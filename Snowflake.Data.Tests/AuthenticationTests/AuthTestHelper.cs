@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Data;
 using NUnit.Framework;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.AuthenticationTests
@@ -61,6 +62,36 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
+        public string ConnectUsingOktaConnectionAndExecuteCustomCommand(string command, bool returnToken = false)
+        {
+            try
+            {
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    var parameters = AuthConnectionString.GetOktaConnectionString();
+                    conn.ConnectionString = AuthConnectionString.ConvertToConnectionString(parameters);
+                    conn.Open();
+                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    using (IDbCommand dbCommand = conn.CreateCommand())
+                    {
+                        dbCommand.CommandText = command;
+                        using (var reader = dbCommand.ExecuteReader())
+                        {
+                            if (returnToken && reader.Read())
+                            {
+                                return reader["token_secret"].ToString();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (SnowflakeDbException e)
+            {
+                _exception = e;
+            }
+            return null;
+        }
+
         public Thread GetConnectAndExecuteSimpleQueryThread(string parameters)
         {
             return new Thread(() => ConnectAndExecuteSimpleQuery(parameters));
@@ -71,11 +102,13 @@ namespace Snowflake.Data.AuthenticationTests
             return new Thread(() => ProvideCredentials(scenario, login, password));
         }
 
-        public void VerifyExceptionIsNotThrown() {
+        public void VerifyExceptionIsNotThrown()
+        {
             Assert.That(_exception, Is.Null, "Unexpected exception thrown");
         }
 
-        public void VerifyExceptionIsThrown(string error) {
+        public void VerifyExceptionIsThrown(string error)
+        {
             Assert.That(_exception, Is.Not.Null, "Expected exception was not thrown");
             Assert.That(_exception.Message, Does.Contain(error), "Unexpected exception message.");
 
@@ -111,7 +144,7 @@ namespace Snowflake.Data.AuthenticationTests
             using (var process = new Process { StartInfo = startInfo })
             {
                 process.Start();
-                if (!process.WaitForExit((int) timeout.TotalMilliseconds))
+                if (!process.WaitForExit((int)timeout.TotalMilliseconds))
                 {
                     process.Kill();
                     throw new TimeoutException("The process did not complete in the allotted time.");
@@ -124,11 +157,17 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
+        internal void RemoveTokenFromCache(string tokenHost, string user, TokenType tokenType)
+        {
+            var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(tokenHost, user, tokenType);
+            SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKey);
+        }
+
         private void ProvideCredentials(string scenario, string login, string password)
         {
             try
             {
-                StartNodeProcess($"/externalbrowser/provideBrowserCredentials.js {scenario} {login} {password}", TimeSpan.FromSeconds(15));
+                StartNodeProcess($"/externalbrowser/provideBrowserCredentials.js {scenario} {login} {password}", TimeSpan.FromSeconds(25));
             }
             catch (Exception e)
             {
@@ -137,4 +176,3 @@ namespace Snowflake.Data.AuthenticationTests
         }
     }
 }
-

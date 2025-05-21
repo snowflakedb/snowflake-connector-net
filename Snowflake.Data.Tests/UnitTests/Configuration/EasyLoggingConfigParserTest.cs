@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             Directory.Delete(s_workingDirectory, true);
         }
-        
+
         [Test]
         public void TestThatParsesConfigFile()
         {
@@ -58,12 +58,12 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // act
             var config = parser.Parse(filePath);
-            
+
             // assert
             Assert.IsNotNull(config);
             Assert.IsNotNull(config.CommonProps);
             Assert.IsNull(config.CommonProps.LogLevel);
-            Assert.IsNull(config.CommonProps.LogPath);            
+            Assert.IsNull(config.CommonProps.LogPath);
         }
 
         [Test]
@@ -76,20 +76,20 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // act
             var config = parser.Parse(noFilePath);
-            
+
             // assert
             Assert.IsNull(config);
         }
-        
+
         [Test]
         public void TestThatFailsWhenTheFileDoesNotExist()
         {
             // arrange
             var parser = new EasyLoggingConfigParser();
-            
+
             // act
             var thrown = Assert.Throws<Exception>(() => parser.Parse(NotExistingFilePath));
-            
+
             // assert
             Assert.IsNotNull(thrown);
             Assert.IsTrue(thrown.Message.Contains("Finding easy logging configuration failed"));

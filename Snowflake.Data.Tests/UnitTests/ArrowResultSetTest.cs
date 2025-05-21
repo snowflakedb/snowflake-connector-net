@@ -10,6 +10,7 @@ using Apache.Arrow.Ipc;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -90,7 +91,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestHasRowsReturnsFalseIfNoRows()
         {
-            PrepareTestCase(SFDataType.FIXED, 0, new sbyte[]{});
+            PrepareTestCase(SFDataType.FIXED, 0, new sbyte[] { });
 
             Assert.IsFalse(_arrowResultSet.HasRows());
         }
@@ -541,7 +542,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private SFStatement PrepareStatement()
         {
-            SFSession session = new SFSession("user=user;password=password;account=account;", null);
+            SFSession session = new SFSession("user=user;password=password;account=account;", new SessionPropertiesContext());
             return new SFStatement(session);
         }
 

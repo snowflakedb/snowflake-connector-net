@@ -11,7 +11,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
-[assembly:LevelOfParallelism(10)]
+[assembly: LevelOfParallelism(10)]
 
 namespace Snowflake.Data.Tests
 {
@@ -48,9 +48,9 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     [SetCulture("en-US")]
-    #if !SEQUENTIAL_TEST_RUN
+#if !SEQUENTIAL_TEST_RUN
     [Parallelizable(ParallelScope.All)]
-    #endif
+#endif
     public class SFBaseTestAsync
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
@@ -190,35 +190,38 @@ namespace Snowflake.Data.Tests
             var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
-        var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-        Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
+            var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
-        var reader = new StreamReader("parameters.json");
+            TestConfig = ReadTestConfig("parameters.json");
+            ModifySchema(TestConfig.schema, SchemaAction.CREATE);
+        }
 
-        var testConfigString = reader.ReadToEnd();
-
-        // Local JSON settings to avoid using system wide settings which could be different
-        // than the default ones
-        var jsonSettings = new JsonSerializerSettings
+        internal static TestConfig ReadTestConfig(string fileName)
         {
-            ContractResolver = new DefaultContractResolver
+            var reader = new StreamReader(fileName);
+            var testConfigString = reader.ReadToEnd();
+            // Local JSON settings to avoid using system wide settings which could be different
+            // than the default ones
+            var jsonSettings = new JsonSerializerSettings
             {
-                NamingStrategy = new DefaultNamingStrategy()
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new DefaultNamingStrategy()
+                }
+            };
+            var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
+            if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
+            {
+                var testConfig = testConnectionConfig;
+                testConfig.schema = testConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+                return testConfig;
             }
-        };
-        var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
-
-        if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
-        {
-            TestConfig = testConnectionConfig;
-            TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
-        }
-        else
-        {
-            Assert.Fail("Failed to load test configuration");
-        }
-
-        ModifySchema(TestConfig.schema, SchemaAction.CREATE);
+            else
+            {
+                Assert.Fail("Failed to load test configuration");
+                throw new Exception("Failed to load test configuration");
+            }
         }
 
         [OneTimeTearDown]
@@ -238,7 +241,7 @@ namespace Snowflake.Data.Tests
         {
             var resultText = "test;time_in_ms\n";
             resultText += string.Join("\n",
-                s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds,0)}"));
+                s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}"));
 
             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
@@ -404,6 +407,27 @@ namespace Snowflake.Data.Tests
 
         [JsonProperty(PropertyName = "NON_PROXY_HOSTS", NullValueHandling = NullValueHandling.Ignore)]
         internal string nonProxyHosts { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_CLIENT_ID", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthClientId { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthClientSecret { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_SCOPE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthScope { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_REDIRECT_URI", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthRedirectUri { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_AUTHORIZATION_URL", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthAuthorizationUrl { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_TOKEN_REQUEST_URL", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthTokenRequestUrl { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PROGRAMMATIC_ACCESS_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string programmaticAccessToken { get; set; }
 
         public TestConfig()
         {

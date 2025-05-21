@@ -98,7 +98,7 @@ namespace Snowflake.Data.Core
         protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
                                                               TimeSpan restTimeout,
                                                               CancellationToken externalCancellationToken,
-                                                              string sid="")
+                                                              string sid = "")
         {
             // merge multiple cancellation token
             using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(restTimeout))

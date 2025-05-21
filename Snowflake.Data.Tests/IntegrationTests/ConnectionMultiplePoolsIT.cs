@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
-    public class ConnectionMultiplePoolsIT: SFBaseTest
+    public class ConnectionMultiplePoolsIT : SFBaseTest
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
@@ -173,7 +173,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Retry(2)]
+        [Retry(3)]
         public void TestWaitInAQueueForAnIdleSession()
         {
             // arrange
@@ -321,7 +321,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestConnectionPoolExpirationWorks()
         {
             // arrange
-            const int ExpirationTimeoutInSeconds = 10;
+            const int ExpirationTimeoutInSeconds = 1;
             var connectionString = ConnectionString + $"expirationTimeout={ExpirationTimeoutInSeconds};maxPoolSize=4;minPoolSize=2";
             var pool = SnowflakeDbConnectionPool.GetPoolInternal(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize());
@@ -369,10 +369,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             connection.Open();
-            Thread.Sleep(3000);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentPoolSize() == 3, TimeSpan.FromMilliseconds(1000));
             Assert.AreEqual(3, pool.GetCurrentPoolSize());
 
             // cleanup
@@ -442,7 +442,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestReturningCancelledSessionsToThePool([Values]bool cancelAsync)
+        public void TestReturningCancelledSessionsToThePool([Values] bool cancelAsync)
         {
             var connectionString = ConnectionString + "minPoolSize=0;maxPoolSize=2;application=TestReturningCancelledSessionsToThePool";
 
@@ -467,7 +467,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }, CancellationToken.None);
 
-            Thread.Sleep(2000);
+            Awaiter.WaitUntilConditionOrTimeout(() =>
+            {
+                var state = pool.GetCurrentState();
+                return state.IdleSessionsCount == 0 && state.BusySessionsCount == 1;
+            }, TimeSpan.FromMilliseconds(1000));
 
             // one busy session
             Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);

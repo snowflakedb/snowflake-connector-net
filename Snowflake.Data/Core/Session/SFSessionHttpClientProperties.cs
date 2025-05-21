@@ -56,11 +56,16 @@ namespace Snowflake.Data.Core
             {
                 DisablePoolingIfNotExplicitlyEnabled(properties, "external browser");
 
-            } else if (KeyPairAuthenticator.IsKeyPairAuthenticator(authenticator)
+            }
+            else if (KeyPairAuthenticator.IsKeyPairAuthenticator(authenticator)
                        && properties.IsNonEmptyValueProvided(SFSessionProperty.PRIVATE_KEY_FILE)
                        && !properties.IsNonEmptyValueProvided(SFSessionProperty.PRIVATE_KEY_PWD))
             {
                 DisablePoolingIfNotExplicitlyEnabled(properties, "key pair with private key in a file");
+            }
+            else if (OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator(authenticator))
+            {
+                DisablePoolingIfNotExplicitlyEnabled(properties, "oauth authorization code");
             }
         }
 
@@ -146,7 +151,7 @@ namespace Snowflake.Data.Core
         {
             if (maxHttpRetries > 0 && maxHttpRetries < DefaultMaxHttpRetries)
             {
-                    s_logger.Warn($"Max retry count provided is less than the allowed minimum value of {DefaultMaxHttpRetries}");
+                s_logger.Warn($"Max retry count provided is less than the allowed minimum value of {DefaultMaxHttpRetries}");
 
                 maxHttpRetries = DefaultMaxHttpRetries;
             }
@@ -248,7 +253,7 @@ namespace Snowflake.Data.Core
                     _expirationTimeout = extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
                     _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
-                    _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]),
+                    _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL])
                 };
             }
 

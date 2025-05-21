@@ -104,7 +104,8 @@ namespace Snowflake.Data.Core.Authenticator
                 && passcodeInPassword)
             {
                 data.extAuthnDuoMethod = "passcode";
-            } else if (session.properties.TryGetValue(SFSessionProperty.PASSCODE, out var passcode) && !string.IsNullOrEmpty(passcode))
+            }
+            else if (session.properties.TryGetValue(SFSessionProperty.PASSCODE, out var passcode) && !string.IsNullOrEmpty(passcode))
             {
                 data.extAuthnDuoMethod = "passcode";
                 data.passcode = passcode;
@@ -205,6 +206,18 @@ namespace Snowflake.Data.Core.Authenticator
             else if (MFACacheAuthenticator.IsMfaCacheAuthenticator(type))
             {
                 return new MFACacheAuthenticator(session);
+            }
+            else if (OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator(type))
+            {
+                return new OAuthAuthorizationCodeAuthenticator(session);
+            }
+            else if (OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator(type))
+            {
+                return new OAuthClientCredentialsAuthenticator(session);
+            }
+            else if (ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator(type))
+            {
+                return new ProgrammaticAccessTokenAuthenticator(session);
             }
             // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
             else if (OktaAuthenticator.IsOktaAuthenticator(type))

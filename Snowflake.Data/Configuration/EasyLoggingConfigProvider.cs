@@ -11,7 +11,7 @@ namespace Snowflake.Data.Configuration
         internal EasyLoggingConfigProvider() : this(EasyLoggingConfigFinder.Instance, EasyLoggingConfigParser.Instance)
         {
         }
-        
+
         internal EasyLoggingConfigProvider(EasyLoggingConfigFinder finder, EasyLoggingConfigParser configParser)
         {
             _finder = finder;

@@ -85,7 +85,8 @@ namespace Snowflake.Data.Core
                 {
                     message.Headers.Add(item.Key, item.Value);
                 }
-            } else
+            }
+            else
             {
                 message.Headers.Add(SSE_C_ALGORITHM, SSE_C_AES);
                 message.Headers.Add(SSE_C_KEY, qrmk);
@@ -115,7 +116,7 @@ namespace Snowflake.Data.Core
             HttpTimeout = TimeSpan.FromSeconds(16);
         }
 
-        internal Object jsonBody { get; set;  }
+        internal Object jsonBody { get; set; }
 
         internal String authorizationToken { get; set; }
 
@@ -243,6 +244,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "AUTHENTICATOR", NullValueHandling = NullValueHandling.Ignore)]
         internal String Authenticator { get; set; }
 
+        [JsonProperty(PropertyName = "OAUTH_TYPE", NullValueHandling = NullValueHandling.Ignore)]
+        internal String OAuthType { get; set; }
+
         [JsonProperty(PropertyName = "CLIENT_ENVIRONMENT")]
         internal LoginRequestClientEnv clientEnv { get; set; }
 
@@ -368,7 +372,7 @@ namespace Snowflake.Data.Core
 
         // Opaque information (object with a value of base64 encoded string).
         [JsonProperty(PropertyName = "context")]
-        public object Context{ get; set; }
+        public object Context { get; set; }
 
         public void SetContext(string context)
         {

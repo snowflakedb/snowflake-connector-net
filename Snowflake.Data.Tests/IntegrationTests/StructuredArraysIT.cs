@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var map = array[0];
                     Assert.NotNull(map);
                     Assert.AreEqual(1, map.Count);
-                    Assert.AreEqual("b",map["a"]);
+                    Assert.AreEqual("b", map["a"]);
                 }
             }
         }
@@ -169,7 +169,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     EnableStructuredTypes(connection, _resultFormat);
                     command.CommandText = $"SELECT {valueSfString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -177,7 +177,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(array);
-                    CollectionAssert.AreEqual(new [] { RemoveWhiteSpaces(expectedValue) }, array.Select(RemoveWhiteSpaces).ToArray());
+                    CollectionAssert.AreEqual(new[] { RemoveWhiteSpaces(expectedValue) }, array.Select(RemoveWhiteSpaces).ToArray());
                 }
             }
         }
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection, _resultFormat);
                     var arrayOfIntegers = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(INTEGER)";
                     command.CommandText = $"SELECT {arrayOfIntegers}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -219,7 +219,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection, _resultFormat);
                     var arrayOfLongs = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(BIGINT)";
                     command.CommandText = $"SELECT {arrayOfLongs}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -244,7 +244,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection, _resultFormat);
                     var arrayOfFloats = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(FLOAT)";
                     command.CommandText = $"SELECT {arrayOfFloats}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -269,7 +269,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection, _resultFormat);
                     var arrayOfDoubles = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(DOUBLE)";
                     command.CommandText = $"SELECT {arrayOfDoubles}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -294,7 +294,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection, _resultFormat);
                     var arrayOfDoubles = "ARRAY_CONSTRUCT(1.0e100, 1.0e-100)::ARRAY(DOUBLE)";
                     command.CommandText = $"SELECT {arrayOfDoubles}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act

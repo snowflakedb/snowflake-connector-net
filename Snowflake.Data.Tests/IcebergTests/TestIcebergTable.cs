@@ -32,8 +32,8 @@ namespace Snowflake.Data.Tests.IcebergTests
               ntz timestamp_ntz(6),
               ltz timestamp_ltz(6),
               bi binary(5),
-              ar array(number(10,0)), 
-              ob object(a number(10,0), b varchar), 
+              ar array(number(10,0)),
+              ob object(a number(10,0), b varchar),
               ma map(varchar, varchar)";
         private const string SqlCreateHybridTableColumns = @"id number(10,0) not null primary key,
               nu number(10,0),
@@ -66,14 +66,14 @@ namespace Snowflake.Data.Tests.IcebergTests
         private const string FormatYmdHms = "yyyy-MM-dd HH:mm:ss";
         private const string FormatYmdHmsf = "yyyy-MM-dd HH:mm:ss.fffffff";
         private const string FormatYmdHmsfZ = "yyyy-MM-dd HH:mm:ss.fffffff zzz";
-        
+
         public TestIcebergTable(ResultFormat resultFormat)
         {
             _resultFormat = resultFormat;
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestInsertPlainText()
         {
             // Arrange
@@ -81,16 +81,16 @@ namespace Snowflake.Data.Tests.IcebergTests
             {
                 CreateIcebergTable(conn);
                 SetResultFormat(conn);
-                
+
                 // Act
-                conn.ExecuteNonQuery(@$"insert into {TableNameIceberg} ({SqlColumnsSimpleTypes}) 
-                                                    values ({I32}, {I64}, {Dec}, {Dbl}, {Flt}, '{Txt}', {B1}, {B0}, 
-                                                            '{_dt.ToString(FormatYmd)}', 
-                                                            '{_tm.ToString(FormatHms)}', 
-                                                            '{_ntz.ToString(FormatYmdHms)}', 
-                                                            '{_ltz.ToString(FormatYmdHmsfZ)}', 
+                conn.ExecuteNonQuery(@$"insert into {TableNameIceberg} ({SqlColumnsSimpleTypes})
+                                                    values ({I32}, {I64}, {Dec}, {Dbl}, {Flt}, '{Txt}', {B1}, {B0},
+                                                            '{_dt.ToString(FormatYmd)}',
+                                                            '{_tm.ToString(FormatHms)}',
+                                                            '{_ntz.ToString(FormatYmdHms)}',
+                                                            '{_ltz.ToString(FormatYmdHmsfZ)}',
                                                             '{ByteArrayToHexString(_bi)}')");
-                
+
                 // Assert
                 var reader = conn.ExecuteReader($"select {SqlColumnsSimpleTypes} from {TableNameIceberg}");
                 int rowsRead = 0;
@@ -102,10 +102,10 @@ namespace Snowflake.Data.Tests.IcebergTests
                 Assert.AreEqual(1, rowsRead);
             }
         }
-        
-        
+
+
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD tests")]
         public void TestInsertWithValueBinding()
         {
             // Arrange
@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             {
                 CreateIcebergTable(conn);
                 SetResultFormat(conn);
-                
+
                 // Act
                 InsertSingleRow(conn, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi);
 
@@ -128,9 +128,9 @@ namespace Snowflake.Data.Tests.IcebergTests
                 Assert.AreEqual(1, rowsRead);
             }
         }
-        
+
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestUpdateWithValueBinding()
         {
             // Arrange
@@ -152,7 +152,7 @@ namespace Snowflake.Data.Tests.IcebergTests
                 CreateIcebergTable(conn);
                 SetResultFormat(conn);
                 InsertSingleRow(conn, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi);
-    
+
                 // Act
                 using (var cmd = conn.CreateCommand($"update {TableNameIceberg} set nu1=?,nu2=?,nu3=?,nu4=?,f=?,tx=?,bt=?,bf=?,dt=?,tm=?,ntz=?,ltz=?,bi=? where nu1=? and (bt=? or dt=?)"))
                 {
@@ -164,8 +164,8 @@ namespace Snowflake.Data.Tests.IcebergTests
                     cmd.Add("6", DbType.String, txt);
                     cmd.Add("7", DbType.Boolean, b1);
                     cmd.Add("8", DbType.Boolean, b0);
-                    cmd.Add("9", DbType.Date, dt); 
-                    cmd.Add("10", DbType.Time, tm); 
+                    cmd.Add("9", DbType.Date, dt);
+                    cmd.Add("10", DbType.Time, tm);
                     cmd.Add("11", DbType.DateTime, ntz);
                     cmd.Add("12", DbType.DateTime, ltz).SFDataType = SFDataType.TIMESTAMP_LTZ;
                     cmd.Add("13", DbType.Binary, bi);
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.IcebergTests
                     cmd.Add("16", DbType.Date, _dt);
                     Assert.AreEqual(1, cmd.ExecuteNonQuery());
                 }
-                
+
                 // Assert
                 var reader = conn.ExecuteReader($"select {SqlColumnsSimpleTypes} from {TableNameIceberg}");
                 int rowsRead = 0;
@@ -186,9 +186,9 @@ namespace Snowflake.Data.Tests.IcebergTests
                 Assert.AreEqual(1, rowsRead);
             }
         }
-        
+
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestJoin()
         {
             using (var conn = OpenConnection())
@@ -196,16 +196,16 @@ namespace Snowflake.Data.Tests.IcebergTests
                 // Arrange
                 CreateIcebergTable(conn);
                 CreateHybridTable(conn);
-                InsertManyRows(conn, 10, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm,_ntz,_ltz,_bi);
+                InsertManyRows(conn, 10, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi);
                 InsertHybridTableData(conn);
                 SetResultFormat(conn);
 
                 // Act
-                var sql = @$"select i.nu1,i.nu2,i.nu3,i.nu4,i.f,i.tx,i.bt,i.bf,i.dt,i.tm,i.ntz,i.ltz,i.bi, h.id,h.nu,h.tx2 
-                             from {TableNameIceberg} i 
-                             join {TableNameHybrid} h 
+                var sql = @$"select i.nu1,i.nu2,i.nu3,i.nu4,i.f,i.tx,i.bt,i.bf,i.dt,i.tm,i.ntz,i.ltz,i.bi, h.id,h.nu,h.tx2
+                             from {TableNameIceberg} i
+                             join {TableNameHybrid} h
                                on i.nu1 = h.nu order by i.nu1";
-                
+
                 // Assert
                 var resultSetColumns = @"nu1 number(10,0),
                                     nu2 number(19,0),
@@ -229,11 +229,11 @@ namespace Snowflake.Data.Tests.IcebergTests
                 Assert.AreEqual(true, reader.Read());
                 AssertRowValuesEqual(reader, resultSetColumns, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi, Id2, I32, Txt2);
                 Assert.AreEqual(false, reader.Read());
-            }            
+            }
         }
-        
+
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestDelete()
         {
             using (var conn = OpenConnection())
@@ -242,12 +242,12 @@ namespace Snowflake.Data.Tests.IcebergTests
                 CreateIcebergTable(conn);
                 InsertManyRows(conn, 100, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi);
                 SetResultFormat(conn);
-                
+
                 // Act
                 var cmd = conn.CreateCommand($"delete from {TableNameIceberg} where nu1 = ?");
                 cmd.Add("1", DbType.Int32, I32);
                 var removed = cmd.ExecuteReader();
-                
+
                 // Assert
                 Assert.AreEqual(1, removed.RecordsAffected);
                 var left = conn.ExecuteReader($"select count(*) from {TableNameIceberg} where nu1 <> {I32}");
@@ -257,7 +257,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestDeleteAll()
         {
             using (var conn = OpenConnection())
@@ -266,11 +266,11 @@ namespace Snowflake.Data.Tests.IcebergTests
                 CreateIcebergTable(conn);
                 InsertManyRows(conn, 100, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi);
                 SetResultFormat(conn);
-                
+
                 // Act
                 var cmd = conn.CreateCommand($@"delete from {TableNameIceberg}");
                 var removed = cmd.ExecuteReader();
-                
+
                 // Assert
                 Assert.AreEqual(100, removed.RecordsAffected);
                 var left = conn.ExecuteReader($"select count(*) from {TableNameIceberg}");
@@ -278,9 +278,9 @@ namespace Snowflake.Data.Tests.IcebergTests
                 Assert.AreEqual(0, left.GetInt32(0));
             }
         }
-        
+
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestMultiStatement()
         {
             using (var conn = OpenConnection())
@@ -294,7 +294,7 @@ namespace Snowflake.Data.Tests.IcebergTests
                 var cmd = conn.CreateCommand($"select * from {TableNameIceberg};select 1;select current_timestamp;select * from {TableNameIceberg}");
                 cmd.Add("MULTI_STATEMENT_COUNT", DbType.Int32, 4);
                 var reader = cmd.ExecuteReader();
-                
+
                 // Assert
                 int rowsRead = 0;
                 while (reader.Read())
@@ -305,9 +305,9 @@ namespace Snowflake.Data.Tests.IcebergTests
                 Assert.AreEqual(1, rowsRead);
             }
         }
-        
+
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestBatchInsertForLargeData()
         {
             using (var conn = OpenConnection())
@@ -319,16 +319,16 @@ namespace Snowflake.Data.Tests.IcebergTests
 
                 // Act
                 var reader = conn.ExecuteReader($"select {SqlColumnsSimpleTypes} from {TableNameIceberg} order by nu1");
-                
+
                 // Assert
                 var resultSetColumns = SqlCreateIcebergTableColumns.Split('\n');
-                var expected = new object[] {I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi};
+                var expected = new object[] { I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi };
                 var rowsRead = 0;
                 while (reader.Read())
                 {
                     ++rowsRead;
                     expected[0] = rowsRead;
-                    var expectedRow = NullEachNthValueBesidesFirst(expected, rowsRead-1);
+                    var expectedRow = NullEachNthValueBesidesFirst(expected, rowsRead - 1);
                     AssertRowValuesEqual(reader, resultSetColumns, expectedRow);
                 }
                 Assert.AreEqual(20_000, rowsRead);
@@ -336,16 +336,16 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
         [Test]
-        [Ignore("TODO: Enable when features available on the automated tests environment")]
+        [Ignore("Not a scope for CICD")]
         public void TestStructuredTypesAsJsonString()
         {
             using (var conn = OpenConnection())
             {
                 SetResultFormat(conn);
                 CreateIcebergTable(conn);
-                var sql = @$"insert into {TableNameIceberg} ({SqlColumnsStructureTypes}) 
-                            select 
-                                [1,2,3]::ARRAY(number), 
+                var sql = @$"insert into {TableNameIceberg} ({SqlColumnsStructureTypes})
+                            select
+                                [1,2,3]::ARRAY(number),
                                 {{'a' : 1, 'b': 'two'}}::OBJECT(a number, b varchar),
                                 {{'4':'one', '5': 'two', '6': 'three'}}::MAP(varchar, varchar)
                             ";
@@ -364,13 +364,13 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        private void CreateIcebergTable(SnowflakeDbConnection conn) 
+        private void CreateIcebergTable(SnowflakeDbConnection conn)
             => conn.ExecuteNonQuery($"create or replace iceberg table {TableNameIceberg} ({SqlCreateIcebergTableColumns}) {IcebergTableCreateFlags}");
 
-        private void CreateHybridTable(SnowflakeDbConnection conn) 
+        private void CreateHybridTable(SnowflakeDbConnection conn)
             => conn.ExecuteNonQuery($"create or replace hybrid table {TableNameHybrid} ({SqlCreateHybridTableColumns})");
-        
-        private void SetResultFormat(SnowflakeDbConnection conn) 
+
+        private void SetResultFormat(SnowflakeDbConnection conn)
             => conn.ExecuteNonQuery($"alter session set DOTNET_QUERY_RESULT_FORMAT={_resultFormat}");
 
         private SnowflakeDbConnection OpenConnection()
@@ -402,7 +402,7 @@ namespace Snowflake.Data.Tests.IcebergTests
                 Assert.AreEqual(1, cmd.ExecuteNonQuery());
             }
         }
-        
+
         private void InsertManyRows(SnowflakeDbConnection conn, int times, params object[] bindings)
         {
             Assert.AreEqual(13, bindings.Length);
@@ -426,7 +426,7 @@ namespace Snowflake.Data.Tests.IcebergTests
                 Assert.AreEqual(times, cmd.ExecuteNonQuery());
             }
         }
-       
+
         private void InsertManyRowsWithNulls(SnowflakeDbConnection conn, int times, params object[] bindings)
         {
             Assert.AreEqual(13, bindings.Length);
@@ -434,55 +434,55 @@ namespace Snowflake.Data.Tests.IcebergTests
             using (var cmd = conn.CreateCommand(sqlInsert))
             {
                 cmd.Add("1", DbType.Int32, Enumerable.Range((int)bindings[0], times).ToArray());
-                
+
                 var longArray = Enumerable.Repeat((long?)bindings[1], times).ToArray();
                 cmd.Add("2", DbType.Int64, NullEachNthValue(longArray, 2));
-                
+
                 var decArray = Enumerable.Repeat((decimal?)bindings[2], times).ToArray();
                 cmd.Add("3", DbType.Decimal, NullEachNthValue(decArray, 3));
-                
+
                 var dblArray = Enumerable.Repeat((double?)bindings[3], times).ToArray();
                 cmd.Add("4", DbType.Double, NullEachNthValue(dblArray, 4));
 
                 var fltArray = Enumerable.Repeat((float?)bindings[4], times).ToArray();
                 cmd.Add("5", DbType.Double, NullEachNthValue(fltArray, 5));
-                
+
                 var strArray = Enumerable.Repeat((string)bindings[5], times).ToArray();
                 cmd.Add("6", DbType.String, NullEachNthValue(strArray, 6));
- 
+
                 var bltArray = Enumerable.Repeat((bool?)bindings[6], times).ToArray();
                 cmd.Add("7", DbType.Boolean, NullEachNthValue(bltArray, 7));
-                
+
                 var blfArray = Enumerable.Repeat((bool?)bindings[7], times).ToArray();
                 cmd.Add("8", DbType.Boolean, NullEachNthValue(blfArray, 8));
-                
+
                 var dtArray = Enumerable.Repeat((DateTime?)bindings[8], times).ToArray();
                 cmd.Add("9", DbType.Date, NullEachNthValue(dtArray, 9));
-                
+
                 var tmArray = Enumerable.Repeat((DateTime?)bindings[9], times).ToArray();
                 cmd.Add("10", DbType.Time, NullEachNthValue(tmArray, 10));
-                
+
                 var ntzArray = Enumerable.Repeat((DateTime?)bindings[10], times).ToArray();
                 cmd.Add("11", DbType.DateTime, NullEachNthValue(ntzArray, 11));
-                
+
                 var ltzArray = Enumerable.Repeat((DateTimeOffset?)bindings[11], times).ToArray();
                 cmd.Add("12", DbType.DateTimeOffset, NullEachNthValue(ltzArray, 12))
                     .SFDataType = SFDataType.TIMESTAMP_LTZ;
-                
+
                 var binArray = Enumerable.Repeat((byte[])bindings[12], times).ToArray();
                 cmd.Add("13", DbType.Binary, NullEachNthValue(binArray, 13));
-                
+
                 Assert.AreEqual(times, cmd.ExecuteNonQuery());
             }
         }
-        
+
         private void InsertHybridTableData(SnowflakeDbConnection conn)
         {
             using (var cmd = conn.CreateCommand($"insert into {TableNameHybrid} ({SqlColumnsHybridTypes}) values (?,?,?)"))
             {
-                cmd.Add("1", DbType.Int32, new[]{Id1, Id2});
-                cmd.Add("2", DbType.Int32, new[]{I32, I32});
-                cmd.Add("3", DbType.String, new[]{Txt1,Txt2});
+                cmd.Add("1", DbType.Int32, new[] { Id1, Id2 });
+                cmd.Add("2", DbType.Int32, new[] { I32, I32 });
+                cmd.Add("3", DbType.String, new[] { Txt1, Txt2 });
                 cmd.ExecuteNonQuery();
             }
         }
@@ -524,9 +524,9 @@ namespace Snowflake.Data.Tests.IcebergTests
                         var frmt = column.Contains(" TIME") ? FormatHms : FormatYmdHmsf;
                         Assert.AreEqual(dt.ToString(frmt), actualRow.GetDateTime(idx).ToString(frmt), mismatch);
                         break;
-                    case DateTimeOffset dto:    
-                        Assert.AreEqual(dto.ToUniversalTime().ToString(FormatYmdHmsfZ), 
-                                        actualRow.GetFieldValue<DateTimeOffset>(idx).ToUniversalTime().ToString(FormatYmdHmsfZ), 
+                    case DateTimeOffset dto:
+                        Assert.AreEqual(dto.ToUniversalTime().ToString(FormatYmdHmsfZ),
+                                        actualRow.GetFieldValue<DateTimeOffset>(idx).ToUniversalTime().ToString(FormatYmdHmsfZ),
                                         mismatch);
                         break;
                     case byte[] bt:

@@ -1,17 +1,21 @@
-using Snowflake.Data.Client;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Snowflake.Data.Client;
 
-namespace Snowflake.Data.Core.Tools
+namespace Snowflake.Data.Core.Authenticator.Browser
 {
-    internal class BrowserOperations
+    internal class WebBrowserRunner : IWebBrowserRunner
     {
-        public static readonly BrowserOperations Instance = new BrowserOperations();
+        public static readonly WebBrowserRunner Instance = new WebBrowserRunner();
 
-        internal virtual void OpenUrl(Uri uri)
+        internal WebBrowserRunner()
         {
-            var url = uri.ToString();
+        }
+
+        public virtual void Run(Uri uri)
+        {
+            var url = uri.AbsoluteUri;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 ProcessStartInfo startInfo = new ProcessStartInfo();

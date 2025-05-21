@@ -18,7 +18,7 @@ namespace Snowflake.Data.Core
 
         public async Task ParseChunk(IResultChunk chunk)
         {
-            ArrowResultChunk resultChunk = (ArrowResultChunk)chunk; 
+            ArrowResultChunk resultChunk = (ArrowResultChunk)chunk;
 
             using (var reader = new ArrowStreamReader(stream))
             {

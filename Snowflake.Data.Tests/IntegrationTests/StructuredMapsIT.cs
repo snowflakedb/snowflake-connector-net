@@ -183,8 +183,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(new string[] {"a"}, map.Keys);
-                    CollectionAssert.AreEqual(new string[] {"b", "c"}, map["a"]);
+                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
+                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
                 }
             }
         }
@@ -209,8 +209,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(new string[] {"a"}, map.Keys);
-                    CollectionAssert.AreEqual(new string[] {"b", "c"}, map["a"]);
+                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
+                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
                 }
             }
         }
@@ -256,7 +256,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     EnableStructuredTypes(connection, _resultFormat);
                     command.CommandText = $"SELECT {valueSfString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
