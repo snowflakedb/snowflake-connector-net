@@ -4,7 +4,7 @@ using Snowflake.Data.Core.Authenticator.Browser;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    internal class MockBrowser: IWebBrowserRunner
+    internal class MockBrowser : IWebBrowserRunner
     {
         private HttpClient _httpClient;
 

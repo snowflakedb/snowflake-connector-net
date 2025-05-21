@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.Util
         public PoolConfig()
         {
             _maxPoolSize = SFSessionHttpClientProperties.DefaultMaxPoolSize;
-            _timeout = (long) SFSessionHttpClientProperties.DefaultExpirationTimeout.TotalSeconds;
+            _timeout = (long)SFSessionHttpClientProperties.DefaultExpirationTimeout.TotalSeconds;
             _pooling = SFSessionHttpClientProperties.DefaultPoolingEnabled;
             _connectionPoolType = SnowflakeDbConnectionPool.DefaultConnectionPoolType;
         }

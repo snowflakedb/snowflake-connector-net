@@ -104,7 +104,8 @@ namespace Snowflake.Data.Core.Authenticator
                 && passcodeInPassword)
             {
                 data.extAuthnDuoMethod = "passcode";
-            } else if (session.properties.TryGetValue(SFSessionProperty.PASSCODE, out var passcode) && !string.IsNullOrEmpty(passcode))
+            }
+            else if (session.properties.TryGetValue(SFSessionProperty.PASSCODE, out var passcode) && !string.IsNullOrEmpty(passcode))
             {
                 data.extAuthnDuoMethod = "passcode";
                 data.passcode = passcode;

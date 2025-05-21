@@ -151,7 +151,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
                 fileMetadata.resultStatus == ResultStatus.DOWNLOADED.ToString())
             {
-                return new FileHeader{
+                return new FileHeader
+                {
                     digest = fileMetadata.sha256Digest,
                     contentLength = fileMetadata.srcFileSize,
                     encryptionMetadata = fileMetadata.encryptionMetadata

@@ -296,11 +296,11 @@ namespace Snowflake.Data.Core
             // For each file metadata, set the result set variables
             for (int index = 0; index < ResultsMetas.Count; index++)
             {
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileName        ] = ResultsMetas[index].srcFileName;
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName   ] = ResultsMetas[index].destFileName;
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize        ] = ResultsMetas[index].srcFileSize.ToString();
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize   ] = ResultsMetas[index].destFileSize.ToString();
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus          ] = ResultsMetas[index].resultStatus;
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileName] = ResultsMetas[index].srcFileName;
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName] = ResultsMetas[index].destFileName;
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize] = ResultsMetas[index].srcFileSize.ToString();
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize] = ResultsMetas[index].destFileSize.ToString();
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus] = ResultsMetas[index].resultStatus;
 
                 if (ResultsMetas[index].lastError != null)
                 {
@@ -790,7 +790,7 @@ namespace Snowflake.Data.Core
                 Logger.Debug("Expand " + location + " into: ");
                 foreach (var filepath in filePaths)
                 {
-                    Logger.Debug("\t" + filepath );
+                    Logger.Debug("\t" + filepath);
                 }
             }
 
@@ -805,7 +805,7 @@ namespace Snowflake.Data.Core
         {
             if (string.IsNullOrEmpty(directoryPath))
             {
-                return new List<string> {Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar};
+                return new List<string> { Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar };
             }
             if (!ContainsWildcard(directoryPath))
             {
@@ -1036,22 +1036,22 @@ namespace Snowflake.Data.Core
 
             for (int count = 0; count < 10; count++)
             {
-              if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
-              {
-                  fileMetadata.client = await renewExpiredClientAsync(cancellationToken).ConfigureAwait(false);
-              }
-              else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
-              {
-                  await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
-              }
+                if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+                {
+                    fileMetadata.client = await renewExpiredClientAsync(cancellationToken).ConfigureAwait(false);
+                }
+                else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                {
+                    await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
+                }
 
-              // Break out of loop if file is successfully uploaded or already exists
-              if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
-                  fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
-              {
-                  breakFlag = true;
-                  break;
-              }
+                // Break out of loop if file is successfully uploaded or already exists
+                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
+                    fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
+                {
+                    breakFlag = true;
+                    break;
+                }
             }
             if (!breakFlag)
             {

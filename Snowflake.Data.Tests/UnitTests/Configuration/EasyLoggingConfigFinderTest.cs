@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             t_environmentOperations
                 .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
-                .Returns((string) null);
+                .Returns((string)null);
         }
 
         private static void MockFileFromEnvironmentalVariable()

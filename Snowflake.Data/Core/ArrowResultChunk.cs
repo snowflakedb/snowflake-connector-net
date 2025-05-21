@@ -253,37 +253,37 @@ namespace Snowflake.Data.Core
                     return DateTime.SpecifyKind(SFDataConverter.UnixEpoch.AddTicks(_int[columnIndex][_currentRecordIndex] * TicksPerDay), DateTimeKind.Unspecified);
 
                 case SFDataType.TIME:
-                {
-                    long value;
-
-                    if (column.GetType() == typeof(Int32Array))
                     {
-                        if (_int[columnIndex] == null)
+                        long value;
+
+                        if (column.GetType() == typeof(Int32Array))
                         {
-                            _int[columnIndex] = ((Int32Array)column).Values.ToArray();
+                            if (_int[columnIndex] == null)
+                            {
+                                _int[columnIndex] = ((Int32Array)column).Values.ToArray();
+                            }
+
+                            value = _int[columnIndex][_currentRecordIndex];
+                        }
+                        else
+                        {
+                            if (_long[columnIndex] == null)
+                            {
+                                _long[columnIndex] = ((Int64Array)column).Values.ToArray();
+                            }
+
+                            value = _long[columnIndex][_currentRecordIndex];
                         }
 
-                        value = _int[columnIndex][_currentRecordIndex];
+                        if (scale == 0)
+                            return DateTimeOffset.FromUnixTimeSeconds(value).DateTime;
+                        if (scale <= 3)
+                            return DateTimeOffset.FromUnixTimeMilliseconds(value * s_powersOf10[3 - scale])
+                                .DateTime;
+                        if (scale <= 7)
+                            return s_epochDate.AddTicks(value * s_powersOf10[7 - scale]).DateTime;
+                        return s_epochDate.AddTicks(value / s_powersOf10[scale - 7]).DateTime;
                     }
-                    else
-                    {
-                        if (_long[columnIndex] == null)
-                        {
-                            _long[columnIndex] = ((Int64Array)column).Values.ToArray();
-                        }
-
-                        value = _long[columnIndex][_currentRecordIndex];
-                    }
-
-                    if (scale == 0)
-                        return DateTimeOffset.FromUnixTimeSeconds(value).DateTime;
-                    if (scale <= 3)
-                        return DateTimeOffset.FromUnixTimeMilliseconds(value * s_powersOf10[3 - scale])
-                            .DateTime;
-                    if (scale <= 7)
-                        return s_epochDate.AddTicks(value * s_powersOf10[7 - scale]).DateTime;
-                    return s_epochDate.AddTicks(value / s_powersOf10[scale - 7]).DateTime;
-                }
                 case SFDataType.TIMESTAMP_TZ:
                     var structCol = (StructArray)column;
                     if (_long[columnIndex] == null)

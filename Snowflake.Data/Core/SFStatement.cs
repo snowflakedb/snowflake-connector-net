@@ -432,12 +432,12 @@ namespace Snowflake.Data.Core
 
                 return BuildResultSet(response, cancellationToken);
             }
-            catch (OperationCanceledException ex)
+            catch (OperationCanceledException)
             {
-                logger.Warn($"Query execution canceled.");
+                logger.Warn("Query execution canceled.");
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 logger.Error("Query execution failed.");
                 throw;
@@ -501,7 +501,7 @@ namespace Snowflake.Data.Core
             }
             catch (SnowflakeDbException ex)
             {
-                logger.Error($"Query execution failed, QueryId: {ex.QueryId??"unavailable"}", ex);
+                logger.Error($"Query execution failed, QueryId: {ex.QueryId ?? "unavailable"}", ex);
                 _lastQueryId = ex.QueryId ?? _lastQueryId;
                 throw;
             }

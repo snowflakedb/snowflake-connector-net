@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
-    public class ConnectionMultiplePoolsIT: SFBaseTest
+    public class ConnectionMultiplePoolsIT : SFBaseTest
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
@@ -442,7 +442,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestReturningCancelledSessionsToThePool([Values]bool cancelAsync)
+        public void TestReturningCancelledSessionsToThePool([Values] bool cancelAsync)
         {
             var connectionString = ConnectionString + "minPoolSize=0;maxPoolSize=2;application=TestReturningCancelledSessionsToThePool";
 

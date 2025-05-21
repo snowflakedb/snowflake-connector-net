@@ -14,7 +14,7 @@ namespace Snowflake.Data.Core
             this.value = value;
         }
 
-        public string type { get; set;  }
+        public string type { get; set; }
 
         public object value { get; set; }
     }

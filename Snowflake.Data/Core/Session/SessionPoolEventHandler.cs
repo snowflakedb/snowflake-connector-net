@@ -1,6 +1,6 @@
 namespace Snowflake.Data.Core.Session
 {
-    internal class SessionPoolEventHandler: ISessionPoolEventHandler
+    internal class SessionPoolEventHandler : ISessionPoolEventHandler
     {
         public virtual void OnNewSessionCreated(SessionPool sessionPool)
         {
@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core.Session
         public virtual void OnWaitingForSessionSuccessful(SessionPool sessionPool)
         {
         }
-        
+
         public virtual void OnSessionProvided(SessionPool sessionPool)
         {
         }

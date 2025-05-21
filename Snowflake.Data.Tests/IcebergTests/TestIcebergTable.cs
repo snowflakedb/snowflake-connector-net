@@ -196,7 +196,7 @@ namespace Snowflake.Data.Tests.IcebergTests
                 // Arrange
                 CreateIcebergTable(conn);
                 CreateHybridTable(conn);
-                InsertManyRows(conn, 10, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm,_ntz,_ltz,_bi);
+                InsertManyRows(conn, 10, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi);
                 InsertHybridTableData(conn);
                 SetResultFormat(conn);
 
@@ -322,13 +322,13 @@ namespace Snowflake.Data.Tests.IcebergTests
 
                 // Assert
                 var resultSetColumns = SqlCreateIcebergTableColumns.Split('\n');
-                var expected = new object[] {I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi};
+                var expected = new object[] { I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi };
                 var rowsRead = 0;
                 while (reader.Read())
                 {
                     ++rowsRead;
                     expected[0] = rowsRead;
-                    var expectedRow = NullEachNthValueBesidesFirst(expected, rowsRead-1);
+                    var expectedRow = NullEachNthValueBesidesFirst(expected, rowsRead - 1);
                     AssertRowValuesEqual(reader, resultSetColumns, expectedRow);
                 }
                 Assert.AreEqual(20_000, rowsRead);
@@ -480,9 +480,9 @@ namespace Snowflake.Data.Tests.IcebergTests
         {
             using (var cmd = conn.CreateCommand($"insert into {TableNameHybrid} ({SqlColumnsHybridTypes}) values (?,?,?)"))
             {
-                cmd.Add("1", DbType.Int32, new[]{Id1, Id2});
-                cmd.Add("2", DbType.Int32, new[]{I32, I32});
-                cmd.Add("3", DbType.String, new[]{Txt1,Txt2});
+                cmd.Add("1", DbType.Int32, new[] { Id1, Id2 });
+                cmd.Add("2", DbType.Int32, new[] { I32, I32 });
+                cmd.Add("3", DbType.String, new[] { Txt1, Txt2 });
                 cmd.ExecuteNonQuery();
             }
         }

@@ -56,7 +56,8 @@ namespace Snowflake.Data.Core
             {
                 DisablePoolingIfNotExplicitlyEnabled(properties, "external browser");
 
-            } else if (KeyPairAuthenticator.IsKeyPairAuthenticator(authenticator)
+            }
+            else if (KeyPairAuthenticator.IsKeyPairAuthenticator(authenticator)
                        && properties.IsNonEmptyValueProvided(SFSessionProperty.PRIVATE_KEY_FILE)
                        && !properties.IsNonEmptyValueProvided(SFSessionProperty.PRIVATE_KEY_PWD))
             {
@@ -150,7 +151,7 @@ namespace Snowflake.Data.Core
         {
             if (maxHttpRetries > 0 && maxHttpRetries < DefaultMaxHttpRetries)
             {
-                    s_logger.Warn($"Max retry count provided is less than the allowed minimum value of {DefaultMaxHttpRetries}");
+                s_logger.Warn($"Max retry count provided is less than the allowed minimum value of {DefaultMaxHttpRetries}");
 
                 maxHttpRetries = DefaultMaxHttpRetries;
             }

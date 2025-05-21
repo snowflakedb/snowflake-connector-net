@@ -183,7 +183,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 {
                     bytes[i] = 58;
                 }
-                bytes[i] = (byte) i;
+                bytes[i] = (byte)i;
             }
             return Encoding.Default.GetString(bytes);
         }
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"""privateKeyData"": ""aaaaaaaaaa""", @"""privateKeyData"": ""XXXX""");
 
             // Verify that all allowed characters are correctly supported
-            BasicMasking(@"""privateKeyData"": ""a/b+c=d0"+ "\n" + "139\"", @"""privateKeyData"": ""XXXX""");
+            BasicMasking(@"""privateKeyData"": ""a/b+c=d0" + "\n" + "139\"", @"""privateKeyData"": ""XXXX""");
         }
 
         [Test]
