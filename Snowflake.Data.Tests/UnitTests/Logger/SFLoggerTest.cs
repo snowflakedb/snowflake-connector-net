@@ -40,6 +40,10 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 SFLoggerImpl.SetLevel(LoggingEvent.DEBUG);
             }
+            else
+            {
+                SFLoggerImpl.SetLevel(LoggingEvent.OFF);
+            }
 
             Assert.AreEqual(isEnabled, _logger.IsDebugEnabled());
             _logger.Debug("debug log message", new Exception("test exception"));
@@ -53,6 +57,10 @@ namespace Snowflake.Data.Tests.UnitTests
             if (isEnabled)
             {
                 SFLoggerImpl.SetLevel(LoggingEvent.INFO);
+            }
+            else
+            {
+                SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
             Assert.AreEqual(isEnabled, _logger.IsInfoEnabled());
@@ -68,6 +76,10 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 SFLoggerImpl.SetLevel(LoggingEvent.WARN);
             }
+            else
+            {
+                SFLoggerImpl.SetLevel(LoggingEvent.OFF);
+            }
 
             Assert.AreEqual(isEnabled, _logger.IsWarnEnabled());
             _logger.Warn("warn log message", new Exception("test exception"));
@@ -81,6 +93,10 @@ namespace Snowflake.Data.Tests.UnitTests
             if (isEnabled)
             {
                 SFLoggerImpl.SetLevel(LoggingEvent.ERROR);
+            }
+            else
+            {
+                SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
             Assert.AreEqual(isEnabled, _logger.IsErrorEnabled());
