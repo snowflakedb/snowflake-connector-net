@@ -130,8 +130,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
             SnowflakeDbConnectionPool.SetMaxPoolSize(3);
             SnowflakeDbConnectionPool.SetTimeout(1); // set short pooling timeout to cover the case that connection expired
-            ConcurrentPoolingAsyncHelper(connStr, true, 3, 3, 3);
-            SnowflakeDbConnectionPool.SetTimeout(20);
+            ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3);
+            SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
         [Test(Description = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
@@ -141,8 +141,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync";
             SnowflakeDbConnectionPool.SetMaxPoolSize(3);
             SnowflakeDbConnectionPool.SetTimeout(1); // set short pooling timeout to cover the case that connection expired
-            ConcurrentPoolingAsyncHelper(connStr, false, 3, 3, 3);
-            SnowflakeDbConnectionPool.SetTimeout(20);
+            ConcurrentPoolingAsyncHelper(connStr, false, 5, 5, 3);
+            SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
         public static void ConcurrentPoolingAsyncHelper(string connectionString, bool closeConnection, int tasksCount, int connectionsInTask, int abandonedConnectionsCount)

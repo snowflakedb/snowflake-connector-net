@@ -343,11 +343,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             connection.Open();
-            Thread.Sleep(1000);
-
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentPoolSize() == 3, TimeSpan.FromMilliseconds(1000));
             Assert.AreEqual(3, pool.GetCurrentPoolSize());
 
             // cleanup
@@ -442,7 +441,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }, CancellationToken.None);
 
-            Thread.Sleep(1000);
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentState().IdleSessionsCount == 0, TimeSpan.FromMilliseconds(1000));
 
             // one busy session
             Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);

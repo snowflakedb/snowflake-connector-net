@@ -56,7 +56,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestConcurrentConnectionPooling()
         {
             // add test case name in connection string to make in unique for each test case
-            string connStr = ConnectionString + ";application=TestConcurrentConnectionPooling;maxPoolSize=2;";
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPooling;";
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             ConcurrentPoolingHelper(connStr, true);
         }
 
@@ -67,7 +68,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestConcurrentConnectionPoolingDispose()
         {
             // add test case name in connection string to make in unique for each test case
-            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingNoClose;maxPoolSize=2";
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingNoClose;";
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             ConcurrentPoolingHelper(connStr, false);
         }
 
@@ -81,7 +83,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // reset to default settings in case it changed by other test cases
             Assert.AreEqual(true, SnowflakeDbConnectionPool.GetPool(connectionString).GetPooling()); // to instantiate pool
-            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             SnowflakeDbConnectionPool.SetTimeout(PoolTimeout);
 
             var threads = new Task[ThreadNum];
@@ -360,7 +362,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             conn2.Open(); // it gets a session from the caching pool firstly closing session of conn1 in background
-            Thread.Sleep(TimeForBackgroundSessionCloseMillis); // wait for closing expired session
+
+            Awaiter.WaitUntilConditionOrTimeout(() => !session.IsEstablished(), TimeSpan.FromMilliseconds(TimeForBackgroundSessionCloseMillis));
 
             // assert
             Assert.IsFalse(session.IsEstablished());

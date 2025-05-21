@@ -1,10 +1,10 @@
+using System;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
-using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
@@ -125,10 +125,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             await connection.OpenAsync().ConfigureAwait(false);
-            Thread.Sleep(1000);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentPoolSize() == 3, TimeSpan.FromMilliseconds(1000));
             Assert.AreEqual(3, pool.GetCurrentPoolSize());
 
             // cleanup
