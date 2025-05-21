@@ -182,7 +182,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // add test case name in connection string to make in unique for each test case
             // set short expiration timeout to cover the case that connection expired
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync2;ExpirationTimeout=3";
-            ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, true, 3, 3, 1);
+            ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3);
         }
 
         [Test(Description = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // add test case name in connection string to make in unique for each test case
             // set short expiration timeout to cover the case that connection expired
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync2;ExpirationTimeout=3";
-            ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, false, 3, 3, 1);
+            ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, false, 5, 5, 3);
         }
     }
 }
