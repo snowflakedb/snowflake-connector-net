@@ -69,7 +69,6 @@ namespace Snowflake.Data.Core
                     _initTrialParameters = new EasyLoggingInitTrialParameters(configFilePathFromConnectionString);
                     return;
                 }
-                SFLoggerImpl.SetLevel(LoggingEvent.OFF); // Logger is disabled by default and can be enabled by the EasyLogging feature
                 var logLevel = GetLogLevel(config.CommonProps.LogLevel);
                 var logPath = GetLogPath(config.CommonProps.LogPath);
                 s_logger.Info($"LogLevel set to {logLevel}");
