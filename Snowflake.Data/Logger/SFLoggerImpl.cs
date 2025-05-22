@@ -28,10 +28,10 @@ namespace Snowflake.Data.Log
         private static void SetEnableValues()
         {
             var enabled = s_level != LoggingEvent.OFF;
-            s_isDebugEnabled = enabled;
-            s_isInfoEnabled = enabled;
-            s_isWarnEnabled = enabled;
-            s_isErrorEnabled = enabled;
+            var isDebugEnabled = enabled;
+            var isInfoEnabled = enabled;
+            var isWarnEnabled = enabled;
+            var isErrorEnabled = enabled;
 
             if (enabled)
             {
@@ -41,19 +41,24 @@ namespace Snowflake.Data.Log
                     case LoggingEvent.DEBUG:
                         break;
                     case LoggingEvent.ERROR:
-                        s_isWarnEnabled = false;
-                        s_isInfoEnabled = false;
-                        s_isDebugEnabled = false;
+                        isWarnEnabled = false;
+                        isInfoEnabled = false;
+                        isDebugEnabled = false;
                         break;
                     case LoggingEvent.WARN:
-                        s_isInfoEnabled = false;
-                        s_isDebugEnabled = false;
+                        isInfoEnabled = false;
+                        isDebugEnabled = false;
                         break;
                     case LoggingEvent.INFO:
-                        s_isDebugEnabled = false;
+                        isDebugEnabled = false;
                         break;
                 }
             }
+
+            s_isDebugEnabled = isDebugEnabled;
+            s_isInfoEnabled = isInfoEnabled;
+            s_isWarnEnabled = isWarnEnabled;
+            s_isErrorEnabled = isErrorEnabled;
         }
 
         public bool IsDebugEnabled()
