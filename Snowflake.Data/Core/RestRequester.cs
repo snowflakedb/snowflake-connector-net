@@ -134,7 +134,7 @@ namespace Snowflake.Data.Core
                         if (watch.IsRunning)
                         {
                             watch.Stop();
-                            logger.Error($"Response receiving interrupted by exception after {watch.ElapsedMilliseconds} ms");
+                            logger.Error($"Response receiving interrupted by exception after {watch.ElapsedMilliseconds} ms. {sid} {message.Method} {message.RequestUri}");
                         }
                         // Disposing of the response if not null now that we don't need it anymore
                         response?.Dispose();
