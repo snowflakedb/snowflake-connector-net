@@ -2512,7 +2512,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var driverRootPath = Path.Combine("..", "..", "..", "..");
             var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
             var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName; // Set either OAuthAuthorizationCodeAuthenticator.AuthName or OAuthClientCredentialsAuthenticator.AuthName
-            var testConfig = TestEnvironment.ReadTestConfig(configFilePath);
+            var testConfig = TestEnvironment.ReadTestConfigFile(configFilePath);
             RemoveOAuthCache(testConfig);
             try
             {
