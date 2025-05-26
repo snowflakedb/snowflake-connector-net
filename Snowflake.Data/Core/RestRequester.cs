@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Newtonsoft.Json;
 using System.Net.Http;
 using System.Threading;
@@ -110,17 +111,19 @@ namespace Snowflake.Data.Core
                     try
                     {
                         logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
-
+                        var watch = new Stopwatch();
+                        watch.Start();
                         response = await _HttpClient
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
+                        watch.Stop();
                         if (!response.IsSuccessStatusCode)
                         {
-                            logger.Error($"Failed Response: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+                            logger.Error($"Failed Response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                         }
                         else
                         {
-                            logger.Debug($"Succeeded Response: {sid} {message.Method} {message.RequestUri}");
+                            logger.Debug($"Succeeded Response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri}");
                         }
                         response.EnsureSuccessStatusCode();
 
