@@ -1,5 +1,4 @@
 using System;
-using log4net.Core;
 using Snowflake.Data.Configuration;
 
 namespace Snowflake.Data.Log
@@ -8,16 +7,16 @@ namespace Snowflake.Data.Log
     {
         public static readonly EasyLoggingLevelMapper Instance = new EasyLoggingLevelMapper();
 
-        public Level ToLog4NetLevel(EasyLoggingLogLevel level)
+        public LoggingEvent ToLoggingEventLevel(EasyLoggingLogLevel level)
         {
             switch (level)
             {
-                case EasyLoggingLogLevel.Off: return Level.Off;
-                case EasyLoggingLogLevel.Error: return Level.Error;
-                case EasyLoggingLogLevel.Warn: return Level.Warn;
-                case EasyLoggingLogLevel.Info: return Level.Info;
-                case EasyLoggingLogLevel.Debug: return Level.Debug;
-                case EasyLoggingLogLevel.Trace: return Level.Trace;
+                case EasyLoggingLogLevel.Off: return LoggingEvent.OFF;
+                case EasyLoggingLogLevel.Error: return LoggingEvent.ERROR;
+                case EasyLoggingLogLevel.Warn: return LoggingEvent.WARN;
+                case EasyLoggingLogLevel.Info: return LoggingEvent.INFO;
+                case EasyLoggingLogLevel.Debug: return LoggingEvent.DEBUG;
+                case EasyLoggingLogLevel.Trace: return LoggingEvent.TRACE;
                 default: throw new Exception("Unknown log level");
             }
         }
