@@ -250,10 +250,10 @@ namespace Snowflake.Data.Tests
             return config;
         }
 
-        private static string ReadEnvVariableIfSet(string value, string variableName)
+        private static string ReadEnvVariableIfSet(string defaultValue, string variableName)
         {
             var variableValue = Environment.GetEnvironmentVariable(variableName);
-            return string.IsNullOrEmpty(variableValue) ? value : variableValue;
+            return string.IsNullOrEmpty(variableValue) ? defaultValue : variableValue;
         }
 
         internal static TestConfig ReadTestConfigFile(string fileName)
