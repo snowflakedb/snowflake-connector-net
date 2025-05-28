@@ -28,7 +28,7 @@
     <ProjectReference Include="..\Snowflake.Data\Snowflake.Data.csproj" />
   </ItemGroup>
   <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
-    <Copy SourceFiles="parameters.json" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="parameters.json" DestinationFolder="$(OutDir)" ContinueOnError="true"/>
     <Copy SourceFiles="App.config" DestinationFolder="$(OutDir)" />
   </Target>
   <ItemGroup>
