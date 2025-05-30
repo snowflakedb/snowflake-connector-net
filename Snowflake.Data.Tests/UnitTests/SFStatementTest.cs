@@ -7,6 +7,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using NUnit.Framework;
 using System;
+using System.Threading.Tasks;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -30,6 +31,34 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual("new_session_token", sfSession.sessionToken);
             Assert.AreEqual("new_master_token", sfSession.masterToken);
             Assert.AreEqual(restRequester.FirstTimeRequestID, restRequester.SecondTimeRequestID);
+        }
+
+        [Test]
+        public void TestSessionRenewGetResultWithId()
+        {
+            Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            sfSession.Open();
+            SFStatement statement = new SFStatement(sfSession);
+            SFBaseResultSet resultSet = statement.GetResultWithId("mockId");
+            Assert.AreEqual(true, resultSet.Next());
+            Assert.AreEqual("abc", resultSet.GetString(0));
+            Assert.AreEqual("new_session_token", sfSession.sessionToken);
+            Assert.AreEqual("new_master_token", sfSession.masterToken);
+        }
+
+        [Test]
+        public async Task TestSessionRenewGetResultWithIdAsync()
+        {
+            Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            sfSession.Open();
+            SFStatement statement = new SFStatement(sfSession);
+            SFBaseResultSet resultSet = await statement.GetResultWithIdAsync("mockId", CancellationToken.None);
+            Assert.AreEqual(true, resultSet.Next());
+            Assert.AreEqual("abc", resultSet.GetString(0));
+            Assert.AreEqual("new_session_token", sfSession.sessionToken);
+            Assert.AreEqual("new_master_token", sfSession.masterToken);
         }
 
         // Mock test for session renew during query execution
