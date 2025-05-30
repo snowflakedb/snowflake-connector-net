@@ -1,18 +1,19 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.CredentialManager;
+using Snowflake.Data.Core.CredentialManager.Infrastructure;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -21,7 +22,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
     [TestFixture]
     class SFConnectionIT : SFBaseTest
     {
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestApplicationName()
         {
-            string[] validApplicationNames = { "test1234", "test_1234", "test-1234", "test.1234"};
+            string[] validApplicationNames = { "test1234", "test_1234", "test-1234", "test.1234" };
             string[] invalidApplicationNames = { "1234test", "test$A", "test<script>" };
 
             // Valid names
@@ -132,7 +132,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
-			}
+            }
         }
 
         [Test]
@@ -763,7 +763,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-                CreateOrReplaceTable(conn, TableName, new []{"c INT"});
+                CreateOrReplaceTable(conn, TableName, new[] { "c INT" });
                 var t1 = conn.BeginTransaction();
                 var t1c1 = conn.CreateCommand();
                 t1c1.Transaction = t1;
@@ -1044,6 +1044,75 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, waitSeconds * 1000);
             // and not later than 5s after expected time
             Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (waitSeconds + 5) * 1000);
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithTokenCaching()
+        {
+            /*
+             * This test checks that the connector successfully stores an SSO token and uses it for authentication if it exists
+             * 1. Login normally using external browser with CLIENT_STORE_TEMPORARY_CREDENTIAL enabled
+             * 2. Login again, this time without a browser, as the connector should be using the SSO token retrieved from step 1
+            */
+
+            // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
+            // The specified user should be configured for SSO
+            var externalBrowserConnectionString
+                = ConnectionStringWithoutAuth
+                    + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;poolingEnabled=false";
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = externalBrowserConnectionString;
+
+                // Authenticate to retrieve and store the token if doesn't exist or invalid
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = externalBrowserConnectionString;
+
+                // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+        }
+
+        [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithInvalidCachedToken()
+        {
+            /*
+             * This test checks that the connector will attempt to re-authenticate using external browser if the token retrieved from the cache is invalid
+             * 1. Create a credential manager and save credentials for the user with a wrong token
+             * 2. Open a connection which initially should try to use the token and then switch to external browser when the token fails
+            */
+
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                        + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;";
+
+                // Create a credential manager and save a wrong token for the test user
+                var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken);
+                var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
+                credentialManager.SaveCredentials(key, "wrongToken");
+
+                // Use the credential manager with the wrong token
+                SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
+
+                // Open a connection which should switch to external browser after trying to connect using the wrong token
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                // Switch back to the default credential manager
+                SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
+            }
         }
 
         [Test]
@@ -1453,7 +1522,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
 
             // Another authenticated proxy connection, same proxy but insecure mode is true
-			// Will use a different httpclient
+            // Will use a different httpclient
             using (var conn5 = new SnowflakeDbConnection())
             {
                 conn5.ConnectionString = ConnectionString
@@ -1467,7 +1536,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
 
             // No proxy again, but insecure mode is true
-			// Will use a different httpclient
+            // Will use a different httpclient
             using (var conn6 = new SnowflakeDbConnection())
             {
 
@@ -1538,7 +1607,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Should use same httpclient than conn6
             using (var conn11 = new SnowflakeDbConnection())
             {
-                conn11.ConnectionString = ConnectionString+";INSECUREMODE=true";
+                conn11.ConnectionString = ConnectionString + ";INSECUREMODE=true";
                 conn11.Open();
             }
         }
@@ -1674,7 +1743,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             bool failed = false;
 
-           Task[] tasks = new Task[450];
+            Task[] tasks = new Task[450];
             for (int i = 0; i < 450; i++)
             {
                 string connString = connectionStrings[i % (connectionStrings.Length)];
@@ -1795,7 +1864,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbCommand command = conn.CreateCommand())
             {
                 command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-                Assert.AreEqual(command.ExecuteScalar(), 46 );
+                Assert.AreEqual(command.ExecuteScalar(), 46);
             }
 
             conn.Close();
@@ -1884,20 +1953,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = infiniteLoginTimeOut;
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
-                // At this point the connection string has not been parsed, it will return the
-                // default value
-                //Assert.AreEqual(SFSessionHttpClientProperties.s_retryTimeoutDefault, conn.ConnectionTimeout);
 
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
 
-                // Sleep for more than the default timeout to make sure there are no false positive)
-                Thread.Sleep(SFSessionHttpClientProperties.DefaultRetryTimeout.Add(TimeSpan.FromSeconds(10)));
-
                 Assert.AreEqual(ConnectionState.Connecting, conn.State);
 
-                // Cancel the connection because it will never succeed since there is no
-                // connection_timeout defined
                 logger.Debug("connectionCancelToken.Cancel ");
                 connectionCancelToken.Cancel();
 
@@ -2090,43 +2151,43 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 task.Wait();
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
             }
-		}
+        }
 
 #if NETCOREAPP3_0_OR_GREATER
-		[Test]
-		public void TestCloseAsync()
-		{
-			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
-			// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
-			// An application can call Close or CloseAsync more than one time.
-			// No exception is generated.
-			using (var conn = new SnowflakeDbConnection())
-			{
-				conn.ConnectionString = ConnectionString;
-				Assert.AreEqual(conn.State, ConnectionState.Closed);
-				Task task = null;
+        [Test]
+        public void TestCloseAsync()
+        {
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
+            // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
+            // An application can call Close or CloseAsync more than one time.
+            // No exception is generated.
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Task task = null;
 
-				// Close the connection. It's not opened yet, but it should not have any issue
-				task = conn.CloseAsync();
-				task.Wait();
-				Assert.AreEqual(conn.State, ConnectionState.Closed);
+                // Close the connection. It's not opened yet, but it should not have any issue
+                task = conn.CloseAsync();
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
 
-				// Open the connection
-				task = conn.OpenAsync();
-				task.Wait();
-				Assert.AreEqual(conn.State, ConnectionState.Open);
+                // Open the connection
+                task = conn.OpenAsync();
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Open);
 
-				// Close the opened connection
-				task = conn.CloseAsync();
-				task.Wait();
-				Assert.AreEqual(conn.State, ConnectionState.Closed);
+                // Close the opened connection
+                task = conn.CloseAsync();
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
 
-				// Close the connection again.
-				task = conn.CloseAsync();
-				task.Wait();
-				Assert.AreEqual(conn.State, ConnectionState.Closed);
-			}
-		}
+                // Close the connection again.
+                task = conn.CloseAsync();
+                task.Wait();
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+            }
+        }
 #endif
 
         [Test]
@@ -2144,7 +2205,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
-                task =  conn.CloseAsync(CancellationToken.None);
+                task = conn.CloseAsync(CancellationToken.None);
                 try
                 {
                     task.Wait();
@@ -2358,6 +2419,44 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        public void TestSSOConnectionWithTokenCachingAsync()
+        {
+            /*
+             * This test checks that the connector successfully stores an SSO token and uses it for authentication if it exists
+             * 1. Login normally using external browser with CLIENT_STORE_TEMPORARY_CREDENTIAL enabled
+             * 2. Login again, this time without a browser, as the connector should be using the SSO token retrieved from step 1
+            */
+
+            // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
+            // The specified user should be configured for SSO
+            var externalBrowserConnectionString
+                = ConnectionStringWithoutAuth
+                    + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;poolingEnabled=false";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = externalBrowserConnectionString;
+
+                // Authenticate to retrieve and store the token if doesn't exist or invalid
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = externalBrowserConnectionString;
+
+                // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+            }
+
+        }
+
+        [Test]
         public void TestCloseSessionWhenGarbageCollectorFinalizesConnection()
         {
             // arrange
@@ -2386,7 +2485,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var restRequester = new MockCloseHangingRestRequester();
-            var session = new SFSession("account=test;user=test;password=test", null, restRequester);
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             session.Open();
             var watchClose = new Stopwatch();
             var watchClosedFinished = new Stopwatch();
@@ -2403,6 +2502,85 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.AreEqual(1, restRequester.CloseRequests.Count);
             Assert.Less(watchClose.Elapsed.Duration(), TimeSpan.FromSeconds(5)); // close executed immediately
             Assert.GreaterOrEqual(watchClosedFinished.Elapsed.Duration(), TimeSpan.FromSeconds(10)); // while background task took more time
+        }
+
+        [Test]
+        [Ignore("Manual test only")]
+        public void TestOAuthFlow()
+        {
+            // arrange
+            var driverRootPath = Path.Combine("..", "..", "..", "..");
+            var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
+            var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName; // Set either OAuthAuthorizationCodeAuthenticator.AuthName or OAuthClientCredentialsAuthenticator.AuthName
+            var testConfig = TestEnvironment.ReadTestConfig(configFilePath);
+            RemoveOAuthCache(testConfig);
+            try
+            {
+                using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthFlows(testConfig, authenticator)))
+                {
+                    // act
+                    connection.Open();
+                }
+            }
+            finally
+            {
+                RemoveOAuthCache(testConfig);
+            }
+        }
+
+        [Test]
+        [Ignore("Manual test only")]
+        public void TestProgrammaticAccessTokenAuthentication()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionStringForPat(testConfig)))
+            {
+                // act
+                connection.Open();
+            }
+        }
+
+        private void RemoveOAuthCache(TestConfig testConfig)
+        {
+            var host = new Uri(testConfig.oauthTokenRequestUrl).Host;
+            var accessCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthAccessToken);
+            var refreshCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthRefreshToken);
+            var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
+            credentialManager.RemoveCredentials(accessCacheKey);
+            credentialManager.RemoveCredentials(refreshCacheKey);
+        }
+
+        private string ConnectionStringForOAuthFlows(TestConfig testConfig, string authenticator)
+        {
+            var builder = new StringBuilder()
+                .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};")
+                .Append($"db={testConfig.database};role={testConfig.role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
+                .Append($"oauthClientId={testConfig.oauthClientId};oauthClientSecret={testConfig.oauthClientSecret};oauthScope={testConfig.oauthScope};")
+                .Append($"oauthTokenRequestUrl={testConfig.oauthTokenRequestUrl};")
+                .Append("poolingEnabled=false;");
+            switch (authenticator)
+            {
+                case OAuthAuthorizationCodeAuthenticator.AuthName:
+                    return builder
+                        .Append($"oauthRedirectUri={testConfig.oauthRedirectUri};")
+                        .Append($"oauthAuthorizationUrl={testConfig.oauthAuthorizationUrl}")
+                        .ToString();
+                case OAuthClientCredentialsAuthenticator.AuthName:
+                    return builder.ToString();
+                default:
+                    throw new Exception("Unknown authenticator");
+            }
+        }
+
+        private string ConnectionStringForPat(TestConfig testConfig)
+        {
+            var role = "ANALYST";
+            return new StringBuilder()
+                .Append($"authenticator=programmatic_access_token;user={testConfig.user};account={testConfig.account};")
+                .Append($"db={testConfig.database};role={role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
+                .Append($"token={testConfig.programmaticAccessToken};")
+                .Append("poolingEnabled=false;")
+                .ToString();
         }
     }
 }

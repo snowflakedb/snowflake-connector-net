@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using Snowflake.Data.Client;
 using System;
 using System.Collections.Generic;
@@ -205,8 +201,8 @@ namespace Snowflake.Data.Core.FileTransfer
                     {
                         return BROTLI;
                     }
-                    else 
-                    { 
+                    else
+                    {
                         return compType;
                     }
                 }

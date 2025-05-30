@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Data;
 using System.Data.Common;
@@ -22,7 +18,7 @@ namespace Snowflake.Data.Client
         private bool isCommittedOrRollbacked = false;
 
         internal bool IsActive => !disposed && !isCommittedOrRollbacked;
-        
+
         public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
         {
             logger.Debug("Begin transaction.");

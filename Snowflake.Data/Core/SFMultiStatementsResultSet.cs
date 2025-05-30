@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2022 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,7 +34,7 @@ namespace Snowflake.Data.Core
         {
             if (curResultSet == null)
             {
-                if (! await NextResultAsync(CancellationToken.None))
+                if (!await NextResultAsync(CancellationToken.None))
                 {
                     return false;
                 }
@@ -96,10 +92,10 @@ namespace Snowflake.Data.Core
             {
                 return false;
             }
-            
+
             return curResultSet.HasRows();
         }
-        
+
         /// <summary>
         /// Move cursor back one row.
         /// </summary>
@@ -132,12 +128,12 @@ namespace Snowflake.Data.Core
                 sfResultSetMetaData = null;
             }
         }
-        
+
         internal override bool IsDBNull(int ordinal)
         {
             return curResultSet.IsDBNull(ordinal);
         }
-        
+
         internal override object GetValue(int ordinal)
         {
             return curResultSet.GetValue(ordinal);
@@ -147,7 +143,7 @@ namespace Snowflake.Data.Core
         {
             return curResultSet.GetBoolean(ordinal);
         }
-        
+
         internal override byte GetByte(int ordinal)
         {
             return curResultSet.GetByte(ordinal);
@@ -162,7 +158,7 @@ namespace Snowflake.Data.Core
         {
             return curResultSet.GetChar(ordinal);
         }
-        
+
         internal override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
         {
             return curResultSet.GetChars(ordinal, dataOffset, buffer, bufferOffset, length);
@@ -212,7 +208,7 @@ namespace Snowflake.Data.Core
         {
             return curResultSet.GetInt64(ordinal);
         }
-        
+
         internal override string GetString(int ordinal)
         {
             return curResultSet.GetString(ordinal);

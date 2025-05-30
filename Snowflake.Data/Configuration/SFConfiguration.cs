@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 
 namespace Snowflake.Data.Configuration
@@ -10,7 +6,7 @@ namespace Snowflake.Data.Configuration
     {
         public int ChunkDownloaderVersion;
         public int ChunkParserVersion;
-        
+
         private SFConfiguration()
         {
             ChunkDownloaderVersion = 3;

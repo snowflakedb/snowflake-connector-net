@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 namespace Snowflake.Data.Core
 {
     internal enum SFSessionParameter
@@ -15,5 +11,6 @@ namespace Snowflake.Data.Core
         DATE_OUTPUT_FORMAT,
         TIME_OUTPUT_FORMAT,
         CLIENT_REQUEST_MFA_TOKEN,
+        CLIENT_STORE_TEMPORARY_CREDENTIAL
     }
 }

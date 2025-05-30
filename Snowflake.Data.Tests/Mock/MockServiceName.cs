@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -76,7 +72,7 @@ namespace Snowflake.Data.Tests.Mock
                 return Task.FromResult<T>((T)(object)null);
             }
 
-       
+
         }
 
         public T Post<T>(IRestRequest postRequest)

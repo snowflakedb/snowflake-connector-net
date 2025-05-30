@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using Amazon.S3;
 using Amazon.S3.Model;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
@@ -37,9 +33,9 @@ namespace Snowflake.Data.Tests.Mock
         // Create AWS exception for mock requests
         static Exception CreateMockAwsResponseError(string awsErrorCode, bool isAsync)
         {
-             Exception exception = awsErrorCode.Length > 0
-                ? new AmazonS3Exception(S3ErrorMessage) { ErrorCode = awsErrorCode }
-                : new Exception("Non-AWS exception");
+            Exception exception = awsErrorCode.Length > 0
+               ? new AmazonS3Exception(S3ErrorMessage) { ErrorCode = awsErrorCode }
+               : new Exception("Non-AWS exception");
 
             if (isAsync)
             {

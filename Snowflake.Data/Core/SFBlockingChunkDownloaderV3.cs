@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO.Compression;
 using System.IO;
@@ -68,7 +64,7 @@ namespace Snowflake.Data.Core
             this.taskQueues = new List<Task<BaseResultChunk>>();
             externalCancellationToken = cancellationToken;
 
-            for (int i=0; i<prefetchSlot; i++)
+            for (int i = 0; i < prefetchSlot; i++)
             {
                 BaseResultChunk resultChunk =
                     resultFormat == ResultFormat.ARROW ? (BaseResultChunk)

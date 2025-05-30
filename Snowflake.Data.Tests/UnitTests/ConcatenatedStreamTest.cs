@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using Snowflake.Data.Tests.Util;
 using NUnit.Framework;
 using System;
@@ -113,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests
             try
             {
                 // An ArgumentException is thrown when 4 bytes is read from a buffer of size 3
-                _concatStream.Read(buffer, 0, 4);
+                var readBytes = _concatStream.Read(buffer, 0, 4);
                 Assert.Fail("An ArgumentException should've been thrown");
             }
             catch (Exception ex)

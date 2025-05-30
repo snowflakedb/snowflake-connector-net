@@ -1,4 +1,5 @@
-﻿using Snowflake.Data.Log;
+using System;
+using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,6 +26,9 @@ namespace Snowflake.Data.Core.Authenticator
         {
             this.session = session;
         }
+
+        public static bool IsOAuthAuthenticator(string authenticator)
+            => AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
         /// <see cref="IAuthenticator.Authenticate"/>
         public void Authenticate()

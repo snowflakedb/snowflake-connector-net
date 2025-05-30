@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Linq;
 using System.Data.Common;
@@ -154,7 +150,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private void CreateAndPopulateTestTable(DbConnection conn)
         {
-            CreateOrReplaceTable(conn, TableName, new []{"cola NUMBER"});
+            CreateOrReplaceTable(conn, TableName, new[] { "cola NUMBER" });
 
             var cmd = conn.CreateCommand();
 

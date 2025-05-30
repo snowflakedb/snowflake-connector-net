@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Data;
 using System.Data.Common;
@@ -9,6 +5,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
@@ -77,6 +74,10 @@ namespace Snowflake.Data.Client
         }
 
         public SecureString Passcode { get; set; }
+
+        public SecureString OAuthClientSecret { get; set; }
+
+        public SecureString Token { get; set; }
 
         public bool IsOpen()
         {
@@ -279,7 +280,14 @@ namespace Snowflake.Data.Client
             {
                 FillConnectionStringFromTomlConfigIfNotSet();
                 OnSessionConnecting();
-                SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, Password, Passcode);
+                var sessionContext = new SessionPropertiesContext
+                {
+                    Password = Password,
+                    Passcode = Passcode,
+                    OAuthClientSecret = OAuthClientSecret,
+                    Token = Token
+                };
+                SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, sessionContext);
                 if (SfSession == null)
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Could not open session");
                 logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
@@ -318,11 +326,17 @@ namespace Snowflake.Data.Client
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
                 return Task.CompletedTask;
             }
-            registerConnectionCancellationCallback(cancellationToken);
             OnSessionConnecting();
             FillConnectionStringFromTomlConfigIfNotSet();
+            var sessionContext = new SessionPropertiesContext
+            {
+                Password = Password,
+                Passcode = Passcode,
+                OAuthClientSecret = OAuthClientSecret,
+                Token = Token
+            };
             return SnowflakeDbConnectionPool
-                .GetSessionAsync(ConnectionString, Password, Passcode, cancellationToken)
+                .GetSessionAsync(ConnectionString, sessionContext, cancellationToken)
                 .ContinueWith(previousTask =>
                 {
                     if (previousTask.IsFaulted)
@@ -425,20 +439,6 @@ namespace Snowflake.Data.Client
             }
 
             base.Dispose(disposing);
-        }
-
-
-        /// <summary>
-        ///     Register cancel callback. Two factors: either external cancellation token passed down from upper
-        ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
-        /// </summary>
-        /// <param name="externalCancellationToken">cancellation token from upper layer</param>
-        internal void registerConnectionCancellationCallback(CancellationToken externalCancellationToken)
-        {
-            if (!externalCancellationToken.IsCancellationRequested)
-            {
-                externalCancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
-            }
         }
 
         public bool IsStillRunning(QueryStatus status)

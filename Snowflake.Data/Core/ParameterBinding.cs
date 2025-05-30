@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +14,7 @@ namespace Snowflake.Data.Core
             this.value = value;
         }
 
-        public string type { get; set;  }
+        public string type { get; set; }
 
         public object value { get; set; }
     }

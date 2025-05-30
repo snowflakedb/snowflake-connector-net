@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 namespace Snowflake.Data.Configuration
 {
     internal class EasyLoggingConfigProvider
@@ -15,7 +11,7 @@ namespace Snowflake.Data.Configuration
         internal EasyLoggingConfigProvider() : this(EasyLoggingConfigFinder.Instance, EasyLoggingConfigParser.Instance)
         {
         }
-        
+
         internal EasyLoggingConfigProvider(EasyLoggingConfigFinder finder, EasyLoggingConfigParser configParser)
         {
             _finder = finder;

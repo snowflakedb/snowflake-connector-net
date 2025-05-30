@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using Moq;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
 using System;
@@ -141,7 +137,7 @@ namespace Snowflake.Data.Tests.Mock
                 throw new WebException(ErrorMessage, null, 0, response.Object);
             }
 
-            return response.Object;            
+            return response.Object;
         }
     }
 }

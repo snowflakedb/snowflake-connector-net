@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
@@ -18,7 +14,7 @@ namespace Snowflake.Data.Tests.Util
         public PoolConfig()
         {
             _maxPoolSize = SFSessionHttpClientProperties.DefaultMaxPoolSize;
-            _timeout = (long) SFSessionHttpClientProperties.DefaultExpirationTimeout.TotalSeconds;
+            _timeout = (long)SFSessionHttpClientProperties.DefaultExpirationTimeout.TotalSeconds;
             _pooling = SFSessionHttpClientProperties.DefaultPoolingEnabled;
             _connectionPoolType = SnowflakeDbConnectionPool.DefaultConnectionPoolType;
         }

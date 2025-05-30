@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Data;
 using System.Data.Common;
 using System;
@@ -112,7 +108,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
 
@@ -278,7 +274,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -504,7 +500,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
+                CreateOrReplaceTable(conn, TableName, new[] { "c1 NUMBER" });
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
@@ -991,7 +987,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
+                    CreateOrReplaceTable(conn, TableName, new[] { "c1 NUMBER" });
 
                     command.CommandText = $"insert into {TableName} values(1), (2), (3), (4), (5), (6)";
                     command.ExecuteNonQuery();
@@ -1015,7 +1011,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        //[Ignore("Ignore flaky unstable test case for now. Will revisit later and sdk issue created (210)")]
+        // [Ignore("Ignore flaky unstable test case for now.")]
+        [Retry(2)]
         public void testPutArrayBindAsync()
         {
             ArrayBindTest(ConnectionString + "poolingEnabled=false", TableName, 15000);
@@ -1030,7 +1027,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = connstr;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, tableName, new []
+                CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING",
@@ -1200,7 +1197,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []{"cola INTEGER"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola INTEGER" });
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -1636,7 +1633,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.Open();
                 var command = conn.CreateCommand();
-                ((SnowflakeDbCommand)command).QueryTag =  expectedQueryTag;
+                ((SnowflakeDbCommand)command).QueryTag = expectedQueryTag;
                 // This query itself will be part of the history and will have the query tag
                 command.CommandText = "SELECT QUERY_TAG FROM table(information_schema.query_history_by_session())";
                 var queryTag = command.ExecuteScalar();

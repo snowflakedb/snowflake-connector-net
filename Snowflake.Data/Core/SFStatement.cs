@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -436,7 +432,12 @@ namespace Snowflake.Data.Core
 
                 return BuildResultSet(response, cancellationToken);
             }
-            catch
+            catch (OperationCanceledException)
+            {
+                logger.Warn("Query execution canceled.");
+                throw;
+            }
+            catch (Exception)
             {
                 logger.Error("Query execution failed.");
                 throw;
@@ -500,7 +501,7 @@ namespace Snowflake.Data.Core
             }
             catch (SnowflakeDbException ex)
             {
-                logger.Error($"Query execution failed, QueryId: {ex.QueryId??"unavailable"}", ex);
+                logger.Error($"Query execution failed, QueryId: {ex.QueryId ?? "unavailable"}", ex);
                 _lastQueryId = ex.QueryId ?? _lastQueryId;
                 throw;
             }

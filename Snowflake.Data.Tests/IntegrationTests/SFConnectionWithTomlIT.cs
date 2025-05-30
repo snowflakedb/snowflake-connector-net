@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Data;
 using System.IO;
@@ -10,6 +6,7 @@ using Mono.Unix.Native;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 using Tomlyn;
 using Tomlyn.Model;
@@ -103,7 +100,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static void CreateTomlConfigBaseOnConnectionString(string connectionString)
         {
             var tomlModel = new TomlTable();
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             var defaultTomlTable = new TomlTable();
             tomlModel.Add("default", defaultTomlTable);

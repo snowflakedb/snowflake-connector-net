@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.FileTransfer
      * (if CryptoStream in EncryptionProvider class would be disposed it would close the base stream as well).
      * The solution is to return both streams and dispose both of them together when processing of the main stream is over.
      */
-    internal class StreamPair: IDisposable
+    internal class StreamPair : IDisposable
     {
         public Stream MainStream { get; set; }
         public Stream HelperStream { get; set; }

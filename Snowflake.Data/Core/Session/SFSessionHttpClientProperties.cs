@@ -40,6 +40,7 @@ namespace Snowflake.Data.Core
         private TimeSpan _waitingForSessionIdleTimeout;
         private TimeSpan _expirationTimeout;
         private bool _poolingEnabled;
+        internal bool _clientStoreTemporaryCredential;
 
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
@@ -50,16 +51,21 @@ namespace Snowflake.Data.Core
 
         public void DisablePoolingDefaultIfSecretsProvidedExternally(SFSessionProperties properties)
         {
-            var authenticator = properties[SFSessionProperty.AUTHENTICATOR].ToLower();
-            if (ExternalBrowserAuthenticator.AUTH_NAME.Equals(authenticator))
+            var authenticator = properties[SFSessionProperty.AUTHENTICATOR];
+            if (ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator(authenticator))
             {
                 DisablePoolingIfNotExplicitlyEnabled(properties, "external browser");
 
-            } else if (KeyPairAuthenticator.AUTH_NAME.Equals(authenticator)
+            }
+            else if (KeyPairAuthenticator.IsKeyPairAuthenticator(authenticator)
                        && properties.IsNonEmptyValueProvided(SFSessionProperty.PRIVATE_KEY_FILE)
                        && !properties.IsNonEmptyValueProvided(SFSessionProperty.PRIVATE_KEY_PWD))
             {
                 DisablePoolingIfNotExplicitlyEnabled(properties, "key pair with private key in a file");
+            }
+            else if (OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator(authenticator))
+            {
+                DisablePoolingIfNotExplicitlyEnabled(properties, "oauth authorization code");
             }
         }
 
@@ -145,7 +151,7 @@ namespace Snowflake.Data.Core
         {
             if (maxHttpRetries > 0 && maxHttpRetries < DefaultMaxHttpRetries)
             {
-                    s_logger.Warn($"Max retry count provided is less than the allowed minimum value of {DefaultMaxHttpRetries}");
+                s_logger.Warn($"Max retry count provided is less than the allowed minimum value of {DefaultMaxHttpRetries}");
 
                 maxHttpRetries = DefaultMaxHttpRetries;
             }
@@ -207,6 +213,7 @@ namespace Snowflake.Data.Core
             var parameterMap = new Dictionary<SFSessionParameter, object>();
             parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = validateDefaultParameters;
             parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] = clientSessionKeepAlive;
+            parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL] = _clientStoreTemporaryCredential;
             return parameterMap;
         }
 
@@ -245,7 +252,8 @@ namespace Snowflake.Data.Core
                     _waitingForSessionIdleTimeout = extractor.ExtractTimeout(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT),
                     _expirationTimeout = extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
-                    _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK)
+                    _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
+                    _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL])
                 };
             }
 

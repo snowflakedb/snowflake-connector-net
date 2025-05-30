@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO;
 using static Snowflake.Data.Core.FileTransfer.SFFileCompressionTypes;
@@ -125,7 +121,7 @@ namespace Snowflake.Data.Core.FileTransfer
 
         public bool sourceFromStream { get; set; }
 
-        public MemoryStream memoryStream {get; set; }
+        public MemoryStream memoryStream { get; set; }
 
         // Proxy credentials of the remote storage client.
         public ProxyCredentials proxyCredentials { get; set; }

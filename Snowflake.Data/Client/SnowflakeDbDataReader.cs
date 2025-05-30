@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Data.Common;
 using System.Collections;
@@ -31,6 +27,8 @@ namespace Snowflake.Data.Client
         private int RecordsAffectedInternal;
 
         internal ResultFormat ResultFormat => resultSet.ResultFormat;
+
+        private const int MaxStringLength = 16777216; // Default maximum allowed length for VARCHAR
 
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
@@ -77,7 +75,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                return resultSet.HasResultSet() && resultSet.HasRows();
+                return !resultSet.isClosed && resultSet.HasRows();
             }
         }
 
@@ -122,7 +120,7 @@ namespace Snowflake.Data.Client
 
                 row[SchemaTableColumn.ColumnName] = rowType.name;
                 row[SchemaTableColumn.ColumnOrdinal] = columnOrdinal;
-                row[SchemaTableColumn.ColumnSize] = (int)rowType.length;
+                row[SchemaTableColumn.ColumnSize] = IsStructuredOrSemiStructuredType(rowType.type) && rowType.length == 0 ? MaxStringLength : (int)rowType.length;
                 row[SchemaTableColumn.NumericPrecision] = (int)rowType.precision;
                 row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
                 row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
@@ -246,7 +244,7 @@ namespace Snowflake.Data.Client
         public override int GetValues(object[] values)
         {
             int count = Math.Min(FieldCount, values.Length);
-            for (int i=0; i< count; i++)
+            for (int i = 0; i < count; i++)
             {
                 values[i] = GetValue(i);
             }
@@ -368,6 +366,12 @@ namespace Snowflake.Data.Client
             base.Close();
             resultSet.close();
             isClosed = true;
+        }
+
+        private bool IsStructuredOrSemiStructuredType(string type)
+        {
+            type = type.ToLower();
+            return type == "array" || type == "object" || type == "variant" || type == "map";
         }
     }
 }

@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -100,7 +96,8 @@ namespace Snowflake.Data.Core.Tools
                 return true;
             }
 
-            if (_unixOperations.CheckFileHasAnyOfPermissions(path, NotSafePermissions))
+            var fileInfo = new UnixFileInfo(path);
+            if (_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, NotSafePermissions))
             {
                 s_logger.Warn($"File '{path}' permissions are too broad. It could be potentially accessed by group or others.");
                 return false;

@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +14,9 @@ namespace Snowflake.Data.Core.Authenticator
         {
         }
 
+        public static bool IsMfaCacheAuthenticator(string authenticator) =>
+            AuthName.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
+
         /// <see cref="IAuthenticator.AuthenticateAsync"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
         {
@@ -27,7 +26,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="IAuthenticator.Authenticate"/>
         void IAuthenticator.Authenticate()
         {
-             base.Login();
+            base.Login();
         }
 
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>

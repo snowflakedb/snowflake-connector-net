@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2022 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Net.Http;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -153,15 +149,15 @@ namespace Snowflake.Data.Tests.UnitTests
                 "123",
                 "testUser",
                 "proxyPassword",
-                "localhost", 
+                "localhost",
                 false,
                 false,
                 7
             );
-            
+
             // when
-            var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
-            
+            var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
+
             // then
             Assert.IsTrue(handler.UseProxy);
             Assert.IsNotNull(handler.Proxy);
@@ -177,15 +173,15 @@ namespace Snowflake.Data.Tests.UnitTests
                 null,
                 null,
                 null,
-                null, 
+                null,
                 false,
                 false,
                 0
             );
-            
+
             // when
-            var handler = (HttpClientHandler) HttpUtil.Instance.SetupCustomHttpHandler(config);
-            
+            var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
+
             // then
             Assert.IsFalse(handler.UseProxy);
             Assert.IsNull(handler.Proxy);

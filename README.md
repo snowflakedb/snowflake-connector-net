@@ -143,6 +143,12 @@ Logging description and configuration:
 Method of validating the connection's certificates in the .NET driver differs from the rest of the Snowflake drivers.
 Read more in [certificate validation](doc/CertficateValidation.md) docs.
 
+## Cache
+
+Storing tokens in cache for SSO/MFA authentication.
+
+Read more in [cache](doc/Cache.md) docs.
+
 ---------------
 
 ## Notice
@@ -185,5 +191,4 @@ Note that the driver is now targeting .NET Standard 2.0. When upgrading, you mig
 
 See more:
 * [Security Policy](SECURITY.md)
-* [Security Advisories](/security/advisories)
-
+* [Security Advisories](../../security/advisories)

@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Runtime.InteropServices;
 using Snowflake.Data.Core;
@@ -41,7 +37,9 @@ namespace Snowflake.Data.Client
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                throw new Exception("File credential manager implementation is not supported on Windows");
+                var errorMessage = "File credential manager implementation is not supported on Windows";
+                s_logger.Error(errorMessage);
+                throw new Exception(errorMessage);
             }
             SetCredentialManager(SFCredentialManagerFileImpl.Instance);
         }
@@ -50,7 +48,9 @@ namespace Snowflake.Data.Client
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                throw new Exception("Windows native credential manager implementation can be used only on Windows");
+                var errorMessage = "Windows native credential manager implementation can be used only on Windows";
+                s_logger.Error(errorMessage);
+                throw new Exception(errorMessage);
             }
             SetCredentialManager(SFCredentialManagerWindowsNativeImpl.Instance);
         }

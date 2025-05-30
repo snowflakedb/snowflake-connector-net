@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Runtime.InteropServices;
@@ -43,13 +39,17 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
             if (!success)
             {
-                s_logger.Info($"Unable to get credentials for key: {key}");
+                s_logger.Debug($"Unable to get credentials for key: {key}");
                 return "";
             }
 
             using (var critCred = new CriticalCredentialHandle(nCredPtr))
             {
                 var cred = critCred.GetCredential();
+                if (cred.CredentialBlob.Length > (int)cred.CredentialBlobSize / 2)
+                {
+                    return cred.CredentialBlob.Substring(0, (int)(cred.CredentialBlobSize / 2));
+                }
                 return cred.CredentialBlob;
             }
         }
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             }
             if (!success)
             {
-                s_logger.Info($"Unable to remove credentials because the specified key did not exist: {key}");
+                s_logger.Debug($"Unable to remove credentials because the specified key did not exist: {key}");
             }
         }
 

@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -250,7 +246,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .Returns<string>((blobName) =>
                     {
                         var mockBlobClient = new Mock<BlobClient>();
-                        mockBlobClient.Setup(client => client.UploadAsync(It.IsAny<Stream>(), It.IsAny<bool>(),It.IsAny<CancellationToken>()))
+                        mockBlobClient.Setup(client => client.UploadAsync(It.IsAny<Stream>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                         .Returns(async () => await Task.Run(() => MockAzureClient.createMockResponseForBlobContentInfo(key)).ConfigureAwait(false));
 
                         return mockBlobClient.Object;

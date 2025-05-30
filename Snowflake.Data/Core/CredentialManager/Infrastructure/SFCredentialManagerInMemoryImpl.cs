@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Collections.Generic;
 using System.Security;
 using System.Threading;
@@ -23,24 +19,24 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         public string GetCredentials(string key)
         {
-                s_logger.Debug($"Getting credentials from memory for key: {key}");
-                bool found;
-                SecureString secureToken;
-                _lock.EnterReadLock();
-                try
-                {
-                    found = s_credentials.TryGetValue(key, out secureToken);
-                }
-                finally
-                {
-                    _lock.ExitReadLock();
-                }
-                if (found)
-                {
-                    return SecureStringHelper.Decode(secureToken);
-                }
-                s_logger.Info("Unable to get credentials for the specified key");
-                return "";
+            s_logger.Debug($"Getting credentials from memory for key: {key}");
+            bool found;
+            SecureString secureToken;
+            _lock.EnterReadLock();
+            try
+            {
+                found = s_credentials.TryGetValue(key, out secureToken);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+            if (found)
+            {
+                return SecureStringHelper.Decode(secureToken);
+            }
+            s_logger.Debug("Unable to get credentials for the specified key");
+            return "";
         }
 
         public void RemoveCredentials(string key)
@@ -69,6 +65,19 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             finally
             {
                 _lock.ExitWriteLock();
+            }
+        }
+
+        internal int GetCount()
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return s_credentials.Count;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
             }
         }
     }

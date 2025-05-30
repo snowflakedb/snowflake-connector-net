@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Data.Common;
 using System.Resources;
@@ -45,7 +41,7 @@ namespace Snowflake.Data.Client
         }
 
         public SnowflakeDbException(SFError error, string queryId, Exception innerException)
-            : base(FormatExceptionMessage(error, new object[] {innerException.Message}, string.Empty, queryId), innerException)
+            : base(FormatExceptionMessage(error, new object[] { innerException.Message }, string.Empty, queryId), innerException)
         {
             VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
             QueryId = queryId;

@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.IO;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
@@ -28,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             return Path.Combine(workingDirectory, Path.GetRandomFileName());
         }
-        
+
         public static string Config(string logLevel, string logPath)
         {
             return @"{

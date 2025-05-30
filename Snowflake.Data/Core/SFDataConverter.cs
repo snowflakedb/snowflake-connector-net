@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -169,7 +165,7 @@ namespace Snowflake.Data.Core
             switch (srcType)
             {
                 case SFDataType.TIMESTAMP_TZ:
-                    int spaceIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)' ', srcVal.offset, srcVal.length); ;
+                    int spaceIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)' ', srcVal.offset, srcVal.length);
                     if (spaceIndex == -1)
                     {
                         throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
@@ -270,6 +266,7 @@ namespace Snowflake.Data.Core
                     break;
 
                 case DbType.Guid:
+                case DbType.AnsiString:
                 case DbType.String:
                 case DbType.StringFixedLength:
                     destType = SFDataType.TEXT;
@@ -307,7 +304,7 @@ namespace Snowflake.Data.Core
         private static string BytesToHex(byte[] bytes)
         {
             StringBuilder hexBuilder = new StringBuilder(bytes.Length * 2);
-            foreach(byte b in bytes)
+            foreach (byte b in bytes)
             {
                 hexBuilder.AppendFormat("{0:x2}", b);
             }
