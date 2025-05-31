@@ -573,6 +573,12 @@ namespace Snowflake.Data.Core
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
             response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+            while (SessionExpired(response))
+            {
+                await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+                req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+            }
             return BuildResultSet(response, cancellationToken);
         }
 
@@ -581,6 +587,12 @@ namespace Snowflake.Data.Core
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
             response = _restRequester.Get<QueryExecResponse>(req);
+            while (SessionExpired(response))
+            {
+                SfSession.renewSession();
+                req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                response = _restRequester.Get<QueryExecResponse>(req);
+            }
             return BuildResultSet(response, CancellationToken.None);
         }
 
