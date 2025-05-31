@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionRenewGetResultWithId()
         {
             Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
             SFBaseResultSet resultSet = statement.GetResultWithId("mockId");
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestSessionRenewGetResultWithIdAsync()
         {
             Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
             SFBaseResultSet resultSet = await statement.GetResultWithIdAsync("mockId", CancellationToken.None);
