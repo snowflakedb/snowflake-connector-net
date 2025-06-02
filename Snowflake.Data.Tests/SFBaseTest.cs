@@ -201,11 +201,9 @@ namespace Snowflake.Data.Tests
         private static TestConfig ReadTestConfig()
         {
             var fileName = "parameters.json";
-            if (File.Exists(fileName))
-            {
-                return ReadTestConfigFile(fileName);
-            }
-            return ReadTestConfigEnvVariables();
+            var testConfig = File.Exists(fileName) ? ReadTestConfigFile(fileName) : ReadTestConfigEnvVariables();
+            testConfig.schema = testConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+            return testConfig;
         }
 
         private static TestConfig ReadTestConfigEnvVariables()
@@ -272,9 +270,7 @@ namespace Snowflake.Data.Tests
             var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
             if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
             {
-                var testConfig = testConnectionConfig;
-                testConfig.schema = testConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
-                return testConfig;
+                return testConnectionConfig;
             }
             else
             {
