@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.Mock
 
         static private readonly String TOKEN_FMT = "Snowflake Token=\"{0}\"";
 
-        static private readonly int SESSION_EXPIRED_CODE = 390112;
+        static internal readonly int SESSION_EXPIRED_CODE = 390112;
 
         public string FirstTimeRequestID;
 
@@ -119,6 +119,15 @@ namespace Snowflake.Data.Tests.Mock
         public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)request;
+            if (sfRequest.Url.ToString().Contains("retryId"))
+            {
+                QueryExecResponse queryExecResponse = new QueryExecResponse
+                {
+                    success = false,
+                    code = SESSION_EXPIRED_CODE
+                };
+                return Task.FromResult<T>((T)(object)queryExecResponse);
+            }
             if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
             {
                 QueryExecResponse queryExecResponse = new QueryExecResponse
