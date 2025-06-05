@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture(ResultFormat.ARROW)]
     [TestFixture(ResultFormat.JSON)]
-    public class StructuredArraysIT: StructuredTypesIT
+    public class StructuredArraysIT : StructuredTypesIT
     {
         private readonly ResultFormat _resultFormat;
 

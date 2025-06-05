@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture(ResultFormat.ARROW)]
     [TestFixture(ResultFormat.JSON)]
-    public class StructuredMapsIT: StructuredTypesIT
+    public class StructuredMapsIT : StructuredTypesIT
     {
         private readonly ResultFormat _resultFormat;
 
