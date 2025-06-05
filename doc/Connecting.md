@@ -132,7 +132,7 @@ Snowflake supports using [double quote identifiers](https://docs.snowflake.com/e
   ```cs
   string connectionString = String.Format(
     "account=testaccount; " +
-    "database=\"testDB\";"
+    "db=\"testDB\";"
   );
   ```
 - To include a `"` character as part of the value should be escaped using `\"\"`.
@@ -140,7 +140,7 @@ Snowflake supports using [double quote identifiers](https://docs.snowflake.com/e
   ```cs
   string connectionString = String.Format(
     "account=testaccount; " +
-    "database=\"\"\"test\"\"user\"\"\";" // DATABASE => ""test"db""
+    "db=\"\"\"test\"\"user\"\"\";" // DATABASE => ""test"db""
   );
   ```
 
