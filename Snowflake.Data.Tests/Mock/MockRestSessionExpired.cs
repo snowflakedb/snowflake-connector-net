@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.Mock
     {
         static private readonly String EXPIRED_SESSION_TOKEN = "session_expired_token";
 
-        static private readonly String NEW_SESSION_TOKEN="new_session_token";
+        static private readonly String NEW_SESSION_TOKEN = "new_session_token";
 
         static private readonly String TOKEN_FMT = "Snowflake Token=\"{0}\"";
 
@@ -121,22 +121,22 @@ namespace Snowflake.Data.Tests.Mock
             SFRestRequest sfRequest = (SFRestRequest)request;
             if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
             {
-                    QueryExecResponse queryExecResponse = new QueryExecResponse
-                    {
-                        success = false,
-                        code = SESSION_EXPIRED_CODE
-                    };
-                    return Task.FromResult<T>((T)(object)queryExecResponse);
+                QueryExecResponse queryExecResponse = new QueryExecResponse
+                {
+                    success = false,
+                    code = SESSION_EXPIRED_CODE
+                };
+                return Task.FromResult<T>((T)(object)queryExecResponse);
             }
             if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
             {
-                    QueryExecResponse queryExecResponse = new QueryExecResponse
+                QueryExecResponse queryExecResponse = new QueryExecResponse
+                {
+                    success = true,
+                    data = new QueryExecResponseData
                     {
-                        success = true,
-                        data = new QueryExecResponseData
-                        {
-                            rowSet = new string[,] { { "abc" } },
-                            rowType = new List<ExecResponseRowType>()
+                        rowSet = new string[,] { { "abc" } },
+                        rowType = new List<ExecResponseRowType>()
                             {
                                 new ExecResponseRowType
                                 {
@@ -144,10 +144,10 @@ namespace Snowflake.Data.Tests.Mock
                                     type = SFDataType.TEXT.ToString()
                                 }
                             },
-                            parameters = new List<NameValueParameter>()
-                        }
-                    };
-                    return Task.FromResult<T>((T)(object)queryExecResponse);
+                        parameters = new List<NameValueParameter>()
+                    }
+                };
+                return Task.FromResult<T>((T)(object)queryExecResponse);
             }
             return Task.FromResult<T>((T)(object)null);
         }
