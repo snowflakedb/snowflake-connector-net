@@ -1,4 +1,4 @@
-using Snowflake.Data.Tests.Util;
+﻿using Snowflake.Data.Tests.Util;
 using NUnit.Framework;
 using System;
 using System.IO;
