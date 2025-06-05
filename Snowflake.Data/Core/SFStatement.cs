@@ -113,7 +113,7 @@ namespace Snowflake.Data.Core
 
         private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
 
-        private const int GetResultWithIdMaxRetries = 3;
+        private const int GetResultWithIdMaxRetriesCount = 3;
 
         private string _requestId;
 
