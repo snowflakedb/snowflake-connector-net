@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using Newtonsoft.Json;
 using System.Net.Http;
 using System.Threading;
@@ -108,22 +107,20 @@ namespace Snowflake.Data.Core
                 restRequestTimeout.Token))
                 {
                     HttpResponseMessage response = null;
-                    logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
-                    var watch = new Stopwatch();
                     try
                     {
-                        watch.Start();
+                        logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
+
                         response = await _HttpClient
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
-                        watch.Stop();
                         if (!response.IsSuccessStatusCode)
                         {
-                            logger.Error($"Failed response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+                            logger.Error($"Failed Response: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                         }
                         else
                         {
-                            logger.Debug($"Succeeded response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri}");
+                            logger.Debug($"Succeeded Response: {sid} {message.Method} {message.RequestUri}");
                         }
                         response.EnsureSuccessStatusCode();
 
@@ -131,11 +128,6 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
-                        if (watch.IsRunning)
-                        {
-                            watch.Stop();
-                            logger.Error($"Response receiving interrupted by exception after {watch.ElapsedMilliseconds} ms. {sid} {message.Method} {message.RequestUri}");
-                        }
                         // Disposing of the response if not null now that we don't need it anymore
                         response?.Dispose();
                         if (restRequestTimeout.IsCancellationRequested)
