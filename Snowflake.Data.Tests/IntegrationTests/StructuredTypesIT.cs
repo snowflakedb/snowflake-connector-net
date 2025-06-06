@@ -1,11 +1,12 @@
 using System.Linq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     public abstract class StructuredTypesIT : SFBaseTest
     {
-        protected void EnableStructuredTypes(SnowflakeDbConnection connection)
+        protected void EnableStructuredTypes(SnowflakeDbConnection connection, ResultFormat resultFormat = ResultFormat.JSON)
         {
             using (var command = connection.CreateCommand())
             {
@@ -13,7 +14,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.ExecuteNonQuery();
                 command.CommandText = "alter session set IGNORE_CLIENT_VESRION_IN_STRUCTURED_TYPES_RESPONSE = true";
                 command.ExecuteNonQuery();
-                command.CommandText = "ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = JSON";
+                command.CommandText = $"ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = {resultFormat}";
                 command.ExecuteNonQuery();
             }
         }
