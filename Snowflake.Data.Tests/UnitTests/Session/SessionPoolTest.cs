@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -278,6 +279,45 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.IsFalse(isSessionReturnedToPool);
+        }
+
+        [Test]
+        public void TestShouldClearQueryContextCacheOnReturningToConnectionCache()
+        {
+            // arrange
+            var session = CreateSessionWithCurrentStartTime("account=testAccount;user=testUser;password=testPassword");
+            var pool = SessionPool.CreateSessionCache();
+            var contextElement = new QueryContextElement(123, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 1, "context");
+            var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new (contextElement) } };
+            session.UpdateQueryContextCache(context);
+            Assert.AreEqual(1, session.GetQueryContextRequest().Entries.Count);
+
+            // act
+            var isSessionReturnedToPool = pool.AddSession(session, false);
+
+            // assert
+            Assert.IsTrue(isSessionReturnedToPool);
+            Assert.AreEqual(0, session.GetQueryContextRequest().Entries.Count);
+        }
+
+        [Test]
+        public void TestShouldClearQueryContextCacheOnReturningToConnectionPool()
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword";
+            var session = CreateSessionWithCurrentStartTime(connectionString);
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            var contextElement = new QueryContextElement(123, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 1, "context");
+            var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new (contextElement) } };
+            session.UpdateQueryContextCache(context);
+            Assert.AreEqual(1, session.GetQueryContextRequest().Entries.Count);
+
+            // act
+            var isSessionReturnedToPool = pool.AddSession(session, false);
+
+            // assert
+            Assert.IsTrue(isSessionReturnedToPool);
+            Assert.AreEqual(0, session.GetQueryContextRequest().Entries.Count);
         }
 
         private SFSession CreateSessionWithCurrentStartTime(string connectionString)
