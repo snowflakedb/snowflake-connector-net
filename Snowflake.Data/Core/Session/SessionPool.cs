@@ -527,6 +527,7 @@ namespace Snowflake.Data.Core.Session
                 return false;
             }
 
+            session.ClearQueryContextCache();
             var result = ReturnSessionToPool(session, ensureMinPoolSize);
             var wasSessionReturnedToPool = result.Item1;
             var sessionCreationTokens = result.Item2;

@@ -528,6 +528,14 @@ namespace Snowflake.Data.Core
             }
         }
 
+        internal void ClearQueryContextCache()
+        {
+            if (!_disableQueryContextCache)
+            {
+                _queryContextCache.ClearCacheSafely();
+            }
+        }
+
         internal void UpdateQueryContextCache(ResponseQueryContext queryContext)
         {
             if (!_disableQueryContextCache)

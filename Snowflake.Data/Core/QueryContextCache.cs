@@ -189,6 +189,14 @@ namespace Snowflake.Data.Core
             _logger.Debug($"clearCache() returns. Number of entries in cache now {_cacheSet.Count}");
         }
 
+        public void ClearCacheSafely()
+        {
+            lock (_qccLock)
+            {
+                ClearCache();
+            }
+        }
+
         public void SetCapacity(int cap)
         {
             // check without locking first for performance reason
