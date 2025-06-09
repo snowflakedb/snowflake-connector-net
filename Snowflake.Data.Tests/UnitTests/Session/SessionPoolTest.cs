@@ -288,7 +288,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var session = CreateSessionWithCurrentStartTime("account=testAccount;user=testUser;password=testPassword");
             var pool = SessionPool.CreateSessionCache();
             var contextElement = new QueryContextElement(123, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 1, "context");
-            var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new (contextElement) } };
+            var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new(contextElement) } };
             session.UpdateQueryContextCache(context);
             Assert.AreEqual(1, session.GetQueryContextRequest().Entries.Count);
 
@@ -308,7 +308,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var session = CreateSessionWithCurrentStartTime(connectionString);
             var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
             var contextElement = new QueryContextElement(123, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 1, "context");
-            var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new (contextElement) } };
+            var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new(contextElement) } };
             session.UpdateQueryContextCache(context);
             Assert.AreEqual(1, session.GetQueryContextRequest().Entries.Count);
 
