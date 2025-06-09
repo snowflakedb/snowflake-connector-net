@@ -153,10 +153,4 @@ namespace Snowflake.Data.Core
     {
         public int errorCode { get; set; }
     }
-
-    public class SqlState
-    {
-        public const string WARNING = "01000";
-    }
-
 }
