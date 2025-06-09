@@ -4,7 +4,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Converter
 {
-    public class StructuredTypesReadingHandler
+    internal class StructuredTypesReadingHandler
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<StructuredTypesReadingHandler>();
 

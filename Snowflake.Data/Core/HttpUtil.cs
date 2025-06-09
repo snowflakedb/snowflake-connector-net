@@ -10,11 +10,10 @@ using System.Web;
 using System.Security.Authentication;
 using System.Linq;
 using Snowflake.Data.Core.Authenticator;
-using static Snowflake.Data.Core.SFRestRequest;
 
 namespace Snowflake.Data.Core
 {
-    public class HttpClientConfig
+    internal class HttpClientConfig
     {
         public HttpClientConfig(
             bool crlCheckEnabled,
@@ -68,7 +67,7 @@ namespace Snowflake.Data.Core
         public readonly string ConfKey;
     }
 
-    public sealed class HttpUtil
+    internal sealed class HttpUtil
     {
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly int s_baseBackOffTime = 1;

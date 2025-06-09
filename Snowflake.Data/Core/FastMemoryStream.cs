@@ -1,14 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
 {
     // Optimized for maximum speed when adding one byte at a time to short buffers
-    public class FastMemoryStream
+    internal class FastMemoryStream
     {
         public const int DEFAULT_BUFFER_SIZE = 256;
 

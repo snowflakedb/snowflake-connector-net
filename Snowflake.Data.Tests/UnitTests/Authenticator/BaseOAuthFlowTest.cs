@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         protected const string TokenHost = "localhost";
         protected const string ClientSecret = "123";
 
-        protected void AssertSessionSuccessfullyCreated(SFSession session)
+        internal void AssertSessionSuccessfullyCreated(SFSession session)
         {
             Assert.AreEqual(SessionId, session.sessionId);
             Assert.AreEqual(MasterToken, session.masterToken);
