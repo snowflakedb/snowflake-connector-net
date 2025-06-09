@@ -200,6 +200,7 @@ namespace Snowflake.Data.Core
                 case SFDataType.ARRAY:
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
+                case SFDataType.MAP:
                     if (_byte[columnIndex] == null || _int[columnIndex] == null)
                     {
                         _byte[columnIndex] = ((StringArray)column).Values.ToArray();
