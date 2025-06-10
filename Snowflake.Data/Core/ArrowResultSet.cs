@@ -347,6 +347,7 @@ namespace Snowflake.Data.Core
                     case long ret: return (short)ret;
                     case int ret: return (short)ret;
                     case sbyte ret: return ret;
+                    case double ret: return Convert.ToInt16(ret);
                     default: return (short)value;
                 }
             }
@@ -363,6 +364,7 @@ namespace Snowflake.Data.Core
                     case long ret: return (int)ret;
                     case short ret: return ret;
                     case sbyte ret: return ret;
+                    case double ret: return Convert.ToInt32(ret);
                     default: return (int)value;
                 }
             }
@@ -379,6 +381,7 @@ namespace Snowflake.Data.Core
                     case int ret: return ret;
                     case short ret: return ret;
                     case sbyte ret: return ret;
+                    case double ret: return Convert.ToInt64(ret);
                     default: return (long)value;
                 }
             }
