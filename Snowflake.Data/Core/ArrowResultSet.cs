@@ -52,7 +52,7 @@ namespace Snowflake.Data.Core
 
         private void ReadChunk(QueryExecResponseData responseData)
         {
-            if (responseData.rowsetBase64.Length > 0)
+            if (responseData.rowsetBase64?.Length > 0)
             {
                 using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
                 {
