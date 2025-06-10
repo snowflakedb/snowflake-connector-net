@@ -113,6 +113,8 @@ namespace Snowflake.Data.Core
 
         private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
 
+        private const int GetResultWithIdMaxRetriesCount = 3;
+
         private string _requestId;
 
         private readonly object _requestIdLock = new object();
@@ -573,6 +575,12 @@ namespace Snowflake.Data.Core
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
             response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount && SessionExpired(response); retryCount++)
+            {
+                await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+                req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+            }
             return BuildResultSet(response, cancellationToken);
         }
 
@@ -581,6 +589,12 @@ namespace Snowflake.Data.Core
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
             response = _restRequester.Get<QueryExecResponse>(req);
+            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount && SessionExpired(response); retryCount++)
+            {
+                SfSession.renewSession();
+                req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                response = _restRequester.Get<QueryExecResponse>(req);
+            }
             return BuildResultSet(response, CancellationToken.None);
         }
 
