@@ -24,9 +24,9 @@
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="Azure.Storage.Common" Version="12.12.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.5" />
     <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="log4net" Version="2.0.12" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
