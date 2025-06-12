@@ -130,7 +130,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.ARROW);
+
+                using (var command = conn.CreateCommand())
+                {
+                    command.CommandText = "alter session set ENABLE_FIX_1758055_ADD_ARROW_SUPPORT_FOR_MULTI_STMTS = true";
+                    command.ExecuteNonQuery();
+                }
 
                 IDbCommand cmd = conn.CreateCommand();
                 // Set statement count
@@ -183,7 +189,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.ARROW);
+
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "alter session set ENABLE_FIX_1758055_ADD_ARROW_SUPPORT_FOR_MULTI_STMTS = true";
+                    cmd.ExecuteNonQuery();
+                }
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
