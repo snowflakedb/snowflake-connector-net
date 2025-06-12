@@ -154,3 +154,12 @@ This might or might not affect your installation. Since the .NET driver doesn't 
 which (hopefully) already includes all the root certificates needing to verify the chain of trust for connecting to Snowflake services.
 If your installation is very old, this might not be the case. Please give the [FAQ: DigiCert Global Root G2 certificate authority (CA) TLS certificate updates](https://community.snowflake.com/s/article/check-impact-from-digicert-g2-certificate-update) article a read
 on the background and possibly necessary steps.
+
+### (Windows only) Hosts receiving their trusted roots and disallowed certificates other than Windows Update
+For reasons outside of Snowflake's control, even if all the CRL URLs are made available from the environment where you run the .NET driver, you might experience multiple seconds of delay in the driver attempting to connect to the Snowflake hosts when CRL checking is enabled.
+If this delay immediately goes away by no other change than turning off CRL validation, and especially if there's a possibility that your Windows host is located in an isolated environment which receives its trusted root certificates from other URL than the automatic updates, then please 
+* read [this Microsoft document](https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/configure-trusted-roots-disallowed-certificates), especially the **Prerequisites** section
+* confirm the computer can resolve the hostname, and reach out to `ctldl.windowsupdate.com` over port 80
+  * you might want to monitor the outgoing traffic from your host to confirm it's indeed currently blocked on trying to download a `.cab` from `ctldl.windowsupdate.com`
+
+Please engage your sysadmin/team for any kind of assistance regarding this scenario. 
