@@ -185,6 +185,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
                 SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
 
+
                 using (DbCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = $"create or replace table {TableName}(cola integer, colb string);" +
