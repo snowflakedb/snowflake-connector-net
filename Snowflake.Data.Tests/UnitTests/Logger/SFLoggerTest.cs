@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Core;
 using Snowflake.Data.Log;
 using System;
 
@@ -15,13 +16,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Log level defaults to Warn on net6.0 builds in github actions
             // Set the root level to Debug
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, "STDOUT");
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, "STDOUT", EasyLoggingStarter.s_defaultUnixPermissions);
         }
 
         [OneTimeTearDown]
         public static void AfterAll()
         {
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, "STDOUT");
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, "STDOUT", EasyLoggingStarter.s_defaultUnixPermissions);
         }
 
         [Test]

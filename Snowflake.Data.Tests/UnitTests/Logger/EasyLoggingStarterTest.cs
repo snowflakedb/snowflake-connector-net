@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix;
+using Mono.Unix.Native;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
@@ -208,7 +209,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
                     FileAccessPermissions.UserReadWriteExecute), Times.Once);
             }
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
+            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath, EasyLoggingStarter.s_defaultUnixPermissions), Times.Once);
 
             // act
             t_easyLoggerStarter.Init(null);
@@ -241,7 +242,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
                     FileAccessPermissions.UserReadWriteExecute), Times.Once);
             }
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
+            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath, EasyLoggingStarter.s_defaultUnixPermissions));
         }
 
         [Test]
@@ -268,13 +269,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
                     FileAccessPermissions.UserReadWriteExecute), Times.Once);
             }
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
+            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath, EasyLoggingStarter.s_defaultUnixPermissions), Times.Once);
 
             // act
             t_easyLoggerStarter.Init(ConfigPath);
 
             // assert
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
+            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath, EasyLoggingStarter.s_defaultUnixPermissions), Times.Once);
             t_easyLoggerManager.VerifyNoOtherCalls();
         }
 
@@ -290,7 +291,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerStarter.Init(null);
 
             // assert
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, "STDOUT"), Times.Once);
+            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, "STDOUT", EasyLoggingStarter.s_defaultUnixPermissions), Times.Once);
         }
     }
 }

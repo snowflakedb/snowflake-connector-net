@@ -12,6 +12,8 @@ internal class SFRollingFileAppender : SFAppender
 {
     internal string LogFilePath { get; set; }
 
+    internal FilePermissions LogFileUnixPermissions { get; set; }
+
     internal long MaximumFileSizeInBytes { get; set; }
 
     internal int MaxSizeRollBackups { get; set; }
@@ -37,7 +39,7 @@ internal class SFRollingFileAppender : SFAppender
             else
             {
                 var fileInfo = new UnixFileInfo(path: LogFilePath);
-                using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
+                using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, LogFileUnixPermissions))
                 {
                     SFCredentialManagerFileImpl.Instance.ValidateFilePermissions(handle);
                     UnixOperations.Instance.WriteAllText(handle, formattedMessage, null);

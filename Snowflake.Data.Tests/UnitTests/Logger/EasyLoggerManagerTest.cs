@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Mono.Unix.Native;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
@@ -36,7 +37,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         [TearDown]
         public void AfterEach()
         {
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath, EasyLoggingStarter.s_defaultUnixPermissions);
         }
 
         [Test]
@@ -46,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
 
             // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Off, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Off, t_directoryLogPath, EasyLoggingStarter.s_defaultUnixPermissions);
 
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
@@ -55,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsFalse(logger.IsErrorEnabled());
 
             // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, t_directoryLogPath, EasyLoggingStarter.s_defaultUnixPermissions);
 
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
@@ -64,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsTrue(logger.IsErrorEnabled());
 
             // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath, EasyLoggingStarter.s_defaultUnixPermissions);
 
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
@@ -73,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsTrue(logger.IsErrorEnabled());
 
             // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, t_directoryLogPath, EasyLoggingStarter.s_defaultUnixPermissions);
 
             // assert
             Assert.IsTrue(logger.IsDebugEnabled());
@@ -87,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         {
             // arrange
             var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, t_directoryLogPath, EasyLoggingStarter.s_defaultUnixPermissions);
 
             // act
             logger.Debug(DebugMessage);
@@ -104,7 +105,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // arrange
             File.Delete(FindLogFilePath(t_directoryLogPath));
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, t_directoryLogPath, EasyLoggingStarter.s_defaultUnixPermissions);
 
             // act
             logger.Debug(DebugMessage);
@@ -120,7 +121,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             // arrange
             const int expecetedBackupLogCount = 2;
             var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Trace, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Trace, t_directoryLogPath, EasyLoggingStarter.s_defaultUnixPermissions);
 
             var appenders = SFLoggerImpl.s_appenders;
             appenders.Remove(appenders[0]);
@@ -166,7 +167,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             {
                 writer.Write(ConfigWithUnknownFields);
             }
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath, EasyLoggingStarter.s_defaultUnixPermissions);
             var parser = new EasyLoggingConfigParser();
 
             // act
