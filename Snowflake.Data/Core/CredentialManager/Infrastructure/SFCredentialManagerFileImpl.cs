@@ -281,6 +281,8 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         internal void ValidateLogFilePermissions(UnixStream stream)
         {
             ValidateUserAndGroupPermissions(stream);
+            Console.WriteLine("EasyLoggingStarter.s_logFileUnixPermissions: " + EasyLoggingStarter.s_logFileUnixPermissions);
+            Console.WriteLine("stream.FileAccessPermissions: " + stream.FileAccessPermissions);
             if ((EasyLoggingStarter.s_logFileUnixPermissions & ~stream.FileAccessPermissions) == 0)
                 ThrowSecurityException("Attempting to read or write to log file with too broad permissions assigned");
         }
