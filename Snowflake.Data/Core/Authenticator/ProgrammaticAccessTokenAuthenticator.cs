@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         public async Task AuthenticateAsync(CancellationToken cancellationToken)
         {
-            await LoginAsync(cancellationToken);
+            await LoginAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public void Authenticate()
