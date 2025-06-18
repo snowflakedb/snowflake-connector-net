@@ -27,7 +27,7 @@ namespace Snowflake.Data.Core
 
         private EasyLoggingInitTrialParameters _initTrialParameters = null;
 
-        internal static readonly FilePermissions s_defaultUnixPermissions = FilePermissions.S_IWUSR | FilePermissions.S_IRUSR;
+        internal static FileAccessPermissions s_logFileUnixPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
 
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
             EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
@@ -74,11 +74,11 @@ namespace Snowflake.Data.Core
                 }
                 var logLevel = GetLogLevel(config.CommonProps.LogLevel);
                 var logPath = GetLogPath(config.CommonProps.LogPath);
-                var logFileUnixPermissions = GetLogFileUnixPermissions(config.Dotnet?.LogFileUnixPermissions);
+                s_logFileUnixPermissions = GetLogFileUnixPermissions(config.Dotnet?.LogFileUnixPermissions);
                 s_logger.Info($"LogLevel set to {logLevel}");
                 s_logger.Info($"LogPath set to {logPath}");
-                s_logger.Info($"LogFileUnixPermissions set to {logFileUnixPermissions}");
-                _easyLoggerManager.ReconfigureEasyLogging(logLevel, logPath, logFileUnixPermissions);
+                s_logger.Info($"LogFileUnixPermissions set to {s_logFileUnixPermissions}");
+                _easyLoggerManager.ReconfigureEasyLogging(logLevel, logPath);
                 _initTrialParameters = new EasyLoggingInitTrialParameters(configFilePathFromConnectionString);
             }
         }
@@ -163,14 +163,14 @@ namespace Snowflake.Data.Core
             return pathWithDotnetSubdirectory;
         }
 
-        private FilePermissions GetLogFileUnixPermissions(string logFileUnixPermissions)
+        private FileAccessPermissions GetLogFileUnixPermissions(string logFileUnixPermissions)
         {
             if (string.IsNullOrEmpty(logFileUnixPermissions))
             {
                 s_logger.Warn("LogFileUnixPermissions in client config not found. Using default value: Owner Write/Read");
-                return s_defaultUnixPermissions;
+                return FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
             }
-            return (FilePermissions)Convert.ToInt32(logFileUnixPermissions, 8);
+            return (FileAccessPermissions)Convert.ToInt32(logFileUnixPermissions, 8);
         }
 
         private void CheckDirPermissionsOnlyAllowUser(string dirPath)

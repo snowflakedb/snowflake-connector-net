@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using Mono.Unix.Native;
 using Snowflake.Data.Configuration;
 
 namespace Snowflake.Data.Log
@@ -16,7 +15,7 @@ namespace Snowflake.Data.Log
 
         private readonly EasyLoggingLevelMapper _levelMapper = EasyLoggingLevelMapper.Instance;
 
-        public virtual void ReconfigureEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel, string logsPath, FilePermissions logFileUnixPermissions)
+        public virtual void ReconfigureEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel, string logsPath)
         {
             var sfLoggerLevel = _levelMapper.ToLoggingEventLevel(easyLoggingLogLevel);
             lock (_lockForExclusiveConfigure)
@@ -24,7 +23,7 @@ namespace Snowflake.Data.Log
                 SFLoggerImpl.SetLevel(sfLoggerLevel);
                 var appender = IsStdout(logsPath)
                     ? AddConsoleAppender()
-                    : AddRollingFileAppender(logsPath, logFileUnixPermissions);
+                    : AddRollingFileAppender(logsPath);
                 RemoveOtherEasyLoggingAppenders(appender);
             }
         }
@@ -60,7 +59,7 @@ namespace Snowflake.Data.Log
             }
         }
 
-        private static SFAppender AddRollingFileAppender(string directoryPath, FilePermissions logFileUnixPermissions)
+        private static SFAppender AddRollingFileAppender(string directoryPath)
         {
             var patternLayout = PatternLayout();
             var randomFileName = $"snowflake_dotnet_{Path.GetRandomFileName()}";
@@ -69,7 +68,6 @@ namespace Snowflake.Data.Log
             {
                 PatternLayout = patternLayout,
                 LogFilePath = Path.Combine(directoryPath, logFileName),
-                LogFileUnixPermissions = logFileUnixPermissions,
                 MaximumFileSizeInBytes = 1000000000, // "1GB"
                 MaxSizeRollBackups = 2,
             };

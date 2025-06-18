@@ -1,5 +1,6 @@
 using Mono.Unix;
 using Mono.Unix.Native;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -11,8 +12,6 @@ using System.Runtime.InteropServices;
 internal class SFRollingFileAppender : SFAppender
 {
     internal string LogFilePath { get; set; }
-
-    internal FilePermissions LogFileUnixPermissions { get; set; }
 
     internal long MaximumFileSizeInBytes { get; set; }
 
@@ -39,9 +38,9 @@ internal class SFRollingFileAppender : SFAppender
             else
             {
                 var fileInfo = new UnixFileInfo(path: LogFilePath);
-                using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, LogFileUnixPermissions))
+                using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, (FilePermissions)EasyLoggingStarter.s_logFileUnixPermissions))
                 {
-                    SFCredentialManagerFileImpl.Instance.ValidateFilePermissions(handle);
+                    SFCredentialManagerFileImpl.Instance.ValidateLogFilePermissions(handle);
                     UnixOperations.Instance.WriteAllText(handle, formattedMessage, null);
                     if (ex != null)
                         UnixOperations.Instance.WriteAllText(handle, ex.ToString(), null);
@@ -60,7 +59,7 @@ internal class SFRollingFileAppender : SFAppender
         if (!DirectoryOperations.Instance.Exists(logDir))
             DirectoryOperations.Instance.CreateDirectory(logDir);
         if (!FileOperations.Instance.Exists(LogFilePath))
-            FileOperations.Instance.Create(LogFilePath).Dispose();
+            FileOperations.Instance.Create(LogFilePath, EasyLoggingStarter.s_logFileUnixPermissions).Dispose();
     }
 
     private bool LogFileIsTooLarge()
@@ -85,6 +84,6 @@ internal class SFRollingFileAppender : SFAppender
         }
 
         if (!FileOperations.Instance.Exists(LogFilePath))
-            FileOperations.Instance.Create(LogFilePath).Dispose();
+            FileOperations.Instance.Create(LogFilePath, EasyLoggingStarter.s_logFileUnixPermissions).Dispose();
     }
 }
