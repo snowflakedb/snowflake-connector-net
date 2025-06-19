@@ -323,6 +323,7 @@ namespace Snowflake.Data.Client
             }
             catch (Exception e)
             {
+                Console.WriteLine("GetMap error: " + e.Message);
                 if (e is SnowflakeDbException)
                     throw;
                 throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting a map");
