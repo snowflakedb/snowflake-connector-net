@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Apache.Arrow;
 
@@ -210,22 +211,17 @@ namespace Snowflake.Data.Core
                         case MapArray array:
                             Console.WriteLine("ExtractCell mapArray.Values.GetType(): " + array.Values.GetType());
                             Console.WriteLine("ExtractCell mapArray.Values.Length(): " + array.Values.Length);
-                            Console.WriteLine("ExtractCell mapArray.Values.Data: " + array.Values.Data);
-                            Console.WriteLine("ExtractCell mapArray.Values.Data.DataType: " + array.Values.Data.DataType);
-                            Console.WriteLine("ExtractCell mapArray.Values.Data.Buffers: " + array.Values.Data.Buffers);
-                            Console.WriteLine("ExtractCell mapArray.Values.Data.Dictionary: " + array.Values.Data.Dictionary);
-
+                            Console.WriteLine("ExtractCell mapArray.Keys.ToString(): " + array.Keys.ToString());
+                            Console.WriteLine("ExtractCell mapArray.Keys.GetType(): " + array.Keys.GetType());
+                            Console.WriteLine("ExtractCell mapArray.KeyValues.ToString(): " + array.KeyValues.ToString());
+                            Console.WriteLine("ExtractCell mapArray.KeyValues.GetType(): " + array.KeyValues.GetType());
                             var keyValuePairs = array.GetKeyValuePairs<StringArray, string, StringArray, string>(
                                 index: 0,
                                 getKey: (k, i) => k.GetString(i),
                                 getValue: (v, i) => v.GetString(i)
                             );
                             string result = "{";
-                            foreach (var kvp in keyValuePairs)
-                            {
-                                Console.WriteLine($"{kvp.Key}: {kvp.Value}");
-                                result += $"{kvp.Key}: {kvp.Value}";
-                            }
+                            result += string.Join(", ", keyValuePairs.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
                             result += "}";
                             return result;
                         default:
