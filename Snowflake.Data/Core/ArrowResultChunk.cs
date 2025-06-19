@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using Apache.Arrow;
@@ -208,7 +209,37 @@ namespace Snowflake.Data.Core
                         Console.WriteLine("ExtractCell mapArray.Values.Length(): " + mapArray.Values.Length);
                         Console.WriteLine("ExtractCell mapArray.Values.ToString(): " + mapArray.Values.ToString());
 
-                        column = (StringArray)mapArray.Values;
+                        for (int i = 0; i < mapArray.Length; i++)
+                        {
+                            int start = mapArray.ValueOffsets[i];
+                            int end = mapArray.ValueOffsets[i + 1];
+
+                            Console.Write($"List {i}: [");
+
+                            for (int j = start; j < end; j++)
+                            {
+                                switch (mapArray.Values)
+                                {
+                                    case Int32Array intArray:
+                                        Console.Write($"{intArray.GetValue(j)}, ");
+                                        break;
+                                    case StringArray strArray:
+                                        Console.Write($"\"{strArray.GetString(j)}\", ");
+                                        break;
+                                    case FloatArray floatArray:
+                                        Console.Write($"{floatArray.GetValue(j)}, ");
+                                        break;
+                                    case ListArray nestedList:
+                                        // Recursive call or custom logic for nested lists
+                                        Console.Write("[nested list], ");
+                                        break;
+                                    default:
+                                        Console.Write($"<unknown type: {mapArray.Values.GetType().Name}>, ");
+                                        break;
+                                }
+                            }
+                            Console.WriteLine("]");
+                        }
                     }
                     if (_byte[columnIndex] == null || _int[columnIndex] == null)
                     {
