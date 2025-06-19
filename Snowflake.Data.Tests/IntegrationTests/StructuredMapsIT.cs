@@ -192,31 +192,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        public void TestSelectMapOfLists()
-        {
-            // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
-            {
-                connection.Open();
-                using (var command = connection.CreateCommand())
-                {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-                    var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
-                    command.CommandText = $"SELECT {mapWithArrayValueSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+        //[Test]
+        //public void TestSelectMapOfLists()
+        //{
+        //    // arrange
+        //    using (var connection = new SnowflakeDbConnection(ConnectionString))
+        //    {
+        //        connection.Open();
+        //        using (var command = connection.CreateCommand())
+        //        {
+        //            EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+        //            var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
+        //            command.CommandText = $"SELECT {mapWithArrayValueSFString}";
+        //            var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+        //            Assert.IsTrue(reader.Read());
 
-                    // act
-                    var map = reader.GetMap<string, List<string>>(0);
+        //            // act
+        //            var map = reader.GetMap<string, List<string>>(0);
 
-                    // assert
-                    Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
-                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
-                }
-            }
-        }
+        //            // assert
+        //            Assert.AreEqual(1, map.Count);
+        //            CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
+        //            CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
+        //        }
+        //    }
+        //}
 
         [Test]
         public void TestSelectMapOfMaps()

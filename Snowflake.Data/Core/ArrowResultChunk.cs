@@ -205,11 +205,29 @@ namespace Snowflake.Data.Core
                     Console.WriteLine("ExtractCell column type: " + column.GetType().Name);
                     switch (column)
                     {
+                        //case StructArray array:
+                        //case ListArray array:
                         case MapArray array:
                             Console.WriteLine("ExtractCell mapArray.Values.GetType(): " + array.Values.GetType());
                             Console.WriteLine("ExtractCell mapArray.Values.Length(): " + array.Values.Length);
                             Console.WriteLine("ExtractCell mapArray.Values.Data: " + array.Values.Data);
-                            return array.Values.Data;
+                            Console.WriteLine("ExtractCell mapArray.Values.Data.DataType: " + array.Values.Data.DataType);
+                            Console.WriteLine("ExtractCell mapArray.Values.Data.Buffers: " + array.Values.Data.Buffers);
+                            Console.WriteLine("ExtractCell mapArray.Values.Data.Dictionary: " + array.Values.Data.Dictionary);
+
+                            var keyValuePairs = array.GetKeyValuePairs<StringArray, string, StringArray, string>(
+                                index: 0,
+                                getKey: (k, i) => k.GetString(i),
+                                getValue: (v, i) => v.GetString(i)
+                            );
+                            string result = "{";
+                            foreach (var kvp in keyValuePairs)
+                            {
+                                Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+                                result += $"{kvp.Key}: {kvp.Value}";
+                            }
+                            result += "}";
+                            return result;
                         default:
                             if (_byte[columnIndex] == null || _int[columnIndex] == null)
                             {
