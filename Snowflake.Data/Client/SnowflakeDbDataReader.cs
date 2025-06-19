@@ -288,9 +288,7 @@ namespace Snowflake.Data.Client
                 }
 
                 var stringValue = GetString(ordinal);
-                Console.WriteLine("GetArray stringValue: " + stringValue);
                 var json = stringValue == null ? null : JArray.Parse(stringValue);
-                Console.WriteLine("GetArray json: " + json);
                 return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
             }
             catch (Exception e)
@@ -313,7 +311,9 @@ namespace Snowflake.Data.Client
                 }
 
                 var stringValue = GetString(ordinal);
+                Console.WriteLine("GetMap stringValue: " + stringValue);
                 var json = stringValue == null ? null : JObject.Parse(stringValue);
+                Console.WriteLine("GetMap json: " + json);
                 return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
             }
             catch (Exception e)
