@@ -203,54 +203,24 @@ namespace Snowflake.Data.Core
                 case SFDataType.OBJECT:
                 case SFDataType.MAP:
                     Console.WriteLine("ExtractCell column type: " + column.GetType().Name);
-                    if (column is MapArray mapArray)
+                    switch (column)
                     {
-                        Console.WriteLine("ExtractCell mapArray.Values.GetType(): " + mapArray.Values.GetType());
-                        Console.WriteLine("ExtractCell mapArray.Values.Length(): " + mapArray.Values.Length);
-                        Console.WriteLine("ExtractCell mapArray.Values.ToString(): " + mapArray.Values.ToString());
-
-                        for (int i = 0; i < mapArray.Length; i++)
-                        {
-                            int start = mapArray.ValueOffsets[i];
-                            int end = mapArray.ValueOffsets[i + 1];
-
-                            Console.Write($"List {i}: [");
-
-                            for (int j = start; j < end; j++)
+                        case MapArray array:
+                            Console.WriteLine("ExtractCell mapArray.Values.GetType(): " + array.Values.GetType());
+                            Console.WriteLine("ExtractCell mapArray.Values.Length(): " + array.Values.Length);
+                            Console.WriteLine("ExtractCell mapArray.Values.Data: " + array.Values.Data);
+                            return array.Values.Data;
+                        default:
+                            if (_byte[columnIndex] == null || _int[columnIndex] == null)
                             {
-                                switch (mapArray.Values)
-                                {
-                                    case Int32Array intArray:
-                                        Console.Write($"{intArray.GetValue(j)}, ");
-                                        break;
-                                    case StringArray strArray:
-                                        Console.Write($"\"{strArray.GetString(j)}\", ");
-                                        break;
-                                    case FloatArray floatArray:
-                                        Console.Write($"{floatArray.GetValue(j)}, ");
-                                        break;
-                                    case ListArray nestedList:
-                                        // Recursive call or custom logic for nested lists
-                                        Console.Write("[nested list], ");
-                                        break;
-                                    default:
-                                        Console.Write($"<unknown type: {mapArray.Values.GetType().Name}>, ");
-                                        break;
-                                }
+                                _byte[columnIndex] = ((StringArray)column).Values.ToArray();
+                                _int[columnIndex] = ((StringArray)column).ValueOffsets.ToArray();
                             }
-                            Console.WriteLine("]");
-                        }
+                            return StringArray.DefaultEncoding.GetString(
+                                _byte[columnIndex],
+                                _int[columnIndex][_currentRecordIndex],
+                                _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
                     }
-                    if (_byte[columnIndex] == null || _int[columnIndex] == null)
-                    {
-                        _byte[columnIndex] = ((StringArray)column).Values.ToArray();
-                        _int[columnIndex] = ((StringArray)column).ValueOffsets.ToArray();
-                    }
-                    return StringArray.DefaultEncoding.GetString(
-                        _byte[columnIndex],
-                        _int[columnIndex][_currentRecordIndex],
-                        _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
-
                 case SFDataType.VECTOR:
                     var col = (FixedSizeListArray)column;
                     var values = col.Values;

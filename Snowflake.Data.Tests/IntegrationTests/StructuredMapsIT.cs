@@ -136,114 +136,114 @@ namespace Snowflake.Data.Tests.IntegrationTests
         //    }
         //}
 
-        //[Test]
-        //public void TestSelectMapOfObjects()
-        //{
-        //    // arrange
-        //    using (var connection = new SnowflakeDbConnection(ConnectionString))
-        //    {
-        //        connection.Open();
-        //        using (var command = connection.CreateCommand())
-        //        {
-        //            EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-        //            var mapWitObjectValueSFString = @"OBJECT_CONSTRUCT(
-        //                'Warsaw', OBJECT_CONSTRUCT('prefix', '01', 'postfix', '234'),
-        //                'San Mateo', OBJECT_CONSTRUCT('prefix', '02', 'postfix', '567')
-        //            )::MAP(VARCHAR, OBJECT(prefix VARCHAR, postfix VARCHAR))";
-        //            command.CommandText = $"SELECT {mapWitObjectValueSFString}";
-        //            var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-        //            Assert.IsTrue(reader.Read());
+        [Test]
+        public void TestSelectMapOfObjects()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    var mapWitObjectValueSFString = @"OBJECT_CONSTRUCT(
+                        'Warsaw', OBJECT_CONSTRUCT('prefix', '01', 'postfix', '234'),
+                        'San Mateo', OBJECT_CONSTRUCT('prefix', '02', 'postfix', '567')
+                    )::MAP(VARCHAR, OBJECT(prefix VARCHAR, postfix VARCHAR))";
+                    command.CommandText = $"SELECT {mapWitObjectValueSFString}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
 
-        //            // act
-        //            var map = reader.GetMap<string, Zip>(0);
+                    // act
+                    var map = reader.GetMap<string, Zip>(0);
 
-        //            // assert
-        //            Assert.NotNull(map);
-        //            Assert.AreEqual(2, map.Count);
-        //            Assert.AreEqual(new Zip("01", "234"), map["Warsaw"]);
-        //            Assert.AreEqual(new Zip("02", "567"), map["San Mateo"]);
-        //        }
-        //    }
-        //}
+                    // assert
+                    Assert.NotNull(map);
+                    Assert.AreEqual(2, map.Count);
+                    Assert.AreEqual(new Zip("01", "234"), map["Warsaw"]);
+                    Assert.AreEqual(new Zip("02", "567"), map["San Mateo"]);
+                }
+            }
+        }
 
-        //[Test]
-        //public void TestSelectMapOfArrays()
-        //{
-        //    // arrange
-        //    using (var connection = new SnowflakeDbConnection(ConnectionString))
-        //    {
-        //        connection.Open();
-        //        using (var command = connection.CreateCommand())
-        //        {
-        //            EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-        //            var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
-        //            command.CommandText = $"SELECT {mapWithArrayValueSFString}";
-        //            var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-        //            Assert.IsTrue(reader.Read());
+        [Test]
+        public void TestSelectMapOfArrays()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
+                    command.CommandText = $"SELECT {mapWithArrayValueSFString}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
 
-        //            // act
-        //            var map = reader.GetMap<string, string[]>(0);
+                    // act
+                    var map = reader.GetMap<string, string[]>(0);
 
-        //            // assert
-        //            Assert.AreEqual(1, map.Count);
-        //            CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
-        //            CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
-        //        }
-        //    }
-        //}
+                    // assert
+                    Assert.AreEqual(1, map.Count);
+                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
+                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
+                }
+            }
+        }
 
-        //[Test]
-        //public void TestSelectMapOfLists()
-        //{
-        //    // arrange
-        //    using (var connection = new SnowflakeDbConnection(ConnectionString))
-        //    {
-        //        connection.Open();
-        //        using (var command = connection.CreateCommand())
-        //        {
-        //            EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-        //            var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
-        //            command.CommandText = $"SELECT {mapWithArrayValueSFString}";
-        //            var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-        //            Assert.IsTrue(reader.Read());
+        [Test]
+        public void TestSelectMapOfLists()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
+                    command.CommandText = $"SELECT {mapWithArrayValueSFString}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
 
-        //            // act
-        //            var map = reader.GetMap<string, List<string>>(0);
+                    // act
+                    var map = reader.GetMap<string, List<string>>(0);
 
-        //            // assert
-        //            Assert.AreEqual(1, map.Count);
-        //            CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
-        //            CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
-        //        }
-        //    }
-        //}
+                    // assert
+                    Assert.AreEqual(1, map.Count);
+                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
+                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
+                }
+            }
+        }
 
-        //[Test]
-        //public void TestSelectMapOfMaps()
-        //{
-        //    // arrange
-        //    using (var connection = new SnowflakeDbConnection(ConnectionString))
-        //    {
-        //        connection.Open();
-        //        using (var command = connection.CreateCommand())
-        //        {
-        //            EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-        //            var mapAsSFString = "OBJECT_CONSTRUCT('a', OBJECT_CONSTRUCT('b', 'c'))::MAP(TEXT, MAP(TEXT, TEXT))";
-        //            command.CommandText = $"SELECT {mapAsSFString}";
-        //            var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-        //            Assert.IsTrue(reader.Read());
+        [Test]
+        public void TestSelectMapOfMaps()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    var mapAsSFString = "OBJECT_CONSTRUCT('a', OBJECT_CONSTRUCT('b', 'c'))::MAP(TEXT, MAP(TEXT, TEXT))";
+                    command.CommandText = $"SELECT {mapAsSFString}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
 
-        //            // act
-        //            var map = reader.GetMap<string, Dictionary<string, string>>(0);
+                    // act
+                    var map = reader.GetMap<string, Dictionary<string, string>>(0);
 
-        //            // assert
-        //            Assert.AreEqual(1, map.Count);
-        //            var nestedMap = map["a"];
-        //            Assert.AreEqual(1, nestedMap.Count);
-        //            Assert.AreEqual("c", nestedMap["b"]);
-        //        }
-        //    }
-        //}
+                    // assert
+                    Assert.AreEqual(1, map.Count);
+                    var nestedMap = map["a"];
+                    Assert.AreEqual(1, nestedMap.Count);
+                    Assert.AreEqual("c", nestedMap["b"]);
+                }
+            }
+        }
 
         //[Test]
         //[TestCase(@"OBJECT_CONSTRUCT('x', OBJECT_CONSTRUCT('a', 'b'))::MAP(VARCHAR,OBJECT)", "{\"a\": \"b\"}")]

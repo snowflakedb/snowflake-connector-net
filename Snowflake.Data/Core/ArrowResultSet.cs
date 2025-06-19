@@ -157,7 +157,6 @@ namespace Snowflake.Data.Core
             ThrowIfOutOfBounds(ordinal);
 
             var type = sfResultSetMetaData.GetTypesByIndex(ordinal).Item1;
-            Console.WriteLine("GetObjectInternal type: " + type);
             var scale = sfResultSetMetaData.GetScaleByIndex(ordinal);
 
             var value = ((ArrowResultChunk)_currentChunk).ExtractCell(ordinal, type, (int)scale);
