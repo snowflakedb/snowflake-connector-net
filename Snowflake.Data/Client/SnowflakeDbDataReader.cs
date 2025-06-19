@@ -308,6 +308,7 @@ namespace Snowflake.Data.Client
             try
             {
                 var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                Console.WriteLine("GetMap rowType.name: " + rowType.name);
                 var fields = rowType.fields;
                 if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsMapType(rowType.type))
                 {
