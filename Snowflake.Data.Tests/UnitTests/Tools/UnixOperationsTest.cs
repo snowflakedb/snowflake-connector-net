@@ -151,6 +151,26 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
         [Test]
         [Platform(Exclude = "Win")]
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
+            [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
+            [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
+        {
+            if (groupPermissions == 0 && othersPermissions == 0)
+            {
+                Assert.Ignore("Skip test when group and others have no permissions");
+            }
+            var content = "random text";
+            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+
+            var filePermissions = userPermissions | groupPermissions | othersPermissions;
+            Syscall.chmod(filePath, (FilePermissions)filePermissions);
+
+            // act and assert
+            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateLogFilePermissions), "Attempting to read or write to log file with too broad permissions assigned");
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
         public void TestCreateFileWithUserRwPermissions()
         {
             // arrange
