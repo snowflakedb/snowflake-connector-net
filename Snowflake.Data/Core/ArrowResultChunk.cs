@@ -201,6 +201,12 @@ namespace Snowflake.Data.Core
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
                 case SFDataType.MAP:
+                    Console.WriteLine("ExtractCell column.GetType().Name: " + column.GetType().Name);
+                    if (column is MapArray mapArray)
+                    {
+                        Console.WriteLine("ExtractCell mapArray.Values.ToString(): " + mapArray.Values.ToString());
+                        return ((MapArray)column).Values.ToString();
+                    }
                     if (_byte[columnIndex] == null || _int[columnIndex] == null)
                     {
                         _byte[columnIndex] = ((StringArray)column).Values.ToArray();
