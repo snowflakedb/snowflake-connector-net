@@ -201,11 +201,14 @@ namespace Snowflake.Data.Core
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
                 case SFDataType.MAP:
-                    Console.WriteLine("ExtractCell column.GetType().Name: " + column.GetType().Name);
+                    Console.WriteLine("ExtractCell column type: " + column.GetType().Name);
                     if (column is MapArray mapArray)
                     {
+                        Console.WriteLine("ExtractCell mapArray.Values.GetType(): " + mapArray.Values.GetType());
+                        Console.WriteLine("ExtractCell mapArray.Values.Length(): " + mapArray.Values.Length);
                         Console.WriteLine("ExtractCell mapArray.Values.ToString(): " + mapArray.Values.ToString());
-                        return ((MapArray)column).Values.ToString();
+
+                        column = (StringArray)mapArray.Values;
                     }
                     if (_byte[columnIndex] == null || _int[columnIndex] == null)
                     {
