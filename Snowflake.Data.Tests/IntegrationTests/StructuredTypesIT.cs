@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.ExecuteNonQuery();
                 if (resultFormat == ResultFormat.ARROW)
                 {
-                    command.CommandText = $"ALTER SESSION SET ENABLE_STRUCTURED_TYPES_NATIVE_ARROW_FORMAT = true";
+                    command.CommandText = $"ALTER SESSION SET ENABLE_STRUCTURED_TYPES_NATIVE_ARROW_FORMAT = false";
                     command.ExecuteNonQuery();
                 }
             }
