@@ -211,9 +211,7 @@ namespace Snowflake.Data.Core
                         case MapArray array:
                             Console.WriteLine("ExtractCell mapArray.Values.GetType(): " + array.Values.GetType());
                             Console.WriteLine("ExtractCell mapArray.Values.Length(): " + array.Values.Length);
-                            Console.WriteLine("ExtractCell mapArray.Keys.ToString(): " + array.Keys.ToString());
                             Console.WriteLine("ExtractCell mapArray.Keys.GetType(): " + array.Keys.GetType());
-                            Console.WriteLine("ExtractCell mapArray.KeyValues.ToString(): " + array.KeyValues.ToString());
                             Console.WriteLine("ExtractCell mapArray.KeyValues.GetType(): " + array.KeyValues.GetType());
                             var keyValuePairs = array.GetKeyValuePairs<StringArray, string, StringArray, string>(
                                 index: 0,
