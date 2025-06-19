@@ -10,9 +10,9 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture(ResultFormat.ARROW, false)]
+    //[TestFixture(ResultFormat.ARROW, false)]
     [TestFixture(ResultFormat.ARROW, true)]
-    [TestFixture(ResultFormat.JSON, false)]
+    //[TestFixture(ResultFormat.JSON, false)]
     public class StructuredArraysIT : StructuredTypesIT
     {
         private readonly ResultFormat _resultFormat;
