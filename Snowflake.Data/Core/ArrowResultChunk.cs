@@ -220,8 +220,8 @@ namespace Snowflake.Data.Core
                                 getKey: (k, i) => k.GetString(i),
                                 getValue: (v, i) => v.GetString(i)
                             );
-                            string result = "{";
-                            result += string.Join(", ", keyValuePairs.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+                            var result = "{";
+                            result += string.Join(", ", keyValuePairs.Select(kvp => $"\"{kvp.Key}\": \"{kvp.Value}\""));
                             result += "}";
                             return result;
                         default:
