@@ -8,15 +8,18 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture(ResultFormat.ARROW)]
-    [TestFixture(ResultFormat.JSON)]
+    [TestFixture(ResultFormat.ARROW, false)]
+    [TestFixture(ResultFormat.ARROW, true)]
+    [TestFixture(ResultFormat.JSON, false)]
     public class StructuredObjectIT : StructuredTypesIT
     {
         private readonly ResultFormat _resultFormat;
+        private readonly bool _nativeArrow;
 
-        public StructuredObjectIT(ResultFormat resultFormat)
+        public StructuredObjectIT(ResultFormat resultFormat, bool nativeArrow)
         {
             _resultFormat = resultFormat;
+            _nativeArrow = nativeArrow;
         }
 
         [Test]
@@ -28,7 +31,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var key = "city";
                     var value = "San Mateo";
                     var addressAsSFString = $"OBJECT_CONSTRUCT('{key}','{value}')::OBJECT(city VARCHAR)";
@@ -57,7 +60,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA')::OBJECT(city VARCHAR, state VARCHAR)";
                     command.CommandText = $"SELECT {addressAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -83,7 +86,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var addressAsSFString =
                         "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA', 'zip', OBJECT_CONSTRUCT('prefix', '00', 'postfix', '11'))::OBJECT(city VARCHAR, state VARCHAR, zip OBJECT(prefix VARCHAR, postfix VARCHAR))";
                     command.CommandText = $"SELECT {addressAsSFString}";
@@ -112,7 +115,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var objectWithMap = "OBJECT_CONSTRUCT('names', OBJECT_CONSTRUCT('Excellent', '6', 'Poor', '1'))::OBJECT(names MAP(VARCHAR,VARCHAR))";
                     command.CommandText = $"SELECT {objectWithMap}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -139,7 +142,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var objectWithArray = "OBJECT_CONSTRUCT('names', ARRAY_CONSTRUCT('Excellent', 'Poor'))::OBJECT(names ARRAY(TEXT))";
                     command.CommandText = $"SELECT {objectWithArray}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -164,7 +167,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var objectWithArray = "OBJECT_CONSTRUCT('names', ARRAY_CONSTRUCT('Excellent', 'Poor'))::OBJECT(names ARRAY(TEXT))";
                     command.CommandText = $"SELECT {objectWithArray}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -192,7 +195,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     command.CommandText = $"SELECT {valueSfString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
@@ -216,7 +219,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var objectSFString = @"OBJECT_CONSTRUCT_KEEP_NULL(
                         'ObjectValue', NULL,
                         'ListValue', NULL,
@@ -260,7 +263,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var objectSFString = @"OBJECT_CONSTRUCT_KEEP_NULL(
                         'ObjectValue', OBJECT_CONSTRUCT('Name', 'John'),
                         'ListValue', ARRAY_CONSTRUCT('a', 'b'),
@@ -308,7 +311,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var objectSFString = @"OBJECT_CONSTRUCT(
                         'IntegerValue', '8',
                         'x', 'abc'
@@ -341,7 +344,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var objectSFString = @"OBJECT_CONSTRUCT(
                         'x', 'abc',
                         'IntegerValue', '8'
@@ -374,7 +377,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var objectSFString = @"OBJECT_CONSTRUCT(
                         'x', 'abc',
                         'IntegerValue', '8'
@@ -407,7 +410,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var nullObjectSFString = "NULL::OBJECT(Name TEXT)";
                     command.CommandText = $"SELECT {nullObjectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -431,7 +434,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var objectSFString = "OBJECT_CONSTRUCT('x', 'y')::OBJECT";
                     command.CommandText = $"SELECT {objectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -457,7 +460,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var objectSFString = "OBJECT_CONSTRUCT('x', 'a', 'y', 'b')::OBJECT(x VARCHAR, y VARCHAR)";
                     command.CommandText = $"SELECT {objectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();

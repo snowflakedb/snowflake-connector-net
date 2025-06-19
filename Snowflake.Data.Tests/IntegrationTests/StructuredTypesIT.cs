@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public abstract class StructuredTypesIT : SFBaseTest
     {
-        protected void EnableStructuredTypes(SnowflakeDbConnection connection, ResultFormat resultFormat = ResultFormat.JSON)
+        protected void EnableStructuredTypes(SnowflakeDbConnection connection, ResultFormat resultFormat = ResultFormat.JSON, bool nativeArrow = false)
         {
             using (var command = connection.CreateCommand())
             {
@@ -18,7 +18,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.ExecuteNonQuery();
                 if (resultFormat == ResultFormat.ARROW)
                 {
-                    command.CommandText = $"ALTER SESSION SET ENABLE_STRUCTURED_TYPES_NATIVE_ARROW_FORMAT = false";
+                    command.CommandText = $"ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = ARROW_FORCE";
+                    command.ExecuteNonQuery();
+                    command.CommandText = $"ALTER SESSION SET ENABLE_STRUCTURED_TYPES_NATIVE_ARROW_FORMAT = {nativeArrow}";
+                    command.CommandText = $"ALTER SESSION SET FORCE_ENABLE_STRUCTURED_TYPES_NATIVE_ARROW_FORMAT  = {nativeArrow}";
                     command.ExecuteNonQuery();
                 }
             }
