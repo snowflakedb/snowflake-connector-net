@@ -263,7 +263,9 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetObject<{typeof(T)}> can be used only for structured object");
                 }
                 var stringValue = GetString(ordinal);
+                Console.WriteLine("GetObject stringValue: " + stringValue);
                 var json = stringValue == null ? null : JObject.Parse(stringValue);
+                Console.WriteLine("GetObject json: " + json);
                 return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
             }
             catch (Exception e)
@@ -288,7 +290,9 @@ namespace Snowflake.Data.Client
                 }
 
                 var stringValue = GetString(ordinal);
+                Console.WriteLine("GetArray: " + stringValue);
                 var json = stringValue == null ? null : JArray.Parse(stringValue);
+                Console.WriteLine("GetArray: " + json);
                 return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
             }
             catch (Exception e)
