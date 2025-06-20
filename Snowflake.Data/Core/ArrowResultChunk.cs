@@ -455,10 +455,15 @@ namespace Snowflake.Data.Core
             sb.Append("{");
 
             var start = mapArray.ValueOffsets[index];
+            Console.WriteLine("FormatArrowMapArray start : " + start);
             var end = mapArray.ValueOffsets[index + 1];
+            Console.WriteLine("FormatArrowMapArray end : " + end);
             var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
+            Console.WriteLine("FormatArrowMapArray keyValuesArray : " + keyValuesArray);
             var keyArray = keyValuesArray.Fields[0] as StringArray;
+            Console.WriteLine("FormatArrowMapArray keyArray : " + keyArray);
             var valueArray = keyValuesArray.Fields[1];
+            Console.WriteLine("FormatArrowMapArray valueArray : " + valueArray);
 
             for (int i = start; i < end; i++)
             {

@@ -257,6 +257,7 @@ namespace Snowflake.Data.Client
             try
             {
                 var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                Console.WriteLine("GetObject rowType.name: " + rowType.name);
                 var fields = rowType.fields;
                 if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsObjectType(rowType.type))
                 {
@@ -282,6 +283,7 @@ namespace Snowflake.Data.Client
             try
             {
                 var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                Console.WriteLine("GetArray rowType.name: " + rowType.name);
                 var fields = rowType.fields;
                 var isArrayOrVector = JsonToStructuredTypeConverter.IsArrayType(rowType.type) ||
                                       JsonToStructuredTypeConverter.IsVectorType(rowType.type);
