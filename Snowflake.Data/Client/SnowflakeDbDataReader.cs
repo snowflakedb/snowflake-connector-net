@@ -291,9 +291,9 @@ namespace Snowflake.Data.Client
                 }
 
                 var stringValue = GetString(ordinal);
-                Console.WriteLine("GetArray: " + stringValue);
+                Console.WriteLine("GetArray stringValue: " + stringValue);
                 var json = stringValue == null ? null : JArray.Parse(stringValue);
-                Console.WriteLine("GetArray: " + json);
+                Console.WriteLine("GetArray json: " + json);
                 return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
             }
             catch (Exception e)

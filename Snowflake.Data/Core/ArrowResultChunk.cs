@@ -385,6 +385,7 @@ namespace Snowflake.Data.Core
 
         private string FormatArrowValue(IArrowArray array, int index)
         {
+            Console.WriteLine("FormatArrowValue array type: " + array.GetType().Name);
             switch (array)
             {
                 case StructArray strct: return FormatStructArray(strct, index);
@@ -396,6 +397,7 @@ namespace Snowflake.Data.Core
 
         private string FormatStructArray(StructArray structArray, int index)
         {
+            Console.WriteLine("FormatStructArray");
             var sb = new StringBuilder();
             sb.Append("{");
 
@@ -418,6 +420,7 @@ namespace Snowflake.Data.Core
 
         private string FormatArrowListArray(ListArray listArray, int index)
         {
+            Console.WriteLine("FormatArrowListArray");
             var sb = new StringBuilder();
             sb.Append("[");
 
@@ -438,6 +441,7 @@ namespace Snowflake.Data.Core
 
         private string FormatArrowMapArray(MapArray mapArray, int index)
         {
+            Console.WriteLine("FormatArrowMapArray");
             var sb = new StringBuilder();
             sb.Append("{");
 
