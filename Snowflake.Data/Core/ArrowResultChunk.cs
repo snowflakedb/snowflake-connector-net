@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Apache.Arrow;
+using Apache.Arrow.Types;
 
 namespace Snowflake.Data.Core
 {
@@ -211,16 +212,20 @@ namespace Snowflake.Data.Core
                             Console.WriteLine("ExtractCell structArray.Length: " + structArray.Length);
                             Console.WriteLine("ExtractCell structArray.Fields: " + structArray.Fields);
                             Console.WriteLine("ExtractCell structArray.Fields.GetType(): " + structArray.Fields.GetType());
+                            Console.WriteLine("ExtractCell structArray.Fields[0]]: " + structArray.Fields[0]);
+                            Console.WriteLine("ExtractCell structArray.Fields[0].GetType(): " + structArray.Fields[0].GetType());
 
+                            var structType = (StructType)structArray.Data.DataType;
 
                             var r = "{";
                             var end = structArray.Fields.Count;
                             for (int i = 0; i < end; i++)
                             {
                                 var field = structArray.Fields[i];
-                                var key = ((StringArray)field).GetString(i);
-                                Console.WriteLine("ExtractCell key: " + key);
-                                r += $"\"{key}\": {((StringArray)field).GetString(i+1)}";
+                                var fieldName = structType.Fields[i].Name;
+                                Console.WriteLine("ExtractCell fieldName: " + fieldName);
+                                Console.WriteLine("ExtractCell GetFieldByName: " + structType.GetFieldByName(fieldName));
+                                r += $"\"{fieldName}\": {((StringArray)field).GetString(i)}";
 
                                 if (i != end - 1)
                                     r+= ", ";
