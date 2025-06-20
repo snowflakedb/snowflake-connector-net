@@ -219,12 +219,14 @@ namespace Snowflake.Data.Core
                             {
                                 var field = structArray.Fields[i];
                                 var key = ((StringArray)field).GetString(i);
+                                Console.WriteLine("ExtractCell key: " + key);
                                 r += $"\"{key}\": {((StringArray)field).GetString(i+1)}";
 
                                 if (i != end - 1)
                                     r+= ", ";
                             }
                             r += "}";
+                            Console.WriteLine("ExtractCell r: " + r);
                             return r;
                         case MapArray mapArray:
                             return FormatArrowMapArray(mapArray, _currentRecordIndex);
