@@ -218,10 +218,7 @@ namespace Snowflake.Data.Core
                             {
                                 var field = structArray.Fields[i];
                                 var fieldName = structType.Fields[i].Name;
-                                Console.WriteLine("ExtractCell index: " + i);
-                                Console.WriteLine("ExtractCell fieldName: " + fieldName);
-                                Console.WriteLine("ExtractCell ((StringArray)field).GetString(i): " + ((StringArray)field).GetString(i));
-                                r += $"\"{fieldName}\": {((StringArray)field).GetString(i)}";
+                                r += $"\"{fieldName}\": {((StringArray)field).GetString(0)}";
 
                                 if (i != end - 1)
                                     r+= ", ";
