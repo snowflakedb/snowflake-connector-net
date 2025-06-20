@@ -208,12 +208,7 @@ namespace Snowflake.Data.Core
                     switch (column)
                     {
                         case StructArray structArray:
-                            Console.WriteLine("ExtractCell structArray.GetType(): " + structArray.GetType());
-                            Console.WriteLine("ExtractCell structArray.Length: " + structArray.Length);
-                            Console.WriteLine("ExtractCell structArray.Fields: " + structArray.Fields);
-                            Console.WriteLine("ExtractCell structArray.Fields.GetType(): " + structArray.Fields.GetType());
-                            Console.WriteLine("ExtractCell structArray.Fields[0]]: " + structArray.Fields[0]);
-                            Console.WriteLine("ExtractCell structArray.Fields[0].GetType(): " + structArray.Fields[0].GetType());
+                            Console.WriteLine("ExtractCell structArray.Fields.Count: " + structArray.Fields.Count);
 
                             var structType = (StructType)structArray.Data.DataType;
 
@@ -223,15 +218,16 @@ namespace Snowflake.Data.Core
                             {
                                 var field = structArray.Fields[i];
                                 var fieldName = structType.Fields[i].Name;
+                                Console.WriteLine("ExtractCell index: " + i);
                                 Console.WriteLine("ExtractCell fieldName: " + fieldName);
-                                Console.WriteLine("ExtractCell GetFieldByName: " + structType.GetFieldByName(fieldName));
+                                Console.WriteLine("ExtractCell ((StringArray)field).GetString(i): " + ((StringArray)field).GetString(i));
                                 r += $"\"{fieldName}\": {((StringArray)field).GetString(i)}";
 
                                 if (i != end - 1)
                                     r+= ", ";
                             }
                             r += "}";
-                            Console.WriteLine("ExtractCell r: " + r);
+                            Console.WriteLine("ExtractCell result: " + r);
                             return r;
                         case MapArray mapArray:
                             return FormatArrowMapArray(mapArray, _currentRecordIndex);
