@@ -206,16 +206,30 @@ namespace Snowflake.Data.Core
                     Console.WriteLine("ExtractCell column type: " + column.GetType().Name);
                     switch (column)
                     {
-                        //case StructArray array:
+                        case StructArray structArray:
+                            Console.WriteLine("ExtractCell structArray.GetType(): " + structArray.GetType());
+                            Console.WriteLine("ExtractCell structArray.Length: " + structArray.Length);
+                            Console.WriteLine("ExtractCell structArray.Fields: " + structArray.Fields);
+                            Console.WriteLine("ExtractCell structArray.Fields.GetType(): " + structArray.Fields.GetType());
+
+
+                            var r = "{";
+                            var end = structArray.Fields.Count;
+                            for (int i = 0; i < end; i++)
+                            {
+                                var field = structArray.Fields[i];
+                                var key = ((StringArray)field).GetString(i);
+                                r += $"\"{key}\": {((StringArray)field).GetString(i+1)}";
+
+                                if (i != end - 1)
+                                    r+= ", ";
+                            }
+                            r += "}";
+                            return r;
                         case MapArray mapArray:
-                            return FormatMapArray(mapArray, _currentRecordIndex);
+                            return FormatArrowMapArray(mapArray, _currentRecordIndex);
                         case ListArray listArray:
-                            Console.WriteLine("ExtractCell listArray.Values.GetType(): " + listArray.Values.GetType());
-                            Console.WriteLine("ExtractCell listArray.Length: " + listArray.Length);
-                            Console.WriteLine("ExtractCell listArray.GetSlicedValues(0): " + listArray.GetSlicedValues(0));
-                            Console.WriteLine("ExtractCell listArray.GetSlicedValues(0).Length: " + listArray.GetSlicedValues(0).Length);
-                            Console.WriteLine("ExtractCell listArray.GetValueLength(0): " + listArray.GetValueLength(0));
-                            return FormatListArray(listArray, _currentRecordIndex);
+                            return FormatArrowListArray(listArray, _currentRecordIndex);
                         default:
                             if (_byte[columnIndex] == null || _int[columnIndex] == null)
                             {
@@ -391,18 +405,18 @@ namespace Snowflake.Data.Core
             switch (array)
             {
                 //case StructArray strct: return FormatStructArray(strct, index);
-                case MapArray map: return FormatMapArray(map, index);
-                case ListArray list: return FormatListArray(list, index);
+                case MapArray map: return FormatArrowMapArray(map, index);
+                case ListArray list: return FormatArrowListArray(list, index);
                 default: return $"\"{((StringArray)array).GetString(index)}\"";
             };
         }
-        public static string FormatListArray(ListArray listArray, int index)
+        public static string FormatArrowListArray(ListArray listArray, int index)
         {
             var sb = new StringBuilder();
             sb.Append("[");
 
-            int start = listArray.ValueOffsets[index];
-            int end = listArray.ValueOffsets[index + 1];
+            var start = listArray.ValueOffsets[index];
+            var end = listArray.ValueOffsets[index + 1];
             var values = listArray.Values;
 
             for (int i = start; i < end; i++)
@@ -416,14 +430,13 @@ namespace Snowflake.Data.Core
             return sb.ToString();
         }
 
-        public static string FormatMapArray(MapArray mapArray, int index)
+        public static string FormatArrowMapArray(MapArray mapArray, int index)
         {
             var sb = new StringBuilder();
             sb.Append("{");
 
-            var offsets = mapArray.ValueOffsets;
-            var start = offsets[index];
-            var end = offsets[index + 1];
+            var start = mapArray.ValueOffsets[index];
+            var end = mapArray.ValueOffsets[index + 1];
             var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
             var keyArray = keyValuesArray.Fields[0] as StringArray;
             var valueArray = keyValuesArray.Fields[1];
