@@ -208,26 +208,14 @@ namespace Snowflake.Data.Core
                     {
                         //case StructArray array:
                         case MapArray mapArray:
-                            return FormatMapArray(mapArray, 0);
+                            return FormatMapArray(mapArray, _currentRecordIndex);
                         case ListArray listArray:
                             Console.WriteLine("ExtractCell listArray.Values.GetType(): " + listArray.Values.GetType());
                             Console.WriteLine("ExtractCell listArray.Length: " + listArray.Length);
                             Console.WriteLine("ExtractCell listArray.GetSlicedValues(0): " + listArray.GetSlicedValues(0));
+                            Console.WriteLine("ExtractCell listArray.GetSlicedValues(0).Length: " + listArray.GetSlicedValues(0).Length);
                             Console.WriteLine("ExtractCell listArray.GetValueLength(0): " + listArray.GetValueLength(0));
-
-                            var start = listArray.ValueOffsets[0];
-                            var end = listArray.ValueOffsets[0 + 1];
-                            var listValues = listArray.Values;
-                            var r = "{";
-                            for (int i = start; i < end; i++)
-                            {
-                                r += $"\"{((StringArray)listValues).GetString(i)}\"";
-                                if (i != end - 1)
-                                    r += ", ";
-                            }
-                            r += "}";
-                            Console.WriteLine("ExtractCell r: " + r);
-                            return r;
+                            return FormatListArray(listArray, _currentRecordIndex);
                         default:
                             if (_byte[columnIndex] == null || _int[columnIndex] == null)
                             {
@@ -402,11 +390,30 @@ namespace Snowflake.Data.Core
         {
             switch (array)
             {
-                //case ListArray list: return FormatListArray(list, index);
                 //case StructArray strct: return FormatStructArray(strct, index);
                 case MapArray map: return FormatMapArray(map, index);
+                case ListArray list: return FormatListArray(list, index);
                 default: return $"\"{((StringArray)array).GetString(index)}\"";
             };
+        }
+        public static string FormatListArray(ListArray listArray, int index)
+        {
+            var sb = new StringBuilder();
+            sb.Append("[");
+
+            int start = listArray.ValueOffsets[index];
+            int end = listArray.ValueOffsets[index + 1];
+            var values = listArray.Values;
+
+            for (int i = start; i < end; i++)
+            {
+                sb.Append($"{FormatArrowValue(values, i)}");
+                if (i != end - 1)
+                    sb.Append(", ");
+            }
+
+            sb.Append("]");
+            return sb.ToString();
         }
 
         public static string FormatMapArray(MapArray mapArray, int index)
