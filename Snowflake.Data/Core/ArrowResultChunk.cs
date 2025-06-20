@@ -391,7 +391,11 @@ namespace Snowflake.Data.Core
                 case StructArray strct: return FormatStructArray(strct, index);
                 case MapArray map: return FormatArrowMapArray(map, index);
                 case ListArray list: return FormatArrowListArray(list, index);
-                default: return $"\"{((StringArray)array).GetString(index)}\"";
+                default: return $"\"{((StringArray)array).GetString(index)}\""
+                .Replace("\"{", "{")
+                .Replace("}\"", "}")
+                .Replace("\"[", "[")
+                .Replace("]\"", "]");
             };
         }
 
