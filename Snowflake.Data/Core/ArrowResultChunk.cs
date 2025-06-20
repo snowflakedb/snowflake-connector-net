@@ -393,11 +393,14 @@ namespace Snowflake.Data.Core
                 case ListArray list: return FormatArrowListArray(list, index);
                 case DoubleArray doubles: return doubles.GetValue(index).ToString();
                 case Decimal128Array decimals: return decimals.GetValue(index).ToString();
-                default: return $"\"{((StringArray)array).GetString(index)}\""
-                .Replace("\"{", "{")
-                .Replace("}\"", "}")
-                .Replace("\"[", "[")
-                .Replace("]\"", "]");
+                default:
+                    {
+                        var str = ((StringArray)array).GetString(index);
+                        return string.IsNullOrEmpty(str) ? "undefined" :
+                            $"\"{str}\""
+                            .Replace("\"{", "{").Replace("}\"", "}")
+                            .Replace("\"[", "[").Replace("]\"", "]");
+                    }
             };
         }
 
