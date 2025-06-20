@@ -207,12 +207,27 @@ namespace Snowflake.Data.Core
                     switch (column)
                     {
                         //case StructArray array:
-                        //case ListArray array:
-                        case MapArray array:
-                            Console.WriteLine("ExtractCell mapArray.Values.GetType(): " + array.Values.GetType());
-                            var result = FormatMapArray(array, 0);
-                            Console.WriteLine("ExtractCell result: " + result);
-                            return result;
+                        case MapArray mapArray:
+                            return FormatMapArray(mapArray, 0);
+                        case ListArray listArray:
+                            Console.WriteLine("ExtractCell listArray.Values.GetType(): " + listArray.Values.GetType());
+                            Console.WriteLine("ExtractCell listArray.Length: " + listArray.Length);
+                            Console.WriteLine("ExtractCell listArray.GetSlicedValues(0): " + listArray.GetSlicedValues(0));
+                            Console.WriteLine("ExtractCell listArray.GetValueLength(0): " + listArray.GetValueLength(0));
+
+                            var start = listArray.ValueOffsets[0];
+                            var end = listArray.ValueOffsets[0 + 1];
+                            var listValues = listArray.Values;
+                            var r = "{";
+                            for (int i = start; i < end; i++)
+                            {
+                                r += $"\"{((StringArray)listValues).GetString(i)}\"";
+                                if (i != end - 1)
+                                    r += ", ";
+                            }
+                            r += "}";
+                            Console.WriteLine("ExtractCell r: " + r);
+                            return r;
                         default:
                             if (_byte[columnIndex] == null || _int[columnIndex] == null)
                             {
@@ -403,7 +418,6 @@ namespace Snowflake.Data.Core
             var start = offsets[index];
             var end = offsets[index + 1];
             var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
-
             var keyArray = keyValuesArray.Fields[0] as StringArray;
             var valueArray = keyValuesArray.Fields[1];
 
