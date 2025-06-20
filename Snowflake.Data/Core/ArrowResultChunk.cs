@@ -409,14 +409,14 @@ namespace Snowflake.Data.Core
 
             for (int i = start; i < end; i++)
             {
-                sb.Append($"{keyArray.GetString(i)}");
+                sb.Append($"\"{keyArray.GetString(i)}\"");
                 sb.Append(": ");
                 sb.Append($"{FormatArrowValue(valueArray, i)}");
-                //sb.Append($"{((StringArray)valueArray).GetString(i)}");
                 if (i != end - 1)
                     sb.Append(", ");
             }
 
+            sb.Append("}");
             return sb.ToString();
         }
     }
