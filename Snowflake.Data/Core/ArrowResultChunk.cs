@@ -210,17 +210,8 @@ namespace Snowflake.Data.Core
                         //case ListArray array:
                         case MapArray array:
                             Console.WriteLine("ExtractCell mapArray.Values.GetType(): " + array.Values.GetType());
-                            Console.WriteLine("ExtractCell mapArray.Values.Length(): " + array.Values.Length);
-                            Console.WriteLine("ExtractCell mapArray.Keys.GetType(): " + array.Keys.GetType());
-                            Console.WriteLine("ExtractCell mapArray.KeyValues.GetType(): " + array.KeyValues.GetType());
-                            var keyValuePairs = array.GetKeyValuePairs<StringArray, string, StringArray, string>(
-                                index: 0,
-                                getKey: (k, i) => k.GetString(i),
-                                getValue: (v, i) => v.GetString(i)
-                            );
-                            var result = "{";
-                            result += string.Join(", ", keyValuePairs.Select(kvp => $"\"{kvp.Key}\": \"{kvp.Value}\""));
-                            result += "}";
+                            var result = FormatMapArray(array, 0);
+                            Console.WriteLine("ExtractCell result: " + result);
                             return result;
                         default:
                             if (_byte[columnIndex] == null || _int[columnIndex] == null)
@@ -390,6 +381,43 @@ namespace Snowflake.Data.Core
         private long ExtractFraction(long value, long scale)
         {
             return ((value % s_powersOf10[scale]) * s_powersOf10[9 - scale]);
+        }
+
+        public static string FormatArrowValue(IArrowArray array, int index)
+        {
+            switch (array)
+            {
+                //case ListArray list: return FormatListArray(list, index);
+                //case StructArray strct: return FormatStructArray(strct, index);
+                case MapArray map: return FormatMapArray(map, index);
+                default: return $"\"{((StringArray)array).GetString(index)}\"";
+            };
+        }
+
+        public static string FormatMapArray(MapArray mapArray, int index)
+        {
+            var sb = new StringBuilder();
+            sb.Append("{");
+
+            var offsets = mapArray.ValueOffsets;
+            var start = offsets[index];
+            var end = offsets[index + 1];
+            var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
+
+            var keyArray = keyValuesArray.Fields[0] as StringArray;
+            var valueArray = keyValuesArray.Fields[1];
+
+            for (int i = start; i < end; i++)
+            {
+                sb.Append($"{keyArray.GetString(i)}");
+                sb.Append(": ");
+                sb.Append($"{FormatArrowValue(valueArray, i)}");
+                //sb.Append($"{((StringArray)valueArray).GetString(i)}");
+                if (i != end - 1)
+                    sb.Append(", ");
+            }
+
+            return sb.ToString();
         }
     }
 }
