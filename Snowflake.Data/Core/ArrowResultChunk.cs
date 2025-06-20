@@ -392,7 +392,10 @@ namespace Snowflake.Data.Core
                 case MapArray map: return FormatArrowMapArray(map, index);
                 case ListArray list: return FormatArrowListArray(list, index);
                 case DoubleArray doubles: return doubles.GetValue(index).ToString();
+                case FloatArray floats: return floats.GetValue(index).ToString();
                 case Decimal128Array decimals: return decimals.GetValue(index).ToString();
+                case Int32Array ints: return ints.GetValue(index).ToString();
+                case Int64Array longs: return longs.GetValue(index).ToString();
                 default:
                     {
                         var str = ((StringArray)array).GetString(index);
@@ -455,19 +458,14 @@ namespace Snowflake.Data.Core
             sb.Append("{");
 
             var start = mapArray.ValueOffsets[index];
-            Console.WriteLine("FormatArrowMapArray start : " + start);
             var end = mapArray.ValueOffsets[index + 1];
-            Console.WriteLine("FormatArrowMapArray end : " + end);
             var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
-            Console.WriteLine("FormatArrowMapArray keyValuesArray : " + keyValuesArray);
-            var keyArray = keyValuesArray.Fields[0] as StringArray;
-            Console.WriteLine("FormatArrowMapArray keyArray : " + keyArray);
+            var keyArray = keyValuesArray.Fields[0];
             var valueArray = keyValuesArray.Fields[1];
-            Console.WriteLine("FormatArrowMapArray valueArray : " + valueArray);
 
             for (int i = start; i < end; i++)
             {
-                sb.Append($"\"{keyArray.GetString(i)}\"");
+                sb.Append($"{FormatArrowValue(keyArray, i)}");
                 sb.Append(": ");
                 sb.Append($"{FormatArrowValue(valueArray, i)}");
                 if (i != end - 1)
