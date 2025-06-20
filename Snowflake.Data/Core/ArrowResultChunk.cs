@@ -407,12 +407,14 @@ namespace Snowflake.Data.Core
 
         private string FormatStructArray(StructArray structArray, int index)
         {
-            var sb = new StringBuilder();
-            sb.Append("{");
+            if (structArray.Fields[0].IsNull(index))
+                return "null";
 
+            var sb = new StringBuilder();
             var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
             var end = structArray.Fields.Count;
 
+            sb.Append("{");
             for (int i = 0; i < end; i++)
             {
                 var field = structArray.Fields[i];
@@ -422,42 +424,46 @@ namespace Snowflake.Data.Core
                 if (i != end - 1)
                     sb.Append(", ");
             }
-
             sb.Append("}");
             return sb.ToString();
         }
 
         private string FormatArrowListArray(ListArray listArray, int index)
         {
-            var sb = new StringBuilder();
-            sb.Append("[");
-
             var start = listArray.ValueOffsets[index];
             var end = listArray.ValueOffsets[index + 1];
+
+            if (start == end)
+                return "null";
+
+            var sb = new StringBuilder();
             var values = listArray.Values;
 
+            sb.Append("[");
             for (int i = start; i < end; i++)
             {
                 sb.Append($"{FormatArrowValue(values, i)}");
                 if (i != end - 1)
                     sb.Append(", ");
             }
-
             sb.Append("]");
             return sb.ToString();
         }
 
         private string FormatArrowMapArray(MapArray mapArray, int index)
         {
-            var sb = new StringBuilder();
-            sb.Append("{");
-
             var start = mapArray.ValueOffsets[index];
             var end = mapArray.ValueOffsets[index + 1];
+
+            if (start == end)
+                return "null";
+
+            var sb = new StringBuilder();
             var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
             var keyArray = keyValuesArray.Fields[0];
             var valueArray = keyValuesArray.Fields[1];
 
+            sb.Append("{");
             for (int i = start; i < end; i++)
             {
                 sb.Append($"{FormatArrowValue(keyArray, i)}");
@@ -466,7 +472,6 @@ namespace Snowflake.Data.Core
                 if (i != end - 1)
                     sb.Append(", ");
             }
-
             sb.Append("}");
             return sb.ToString();
         }
