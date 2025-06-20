@@ -265,6 +265,7 @@ namespace Snowflake.Data.Client
                 var stringValue = GetString(ordinal);
                 Console.WriteLine("GetObject stringValue: " + stringValue);
                 var json = stringValue == null ? null : JObject.Parse(stringValue);
+                Console.WriteLine("GetObject json: " + json);
                 return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
             }
             catch (Exception e)
@@ -290,11 +291,14 @@ namespace Snowflake.Data.Client
                 }
 
                 var stringValue = GetString(ordinal);
+                Console.WriteLine("GetArray: " + stringValue);
                 var json = stringValue == null ? null : JArray.Parse(stringValue);
+                Console.WriteLine("GetArray: " + json);
                 return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
             }
             catch (Exception e)
             {
+                Console.WriteLine("GetArray error: " + e.Message);
                 if (e is SnowflakeDbException)
                     throw;
                 throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting an array");
@@ -306,6 +310,7 @@ namespace Snowflake.Data.Client
             try
             {
                 var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+                Console.WriteLine("GetMap rowType.name: " + rowType.name);
                 var fields = rowType.fields;
                 if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsMapType(rowType.type))
                 {
@@ -313,11 +318,14 @@ namespace Snowflake.Data.Client
                 }
 
                 var stringValue = GetString(ordinal);
+                Console.WriteLine("GetMap stringValue: " + stringValue);
                 var json = stringValue == null ? null : JObject.Parse(stringValue);
+                Console.WriteLine("GetMap json: " + json);
                 return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
             }
             catch (Exception e)
             {
+                Console.WriteLine("GetMap error: " + e.Message);
                 if (e is SnowflakeDbException)
                     throw;
                 throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting a map");

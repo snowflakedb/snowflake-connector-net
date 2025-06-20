@@ -387,7 +387,7 @@ namespace Snowflake.Data.Core
         {
             switch (array)
             {
-                //case StructArray strct: return FormatStructArray(strct, index);
+                case StructArray strct: return FormatStructArray(strct, index);
                 case MapArray map: return FormatArrowMapArray(map, index);
                 case ListArray list: return FormatArrowListArray(list, index);
                 default: return $"\"{((StringArray)array).GetString(index)}\"";
