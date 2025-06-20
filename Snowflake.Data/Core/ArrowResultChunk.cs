@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Apache.Arrow;
+using Apache.Arrow.Types;
 
 namespace Snowflake.Data.Core
 {
@@ -201,16 +202,25 @@ namespace Snowflake.Data.Core
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
                 case SFDataType.MAP:
-                    if (_byte[columnIndex] == null || _int[columnIndex] == null)
+                    switch (column)
                     {
-                        _byte[columnIndex] = ((StringArray)column).Values.ToArray();
-                        _int[columnIndex] = ((StringArray)column).ValueOffsets.ToArray();
+                        case StructArray structArray:
+                            return FormatStructArray(structArray, _currentBatchIndex);
+                        case MapArray mapArray:
+                            return FormatArrowMapArray(mapArray, _currentRecordIndex);
+                        case ListArray listArray:
+                            return FormatArrowListArray(listArray, _currentRecordIndex);
+                        default:
+                            if (_byte[columnIndex] == null || _int[columnIndex] == null)
+                            {
+                                _byte[columnIndex] = ((StringArray)column).Values.ToArray();
+                                _int[columnIndex] = ((StringArray)column).ValueOffsets.ToArray();
+                            }
+                            return StringArray.DefaultEncoding.GetString(
+                                _byte[columnIndex],
+                                _int[columnIndex][_currentRecordIndex],
+                                _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
                     }
-                    return StringArray.DefaultEncoding.GetString(
-                        _byte[columnIndex],
-                        _int[columnIndex][_currentRecordIndex],
-                        _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
-
                 case SFDataType.VECTOR:
                     var col = (FixedSizeListArray)column;
                     var values = col.Values;
@@ -368,6 +378,93 @@ namespace Snowflake.Data.Core
         private long ExtractFraction(long value, long scale)
         {
             return ((value % s_powersOf10[scale]) * s_powersOf10[9 - scale]);
+        }
+
+        private string FormatArrowValue(IArrowArray array, int index)
+        {
+            switch (array)
+            {
+                case StructArray strct: return FormatStructArray(strct, index);
+                case MapArray map: return FormatArrowMapArray(map, index);
+                case ListArray list: return FormatArrowListArray(list, index);
+                case DoubleArray doubles: return doubles.GetValue(index).ToString();
+                case FloatArray floats: return floats.GetValue(index).ToString();
+                case Decimal128Array decimals: return decimals.GetValue(index).ToString();
+                case Int32Array ints: return ints.GetValue(index).ToString();
+                case Int64Array longs: return longs.GetValue(index).ToString();
+                default:
+                    {
+                        var str = ((StringArray)array).GetString(index);
+                        return string.IsNullOrEmpty(str) ? "undefined" :
+                            $"\"{str}\""
+                            .Replace("\"{", "{").Replace("}\"", "}")
+                            .Replace("\"[", "[").Replace("]\"", "]");
+                    }
+            };
+        }
+
+        private string FormatStructArray(StructArray structArray, int index)
+        {
+            var sb = new StringBuilder();
+            var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
+            var end = structArray.Fields.Count;
+            sb.Append("{");
+            for (int i = 0; i < end; i++)
+            {
+                var field = structArray.Fields[i];
+                var value = FormatArrowValue(field, index);
+                if (value == "undefined" && end == 1)
+                    return "null";
+                sb.Append($"\"{structTypeFields[i].Name}\"");
+                sb.Append(": ");
+                sb.Append($"{value}");
+                if (i != end - 1)
+                    sb.Append(", ");
+            }
+            sb.Append("}");
+            return sb.ToString();
+        }
+
+        private string FormatArrowListArray(ListArray listArray, int index)
+        {
+            var start = listArray.ValueOffsets[index];
+            var end = listArray.ValueOffsets[index + 1];
+            if (start == end)
+                return "null";
+            var sb = new StringBuilder();
+            var values = listArray.Values;
+            sb.Append("[");
+            for (int i = start; i < end; i++)
+            {
+                sb.Append($"{FormatArrowValue(values, i)}");
+                if (i != end - 1)
+                    sb.Append(", ");
+            }
+            sb.Append("]");
+            return sb.ToString();
+        }
+
+        private string FormatArrowMapArray(MapArray mapArray, int index)
+        {
+            var start = mapArray.ValueOffsets[index];
+            var end = mapArray.ValueOffsets[index + 1];
+            if (start == end)
+                return "null";
+            var sb = new StringBuilder();
+            var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
+            var keyArray = keyValuesArray.Fields[0];
+            var valueArray = keyValuesArray.Fields[1];
+            sb.Append("{");
+            for (int i = start; i < end; i++)
+            {
+                sb.Append($"{FormatArrowValue(keyArray, i)}");
+                sb.Append(": ");
+                sb.Append($"{FormatArrowValue(valueArray, i)}");
+                if (i != end - 1)
+                    sb.Append(", ");
+            }
+            sb.Append("}");
+            return sb.ToString();
         }
     }
 }
