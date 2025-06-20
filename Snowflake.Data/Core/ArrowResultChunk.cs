@@ -208,24 +208,7 @@ namespace Snowflake.Data.Core
                     switch (column)
                     {
                         case StructArray structArray:
-                            Console.WriteLine("ExtractCell structArray.Fields.Count: " + structArray.Fields.Count);
-
-                            var structType = (StructType)structArray.Data.DataType;
-
-                            var r = "{";
-                            var end = structArray.Fields.Count;
-                            for (int i = 0; i < end; i++)
-                            {
-                                var field = structArray.Fields[i];
-                                var fieldName = structType.Fields[i].Name;
-                                r += $"\"{fieldName}\": {((StringArray)field).GetString(0)}";
-
-                                if (i != end - 1)
-                                    r+= ", ";
-                            }
-                            r += "}";
-                            Console.WriteLine("ExtractCell result: " + r);
-                            return r;
+                            return FormatStructArray(structArray, _currentBatchIndex);
                         case MapArray mapArray:
                             return FormatArrowMapArray(mapArray, _currentRecordIndex);
                         case ListArray listArray:
@@ -400,7 +383,7 @@ namespace Snowflake.Data.Core
             return ((value % s_powersOf10[scale]) * s_powersOf10[9 - scale]);
         }
 
-        public static string FormatArrowValue(IArrowArray array, int index)
+        private string FormatArrowValue(IArrowArray array, int index)
         {
             switch (array)
             {
@@ -410,7 +393,30 @@ namespace Snowflake.Data.Core
                 default: return $"\"{((StringArray)array).GetString(index)}\"";
             };
         }
-        public static string FormatArrowListArray(ListArray listArray, int index)
+
+        private string FormatStructArray(StructArray structArray, int index)
+        {
+            var sb = new StringBuilder();
+            sb.Append("{");
+
+            var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
+            var end = structArray.Fields.Count;
+
+            for (int i = 0; i < end; i++)
+            {
+                var field = structArray.Fields[i];
+                sb.Append($"\"{structTypeFields[i].Name}\"");
+                sb.Append(": ");
+                sb.Append($"{FormatArrowValue(field, 0)}");
+                if (i != end - 1)
+                    sb.Append(", ");
+            }
+
+            sb.Append("}");
+            return sb.ToString();
+        }
+
+        private string FormatArrowListArray(ListArray listArray, int index)
         {
             var sb = new StringBuilder();
             sb.Append("[");
@@ -430,7 +436,7 @@ namespace Snowflake.Data.Core
             return sb.ToString();
         }
 
-        public static string FormatArrowMapArray(MapArray mapArray, int index)
+        private string FormatArrowMapArray(MapArray mapArray, int index)
         {
             var sb = new StringBuilder();
             sb.Append("{");
