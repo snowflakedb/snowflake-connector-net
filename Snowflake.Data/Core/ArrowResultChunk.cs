@@ -407,11 +407,6 @@ namespace Snowflake.Data.Core
 
         private string FormatStructArray(StructArray structArray, int index)
         {
-            Console.WriteLine("FormatStructArray IsNull: " + structArray.Fields[0].IsNull(index));
-            Console.WriteLine("FormatStructArray Count: " + structArray.Fields.Count);
-            if (structArray.Fields[0].IsNull(index) && structArray.Fields.Count == 1)
-                return "null";
-
             var sb = new StringBuilder();
             var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
             var end = structArray.Fields.Count;
@@ -420,9 +415,14 @@ namespace Snowflake.Data.Core
             for (int i = 0; i < end; i++)
             {
                 var field = structArray.Fields[i];
+                var value = FormatArrowValue(field, index);
+                if (value == "undefined" && end == 1)
+                    return "null";
+
                 sb.Append($"\"{structTypeFields[i].Name}\"");
                 sb.Append(": ");
-                sb.Append($"{FormatArrowValue(field, index)}");
+                sb.Append($"{value}");
+
                 if (i != end - 1)
                     sb.Append(", ");
             }
@@ -434,7 +434,6 @@ namespace Snowflake.Data.Core
         {
             var start = listArray.ValueOffsets[index];
             var end = listArray.ValueOffsets[index + 1];
-            Console.WriteLine("FormatArrowListArray start == end" + (start == end));
 
             if (start == end)
                 return "null";
@@ -457,7 +456,6 @@ namespace Snowflake.Data.Core
         {
             var start = mapArray.ValueOffsets[index];
             var end = mapArray.ValueOffsets[index + 1];
-            Console.WriteLine("FormatArrowMapArray start == end" + (start == end));
 
             if (start == end)
                 return "null";
