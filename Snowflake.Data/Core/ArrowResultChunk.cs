@@ -407,8 +407,9 @@ namespace Snowflake.Data.Core
 
         private string FormatStructArray(StructArray structArray, int index)
         {
-            Console.WriteLine("FormatStructArray IsNull" + structArray.Fields[0].IsNull(index));
-            if (structArray.Fields[0].IsNull(index))
+            Console.WriteLine("FormatStructArray IsNull: " + structArray.Fields[0].IsNull(index));
+            Console.WriteLine("FormatStructArray Count: " + structArray.Fields.Count);
+            if (structArray.Fields[0].IsNull(index) && structArray.Fields.Count == 1)
                 return "null";
 
             var sb = new StringBuilder();
