@@ -391,6 +391,8 @@ namespace Snowflake.Data.Core
                 case StructArray strct: return FormatStructArray(strct, index);
                 case MapArray map: return FormatArrowMapArray(map, index);
                 case ListArray list: return FormatArrowListArray(list, index);
+                case DoubleArray doubles: return doubles.GetValue(index).ToString();
+                case Decimal128Array decimals: return decimals.GetValue(index).ToString();
                 default: return $"\"{((StringArray)array).GetString(index)}\""
                 .Replace("\"{", "{")
                 .Replace("}\"", "}")
