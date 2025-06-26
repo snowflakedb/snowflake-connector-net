@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.IsFalse(string.IsNullOrEmpty(attestation.Credential));
+            AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
         [Test]
