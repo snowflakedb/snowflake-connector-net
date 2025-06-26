@@ -1,7 +1,7 @@
 {
     "mappings": [
         {
-            "scenarioName": "Successful Snowflake login for OAuth authentication with a token",
+            "scenarioName": "Successful Snowflake login for WIF authentication",
             "request": {
                 "urlPathPattern": "/session/v1/login-request",
                 "method": "POST",
