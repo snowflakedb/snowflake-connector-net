@@ -71,7 +71,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             }
             catch (Exception exception)
             {
-                var realException = UnpackAggregateException(exception);
+                var realException = HttpUtil.UnpackAggregateException(exception);
                 s_logger.Error($"Failed to get access token in workload_identity authentication for Azure: {realException.Message}");
                 throw AttestationError($"Failed to get access token: {realException.Message}");
             }
@@ -84,9 +84,6 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
             return response.AccessToken;
         }
-
-        private Exception UnpackAggregateException(Exception exception) =>
-            exception is AggregateException ? ((AggregateException)exception).InnerException : exception;
 
         private HttpRequestMessage PrepareRequest(string snowflakeEntraResource)
         {

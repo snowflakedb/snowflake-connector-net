@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
             Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
             Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            Assert.IsFalse(string.IsNullOrEmpty(attestation.Credential));
+            AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
             Assert.AreEqual(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
             Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            Assert.IsFalse(string.IsNullOrEmpty(attestation.Credential));
+            AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
         [Test]
@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
 
             // assert
-            Assert.AreEqual(SFError.WIF_ATTESTATION_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
             Assert.That(thrown.Message, Does.Contain("Retrieving attestation for AZURE failed. Reading of the token failed."));
         }
 
@@ -155,7 +155,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
             Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
             Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            Assert.IsFalse(string.IsNullOrEmpty(attestation.Credential));
+            AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
         [Test]
@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
             Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
             Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            Assert.IsFalse(string.IsNullOrEmpty(attestation.Credential));
+            AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
         [Test]
@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
             Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
             Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            Assert.IsFalse(string.IsNullOrEmpty(attestation.Credential));
+            AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
         [Test]
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
 
             // assert
-            Assert.AreEqual(SFError.WIF_ATTESTATION_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
             Assert.That(thrown.Message, Does.Contain("Retrieving attestation for AZURE failed. Managed identity is not enabled on this Azure function."));
         }
 
@@ -247,7 +247,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
             Assert.AreEqual(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
             Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            Assert.IsFalse(string.IsNullOrEmpty(attestation.Credential));
+            AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
         private void AddAzureBasicWiremockMappings() => AddAzureBasicWiremockMappings(_runner);

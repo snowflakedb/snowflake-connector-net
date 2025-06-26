@@ -74,7 +74,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             }
             catch (Exception exception)
             {
-                var realException = UnpackAggregateException(exception);
+                var realException = HttpUtil.UnpackAggregateException(exception);
                 s_logger.Error($"Failed to get token in workload_identity authentication for GCP: {realException.Message}");
                 throw AttestationError($"Failed to get token: {realException.Message}");
             }
@@ -85,8 +85,5 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             }
             return response;
         }
-
-        private Exception UnpackAggregateException(Exception exception) =>
-            exception is AggregateException ? ((AggregateException)exception).InnerException : exception;
     }
 }

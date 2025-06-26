@@ -105,7 +105,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
 
             // assert
-            Assert.AreEqual(SFError.WIF_ATTESTATION_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
             Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
         }
 
@@ -121,7 +121,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
 
             // assert
-            Assert.AreEqual(SFError.WIF_ATTESTATION_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
             Assert.That(thrown.Message, Does.Contain("Retrieving attestation for GCP failed. Failed to get token: Response status code does not indicate success: 400 (Bad Request)."));
         }
 

@@ -1,4 +1,5 @@
 using System;
+using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
@@ -79,7 +80,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.AreEqual(AttestationProvider.AWS, attestation.Provider);
-            Assert.IsFalse(string.IsNullOrEmpty(attestation.Credential));
+            AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
         [Test]
@@ -95,10 +96,10 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.AreEqual(AttestationProvider.GCP, attestation.Provider);
-            Assert.IsFalse(string.IsNullOrEmpty(attestation.Credential));
+            AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        private SFSession CreateSession(string connectionStringSuffix, Action<Moq.Mock<AwsSdkWrapper>> awsSdkConfigurator) =>
+        private SFSession CreateSession(string connectionStringSuffix, Action<Mock<AwsSdkWrapper>> awsSdkConfigurator) =>
             PrepareSession(
                 null,
                 connectionStringSuffix,

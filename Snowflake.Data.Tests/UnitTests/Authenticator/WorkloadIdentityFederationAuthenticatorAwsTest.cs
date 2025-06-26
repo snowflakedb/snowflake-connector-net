@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
 
             // assert
-            Assert.AreEqual(SFError.EXPERIMENTAL_AUTHENTICATION_DISABLED.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.EXPERIMENTAL_AUTHENTICATION_DISABLED);
             Assert.That(thrown.Message, Does.Contain("Experimental authentication of 'workload_identity' is disabled. You can enable it by SF_ENABLE_EXPERIMENTAL_AUTHENTICATION environmental variable."));
         }
 

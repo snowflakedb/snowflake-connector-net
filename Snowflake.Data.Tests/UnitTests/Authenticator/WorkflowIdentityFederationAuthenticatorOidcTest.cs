@@ -46,6 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             AssertSessionSuccessfullyCreated(session);
         }
+
         [Test]
         public async Task TestSuccessfulOidcAuthenticationAsync()
         {
@@ -92,6 +93,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
 
             // assert
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
             Assert.That(thrown.Message, Does.Contain("Retrieving attestation for OIDC failed. Failed to parse a token for OIDC workload identity federation."));
         }
 
