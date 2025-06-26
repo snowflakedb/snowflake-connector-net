@@ -21,7 +21,7 @@ namespace Snowflake.Data.Configuration
             IsEnabledExperimentalAuthentication = ReadEnabledExperimentalAuthentication(environmentOperations);
         }
 
-        public void VerifyIfAuthenticationEnabled(string authenticator)
+        public void VerifyIfExperimentalAuthenticationEnabled(string authenticator)
         {
             if (!IsEnabledExperimentalAuthentication)
             {

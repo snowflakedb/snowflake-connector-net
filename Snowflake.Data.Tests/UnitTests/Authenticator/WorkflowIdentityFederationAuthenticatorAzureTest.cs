@@ -149,7 +149,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
             // act
-            //session.Open();
             var attestation = authenticator.CreateAttestation();
 
             // assert
@@ -173,7 +172,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
             // act
-            //session.Open();
             var attestation = authenticator.CreateAttestation();
 
             // assert
@@ -198,7 +196,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
             // act
-            //session.Open();
             var attestation = authenticator.CreateAttestation();
 
             // assert

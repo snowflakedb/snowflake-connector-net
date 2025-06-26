@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var clientFeatures = new ClientFeatureFlags(environmentOperations.Object);
 
             // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => clientFeatures.VerifyIfAuthenticationEnabled("workload_identity"));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => clientFeatures.VerifyIfExperimentalAuthenticationEnabled("workload_identity"));
 
             // assert
             Assert.AreEqual(SFError.EXPERIMENTAL_AUTHENTICATION_DISABLED.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);

@@ -68,14 +68,14 @@ namespace Snowflake.Data.Core.Authenticator
 
         public async Task AuthenticateAsync(CancellationToken cancellationToken)
         {
-            _featureFlags.VerifyIfAuthenticationEnabled(AuthName);
+            _featureFlags.VerifyIfExperimentalAuthenticationEnabled(AuthName);
             _attestationData = CreateAttestation();
             await LoginAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public void Authenticate()
         {
-            _featureFlags.VerifyIfAuthenticationEnabled(AuthName);
+            _featureFlags.VerifyIfExperimentalAuthenticationEnabled(AuthName);
             _attestationData = CreateAttestation();
             Login();
         }
