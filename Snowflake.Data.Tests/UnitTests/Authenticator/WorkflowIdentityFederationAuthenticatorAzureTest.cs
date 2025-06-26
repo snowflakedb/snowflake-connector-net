@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             AddAzureFunctionsWithoutClientIdWiremockMappings();
-            var session = PrepareSessionForAzure(null,e =>
+            var session = PrepareSessionForAzure(null, e =>
             {
                 SetupExperimentalAuthenticationEnabled(e);
                 ConfigureIdentityEndpoint(e);

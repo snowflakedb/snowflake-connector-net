@@ -106,7 +106,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 }
 
                 urlWithoutQueryParams = identityEndpoint;
-                headers = new Dictionary<string, string> { {"X-IDENTITY-HEADER", identityHeader} };
+                headers = new Dictionary<string, string> { { "X-IDENTITY-HEADER", identityHeader } };
                 queryParams = $"api-version=2019-08-01&resource={HttpUtility.UrlEncode(entraResourceOrDefault)}";
 
                 var clientId = _environmentOperations.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID");

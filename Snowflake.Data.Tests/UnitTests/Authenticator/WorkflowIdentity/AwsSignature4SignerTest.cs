@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
         private const string AwsSecretKey = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStT"; // pragma: allowlist secret
         private const string AwsToken = "HIJKLMNOPQRSTUWXYZ"; // pragma: allowlist secret
         private const string SnowflakeAudience = "snowflakecomputing.com";
-        private static readonly DateTime s_time = new (2025, 6, 12, 15, 46, 13, 5, new GregorianCalendar(), DateTimeKind.Utc);
+        private static readonly DateTime s_time = new(2025, 6, 12, 15, 46, 13, 5, new GregorianCalendar(), DateTimeKind.Utc);
         private const string ExpectedAmazonDate = "20250612T154613Z";
         private const string ExpectedSignature = "3fa477a5d4df0381fa0d303cc944723b20e6fff8e1917602a19f4dc67c18df17"; // pragma: allowlist secret
         private static readonly string s_expectedAuthorization = $"AWS4-HMAC-SHA256 Credential={AwsAccessKey}/20250612/eu-west-1/sts/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token;x-snowflake-audience, Signature={ExpectedSignature}";

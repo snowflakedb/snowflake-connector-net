@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             .Append("}}")
             .ToString();
         private static readonly string s_awsRequestBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(s_awsRequest));
-        internal static readonly DateTime s_utcNow = new (2025, 5, 27, 14, 20, 33, 11, new GregorianCalendar(), DateTimeKind.Utc);
+        internal static readonly DateTime s_utcNow = new(2025, 5, 27, 14, 20, 33, 11, new GregorianCalendar(), DateTimeKind.Utc);
 
         private WiremockRunner _runner;
 

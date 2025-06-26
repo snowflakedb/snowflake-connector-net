@@ -4,7 +4,7 @@ namespace Snowflake.Data.Tests.Util
 {
     internal class StringTransformations
     {
-        private List<StringTransformation> _transformations = new ();
+        private List<StringTransformation> _transformations = new();
 
         public static readonly StringTransformations NoTransformationsInstance = new StringTransformations();
 
