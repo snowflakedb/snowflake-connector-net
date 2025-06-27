@@ -1,0 +1,32 @@
+{
+    "mappings": [
+        {
+            "request": {
+                "urlPattern": "/metadata/identity/endpoint/from/env.*",
+                "queryParameters": {
+                    "api-version": {
+                        "equalTo": "2019-08-01"
+                    },
+                    "resource": {
+                        "equalTo": "%ENTRA_RESOURCE%"
+                    },
+                    "client_id": {
+                        "equalTo": "%CLIENT_ID%"
+                    }
+                },
+                "method": "GET",
+                "headers": {
+                    "X-IDENTITY-HEADER": {
+                        "equalTo": "%IDENTITY_HEADER%"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "jsonBody": {
+                    "access_token": "%ACCESS_TOKEN%"
+                }
+            }
+        }
+    ]
+}

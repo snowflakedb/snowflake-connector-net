@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core
@@ -126,6 +127,10 @@ namespace Snowflake.Data.Core
         OAUTHTOKENREQUESTURL,
         [SFSessionPropertyAttr(required = false, defaultValue = "true", defaultNonWindowsValue = "false")]
         CLIENT_STORE_TEMPORARY_CREDENTIAL,
+        [SFSessionPropertyAttr(required = false)]
+        WIFPROVIDER,
+        [SFSessionPropertyAttr(required = false)]
+        WIFENTRARESOURCE,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -378,6 +383,32 @@ namespace Snowflake.Data.Core
             {
                 CheckRequiredProperty(SFSessionProperty.TOKEN, properties);
             }
+            else if (WorkloadIdentityFederationAuthenticator.IsWorkloadIdentityAuthenticator(authenticator))
+            {
+                var attestationProvider = ValidateWifProvider(properties);
+                ValidateAttestationParameters(attestationProvider, properties);
+            }
+        }
+
+        private static AttestationProvider? ValidateWifProvider(SFSessionProperties properties)
+        {
+            if (!properties.TryGetValue(SFSessionProperty.WIFPROVIDER, out var provider) || string.IsNullOrEmpty(provider))
+            {
+                return null;
+            }
+            if (!Enum.TryParse(provider, true, out AttestationProvider attestationProvider))
+            {
+                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, "Unknown value of wifProvider parameter.");
+            }
+            return attestationProvider;
+        }
+
+        private static void ValidateAttestationParameters(AttestationProvider? attestationProvider, SFSessionProperties properties)
+        {
+            if (attestationProvider == AttestationProvider.OIDC)
+            {
+                CheckRequiredProperty(SFSessionProperty.TOKEN, properties);
+            }
         }
 
         private static void ValidatePoolingEnabledOnlyWithUser(SFSessionProperties properties)
@@ -508,7 +539,8 @@ namespace Snowflake.Data.Core
                 MFACacheAuthenticator.IsMfaCacheAuthenticator,
                 OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
                 OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
-                ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
+                ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator,
+                WorkloadIdentityFederationAuthenticator.IsWorkloadIdentityAuthenticator
             };
 
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
@@ -733,7 +765,8 @@ namespace Snowflake.Data.Core
                     OAuthAuthenticator.IsOAuthAuthenticator,
                     OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
                     OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
-                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
+                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator,
+                    WorkloadIdentityFederationAuthenticator.IsWorkloadIdentityAuthenticator
                 };
                 // External browser, jwt and oauth don't require a password for authenticating
                 return !authenticatorDefined || !authenticatorsWithoutPassword.Any(func => func(authenticator));
@@ -749,7 +782,8 @@ namespace Snowflake.Data.Core
                     ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
                     OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
                     OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
-                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
+                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator,
+                    WorkloadIdentityFederationAuthenticator.IsWorkloadIdentityAuthenticator
                 };
                 return !authenticatorDefined || !authenticatorsWithoutUsername.Any(func => func(authenticator));
             }
