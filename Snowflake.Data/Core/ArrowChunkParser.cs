@@ -1,13 +1,11 @@
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Apache.Arrow;
 using Apache.Arrow.Ipc;
 
 namespace Snowflake.Data.Core
 {
-    public class ArrowChunkParser : IChunkParser
+    internal class ArrowChunkParser : IChunkParser
     {
         private readonly Stream stream;
 
