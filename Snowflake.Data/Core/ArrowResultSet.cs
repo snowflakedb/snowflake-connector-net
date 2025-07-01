@@ -52,7 +52,7 @@ namespace Snowflake.Data.Core
 
         private void ReadChunk(QueryExecResponseData responseData)
         {
-            if (responseData.rowsetBase64.Length > 0)
+            if (responseData.rowsetBase64?.Length > 0)
             {
                 using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
                 {
@@ -297,7 +297,7 @@ namespace Snowflake.Data.Core
                 case int ret: return ret;
                 case short ret: return ret;
                 case sbyte ret: return ret;
-                default: return (decimal)value;
+                default: return Convert.ToDecimal(value);
             }
         }
 
@@ -312,7 +312,7 @@ namespace Snowflake.Data.Core
                 case int ret: return ret;
                 case short ret: return ret;
                 case sbyte ret: return ret;
-                default: return (double)value;
+                default: return Convert.ToDouble(value);
             }
         }
 
@@ -327,7 +327,7 @@ namespace Snowflake.Data.Core
                 case int ret: return ret;
                 case short ret: return ret;
                 case sbyte ret: return ret;
-                default: return (float)value;
+                default: return Convert.ToSingle(value);
             }
         }
 
@@ -347,7 +347,7 @@ namespace Snowflake.Data.Core
                     case long ret: return (short)ret;
                     case int ret: return (short)ret;
                     case sbyte ret: return ret;
-                    default: return (short)value;
+                    default: return Convert.ToInt16(value);
                 }
             }
         }
@@ -363,7 +363,7 @@ namespace Snowflake.Data.Core
                     case long ret: return (int)ret;
                     case short ret: return ret;
                     case sbyte ret: return ret;
-                    default: return (int)value;
+                    default: return Convert.ToInt32(value);
                 }
             }
         }
@@ -379,7 +379,7 @@ namespace Snowflake.Data.Core
                     case int ret: return ret;
                     case short ret: return ret;
                     case sbyte ret: return ret;
-                    default: return (long)value;
+                    default: return Convert.ToInt64(value);
                 }
             }
         }
