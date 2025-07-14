@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -5,9 +6,11 @@ using System.Security;
 using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Log;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
@@ -92,6 +95,32 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             // assert
             Assert.AreEqual(content, result);
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestSkipReadPermissionsWhenSkipIsEnabled()
+        {
+            var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var logPath = Path.Combine(logsDirectory, $"easy_logging_logs_{Path.GetRandomFileName()}", "dotnet");
+            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "true");
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, logPath);
+
+            var content = "random text";
+            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+
+            var fileReadPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
+            Syscall.chmod(filePath, (FilePermissions)fileReadPermissions);
+
+            // act
+            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
+
+            // assert
+            Assert.AreEqual(content, result);
+            var logLines = File.ReadLines(Logger.EasyLoggerManagerTest.FindLogFilePath(logPath));
+            Assert.That(logLines, Has.Exactly(0).Matches<string>(s => s.Contains("File is readable by someone other than the owner")));
+
+            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
         }
 
         [Test]
