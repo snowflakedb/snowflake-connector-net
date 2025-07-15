@@ -1,0 +1,86 @@
+{
+    "mappings": [
+        {
+            "scenarioName": "Successful Snowflake login for WIF authentication",
+            "request": {
+                "urlPathPattern": "/session/v1/login-request",
+                "method": "POST",
+                "headers": {
+                    "Authorization": {
+                        "contains": "Basic"
+                    }
+                },
+                "bodyPatterns": [
+                    { "matchesJsonPath": "$.data[?(@.AUTHENTICATOR == 'workload_identity')]" },
+                    { "matchesJsonPath": "$.data[?(@.TOKEN == '%ACCESS_TOKEN%')]" },
+                    { "matchesJsonPath": "$.data[?(@.PROVIDER == '%WIF_PROVIDER%')]" }
+                ]
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "jsonBody": {
+                    "data": {
+                        "masterToken": "masterToken123",
+                        "additionalAuthnData": {},
+                        "token": "sessionToken123",
+                        "sessionId": 1234567890,
+                        "parameters": [
+                            { "name": "TIMESTAMP_OUTPUT_FORMAT", "value": "YYYY-MM-DD HH24:MI:SS.FF3 TZHTZM" },
+                            { "name": "CLIENT_PREFETCH_THREADS", "value": 4 },
+                            { "name": "VARIANT_MAX_SIZE_IN_RESULT", "value": 134217728 },
+                            { "name": "TIME_OUTPUT_FORMAT", "value":"HH24:MI:SS " },
+                            { "name": "CLIENT_RESULT_CHUNK_SIZE", "value": 16 },
+                            { "name": "TIMESTAMP_TZ_OUTPUT_FORMAT", "value":" " },
+                            { "name": "CLIENT_SESSION_KEEP_ALIVE", "value": false },
+                            { "name": "QUERY_CONTEXT_CACHE_SIZE", "value": 5 },
+                            { "name": "CLIENT_OUT_OF_BAND_TELEMETRY_ENABLED", "value": false },
+                            { "name": "CLIENT_METADATA_USE_SESSION_DATABASE", "value": false },
+                            { "name": "VARCHAR_AND_BINARY_MAX_SIZE_IN_RESULT", "value": 134217728 },
+                            { "name": "ENABLE_STAGE_S3_PRIVATELINK_FOR_US_EAST_1", "value": true },
+                            { "name": "CLIENT_RESULT_PREFETCH_THREADS", "value": 1 },
+                            { "name": "TIMESTAMP_NTZ_OUTPUT_FORMAT", "value":"YYYY-MM-DD HH24:MI:SS.FF3 " },
+                            { "name": "CLIENT_METADATA_REQUEST_USE_CONNECTION_CTX", "value": false },
+                            { "name": "CLIENT_HONOR_CLIENT_TZ_FOR_TIMESTAMP_NTZ", "value": true },
+                            { "name": "CLIENT_MEMORY_LIMIT", "value": 1536 },
+                            { "name": "CLIENT_TIMESTAMP_TYPE_MAPPING", "value":"TIMESTAMP_LTZ " },
+                            { "name": "TIMEZONE", "value":"America/Los_Angeles " },
+                            { "name": "SERVICE_NAME", "value":" "},
+                            { "name": "CLIENT_RESULT_PREFETCH_SLOTS", "value": 2 },
+                            { "name": "CLIENT_TELEMETRY_ENABLED", "value": true },
+                            { "name": "CLIENT_DISABLE_INCIDENTS", "value": true },
+                            { "name": "CLIENT_USE_V1_QUERY_API", "value": true },
+                            { "name": "CLIENT_RESULT_COLUMN_CASE_INSENSITIVE", "value": false },
+                            { "name": "BINARY_OUTPUT_FORMAT", "value":"HEX " },
+                            { "name": "CSV_TIMESTAMP_FORMAT", "value":" " },
+                            { "name": "CLIENT_ENABLE_LOG_INFO_STATEMENT_PARAMETERS", "value": false },
+                            { "name": "CLIENT_TELEMETRY_SESSIONLESS_ENABLED", "value": true },
+                            { "name": "DATE_OUTPUT_FORMAT", "value":"YYYY-MM-DD " },
+                            { "name": "CLIENT_STAGE_ARRAY_BINDING_THRESHOLD", "value": 65280 },
+                            { "name": "CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY", "value": 3600 },
+                            { "name": "CLIENT_SESSION_CLONE", "value": false },
+                            { "name": "AUTOCOMMIT", "value": true },
+                            { "name": "TIMESTAMP_LTZ_OUTPUT_FORMAT", "value": "" }
+                        ],
+                        "sessionInfo":{
+                            "databaseName":null,
+                            "schemaName":null,
+                            "warehouseName":null,
+                            "roleName":null
+                        },
+                        "idToken": null,
+                        "idTokenValidityInSeconds": 0,
+                        "responseData": null,
+                        "mfaToken": null,
+                        "mfaTokenValidityInSeconds": 0
+                    },
+                    "code": null,
+                    "message": null,
+                    "success": true
+                }
+            }
+        }
+    ]
+}
