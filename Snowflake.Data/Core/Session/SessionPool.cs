@@ -516,7 +516,7 @@ namespace Snowflake.Data.Core.Session
                 session.SetPooling(false);
             }
 
-            var sessionContext = new SessionPropertiesContext { Password = Password, Token = Token };
+            var sessionContext = new SessionPropertiesContext { Password = Password, OAuthClientSecret = OAuthClientSecret, Token = Token };
             if (!session.GetPooling())
             {
                 ReleaseBusySession(session);
@@ -527,6 +527,7 @@ namespace Snowflake.Data.Core.Session
                 return false;
             }
 
+            session.ClearQueryContextCache();
             var result = ReturnSessionToPool(session, ensureMinPoolSize);
             var wasSessionReturnedToPool = result.Item1;
             var sessionCreationTokens = result.Item2;
