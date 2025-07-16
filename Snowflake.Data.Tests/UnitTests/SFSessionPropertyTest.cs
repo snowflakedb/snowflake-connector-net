@@ -556,6 +556,18 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
         }
 
+        [Test]
+        [TestCase("authenticator=workload_identity;account=test;wifProvider=abc;", "Connection string is invalid: Unknown value of wifProvider parameter.")]
+        [TestCase("authenticator=workload_identity;account=test;wifProvider=OIDC;", "Required property TOKEN is not provided.")]
+        public void TestFailOnWrongWifConfiguration(string connectionString, string expectedErrorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
+        }
+
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";

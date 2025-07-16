@@ -522,6 +522,9 @@ namespace Snowflake.Data.Core
             }
         }
 
+        internal static Exception UnpackAggregateException(Exception exception) =>
+            exception is AggregateException ? ((AggregateException)exception).InnerException : exception;
+
         static private Exception GetInnerMostException(Exception exception)
         {
             var innermostException = exception;
