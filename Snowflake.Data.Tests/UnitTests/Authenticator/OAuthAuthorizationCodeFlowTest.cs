@@ -303,7 +303,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginInvalidTokenMappingPath);
             _runner.AddMappings(s_refreshTokenMappingPath);
-            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformation(AccessToken, NewAccessToken));
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
             var session = PrepareSession();
             var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -325,7 +325,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginInvalidTokenMappingPath);
             _runner.AddMappings(s_refreshTokenMappingPath);
-            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformation(AccessToken, NewAccessToken));
+            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
             var session = PrepareSession();
             var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 

@@ -157,11 +157,11 @@ namespace Snowflake.Data.Tests.Util
             }
         }
 
-        public void AddMappings(string file, StringTransformation transformation = null)
+        public void AddMappings(string file, StringTransformations transformations = null)
         {
             s_logger.Debug($"Adding wiremock mappings from {file}");
             var fileContent = File.ReadAllText(file);
-            var transformedContent = (transformation ?? StringTransformation.NoTransformationInstance)
+            var transformedContent = (transformations ?? StringTransformations.NoTransformationsInstance)
                 .Transform(fileContent)
                 .Replace("'", "\'");
             var payload = new StringContent(transformedContent, Encoding.UTF8, "application/json");
