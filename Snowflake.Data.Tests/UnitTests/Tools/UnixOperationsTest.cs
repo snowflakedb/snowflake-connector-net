@@ -109,8 +109,9 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
 
-            var fileReadPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
-            Syscall.chmod(filePath, (FilePermissions)fileReadPermissions);
+            var filePermissions = FileAccessPermissions.UserWrite | FileAccessPermissions.UserRead |
+                FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
+            Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
@@ -135,8 +136,9 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
 
-            var fileReadPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
-            Syscall.chmod(filePath, (FilePermissions)fileReadPermissions);
+            var filePermissions = FileAccessPermissions.UserWrite | FileAccessPermissions.UserRead |
+                FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
+            Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);

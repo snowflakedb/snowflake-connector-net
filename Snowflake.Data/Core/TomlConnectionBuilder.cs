@@ -159,6 +159,9 @@ namespace Snowflake.Data.Core
         {
             var allowedPermissions = new[]
             {
+                FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead,
+                FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.OtherRead,
+                FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupRead,
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite,
                 FileAccessPermissions.UserRead
             };
