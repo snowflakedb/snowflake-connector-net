@@ -1473,7 +1473,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 DbDataReader reader = cmd.ExecuteReader();
 
-                ValidateResultFormat(reader);
+                Assert.AreEqual(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
 
                 // select 1
                 Assert.IsTrue(reader.HasRows);
