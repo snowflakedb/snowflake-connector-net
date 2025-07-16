@@ -1459,7 +1459,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
                 DbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "select 1;" +
                                   "select 1 where 1=2;" +
@@ -1474,8 +1474,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 DbDataReader reader = cmd.ExecuteReader();
 
-                // multi statements are always returned in JSON
-                Assert.AreEqual(ResultFormat.JSON, ((SnowflakeDbDataReader)reader).ResultFormat);
+                ValidateResultFormat(reader);
 
                 // select 1
                 Assert.IsTrue(reader.HasRows);
