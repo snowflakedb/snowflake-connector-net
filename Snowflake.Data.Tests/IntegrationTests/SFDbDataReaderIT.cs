@@ -1459,7 +1459,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
                 DbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "select 1;" +
                                   "select 1 where 1=2;" +
