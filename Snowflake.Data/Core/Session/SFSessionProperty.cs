@@ -127,6 +127,8 @@ namespace Snowflake.Data.Core
         OAUTHTOKENREQUESTURL,
         [SFSessionPropertyAttr(required = false, defaultValue = "true", defaultNonWindowsValue = "false")]
         CLIENT_STORE_TEMPORARY_CREDENTIAL,
+        [SFSessionPropertyAttr(required = false, defaultValue = "true", defaultNonWindowsValue = "false")]
+        CLIENT_REQUEST_MFA_TOKEN,
         [SFSessionPropertyAttr(required = false)]
         WIFPROVIDER,
         [SFSessionPropertyAttr(required = false)]

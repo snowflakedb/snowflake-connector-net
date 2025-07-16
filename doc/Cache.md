@@ -4,10 +4,19 @@ The Snowflake .NET driver provides the ability to cache tokens using different i
 
 ### Enabling the Cache
 
-The SSO token cache and the token cache for OAuth authorization code flow and OAuth client credentials flow is enabled by setting the parameter **client_store_temporary_credential** to true. The default value is based on OS:
+#### Client Side
+The **SSO token cache** and the token cache for **OAuth** authorization code flow and OAuth client credentials flow is enabled by setting the parameter `client_store_temporary_credential` to true. The default value is based on OS:
 - **Windows**: true
 - **Linux**: false
 - **Mac**: false
+
+Similarly, you can enable **MFA token caching** with setting `client_request_mfa_token` to true. For this to work properly with a username/password type of authentication, you'll also need to modify `authenticator` to `username_password_mfa`.
+
+#### Server Side
+Enabling SSO or MFA token caching on the client driver side is not enough to make it work, you also need to allow them on the server side, by toggling the relevant Snowflake parameters.
+Please see below documentation:
+* Allow SSO token to be cached (`ALLOW_ID_TOKEN`) - https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use#using-connection-caching-to-minimize-the-number-of-prompts-for-authentication-optional
+* Allow MFA token to be cached (`ALLOW_CLIENT_MFA_CACHING`) - https://docs.snowflake.com/en/user-guide/security-mfa#label-mfa-token-caching
 
 ### Types of Cache
 - **In-memory implementation:** The most secure option. Stores credentials that persist within the application's runtime
