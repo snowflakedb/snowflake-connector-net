@@ -162,7 +162,6 @@ namespace Snowflake.Data.Core
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite,
                 FileAccessPermissions.UserRead
             };
-
             if (stream.OwnerUser.UserId != Syscall.geteuid())
                 throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
             if (stream.OwnerGroup.GroupId != Syscall.getegid())
