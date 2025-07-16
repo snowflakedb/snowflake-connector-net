@@ -125,6 +125,32 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
         [Test]
         [Platform(Exclude = "Win")]
+        public void TestCheckReadPermissionsWhenSkipIsDisabled()
+        {
+            var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var logPath = Path.Combine(logsDirectory, $"easy_logging_logs_{Path.GetRandomFileName()}", "dotnet");
+            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, logPath);
+
+            var content = "random text";
+            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+
+            var fileReadPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
+            Syscall.chmod(filePath, (FilePermissions)fileReadPermissions);
+
+            // act
+            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
+
+            // assert
+            Assert.AreEqual(content, result);
+            var logLines = File.ReadLines(Logger.EasyLoggerManagerTest.FindLogFilePath(logPath));
+            Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains("File is readable by someone other than the owner")));
+
+            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
         public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
             [ValueSource(nameof(UserAllowedWritePermissions))] FileAccessPermissions userAllowedPermissions)
         {
