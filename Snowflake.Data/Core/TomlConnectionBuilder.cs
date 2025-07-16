@@ -157,10 +157,10 @@ namespace Snowflake.Data.Core
 
         internal static void ValidateFilePermissions(UnixStream stream)
         {
-            var allowedWritePermissions = new[]
+            var allowedPermissions = new[]
             {
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite,
-                FileAccessPermissions.UserWrite
+                FileAccessPermissions.UserRead
             };
 
             if (stream.OwnerUser.UserId != Syscall.geteuid())
@@ -170,16 +170,16 @@ namespace Snowflake.Data.Core
 
             if (!_skipWarningForReadPermissions)
             {
-                var allowedReadPermissions = new[]
+                var nonUserReadPermissions = new[]
                 {
-                    FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite,
-                    FileAccessPermissions.UserRead
+                    FileAccessPermissions.GroupRead,
+                    FileAccessPermissions.OtherRead
                 };
-                if (!(allowedReadPermissions.Any(a => stream.FileAccessPermissions == a)))
-                    s_logger.Info("File is readable by someone other than the owner");
+                if (nonUserReadPermissions.Any(p => (stream.FileAccessPermissions & p) == p))
+                    s_logger.Warn("File is readable by someone other than the owner");
             }
 
-            if (!(allowedWritePermissions.Any(a => stream.FileAccessPermissions == a)))
+            if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
                 throw new SecurityException("Attempting to read a file with too broad permissions assigned");
         }
     }
