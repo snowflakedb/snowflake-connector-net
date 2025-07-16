@@ -265,6 +265,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "PASSCODE", NullValueHandling = NullValueHandling.Ignore)]
         internal string passcode;
 
+        [JsonProperty(PropertyName = "PROVIDER", NullValueHandling = NullValueHandling.Ignore)]
+        internal string Provider { get; set; }
+
         [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
         internal Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
 
