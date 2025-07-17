@@ -77,8 +77,18 @@ You can close this window now and go back where you started from.
                 ClientId = authorizationCodeRequest.ClientId,
                 ClientSecret = RequiredProperty(SFSessionProperty.OAUTHCLIENTSECRET),
                 CodeVerifier = authorizationData.Verifier.Value,
-                RedirectUri = authorizationCodeRequest.RedirectUri
+                RedirectUri = authorizationCodeRequest.RedirectUri,
+                EnableSingleUseRefreshTokens = GetEnableSingleUseRefreshTokens()
             };
+        }
+
+        private string GetEnableSingleUseRefreshTokens()
+        {
+            var enableSingleUseRefreshTokensString = ExtractPropertyOrEmptyString(SFSessionProperty.ENABLESINGLEUSEREFRESHTOKENS);
+            if (string.IsNullOrEmpty(enableSingleUseRefreshTokensString))
+                return null;
+            var enableSingleUseRefreshTokens = bool.Parse(enableSingleUseRefreshTokensString);
+            return enableSingleUseRefreshTokens ? "true" : null;
         }
 
         protected override BaseOAuthAccessTokenRequest GetRenewAccessTokenRequest(SnowflakeDbException exception, OAuthCacheKeys cacheKeys)
