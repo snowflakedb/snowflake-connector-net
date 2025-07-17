@@ -10,7 +10,7 @@ The **SSO token cache** and the token cache for **OAuth** authorization code flo
 - **Linux**: false
 - **Mac**: false
 
-Similarly, you can enable **MFA token caching** with setting `client_request_mfa_token` to true. For this to work properly with a username/password type of authentication, you'll also need to modify `authenticator` to `username_password_mfa`.
+Similarly, you can enable **MFA token caching** with setting `authenticator` to `username_password_mfa`. This will also automatically add the corresponding server-side parameter `client_request_mfa_token` and with that -given that server-side changes are already enabled, see below- also automatically enables MFA token caching.
 
 #### Server Side
 Enabling SSO or MFA token caching on the client driver side is not enough to make it work, you also need to allow them on the server side, by toggling the relevant Snowflake parameters.
