@@ -398,10 +398,9 @@ namespace Snowflake.Data.Core
                     {
                         var str = ((StringArray)array).GetString(index);
                         return string.IsNullOrEmpty(str) ? "undefined" :
-                            $"\"{str}\""
+                            $"\"{str.Replace("\"", "\\\"")}\""
                             .Replace("\"{", "{").Replace("}\"", "}")
-                            .Replace("\"[", "[").Replace("]\"", "]")
-                            .Replace("\"", "\\\"");
+                            .Replace("\"[", "[").Replace("]\"", "]");
                     }
             };
         }
