@@ -211,9 +211,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var amazonS3Client = new AmazonS3Config();
             var endpoint = "endpointWithNoHttps.com";
             var expectedEndpoint = "https://endpointWithNoHttps.com";
+            var mockRegion = "fakeRegion";
 
             // ACT
-            SFS3Client.SetCommonClientConfig(amazonS3Client, string.Empty, endpoint, 1, 0);
+            SFS3Client.SetCommonClientConfig(amazonS3Client, mockRegion, endpoint, 1, 0);
 
             // Assert
             Assert.That(amazonS3Client.ServiceURL, Is.EqualTo(expectedEndpoint));
@@ -226,9 +227,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var amazonS3Client = new AmazonS3Config();
             var endpoint = "[endpointWithNoHttps.com]";
             var expectedEndpoint = "https://endpointWithNoHttps.com";
+            var mockRegion = "fakeRegion";
 
             // ACT
-            SFS3Client.SetCommonClientConfig(amazonS3Client, string.Empty, endpoint, 1, 0);
+            SFS3Client.SetCommonClientConfig(amazonS3Client, mockRegion, endpoint, 1, 0);
 
             // Assert
             Assert.That(amazonS3Client.ServiceURL, Is.EqualTo(expectedEndpoint));
