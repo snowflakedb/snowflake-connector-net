@@ -264,6 +264,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(amazonS3Client.RegionEndpoint, Is.EqualTo(expectedRegionEndpoint));
+            Assert.IsNull(amazonS3Client.ServiceURL);
         }
 
         [Test]
