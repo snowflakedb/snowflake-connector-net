@@ -47,7 +47,6 @@ namespace Snowflake.Data.Core
         {
             _fileOperations = fileOperations;
             _environmentOperations = environmentOperations;
-            bool.TryParse(_environmentOperations.GetEnvironmentVariable(SkipWarningForReadPermissions), out _skipWarningForReadPermissions);
         }
 
         public string GetConnectionStringFromToml(string connectionName = null)
@@ -170,6 +169,7 @@ namespace Snowflake.Data.Core
             if (stream.OwnerGroup.GroupId != Syscall.getegid())
                 throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
 
+            bool.TryParse(EnvironmentOperations.Instance.GetEnvironmentVariable(SkipWarningForReadPermissions), out _skipWarningForReadPermissions);
             if (!_skipWarningForReadPermissions)
             {
                 var nonUserReadPermissions = new[]
