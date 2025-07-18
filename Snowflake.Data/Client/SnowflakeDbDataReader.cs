@@ -271,6 +271,7 @@ namespace Snowflake.Data.Client
             }
             catch (Exception e)
             {
+                Console.WriteLine("GetObject stack trace: " + e.StackTrace);
                 Console.WriteLine("GetObject error: " + e.Message);
                 if (e is SnowflakeDbException)
                     throw;
@@ -300,6 +301,7 @@ namespace Snowflake.Data.Client
             }
             catch (Exception e)
             {
+                Console.WriteLine("GetArray stack trace: " + e.StackTrace);
                 Console.WriteLine("GetArray error: " + e.Message);
                 if (e is SnowflakeDbException)
                     throw;
@@ -327,6 +329,7 @@ namespace Snowflake.Data.Client
             }
             catch (Exception e)
             {
+                Console.WriteLine("GetMap stack trace: " + e.StackTrace);
                 Console.WriteLine("GetMap error: " + e.Message);
                 if (e is SnowflakeDbException)
                     throw;
