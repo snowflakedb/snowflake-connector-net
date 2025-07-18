@@ -182,7 +182,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            if (groupPermissions != FileAccessPermissions.GroupRead && filePermissions != FileAccessPermissions.OtherRead)
+            if ((groupPermissions != FileAccessPermissions.GroupRead || groupPermissions != 0) &&
+                filePermissions != FileAccessPermissions.OtherRead)
                 Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions), "Attempting to read a file with too broad permissions assigned");
         }
 
