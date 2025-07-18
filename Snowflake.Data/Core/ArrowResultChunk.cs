@@ -399,9 +399,7 @@ namespace Snowflake.Data.Core
                     {
                         var str = ((StringArray)array).GetString(index);
                         return string.IsNullOrEmpty(str) ? "undefined" :
-                            JsonSerializer.Serialize(str)
-                            .Replace("\"{", "{").Replace("}\"", "}")
-                            .Replace("\"[", "[").Replace("]\"", "]");
+                            JsonSerializer.Serialize(str);
                     }
             };
         }
