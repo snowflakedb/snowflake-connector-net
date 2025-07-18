@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using Apache.Arrow;
 using Apache.Arrow.Types;
 
@@ -398,7 +399,7 @@ namespace Snowflake.Data.Core
                     {
                         var str = ((StringArray)array).GetString(index);
                         return string.IsNullOrEmpty(str) ? "undefined" :
-                            $"\"{str.Replace("\"", "\\\"")}\""
+                            JsonSerializer.Serialize(str)
                             .Replace("\"{", "{").Replace("}\"", "}")
                             .Replace("\"[", "[").Replace("]\"", "]");
                     }
