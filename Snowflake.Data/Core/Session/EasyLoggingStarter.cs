@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix;
+using Mono.Unix.Native;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -25,6 +26,8 @@ namespace Snowflake.Data.Core
         private readonly object _lockForExclusiveInit = new object();
 
         private EasyLoggingInitTrialParameters _initTrialParameters = null;
+
+        internal static FileAccessPermissions s_logFileUnixPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
 
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
             EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
@@ -71,8 +74,10 @@ namespace Snowflake.Data.Core
                 }
                 var logLevel = GetLogLevel(config.CommonProps.LogLevel);
                 var logPath = GetLogPath(config.CommonProps.LogPath);
+                s_logFileUnixPermissions = GetLogFileUnixPermissions(config.Dotnet?.LogFileUnixPermissions);
                 s_logger.Info($"LogLevel set to {logLevel}");
                 s_logger.Info($"LogPath set to {logPath}");
+                s_logger.Info($"LogFileUnixPermissions set to {s_logFileUnixPermissions}");
                 _easyLoggerManager.ReconfigureEasyLogging(logLevel, logPath);
                 _initTrialParameters = new EasyLoggingInitTrialParameters(configFilePathFromConnectionString);
             }
@@ -156,6 +161,34 @@ namespace Snowflake.Data.Core
             CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
 
             return pathWithDotnetSubdirectory;
+        }
+
+        private FileAccessPermissions GetLogFileUnixPermissions(string logFileUnixPermissions)
+        {
+            var defaultPermissions = Convert.ToInt32("600", 8); // User Read/Write
+            if (string.IsNullOrEmpty(logFileUnixPermissions))
+            {
+                s_logger.Warn("LogFileUnixPermissions in client config not found. Using default value: 600");
+                return (FileAccessPermissions)defaultPermissions;
+            }
+
+            int parsedPermissions;
+            try
+            {
+                parsedPermissions = Convert.ToInt32(logFileUnixPermissions, 8);
+                if (parsedPermissions < 0 || parsedPermissions > 777)
+                {
+                    s_logger.Warn($"LogFileUnixPermissions '{logFileUnixPermissions}' is out of valid range (000–777). Using default value: 600");
+                    parsedPermissions = defaultPermissions;
+                }
+            }
+            catch
+            {
+                s_logger.Warn($"Invalid LogFileUnixPermissions value '{logFileUnixPermissions}'. Using default value: 600");
+                parsedPermissions = defaultPermissions;
+            }
+
+            return (FileAccessPermissions)parsedPermissions;
         }
 
         private void CheckDirPermissionsOnlyAllowUser(string dirPath)
