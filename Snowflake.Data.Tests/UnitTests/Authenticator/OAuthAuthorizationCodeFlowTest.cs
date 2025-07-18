@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             _runner.AddMappings(s_authorizationCodeSuccessfulWithSingleUseRefreshTokenMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
-            var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=true;enableSingleUseRefreshTokens=true;");
+            var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=true;oauthEnableSingleUseRefreshTokens=true;");
             var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             _runner.AddMappings(s_authorizationCodeSuccessfulWithSingleUseRefreshTokenMappingPath);
             _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
-            var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=true;enableSingleUseRefreshTokens=true;");
+            var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=true;oauthEnableSingleUseRefreshTokens=true;");
             var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
             // act

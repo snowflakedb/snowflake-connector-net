@@ -84,7 +84,7 @@ You can close this window now and go back where you started from.
 
         private string GetEnableSingleUseRefreshTokens()
         {
-            var enableSingleUseRefreshTokensString = ExtractPropertyOrEmptyString(SFSessionProperty.ENABLESINGLEUSEREFRESHTOKENS);
+            var enableSingleUseRefreshTokensString = ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS);
             if (string.IsNullOrEmpty(enableSingleUseRefreshTokensString))
                 return null;
             var enableSingleUseRefreshTokens = bool.Parse(enableSingleUseRefreshTokensString);

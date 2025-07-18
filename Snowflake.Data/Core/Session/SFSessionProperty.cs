@@ -132,7 +132,7 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false)]
         WIFENTRARESOURCE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
-        ENABLESINGLEUSEREFRESHTOKENS,
+        OAUTHENABLESINGLEUSEREFRESHTOKENS,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -395,11 +395,11 @@ namespace Snowflake.Data.Core
 
         private static void ValidateEnableSingleUseRefreshToken(SFSessionProperties properties)
         {
-            CheckRequiredProperty(SFSessionProperty.ENABLESINGLEUSEREFRESHTOKENS, properties);
-            var enableSingleUserRefreshTokens = properties[SFSessionProperty.ENABLESINGLEUSEREFRESHTOKENS];
+            CheckRequiredProperty(SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS, properties);
+            var enableSingleUserRefreshTokens = properties[SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS];
             if (!bool.TryParse(enableSingleUserRefreshTokens, out _))
             {
-                SnowflakeDbException exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.ENABLESINGLEUSEREFRESHTOKENS.ToString()} value should be parsable as boolean.");
+                SnowflakeDbException exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS.ToString()} value should be parsable as boolean.");
                 logger.Error(exception.Message);
                 throw exception;
             }
