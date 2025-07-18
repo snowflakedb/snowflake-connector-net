@@ -400,7 +400,8 @@ namespace Snowflake.Data.Core
                         return string.IsNullOrEmpty(str) ? "undefined" :
                             $"\"{str}\""
                             .Replace("\"{", "{").Replace("}\"", "}")
-                            .Replace("\"[", "[").Replace("]\"", "]");
+                            .Replace("\"[", "[").Replace("]\"", "]")
+                            .Replace("\"", "\\\"");
                     }
             };
         }
