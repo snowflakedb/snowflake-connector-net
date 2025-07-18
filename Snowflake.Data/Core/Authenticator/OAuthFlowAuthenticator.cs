@@ -239,6 +239,7 @@ namespace Snowflake.Data.Core.Authenticator
             }
             return value;
         }
+
         protected string ExtractPropertyOrEmptyString(SFSessionProperty property) => ExtractPropertyOrDefault(property, string.Empty);
 
         private string ExtractPropertyOrDefault(SFSessionProperty property, string defaultValue)
