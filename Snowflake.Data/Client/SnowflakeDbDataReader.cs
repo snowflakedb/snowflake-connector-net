@@ -496,21 +496,26 @@ namespace Snowflake.Data.Core.Converter
 
         internal static T[] ToArray<T>(List<object> list)
         {
-            var array = list.Select(o => (T)o).ToArray();
+            var targetType = typeof(T);
+            var array = list.Select(o => (T)Convert.ChangeType(o, targetType)).ToArray();
             return array;
         }
 
         internal static List<T> ToList<T>(List<object> list)
         {
-            var typedList = list.Select(o => (T)o).ToList();
+            var targetType = typeof(T);
+            var typedList = list.Select(o => (T)Convert.ChangeType(o, targetType)).ToList();
             return typedList;
         }
 
         internal static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(Dictionary<object, object> dict)
         {
+            var targetKeyType = typeof(TKey);
+            var targetValueType = typeof(TValue);
+
             var typedDict = dict.ToDictionary(
-                kvp => (TKey)kvp.Key,
-                kvp => (TValue)kvp.Value
+                kvp => (TKey)Convert.ChangeType(kvp.Key, targetKeyType),
+                kvp => (TValue)Convert.ChangeType(kvp.Value, targetValueType)
             );
             return typedDict;
         }
