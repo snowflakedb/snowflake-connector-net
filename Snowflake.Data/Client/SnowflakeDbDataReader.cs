@@ -307,11 +307,21 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array or vector types");
                 }
 
-                var stringValue = GetString(ordinal);
-                Console.WriteLine("GetArray stringValue: " + stringValue);
-                var json = stringValue == null ? null : JArray.Parse(stringValue);
-                Console.WriteLine("GetArray json: " + json);
-                return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
+
+                if (ResultFormat == ResultFormat.JSON)
+                {
+                    var stringValue = GetString(ordinal);
+                    Console.WriteLine("GetArray stringValue: " + stringValue);
+                    var json = stringValue == null ? null : JArray.Parse(stringValue);
+                    Console.WriteLine("GetArray json: " + json);
+                    return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
+                }
+                else
+                {
+                    var val = resultSet.GetValue(0);
+                    var obj = ArrowConverter.FormatArrowListArray((ListArray)val, 0);
+                    return ArrowConverter.ToArray<T>(obj);
+                }
             }
             catch (Exception e)
             {
@@ -335,11 +345,20 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetMap<{typeof(TKey)}, {typeof(TValue)}> can be used only for structured map");
                 }
 
-                var stringValue = GetString(ordinal);
-                Console.WriteLine("GetMap stringValue: " + stringValue);
-                var json = stringValue == null ? null : JObject.Parse(stringValue);
-                Console.WriteLine("GetMap json: " + json);
-                return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
+                if (ResultFormat == ResultFormat.JSON)
+                {
+                    var stringValue = GetString(ordinal);
+                    Console.WriteLine("GetMap stringValue: " + stringValue);
+                    var json = stringValue == null ? null : JObject.Parse(stringValue);
+                    Console.WriteLine("GetMap json: " + json);
+                    return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
+                }
+                else
+                {
+                    var val = resultSet.GetValue(0);
+                    var obj = ArrowConverter.FormatArrowMapArray((MapArray)val, 0);
+                    return ArrowConverter.ToDictionary<TKey, TValue>(obj);
+                }
             }
             catch (Exception e)
             {
