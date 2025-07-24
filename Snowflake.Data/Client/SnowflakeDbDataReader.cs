@@ -421,7 +421,7 @@ namespace Snowflake.Data.Core.Converter
             foreach (var property in targetProperties)
             {
                 Console.WriteLine($"ToObject targetProperties.property.Name: {property.Name}");
-                Console.WriteLine($"ToObject targetProperties.dict[property.Name]: {dict[property.Name]}");
+                //Console.WriteLine($"ToObject targetProperties.dict[property.Name]: {dict[property.Name]}");
                 //property.SetValue(obj, dict[property.Name]);
             }
 
