@@ -431,9 +431,16 @@ namespace Snowflake.Data.Core.Converter
 
                     if (value is List<object> objList)
                     {
-                        var stringArray = objList.Select(o => o?.ToString()).ToArray();
-                        Console.WriteLine($"ToObject stringArray: {stringArray}");
-                        prop.SetValue(obj, stringArray);
+                        if (prop.PropertyType.IsArray)
+                        {
+                            var stringArray = objList.Select(o => o?.ToString()).ToArray();
+                            prop.SetValue(obj, stringArray);
+                        }
+                        else if (prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
+                        {
+                            var strList = objList.OfType<string>().ToList();
+                            prop.SetValue(obj, strList);
+                        }
                     }
                     else if (value is Dictionary<object, object> objDict)
                     {
