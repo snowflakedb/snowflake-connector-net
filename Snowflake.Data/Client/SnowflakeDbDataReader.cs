@@ -307,6 +307,10 @@ namespace Snowflake.Data.Client
                 {
                     if (string.Equals(property.Name, field.Name, StringComparison.OrdinalIgnoreCase))
                     {
+                        Console.WriteLine($"property.Name: {property.Name}");
+                        Console.WriteLine($"property.PropertyType: {property.PropertyType}");
+                        Console.WriteLine($"property.MemberType: {property.MemberType}");
+                        Console.WriteLine($"structArray.Fields[{i}] type: {structArray.Fields[i].GetType().Name}");
                         var value = GetValueFromArray(structArray.Fields[i]);
                         if (value != null)
                         {
