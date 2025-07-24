@@ -428,21 +428,106 @@ namespace Snowflake.Data.Core.Converter
 {
     internal static class ArrowConverter
     {
+        //internal static T ToObject<T>(Dictionary<string, object> dict) where T : new()
+        //{
+        //    Console.WriteLine($"ToObject dict.Count: {dict.Count}");
+
+        //    T obj = new T();
+        //    Type type = typeof(T);
+
+        //    foreach (var kvp in dict)
+        //    {
+        //        var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+
+        //        Console.WriteLine($"ToObject kvp.Key: {kvp.Key}");
+        //        Console.WriteLine($"ToObject kvp.Value: {kvp.Value}");
+        //        Console.WriteLine($"ToObject kvp.Type: {kvp.Value.GetType().Name}");
+        //        Console.WriteLine($"ToObject prop: {prop}");
+
+        //        if (prop != null)
+        //        {
+        //            var value = kvp.Value;
+
+        //            if (value is List<object> objList)
+        //            {
+        //                if (prop.PropertyType.IsArray)
+        //                {
+        //                    var innerType = prop.PropertyType.GetElementType();
+        //                    var arr = CallMethod(innerType, objList, "ToArray");
+        //                    prop.SetValue(obj, arr);
+        //                }
+        //                else if (prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
+        //                {
+        //                    var innerType = prop.PropertyType.GetGenericArguments()[0];
+        //                    var list = CallMethod(innerType, objList, "ToList");
+        //                    prop.SetValue(obj, list);
+        //                }
+        //            }
+        //            else if (value is Dictionary<object, object> objDict)
+        //            {
+        //                var genericArgs = prop.PropertyType.GetGenericArguments();
+        //                var keyType = genericArgs[0];
+        //                var valueType = genericArgs[1];
+
+        //                var stringDict = CallMethod(keyType, objDict, "ToDictionary", valueType);
+        //                prop.SetValue(obj, stringDict);
+        //            }
+        //            else
+        //            {
+        //                value = Convert.ChangeType(value, prop.PropertyType);
+        //                prop.SetValue(obj, value);
+        //            }
+        //        }
+        //    }
+        //    return obj;
+        //}
+
+        //internal static object CallMethod(Type type, object obj, string methodName, Type type2 = null)
+        //{
+        //    MethodInfo genericMethod = typeof(ArrowConverter)
+        //        .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
+        //    MethodInfo constructedMethod;
+        //    if (type2 == null)
+        //        constructedMethod = genericMethod.MakeGenericMethod(type);
+        //    else
+        //        constructedMethod = genericMethod.MakeGenericMethod(type, type2);
+        //    return constructedMethod.Invoke(null, new object[] { obj });
+        //}
+
+        //internal static T[] ToArray<T>(List<object> list)
+        //{
+        //    var targetType = typeof(T);
+        //    var array = list.Select(o => (T)Convert.ChangeType(o, targetType)).ToArray();
+        //    return array;
+        //}
+
+        //internal static List<T> ToList<T>(List<object> list)
+        //{
+        //    var targetType = typeof(T);
+        //    var typedList = list.Select(o => (T)Convert.ChangeType(o, targetType)).ToList();
+        //    return typedList;
+        //}
+
+        //internal static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(Dictionary<object, object> dict)
+        //{
+        //    var targetKeyType = typeof(TKey);
+        //    var targetValueType = typeof(TValue);
+
+        //    var typedDict = dict.ToDictionary(
+        //        kvp => (TKey)Convert.ChangeType(kvp.Key, targetKeyType),
+        //        kvp => (TValue)Convert.ChangeType(kvp.Value, targetValueType)
+        //    );
+        //    return typedDict;
+        //}
+
         internal static T ToObject<T>(Dictionary<string, object> dict) where T : new()
         {
-            Console.WriteLine($"ToObject dict.Count: {dict.Count}");
-
             T obj = new T();
             Type type = typeof(T);
 
             foreach (var kvp in dict)
             {
                 var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-
-                Console.WriteLine($"ToObject kvp.Key: {kvp.Key}");
-                Console.WriteLine($"ToObject kvp.Value: {kvp.Value}");
-                Console.WriteLine($"ToObject kvp.Type: {kvp.Value.GetType().Name}");
-                Console.WriteLine($"ToObject prop: {prop}");
 
                 if (prop != null)
                 {
@@ -456,7 +541,7 @@ namespace Snowflake.Data.Core.Converter
                             var arr = CallMethod(innerType, objList, "ToArray");
                             prop.SetValue(obj, arr);
                         }
-                        else if (prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
+                        else if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
                         {
                             var innerType = prop.PropertyType.GetGenericArguments()[0];
                             var list = CallMethod(innerType, objList, "ToList");
@@ -468,14 +553,29 @@ namespace Snowflake.Data.Core.Converter
                         var genericArgs = prop.PropertyType.GetGenericArguments();
                         var keyType = genericArgs[0];
                         var valueType = genericArgs[1];
-
-                        var stringDict = CallMethod(keyType, objDict, "ToDictionary", valueType);
-                        prop.SetValue(obj, stringDict);
+                        var dictValue = CallMethod(keyType, objDict, "ToDictionary", valueType);
+                        prop.SetValue(obj, dictValue);
+                    }
+                    else if (value is Dictionary<string, object> nestedDict)
+                    {
+                        var nestedObj = typeof(ArrowConverter)
+                            .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
+                            .MakeGenericMethod(prop.PropertyType)
+                            .Invoke(null, new object[] { nestedDict });
+                        prop.SetValue(obj, nestedObj);
                     }
                     else
                     {
-                        value = Convert.ChangeType(value, prop.PropertyType);
-                        prop.SetValue(obj, value);
+                        try
+                        {
+                            var converted = Convert.ChangeType(value, prop.PropertyType);
+                            prop.SetValue(obj, converted);
+                        }
+                        catch
+                        {
+                            // fallback for more complex types
+                            prop.SetValue(obj, value);
+                        }
                     }
                 }
             }
@@ -486,38 +586,104 @@ namespace Snowflake.Data.Core.Converter
         {
             MethodInfo genericMethod = typeof(ArrowConverter)
                 .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
-            MethodInfo constructedMethod;
-            if (type2 == null)
-                constructedMethod = genericMethod.MakeGenericMethod(type);
-            else
-                constructedMethod = genericMethod.MakeGenericMethod(type, type2);
+            MethodInfo constructedMethod = type2 == null
+                ? genericMethod.MakeGenericMethod(type)
+                : genericMethod.MakeGenericMethod(type, type2);
             return constructedMethod.Invoke(null, new object[] { obj });
         }
 
         internal static T[] ToArray<T>(List<object> list)
         {
             var targetType = typeof(T);
-            var array = list.Select(o => (T)Convert.ChangeType(o, targetType)).ToArray();
-            return array;
+            var result = new T[list.Count];
+            for (int i = 0; i < list.Count; i++)
+            {
+                result[i] = (T)ConvertValue(list[i], targetType);
+            }
+            return result;
         }
 
         internal static List<T> ToList<T>(List<object> list)
         {
             var targetType = typeof(T);
-            var typedList = list.Select(o => (T)Convert.ChangeType(o, targetType)).ToList();
-            return typedList;
+            var result = new List<T>(list.Count);
+            foreach (var item in list)
+            {
+                result.Add((T)ConvertValue(item, targetType));
+            }
+            return result;
         }
 
         internal static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(Dictionary<object, object> dict)
         {
-            var targetKeyType = typeof(TKey);
-            var targetValueType = typeof(TValue);
+            var keyType = typeof(TKey);
+            var valueType = typeof(TValue);
 
-            var typedDict = dict.ToDictionary(
-                kvp => (TKey)Convert.ChangeType(kvp.Key, targetKeyType),
-                kvp => (TValue)Convert.ChangeType(kvp.Value, targetValueType)
-            );
-            return typedDict;
+            var result = new Dictionary<TKey, TValue>();
+            foreach (var kvp in dict)
+            {
+                var key = (TKey)ConvertValue(kvp.Key, keyType);
+                var value = (TValue)ConvertValue(kvp.Value, valueType);
+                result[key] = value;
+            }
+            return result;
+        }
+
+        private static object ConvertValue(object value, Type targetType)
+        {
+            if (value == null)
+                return null;
+
+            if (targetType.IsAssignableFrom(value.GetType()))
+                return value;
+
+            if (value is Dictionary<string, object> dict)
+            {
+                var method = typeof(ArrowConverter)
+                    .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
+                    .MakeGenericMethod(targetType);
+                return method.Invoke(null, new object[] { dict });
+            }
+
+            if (value is Dictionary<object, object> objDict && targetType.IsGenericType &&
+                targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+            {
+                var keyType = targetType.GetGenericArguments()[0];
+                var valueType = targetType.GetGenericArguments()[1];
+                var method = typeof(ArrowConverter)
+                    .GetMethod("ToDictionary", BindingFlags.NonPublic | BindingFlags.Static)
+                    .MakeGenericMethod(keyType, valueType);
+                return method.Invoke(null, new object[] { objDict });
+            }
+
+            if (value is List<object> objList)
+            {
+                if (targetType.IsArray)
+                {
+                    var elementType = targetType.GetElementType();
+                    var method = typeof(ArrowConverter)
+                        .GetMethod("ToArray", BindingFlags.NonPublic | BindingFlags.Static)
+                        .MakeGenericMethod(elementType);
+                    return method.Invoke(null, new object[] { objList });
+                }
+                else if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
+                {
+                    var elementType = targetType.GetGenericArguments()[0];
+                    var method = typeof(ArrowConverter)
+                        .GetMethod("ToList", BindingFlags.NonPublic | BindingFlags.Static)
+                        .MakeGenericMethod(elementType);
+                    return method.Invoke(null, new object[] { objList });
+                }
+            }
+
+            try
+            {
+                return Convert.ChangeType(value, targetType);
+            }
+            catch
+            {
+                return value; // fallback for unexpected cases
+            }
         }
 
         internal static object FormatArrowValue(IArrowArray array, int index)
