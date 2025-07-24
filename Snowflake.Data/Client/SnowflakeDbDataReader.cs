@@ -277,8 +277,11 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
+                    Console.WriteLine("GetObject resultSet.GetValue(0)");
                     var val = resultSet.GetValue(0);
+                    Console.WriteLine("ArrowConverter.FormatStructArray((StructArray)val, 0)");
                     var obj = ArrowConverter.FormatStructArray((StructArray)val, 0);
+                    Console.WriteLine("ArrowConverter.ToObject<T>(obj)");
                     return ArrowConverter.ToObject<T>(obj);
                 }
             }
@@ -410,19 +413,21 @@ namespace Snowflake.Data.Core.Converter
     {
         internal static T ToObject<T>(this Dictionary<string, object> dict) where T : new()
         {
+            Console.WriteLine($"ToObject start");
+
             T obj = new T();
             Type type = typeof(T);
 
             foreach (var kvp in dict)
             {
                 PropertyInfo prop = type.GetProperty(kvp.Key);
-                if (prop != null && prop.CanWrite)
+                if (prop != null)
                 {
                     object value = kvp.Value;
 
-                    Console.WriteLine($"value: {value.ToString()}");
-                    Console.WriteLine($"value.GetType().Name: {value.GetType().Name}");
-                    Console.WriteLine($"prop.PropertyType: {prop.PropertyType}");
+                    Console.WriteLine($"ToObject value: {value.ToString()}");
+                    Console.WriteLine($"ToObject value.GetType().Name: {value.GetType().Name}");
+                    Console.WriteLine($"ToObject prop.PropertyType: {prop.PropertyType}");
 
                     if (value != null && prop.PropertyType != value.GetType())
                     {
