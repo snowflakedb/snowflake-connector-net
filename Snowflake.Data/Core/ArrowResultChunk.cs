@@ -208,11 +208,14 @@ namespace Snowflake.Data.Core
                     switch (column)
                     {
                         case StructArray structArray:
-                            return FormatStructArray(structArray, _currentBatchIndex);
+                            return structArray;
+                            //return FormatStructArray(structArray, _currentRecordIndex);
                         case MapArray mapArray:
-                            return FormatArrowMapArray(mapArray, _currentRecordIndex);
+                            return mapArray;
+                            //return FormatArrowMapArray(mapArray, _currentRecordIndex);
                         case ListArray listArray:
-                            return FormatArrowListArray(listArray, _currentRecordIndex);
+                            return listArray;
+                            //return FormatArrowListArray(listArray, _currentRecordIndex);
                         default:
                             if (_byte[columnIndex] == null || _int[columnIndex] == null)
                             {

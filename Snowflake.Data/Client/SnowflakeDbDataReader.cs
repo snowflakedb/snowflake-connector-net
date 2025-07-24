@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Newtonsoft.Json.Linq;
 using Snowflake.Data.Core.Converter;
+using System.Reflection;
+using Apache.Arrow;
+using Apache.Arrow.Types;
 
 namespace Snowflake.Data.Client
 {
@@ -263,11 +266,21 @@ namespace Snowflake.Data.Client
                 {
                     throw new StructuredTypesReadingException($"Method GetObject<{typeof(T)}> can be used only for structured object");
                 }
-                var stringValue = GetString(ordinal);
-                Console.WriteLine("GetObject stringValue: " + stringValue);
-                var json = stringValue == null ? null : JObject.Parse(stringValue);
-                Console.WriteLine("GetObject json: " + json);
-                return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
+
+                if (ResultFormat == ResultFormat.JSON)
+                {
+                    var stringValue = GetString(ordinal);
+                    Console.WriteLine("GetObject stringValue: " + stringValue);
+                    var json = stringValue == null ? null : JObject.Parse(stringValue);
+                    Console.WriteLine("GetObject json: " + json);
+                    return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
+                }
+                else
+                {
+                    var val = resultSet.GetValue(0);
+                    return ConvertFromStructArray<T>((StructArray)val);
+                    //return null;
+                }
             }
             catch (Exception e)
             {
@@ -278,6 +291,53 @@ namespace Snowflake.Data.Client
                 throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting an object");
             }
         }
+
+        public static T ConvertFromStructArray<T>(StructArray structArray) where T : new()
+        {
+            T result = new T();
+            Type targetType = typeof(T);
+            PropertyInfo[] targetProperties = targetType.GetProperties();
+
+            var structType = (StructType)structArray.Data.DataType;
+
+            for (int i = 0; i < structType.Fields.Count; i++)
+            {
+                var field = structType.Fields[i];
+                foreach (var property in targetProperties)
+                {
+                    if (string.Equals(property.Name, field.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var value = GetValueFromArray(structArray.Fields[i]);
+                        if (value != null)
+                        {
+                            property.SetValue(result, value);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private static object GetValueFromArray(IArrowArray array)
+        {
+            if (array is Int32Array int32Array)
+                return int32Array.GetValue(0);
+            if (array is Int64Array int64Array)
+                return int64Array.GetValue(0);
+            if (array is FloatArray floatArray)
+                return floatArray.GetValue(0);
+            if (array is DoubleArray doubleArray)
+                return doubleArray.GetValue(0);
+            if (array is BooleanArray boolArray)
+                return boolArray.GetValue(0);
+            if (array is StringArray stringArray)
+                return stringArray.GetString(0);
+            if (array is Date64Array date64Array)
+                return DateTimeOffset.FromUnixTimeMilliseconds((long)date64Array.GetValue(0)).DateTime;
+            return null;
+        }
+
 
         public T[] GetArray<T>(int ordinal)
         {

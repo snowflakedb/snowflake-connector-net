@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Apache.Arrow;
 using Apache.Arrow.Ipc;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
@@ -203,6 +204,15 @@ namespace Snowflake.Data.Core
                         obj = ret;
                         break;
                     case DateTimeOffset ret:
+                        obj = ret;
+                        break;
+                    case StructArray ret:
+                        obj = ret;
+                        break;
+                    case MapArray ret:
+                        obj = ret;
+                        break;
+                    case ListArray ret:
                         obj = ret;
                         break;
                     default:
@@ -432,7 +442,7 @@ namespace Snowflake.Data.Core
 
             var value = GetObjectInternal(ordinal);
             var type = sfResultSetMetaData.GetColumnTypeByIndex(ordinal);
-            Array data;
+            System.Array data;
             if (type == SFDataType.BINARY)
                 data = (byte[])value;
             else if (typeof(T) == typeof(byte))
@@ -458,7 +468,7 @@ namespace Snowflake.Data.Core
 
             long dataLength = data.Length - dataOffset;
             long elementsRead = Math.Min(length, dataLength);
-            Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
+            System.Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
 
             return elementsRead;
 
