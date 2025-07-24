@@ -12,6 +12,7 @@ using Snowflake.Data.Core.Converter;
 using System.Reflection;
 using Apache.Arrow;
 using Apache.Arrow.Types;
+using System.Linq;
 
 namespace Snowflake.Data.Client
 {
@@ -278,9 +279,7 @@ namespace Snowflake.Data.Client
                 else
                 {
                     var val = resultSet.GetValue(0);
-                    Console.WriteLine($"GetObject val: {val.ToString()}");
                     var obj = ArrowConverter.FormatStructArray((StructArray)val, 0);
-                    Console.WriteLine($"GetObject obj: {obj.ToString()}");
                     return ArrowConverter.ToObject<T>(obj);
                 }
             }
@@ -417,14 +416,6 @@ namespace Snowflake.Data.Core.Converter
             T obj = new T();
             Type type = typeof(T);
 
-            PropertyInfo[] targetProperties = type.GetProperties();
-            foreach (var property in targetProperties)
-            {
-                Console.WriteLine($"ToObject targetProperties.property.Name: {property.Name}");
-                //Console.WriteLine($"ToObject targetProperties.dict[property.Name]: {dict[property.Name]}");
-                //property.SetValue(obj, dict[property.Name]);
-            }
-
             foreach (var kvp in dict)
             {
                 var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase |  BindingFlags.Public | BindingFlags.Instance);
@@ -436,9 +427,28 @@ namespace Snowflake.Data.Core.Converter
 
                 if (prop != null)
                 {
-                    object value = kvp.Value;
-                    //value = Convert.ChangeType(value, prop.PropertyType);
-                    prop.SetValue(obj, value);
+                    var value = kvp.Value;
+
+                    if (value is List<object> objList)
+                    {
+                        var stringArray = objList.Select(o => o?.ToString()).ToArray();
+                        Console.WriteLine($"ToObject stringArray: {stringArray}");
+                        prop.SetValue(obj, stringArray);
+                    }
+                    else if (value is Dictionary<object, object> objDict)
+                    {
+                        var stringDict = objDict.ToDictionary(
+                            kv => kv.Key?.ToString(),
+                            kv => kv.Value?.ToString()
+                        );
+                        Console.WriteLine($"ToObject stringDict: {stringDict}");
+                        prop.SetValue(obj, stringDict);
+                    }
+                    else
+                    {
+                        //value = Convert.ChangeType(value, prop.PropertyType);
+                        prop.SetValue(obj, value);
+                    }
                 }
             }
 
