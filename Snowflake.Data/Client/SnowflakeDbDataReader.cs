@@ -278,8 +278,8 @@ namespace Snowflake.Data.Client
                 else
                 {
                     var val = resultSet.GetValue(0);
-                    return ConvertFromStructArray<T>((StructArray)val);
-                    //return null;
+                    var obj = ArrowConverter.FormatStructArray((StructArray)val, 0);
+                    return ArrowConverter.ToObject<T>(obj);
                 }
             }
             catch (Exception e)
@@ -291,57 +291,6 @@ namespace Snowflake.Data.Client
                 throw StructuredTypesReadingHandler.ToSnowflakeDbException(e, "when getting an object");
             }
         }
-
-        public static T ConvertFromStructArray<T>(StructArray structArray) where T : new()
-        {
-            T result = new T();
-            Type targetType = typeof(T);
-            PropertyInfo[] targetProperties = targetType.GetProperties();
-
-            var structType = (StructType)structArray.Data.DataType;
-
-            for (int i = 0; i < structType.Fields.Count; i++)
-            {
-                var field = structType.Fields[i];
-                foreach (var property in targetProperties)
-                {
-                    if (string.Equals(property.Name, field.Name, StringComparison.OrdinalIgnoreCase))
-                    {
-                        Console.WriteLine($"property.Name: {property.Name}");
-                        Console.WriteLine($"property.PropertyType: {property.PropertyType}");
-                        Console.WriteLine($"property.MemberType: {property.MemberType}");
-                        Console.WriteLine($"structArray.Fields[{i}] type: {structArray.Fields[i].GetType().Name}");
-                        var value = GetValueFromArray(structArray.Fields[i]);
-                        if (value != null)
-                        {
-                            property.SetValue(result, value);
-                        }
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        private static object GetValueFromArray(IArrowArray array)
-        {
-            if (array is Int32Array int32Array)
-                return int32Array.GetValue(0);
-            if (array is Int64Array int64Array)
-                return int64Array.GetValue(0);
-            if (array is FloatArray floatArray)
-                return floatArray.GetValue(0);
-            if (array is DoubleArray doubleArray)
-                return doubleArray.GetValue(0);
-            if (array is BooleanArray boolArray)
-                return boolArray.GetValue(0);
-            if (array is StringArray stringArray)
-                return stringArray.GetString(0);
-            if (array is Date64Array date64Array)
-                return DateTimeOffset.FromUnixTimeMilliseconds((long)date64Array.GetValue(0)).DateTime;
-            return null;
-        }
-
 
         public T[] GetArray<T>(int ordinal)
         {
@@ -451,6 +400,119 @@ namespace Snowflake.Data.Client
         {
             type = type.ToLower();
             return type == "array" || type == "object" || type == "variant" || type == "map";
+        }
+    }
+}
+
+namespace Snowflake.Data.Core.Converter
+{
+    internal static class ArrowConverter
+    {
+        internal static T ToObject<T>(this Dictionary<string, object> dict) where T : new()
+        {
+            T obj = new T();
+            Type type = typeof(T);
+
+            foreach (var kvp in dict)
+            {
+                PropertyInfo prop = type.GetProperty(kvp.Key);
+                if (prop != null && prop.CanWrite)
+                {
+                    object value = kvp.Value;
+                    if (value != null && prop.PropertyType != value.GetType())
+                    {
+                        value = Convert.ChangeType(value, prop.PropertyType);
+                    }
+
+                    prop.SetValue(obj, value);
+                }
+            }
+
+            return obj;
+        }
+
+        internal static object FormatArrowValue(IArrowArray array, int index)
+        {
+            switch (array)
+            {
+                case StructArray strct: return FormatStructArray(strct, index);
+                case MapArray map: return FormatArrowMapArray(map, index);
+                case ListArray list: return FormatArrowListArray(list, index);
+                case DoubleArray doubles: return doubles.GetValue(index);
+                case FloatArray floats: return floats.GetValue(index);
+                case Decimal128Array decimals: return decimals.GetValue(index);
+                case Int32Array ints: return ints.GetValue(index);
+                case Int64Array longs: return longs.GetValue(index);
+                case StringArray strArray:
+                    var str = strArray.GetString(index);
+                    return string.IsNullOrEmpty(str) ? null : str;
+                default:
+                    throw new NotSupportedException($"Unsupported array type: {array.GetType()}");
+            }
+        }
+
+        internal static Dictionary<string, object> FormatStructArray(StructArray structArray, int index)
+        {
+            var result = new Dictionary<string, object>();
+            var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
+
+            for (int i = 0; i < structArray.Fields.Count; i++)
+            {
+                var field = structArray.Fields[i];
+                var fieldName = structTypeFields[i].Name;
+                var value = FormatArrowValue(field, index);
+
+                // Only skip "undefined" fields if it's the only field
+                if (value == null && structArray.Fields.Count == 1)
+                    return null;
+
+                result[fieldName] = value;
+            }
+
+            return result;
+        }
+
+        internal static List<object> FormatArrowListArray(ListArray listArray, int index)
+        {
+            int start = listArray.ValueOffsets[index];
+            int end = listArray.ValueOffsets[index + 1];
+
+            if (start == end)
+                return null;
+
+            var values = listArray.Values;
+            var result = new List<object>(end - start);
+
+            for (int i = start; i < end; i++)
+            {
+                result.Add(FormatArrowValue(values, i));
+            }
+
+            return result;
+        }
+
+        internal static Dictionary<object, object> FormatArrowMapArray(MapArray mapArray, int index)
+        {
+            int start = mapArray.ValueOffsets[index];
+            int end = mapArray.ValueOffsets[index + 1];
+
+            if (start == end)
+                return null;
+
+            var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
+            var keyArray = keyValuesArray.Fields[0];
+            var valueArray = keyValuesArray.Fields[1];
+
+            var result = new Dictionary<object, object>();
+
+            for (int i = 0; i < end - start; i++)
+            {
+                var key = FormatArrowValue(keyArray, i);
+                var value = FormatArrowValue(valueArray, i);
+                result[key] = value;
+            }
+
+            return result;
         }
     }
 }
