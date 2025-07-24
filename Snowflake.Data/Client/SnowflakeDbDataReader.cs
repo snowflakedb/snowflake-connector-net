@@ -419,6 +419,11 @@ namespace Snowflake.Data.Core.Converter
                 if (prop != null && prop.CanWrite)
                 {
                     object value = kvp.Value;
+
+                    Console.WriteLine($"value: {value.ToString()}");
+                    Console.WriteLine($"value.GetType().Name: {value.GetType().Name}");
+                    Console.WriteLine($"prop.PropertyType: {prop.PropertyType}");
+
                     if (value != null && prop.PropertyType != value.GetType())
                     {
                         value = Convert.ChangeType(value, prop.PropertyType);
@@ -433,6 +438,7 @@ namespace Snowflake.Data.Core.Converter
 
         internal static object FormatArrowValue(IArrowArray array, int index)
         {
+            Console.WriteLine($"FormatArrowValue array.GetType().Name: {array.GetType().Name}");
             switch (array)
             {
                 case StructArray strct: return FormatStructArray(strct, index);
@@ -462,7 +468,6 @@ namespace Snowflake.Data.Core.Converter
                 var fieldName = structTypeFields[i].Name;
                 var value = FormatArrowValue(field, index);
 
-                // Only skip "undefined" fields if it's the only field
                 if (value == null && structArray.Fields.Count == 1)
                     return null;
 
