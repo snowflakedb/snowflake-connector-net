@@ -417,20 +417,13 @@ namespace Snowflake.Data.Core.Converter
             T obj = new T();
             Type type = typeof(T);
 
-            PropertyInfo[] targetProperties = type.GetProperties();
-            foreach (var property in targetProperties)
-            {
-                Console.WriteLine($"ToObject targetProperties.Name: {property.Name}");
-            }
-
             foreach (var kvp in dict)
             {
+                var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase);
+
                 Console.WriteLine($"ToObject kvp.Key: {kvp.Key}");
                 Console.WriteLine($"ToObject kvp.Value: {kvp.Value}");
                 Console.WriteLine($"ToObject kvp.Type: {kvp.Value.GetType().Name}");
-
-                PropertyInfo prop = obj.GetType().GetProperty(kvp.Key, BindingFlags.Public | BindingFlags.Instance);
-
                 Console.WriteLine($"ToObject prop: {prop}");
 
                 if (prop != null)
