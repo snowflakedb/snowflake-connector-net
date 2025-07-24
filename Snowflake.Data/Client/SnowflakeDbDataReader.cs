@@ -424,17 +424,12 @@ namespace Snowflake.Data.Core.Converter
                 Console.WriteLine($"ToObject kvp.Type: {kvp.Value.GetType().Name}");
 
                 PropertyInfo prop = type.GetProperty(kvp.Key);
-                Console.WriteLine($"ToObject prop.PropertyType: {prop.PropertyType}");
+                Console.WriteLine($"ToObject prop: {prop}");
 
                 if (prop != null)
                 {
                     object value = kvp.Value;
-
-                    if (value != null && prop.PropertyType != value.GetType())
-                    {
-                        value = Convert.ChangeType(value, prop.PropertyType);
-                    }
-
+                    //value = Convert.ChangeType(value, prop.PropertyType);
                     prop.SetValue(obj, value);
                 }
             }
@@ -444,7 +439,7 @@ namespace Snowflake.Data.Core.Converter
 
         internal static object FormatArrowValue(IArrowArray array, int index)
         {
-            Console.WriteLine($"FormatArrowValue array.GetType().Name: {array.GetType().Name}");
+            //Console.WriteLine($"FormatArrowValue array.GetType().Name: {array.GetType().Name}");
             switch (array)
             {
                 case StructArray strct: return FormatStructArray(strct, index);

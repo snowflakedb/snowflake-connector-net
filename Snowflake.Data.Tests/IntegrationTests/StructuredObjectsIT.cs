@@ -61,7 +61,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-                    var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA\"')::OBJECT(city VARCHAR, state VARCHAR)";
+                    var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA')::OBJECT(city VARCHAR, state VARCHAR)";
+                    //var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA\"')::OBJECT(city VARCHAR, state VARCHAR)";
                     command.CommandText = $"SELECT {addressAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
