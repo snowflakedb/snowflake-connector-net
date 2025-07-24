@@ -433,7 +433,7 @@ namespace Snowflake.Data.Core.Converter
                     {
                         if (prop.PropertyType.IsArray)
                         {
-                            var innerType = objList.GetType().GetElementType();
+                            var innerType = prop.PropertyType.GetElementType();
                             var arr = CallMethod(innerType, objList, "ToArray");
                             prop.SetValue(obj, arr);
                         }
@@ -466,7 +466,7 @@ namespace Snowflake.Data.Core.Converter
         internal static object CallMethod(Type type, object obj, string methodName, Type type2 = null)
         {
             MethodInfo genericMethod = typeof(ArrowConverter)
-                .GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
+                .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
             MethodInfo constructedMethod;
             if (type2 == null)
                 constructedMethod = genericMethod.MakeGenericMethod(type);
