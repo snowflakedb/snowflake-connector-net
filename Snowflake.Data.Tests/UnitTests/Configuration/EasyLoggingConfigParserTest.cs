@@ -16,6 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private const string NotExistingFilePath = "../../../Resources/EasyLogging/not_existing_config.json";
         private const string LogLevel = "info";
         private const string LogPath = "./test-logs/log_file.log";
+        private const string LogFileUnixPermissions = "640";
         private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
 
         [OneTimeSetUp]
@@ -34,11 +35,13 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [Test]
-        public void TestThatParsesConfigFile()
+        [TestCase(null)]
+        [TestCase("640")]
+        public void TestThatParsesConfigFile(string logFileUnixPermissions)
         {
             // arrange
             var parser = new EasyLoggingConfigParser();
-            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath));
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, logFileUnixPermissions));
 
             // act
             var config = parser.Parse(configFilePath);
@@ -48,6 +51,13 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.IsNotNull(config.CommonProps);
             Assert.AreEqual(LogLevel, config.CommonProps.LogLevel);
             Assert.AreEqual(LogPath, config.CommonProps.LogPath);
+            if (logFileUnixPermissions == null)
+                Assert.IsNull(config.Dotnet);
+            else
+            {
+                Assert.IsNotNull(config.Dotnet);
+                Assert.AreEqual(logFileUnixPermissions, config.Dotnet.LogFileUnixPermissions);
+            }
         }
 
         [Test, TestCaseSource(nameof(ConfigFilesWithoutValues))]

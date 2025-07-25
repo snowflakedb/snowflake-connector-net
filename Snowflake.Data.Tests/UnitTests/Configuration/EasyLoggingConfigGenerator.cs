@@ -25,17 +25,21 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             return Path.Combine(workingDirectory, Path.GetRandomFileName());
         }
 
-        public static string Config(string logLevel, string logPath)
+        public static string Config(string logLevel, string logPath, string logFileUnixPermissions = null)
         {
-            return @"{
-                ""common"": {
-                    ""log_level"": {logLevel},
-                    ""log_path"": {logPath}
-                }
-            }"
-                .Replace("{logLevel}", SerializeParameter(logLevel))
-                .Replace("{logPath}", SerializeParameter(logPath))
-                .Replace("\\", "\\\\");
+            var commonSection = $@"
+                ""common"": {{
+                    ""log_level"": {SerializeParameter(logLevel)},
+                    ""log_path"": {SerializeParameter(logPath).Replace("\\", "\\\\")}
+                }}";
+            var dotnetSection = string.Empty;
+            if (logFileUnixPermissions != null)
+                dotnetSection = $@",
+                ""dotnet"": {{
+                    ""log_file_unix_permissions"": {SerializeParameter(logFileUnixPermissions)}
+                }}";
+            var config = "{" + commonSection + dotnetSection + "\n}";
+            return config;
         }
 
         private static string SerializeParameter(string parameter)
