@@ -50,7 +50,7 @@ namespace Snowflake.Data.AuthenticationTests
             Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
 
             authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
-            authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user currently logged in at the IDP");
+            authTestHelper.VerifyExceptionIsThrown("The user authenticated by the Identity Provider does not match the user specified in the Login UI");
         }
 
         [Test, IgnoreOnCI]
