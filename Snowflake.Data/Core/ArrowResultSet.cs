@@ -388,7 +388,7 @@ namespace Snowflake.Data.Core
         {
             var value = GetObjectInternal(ordinal);
             if (value == DBNull.Value)
-                return (string)value;
+                return null;
 
             var type = sfResultSetMetaData.GetColumnTypeByIndex(ordinal);
             switch (value)
