@@ -61,6 +61,7 @@ The following table lists all valid connection properties:
 | OAUTHREDIRECTURI                  | Depends  | The url of the local endpoint the driver will listen to in OAuth Authorization Code Flow to get an authorization code from the Identity Provider. Required for non-Snowflake Identity providers. Optional for Snowflake-provided OAuth service. See more: [Snowflake OAuth](https://docs.snowflake.com/en/user-guide/oauth-snowflake-overview)                                                                                                                                                                                                                                                                                                                                                                            |
 | WIFPROVIDER                       | No       | The type of attestation provider for Workload Identity Federation authentication. You can specify one of following values: `OIDC`, `AZURE`, `AWS`, `GCP`. If you don't provide it the provider is going to be auto-detected. It is recommended to specify the value because auto-detection increases latency.                                                                                                                                                                                                                                                                                                                                                                                                             |
 | WIFENTRARESOURCE                  | No       | The entra resource used for Azure provider in Workload Identity Federation authentication. The default value for it is `api://fd3f753b-eed3-462c-b6a7-a4b5bb650aad`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| OAUTHENABLESINGLEUSEREFRESHTOKENS | No       | Used in OAuth Authorization Code Flow authentication. The default value is `false`. When set to `true` the driver requests the Identity Provider for single use refresh tokens.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 <br />
 
 **Note**: Connections should not be shared across multiple threads.
@@ -134,7 +135,7 @@ Snowflake supports using [double quote identifiers](https://docs.snowflake.com/e
   ```cs
   string connectionString = String.Format(
     "account=testaccount; " +
-    "database=\"testDB\";"
+    "db=\"testDB\";"
   );
   ```
 - To include a `"` character as part of the value should be escaped using `\"\"`.
@@ -142,7 +143,7 @@ Snowflake supports using [double quote identifiers](https://docs.snowflake.com/e
   ```cs
   string connectionString = String.Format(
     "account=testaccount; " +
-    "database=\"\"\"test\"\"user\"\"\";" // DATABASE => ""test"db""
+    "db=\"\"\"test\"\"user\"\"\";" // DATABASE => ""test"db""
   );
   ```
 
