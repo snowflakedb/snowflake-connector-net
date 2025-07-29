@@ -18,7 +18,6 @@ namespace Snowflake.Data.WIFTests
     [NonParallelizable, IgnoreOnCI]
     public class WifLatestTest
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WifLatestTest>();
         private static readonly string s_account = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_ACCOUNT");
         private static readonly string s_host = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_HOST");
         private static readonly string s_provider = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_PROVIDER");
