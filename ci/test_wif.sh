@@ -47,9 +47,14 @@ EOF
 
 get_branch() {
   local branch
-  branch=$(git rev-parse --abbrev-ref HEAD)
-  if [[ "$branch" == "HEAD" ]]; then
-    branch=$(git name-rev --name-only HEAD | sed 's#^remotes/origin/##;s#^origin/##')
+  if [[ -n "${GIT_BRANCH}" ]]; then
+    # Jenkins
+    branch="${GIT_BRANCH}"
+  else
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ "$branch" == "HEAD" ]]; then
+      branch=$(git name-rev --name-only HEAD | sed 's#^remotes/origin/##;s#^origin/##')
+    fi
   fi
   echo "$branch"
 }
