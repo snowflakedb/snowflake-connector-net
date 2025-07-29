@@ -71,6 +71,7 @@ namespace Snowflake.Data.WIFTests
 
                 using var process = Process.Start(startInfo);
                 string token = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
                 process.WaitForExit();
 
                 if (process.ExitCode == 0 && !string.IsNullOrWhiteSpace(token))
@@ -78,7 +79,8 @@ namespace Snowflake.Data.WIFTests
                     return token.Trim();
                 }
 
-                throw new InvalidOperationException($"Failed to retrieve GCP access token, exit code: {process.ExitCode}");
+                throw new InvalidOperationException(
+                    $"Failed to retrieve GCP access token, exit code: {process.ExitCode}, error: {error}");
             }
             catch (Exception e)
             {
