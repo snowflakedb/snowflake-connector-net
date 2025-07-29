@@ -240,10 +240,11 @@ You can close this window now and go back where you started from.
             {
                 numberOfAttemptsLeft--;
                 var port = _listenerStarter.GetRandomUnusedPort();
-                redirectUri = $"http://{DefaultRedirectUriHost}:{port}/";
+                redirectUri = $"http://{DefaultRedirectUriHost}:{port}";
+                var redirectUriWithSlash = $"{redirectUri}/";
                 try
                 {
-                    listener = _listenerStarter.StartHttpListener(redirectUri);
+                    listener = _listenerStarter.StartHttpListener(redirectUriWithSlash);
                 }
                 catch (HttpListenerException)
                 {
