@@ -3,6 +3,7 @@ using System.Data;
 using System.Diagnostics;
 using NUnit.Framework;
 using Snowflake.Data.Client;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.WIFTests
 {
@@ -16,6 +17,7 @@ namespace Snowflake.Data.Tests.WIFTests
     [NonParallelizable, IgnoreOnCI]
     public class WifLatestTest
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WifLatestTest>();
         private static readonly string s_account = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_ACCOUNT");
         private static readonly string s_host = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_HOST");
         private static readonly string s_provider = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_PROVIDER");
@@ -23,9 +25,9 @@ namespace Snowflake.Data.Tests.WIFTests
         [Test, IgnoreOnCI]
         public void TestAuthenticateUsingWifWithProviderDetection()
         {
-            Console.WriteLine($"SNOWFLAKE_TEST_WIF_ACCOUNT: {s_account ?? "NOT_SET"}");
-            Console.WriteLine($"SNOWFLAKE_TEST_WIF_HOST: {s_host ?? "NOT_SET"}");
-            Console.WriteLine($"SNOWFLAKE_TEST_WIF_PROVIDER: {s_provider ?? "NOT_SET"}");
+            s_logger.Info("SNOWFLAKE_TEST_WIF_ACCOUNT: " + (s_account ?? "NOT_SET"));
+            s_logger.Info("SNOWFLAKE_TEST_WIF_HOST: " + (s_host ?? "NOT_SET"));
+            s_logger.Info("SNOWFLAKE_TEST_WIF_PROVIDER: " + (s_provider ?? "NOT_SET"));
             var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY";
             ConnectAndExecuteSimpleQuery(connectionString);
         }
