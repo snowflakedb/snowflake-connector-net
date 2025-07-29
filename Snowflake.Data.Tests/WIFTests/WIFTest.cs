@@ -4,8 +4,9 @@ using System.Diagnostics;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests;
 
-namespace Snowflake.Data.Tests.WIFTests
+namespace Snowflake.Data.WIFTests
 {
     /// <summary>
     /// Running tests locally:
@@ -25,9 +26,6 @@ namespace Snowflake.Data.Tests.WIFTests
         [Test, IgnoreOnCI]
         public void TestAuthenticateUsingWifWithProviderDetection()
         {
-            s_logger.Info("SNOWFLAKE_TEST_WIF_ACCOUNT: " + (s_account ?? "NOT_SET"));
-            s_logger.Info("SNOWFLAKE_TEST_WIF_HOST: " + (s_host ?? "NOT_SET"));
-            s_logger.Info("SNOWFLAKE_TEST_WIF_PROVIDER: " + (s_provider ?? "NOT_SET"));
             var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY";
             ConnectAndExecuteSimpleQuery(connectionString);
         }
@@ -64,7 +62,7 @@ namespace Snowflake.Data.Tests.WIFTests
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "/bin/bash",
-                    Arguments = "-c 'curl -H \"Metadata-Flavor: Google\" \"http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity?audience=snowflakecomputing.com\"'",
+                    Arguments = "-c wget --header=\"Metadata-Flavor: Google\" -qO- \"http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity?audience=snowflakecomputing.com\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -72,8 +70,7 @@ namespace Snowflake.Data.Tests.WIFTests
                 };
 
                 using var process = Process.Start(startInfo);
-                using var reader = process.StandardOutput;
-                var token = reader.ReadLine();
+                string token = process.StandardOutput.ReadToEnd();
                 process.WaitForExit();
 
                 if (process.ExitCode == 0 && !string.IsNullOrWhiteSpace(token))

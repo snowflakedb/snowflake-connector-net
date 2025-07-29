@@ -26,10 +26,10 @@ run_tests_and_set_result() {
           bash -c "
             echo 'Running tests on branch: \$BRANCH'
             if [[ \"\$BRANCH\" =~ ^PR-[0-9]+\$ ]]; then
-              curl -L https://github.com/snowflakedb/snowflake-connector-net/archive/refs/pull/\$(echo \$BRANCH | cut -d- -f2)/head.tar.gz | tar -xz --transform 's/^[^\/]*/snowflake-connector-net/'
+                wget -qO- https://github.com/snowflakedb/snowflake-connector-net/archive/refs/pull/\$(echo \$BRANCH | cut -d- -f2)/head.tar.gz | tar -xz --transform 's/^[^\/]*/snowflake-connector-net/'
             else
-              echo https://github.com/snowflakedb/snowflake-connector-net/archive/refs/heads/\$BRANCH.tar.gz
-              curl -L https://github.com/snowflakedb/snowflake-connector-net/archive/refs/heads/\$BRANCH.tar.gz | tar -xz --transform 's/^[^\/]*/snowflake-connector-net/'
+                echo https://github.com/snowflakedb/snowflake-connector-net/archive/refs/heads/\$BRANCH.tar.gz
+                wget -qO- https://github.com/snowflakedb/snowflake-connector-net/archive/refs/heads/\$BRANCH.tar.gz | tar -xz --transform 's/^[^\/]*/snowflake-connector-net/'
             fi
             cd snowflake-connector-net
             bash ci/wif/test_wif.sh
