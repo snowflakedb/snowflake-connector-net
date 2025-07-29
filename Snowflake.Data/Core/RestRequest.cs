@@ -310,7 +310,7 @@ namespace Snowflake.Data.Core
                 application, osVersion, netRuntime, netVersion, insecureMode);
         }
 
-        public LoginRequestClientEnv CopyStaticValues()
+        public LoginRequestClientEnv CopyUnchangingValues()
         {
             return new LoginRequestClientEnv()
             {

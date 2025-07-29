@@ -51,7 +51,7 @@ namespace Snowflake.Data.Core.Authenticator
         protected SFSession session;
 
         // The client environment properties
-        private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CopyStaticValues();
+        private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CopyUnchangingValues();
 
         /// <summary>
         /// The abstract base for all authenticators.
@@ -127,8 +127,16 @@ namespace Snowflake.Data.Core.Authenticator
         {
             // build uri
             var loginUrl = session.BuildLoginUrl();
+            var data = BuildLoginRequestData();
 
-            LoginRequestData data = new LoginRequestData()
+            return data.HttpTimeout.HasValue ?
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data }, data.HttpTimeout.Value) :
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+        }
+
+        internal LoginRequestData BuildLoginRequestData()
+        {
+            var data = new LoginRequestData
             {
                 loginName = session.properties[SFSessionProperty.USER],
                 accountName = session.properties[SFSessionProperty.ACCOUNT],
@@ -139,10 +147,7 @@ namespace Snowflake.Data.Core.Authenticator
                 Authenticator = authName,
             };
             SetSpecializedAuthenticatorData(ref data);
-
-            return data.HttpTimeout.HasValue ?
-                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data }, data.HttpTimeout.Value) :
-                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            return data;
         }
     }
 

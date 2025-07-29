@@ -13,7 +13,7 @@ namespace Snowflake.Data.Core.Authenticator
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthFlowAuthenticator>();
 
-        internal SecureString AccessToken { get; private set; } = null;
+        internal SecureString AccessToken { get; set; } = null;
 
         protected OAuthFlowAuthenticator(SFSession session, string authName) : base(session, authName)
         {
