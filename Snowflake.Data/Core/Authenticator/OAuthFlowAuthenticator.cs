@@ -99,7 +99,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            data.OAuthType = GetAuthenticatorName();
+            data.clientEnv.oauthType = GetAuthenticatorName();
             data.Token = (AccessToken == null ? null : SecureStringHelper.Decode(AccessToken));
             if (string.IsNullOrEmpty(data.Token))
             {

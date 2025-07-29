@@ -51,7 +51,7 @@ namespace Snowflake.Data.Core.Authenticator
         protected SFSession session;
 
         // The client environment properties
-        private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv;
+        private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CopyStaticValues();
 
         /// <summary>
         /// The abstract base for all authenticators.
@@ -61,13 +61,14 @@ namespace Snowflake.Data.Core.Authenticator
         {
             this.session = session;
             this.authName = authName;
-            // Update the value for insecureMode because it can be different for each session
             ClientEnv.insecureMode = session.properties[SFSessionProperty.INSECUREMODE];
             if (session.properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
             {
-                // If an application name has been specified in the connection setting, use it
-                // Otherwise, it will default to the running process name
                 ClientEnv.application = applicationName;
+            }
+            else
+            {
+                ClientEnv.application = ClientEnv.processName;
             }
         }
 
