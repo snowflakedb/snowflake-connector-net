@@ -62,7 +62,7 @@ namespace Snowflake.Data.WIFTests
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "/bin/bash",
-                    Arguments = "-c wget --header=\"Metadata-Flavor: Google\" -qO- \"http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity?audience=snowflakecomputing.com\"",
+                    Arguments = "-c \"wget --header='Metadata-Flavor: Google' -qO- 'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity?audience=snowflakecomputing.com'\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
