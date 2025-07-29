@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.WIFTests
     /// <summary>
     /// Running tests locally:
     /// 1. Push branch to repository
-    /// 2. Set environment variables PARAMETERS_SECRET and BRANCH
+    /// 2. Set environment variable PARAMETERS_SECRET
     /// 3. Run ci/test_wif.sh
     /// </summary>
     ///
@@ -23,6 +23,9 @@ namespace Snowflake.Data.Tests.WIFTests
         [Test, IgnoreOnCI]
         public void TestAuthenticateUsingWifWithProviderDetection()
         {
+            Console.WriteLine($"SNOWFLAKE_TEST_WIF_ACCOUNT: {s_account ?? "NOT_SET"}");
+            Console.WriteLine($"SNOWFLAKE_TEST_WIF_HOST: {s_host ?? "NOT_SET"}");
+            Console.WriteLine($"SNOWFLAKE_TEST_WIF_PROVIDER: {s_provider ?? "NOT_SET"}");
             var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY";
             ConnectAndExecuteSimpleQuery(connectionString);
         }
