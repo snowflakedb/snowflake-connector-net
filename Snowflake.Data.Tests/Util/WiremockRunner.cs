@@ -220,7 +220,21 @@ namespace Snowflake.Data.Tests.Util
 
         private static bool CheckFileSHA256(string filePath, string expectedShaValue)
         {
-            var bytes = File.ReadAllBytes(filePath);
+            byte[] bytes;
+            try
+            {
+                bytes = File.ReadAllBytes(filePath);
+            }
+            catch (IOException exception)
+            {
+                if (exception.Message.Contains("The process cannot access the file") &&
+                    exception.Message.Contains("because it is being used by another process"))
+                {
+                    s_logger.Debug("Could not read wiremock jar file content because it was used by another process. Assuming the file is not corrupted.");
+                    return true;
+                }
+                throw;
+            }
             using (var sha256Encoder = SHA256.Create())
             {
                 byte[] sha256Hash = sha256Encoder.ComputeHash(bytes);
