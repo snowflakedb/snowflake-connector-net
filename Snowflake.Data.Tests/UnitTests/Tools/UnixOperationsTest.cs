@@ -183,7 +183,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             // act and assert
             if ((groupPermissions & (FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)) != 0 ||
-                (othersPermissions & (FileAccessPermissions.OtherRead | FileAccessPermissions.OtherWrite)) != 0)
+                (othersPermissions & (FileAccessPermissions.OtherWrite | FileAccessPermissions.OtherExecute)) != 0)
                 Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions), "Attempting to read a file with too broad permissions assigned");
         }
 
