@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace Snowflake.Data.Tests.Util
         private const int RetryInterval = 200;
         private const int WarmupTime = 1000;
         private const string WiremockVersion = "3.11.0";
+        private const string WiremockJarFileSha256 = "85f47eecd54ddf6aa275c9a3ceaf8e200cad30d26b529a706dd55e3bf3a4787e"; // pragma: allowlist secret
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WiremockRunner>();
         private static readonly string s_userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         private static readonly string s_wiremockPath = Path.Combine(s_userProfilePath, ".m2", "repository", "org", "wiremock", "wiremock-standalone", WiremockVersion);
@@ -184,8 +186,16 @@ namespace Snowflake.Data.Tests.Util
             {
                 if (File.Exists(s_wiremockJarPath))
                 {
-                    s_logger.Debug($"Wiremock v{WiremockVersion} exists.");
-                    return;
+                    if (CheckFileSHA256(s_wiremockJarPath, WiremockJarFileSha256))
+                    {
+                        s_logger.Debug($"Wiremock v{WiremockVersion} exists.");
+                        return;
+                    }
+                    else
+                    {
+                        s_logger.Debug($"Wiremock v{WiremockVersion} exists but is corrupted. Deleting and downloading again.");
+                        File.Delete(s_wiremockJarPath);
+                    }
                 }
 
                 try
@@ -205,6 +215,17 @@ namespace Snowflake.Data.Tests.Util
 
                     throw;
                 }
+            }
+        }
+
+        private static bool CheckFileSHA256(string filePath, string expectedShaValue)
+        {
+            var bytes = File.ReadAllBytes(filePath);
+            using (var sha256Encoder = SHA256.Create())
+            {
+                byte[] sha256Hash = sha256Encoder.ComputeHash(bytes);
+                var hash = BitConverter.ToString(sha256Hash).Replace("-", string.Empty);
+                return expectedShaValue.Equals(hash, StringComparison.OrdinalIgnoreCase);
             }
         }
     }
