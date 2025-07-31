@@ -29,7 +29,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string DefaultScope = "session:role:" + Role;
         private static readonly string s_defaultAuthorizationEndpoint = $"https://{Host}:{Port}/oauth/authorize";
         private const int RandomPort = 1234;
-        private static readonly string s_defaultRedirectUri = $"http://127.0.0.1:{RandomPort}/";
+        private static readonly string s_defaultRedirectUri = $"http://127.0.0.1:{RandomPort}";
+        private static readonly string s_defaultRedirectUriWithSlash = s_defaultRedirectUri + "/";
         private const string CodeVerifier = "codeVerifierForAuthorizationCodeFlowMustBeALongString";
 
         [Test]
@@ -44,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 .Setup(s => s.GetRandomUnusedPort())
                 .Returns(RandomPort);
             listenerStarter
-                .Setup(s => s.StartHttpListener(s_defaultRedirectUri))
+                .Setup(s => s.StartHttpListener(s_defaultRedirectUriWithSlash))
                 .Returns(httpListener);
 
             // act
@@ -59,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.AreEqual(s_defaultRedirectUri, authorizationData.Request.RedirectUri);
             Assert.NotNull(authorizationData.Request.CodeChallenge);
             Assert.AreEqual(State, authorizationData.Request.State);
-            listenerStarter.Verify(s => s.StartHttpListener(s_defaultRedirectUri), Times.Once);
+            listenerStarter.Verify(s => s.StartHttpListener(s_defaultRedirectUriWithSlash), Times.Once);
         }
 
         [Test]
@@ -74,7 +75,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 .Setup(s => s.GetRandomUnusedPort())
                 .Returns(RandomPort);
             listenerStarter
-                .Setup(s => s.StartHttpListener(s_defaultRedirectUri))
+                .Setup(s => s.StartHttpListener(s_defaultRedirectUriWithSlash))
                 .Throws(() => new HttpListenerException(5, "Failed to listen on prefix because it conflicts with an existing registration on the machine."));
 
             // act/assert
