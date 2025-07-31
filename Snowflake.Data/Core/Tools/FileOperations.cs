@@ -59,13 +59,13 @@ namespace Snowflake.Data.Core.Tools
             return Create(absolutePath);
         }
 
-        public virtual Stream Create(string filePath)
+        public virtual Stream Create(string filePath, FileAccessPermissions fileAccessPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite)
         {
             var absolutePath = Path.GetFullPath(filePath);
 
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ?
                 File.Create(absolutePath) :
-                _unixOperations.CreateFileWithPermissions(absolutePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+                _unixOperations.CreateFileWithPermissions(absolutePath, fileAccessPermissions);
         }
 
         public virtual void CopyFile(string src, string dst)
