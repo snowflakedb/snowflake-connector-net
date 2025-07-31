@@ -16,7 +16,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     public class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private const string AwsRegion = "eu-west-1";
