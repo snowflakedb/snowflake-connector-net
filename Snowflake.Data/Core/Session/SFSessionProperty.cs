@@ -282,6 +282,7 @@ namespace Snowflake.Data.Core
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
+            WarnIfHttpUsed(properties);
             ValidateAuthenticatorFlowsProperties(properties);
 
             var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
@@ -478,7 +479,6 @@ namespace Snowflake.Data.Core
             }
             if (bothEmpty)
             {
-                WarnIfHttpUsed(properties);
                 return true;
             }
             var externalAuthorizationUrlHost = GetHost(externalAuthorizationUrl);
