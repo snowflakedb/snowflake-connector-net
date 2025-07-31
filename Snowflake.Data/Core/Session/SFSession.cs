@@ -16,7 +16,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
 {
-    public class SFSession
+    internal class SFSession
     {
         public const int SF_SESSION_EXPIRED_CODE = 390112;
 
