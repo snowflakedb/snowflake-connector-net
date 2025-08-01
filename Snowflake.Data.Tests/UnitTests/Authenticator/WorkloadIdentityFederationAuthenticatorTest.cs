@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Moq;
 using NUnit.Framework;
-using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
@@ -37,25 +36,18 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var session = new SFSession(connectionString, sessionContext);
             var environmentOperations = new Mock<EnvironmentOperations>();
             environmentOperationsConfigurator(environmentOperations);
-            var featureFlags = new ClientFeatureFlags(environmentOperations.Object);
             var timeProvider = new Mock<TimeProvider>();
             timeProviderConfigurator(timeProvider);
             var awsSdkWrapper = new Mock<AwsSdkWrapper>();
             awsSdkConfigurator(awsSdkWrapper);
-            var authenticator = new WorkloadIdentityFederationAuthenticator(session, featureFlags, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, s_wiremockUrl);
+            var authenticator = new WorkloadIdentityFederationAuthenticator(session, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, s_wiremockUrl);
             session.ReplaceAuthenticator(authenticator);
             return session;
         }
 
-        internal void SetupExperimentalAuthenticationEnabled(Mock<EnvironmentOperations> environmentOperations) =>
-            environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName))
-                .Returns("true");
-
-        internal void SetupExperimentalAuthenticationDisabled(Mock<EnvironmentOperations> environmentOperations) =>
-            environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName))
-                .Returns("");
+        internal void NoEnvironmentSetup(Mock<EnvironmentOperations> environmentOperations)
+        {
+        }
 
         internal void SetupSystemTime(Mock<TimeProvider> timeProvider) =>
             timeProvider
