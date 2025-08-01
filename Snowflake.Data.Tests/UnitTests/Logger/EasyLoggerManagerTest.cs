@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             return Path.Combine(s_logsDirectory, $"easy_logging_logs_{randomName}", "dotnet");
         }
 
-        private static string FindLogFilePath(string directoryLogPath)
+        internal static string FindLogFilePath(string directoryLogPath)
         {
             Assert.IsTrue(Directory.Exists(directoryLogPath));
             var files = Directory.GetFiles(directoryLogPath);
