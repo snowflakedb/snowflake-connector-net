@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var environmentOperations = new Mock<EnvironmentOperations>();
             var crlParser = new CrlParser(environmentOperations.Object);
             var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
-            var expectedCrlDistributionPoints = new [] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
+            var expectedCrlDistributionPoints = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
             var unrevokedCertSerialNumber = "0C5B94A21CF8D834C17A58724F3EA385"; // pragma: allowlist secret
             var revokedCertSerialNumber = "084E2808851C58174D0EF94B29571042"; // pragma: allowlist secret
 

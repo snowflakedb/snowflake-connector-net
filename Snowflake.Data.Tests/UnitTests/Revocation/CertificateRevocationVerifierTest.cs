@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestVerifyCertificateAsUnrevoked()
         {
             // arrange
-            var expectedCrlUrls = new [] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
+            var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
             var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
             var config = GetHttpConfig();
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestVerifyCertificateAsErrorWhenCouldNotDownloadCrl()
         {
             // arrange
-            var expectedCrlUrls = new [] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
+            var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
             var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
             var config = GetHttpConfig();
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestVerifyCertificateAsErrorWhenOneOfCrlsIsNotParsable()
         {
             // arrange
-            var expectedCrlUrls = new [] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
+            var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
             var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
             var config = GetHttpConfig();
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestVerifyIfIssuerMatchesTheCertificateIssuer(string issuerName, bool expectedIsEquivalent)
         {
             // arrange
-            var certificate = CertificateGenerator.GenerateSelfSignedCertificate("other CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), new string[] {});
+            var certificate = CertificateGenerator.GenerateSelfSignedCertificate("other CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), new string[] { });
             var config = GetHttpConfig();
             var restRequester = new Mock<IRestRequester>();
             var crlRepository = new Mock<CrlRepository>();

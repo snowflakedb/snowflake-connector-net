@@ -27,8 +27,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
         static IEnumerable<string[]> CrlsTestCases()
         {
-            yield return new [] { "http://snowflake.com/crl1.crl", "http://snowflake.com/crl2.crl" };
-            yield return new string[] {};
+            yield return new[] { "http://snowflake.com/crl1.crl", "http://snowflake.com/crl2.crl" };
+            yield return new string[] { };
         }
     }
 }
