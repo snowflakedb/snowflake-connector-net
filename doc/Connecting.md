@@ -327,9 +327,6 @@ OIDC provider allows you to provide your own token which will be used to authent
 If you don't provide `WIFPROVIDER` property it will be auto-detected. The order in which the driver tries to produce attestation is: OIDC, Azure, AWS, GCP.
 If you know on which cloud your application is running it is recommended to provide `WIFPROVIDER` parameter because auto-detection increases latency.
 
-**Note**: Workload Identity Federation authentication currently is an experimental feature.
-You need to set environmental variable `SF_ENABLE_EXPERIMENTAL_AUTHENTICATION` to `true` if you want to use this authentication.
-
 Using Workload Identity Federation for AWS cloud:
 ```csharp
     var conn = new SnowflakeDbConnection("authenticator=workload_identity;wifProvider=aws;account=test;");

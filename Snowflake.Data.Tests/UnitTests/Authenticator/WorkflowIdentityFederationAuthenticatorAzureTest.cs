@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             AddAzureBasicWiremockMappings();
             SetupSnowflakeAuthentication(_runner, AttestationProvider.AZURE, s_JWTAccessToken);
-            var session = PrepareSessionForAzure(null, SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
 
             // act
             session.Open();
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             AddAzureBasicWiremockMappings();
             SetupSnowflakeAuthentication(_runner, AttestationProvider.AZURE, s_JWTAccessToken);
-            var session = PrepareSessionForAzure(null, SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
 
             // act
             await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             AddAzureBasicWiremockMappings();
-            var session = PrepareSessionForAzure(null, SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
             // act
@@ -106,7 +106,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             AddAzureBasicV2IssuerWiremockMappings();
-            var session = PrepareSessionForAzure(null, SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
             // act
@@ -123,7 +123,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestFailForUnparsableTokenAttestation()
         {
             AddAzureUnparsableTokenWiremockMappings();
-            var session = PrepareSessionForAzure(null, SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
             // act
@@ -141,7 +141,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AddAzureFunctionsWiremockMappings();
             var session = PrepareSessionForAzure(null, e =>
             {
-                SetupExperimentalAuthenticationEnabled(e);
                 ConfigureIdentityEndpoint(e);
                 ConfigureIdentityHeader(e);
                 ConfigureIdentityClientId(e);
@@ -165,7 +164,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AddAzureFunctionsWithoutClientIdWiremockMappings();
             var session = PrepareSessionForAzure(null, e =>
             {
-                SetupExperimentalAuthenticationEnabled(e);
                 ConfigureIdentityEndpoint(e);
                 ConfigureIdentityHeader(e);
             });
@@ -188,7 +186,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AddAzureFunctionsWithCustomEntraResourceWiremockMappings();
             var session = PrepareSessionForAzure($"wifEntraResource={s_customEntraResource};", e =>
             {
-                SetupExperimentalAuthenticationEnabled(e);
                 ConfigureIdentityEndpoint(e);
                 ConfigureIdentityHeader(e);
                 ConfigureIdentityClientId(e);
@@ -212,7 +209,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AddAzureFunctionsWiremockMappings();
             var session = PrepareSessionForAzure(null, e =>
             {
-                SetupExperimentalAuthenticationEnabled(e);
                 ConfigureIdentityEndpoint(e);
                 ConfigureIdentityClientId(e);
             });
@@ -233,7 +229,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AddAzureFunctionsWithV2IssuerWiremockMappings();
             var session = PrepareSessionForAzure(null, e =>
             {
-                SetupExperimentalAuthenticationEnabled(e);
                 ConfigureIdentityEndpoint(e);
                 ConfigureIdentityHeader(e);
                 ConfigureIdentityClientId(e);

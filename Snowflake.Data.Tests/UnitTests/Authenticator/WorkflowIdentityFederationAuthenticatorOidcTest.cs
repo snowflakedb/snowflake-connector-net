@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             PrepareSession(
                 AttestationProvider.OIDC,
                 $"token={token};",
-                SetupExperimentalAuthenticationEnabled,
+                NoEnvironmentSetup,
                 SetupSystemTime,
                 SetupAwsSdkDisabled
             );
