@@ -1,7 +1,8 @@
 using System;
-using System.Formats.Asn1;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Org.BouncyCastle.Asn1.X509;
 using X509Extension = System.Security.Cryptography.X509Certificates.X509Extension;
 
 namespace Snowflake.Data.Tests.Util
@@ -56,22 +57,16 @@ namespace Snowflake.Data.Tests.Util
 
         private static X509Extension CreateCrlDistributionPointsExtension(string[] crlUrls)
         {
-            var writer = new AsnWriter(AsnEncodingRules.DER);
-            writer.PushSequence(); // Outer SEQUENCE for CRLDistributionPoints
-            foreach (var crlUrl in crlUrls)
-            {
-                writer.PushSequence();
-                writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 0)); // Tag for distributionPoint
-                writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 0)); // Tag for fullName (CHOICE)
-                writer.PushSequence(); // GeneralNames SEQUENCE
-                writer.WriteCharacterString(UniversalTagNumber.IA5String, crlUrl, new Asn1Tag(TagClass.ContextSpecific, 6));
-                writer.PopSequence(); // Pop GeneralNames SEQUENCE
-                writer.PopSequence(new Asn1Tag(TagClass.ContextSpecific, 0)); // Pop fullName
-                writer.PopSequence(new Asn1Tag(TagClass.ContextSpecific, 0)); // Pop distributionPoint
-                writer.PopSequence();
-            }
-            writer.PopSequence(); // Pop outer CRLDistributionPoints SEQUENCE
-            return new X509Extension(new Oid("2.5.29.31"), writer.Encode(), false);
+            var distributionPoints = crlUrls
+                .Select(crlUrl =>
+                {
+                    var uriGeneralName = new GeneralName(GeneralName.UniformResourceIdentifier, crlUrl);
+                    var dpName = new DistributionPointName(DistributionPointName.FullName, new GeneralNames(uriGeneralName));
+                    return new DistributionPoint(dpName, null, null);
+                })
+                .ToArray();
+            var crlDistPoint = new CrlDistPoint(distributionPoints);
+            return new X509Extension(new Oid("2.5.29.31"), crlDistPoint.GetDerEncoded(), false);
         }
     }
 }
