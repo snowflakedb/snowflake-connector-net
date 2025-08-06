@@ -24,13 +24,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_SuccessfulMappingPath = Path.Combine(s_wifMappingPath, "snowflake_successful_login.json");
 
         internal SFSession PrepareSession(
-            AttestationProvider? attestationProvider,
+            AttestationProvider attestationProvider,
             string connectionStringSuffix,
             Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator,
             Action<Mock<TimeProvider>> timeProviderConfigurator,
             Action<Mock<AwsSdkWrapper>> awsSdkConfigurator)
         {
-            var wifProviderPart = attestationProvider == null ? string.Empty : $"wifProvider={attestationProvider.ToString()};";
+            var wifProviderPart = $"wifProvider={attestationProvider.ToString()};";
             var connectionString = $"authenticator=workload_identity;account=testaccount;{wifProviderPart}{connectionStringSuffix ?? string.Empty};host=localhost;port={WiremockRunner.DefaultHttpPort};scheme=http;";
             var sessionContext = new SessionPropertiesContext();
             var session = new SFSession(connectionString, sessionContext);
