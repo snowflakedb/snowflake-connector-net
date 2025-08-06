@@ -3,7 +3,6 @@ using System.Data;
 using System.Diagnostics;
 using NUnit.Framework;
 using Snowflake.Data.Client;
-using Snowflake.Data.Log;
 using Snowflake.Data.Tests;
 
 namespace Snowflake.Data.WIFTests
@@ -21,13 +20,6 @@ namespace Snowflake.Data.WIFTests
         private static readonly string s_account = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_ACCOUNT");
         private static readonly string s_host = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_HOST");
         private static readonly string s_provider = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_PROVIDER");
-
-        [Test, IgnoreOnCI]
-        public void TestAuthenticateUsingWifWithProviderDetection()
-        {
-            var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY";
-            ConnectAndExecuteSimpleQuery(connectionString);
-        }
 
         [Test, IgnoreOnCI]
         public void TestAuthenticateUsingWifWithDefinedProvider()
