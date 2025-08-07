@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Moq;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
@@ -24,13 +25,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_SuccessfulMappingPath = Path.Combine(s_wifMappingPath, "snowflake_successful_login.json");
 
         internal SFSession PrepareSession(
-            AttestationProvider attestationProvider,
+            AttestationProvider? attestationProvider,
             string connectionStringSuffix,
             Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator,
             Action<Mock<TimeProvider>> timeProviderConfigurator,
             Action<Mock<AwsSdkWrapper>> awsSdkConfigurator)
         {
-            var wifProviderPart = $"wifProvider={attestationProvider.ToString()};";
+            var wifProviderPart = attestationProvider == null ? string.Empty : $"wifProvider={attestationProvider.ToString()};";
             var connectionString = $"authenticator=workload_identity;account=testaccount;{wifProviderPart}{connectionStringSuffix ?? string.Empty};host=localhost;port={WiremockRunner.DefaultHttpPort};scheme=http;";
             var sessionContext = new SessionPropertiesContext();
             var session = new SFSession(connectionString, sessionContext);
@@ -43,6 +44,29 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var authenticator = new WorkloadIdentityFederationAuthenticator(session, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, s_wiremockUrl);
             session.ReplaceAuthenticator(authenticator);
             return session;
+        }
+
+        [Test]
+        public void TestFailsAuthorizationWhenProviderIsNotGiven()
+        {
+            // arrange/act
+            var exception = Assert.Throws<SnowflakeDbException>(() => PrepareSession(null, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled));
+
+            // assert
+            Assert.That(exception?.Message, Does.Contain("Required property WIFPROVIDER is not provided"));
+        }
+
+        [Test]
+        public void TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
+        {
+            // arrange: throws exception with "Not available" message
+            var session = PrepareSession(AttestationProvider.AWS, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled);
+
+            // act
+            var exception = Assert.Throws<SnowflakeDbException>(() => session.Open());
+
+            // assert
+            Assert.That(exception?.Message, Does.Contain("Retrieving attestation for AWS failed. Not available"));
         }
 
         internal void NoEnvironmentSetup(Mock<EnvironmentOperations> environmentOperations)

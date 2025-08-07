@@ -76,18 +76,27 @@ namespace Snowflake.Data.Core.Authenticator
 
         internal WorkloadIdentityAttestationData CreateAttestation()
         {
-            return _provider switch
+            try
             {
-                AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentOperations, _timeProvider, _awsSdkWrapper)
-                    .CreateAttestationData(_entraResource, _token),
-                AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentOperations, session.restRequester, _metadataHost)
-                    .CreateAttestationData(_entraResource, _token),
-                AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(session.restRequester, _metadataHost)
-                    .CreateAttestationData(_entraResource, _token),
-                AttestationProvider.OIDC => new WorkflowIdentityOidcAttestationRetriever()
-                    .CreateAttestationData(_entraResource, _token),
-                _ => throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, $"Unsupported attestation provider: {_provider}"),
-            };
+                return _provider switch
+                {
+                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentOperations, _timeProvider, _awsSdkWrapper)
+                        .CreateAttestationData(_entraResource, _token),
+                    AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentOperations, session.restRequester, _metadataHost)
+                        .CreateAttestationData(_entraResource, _token),
+                    AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(session.restRequester, _metadataHost)
+                        .CreateAttestationData(_entraResource, _token),
+                    AttestationProvider.OIDC => new WorkflowIdentityOidcAttestationRetriever()
+                        .CreateAttestationData(_entraResource, _token),
+                    _ => throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, $"Unsupported attestation provider: {_provider}"),
+                };
+            }
+            catch (Exception e)
+            {
+                var errorMessage = $"Failed to create attestation data for provider {_provider}: {e.Message}";
+                s_logger.Error(errorMessage);
+                throw new SnowflakeDbException(e, SFError.WIF_ATTESTATION_ERROR, new object[]{_provider, e.Message});
+            }
         }
     }
 }
