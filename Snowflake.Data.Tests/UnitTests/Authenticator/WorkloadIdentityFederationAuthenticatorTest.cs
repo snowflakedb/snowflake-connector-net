@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Moq;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
@@ -43,6 +44,29 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var authenticator = new WorkloadIdentityFederationAuthenticator(session, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, s_wiremockUrl);
             session.ReplaceAuthenticator(authenticator);
             return session;
+        }
+
+        [Test]
+        public void TestFailsAuthorizationWhenProviderIsNotGiven()
+        {
+            // arrange/act
+            var exception = Assert.Throws<SnowflakeDbException>(() => PrepareSession(null, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled));
+
+            // assert
+            Assert.That(exception?.Message, Does.Contain("Required property WIFPROVIDER is not provided"));
+        }
+
+        [Test]
+        public void TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
+        {
+            // arrange: throws exception with "Not available" message
+            var session = PrepareSession(AttestationProvider.AWS, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled);
+
+            // act
+            var exception = Assert.Throws<SnowflakeDbException>(() => session.Open());
+
+            // assert
+            Assert.That(exception?.Message, Does.Contain("Retrieving attestation for AWS failed. Not available"));
         }
 
         internal void NoEnvironmentSetup(Mock<EnvironmentOperations> environmentOperations)

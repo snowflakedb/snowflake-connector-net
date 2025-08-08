@@ -3,7 +3,6 @@ using System.Data;
 using System.Diagnostics;
 using NUnit.Framework;
 using Snowflake.Data.Client;
-using Snowflake.Data.Log;
 using Snowflake.Data.Tests;
 
 namespace Snowflake.Data.WIFTests
@@ -23,16 +22,9 @@ namespace Snowflake.Data.WIFTests
         private static readonly string s_provider = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_PROVIDER");
 
         [Test, IgnoreOnCI]
-        public void TestAuthenticateUsingWifWithProviderDetection()
-        {
-            var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY";
-            ConnectAndExecuteSimpleQuery(connectionString);
-        }
-
-        [Test, IgnoreOnCI]
         public void TestAuthenticateUsingWifWithDefinedProvider()
         {
-            var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY;workloadIdentityProvider={s_provider}";
+            var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY;wifProvider={s_provider}";
             ConnectAndExecuteSimpleQuery(connectionString);
         }
 
@@ -45,7 +37,7 @@ namespace Snowflake.Data.WIFTests
             }
 
             var token = GetGcpAccessToken();
-            var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY;workloadIdentityProvider=OIDC;token={token}";
+            var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY;wifProvider=OIDC;token={token}";
             ConnectAndExecuteSimpleQuery(connectionString);
         }
 
