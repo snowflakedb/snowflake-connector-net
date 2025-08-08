@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             PrepareSession(
                 null,
                 connectionStringSuffix,
-                SetupExperimentalAuthenticationEnabled,
+                NoEnvironmentSetup,
                 t => SetupTime(t, WorkloadIdentityFederationAuthenticatorAwsTest.s_utcNow),
                 awsSdkConfigurator
             );

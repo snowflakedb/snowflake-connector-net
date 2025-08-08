@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
-using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -14,7 +13,6 @@ namespace Snowflake.Data.Core.Authenticator
         public const string AuthName = "workload_identity";
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WorkloadIdentityFederationAuthenticator>();
 
-        private readonly ClientFeatureFlags _featureFlags;
         private readonly EnvironmentOperations _environmentOperations;
         private readonly TimeProvider _timeProvider;
         private readonly AwsSdkWrapper _awsSdkWrapper;
@@ -25,19 +23,17 @@ namespace Snowflake.Data.Core.Authenticator
         private string _token;
         private WorkloadIdentityAttestationData _attestationData;
 
-        public WorkloadIdentityFederationAuthenticator(SFSession session) : this(session, ClientFeatureFlags.Instance, EnvironmentOperations.Instance, TimeProvider.Instance, AwsSdkWrapper.Instance, null)
+        public WorkloadIdentityFederationAuthenticator(SFSession session) : this(session, EnvironmentOperations.Instance, TimeProvider.Instance, AwsSdkWrapper.Instance, null)
         {
         }
 
         internal WorkloadIdentityFederationAuthenticator(
             SFSession session,
-            ClientFeatureFlags featureFlags,
             EnvironmentOperations environmentOperations,
             TimeProvider timeProvider,
             AwsSdkWrapper awsSdkWrapper,
             string metadataHost) : base(session, AuthName)
         {
-            _featureFlags = featureFlags;
             _environmentOperations = environmentOperations;
             _timeProvider = timeProvider;
             _awsSdkWrapper = awsSdkWrapper;
@@ -68,14 +64,12 @@ namespace Snowflake.Data.Core.Authenticator
 
         public async Task AuthenticateAsync(CancellationToken cancellationToken)
         {
-            _featureFlags.VerifyIfExperimentalAuthenticationEnabled(AuthName);
             _attestationData = CreateAttestation();
             await LoginAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public void Authenticate()
         {
-            _featureFlags.VerifyIfExperimentalAuthenticationEnabled(AuthName);
             _attestationData = CreateAttestation();
             Login();
         }
