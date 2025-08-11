@@ -406,12 +406,10 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static AttestationProvider? ValidateWifProvider(SFSessionProperties properties)
+        private static AttestationProvider ValidateWifProvider(SFSessionProperties properties)
         {
-            if (!properties.TryGetValue(SFSessionProperty.WIFPROVIDER, out var provider) || string.IsNullOrEmpty(provider))
-            {
-                return null;
-            }
+            CheckRequiredProperty(SFSessionProperty.WIFPROVIDER, properties);
+            var provider = properties[SFSessionProperty.WIFPROVIDER];
             if (!Enum.TryParse(provider, true, out AttestationProvider attestationProvider))
             {
                 throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, "Unknown value of wifProvider parameter.");
