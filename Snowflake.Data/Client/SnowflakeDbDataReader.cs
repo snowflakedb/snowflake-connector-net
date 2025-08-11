@@ -279,6 +279,8 @@ namespace Snowflake.Data.Client
                 else
                 {
                     var val = resultSet.GetValue(0);
+                    if (val is DBNull)
+                        return null;
                     var obj = ArrowConverter.FormatStructArray((StructArray)val, 0);
                     return ArrowConverter.ToObject<T>(obj);
                 }
@@ -319,6 +321,8 @@ namespace Snowflake.Data.Client
                 else
                 {
                     var val = resultSet.GetValue(0);
+                    if (val is DBNull)
+                        return null;
                     var obj = ArrowConverter.FormatArrowListArray((ListArray)val, 0);
                     return ArrowConverter.ToArray<T>(obj);
                 }
@@ -356,6 +360,8 @@ namespace Snowflake.Data.Client
                 else
                 {
                     var val = resultSet.GetValue(0);
+                    if (val is DBNull)
+                        return null;
                     var obj = ArrowConverter.FormatArrowMapArray((MapArray)val, 0);
                     return ArrowConverter.ToDictionary<TKey, TValue>(obj);
                 }
