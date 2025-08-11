@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Action<Mock<TimeProvider>> timeProviderConfigurator,
             Action<Mock<AwsSdkWrapper>> awsSdkConfigurator)
         {
-            var wifProviderPart = attestationProvider == null ? string.Empty : $"wifProvider={attestationProvider.ToString()};";
+            var wifProviderPart = attestationProvider == null ? string.Empty : $"workload_identity_provider={attestationProvider.ToString()};";
             var connectionString = $"authenticator=workload_identity;account=testaccount;{wifProviderPart}{connectionStringSuffix ?? string.Empty};host=localhost;port={WiremockRunner.DefaultHttpPort};scheme=http;";
             var sessionContext = new SessionPropertiesContext();
             var session = new SFSession(connectionString, sessionContext);
@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var exception = Assert.Throws<SnowflakeDbException>(() => PrepareSession(null, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled));
 
             // assert
-            Assert.That(exception?.Message, Does.Contain("Required property WIFPROVIDER is not provided"));
+            Assert.That(exception?.Message, Does.Contain("Required property WORKLOAD_IDENTITY_PROVIDER is not provided"));
         }
 
         [Test]

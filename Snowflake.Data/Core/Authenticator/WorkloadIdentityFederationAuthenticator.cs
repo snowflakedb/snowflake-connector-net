@@ -38,15 +38,15 @@ namespace Snowflake.Data.Core.Authenticator
             _timeProvider = timeProvider;
             _awsSdkWrapper = awsSdkWrapper;
             _metadataHost = metadataHost;
-            if (session.properties.TryGetValue(SFSessionProperty.WIFPROVIDER, out var provider) && !string.IsNullOrEmpty(provider))
+            if (session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER, out var provider) && !string.IsNullOrEmpty(provider))
             {
                 _provider = (AttestationProvider)Enum.Parse(typeof(AttestationProvider), provider, true);
             }
             else
             {
-                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Property {SFSessionProperty.WIFPROVIDER} is required for Workload Identity authentication");
+                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Property {SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER} is required for Workload Identity authentication");
             }
-            if (!session.properties.TryGetValue(SFSessionProperty.WIFENTRARESOURCE, out _entraResource))
+            if (!session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_ENTRA_RESOURCE, out _entraResource))
             {
                 _entraResource = null;
             }

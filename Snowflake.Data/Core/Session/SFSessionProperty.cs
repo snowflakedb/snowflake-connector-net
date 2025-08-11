@@ -128,9 +128,9 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "true", defaultNonWindowsValue = "false")]
         CLIENT_STORE_TEMPORARY_CREDENTIAL,
         [SFSessionPropertyAttr(required = false)]
-        WIFPROVIDER,
+        WORKLOAD_IDENTITY_PROVIDER,
         [SFSessionPropertyAttr(required = false)]
-        WIFENTRARESOURCE,
+        WORKLOAD_IDENTITY_ENTRA_RESOURCE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         OAUTHENABLESINGLEUSEREFRESHTOKENS,
     }
@@ -408,11 +408,11 @@ namespace Snowflake.Data.Core
 
         private static AttestationProvider ValidateWifProvider(SFSessionProperties properties)
         {
-            CheckRequiredProperty(SFSessionProperty.WIFPROVIDER, properties);
-            var provider = properties[SFSessionProperty.WIFPROVIDER];
+            CheckRequiredProperty(SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER, properties);
+            var provider = properties[SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER];
             if (!Enum.TryParse(provider, true, out AttestationProvider attestationProvider))
             {
-                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, "Unknown value of wifProvider parameter.");
+                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, "Unknown value of workload_identity_provider parameter.");
             }
             return attestationProvider;
         }
