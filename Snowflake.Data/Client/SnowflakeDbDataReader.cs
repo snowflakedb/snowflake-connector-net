@@ -639,6 +639,8 @@ namespace Snowflake.Data.Core.Converter
 
         private static object ConvertValue(object value, Type targetType)
         {
+            Console.WriteLine($"ConvertValue {value} - Type {targetType}");
+
             if (value == null)
                 return null;
 
@@ -686,6 +688,7 @@ namespace Snowflake.Data.Core.Converter
 
             try
             {
+                Console.WriteLine($"Convert.ChangeType({value}, {targetType})");
                 return Convert.ChangeType(value, targetType);
             }
             catch (Exception ex)
