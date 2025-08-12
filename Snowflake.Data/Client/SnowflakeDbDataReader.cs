@@ -688,9 +688,9 @@ namespace Snowflake.Data.Core.Converter
             {
                 return Convert.ChangeType(value, targetType);
             }
-            catch
+            catch (Exception ex)
             {
-                return value; // fallback for unexpected cases
+                throw ex;
             }
         }
 
