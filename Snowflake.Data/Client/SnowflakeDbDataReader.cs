@@ -278,7 +278,7 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
-                    var val = resultSet.GetValue(0);
+                    var val = resultSet.GetValue(ordinal);
                     if (val is DBNull)
                         return null;
                     var obj = ArrowConverter.FormatStructArray((StructArray)val, 0);
@@ -320,7 +320,7 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
-                    var val = resultSet.GetValue(0);
+                    var val = resultSet.GetValue(ordinal);
                     if (val is DBNull)
                         return null;
                     var obj = ArrowConverter.FormatArrowListArray((ListArray)val, 0);
@@ -359,7 +359,7 @@ namespace Snowflake.Data.Client
                 }
                 else
                 {
-                    var val = resultSet.GetValue(0);
+                    var val = resultSet.GetValue(ordinal);
                     if (val is DBNull)
                         return null;
                     var obj = ArrowConverter.FormatArrowMapArray((MapArray)val, 0);
@@ -604,6 +604,8 @@ namespace Snowflake.Data.Core.Converter
             var result = new T[list.Count];
             for (int i = 0; i < list.Count; i++)
             {
+                if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    targetType = Nullable.GetUnderlyingType(targetType);
                 result[i] = (T)ConvertValue(list[i], targetType);
             }
             return result;
