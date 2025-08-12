@@ -456,6 +456,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
+                    var array = reader.GetArray<AnnotatedClassForConstructorConstruction>(0);
+                    foreach (var item in array)
+                    {
+                        Console.WriteLine($"TestThrowExceptionForNextedInvalidElement item: {item}");
+                    }
+
                     // act
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<AnnotatedClassForConstructorConstruction>(0));
 
