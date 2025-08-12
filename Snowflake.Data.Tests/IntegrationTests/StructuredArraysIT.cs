@@ -430,7 +430,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
-                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]"));
+                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an array $[1]"));
                 }
             }
         }
