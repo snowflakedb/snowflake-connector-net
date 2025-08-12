@@ -457,9 +457,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     var array = reader.GetArray<AnnotatedClassForConstructorConstruction>(0);
+                    var i = 0;
                     foreach (var item in array)
                     {
-                        Console.WriteLine($"TestThrowExceptionForNextedInvalidElement item: {item}");
+                        Console.WriteLine($"{i} StringValue: {item.StringValue}");
+                        Console.WriteLine($"{i} IntegerValue: {item.IntegerValue}");
+                        Console.WriteLine($"{i} IgnoredValue: {item.IgnoredValue}");
+                        i++;
                     }
 
                     // act
