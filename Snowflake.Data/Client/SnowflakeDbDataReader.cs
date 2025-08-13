@@ -530,11 +530,11 @@ namespace Snowflake.Data.Core.Converter
         {
             T obj = new T();
             Type type = typeof(T);
-            var noKvps = true;
 
             foreach (var kvp in dict)
             {
-                noKvps = false;
+                Console.WriteLine($"key: {kvp.Key}");
+                Console.WriteLine($"value: {kvp.Value}");
                 var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
                 if (prop != null)
@@ -584,16 +584,17 @@ namespace Snowflake.Data.Core.Converter
                         }
                     }
                 }
-            }
-            if (noKvps)
-            {
-                try
+                else
                 {
-                    Convert.ChangeType(dict, typeof(T));
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
+                    try
+                    {
+                        var converted = Convert.ChangeType(dict, typeof(T));
+                        prop.SetValue(obj, converted);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
                 }
             }
             return obj;
