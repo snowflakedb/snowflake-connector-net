@@ -538,6 +538,11 @@ namespace Snowflake.Data.Core.Converter
                 if (prop != null)
                 {
                     var value = kvp.Value;
+                    Console.WriteLine($"Value: {value}");
+                    Console.WriteLine($"1: {prop.PropertyType.IsArray}");
+                    Console.WriteLine($"2: {prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>)}");
+                    Console.WriteLine($"3: {value is Dictionary<object, object>}");
+                    Console.WriteLine($"4: {value is Dictionary<string, object>}");
 
                     if (value is List<object> objList)
                     {
