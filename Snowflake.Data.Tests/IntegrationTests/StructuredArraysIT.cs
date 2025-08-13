@@ -460,9 +460,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<AnnotatedClassForConstructorConstruction>(0));
 
                     // assert
-                    SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
-                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[0][1]"));
-                    Assert.That(thrown.Message, Does.Contain("Could not read text type into System.Int32"));
+                    if (_resultFormat == ResultFormat.JSON)
+                    {
+                        SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
+                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[0][1]"));
+                        Assert.That(thrown.Message, Does.Contain("Could not read text type into System.Int32"));
+                    }
+                    else
+                    {
+                        SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
+                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[0][1]"));
+                    }
                 }
             }
         }
