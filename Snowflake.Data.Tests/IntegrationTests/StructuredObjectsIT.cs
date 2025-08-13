@@ -25,6 +25,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestDataTableLoadOnStructuredObject()
         {
+            if (_resultFormat != ResultFormat.JSON)
+                Assert.Ignore("skip test on arrow");
+
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionString))
             {
