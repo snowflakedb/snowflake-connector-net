@@ -837,7 +837,7 @@ namespace Snowflake.Data.Core
         }
     }
 
-    public static class EnumExtensions
+    internal static class EnumExtensions
     {
         public static TAttribute GetAttribute<TAttribute>(this Enum value)
             where TAttribute : Attribute
