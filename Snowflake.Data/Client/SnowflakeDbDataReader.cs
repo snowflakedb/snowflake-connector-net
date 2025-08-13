@@ -647,10 +647,14 @@ namespace Snowflake.Data.Core.Converter
                 return null;
 
             if (targetType.IsAssignableFrom(value.GetType()))
+            {
+                Console.WriteLine("ConvertValue 0");
                 return value;
+            }
 
             if (value is Dictionary<string, object> dict)
             {
+                Console.WriteLine("ConvertValue 1");
                 var method = typeof(ArrowConverter)
                     .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
                     .MakeGenericMethod(targetType);
@@ -660,6 +664,7 @@ namespace Snowflake.Data.Core.Converter
             if (value is Dictionary<object, object> objDict && targetType.IsGenericType &&
                 targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
             {
+                Console.WriteLine("ConvertValue 2");
                 var keyType = targetType.GetGenericArguments()[0];
                 var valueType = targetType.GetGenericArguments()[1];
                 var method = typeof(ArrowConverter)
@@ -672,6 +677,7 @@ namespace Snowflake.Data.Core.Converter
             {
                 if (targetType.IsArray)
                 {
+                    Console.WriteLine("ConvertValue 3");
                     var elementType = targetType.GetElementType();
                     var method = typeof(ArrowConverter)
                         .GetMethod("ToArray", BindingFlags.NonPublic | BindingFlags.Static)
@@ -680,6 +686,7 @@ namespace Snowflake.Data.Core.Converter
                 }
                 else if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
                 {
+                    Console.WriteLine("ConvertValue 4");
                     var elementType = targetType.GetGenericArguments()[0];
                     var method = typeof(ArrowConverter)
                         .GetMethod("ToList", BindingFlags.NonPublic | BindingFlags.Static)
@@ -690,6 +697,7 @@ namespace Snowflake.Data.Core.Converter
 
             try
             {
+                Console.WriteLine("ConvertValue 5");
                 return Convert.ChangeType(value, targetType);
             }
             catch (Exception ex)
