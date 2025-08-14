@@ -532,81 +532,84 @@ namespace Snowflake.Data.Core.Converter
             T obj = new T();
             Type type = typeof(T);
 
-            var constructionMethod = JsonToStructuredTypeConverter.GetConstructionMethod(type);
-            if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)
+            if (type.GetCustomAttributes(false).Any(attribute => attribute.GetType() == typeof(SnowflakeObject)))
             {
-                Console.WriteLine($"ToObject 7");
-                foreach (var kvp in dict)
+                var constructionMethod = JsonToStructuredTypeConverter.GetConstructionMethod(type);
+                if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)
                 {
-                    var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                    if (prop != null)
+                    Console.WriteLine($"ToObject 7");
+                    foreach (var kvp in dict)
                     {
-                        var converted = Convert.ChangeType(kvp.Value, prop.PropertyType);
-                        prop.SetValue(obj, converted);
-                    }
-                    else
-                    {
-                        var match = type
-                        .GetProperties()
-                        .SelectMany(
-                            property => property.GetCustomAttributes().OfType<SnowflakeColumn>(),
-                            (property, attr) => new { Property = property, Attribute = attr }
-                        )
-                        .FirstOrDefault(x => x.Attribute?.Name == kvp.Key);
-
-                        if (match != null)
+                        var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                        if (prop != null)
                         {
-                            var converted = Convert.ChangeType(kvp.Value, match.Property.PropertyType);
-                            match.Property.SetValue(obj, converted);
-                        }
-                    }
-                }
-            }
-            else if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
-            {
-                Console.WriteLine($"ToObject 8");
-                var index = 0;
-                foreach (var property in type.GetProperties())
-                {
-                    if (index < dict.Count)
-                    {
-                        var attributes = property.GetCustomAttributes();
-                        if (attributes.Count() == 0)
-                        {
-                            var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.PropertyType);
-                            property.SetValue(obj, converted);
-                            index++;
+                            var converted = Convert.ChangeType(kvp.Value, prop.PropertyType);
+                            prop.SetValue(obj, converted);
                         }
                         else
                         {
-                            foreach (var attr in attributes)
+                            var match = type
+                            .GetProperties()
+                            .SelectMany(
+                                property => property.GetCustomAttributes().OfType<SnowflakeColumn>(),
+                                (property, attr) => new { Property = property, Attribute = attr }
+                            )
+                            .FirstOrDefault(x => x.Attribute?.Name == kvp.Key);
+
+                            if (match != null)
                             {
-                                var snowflakeAttr = (SnowflakeColumn)attr;
-                                if (!snowflakeAttr.IgnoreForPropertyOrder)
-                                {
-                                    var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.PropertyType);
-                                    property.SetValue(obj, converted);
-                                    index++;
-                                }
+                                var converted = Convert.ChangeType(kvp.Value, match.Property.PropertyType);
+                                match.Property.SetValue(obj, converted);
                             }
                         }
-                    }                    
-                }
-            }
-            else if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
-            {
-                Console.WriteLine($"ToObject 6");
-                var instance = Activator.CreateInstance(type);
-                foreach (var kvp in dict)
-                {
-                    var prop = type.GetProperty(kvp.Key);
-                    if (prop != null && prop.CanWrite)
-                    {
-                        var converted = Convert.ChangeType(kvp.Value, prop.PropertyType);
-                        prop.SetValue(instance, converted);
                     }
                 }
-                return (T)instance;
+                else if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
+                {
+                    Console.WriteLine($"ToObject 8");
+                    var index = 0;
+                    foreach (var property in type.GetProperties())
+                    {
+                        if (index < dict.Count)
+                        {
+                            var attributes = property.GetCustomAttributes();
+                            if (attributes.Count() == 0)
+                            {
+                                var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.PropertyType);
+                                property.SetValue(obj, converted);
+                                index++;
+                            }
+                            else
+                            {
+                                foreach (var attr in attributes)
+                                {
+                                    var snowflakeAttr = (SnowflakeColumn)attr;
+                                    if (!snowflakeAttr.IgnoreForPropertyOrder)
+                                    {
+                                        var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.PropertyType);
+                                        property.SetValue(obj, converted);
+                                        index++;
+                                    }
+                                }
+                            }
+                        }                    
+                    }
+                }
+                else if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
+                {
+                    Console.WriteLine($"ToObject 6");
+                    var instance = Activator.CreateInstance(type);
+                    foreach (var kvp in dict)
+                    {
+                        var prop = type.GetProperty(kvp.Key);
+                        if (prop != null && prop.CanWrite)
+                        {
+                            var converted = Convert.ChangeType(kvp.Value, prop.PropertyType);
+                            prop.SetValue(instance, converted);
+                        }
+                    }
+                    return (T)instance;
+                }
             }
             else
             {
