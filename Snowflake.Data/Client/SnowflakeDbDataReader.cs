@@ -562,12 +562,16 @@ namespace Snowflake.Data.Core.Converter
                             var arr = CallMethod(innerType, objList, "ToArray");
                             prop.SetValue(obj, arr);
                         }
-                        else if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
+                        else if (prop.PropertyType.IsGenericType)
                         {
-                            Console.WriteLine($"2");
-                            var innerType = prop.PropertyType.GetGenericArguments()[0];
-                            var list = CallMethod(innerType, objList, "ToList");
-                            prop.SetValue(obj, list);
+                            var genericType = prop.PropertyType.GetGenericTypeDefinition();
+                            if (genericType == typeof(List<>) || genericType == typeof(IList<>))
+                            {
+                                Console.WriteLine($"2");
+                                var innerType = prop.PropertyType.GetGenericArguments()[0];
+                                var list = CallMethod(innerType, objList, "ToList");
+                                prop.SetValue(obj, list);
+                            }
                         }
                     }
                     else if (value is Dictionary<object, object> objDict)
