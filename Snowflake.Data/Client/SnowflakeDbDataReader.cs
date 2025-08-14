@@ -615,15 +615,11 @@ namespace Snowflake.Data.Core.Converter
                         {
                             var attrType = attr.GetType();
                             var nameProp = attrType.GetProperty("Name");
-
-                            if (nameProp != null)
+                            Console.WriteLine($"nameProp: {nameProp}");
+                            if (nameProp != null && nameProp.Name == kvp.Key)
                             {
-                                var nameValue = nameProp.GetValue(attr) as string;
-                                if (nameValue == kvp.Key)
-                                {
-                                    var converted = Convert.ChangeType(kvp.Value, nameProp.PropertyType);
-                                    nameProp.SetValue(obj, converted);
-                                }
+                                var converted = Convert.ChangeType(kvp.Value, nameProp.PropertyType);
+                                nameProp.SetValue(obj, converted);
                             }
                         }
                     }
