@@ -13,6 +13,7 @@ using System.Reflection;
 using Apache.Arrow;
 using Apache.Arrow.Types;
 using System.Linq;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Client
 {
@@ -531,108 +532,155 @@ namespace Snowflake.Data.Core.Converter
             T obj = new T();
             Type type = typeof(T);
 
-            foreach (var kvp in dict)
+            var constructionMethod = JsonToStructuredTypeConverter.GetConstructionMethod(type);
+            if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)
             {
-                Console.WriteLine($"key: {kvp.Key}");
-                Console.WriteLine($"value: {kvp.Value}");
-                if (kvp.Value is IList ilist)
+                Console.WriteLine($"7");
+                foreach (var kvp in dict)
                 {
-                    foreach (var item in ilist)
+                    var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                    if (prop != null)
                     {
-                        Console.WriteLine(item);
-                    }
-                }
-                var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-
-                if (prop != null)
-                {
-                    var value = kvp.Value;
-                    if (value is List<object> objList)
-                    {
-                        Console.WriteLine($"value is List<object> objList");
-                        Console.WriteLine($"{prop.PropertyType.IsArray}");
-                        Console.WriteLine($"{prop.PropertyType.IsGenericType}");
-                        if (prop.PropertyType.IsGenericType)
-                            Console.WriteLine($"{prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>)}");
-
-                        if (prop.PropertyType.IsArray)
-                        {
-                            Console.WriteLine($"1");
-                            var innerType = prop.PropertyType.GetElementType();
-                            var arr = CallMethod(innerType, objList, "ToArray");
-                            prop.SetValue(obj, arr);
-                        }
-                        else if (prop.PropertyType.IsGenericType)
-                        {
-                            var genericType = prop.PropertyType.GetGenericTypeDefinition();
-                            if (genericType == typeof(List<>) || genericType == typeof(IList<>))
-                            {
-                                Console.WriteLine($"2");
-                                var innerType = prop.PropertyType.GetGenericArguments()[0];
-                                var list = CallMethod(innerType, objList, "ToList");
-                                prop.SetValue(obj, list);
-                            }
-                        }
-                    }
-                    else if (value is Dictionary<object, object> objDict)
-                    {
-                        Console.WriteLine($"3");
-                        var genericArgs = prop.PropertyType.GetGenericArguments();
-                        var keyType = genericArgs[0];
-                        var valueType = genericArgs[1];
-                        var dictValue = CallMethod(keyType, objDict, "ToDictionary", valueType);
-                        prop.SetValue(obj, dictValue);
-                    }
-                    else if (value is Dictionary<string, object> nestedDict)
-                    {
-                        Console.WriteLine($"4");
-                        var nestedObj = typeof(ArrowConverter)
-                            .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
-                            .MakeGenericMethod(prop.PropertyType)
-                            .Invoke(null, new object[] { nestedDict });
-                        prop.SetValue(obj, nestedObj);
+                        var converted = Convert.ChangeType(kvp.Value, prop.PropertyType);
+                        prop.SetValue(obj, converted);
                     }
                     else
                     {
-                        try
+                        var match = type
+                        .GetProperties()
+                        .SelectMany(
+                            property => property.GetCustomAttributes().OfType<SnowflakeColumn>(),
+                            (property, attr) => new { Property = property, Attribute = attr }
+                        )
+                        .FirstOrDefault(x => x.Attribute?.Name == kvp.Key);
+
+                        if (match != null)
+                        {
+                            var converted = Convert.ChangeType(kvp.Value, match.Property.PropertyType);
+                            match.Property.SetValue(obj, converted);
+                        }
+                    }
+                }
+            }
+            else if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
+            {
+                Console.WriteLine($"8");
+                var index = 0;
+                foreach (var property in type.GetProperties())
+                {
+                    var attributes = property.GetCustomAttributes();
+                    if (attributes.Count() == 0)
+                    {
+                        var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.PropertyType);
+                        property.SetValue(obj, converted);
+                        index++;
+                    }
+                    else
+                    {
+                        foreach (var attr in attributes)
+                        {
+                            var snowflakeAttr = (SnowflakeColumn)attr;
+                            if (!snowflakeAttr.IgnoreForPropertyOrder)
+                            {
+                                var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.PropertyType);
+                                property.SetValue(obj, converted);
+                                index++;
+                            }
+                        }
+                    }
+                }
+            }
+            else if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
+            {
+                Console.WriteLine($"6");
+                var instance = Activator.CreateInstance(type);
+                foreach (var entry in dict)
+                {
+                    PropertyInfo prop = type.GetProperty(entry.Key);
+
+                    if (prop != null && prop.CanWrite)
+                    {
+                        object safeValue = Convert.ChangeType(entry.Value, prop.PropertyType);
+                        prop.SetValue(instance, safeValue);
+                    }
+                }
+                return (T)instance;
+            }
+            else
+            {
+                foreach (var kvp in dict)
+                {
+                    Console.WriteLine($"key: {kvp.Key}");
+                    Console.WriteLine($"value: {kvp.Value}");
+                    if (kvp.Value is IList ilist)
+                    {
+                        foreach (var item in ilist)
+                        {
+                            Console.WriteLine(item);
+                        }
+                    }
+                    var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+
+                    if (prop != null)
+                    {
+                        var value = kvp.Value;
+                        if (value is List<object> objList)
+                        {
+                            Console.WriteLine($"value is List<object> objList");
+                            Console.WriteLine($"{prop.PropertyType.IsArray}");
+                            Console.WriteLine($"{prop.PropertyType.IsGenericType}");
+                            if (prop.PropertyType.IsGenericType)
+                                Console.WriteLine($"{prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>)}");
+
+                            if (prop.PropertyType.IsArray)
+                            {
+                                Console.WriteLine($"1");
+                                var innerType = prop.PropertyType.GetElementType();
+                                var arr = CallMethod(innerType, objList, "ToArray");
+                                prop.SetValue(obj, arr);
+                            }
+                            else if (prop.PropertyType.IsGenericType)
+                            {
+                                var genericType = prop.PropertyType.GetGenericTypeDefinition();
+                                if (genericType == typeof(List<>) || genericType == typeof(IList<>))
+                                {
+                                    Console.WriteLine($"2");
+                                    var innerType = prop.PropertyType.GetGenericArguments()[0];
+                                    var list = CallMethod(innerType, objList, "ToList");
+                                    prop.SetValue(obj, list);
+                                }
+                            }
+                        }
+                        else if (value is Dictionary<object, object> objDict)
+                        {
+                            Console.WriteLine($"3");
+                            var genericArgs = prop.PropertyType.GetGenericArguments();
+                            var keyType = genericArgs[0];
+                            var valueType = genericArgs[1];
+                            var dictValue = CallMethod(keyType, objDict, "ToDictionary", valueType);
+                            prop.SetValue(obj, dictValue);
+                        }
+                        else if (value is Dictionary<string, object> nestedDict)
+                        {
+                            Console.WriteLine($"4");
+                            var nestedObj = typeof(ArrowConverter)
+                                .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
+                                .MakeGenericMethod(prop.PropertyType)
+                                .Invoke(null, new object[] { nestedDict });
+                            prop.SetValue(obj, nestedObj);
+                        }
+                        else
                         {
                             Console.WriteLine($"5");
                             var converted = Convert.ChangeType(value, prop.PropertyType);
                             prop.SetValue(obj, converted);
                         }
-                        catch (Exception ex)
-                        {
-                            throw ex;
-                        }
                     }
-                }
-                else
-                {
-                    try
-                    {
-                        Console.WriteLine($"6");
-                        foreach (var property in type.GetProperties())
-                        {
-                            foreach (var attr in property.GetCustomAttributes())
-                            {
-                                var attrType = attr.GetType();
-                                var nameProp = attrType.GetProperty("Name");
-                                if (nameProp != null)
-                                {
-                                    var nameValue = nameProp.GetValue(attr)?.ToString();
-                                    if (nameValue == kvp.Key)
-                                    {
-                                        var converted = Convert.ChangeType(kvp.Value, property.PropertyType);
-                                        property.SetValue(obj, converted);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        throw ex;
-                    }
+                    //else
+                    //{
+                    //    Console.WriteLine($"6");
+                    //    prop.SetValue(obj, kvp);
+                    //}
                 }
             }
             return obj;
