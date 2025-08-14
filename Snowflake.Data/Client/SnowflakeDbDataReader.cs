@@ -552,7 +552,9 @@ namespace Snowflake.Data.Core.Converter
                         Console.WriteLine($"value is List<object> objList");
                         Console.WriteLine($"{prop.PropertyType.IsArray}");
                         Console.WriteLine($"{prop.PropertyType.IsGenericType}");
-                        Console.WriteLine($"{prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>)}");
+                        if (prop.PropertyType.IsGenericType)
+                            Console.WriteLine($"{prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>)}");
+
                         if (prop.PropertyType.IsArray)
                         {
                             Console.WriteLine($"1");
