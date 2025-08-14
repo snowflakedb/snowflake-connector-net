@@ -535,7 +535,7 @@ namespace Snowflake.Data.Core.Converter
             var constructionMethod = JsonToStructuredTypeConverter.GetConstructionMethod(type);
             if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)
             {
-                Console.WriteLine($"7");
+                Console.WriteLine($"ToObject 7");
                 foreach (var kvp in dict)
                 {
                     var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
@@ -564,44 +564,46 @@ namespace Snowflake.Data.Core.Converter
             }
             else if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
             {
-                Console.WriteLine($"8");
+                Console.WriteLine($"ToObject 8");
                 var index = 0;
                 foreach (var property in type.GetProperties())
                 {
-                    var attributes = property.GetCustomAttributes();
-                    if (attributes.Count() == 0)
+                    if (index < dict.Count)
                     {
-                        var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.PropertyType);
-                        property.SetValue(obj, converted);
-                        index++;
-                    }
-                    else
-                    {
-                        foreach (var attr in attributes)
+                        var attributes = property.GetCustomAttributes();
+                        if (attributes.Count() == 0)
                         {
-                            var snowflakeAttr = (SnowflakeColumn)attr;
-                            if (!snowflakeAttr.IgnoreForPropertyOrder)
+                            var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.PropertyType);
+                            property.SetValue(obj, converted);
+                            index++;
+                        }
+                        else
+                        {
+                            foreach (var attr in attributes)
                             {
-                                var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.PropertyType);
-                                property.SetValue(obj, converted);
-                                index++;
+                                var snowflakeAttr = (SnowflakeColumn)attr;
+                                if (!snowflakeAttr.IgnoreForPropertyOrder)
+                                {
+                                    var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.PropertyType);
+                                    property.SetValue(obj, converted);
+                                    index++;
+                                }
                             }
                         }
-                    }
+                    }                    
                 }
             }
             else if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
             {
-                Console.WriteLine($"6");
+                Console.WriteLine($"ToObject 6");
                 var instance = Activator.CreateInstance(type);
-                foreach (var entry in dict)
+                foreach (var kvp in dict)
                 {
-                    PropertyInfo prop = type.GetProperty(entry.Key);
-
+                    var prop = type.GetProperty(kvp.Key);
                     if (prop != null && prop.CanWrite)
                     {
-                        object safeValue = Convert.ChangeType(entry.Value, prop.PropertyType);
-                        prop.SetValue(instance, safeValue);
+                        var converted = Convert.ChangeType(kvp.Value, prop.PropertyType);
+                        prop.SetValue(instance, converted);
                     }
                 }
                 return (T)instance;
@@ -634,7 +636,7 @@ namespace Snowflake.Data.Core.Converter
 
                             if (prop.PropertyType.IsArray)
                             {
-                                Console.WriteLine($"1");
+                                Console.WriteLine($"ToObject 1");
                                 var innerType = prop.PropertyType.GetElementType();
                                 var arr = CallMethod(innerType, objList, "ToArray");
                                 prop.SetValue(obj, arr);
@@ -644,7 +646,7 @@ namespace Snowflake.Data.Core.Converter
                                 var genericType = prop.PropertyType.GetGenericTypeDefinition();
                                 if (genericType == typeof(List<>) || genericType == typeof(IList<>))
                                 {
-                                    Console.WriteLine($"2");
+                                    Console.WriteLine($"ToObject 2");
                                     var innerType = prop.PropertyType.GetGenericArguments()[0];
                                     var list = CallMethod(innerType, objList, "ToList");
                                     prop.SetValue(obj, list);
@@ -653,7 +655,7 @@ namespace Snowflake.Data.Core.Converter
                         }
                         else if (value is Dictionary<object, object> objDict)
                         {
-                            Console.WriteLine($"3");
+                            Console.WriteLine($"ToObject 3");
                             var genericArgs = prop.PropertyType.GetGenericArguments();
                             var keyType = genericArgs[0];
                             var valueType = genericArgs[1];
@@ -662,7 +664,7 @@ namespace Snowflake.Data.Core.Converter
                         }
                         else if (value is Dictionary<string, object> nestedDict)
                         {
-                            Console.WriteLine($"4");
+                            Console.WriteLine($"ToObject 4");
                             var nestedObj = typeof(ArrowConverter)
                                 .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
                                 .MakeGenericMethod(prop.PropertyType)
@@ -671,16 +673,11 @@ namespace Snowflake.Data.Core.Converter
                         }
                         else
                         {
-                            Console.WriteLine($"5");
+                            Console.WriteLine($"ToObject 5");
                             var converted = Convert.ChangeType(value, prop.PropertyType);
                             prop.SetValue(obj, converted);
                         }
                     }
-                    //else
-                    //{
-                    //    Console.WriteLine($"6");
-                    //    prop.SetValue(obj, kvp);
-                    //}
                 }
             }
             return obj;
