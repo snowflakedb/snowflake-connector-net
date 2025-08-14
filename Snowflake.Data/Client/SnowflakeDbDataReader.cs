@@ -435,98 +435,6 @@ namespace Snowflake.Data.Core.Converter
 {
     internal static class ArrowConverter
     {
-        //internal static T ToObject<T>(Dictionary<string, object> dict) where T : new()
-        //{
-        //    Console.WriteLine($"ToObject dict.Count: {dict.Count}");
-
-        //    T obj = new T();
-        //    Type type = typeof(T);
-
-        //    foreach (var kvp in dict)
-        //    {
-        //        var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-
-        //        Console.WriteLine($"ToObject kvp.Key: {kvp.Key}");
-        //        Console.WriteLine($"ToObject kvp.Value: {kvp.Value}");
-        //        Console.WriteLine($"ToObject kvp.Type: {kvp.Value.GetType().Name}");
-        //        Console.WriteLine($"ToObject prop: {prop}");
-
-        //        if (prop != null)
-        //        {
-        //            var value = kvp.Value;
-
-        //            if (value is List<object> objList)
-        //            {
-        //                if (prop.PropertyType.IsArray)
-        //                {
-        //                    var innerType = prop.PropertyType.GetElementType();
-        //                    var arr = CallMethod(innerType, objList, "ToArray");
-        //                    prop.SetValue(obj, arr);
-        //                }
-        //                else if (prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
-        //                {
-        //                    var innerType = prop.PropertyType.GetGenericArguments()[0];
-        //                    var list = CallMethod(innerType, objList, "ToList");
-        //                    prop.SetValue(obj, list);
-        //                }
-        //            }
-        //            else if (value is Dictionary<object, object> objDict)
-        //            {
-        //                var genericArgs = prop.PropertyType.GetGenericArguments();
-        //                var keyType = genericArgs[0];
-        //                var valueType = genericArgs[1];
-
-        //                var stringDict = CallMethod(keyType, objDict, "ToDictionary", valueType);
-        //                prop.SetValue(obj, stringDict);
-        //            }
-        //            else
-        //            {
-        //                value = Convert.ChangeType(value, prop.PropertyType);
-        //                prop.SetValue(obj, value);
-        //            }
-        //        }
-        //    }
-        //    return obj;
-        //}
-
-        //internal static object CallMethod(Type type, object obj, string methodName, Type type2 = null)
-        //{
-        //    MethodInfo genericMethod = typeof(ArrowConverter)
-        //        .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
-        //    MethodInfo constructedMethod;
-        //    if (type2 == null)
-        //        constructedMethod = genericMethod.MakeGenericMethod(type);
-        //    else
-        //        constructedMethod = genericMethod.MakeGenericMethod(type, type2);
-        //    return constructedMethod.Invoke(null, new object[] { obj });
-        //}
-
-        //internal static T[] ToArray<T>(List<object> list)
-        //{
-        //    var targetType = typeof(T);
-        //    var array = list.Select(o => (T)Convert.ChangeType(o, targetType)).ToArray();
-        //    return array;
-        //}
-
-        //internal static List<T> ToList<T>(List<object> list)
-        //{
-        //    var targetType = typeof(T);
-        //    var typedList = list.Select(o => (T)Convert.ChangeType(o, targetType)).ToList();
-        //    return typedList;
-        //}
-
-        //internal static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(Dictionary<object, object> dict)
-        //{
-        //    var targetKeyType = typeof(TKey);
-        //    var targetValueType = typeof(TValue);
-
-        //    var typedDict = dict.ToDictionary(
-        //        kvp => (TKey)Convert.ChangeType(kvp.Key, targetKeyType),
-        //        kvp => (TValue)Convert.ChangeType(kvp.Value, targetValueType)
-        //    );
-        //    return typedDict;
-        //}
-
         internal static T ToObject<T>(Dictionary<string, object> dict) where T : new()
         {
             T obj = new T();
@@ -592,23 +500,31 @@ namespace Snowflake.Data.Core.Converter
                                     }
                                 }
                             }
-                        }                    
+                        }
                     }
                 }
                 else if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
                 {
                     Console.WriteLine($"ToObject 6");
-                    var instance = Activator.CreateInstance(type);
-                    foreach (var kvp in dict)
+                    var constructors = type.GetConstructors();
+
+                    var matchingConstructor = type.GetConstructors()
+                        .Where(c => c.GetParameters().Length == dict.Count)
+                        .First();
+
+                    if (matchingConstructor == null)
+                        throw new StructuredTypesReadingException($"No constructor found for type: {type}");
+
+                    var parameters = new object[dict.Count];
+                    var index = 0;
+                    foreach (var property in matchingConstructor.GetParameters())
                     {
-                        var prop = type.GetProperty(kvp.Key);
-                        if (prop != null && prop.CanWrite)
-                        {
-                            var converted = Convert.ChangeType(kvp.Value, prop.PropertyType);
-                            prop.SetValue(instance, converted);
-                        }
+                        var converted = Convert.ChangeType(dict.ElementAt(index).Value, property.ParameterType);
+                        parameters[index] = converted;
+                        index++;
                     }
-                    return (T)instance;
+
+                    return (T)matchingConstructor.Invoke(parameters);
                 }
             }
             else
