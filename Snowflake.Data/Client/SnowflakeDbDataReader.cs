@@ -535,6 +535,13 @@ namespace Snowflake.Data.Core.Converter
             {
                 Console.WriteLine($"key: {kvp.Key}");
                 Console.WriteLine($"value: {kvp.Value}");
+                if (kvp.Value is IList ilist)
+                {
+                    foreach (var item in ilist)
+                    {
+                        Console.WriteLine(item);
+                    }
+                }
                 var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
                 if (prop != null)
@@ -544,12 +551,14 @@ namespace Snowflake.Data.Core.Converter
                     {
                         if (prop.PropertyType.IsArray)
                         {
+                            Console.WriteLine($"1");
                             var innerType = prop.PropertyType.GetElementType();
                             var arr = CallMethod(innerType, objList, "ToArray");
                             prop.SetValue(obj, arr);
                         }
                         else if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
                         {
+                            Console.WriteLine($"2");
                             var innerType = prop.PropertyType.GetGenericArguments()[0];
                             var list = CallMethod(innerType, objList, "ToList");
                             prop.SetValue(obj, list);
@@ -557,6 +566,7 @@ namespace Snowflake.Data.Core.Converter
                     }
                     else if (value is Dictionary<object, object> objDict)
                     {
+                        Console.WriteLine($"3");
                         var genericArgs = prop.PropertyType.GetGenericArguments();
                         var keyType = genericArgs[0];
                         var valueType = genericArgs[1];
@@ -565,6 +575,7 @@ namespace Snowflake.Data.Core.Converter
                     }
                     else if (value is Dictionary<string, object> nestedDict)
                     {
+                        Console.WriteLine($"4");
                         var nestedObj = typeof(ArrowConverter)
                             .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
                             .MakeGenericMethod(prop.PropertyType)
@@ -575,6 +586,7 @@ namespace Snowflake.Data.Core.Converter
                     {
                         try
                         {
+                            Console.WriteLine($"5");
                             var converted = Convert.ChangeType(value, prop.PropertyType);
                             prop.SetValue(obj, converted);
                         }
@@ -588,6 +600,7 @@ namespace Snowflake.Data.Core.Converter
                 {
                     try
                     {
+                        Console.WriteLine($"6");
                         var converted = Convert.ChangeType(dict, typeof(T));
                         prop.SetValue(obj, converted);
                     }
