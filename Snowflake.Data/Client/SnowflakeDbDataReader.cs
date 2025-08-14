@@ -611,7 +611,21 @@ namespace Snowflake.Data.Core.Converter
                     try
                     {
                         Console.WriteLine($"6");
-                        prop.SetValue(obj, kvp.Value);
+                        foreach (var attr in type.GetCustomAttributes())
+                        {
+                            var attrType = attr.GetType();
+                            var nameProp = attrType.GetProperty("Name");
+
+                            if (nameProp != null)
+                            {
+                                var nameValue = nameProp.GetValue(attr) as string;
+                                if (nameValue == kvp.Key)
+                                {
+                                    var converted = Convert.ChangeType(kvp.Value, nameProp.PropertyType);
+                                    nameProp.SetValue(obj, converted);
+                                }
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
