@@ -611,8 +611,7 @@ namespace Snowflake.Data.Core.Converter
                     try
                     {
                         Console.WriteLine($"6");
-                        var converted = Convert.ChangeType(dict, typeof(T));
-                        prop.SetValue(obj, converted);
+                        prop.SetValue(obj, kvp.Value);
                     }
                     catch (Exception ex)
                     {
