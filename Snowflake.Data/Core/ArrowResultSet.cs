@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -206,13 +207,13 @@ namespace Snowflake.Data.Core
                     case DateTimeOffset ret:
                         obj = ret;
                         break;
-                    case StructArray ret:
+                    case Dictionary<string, object> ret:
                         obj = ret;
                         break;
-                    case MapArray ret:
+                    case Dictionary<object, object> ret:
                         obj = ret;
                         break;
-                    case ListArray ret:
+                    case List<object> ret:
                         obj = ret;
                         break;
                     default:

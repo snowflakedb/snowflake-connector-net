@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.Converter
 {
     internal static class ArrowConverter
     {
-        internal static T ToObject<T>(Dictionary<string, object> dict) where T : new()
+        internal static T ConvertObject<T>(Dictionary<string, object> dict) where T : new()
         {
             T obj = new T();
             Type type = typeof(T);
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Core.Converter
             return constructedMethod.Invoke(null, new object[] { obj });
         }
 
-        internal static T[] ToArray<T>(List<object> list)
+        internal static T[] ConvertArray<T>(List<object> list)
         {
             var targetType = typeof(T);
             var result = new T[list.Count];
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Core.Converter
             return result;
         }
 
-        internal static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(Dictionary<object, object> dict)
+        internal static Dictionary<TKey, TValue> ConvertMap<TKey, TValue>(Dictionary<object, object> dict)
         {
             var keyType = typeof(TKey);
             var valueType = typeof(TValue);
@@ -176,89 +176,6 @@ namespace Snowflake.Data.Core.Converter
                 }
             }
             return Convert.ChangeType(value, targetType);
-        }
-
-        internal static object ConvertArrowValue(IArrowArray array, int index)
-        {
-            switch (array)
-            {
-                case StructArray strct: return ParseStructArray(strct, index);
-                case MapArray map: return ParseMapArray(map, index);
-                case ListArray list: return ParseListArray(list, index);
-                case DoubleArray doubles: return doubles.GetValue(index);
-                case FloatArray floats: return floats.GetValue(index);
-                case Decimal128Array decimals: return decimals.GetValue(index);
-                case Int32Array ints: return ints.GetValue(index);
-                case Int64Array longs: return longs.GetValue(index);
-                case StringArray strArray:
-                    var str = strArray.GetString(index);
-                    return string.IsNullOrEmpty(str) ? null : str;
-                default:
-                    throw new NotSupportedException($"Unsupported array type: {array.GetType()}");
-            }
-        }
-
-        internal static Dictionary<string, object> ParseStructArray(StructArray structArray, int index)
-        {
-            var result = new Dictionary<string, object>();
-            var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
-
-            for (int i = 0; i < structArray.Fields.Count; i++)
-            {
-                var field = structArray.Fields[i];
-                var fieldName = structTypeFields[i].Name;
-                var value = ConvertArrowValue(field, index);
-
-                if (value == null && structArray.Fields.Count == 1)
-                    return null;
-
-                result[fieldName] = value;
-            }
-
-            return result;
-        }
-
-        internal static List<object> ParseListArray(ListArray listArray, int index)
-        {
-            int start = listArray.ValueOffsets[index];
-            int end = listArray.ValueOffsets[index + 1];
-
-            if (start == end)
-                return null;
-
-            var values = listArray.Values;
-            var result = new List<object>(end - start);
-
-            for (int i = start; i < end; i++)
-            {
-                result.Add(ConvertArrowValue(values, i));
-            }
-
-            return result;
-        }
-
-        internal static Dictionary<object, object> ParseMapArray(MapArray mapArray, int index)
-        {
-            int start = mapArray.ValueOffsets[index];
-            int end = mapArray.ValueOffsets[index + 1];
-
-            if (start == end)
-                return null;
-
-            var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
-            var keyArray = keyValuesArray.Fields[0];
-            var valueArray = keyValuesArray.Fields[1];
-
-            var result = new Dictionary<object, object>();
-
-            for (int i = 0; i < end - start; i++)
-            {
-                var key = ConvertArrowValue(keyArray, i);
-                var value = ConvertArrowValue(valueArray, i);
-                result[key] = value;
-            }
-
-            return result;
         }
     }
 }

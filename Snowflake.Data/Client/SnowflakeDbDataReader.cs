@@ -274,10 +274,9 @@ namespace Snowflake.Data.Client
                 else
                 {
                     var val = resultSet.GetValue(ordinal);
-                    if (val is StructArray array)
+                    if (val is Dictionary<string, object> obj)
                     {
-                        var obj = ArrowConverter.ParseStructArray(array, 0);
-                        return ArrowConverter.ToObject<T>(obj);
+                        return ArrowConverter.ConvertObject<T>(obj);
                     }
                     else if (val is string stringValue)
                     {
@@ -321,10 +320,9 @@ namespace Snowflake.Data.Client
                 else
                 {
                     var val = resultSet.GetValue(ordinal);
-                    if (val is ListArray array)
+                    if (val is List<object> array)
                     {
-                        var obj = ArrowConverter.ParseListArray(array, 0);
-                        return ArrowConverter.ToArray<T>(obj);
+                        return ArrowConverter.ConvertArray<T>(array);
                     }
                     else if (val is string stringValue)
                     {
@@ -366,10 +364,9 @@ namespace Snowflake.Data.Client
                 else
                 {
                     var val = resultSet.GetValue(ordinal);
-                    if (val is MapArray array)
+                    if (val is Dictionary<object, object> map)
                     {
-                        var obj = ArrowConverter.ParseMapArray(array, 0);
-                        return ArrowConverter.ToDictionary<TKey, TValue>(obj);
+                        return ArrowConverter.ConvertMap<TKey, TValue>(map);
                     }
                     else if (val is string stringValue)
                     {
