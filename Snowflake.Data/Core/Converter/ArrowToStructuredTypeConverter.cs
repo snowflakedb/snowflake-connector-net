@@ -21,83 +21,15 @@ namespace Snowflake.Data.Core.Converter
                 var constructionMethod = JsonToStructuredTypeConverter.GetConstructionMethod(type);
                 if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)
                 {
-                    foreach (var kvp in dict)
-                    {
-                        var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                        if (prop != null)
-                        {
-                            var converted = Convert.ChangeType(kvp.Value, prop.PropertyType);
-                            prop.SetValue(obj, converted);
-                        }
-                        else
-                        {
-                            var match = type
-                            .GetProperties()
-                            .SelectMany(
-                                property => property.GetCustomAttributes().OfType<SnowflakeColumn>(),
-                                (property, attr) => new { Property = property, Attribute = attr }
-                            )
-                            .FirstOrDefault(x => x.Attribute?.Name == kvp.Key);
-
-                            if (match != null)
-                            {
-                                var converted = ConvertValue(kvp.Value, match.Property.PropertyType);
-                                match.Property.SetValue(obj, converted);
-                            }
-                        }
-                    }
+                    MapPropertiesByNames(obj, dict, type);
                 }
                 else if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
                 {
-                    var index = 0;
-                    foreach (var property in type.GetProperties())
-                    {
-                        if (index < dict.Count)
-                        {
-                            var attributes = property.GetCustomAttributes();
-                            if (attributes.Count() == 0)
-                            {
-                                var converted = ConvertValue(dict.ElementAt(index).Value, property.PropertyType);
-                                property.SetValue(obj, converted);
-                                index++;
-                            }
-                            else
-                            {
-                                foreach (var attr in attributes)
-                                {
-                                    var snowflakeAttr = (SnowflakeColumn)attr;
-                                    if (!snowflakeAttr.IgnoreForPropertyOrder)
-                                    {
-                                        var converted = ConvertValue(dict.ElementAt(index).Value, property.PropertyType);
-                                        property.SetValue(obj, converted);
-                                        index++;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    MapPropertiesByOrder(obj, dict, type);
                 }
                 else if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
                 {
-                    var constructors = type.GetConstructors();
-
-                    var matchingConstructor = type.GetConstructors()
-                        .Where(c => c.GetParameters().Length == dict.Count)
-                        .First();
-
-                    if (matchingConstructor == null)
-                        throw new StructuredTypesReadingException($"No constructor found for type: {type}");
-
-                    var parameters = new object[dict.Count];
-                    var index = 0;
-                    foreach (var property in matchingConstructor.GetParameters())
-                    {
-                        var converted = ConvertValue(dict.ElementAt(index).Value, property.ParameterType);
-                        parameters[index] = converted;
-                        index++;
-                    }
-
-                    return (T)matchingConstructor.Invoke(parameters);
+                    return MapUsingConstructor<T>(dict, type);
                 }
             }
             else
@@ -160,6 +92,62 @@ namespace Snowflake.Data.Core.Converter
                 }
             }
             return obj;
+        }
+
+        private static void MapPropertiesByNames(object obj, Dictionary<string, object> dict, Type type)
+        {
+            foreach (var kvp in dict)
+            {
+                var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                if (prop != null)
+                {
+                    var converted = ConvertValue(kvp.Value, prop.PropertyType);
+                    prop.SetValue(obj, converted);
+                }
+                else
+                {
+                    var match = type.GetProperties()
+                        .SelectMany(property => property.GetCustomAttributes().OfType<SnowflakeColumn>(),
+                        (property, attr) => new { Property = property, Attribute = attr })
+                        .FirstOrDefault(x => x.Attribute?.Name == kvp.Key);
+                    if (match != null)
+                    {
+                        var converted = ConvertValue(kvp.Value, match.Property.PropertyType);
+                        match.Property.SetValue(obj, converted);
+                    }
+                }
+            }
+        }
+
+        private static void MapPropertiesByOrder(object obj, Dictionary<string, object> dict, Type type)
+        {
+            var index = 0;
+            foreach (var property in type.GetProperties())
+            {
+                if (index < dict.Count)
+                {
+                    var attributes = property.GetCustomAttributes().OfType<SnowflakeColumn>().ToList();
+                    if (attributes.Count == 0 || attributes.All(attr => !attr.IgnoreForPropertyOrder))
+                    {
+                        var converted = ConvertValue(dict.ElementAt(index).Value, property.PropertyType);
+                        property.SetValue(obj, converted);
+                        index++;
+                    }
+                }
+            }
+        }
+
+        private static T MapUsingConstructor<T>(Dictionary<string, object> dict, Type type)
+        {
+            var matchingConstructor = type.GetConstructors()
+                .FirstOrDefault(c => c.GetParameters().Length == dict.Count) ??
+                throw new StructuredTypesReadingException($"No constructor found for type: {type}");
+
+            var parameters = matchingConstructor.GetParameters()
+                .Select((param, index) => ConvertValue(dict.ElementAt(index).Value, param.ParameterType))
+                .ToArray();
+
+            return (T)matchingConstructor.Invoke(parameters);
         }
 
         internal static object CallMethod(Type type, object obj, string methodName, Type type2 = null)
