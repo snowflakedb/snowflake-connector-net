@@ -220,22 +220,14 @@ namespace Snowflake.Data.Core.Converter
                 return value;
 
             if (value is Dictionary<string, object> dict)
-            {
-                var method = typeof(ArrowConverter)
-                    .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
-                    .MakeGenericMethod(targetType);
-                return method.Invoke(null, new object[] { dict });
-            }
+                return CallMethod(targetType, dict, "ToObject");
 
             if (value is Dictionary<object, object> objDict && targetType.IsGenericType &&
                 targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
             {
                 var keyType = targetType.GetGenericArguments()[0];
                 var valueType = targetType.GetGenericArguments()[1];
-                var method = typeof(ArrowConverter)
-                    .GetMethod("ToDictionary", BindingFlags.NonPublic | BindingFlags.Static)
-                    .MakeGenericMethod(keyType, valueType);
-                return method.Invoke(null, new object[] { objDict });
+                return CallMethod(keyType, objDict, "ToDictionary", valueType);
             }
 
             if (value is List<object> objList)
@@ -243,29 +235,15 @@ namespace Snowflake.Data.Core.Converter
                 if (targetType.IsArray)
                 {
                     var elementType = targetType.GetElementType();
-                    var method = typeof(ArrowConverter)
-                        .GetMethod("ToArray", BindingFlags.NonPublic | BindingFlags.Static)
-                        .MakeGenericMethod(elementType);
-                    return method.Invoke(null, new object[] { objList });
+                    return CallMethod(elementType, objList, "ToArray");
                 }
                 else if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
                 {
                     var elementType = targetType.GetGenericArguments()[0];
-                    var method = typeof(ArrowConverter)
-                        .GetMethod("ToList", BindingFlags.NonPublic | BindingFlags.Static)
-                        .MakeGenericMethod(elementType);
-                    return method.Invoke(null, new object[] { objList });
+                    return CallMethod(elementType, objList, "ToList");
                 }
             }
-
-            try
-            {
-                return Convert.ChangeType(value, targetType);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            return Convert.ChangeType(value, targetType);
         }
 
         internal static object ConvertArrowValue(IArrowArray array, int index)
