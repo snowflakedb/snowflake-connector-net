@@ -368,7 +368,7 @@ namespace Snowflake.Data.Client
                     var val = resultSet.GetValue(ordinal);
                     if (val is MapArray array)
                     {
-                        var obj = ArrowConverter.ParseMapArray((MapArray)val, 0);
+                        var obj = ArrowConverter.ParseMapArray(array, 0);
                         return ArrowConverter.ToDictionary<TKey, TValue>(obj);
                     }
                     else if (val is string stringValue)
