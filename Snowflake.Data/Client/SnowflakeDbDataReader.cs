@@ -278,7 +278,8 @@ namespace Snowflake.Data.Client
                     var val = resultSet.GetValue(ordinal);
                     if (val is DBNull)
                         return null;
-                    return ArrowConverter.ToObject<T>((Dictionary<string, object>)val);
+                    var obj = ArrowConverter.FormatStructArray((StructArray)val, 0);
+                    return ArrowConverter.ToObject<T>(obj);
                 }
             }
             catch (Exception e)
@@ -319,7 +320,8 @@ namespace Snowflake.Data.Client
                     var val = resultSet.GetValue(ordinal);
                     if (val is DBNull)
                         return null;
-                    return ArrowConverter.ToArray<T>((List<object>)val);
+                    var obj = ArrowConverter.FormatArrowListArray((ListArray)val, 0);
+                    return ArrowConverter.ToArray<T>(obj);
                 }
             }
             catch (Exception e)
@@ -357,7 +359,8 @@ namespace Snowflake.Data.Client
                     var val = resultSet.GetValue(ordinal);
                     if (val is DBNull)
                         return null;
-                    return ArrowConverter.ToDictionary<TKey, TValue>((Dictionary<object, object>)val);
+                    var obj = ArrowConverter.FormatArrowMapArray((MapArray)val, 0);
+                    return ArrowConverter.ToDictionary<TKey, TValue>(obj);
                 }
             }
             catch (Exception e)
