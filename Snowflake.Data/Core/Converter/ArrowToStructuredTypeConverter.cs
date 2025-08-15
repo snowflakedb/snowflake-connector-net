@@ -122,7 +122,7 @@ namespace Snowflake.Data.Core.Converter
             return result;
         }
 
-        internal static List<T> ToList<T>(List<object> list)
+        internal static List<T> ConvertList<T>(List<object> list)
         {
             var targetType = typeof(T);
             var result = new List<T>(list.Count);
@@ -153,26 +153,26 @@ namespace Snowflake.Data.Core.Converter
                 return null;
             if (targetType.IsAssignableFrom(value.GetType()))
                 return value;
-            if (value is Dictionary<string, object> dict)
-                return CallMethod(targetType, dict, "ToObject");
-            if (value is Dictionary<object, object> objDict)
+            if (value is Dictionary<string, object> objDict)
+                return CallMethod(targetType, objDict, nameof(ConvertObject));
+            if (value is Dictionary<object, object> mapDict)
             {
                 var genericArgs = targetType.GetGenericArguments();
                 var keyType = genericArgs[0];
                 var valueType = genericArgs[1];
-                return CallMethod(keyType, objDict, "ToDictionary", valueType);
+                return CallMethod(keyType, mapDict, nameof(ConvertMap), valueType);
             }
             if (value is List<object> objList)
             {
                 if (targetType.IsArray)
                 {
                     var elementType = targetType.GetElementType();
-                    return CallMethod(elementType, objList, "ToArray");
+                    return CallMethod(elementType, objList, nameof(ConvertArray));
                 }
                 else if (targetType.IsGenericType)
                 {
                     var elementType = targetType.GetGenericArguments()[0];
-                    return CallMethod(elementType, objList, "ToList");
+                    return CallMethod(elementType, objList, nameof(ConvertList));
                 }
             }
             return Convert.ChangeType(value, targetType);
