@@ -203,10 +203,12 @@ namespace Snowflake.Data.Core
                 case SFDataType.MAP:
                     switch (column)
                     {
-                        case StructArray _:
-                        case MapArray _:
-                        case ListArray _:
-                            return column;
+                        case StructArray structArray:
+                            return structArray;
+                        case MapArray mapArray:
+                            return mapArray;
+                        case ListArray listArray:
+                            return listArray;
                         default:
                             if (_byte[columnIndex] == null || _int[columnIndex] == null)
                             {
