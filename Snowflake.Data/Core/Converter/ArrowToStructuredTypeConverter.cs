@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.Converter
 {
     internal static class ArrowConverter
     {
-        internal static T ToObject<T>(Dictionary<string, object> dict) where T : new()
+        internal static T ConvertObject<T>(Dictionary<string, object> dict) where T : new()
         {
             T obj = new T();
             Type type = typeof(T);
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Core.Converter
             return constructedMethod.Invoke(null, new object[] { obj });
         }
 
-        internal static T[] ToArray<T>(List<object> list)
+        internal static T[] ConvertArray<T>(List<object> list)
         {
             var targetType = typeof(T);
             var result = new T[list.Count];
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Core.Converter
             return result;
         }
 
-        internal static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(Dictionary<object, object> dict)
+        internal static Dictionary<TKey, TValue> ConvertMap<TKey, TValue>(Dictionary<object, object> dict)
         {
             var keyType = typeof(TKey);
             var valueType = typeof(TValue);
@@ -182,9 +182,9 @@ namespace Snowflake.Data.Core.Converter
         {
             switch (array)
             {
-                case StructArray strct: return ParseStructArray(strct, index);
-                case MapArray map: return ParseMapArray(map, index);
-                case ListArray list: return ParseListArray(list, index);
+                case StructArray strct: return ExtractStructArray(strct, index);
+                case MapArray map: return ExtractMapArray(map, index);
+                case ListArray list: return ExtractListArray(list, index);
                 case DoubleArray doubles: return doubles.GetValue(index);
                 case FloatArray floats: return floats.GetValue(index);
                 case Decimal128Array decimals: return decimals.GetValue(index);
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Core.Converter
             }
         }
 
-        internal static Dictionary<string, object> ParseStructArray(StructArray structArray, int index)
+        internal static Dictionary<string, object> ExtractStructArray(StructArray structArray, int index)
         {
             var result = new Dictionary<string, object>();
             var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
@@ -218,7 +218,7 @@ namespace Snowflake.Data.Core.Converter
             return result;
         }
 
-        internal static List<object> ParseListArray(ListArray listArray, int index)
+        internal static List<object> ExtractListArray(ListArray listArray, int index)
         {
             int start = listArray.ValueOffsets[index];
             int end = listArray.ValueOffsets[index + 1];
@@ -237,7 +237,7 @@ namespace Snowflake.Data.Core.Converter
             return result;
         }
 
-        internal static Dictionary<object, object> ParseMapArray(MapArray mapArray, int index)
+        internal static Dictionary<object, object> ExtractMapArray(MapArray mapArray, int index)
         {
             int start = mapArray.ValueOffsets[index];
             int end = mapArray.ValueOffsets[index + 1];
