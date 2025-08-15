@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
-using System.Collections;
 
 namespace Snowflake.Data.Core.Converter
 {
@@ -15,7 +14,6 @@ namespace Snowflake.Data.Core.Converter
         {
             T obj = new T();
             Type type = typeof(T);
-
             if (type.GetCustomAttributes(false).Any(attribute => attribute.GetType() == typeof(SnowflakeObject)))
             {
                 var constructionMethod = JsonToStructuredTypeConverter.GetConstructionMethod(type);
@@ -39,7 +37,6 @@ namespace Snowflake.Data.Core.Converter
                     var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
                     if (prop == null)
                         continue;
-
                     prop.SetValue(obj, ConvertValue(kvp.Value, prop.PropertyType));
                 }
             }
@@ -96,11 +93,9 @@ namespace Snowflake.Data.Core.Converter
             var matchingConstructor = type.GetConstructors()
                 .FirstOrDefault(c => c.GetParameters().Length == dict.Count) ??
                 throw new StructuredTypesReadingException($"No constructor found for type: {type}");
-
             var parameters = matchingConstructor.GetParameters()
                 .Select((param, index) => ConvertValue(dict.ElementAt(index).Value, param.ParameterType))
                 .ToArray();
-
             return (T)matchingConstructor.Invoke(parameters);
         }
 
@@ -142,7 +137,6 @@ namespace Snowflake.Data.Core.Converter
         {
             var keyType = typeof(TKey);
             var valueType = typeof(TValue);
-
             var result = new Dictionary<TKey, TValue>();
             foreach (var kvp in dict)
             {
@@ -157,21 +151,17 @@ namespace Snowflake.Data.Core.Converter
         {
             if (value == null)
                 return null;
-
             if (targetType.IsAssignableFrom(value.GetType()))
                 return value;
-
             if (value is Dictionary<string, object> dict)
                 return CallMethod(targetType, dict, "ToObject");
-
-            if (value is Dictionary<object, object> objDict && targetType.IsGenericType &&
-                targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+            if (value is Dictionary<object, object> objDict)
             {
-                var keyType = targetType.GetGenericArguments()[0];
-                var valueType = targetType.GetGenericArguments()[1];
+                var genericArgs = targetType.GetGenericArguments();
+                var keyType = genericArgs[0];
+                var valueType = genericArgs[1];
                 return CallMethod(keyType, objDict, "ToDictionary", valueType);
             }
-
             if (value is List<object> objList)
             {
                 if (targetType.IsArray)
@@ -179,7 +169,7 @@ namespace Snowflake.Data.Core.Converter
                     var elementType = targetType.GetElementType();
                     return CallMethod(elementType, objList, "ToArray");
                 }
-                else if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
+                else if (targetType.IsGenericType)
                 {
                     var elementType = targetType.GetGenericArguments()[0];
                     return CallMethod(elementType, objList, "ToList");
