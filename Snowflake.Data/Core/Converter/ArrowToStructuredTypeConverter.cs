@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
-using System.Collections;
 
 namespace Snowflake.Data.Core.Converter
 {
@@ -15,158 +14,76 @@ namespace Snowflake.Data.Core.Converter
         {
             T obj = new T();
             Type type = typeof(T);
+            var constructionMethod = JsonToStructuredTypeConverter.GetConstructionMethod(type);
 
-            if (type.GetCustomAttributes(false).Any(attribute => attribute.GetType() == typeof(SnowflakeObject)))
+            if (type.GetCustomAttributes(false).Any(attr => attr.GetType() == typeof(SnowflakeObject)))
             {
-                var constructionMethod = JsonToStructuredTypeConverter.GetConstructionMethod(type);
                 if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)
-                {
-                    foreach (var kvp in dict)
-                    {
-                        var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                        if (prop != null)
-                        {
-                            var converted = Convert.ChangeType(kvp.Value, prop.PropertyType);
-                            prop.SetValue(obj, converted);
-                        }
-                        else
-                        {
-                            var match = type
-                            .GetProperties()
-                            .SelectMany(
-                                property => property.GetCustomAttributes().OfType<SnowflakeColumn>(),
-                                (property, attr) => new { Property = property, Attribute = attr }
-                            )
-                            .FirstOrDefault(x => x.Attribute?.Name == kvp.Key);
-
-                            if (match != null)
-                            {
-                                var converted = ConvertValue(kvp.Value, match.Property.PropertyType);
-                                match.Property.SetValue(obj, converted);
-                            }
-                        }
-                    }
-                }
+                    SetPropertiesFromDictionary(obj, type, dict);
                 else if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
-                {
-                    var index = 0;
-                    foreach (var property in type.GetProperties())
-                    {
-                        if (index < dict.Count)
-                        {
-                            var attributes = property.GetCustomAttributes();
-                            if (attributes.Count() == 0)
-                            {
-                                var converted = ConvertValue(dict.ElementAt(index).Value, property.PropertyType);
-                                property.SetValue(obj, converted);
-                                index++;
-                            }
-                            else
-                            {
-                                foreach (var attr in attributes)
-                                {
-                                    var snowflakeAttr = (SnowflakeColumn)attr;
-                                    if (!snowflakeAttr.IgnoreForPropertyOrder)
-                                    {
-                                        var converted = ConvertValue(dict.ElementAt(index).Value, property.PropertyType);
-                                        property.SetValue(obj, converted);
-                                        index++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                    SetPropertiesFromOrder(obj, type, dict);
                 else if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
-                {
-                    var constructors = type.GetConstructors();
-
-                    var matchingConstructor = type.GetConstructors()
-                        .Where(c => c.GetParameters().Length == dict.Count)
-                        .First();
-
-                    if (matchingConstructor == null)
-                        throw new StructuredTypesReadingException($"No constructor found for type: {type}");
-
-                    var parameters = new object[dict.Count];
-                    var index = 0;
-                    foreach (var property in matchingConstructor.GetParameters())
-                    {
-                        var converted = ConvertValue(dict.ElementAt(index).Value, property.ParameterType);
-                        parameters[index] = converted;
-                        index++;
-                    }
-
-                    return (T)matchingConstructor.Invoke(parameters);
-                }
+                    return CreateFromConstructor<T>(type, dict);
             }
             else
-            {
-                foreach (var kvp in dict)
-                {
-                    if (kvp.Value is IList ilist)
-                    {
-                        foreach (var item in ilist)
-                        {
-                            Console.WriteLine(item);
-                        }
-                    }
-                    var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                SetPropertiesFromDictionary(obj, type, dict);
 
-                    if (prop != null)
-                    {
-                        var value = kvp.Value;
-                        if (value is List<object> objList)
-                        {
-                            if (prop.PropertyType.IsArray)
-                            {
-                                var innerType = prop.PropertyType.GetElementType();
-                                var arr = CallMethod(innerType, objList, "ToArray");
-                                prop.SetValue(obj, arr);
-                            }
-                            else if (prop.PropertyType.IsGenericType)
-                            {
-                                var genericType = prop.PropertyType.GetGenericTypeDefinition();
-                                if (genericType == typeof(List<>) || genericType == typeof(IList<>))
-                                {
-                                    var innerType = prop.PropertyType.GetGenericArguments()[0];
-                                    var list = CallMethod(innerType, objList, "ToList");
-                                    prop.SetValue(obj, list);
-                                }
-                            }
-                        }
-                        else if (value is Dictionary<object, object> objDict)
-                        {
-                            var genericArgs = prop.PropertyType.GetGenericArguments();
-                            var keyType = genericArgs[0];
-                            var valueType = genericArgs[1];
-                            var dictValue = CallMethod(keyType, objDict, "ToDictionary", valueType);
-                            prop.SetValue(obj, dictValue);
-                        }
-                        else if (value is Dictionary<string, object> nestedDict)
-                        {
-                            var nestedObj = typeof(ArrowConverter)
-                                .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
-                                .MakeGenericMethod(prop.PropertyType)
-                                .Invoke(null, new object[] { nestedDict });
-                            prop.SetValue(obj, nestedObj);
-                        }
-                        else
-                        {
-                            var converted = Convert.ChangeType(value, prop.PropertyType);
-                            prop.SetValue(obj, converted);
-                        }
-                    }
+            return obj;
+        }
+
+        private static void SetPropertiesFromDictionary<T>(T obj, Type type, Dictionary<string, object> dict)
+        {
+            foreach (var kvp in dict)
+            {
+                var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                if (prop != null)
+                {
+                    var value = ConvertValue(kvp.Value, prop.PropertyType);
+                    prop.SetValue(obj, value);
+                }
+                else
+                {
+                    HandleNestedDictionary<T>(obj, kvp, type);
                 }
             }
-            return obj;
+        }
+
+        private static void SetPropertiesFromOrder<T>(T obj, Type type, Dictionary<string, object> dict)
+        {
+            var index = 0;
+            foreach (var property in type.GetProperties())
+            {
+                if (index >= dict.Count) break;
+                var converted = ConvertValue(dict.ElementAt(index).Value, property.PropertyType);
+                property.SetValue(obj, converted);
+                index++;
+            }
+        }
+
+        private static T CreateFromConstructor<T>(Type type, Dictionary<string, object> dict)
+        {
+            var matchingConstructor = type.GetConstructors()
+                .FirstOrDefault(c => c.GetParameters().Length == dict.Count)
+                ?? throw new StructuredTypesReadingException($"No constructor found for type: {type}");
+
+            var parameters = dict.Values.Select((v, i) => ConvertValue(v, matchingConstructor.GetParameters()[i].ParameterType)).ToArray();
+            return (T)matchingConstructor.Invoke(parameters);
+        }
+
+        private static void HandleNestedDictionary<T>(T obj, KeyValuePair<string, object> kvp, Type type)
+        {
+            if (kvp.Value is Dictionary<string, object> nestedDict)
+            {
+                var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                var nestedObj = ToObject<object>(nestedDict);
+                prop.SetValue(obj, nestedObj);
+            }
         }
 
         internal static object CallMethod(Type type, object obj, string methodName, Type type2 = null)
         {
-            MethodInfo genericMethod = typeof(ArrowConverter)
-                .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
-            MethodInfo constructedMethod = type2 == null
+            var genericMethod = typeof(ArrowConverter).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
+            var constructedMethod = type2 == null
                 ? genericMethod.MakeGenericMethod(type)
                 : genericMethod.MakeGenericMethod(type, type2);
             return constructedMethod.Invoke(null, new object[] { obj });
@@ -174,101 +91,46 @@ namespace Snowflake.Data.Core.Converter
 
         internal static T[] ToArray<T>(List<object> list)
         {
-            var targetType = typeof(T);
-            var result = new T[list.Count];
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
-                    targetType = Nullable.GetUnderlyingType(targetType);
-                result[i] = (T)ConvertValue(list[i], targetType);
-            }
-            return result;
+            return list.Select(item => (T)ConvertValue(item, typeof(T))).ToArray();
         }
 
         internal static List<T> ToList<T>(List<object> list)
         {
-            var targetType = typeof(T);
-            var result = new List<T>(list.Count);
-            foreach (var item in list)
-            {
-                result.Add((T)ConvertValue(item, targetType));
-            }
-            return result;
+            return list.Select(item => (T)ConvertValue(item, typeof(T))).ToList();
         }
 
         internal static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(Dictionary<object, object> dict)
         {
-            var keyType = typeof(TKey);
-            var valueType = typeof(TValue);
-
-            var result = new Dictionary<TKey, TValue>();
-            foreach (var kvp in dict)
-            {
-                var key = (TKey)ConvertValue(kvp.Key, keyType);
-                var value = (TValue)ConvertValue(kvp.Value, valueType);
-                result[key] = value;
-            }
-            return result;
+            return dict.ToDictionary(
+                kvp => (TKey)ConvertValue(kvp.Key, typeof(TKey)),
+                kvp => (TValue)ConvertValue(kvp.Value, typeof(TValue))
+            );
         }
 
         private static object ConvertValue(object value, Type targetType)
         {
-            if (value == null)
-                return null;
+            if (value == null) return null;
 
-            if (targetType.IsAssignableFrom(value.GetType()))
-                return value;
+            if (targetType.IsAssignableFrom(value.GetType())) return value;
 
             if (value is Dictionary<string, object> dict)
-            {
-                var method = typeof(ArrowConverter)
-                    .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
-                    .MakeGenericMethod(targetType);
-                return method.Invoke(null, new object[] { dict });
-            }
-
-            if (value is Dictionary<object, object> objDict && targetType.IsGenericType &&
+                return ToObject<object>(dict);
+            if (value is Dictionary<object, object> objDict &&
+                targetType.IsGenericType &&
                 targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
-            {
-                var keyType = targetType.GetGenericArguments()[0];
-                var valueType = targetType.GetGenericArguments()[1];
-                var method = typeof(ArrowConverter)
-                    .GetMethod("ToDictionary", BindingFlags.NonPublic | BindingFlags.Static)
-                    .MakeGenericMethod(keyType, valueType);
-                return method.Invoke(null, new object[] { objDict });
-            }
+                return ToDictionary<object, object>(objDict);
 
             if (value is List<object> objList)
             {
-                if (targetType.IsArray)
-                {
-                    var elementType = targetType.GetElementType();
-                    var method = typeof(ArrowConverter)
-                        .GetMethod("ToArray", BindingFlags.NonPublic | BindingFlags.Static)
-                        .MakeGenericMethod(elementType);
-                    return method.Invoke(null, new object[] { objList });
-                }
-                else if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
-                {
-                    var elementType = targetType.GetGenericArguments()[0];
-                    var method = typeof(ArrowConverter)
-                        .GetMethod("ToList", BindingFlags.NonPublic | BindingFlags.Static)
-                        .MakeGenericMethod(elementType);
-                    return method.Invoke(null, new object[] { objList });
-                }
+                if (targetType.IsArray) return ToArray<object>(objList);
+                if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
+                    return ToList<object>(objList);
             }
 
-            try
-            {
-                return Convert.ChangeType(value, targetType);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            return Convert.ChangeType(value, targetType);
         }
 
-        internal static object FormatArrowValue(IArrowArray array, int index)
+        internal static object ConvertArrowValue(IArrowArray array, int index)
         {
             switch (array)
             {
@@ -297,7 +159,7 @@ namespace Snowflake.Data.Core.Converter
             {
                 var field = structArray.Fields[i];
                 var fieldName = structTypeFields[i].Name;
-                var value = FormatArrowValue(field, index);
+                var value = ConvertArrowValue(field, index);
 
                 if (value == null && structArray.Fields.Count == 1)
                     return null;
@@ -321,7 +183,7 @@ namespace Snowflake.Data.Core.Converter
 
             for (int i = start; i < end; i++)
             {
-                result.Add(FormatArrowValue(values, i));
+                result.Add(ConvertArrowValue(values, i));
             }
 
             return result;
@@ -343,8 +205,8 @@ namespace Snowflake.Data.Core.Converter
 
             for (int i = 0; i < end - start; i++)
             {
-                var key = FormatArrowValue(keyArray, i);
-                var value = FormatArrowValue(valueArray, i);
+                var key = ConvertArrowValue(keyArray, i);
+                var value = ConvertArrowValue(valueArray, i);
                 result[key] = value;
             }
 
