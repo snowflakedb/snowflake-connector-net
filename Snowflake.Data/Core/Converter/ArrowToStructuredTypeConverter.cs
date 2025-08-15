@@ -1,5 +1,3 @@
-using Apache.Arrow.Types;
-using Apache.Arrow;
 using Snowflake.Data.Client;
 using System.Collections.Generic;
 using System.Reflection;
