@@ -36,59 +36,11 @@ namespace Snowflake.Data.Core.Converter
             {
                 foreach (var kvp in dict)
                 {
-                    if (kvp.Value is IList ilist)
-                    {
-                        foreach (var item in ilist)
-                        {
-                            Console.WriteLine(item);
-                        }
-                    }
                     var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                    if (prop == null)
+                        continue;
 
-                    if (prop != null)
-                    {
-                        var value = kvp.Value;
-                        if (value is List<object> objList)
-                        {
-                            if (prop.PropertyType.IsArray)
-                            {
-                                var innerType = prop.PropertyType.GetElementType();
-                                var arr = CallMethod(innerType, objList, "ToArray");
-                                prop.SetValue(obj, arr);
-                            }
-                            else if (prop.PropertyType.IsGenericType)
-                            {
-                                var genericType = prop.PropertyType.GetGenericTypeDefinition();
-                                if (genericType == typeof(List<>) || genericType == typeof(IList<>))
-                                {
-                                    var innerType = prop.PropertyType.GetGenericArguments()[0];
-                                    var list = CallMethod(innerType, objList, "ToList");
-                                    prop.SetValue(obj, list);
-                                }
-                            }
-                        }
-                        else if (value is Dictionary<object, object> objDict)
-                        {
-                            var genericArgs = prop.PropertyType.GetGenericArguments();
-                            var keyType = genericArgs[0];
-                            var valueType = genericArgs[1];
-                            var dictValue = CallMethod(keyType, objDict, "ToDictionary", valueType);
-                            prop.SetValue(obj, dictValue);
-                        }
-                        else if (value is Dictionary<string, object> nestedDict)
-                        {
-                            var nestedObj = typeof(ArrowConverter)
-                                .GetMethod("ToObject", BindingFlags.NonPublic | BindingFlags.Static)
-                                .MakeGenericMethod(prop.PropertyType)
-                                .Invoke(null, new object[] { nestedDict });
-                            prop.SetValue(obj, nestedObj);
-                        }
-                        else
-                        {
-                            var converted = Convert.ChangeType(value, prop.PropertyType);
-                            prop.SetValue(obj, converted);
-                        }
-                    }
+                    prop.SetValue(obj, ConvertValue(kvp.Value, prop.PropertyType));
                 }
             }
             return obj;
