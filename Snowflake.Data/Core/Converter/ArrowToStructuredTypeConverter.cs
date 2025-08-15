@@ -272,9 +272,9 @@ namespace Snowflake.Data.Core.Converter
         {
             switch (array)
             {
-                case StructArray strct: return FormatStructArray(strct, index);
-                case MapArray map: return FormatArrowMapArray(map, index);
-                case ListArray list: return FormatArrowListArray(list, index);
+                case StructArray strct: return ParseStructArray(strct, index);
+                case MapArray map: return ParseMapArray(map, index);
+                case ListArray list: return ParseListArray(list, index);
                 case DoubleArray doubles: return doubles.GetValue(index);
                 case FloatArray floats: return floats.GetValue(index);
                 case Decimal128Array decimals: return decimals.GetValue(index);
@@ -288,7 +288,7 @@ namespace Snowflake.Data.Core.Converter
             }
         }
 
-        internal static Dictionary<string, object> FormatStructArray(StructArray structArray, int index)
+        internal static Dictionary<string, object> ParseStructArray(StructArray structArray, int index)
         {
             var result = new Dictionary<string, object>();
             var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
@@ -308,7 +308,7 @@ namespace Snowflake.Data.Core.Converter
             return result;
         }
 
-        internal static List<object> FormatArrowListArray(ListArray listArray, int index)
+        internal static List<object> ParseListArray(ListArray listArray, int index)
         {
             int start = listArray.ValueOffsets[index];
             int end = listArray.ValueOffsets[index + 1];
@@ -327,7 +327,7 @@ namespace Snowflake.Data.Core.Converter
             return result;
         }
 
-        internal static Dictionary<object, object> FormatArrowMapArray(MapArray mapArray, int index)
+        internal static Dictionary<object, object> ParseMapArray(MapArray mapArray, int index)
         {
             int start = mapArray.ValueOffsets[index];
             int end = mapArray.ValueOffsets[index + 1];

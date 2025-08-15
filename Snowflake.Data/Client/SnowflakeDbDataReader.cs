@@ -268,18 +268,23 @@ namespace Snowflake.Data.Client
                 if (ResultFormat == ResultFormat.JSON)
                 {
                     var stringValue = GetString(ordinal);
-                    Console.WriteLine("GetObject stringValue: " + stringValue);
                     var json = stringValue == null ? null : JObject.Parse(stringValue);
-                    Console.WriteLine("GetObject json: " + json);
                     return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
                 }
                 else
                 {
                     var val = resultSet.GetValue(ordinal);
-                    if (val is DBNull)
-                        return null;
-                    var obj = ArrowConverter.FormatStructArray((StructArray)val, 0);
-                    return ArrowConverter.ToObject<T>(obj);
+                    if (val is StructArray array)
+                    {
+                        var obj = ArrowConverter.ParseStructArray(array, 0);
+                        return ArrowConverter.ToObject<T>(obj);
+                    }
+                    else if (val is string stringValue)
+                    {
+                        var json = stringValue == null ? null : JObject.Parse(stringValue);
+                        return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
+                    }
+                    return null;
                 }
             }
             catch (Exception e)
@@ -310,18 +315,24 @@ namespace Snowflake.Data.Client
                 if (ResultFormat == ResultFormat.JSON)
                 {
                     var stringValue = GetString(ordinal);
-                    Console.WriteLine("GetArray stringValue: " + stringValue);
                     var json = stringValue == null ? null : JArray.Parse(stringValue);
-                    Console.WriteLine("GetArray json: " + json);
                     return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
                 }
                 else
                 {
                     var val = resultSet.GetValue(ordinal);
-                    if (val is DBNull)
-                        return null;
-                    var obj = ArrowConverter.FormatArrowListArray((ListArray)val, 0);
-                    return ArrowConverter.ToArray<T>(obj);
+                    if (val is ListArray array)
+                    {
+                        var obj = ArrowConverter.ParseListArray(array, 0);
+                        return ArrowConverter.ToArray<T>(obj);
+                    }
+                    else if (val is string stringValue)
+                    {
+                        var json = stringValue == null ? null : JArray.Parse(stringValue);
+                        return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
+                    }
+                    return null;
+
                 }
             }
             catch (Exception e)
@@ -349,18 +360,23 @@ namespace Snowflake.Data.Client
                 if (ResultFormat == ResultFormat.JSON)
                 {
                     var stringValue = GetString(ordinal);
-                    Console.WriteLine("GetMap stringValue: " + stringValue);
                     var json = stringValue == null ? null : JObject.Parse(stringValue);
-                    Console.WriteLine("GetMap json: " + json);
                     return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
                 }
                 else
                 {
                     var val = resultSet.GetValue(ordinal);
-                    if (val is DBNull)
-                        return null;
-                    var obj = ArrowConverter.FormatArrowMapArray((MapArray)val, 0);
-                    return ArrowConverter.ToDictionary<TKey, TValue>(obj);
+                    if (val is MapArray array)
+                    {
+                        var obj = ArrowConverter.ParseMapArray((MapArray)val, 0);
+                        return ArrowConverter.ToDictionary<TKey, TValue>(obj);
+                    }
+                    else if (val is string stringValue)
+                    {
+                        var json = stringValue == null ? null : JObject.Parse(stringValue);
+                        return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
+                    }
+                    return null;
                 }
             }
             catch (Exception e)
