@@ -106,14 +106,16 @@ namespace Snowflake.Data.Core.Converter
                 }
                 else
                 {
-                    var match = type.GetProperties()
-                        .SelectMany(property => property.GetCustomAttributes().OfType<SnowflakeColumn>(),
-                        (property, attr) => new { Property = property, Attribute = attr })
-                        .FirstOrDefault(x => x.Attribute?.Name == kvp.Key);
-                    if (match != null)
+                    foreach (var property in type.GetProperties())
                     {
-                        var converted = ConvertValue(kvp.Value, match.Property.PropertyType);
-                        match.Property.SetValue(obj, converted);
+                        foreach (var attr in property.GetCustomAttributes().OfType<SnowflakeColumn>())
+                        {
+                            if (attr?.Name == kvp.Key)
+                            {
+                                var converted = ConvertValue(kvp.Value, property.PropertyType);
+                                property.SetValue(obj, converted);
+                            }
+                        }
                     }
                 }
             }
@@ -124,15 +126,15 @@ namespace Snowflake.Data.Core.Converter
             var index = 0;
             foreach (var property in type.GetProperties())
             {
-                if (index < dict.Count)
+                if (index >= dict.Count)
+                    break;
+
+                var attributes = property.GetCustomAttributes().OfType<SnowflakeColumn>().ToList();
+                if (attributes.Count == 0 || attributes.All(attr => !attr.IgnoreForPropertyOrder))
                 {
-                    var attributes = property.GetCustomAttributes().OfType<SnowflakeColumn>().ToList();
-                    if (attributes.Count == 0 || attributes.All(attr => !attr.IgnoreForPropertyOrder))
-                    {
-                        var converted = ConvertValue(dict.ElementAt(index).Value, property.PropertyType);
-                        property.SetValue(obj, converted);
-                        index++;
-                    }
+                    var converted = ConvertValue(dict.ElementAt(index).Value, property.PropertyType);
+                    property.SetValue(obj, converted);
+                    index++;
                 }
             }
         }
