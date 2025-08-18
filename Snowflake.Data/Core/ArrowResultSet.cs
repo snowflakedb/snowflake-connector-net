@@ -405,6 +405,10 @@ namespace Snowflake.Data.Core
             {
                 case string ret:
                     return ret;
+                case Dictionary<string, object> _:
+                case Dictionary<object, object> _:
+                case List<object> _:
+                    return System.Text.Json.JsonSerializer.Serialize(value);
                 case DateTime ret:
                     if (type == SFDataType.DATE)
                         return SFDataConverter.ToDateString(ret, sfResultSetMetaData.dateOutputFormat);

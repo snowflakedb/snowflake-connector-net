@@ -257,17 +257,12 @@ namespace Snowflake.Data.Client
             try
             {
                 var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
-                Console.WriteLine("GetObject rowType.name: " + rowType.name);
                 var fields = rowType.fields;
                 if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsObjectType(rowType.type))
                 {
                     throw new StructuredTypesReadingException($"Method GetObject<{typeof(T)}> can be used only for structured object");
                 }
-
-                var val = ResultFormat == ResultFormat.JSON
-                    ? GetString(ordinal)
-                    : GetValue(ordinal);
-
+                var val = GetValue(ordinal);
                 if (val is string stringValue)
                 {
                     var json = stringValue == null ? null : JObject.Parse(stringValue);
@@ -292,7 +287,6 @@ namespace Snowflake.Data.Client
             try
             {
                 var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
-                Console.WriteLine("GetArray rowType.name: " + rowType.name);
                 var fields = rowType.fields;
                 var isArrayOrVector = JsonToStructuredTypeConverter.IsArrayType(rowType.type) ||
                                       JsonToStructuredTypeConverter.IsVectorType(rowType.type);
@@ -300,11 +294,7 @@ namespace Snowflake.Data.Client
                 {
                     throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array or vector types");
                 }
-
-                var val = ResultFormat == ResultFormat.JSON
-                    ? GetString(ordinal)
-                    : GetValue(ordinal);
-
+                var val = GetValue(ordinal);
                 if (val is string stringValue)
                 {
                     var json = stringValue == null ? null : JArray.Parse(stringValue);
@@ -329,17 +319,12 @@ namespace Snowflake.Data.Client
             try
             {
                 var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
-                Console.WriteLine("GetMap rowType.name: " + rowType.name);
                 var fields = rowType.fields;
                 if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsMapType(rowType.type))
                 {
                     throw new StructuredTypesReadingException($"Method GetMap<{typeof(TKey)}, {typeof(TValue)}> can be used only for structured map");
                 }
-
-                var val = ResultFormat == ResultFormat.JSON
-                    ? GetString(ordinal)
-                    : GetValue(ordinal);
-
+                var val = GetValue(ordinal);
                 if (val is string stringValue)
                 {
                     var json = stringValue == null ? null : JObject.Parse(stringValue);

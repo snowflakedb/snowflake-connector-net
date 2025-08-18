@@ -380,7 +380,7 @@ namespace Snowflake.Data.Core
             return ((value % s_powersOf10[scale]) * s_powersOf10[9 - scale]);
         }
 
-        internal static object ConvertArrowValue(IArrowArray array, int index)
+        private object ConvertArrowValue(IArrowArray array, int index)
         {
             switch (array)
             {
@@ -400,7 +400,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal static Dictionary<string, object> ExtractStructArray(StructArray structArray, int index)
+        private Dictionary<string, object> ExtractStructArray(StructArray structArray, int index)
         {
             var result = new Dictionary<string, object>();
             var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
@@ -420,7 +420,7 @@ namespace Snowflake.Data.Core
             return result;
         }
 
-        internal static List<object> ExtractListArray(ListArray listArray, int index)
+        private List<object> ExtractListArray(ListArray listArray, int index)
         {
             int start = listArray.ValueOffsets[index];
             int end = listArray.ValueOffsets[index + 1];
@@ -439,7 +439,7 @@ namespace Snowflake.Data.Core
             return result;
         }
 
-        internal static Dictionary<object, object> ExtractMapArray(MapArray mapArray, int index)
+        private Dictionary<object, object> ExtractMapArray(MapArray mapArray, int index)
         {
             int start = mapArray.ValueOffsets[index];
             int end = mapArray.ValueOffsets[index + 1];
