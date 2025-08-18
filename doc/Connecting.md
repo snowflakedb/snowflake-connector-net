@@ -324,9 +324,6 @@ Alternatively you can provide `token` property as a secure string of the connect
 In this type of authentication credentials can be retrieved from a cloud on which your application is running (AWS, Azure, GCP) and then a token generated based on that is used to authenticate in Snowflake.
 OIDC provider allows you to provide your own token which will be used to authenticate in Snowflake.
 
-If you don't provide `WORKLOAD_IDENTITY_PROVIDER` property it will be auto-detected. The order in which the driver tries to produce attestation is: OIDC, Azure, AWS, GCP.
-If you know on which cloud your application is running it is recommended to provide `WORKLOAD_IDENTITY_PROVIDER` parameter because auto-detection increases latency.
-
 Using Workload Identity Federation for AWS cloud:
 ```csharp
     var conn = new SnowflakeDbConnection("authenticator=workload_identity;workload_identity_provider=aws;account=test;");
@@ -349,11 +346,6 @@ Using your own token (OIDC) for Workload Identity Federation:
 
     var conn2 = new SnowflakeDbConnection("authenticator=workload_identity;workload_identity_provider=oidc;account=test;");
     var conn2.Token = ...; // provide token by connection property
-```
-
-Using auto-detection:
-```csharp
-    var conn = new SnowflakeDbConnection("authenticator=workload_identity;account=test;");
 ```
 
 - **Browser-based SSO**
