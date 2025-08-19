@@ -263,7 +263,7 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetObject<{typeof(T)}> can be used only for structured object");
                 }
                 var val = GetValue(ordinal);
-                val = System.Text.Json.JsonSerializer.Serialize(val);
+                val = val == null ? null :System.Text.Json.JsonSerializer.Serialize(val);
                 if (val is string stringValue)
                 {
                     Console.WriteLine("here");
@@ -297,7 +297,7 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array or vector types");
                 }
                 var val = GetValue(ordinal);
-                val = System.Text.Json.JsonSerializer.Serialize(val);
+                val = val == null ? null :System.Text.Json.JsonSerializer.Serialize(val);
                 if (val is string stringValue)
                 {
                     Console.WriteLine("here");
@@ -329,7 +329,7 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetMap<{typeof(TKey)}, {typeof(TValue)}> can be used only for structured map");
                 }
                 var val = GetValue(ordinal);
-                val = System.Text.Json.JsonSerializer.Serialize(val);
+                val = val == null ? null :System.Text.Json.JsonSerializer.Serialize(val);
                 if (val is string stringValue)
                 {
                     Console.WriteLine("here");
