@@ -1,20 +1,60 @@
-using Microsoft.Extensions.Logging;
+﻿/*
+ * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
+ */
+
+using log4net;
 
 namespace Snowflake.Data.Log
 {
-    internal class SFLoggerFactory
+    class SFLoggerFactory
     {
-        internal static ILogger s_customLogger = new LoggerEmptyImpl();
+        private static bool isLoggerEnabled = true;
 
-        internal static SFLogger GetLogger<T>()
+        private static SFLogger logger = null;
+
+        private SFLoggerFactory()
         {
-            return new SFLoggerPair(GetSFLogger<T>());
         }
 
-        internal static SFLogger GetSFLogger<T>()
+        public static void disableLogger()
         {
-            var logger = new SFLoggerImpl(typeof(T));
-            return logger;
+            isLoggerEnabled = false;
+        }
+
+        public static void enableLogger()
+        {
+            isLoggerEnabled = true;
+        }
+
+        public static void useDefaultLogger()
+        {
+            logger = null;
+        }
+
+        public static void Instance(SFLogger customLogger)
+        {            
+            logger = customLogger;
+        }
+
+        public static SFLogger GetLogger<T>()
+        {
+            // If true, return the default/specified logger
+            if (isLoggerEnabled)
+            {
+                // If no logger specified, use the default logger: log4net
+                if (logger == null)
+                {
+                    ILog loggerL = LogManager.GetLogger(typeof(T));
+                    return new Log4NetImpl(loggerL);
+                }
+                return logger;
+            }
+            // Else, return the empty logger implementation which outputs nothing
+            else
+            {
+                return new SFLoggerEmptyImpl();
+            }
         }
     }
+
 }
