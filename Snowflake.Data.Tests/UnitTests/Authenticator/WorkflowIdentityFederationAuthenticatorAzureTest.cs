@@ -184,7 +184,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             AddAzureFunctionsWithCustomEntraResourceWiremockMappings();
-            var session = PrepareSessionForAzure($"wifEntraResource={s_customEntraResource};", e =>
+            var session = PrepareSessionForAzure($"workload_identity_entra_resource={s_customEntraResource};", e =>
             {
                 ConfigureIdentityEndpoint(e);
                 ConfigureIdentityHeader(e);

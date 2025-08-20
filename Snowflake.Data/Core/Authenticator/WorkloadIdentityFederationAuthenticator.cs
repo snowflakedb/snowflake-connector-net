@@ -38,15 +38,15 @@ namespace Snowflake.Data.Core.Authenticator
             _timeProvider = timeProvider;
             _awsSdkWrapper = awsSdkWrapper;
             _metadataHost = metadataHost;
-            if (session.properties.TryGetValue(SFSessionProperty.WIFPROVIDER, out var provider) && !string.IsNullOrEmpty(provider))
+            if (session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER, out var provider) && !string.IsNullOrEmpty(provider))
             {
                 _provider = (AttestationProvider)Enum.Parse(typeof(AttestationProvider), provider, true);
             }
             else
             {
-                _provider = null;
+                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Property {SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER} is required for Workload Identity authentication");
             }
-            if (!session.properties.TryGetValue(SFSessionProperty.WIFENTRARESOURCE, out _entraResource))
+            if (!session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_ENTRA_RESOURCE, out _entraResource))
             {
                 _entraResource = null;
             }
@@ -76,47 +76,27 @@ namespace Snowflake.Data.Core.Authenticator
 
         internal WorkloadIdentityAttestationData CreateAttestation()
         {
-            return _provider switch
+            try
             {
-                AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentOperations, _timeProvider, _awsSdkWrapper)
-                    .CreateAttestationData(_entraResource, _token),
-                AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentOperations, session.restRequester, _metadataHost)
-                    .CreateAttestationData(_entraResource, _token),
-                AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(session.restRequester, _metadataHost)
-                    .CreateAttestationData(_entraResource, _token),
-                AttestationProvider.OIDC => new WorkflowIdentityOidcAttestationRetriever()
-                    .CreateAttestationData(_entraResource, _token),
-                _ => AutodetectAttestation()
-            };
-        }
-
-        private WorkloadIdentityAttestationData AutodetectAttestation()
-        {
-            var retrievers = new Func<WorkloadIdentityAttestationRetriever>[]
-            {
-                () => new WorkflowIdentityOidcAttestationRetriever(),
-                () => new WorkflowIdentityAzureAttestationRetriever(_environmentOperations, session.restRequester, _metadataHost),
-                () => new WorkflowIdentityAwsAttestationRetriever(_environmentOperations, _timeProvider, _awsSdkWrapper),
-                () => new WorkflowIdentityGcpAttestationRetriever(session.restRequester, _metadataHost)
-            };
-            s_logger.Debug("Auto detection of attestations");
-            foreach (var retrieverFunc in retrievers)
-            {
-                var retriever = retrieverFunc();
-                try
+                return _provider switch
                 {
-                    s_logger.Debug($"Trying to do attestation for {retriever.GetAttestationProvider().ToString()}");
-                    var attestationData = retriever.CreateAttestationData(_entraResource, _token);
-                    s_logger.Debug($"Attestation successfully created for {retriever.GetAttestationProvider().ToString()}");
-                    return attestationData;
-                }
-                catch (Exception)
-                {
-                    s_logger.Debug($"Auto-detection failed for: {retriever.GetAttestationProvider()}");
-                }
+                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentOperations, _timeProvider, _awsSdkWrapper)
+                        .CreateAttestationData(_entraResource, _token),
+                    AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentOperations, session.restRequester, _metadataHost)
+                        .CreateAttestationData(_entraResource, _token),
+                    AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(session.restRequester, _metadataHost)
+                        .CreateAttestationData(_entraResource, _token),
+                    AttestationProvider.OIDC => new WorkflowIdentityOidcAttestationRetriever()
+                        .CreateAttestationData(_entraResource, _token),
+                    _ => throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, $"Unsupported attestation provider: {_provider}"),
+                };
             }
-            s_logger.Error("Auto detection of attestations failed");
-            throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, "AUTO DETECTION", "Could not receive attestation for any of attestation providers");
+            catch (Exception e)
+            {
+                var errorMessage = $"Failed to create attestation data for provider {_provider}: {e.Message}";
+                s_logger.Error(errorMessage);
+                throw new SnowflakeDbException(e, SFError.WIF_ATTESTATION_ERROR, new object[] { _provider, e.Message });
+            }
         }
     }
 }
