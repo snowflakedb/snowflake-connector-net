@@ -263,8 +263,10 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetObject<{typeof(T)}> can be used only for structured object");
                 }
                 var val = GetValue(ordinal);
-                Console.WriteLine($"Val: {val}");
-                val = val == null ? null :System.Text.Json.JsonSerializer.Serialize(val);
+                Console.WriteLine($"val: {val}");
+                Console.WriteLine($"val == null: {val == null}");
+                Console.WriteLine($"string.IsNullOrEmpty(val.ToString()): {string.IsNullOrEmpty(val.ToString())}");
+                val = string.IsNullOrEmpty(val.ToString()) ? null : System.Text.Json.JsonSerializer.Serialize(val);
                 if (val is string stringValue)
                 {
                     var json = stringValue == null ? null : JObject.Parse(stringValue);
@@ -297,8 +299,10 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array or vector types");
                 }
                 var val = GetValue(ordinal);
-                Console.WriteLine($"Val: {val}");
-                val = val == null ? null :System.Text.Json.JsonSerializer.Serialize(val);
+                Console.WriteLine($"val: {val}");
+                Console.WriteLine($"val == null: {val == null}");
+                Console.WriteLine($"string.IsNullOrEmpty(val.ToString()): {string.IsNullOrEmpty(val.ToString())}");
+                val = string.IsNullOrEmpty(val.ToString()) ? null : System.Text.Json.JsonSerializer.Serialize(val);
                 if (val is string stringValue)
                 {
                     var json = stringValue == null ? null : JArray.Parse(stringValue);
@@ -329,8 +333,10 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetMap<{typeof(TKey)}, {typeof(TValue)}> can be used only for structured map");
                 }
                 var val = GetValue(ordinal);
-                Console.WriteLine($"Val: {val}");
-                val = val == null ? null :System.Text.Json.JsonSerializer.Serialize(val);
+                Console.WriteLine($"val: {val}");
+                Console.WriteLine($"val == null: {val == null}");
+                Console.WriteLine($"string.IsNullOrEmpty(val.ToString()): {string.IsNullOrEmpty(val.ToString())}");
+                val = string.IsNullOrEmpty(val.ToString()) ? null : System.Text.Json.JsonSerializer.Serialize(val);
                 if (val is string stringValue)
                 {
                     var json = stringValue == null ? null : JObject.Parse(stringValue);
