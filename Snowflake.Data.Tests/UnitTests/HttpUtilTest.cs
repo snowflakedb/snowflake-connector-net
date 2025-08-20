@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests
             .ThrowsAsync(new HttpRequestException("", new AuthenticationException()));
 
             var httpClient = HttpUtil.Instance.GetHttpClient(
-                new HttpClientConfig(false, "fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7),
+                new HttpClientConfig(false, "fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7, 20),
                 handler.Object);
 
             try
@@ -152,7 +152,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 "localhost",
                 false,
                 false,
-                7
+                7,
+                20
             );
 
             // when
@@ -176,6 +177,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 null,
                 false,
                 false,
+                20,
                 0
             );
 
