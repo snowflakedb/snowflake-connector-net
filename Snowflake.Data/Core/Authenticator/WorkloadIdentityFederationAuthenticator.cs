@@ -95,7 +95,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 var errorMessage = $"Failed to create attestation data for provider {_provider}: {e.Message}";
                 s_logger.Error(errorMessage);
-                throw new SnowflakeDbException(e, SFError.WIF_ATTESTATION_ERROR, new object[]{_provider, e.Message});
+                throw new SnowflakeDbException(e, SFError.WIF_ATTESTATION_ERROR, new object[] { _provider, e.Message });
             }
         }
     }
