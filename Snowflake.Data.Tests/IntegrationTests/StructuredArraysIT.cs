@@ -10,9 +10,9 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    //[TestFixture(ResultFormat.ARROW, false)]
+    [TestFixture(ResultFormat.ARROW, false)]
     [TestFixture(ResultFormat.ARROW, true)]
-    //[TestFixture(ResultFormat.JSON, false)]
+    [TestFixture(ResultFormat.JSON, false)]
     public class StructuredArraysIT : StructuredTypesIT
     {
         private readonly ResultFormat _resultFormat;
@@ -433,7 +433,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
-                    if (_resultFormat == ResultFormat.JSON)
+                    if (_resultFormat == ResultFormat.JSON || !_nativeArrow)
                         Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]"));
                     else
                         Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an array."));
@@ -463,7 +463,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<AnnotatedClassForConstructorConstruction>(0));
 
                     // assert
-                    if (_resultFormat == ResultFormat.JSON)
+                    if (_resultFormat == ResultFormat.JSON || !_nativeArrow)
                     {
                         SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
                         Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[0][1]"));
