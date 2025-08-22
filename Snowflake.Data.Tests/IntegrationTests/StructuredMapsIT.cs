@@ -349,7 +349,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
-                    if (_resultFormat == ResultFormat.JSON)
+                    if (_resultFormat == ResultFormat.JSON || !_nativeArrow)
                         Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]"));
                     else
                         Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting a map."));
