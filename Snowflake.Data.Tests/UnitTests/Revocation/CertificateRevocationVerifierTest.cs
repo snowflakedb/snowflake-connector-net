@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
             var restRequester = new Mock<IRestRequester>();
             MockByteResponseForGet(restRequester, DigiCertCrlUrl1, crlBytes);
-            MockErrorResponseForGet(restRequester, DigiCertCrlUrl2, () => new HttpRequestException("Response status code does not indicate success: 404 (Not Found).", null, HttpStatusCode.NotFound));
+            MockErrorResponseForGet(restRequester, DigiCertCrlUrl2, NotFoundHttpExceptionProvider);
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
             var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
@@ -104,6 +104,13 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             // assert
             Assert.AreEqual(expectedIsEquivalent, isEquivalent);
         }
+
+        private static HttpRequestException NotFoundHttpExceptionProvider() =>
+#if NETFRAMEWORK
+            new HttpRequestException("Response status code does not indicate success: 404 (Not Found).", null);
+#else
+            new HttpRequestException("Response status code does not indicate success: 404 (Not Found).", null, HttpStatusCode.NotFound);
+#endif
 
         private static void MockByteResponseForGet(Mock<IRestRequester> restRequester, string url, byte[] bytes)
         {
