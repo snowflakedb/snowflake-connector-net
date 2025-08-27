@@ -20,8 +20,6 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlParser = new CrlParser(environmentOperations.Object);
             var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
             var expectedCrlDistributionPoints = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
-            var unrevokedCertSerialNumber = "0C5B94A21CF8D834C17A58724F3EA385"; // pragma: allowlist secret
-            var revokedCertSerialNumber = "084E2808851C58174D0EF94B29571042"; // pragma: allowlist secret
 
             // act
             var crl = crlParser.Parse(crlBytes, now);
@@ -34,10 +32,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.AreEqual(DigiCertNextUpdateString, crl.NextUpdate?.ToUniversalTime().ToString("o"));
             Assert.AreEqual(DigiCertIssuer, crl.IssuerName);
             Assert.That(crl.IssuerDistributionPoints, Is.EquivalentTo(expectedCrlDistributionPoints));
-            Assert.That(crl.RevokedCertificates, Does.Contain(revokedCertSerialNumber));
-            Assert.IsTrue(crl.IsRevoked(revokedCertSerialNumber));
-            Assert.IsFalse(crl.RevokedCertificates.Contains(unrevokedCertSerialNumber));
-            Assert.IsFalse(crl.IsRevoked(unrevokedCertSerialNumber));
+            Assert.That(crl.RevokedCertificates, Does.Contain(DigiCertRevokedCertSerialNumber));
+            Assert.IsTrue(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
+            Assert.IsFalse(crl.RevokedCertificates.Contains(DigiCertUnrevokedCertSerialNumber));
+            Assert.IsFalse(crl.IsRevoked(DigiCertUnrevokedCertSerialNumber));
             Assert.IsFalse(crl.NeedsFreshCrl(now));
             Assert.AreEqual(TimeSpan.FromDays(10), crl.CrlCacheValidityTime);
         }
@@ -53,8 +51,6 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 .Returns("1");
             var crlParser = new CrlParser(environmentOperations.Object);
             var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
-            var unrevokedCertSerialNumber = "0C5B94A21CF8D834C17A58724F3EA385"; // pragma: allowlist secret
-            var revokedCertSerialNumber = "084E2808851C58174D0EF94B29571042"; // pragma: allowlist secret
 
             // act
             var crl = crlParser.Parse(crlBytes, now);
