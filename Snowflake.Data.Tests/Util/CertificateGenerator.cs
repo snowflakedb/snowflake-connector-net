@@ -1,9 +1,13 @@
 using System;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Org.BouncyCastle.Asn1.X509;
-using X509Extension = System.Security.Cryptography.X509Certificates.X509Extension;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Operators;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.X509;
 
 namespace Snowflake.Data.Tests.Util
 {
@@ -18,55 +22,49 @@ namespace Snowflake.Data.Tests.Util
             string[] crlUrls,
             int keySize = 2048)
         {
+            var keyPair = GenerateRsaKeyPair(keySize);
+            var certGenerator = new X509V3CertificateGenerator();
             var subjectName = $"CN={cn}, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
-            var distinguishedName = new X500DistinguishedName(subjectName);
-            using (var rsa = RSA.Create(keySize))
+            var distinguishedName = new X509Name(subjectName);
+            certGenerator.SetIssuerDN(distinguishedName);
+            certGenerator.SetSubjectDN(distinguishedName);
+            certGenerator.SetPublicKey(keyPair.Public);
+            certGenerator.SetNotBefore(notBefore.UtcDateTime);
+            certGenerator.SetNotAfter(notAfter.UtcDateTime);
+            certGenerator.SetSerialNumber(BigInteger.ProbablePrime(128, new Random()));
+            certGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(true)); // mark as CA
+            if (crlUrls?.Length > 0)
             {
-                var request = new CertificateRequest(
-                    distinguishedName,
-                    rsa,
-                    HashAlgorithmName.SHA256,
-                    RSASignaturePadding.Pkcs1);
-                request.CertificateExtensions.Add(
-                    new X509BasicConstraintsExtension(
-                        certificateAuthority: false,
-                        hasPathLengthConstraint: false,
-                        pathLengthConstraint: 0,
-                        critical: true
-                    ));
-                request.CertificateExtensions.Add(
-                    new X509KeyUsageExtension(
-                        X509KeyUsageFlags.DataEncipherment |
-                        X509KeyUsageFlags.KeyEncipherment |
-                        X509KeyUsageFlags.DigitalSignature,
-                        critical: true));
-                var sanBuilder = new SubjectAlternativeNameBuilder();
-                sanBuilder.AddDnsName("localhost");
-                sanBuilder.AddDnsName("127.0.0.1");
-                request.CertificateExtensions.Add(sanBuilder.Build());
-                request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
-                if (crlUrls.Length > 0)
-                {
-                    var distributionPointsExtension = CreateCrlDistributionPointsExtension(crlUrls);
-                    request.CertificateExtensions.Add(distributionPointsExtension);
-                }
-                var certificate = request.CreateSelfSigned(notBefore, notAfter);
-                return certificate;
+                var distributionPoints = crlUrls
+                    .Select(ConvertToDistributionPoint)
+                    .ToArray();
+                var crlDistPoints = new CrlDistPoint(distributionPoints);
+                certGenerator.AddExtension(X509Extensions.CrlDistributionPoints, false, crlDistPoints);
             }
+            var signatureFactory = new Asn1SignatureFactory("SHA256WithRSA", keyPair.Private, new SecureRandom());
+            var bouncyCertificate = certGenerator.Generate(signatureFactory);
+            return ConvertCertificate(bouncyCertificate);
         }
 
-        private static X509Extension CreateCrlDistributionPointsExtension(string[] crlUrls)
+        private static X509Certificate2 ConvertCertificate(Org.BouncyCastle.X509.X509Certificate bouncyCertificate)
         {
-            var distributionPoints = crlUrls
-                .Select(crlUrl =>
-                {
-                    var uriGeneralName = new GeneralName(GeneralName.UniformResourceIdentifier, crlUrl);
-                    var dpName = new DistributionPointName(DistributionPointName.FullName, new GeneralNames(uriGeneralName));
-                    return new DistributionPoint(dpName, null, null);
-                })
-                .ToArray();
-            var crlDistPoint = new CrlDistPoint(distributionPoints);
-            return new X509Extension(new Oid("2.5.29.31"), crlDistPoint.GetDerEncoded(), false);
+            var x509Certificate = DotNetUtilities.ToX509Certificate(bouncyCertificate);
+            return new X509Certificate2(x509Certificate);
+        }
+
+        private static DistributionPoint ConvertToDistributionPoint(string crlUrl)
+        {
+            var generalName = new GeneralName(GeneralName.UniformResourceIdentifier, crlUrl);
+            var generalNames = new GeneralNames(generalName);
+            var distributionPointName = new DistributionPointName(generalNames);
+            return new DistributionPoint(distributionPointName, null, null);
+        }
+
+        private static AsymmetricCipherKeyPair GenerateRsaKeyPair(int keySize)
+        {
+            var keyPairGenerator = new RsaKeyPairGenerator();
+            keyPairGenerator.Init(new KeyGenerationParameters(new SecureRandom(), keySize));
+            return keyPairGenerator.GenerateKeyPair();
         }
     }
 }
