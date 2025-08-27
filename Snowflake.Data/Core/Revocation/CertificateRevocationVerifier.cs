@@ -64,13 +64,14 @@ namespace Snowflake.Data.Core.Revocation
             var unsuccessfulResults = new HashSet<ChainRevocationCheckResult> { result };
             foreach (var alternativeChain in FindAlternativeValidChains(certificate, chain))
             {
-                var alternativeResult = CheckChainRevocation(chain);
+                var alternativeResult = CheckChainRevocation(alternativeChain);
                 if (alternativeResult == ChainRevocationCheckResult.ChainUnrevoked)
                     return true; // OPEN
                 unsuccessfulResults.Add(alternativeResult);
             }
             if (unsuccessfulResults.Contains(ChainRevocationCheckResult.ChainError) && _certRevocationCheckMode == CertRevocationCheckMode.Advisory)
             {
+                s_logger.Debug("Encountered errors when checking revocation status for the certificate chain but assumed it is not revoked due to Advisory mode (fail open)");
                 return true; // FAIL OPEN
             }
             return false; // CLOSE or FAIL CLOSE
@@ -87,7 +88,7 @@ namespace Snowflake.Data.Core.Revocation
             foreach (var chainElement in chain.ChainElements)
             {
                 index++;
-                var isRoot = index == chainElementsCount && index > 1;
+                var isRoot = index == chainElementsCount;
                 if (isRoot)
                     continue;
                 var certificate = chainElement.Certificate;
@@ -96,7 +97,7 @@ namespace Snowflake.Data.Core.Revocation
                 {
                     if (_allowCertificatesWithoutCrlUrl)
                     {
-                        s_logger.Warn("Certificate has missing CRL Distribution Point URLs");
+                        s_logger.Debug("Certificate has missing CRL Distribution Point URLs");
                         continue;
                     }
                     chainResult = ChainRevocationCheckResult.ChainError;
@@ -111,7 +112,6 @@ namespace Snowflake.Data.Core.Revocation
                 if (certStatus == CertRevocationCheckResult.CertError)
                 {
                     chainResult = ChainRevocationCheckResult.ChainError;
-                    continue;
                 }
             }
             return chainResult;
@@ -126,15 +126,23 @@ namespace Snowflake.Data.Core.Revocation
 
         internal CertRevocationCheckResult CheckCertRevocation(X509Certificate2 certificate, string[] crlUrls)
         {
+            var results = new HashSet<CertRevocationCheckResult>();
             foreach (var crlUrl in crlUrls)
             {
                 var result = CheckCertRevocationForOneCrlUrl(certificate, crlUrl);
-                if (result != CertRevocationCheckResult.CertUnrevoked)
-                    return result;
+                if (result == CertRevocationCheckResult.CertRevoked)
+                {
+                    return result; // fail fast
+                }
+                results.Add(result);
+            }
+
+            if (results.Contains(CertRevocationCheckResult.CertError))
+            {
+                return CertRevocationCheckResult.CertError;
             }
             return CertRevocationCheckResult.CertUnrevoked;
         }
-
 
         private CertRevocationCheckResult CheckCertRevocationForOneCrlUrl(X509Certificate2 certificate, string crlUrl)
         {
