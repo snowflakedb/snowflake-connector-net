@@ -4,6 +4,8 @@ namespace Snowflake.Data.Core.Revocation
     {
         public static readonly FileCrlCache Instance = new FileCrlCache();
 
+        // private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<FileCrlCache>();
+
         internal FileCrlCache()
         {
         }
@@ -15,6 +17,7 @@ namespace Snowflake.Data.Core.Revocation
 
         public void Set(string crlUrl, Crl crl)
         {
+            //s_logger.Debug($"Updating file crl cache for crl url: {crlUrl}");
             // TODO: implement
         }
     }

@@ -252,6 +252,7 @@ namespace Snowflake.Data.Core
 
         private HttpClientHandler CreateHttpClientHandlerWithDotnetCrlCheck(HttpClientConfig config)
         {
+            logger.Debug("Creating HttpClientHandler without CRL check customizations");
             return new HttpClientHandler
             {
                 CheckCertificateRevocationList = config.CrlCheckEnabled,
@@ -265,6 +266,7 @@ namespace Snowflake.Data.Core
 
         private HttpClientHandler CreateHttpClientHandlerWithCustomizedCrlCheck(HttpClientConfig config)
         {
+            logger.Debug("Creating HttpClientHandler with customized CRL check");
             var revocationVerifier = new CertificateRevocationVerifier(
                 config,
                 TimeProvider.Instance,

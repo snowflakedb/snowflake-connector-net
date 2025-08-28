@@ -24,6 +24,7 @@ namespace Snowflake.Data.Core.Revocation
 
         private static readonly ConcurrentDictionary<string, object> s_locksForCrlUrls = new ConcurrentDictionary<string, object>();
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<CertificateRevocationVerifier>();
+        private static readonly TimeSpan s_httpTimeout = TimeSpan.FromSeconds(60);
 
         public CertificateRevocationVerifier(
             HttpClientConfig config,
@@ -52,25 +53,40 @@ namespace Snowflake.Data.Core.Revocation
 
         private bool CheckCertificateRevocationStatus(X509Certificate2 certificate, X509Chain chain)
         {
+            var joinedChainSubjects = GetJoinedChainSubjects(chain);
+            s_logger.Debug($"Checking revocation status for certificate: '{certificate.Subject}' with the best chain of: {joinedChainSubjects}");
             if (_certRevocationCheckMode == CertRevocationCheckMode.Disabled)
+            {
+                s_logger.Debug($"Certificate revocation status checking is disabled. Allowing to use the certificate: '{certificate.Subject}'");
                 return true; // OPEN
+            }
             var result = CheckChainRevocation(chain);
+            s_logger.Debug($"Revocation status for certificate: '{certificate.Subject}' with the best chain of: '{joinedChainSubjects}' is: {result.ToString()}");
             if (result == ChainRevocationCheckResult.ChainUnrevoked)
                 return true; // OPEN
             var unsuccessfulResults = new HashSet<ChainRevocationCheckResult> { result };
             foreach (var alternativeChain in FindAlternativeValidChains(certificate, chain))
             {
+                var alternativeChainSubjects = GetJoinedChainSubjects(alternativeChain);
+                s_logger.Debug($"Checking revocation status for certificate: '{certificate.Subject}' with alternative chain of: '{alternativeChainSubjects}'");
                 var alternativeResult = CheckChainRevocation(alternativeChain);
+                s_logger.Debug($"Revocation status for certificate: '{certificate.Subject}' with the alternative chain of: '{alternativeChainSubjects}' is: {alternativeResult.ToString()}");
                 if (alternativeResult == ChainRevocationCheckResult.ChainUnrevoked)
                     return true; // OPEN
                 unsuccessfulResults.Add(alternativeResult);
             }
             if (unsuccessfulResults.Contains(ChainRevocationCheckResult.ChainError) && _certRevocationCheckMode == CertRevocationCheckMode.Advisory)
             {
-                s_logger.Debug("Encountered errors when checking revocation status for the certificate chain but assumed it is not revoked due to Advisory mode (fail open)");
+                s_logger.Debug($"Encountered errors when checking revocation status for the certificate chains for certificate: '{certificate.Subject}'. Allowing to accept the certificate due to Advisory mode (fail open)");
                 return true; // FAIL OPEN
             }
             return false; // CLOSE or FAIL CLOSE
+        }
+
+        private static string GetJoinedChainSubjects(X509Chain chain)
+        {
+            var chainSubjects = chain.ChainElements.Cast<X509ChainElement>().Select(e => e.Certificate.Subject);
+            return string.Join(" -> ", chainSubjects);
         }
 
         private static object GetLock(string crlUrl) =>
@@ -78,6 +94,7 @@ namespace Snowflake.Data.Core.Revocation
 
         private ChainRevocationCheckResult CheckChainRevocation(X509Chain chain)
         {
+            var chainSubjects = GetJoinedChainSubjects(chain);
             var chainResult = ChainRevocationCheckResult.ChainUnrevoked;
             var chainElementsCount = chain.ChainElements.Count;
             var index = 0;
@@ -88,17 +105,21 @@ namespace Snowflake.Data.Core.Revocation
                 if (isRoot)
                     continue;
                 var certificate = chainElement.Certificate;
+                s_logger.Debug($"Checking certificate revocation status for certificate: {certificate.Subject} on position: {index} in chain: '{chainSubjects}'");
                 var crlUrls = _crlExtractor.Extract(certificate);
                 if (!ContainsAnyValue(crlUrls))
                 {
                     if (_allowCertificatesWithoutCrlUrl)
                     {
-                        s_logger.Debug("Certificate has missing CRL Distribution Point URLs");
+                        s_logger.Debug($"Certificate '{certificate.Subject}' on position: {index} in chain: '{chainSubjects}' has missing CRL Distribution Point URLs but it is acceptable");
                         continue;
                     }
+                    s_logger.Debug($"Certificate '{certificate.Subject}' on position: {index} in chain: '{chainSubjects}' has missing CRL Distribution Point URLs so it adds a {ChainRevocationCheckResult.ChainError.ToString()} to chain revocation status");
                     chainResult = ChainRevocationCheckResult.ChainError;
                     continue;
                 }
+                var joinedCrlUrls = string.Join(", ", crlUrls);
+                s_logger.Debug($"Certificate '{certificate.Subject}' on position: {index} in chain: '{chainSubjects}' has following CRL Distribution Point URLs: {joinedCrlUrls}");
                 var certStatus = CheckCertRevocation(certificate, crlUrls);
                 if (certStatus == CertRevocationCheckResult.CertRevoked)
                 {
@@ -110,6 +131,7 @@ namespace Snowflake.Data.Core.Revocation
                     chainResult = ChainRevocationCheckResult.ChainError;
                 }
             }
+            s_logger.Debug($"Certificate chain '{chainSubjects}' revocation status is: {chainResult.ToString()}");
             return chainResult;
         }
 
@@ -128,6 +150,7 @@ namespace Snowflake.Data.Core.Revocation
                 var result = CheckCertRevocationForOneCrlUrl(certificate, crlUrl);
                 if (result == CertRevocationCheckResult.CertRevoked)
                 {
+                    s_logger.Debug($"Certificate revocation status for certificate '{certificate.Subject}' is {CertRevocationCheckResult.CertRevoked.ToString()} because for one of its CRL urls the status was {CertRevocationCheckResult.CertRevoked.ToString()}");
                     return result; // fail fast
                 }
                 results.Add(result);
@@ -135,13 +158,16 @@ namespace Snowflake.Data.Core.Revocation
 
             if (results.Contains(CertRevocationCheckResult.CertError))
             {
+                s_logger.Debug($"Certificate revocation status for certificate '{certificate.Subject}' is {CertRevocationCheckResult.CertError.ToString()} because for one of its CRL urls the status was {CertRevocationCheckResult.CertError.ToString()} and there was no {CertRevocationCheckResult.CertRevoked.ToString()} status");
                 return CertRevocationCheckResult.CertError;
             }
+            s_logger.Debug($"Certificate revocation status for certificate '{certificate.Subject}' is {CertRevocationCheckResult.CertUnrevoked.ToString()}");
             return CertRevocationCheckResult.CertUnrevoked;
         }
 
         private CertRevocationCheckResult CheckCertRevocationForOneCrlUrl(X509Certificate2 certificate, string crlUrl)
         {
+            s_logger.Debug($"Checking certificate revocation for certificate: '{certificate.Subject}' with CRL url: '{crlUrl}'");
             Crl crl = null;
             var lockObject = GetLock(crlUrl);
             lock (lockObject)
@@ -166,7 +192,7 @@ namespace Snowflake.Data.Core.Revocation
                         }
                         else
                         {
-                            s_logger.Error($"Unable to fetch a valid or newer CRL from {crlUrl}. No fallback available.");
+                            s_logger.Error($"Unable to fetch a valid or newer CRL from '{crlUrl}' for certificate: '{certificate.Subject}'. No fallback available. Certificate revocation status is: {CertRevocationCheckResult.CertError.ToString()}");
                             return CertRevocationCheckResult.CertError;
                         }
                     }
@@ -177,7 +203,7 @@ namespace Snowflake.Data.Core.Revocation
                 }
                 if (!IsCrlSignatureAndIssuerValid(crl, certificate, crlUrl))
                 {
-                    s_logger.Error($"Unable to verify CRL for {crlUrl}");
+                    s_logger.Error($"Unable to verify CRL: '{crlUrl}' for certificate: '{certificate.Subject}' because of CRL and certificate details mismatch. Certificate revocation status is: {CertRevocationCheckResult.CertError.ToString()}");
                     return CertRevocationCheckResult.CertError;
                 }
                 if (shouldUpdateCrl)
@@ -187,8 +213,10 @@ namespace Snowflake.Data.Core.Revocation
             }
             if (crl.IsRevoked(certificate.SerialNumber))
             {
+                s_logger.Debug($"Certificate '{certificate.Subject}' has been verified for CRL: '{crlUrl}' to have status: {CertRevocationCheckResult.CertRevoked.ToString()}");
                 return CertRevocationCheckResult.CertRevoked;
             }
+            s_logger.Debug($"Certificate '{certificate.Subject}' has been verified for CRL: '{crlUrl}' to have status: {CertRevocationCheckResult.CertUnrevoked.ToString()}");
             return CertRevocationCheckResult.CertUnrevoked;
         }
 
@@ -221,10 +249,9 @@ namespace Snowflake.Data.Core.Revocation
 
         private Crl FetchCrl(string crlUrl)
         {
-            var timeout = TimeSpan.FromSeconds(60);
             var request = new HttpRequestMessage(HttpMethod.Get, crlUrl);
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, timeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, timeout);
+            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, s_httpTimeout);
+            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, s_httpTimeout);
             byte[] crlBytes = null;
             DateTime now;
             try

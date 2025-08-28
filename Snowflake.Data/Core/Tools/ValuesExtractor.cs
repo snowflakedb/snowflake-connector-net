@@ -21,7 +21,7 @@ namespace Snowflake.Data.Core.Tools
             }
             if (string.IsNullOrEmpty(value))
             {
-                s_logger.Debug($"Did not retrieved value from {valueName}. Using default value: {defaultValue}");
+                s_logger.Debug($"Did not retrieve value from {valueName}. Using default value: {defaultValue}");
                 return defaultValue;
             }
             if (!int.TryParse(value, out int intValue))
