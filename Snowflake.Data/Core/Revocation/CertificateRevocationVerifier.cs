@@ -15,8 +15,6 @@ namespace Snowflake.Data.Core.Revocation
     internal class CertificateRevocationVerifier
     {
         private readonly CertRevocationCheckMode _certRevocationCheckMode;
-        private readonly bool _enableCRLDiskCaching;
-        private readonly bool _enableCRLInMemoryCaching;
         private readonly bool _allowCertificatesWithoutCrlUrl;
         private readonly TimeProvider _timeProvider;
         private readonly IRestRequester _restRequester;
@@ -36,8 +34,6 @@ namespace Snowflake.Data.Core.Revocation
             CrlRepository crlRepository)
         {
             _certRevocationCheckMode = config.CertRevocationCheckMode;
-            _enableCRLDiskCaching = config.EnableCRLDiskCaching;
-            _enableCRLInMemoryCaching = config.EnableCRLInMemoryCaching;
             _allowCertificatesWithoutCrlUrl = config.AllowCertificatesWithoutCrlUrl;
             _timeProvider = timeProvider;
             _restRequester = restRequester;
