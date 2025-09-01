@@ -229,18 +229,22 @@ namespace Snowflake.Data.Core
 
         private HttpClientHandler CreateHttpClientHandler(HttpClientConfig config)
         {
+            var httpClientType = "";
             try
             {
                 if (!config.UseDotnetCrlCheckMechanism && config.CrlCheckEnabled)
                 {
+                    httpClientType = "customized";
                     return CreateHttpClientHandlerWithCustomizedCrlCheck(config);
                 }
+                httpClientType = "dotnet";
                 return CreateHttpClientHandlerWithDotnetCrlCheck(config);
             }
             // special logic for .NET framework 4.7.1 that
             // CheckCertificateRevocationList and SslProtocols are not supported
-            catch (PlatformNotSupportedException)
+            catch (PlatformNotSupportedException exception)
             {
+                logger.Error($"!!! PlatformNotSupportedException thrown when creating {httpClientType} http client: {exception.Message}", exception);
                 return new HttpClientHandler
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
@@ -274,7 +278,7 @@ namespace Snowflake.Data.Core
                 CertificateCrlDistributionPointsExtractor.Instance,
                 new CrlParser(EnvironmentOperations.Instance),
                 new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching));
-            return new HttpClientHandler
+            var handler = new HttpClientHandler
             {
                 CheckCertificateRevocationList = false,
                 ServerCertificateCustomValidationCallback = revocationVerifier.CertificateValidationCallback,
@@ -284,6 +288,8 @@ namespace Snowflake.Data.Core
                 UseCookies = false, // Disable cookies
                 UseProxy = false
             };
+            logger.Warn("!!! Successfully created HttpClientHandler with customized CRL check");
+            return handler;
         }
 
         /// <summary>
