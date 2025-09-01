@@ -554,4 +554,35 @@ namespace Snowflake.Data.Tests
         {
         }
     }
+
+    public class IgnoreOnEnvNotDefined : Attribute, ITestAction
+    {
+        private readonly string _key;
+
+        public IgnoreOnEnvNotDefined(string key)
+        {
+            _key = key;
+        }
+
+        public void BeforeTest(ITest test)
+        {
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(_key)))
+            {
+                Assert.Ignore("Test is ignored when environment variable {0} is not set", _key);
+            }
+        }
+
+        public void AfterTest(ITest test)
+        {
+        }
+
+        public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
+    }
+
+    public class IgnoreWhenNotCI : IgnoreOnEnvNotDefined
+    {
+        public IgnoreWhenNotCI() : base("CI")
+        {
+        }
+    }
 }
