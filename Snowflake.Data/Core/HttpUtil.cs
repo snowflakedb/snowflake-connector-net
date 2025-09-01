@@ -95,6 +95,7 @@ namespace Snowflake.Data.Core
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly int s_baseBackOffTime = 1;
         private static readonly int s_exponentialFactor = 2;
+        private static readonly SslProtocols s_tls13 = (SslProtocols)12288;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
 
         private static readonly List<string> s_supportedEndpointsForRetryPolicy = new List<string>
@@ -260,8 +261,7 @@ namespace Snowflake.Data.Core
             return new HttpClientHandler
             {
                 CheckCertificateRevocationList = config.CrlCheckEnabled,
-                // Enforce tls v1.2
-                SslProtocols = SslProtocols.Tls12,
+                SslProtocols = s_tls13,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
                 UseProxy = false
