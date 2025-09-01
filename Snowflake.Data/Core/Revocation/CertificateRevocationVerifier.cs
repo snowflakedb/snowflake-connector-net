@@ -105,6 +105,7 @@ namespace Snowflake.Data.Core.Revocation
                 if (isRoot)
                     continue;
                 var certificate = chainElement.Certificate;
+                // TODO: skip CRL checking if the certificate is short lived
                 s_logger.Debug($"Checking certificate revocation status for certificate: {certificate.Subject} on position: {index} in chain: '{chainSubjects}'");
                 var crlUrls = _crlExtractor.Extract(certificate);
                 if (!ContainsAnyValue(crlUrls))
