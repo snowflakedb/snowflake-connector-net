@@ -48,7 +48,15 @@ namespace Snowflake.Data.Core.Revocation
             bool defaultValidationPassed = sslPolicyErrors == SslPolicyErrors.None;
             if (!defaultValidationPassed)
                 return false;
-            return CheckCertificateRevocationStatus(certificate, chain);
+            try
+            {
+                return CheckCertificateRevocationStatus(certificate, chain);
+            }
+            catch (Exception exception)
+            {
+                s_logger.Error($"Unexpected exception checking certificate revocation status: {exception.Message}", exception);
+                return false;
+            }
         }
 
         private bool CheckCertificateRevocationStatus(X509Certificate2 certificate, X509Chain chain)
