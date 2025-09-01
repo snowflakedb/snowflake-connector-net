@@ -120,9 +120,19 @@ namespace Snowflake.Data.AuthenticationTests
         public static SFSessionProperties GetOktaConnectionString()
         {
             var properties = GetBaseConnectionParameters();
-            properties.Add(SFSessionProperty.AUTHENTICATOR, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_OAUTH_URL"));
+            properties.Add(SFSessionProperty.AUTHENTICATOR, Environment.GetEnvironmentVariable("username_password_mfa"));
             properties.Add(SFSessionProperty.USER, SsoUser);
             properties.Add(SFSessionProperty.PASSWORD, SsoPassword);
+
+            return properties;
+        }
+
+        public static SFSessionProperties GetMfaConnectionString()
+        {
+            var properties = GetBaseConnectionParameters();
+            properties.Add(SFSessionProperty.AUTHENTICATOR, "USERNAME_PASSWORD_MFA");
+            properties.Add(SFSessionProperty.USER, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_MFA_USER"));
+            properties.Add(SFSessionProperty.PASSWORD, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_MFA_PASSWORD"));
 
             return properties;
         }
