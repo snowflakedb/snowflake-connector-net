@@ -278,18 +278,33 @@ namespace Snowflake.Data.Core
                 CertificateCrlDistributionPointsExtractor.Instance,
                 new CrlParser(EnvironmentOperations.Instance),
                 new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching));
-            var handler = new HttpClientHandler
+            try
             {
-                CheckCertificateRevocationList = false,
-                ServerCertificateCustomValidationCallback = revocationVerifier.CertificateValidationCallback,
-                // Enforce tls v1.2
-                SslProtocols = SslProtocols.Tls12,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                UseCookies = false, // Disable cookies
-                UseProxy = false
-            };
-            logger.Warn("!!! Successfully created HttpClientHandler with customized CRL check");
-            return handler;
+                var handler = new HttpClientHandler
+                {
+                    CheckCertificateRevocationList = false,
+                    ServerCertificateCustomValidationCallback = revocationVerifier.CertificateValidationCallback,
+                    // Enforce tls v1.2
+                    SslProtocols = SslProtocols.Tls12,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseCookies = false, // Disable cookies
+                    UseProxy = false
+                };
+                logger.Warn("!!! Successfully created HttpClientHandler with customized CRL check");
+                return handler;
+            }
+            catch (PlatformNotSupportedException exception)
+            {
+                var handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = revocationVerifier.CertificateValidationCallback,
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseCookies = false, // Disable cookies
+                    UseProxy = false
+                };
+                logger.Warn("!!! Successfully created HttpClientHandler with customized CRL check without SslProtocols and CheckCertificateRevocationList");
+                return handler;
+            }
         }
 
         /// <summary>
