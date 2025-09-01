@@ -215,7 +215,7 @@ namespace Snowflake.Data.AuthenticationTests
             if (_runAuthTestsManually)
             {
                 s_logger.Info("TOTP generation is not supported in manual test mode");
-                return new string[0];
+                return Array.Empty<string>();
             }
             else
             {
@@ -251,7 +251,7 @@ namespace Snowflake.Data.AuthenticationTests
                             throw new Exception($"TOTP generation failed with exit code {process.ExitCode}: {error}");
                         }
 
-                        return output.Split(new char[0], StringSplitOptions.RemoveEmptyEntries);
+                        return output.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries);
                     }
                 }
                 catch (Exception e)
