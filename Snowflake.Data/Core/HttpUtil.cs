@@ -229,10 +229,12 @@ namespace Snowflake.Data.Core
 
         private HttpClientHandler CreateHttpClientHandler(HttpClientConfig config)
         {
+            bool customizedCrlCheck = false;
             try
             {
                 if (!config.UseDotnetCrlCheckMechanism && config.CrlCheckEnabled)
                 {
+                    customizedCrlCheck = true;
                     return CreateHttpClientHandlerWithCustomizedCrlCheck(config);
                 }
                 return CreateHttpClientHandlerWithDotnetCrlCheck(config);
@@ -241,6 +243,10 @@ namespace Snowflake.Data.Core
             // CheckCertificateRevocationList and SslProtocols are not supported
             catch (PlatformNotSupportedException)
             {
+                if (customizedCrlCheck)
+                {
+                    logger.Error("Could not use customized Crl revocation check. Probably you are using old .net framework 4.6.2 or 4.7.1 where revocation check is done by Windows OS");
+                }
                 return new HttpClientHandler
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,

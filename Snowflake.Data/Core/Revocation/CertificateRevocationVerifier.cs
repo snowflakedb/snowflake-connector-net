@@ -259,7 +259,7 @@ namespace Snowflake.Data.Core.Revocation
             {
                 var response = _restRequester.Get(new RestRequestWrapper(request));
                 now = _timeProvider.UtcNow();
-                crlBytes = response.Content.ReadAsByteArrayAsync().Result;
+                crlBytes = response.Content?.ReadAsByteArrayAsync().Result;
             }
             catch (Exception exception)
             {
