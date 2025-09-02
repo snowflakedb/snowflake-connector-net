@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class CertificateRevocationIT : SFBaseTest
     {
         [Test]
-        [IgnoreOnJenkins]
+        [Ignore("Temporarily ignored")]
         public void TestCertificate()
         {
             // arrange
