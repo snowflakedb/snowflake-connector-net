@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 using Apache.Arrow;
 using Apache.Arrow.Types;
 
@@ -206,11 +205,11 @@ namespace Snowflake.Data.Core
                     switch (column)
                     {
                         case StructArray structArray:
-                            return FormatStructArray(structArray, _currentBatchIndex);
+                            return ExtractStructArray(structArray, _currentRecordIndex);
                         case MapArray mapArray:
-                            return FormatArrowMapArray(mapArray, _currentRecordIndex);
+                            return ExtractMapArray(mapArray, _currentRecordIndex);
                         case ListArray listArray:
-                            return FormatArrowListArray(listArray, _currentRecordIndex);
+                            return ExtractListArray(listArray, _currentRecordIndex);
                         default:
                             if (_byte[columnIndex] == null || _int[columnIndex] == null)
                             {
@@ -381,89 +380,87 @@ namespace Snowflake.Data.Core
             return ((value % s_powersOf10[scale]) * s_powersOf10[9 - scale]);
         }
 
-        private string FormatArrowValue(IArrowArray array, int index)
+        private object ConvertArrowValue(IArrowArray array, int index)
         {
             switch (array)
             {
-                case StructArray strct: return FormatStructArray(strct, index);
-                case MapArray map: return FormatArrowMapArray(map, index);
-                case ListArray list: return FormatArrowListArray(list, index);
-                case DoubleArray doubles: return doubles.GetValue(index).ToString();
-                case FloatArray floats: return floats.GetValue(index).ToString();
-                case Decimal128Array decimals: return decimals.GetValue(index).ToString();
-                case Int32Array ints: return ints.GetValue(index).ToString();
-                case Int64Array longs: return longs.GetValue(index).ToString();
+                case StructArray strct: return ExtractStructArray(strct, index);
+                case MapArray map: return ExtractMapArray(map, index);
+                case ListArray list: return ExtractListArray(list, index);
+                case DoubleArray doubles: return doubles.GetValue(index);
+                case FloatArray floats: return floats.GetValue(index);
+                case Decimal128Array decimals: return decimals.GetValue(index);
+                case Int32Array ints: return ints.GetValue(index);
+                case Int64Array longs: return longs.GetValue(index);
+                case StringArray strArray:
+                    var str = strArray.GetString(index);
+                    return string.IsNullOrEmpty(str) ? null : str;
                 default:
-                    {
-                        var str = ((StringArray)array).GetString(index);
-                        return string.IsNullOrEmpty(str) ? "undefined" :
-                            JsonSerializer.Serialize(str);
-                    }
-            };
+                    throw new NotSupportedException($"Unsupported array type: {array.GetType()}");
+            }
         }
 
-        private string FormatStructArray(StructArray structArray, int index)
+        private Dictionary<string, object> ExtractStructArray(StructArray structArray, int index)
         {
-            var sb = new StringBuilder();
+            var result = new Dictionary<string, object>();
             var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
-            var end = structArray.Fields.Count;
-            sb.Append("{");
-            for (int i = 0; i < end; i++)
+
+            for (int i = 0; i < structArray.Fields.Count; i++)
             {
                 var field = structArray.Fields[i];
-                var value = FormatArrowValue(field, index);
-                if (value == "undefined" && end == 1)
-                    return "null";
-                sb.Append($"\"{structTypeFields[i].Name}\"");
-                sb.Append(": ");
-                sb.Append($"{value}");
-                if (i != end - 1)
-                    sb.Append(", ");
+                var fieldName = structTypeFields[i].Name;
+                var value = ConvertArrowValue(field, index);
+
+                if (value == null && structArray.Fields.Count == 1)
+                    return null;
+
+                result[fieldName] = value;
             }
-            sb.Append("}");
-            return sb.ToString();
+
+            return result;
         }
 
-        private string FormatArrowListArray(ListArray listArray, int index)
+        private List<object> ExtractListArray(ListArray listArray, int index)
         {
-            var start = listArray.ValueOffsets[index];
-            var end = listArray.ValueOffsets[index + 1];
+            int start = listArray.ValueOffsets[index];
+            int end = listArray.ValueOffsets[index + 1];
+
             if (start == end)
-                return "null";
-            var sb = new StringBuilder();
+                return null;
+
             var values = listArray.Values;
-            sb.Append("[");
+            var result = new List<object>(end - start);
+
             for (int i = start; i < end; i++)
             {
-                sb.Append($"{FormatArrowValue(values, i)}");
-                if (i != end - 1)
-                    sb.Append(", ");
+                result.Add(ConvertArrowValue(values, i));
             }
-            sb.Append("]");
-            return sb.ToString();
+
+            return result;
         }
 
-        private string FormatArrowMapArray(MapArray mapArray, int index)
+        private Dictionary<object, object> ExtractMapArray(MapArray mapArray, int index)
         {
-            var start = mapArray.ValueOffsets[index];
-            var end = mapArray.ValueOffsets[index + 1];
+            int start = mapArray.ValueOffsets[index];
+            int end = mapArray.ValueOffsets[index + 1];
+
             if (start == end)
-                return "null";
-            var sb = new StringBuilder();
+                return null;
+
             var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
             var keyArray = keyValuesArray.Fields[0];
             var valueArray = keyValuesArray.Fields[1];
-            sb.Append("{");
-            for (int i = start; i < end; i++)
+
+            var result = new Dictionary<object, object>();
+
+            for (int i = 0; i < end - start; i++)
             {
-                sb.Append($"{FormatArrowValue(keyArray, i)}");
-                sb.Append(": ");
-                sb.Append($"{FormatArrowValue(valueArray, i)}");
-                if (i != end - 1)
-                    sb.Append(", ");
+                var key = ConvertArrowValue(keyArray, i);
+                var value = ConvertArrowValue(valueArray, i);
+                result[key] = value;
             }
-            sb.Append("}");
-            return sb.ToString();
+
+            return result;
         }
     }
 }
