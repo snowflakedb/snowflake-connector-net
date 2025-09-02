@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     public class CertificateRevocationIT : SFBaseTest
     {
-        [Test,  IgnoreOnJenkins]
+        [Test, IgnoreOnJenkins]
         public void TestCertificate()
         {
             // arrange
