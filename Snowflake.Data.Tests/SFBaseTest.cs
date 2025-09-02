@@ -555,40 +555,10 @@ namespace Snowflake.Data.Tests
         }
     }
 
-    public class IgnoreConditional : Attribute, ITestAction
+    public class IgnoreOnJenkins : IgnoreOnEnvIsSetAttribute
     {
-        private readonly Func<bool> _condition;
-
-        public IgnoreConditional(Func<bool> condition)
+        public IgnoreOnJenkins() : base("JENKINS_HOME")
         {
-            _condition = condition;
-        }
-
-        public void BeforeTest(ITest test)
-        {
-            if (_condition())
-            {
-                Assert.Ignore("Test is ignored because condition is met");
-            }
-        }
-
-        public void AfterTest(ITest test)
-        {
-        }
-
-        public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
-    }
-
-    public class IgnoreOnJenkins : IgnoreConditional
-    {
-        public IgnoreOnJenkins() : base(IsJenkins)
-        {
-        }
-
-        private static bool IsJenkins()
-        {
-            var jenkinsHome = Environment.GetEnvironmentVariable("JENKINS_HOME");
-            return !string.IsNullOrEmpty(jenkinsHome);
         }
     }
 }
