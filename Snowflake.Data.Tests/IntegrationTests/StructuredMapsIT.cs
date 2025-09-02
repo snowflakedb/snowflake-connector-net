@@ -79,6 +79,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual("San Mateo", map["city"]);
                     Assert.AreEqual("CA", map["state"]);
                     Assert.AreEqual("01-234", map["zip"]);
+
+                    if (_nativeArrow)
+                    {
+                        reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                        var mapStringFromArrowResult = reader.GetString(0);
+                        Console.WriteLine("mapStringFromArrowResult");
+                        Console.WriteLine(mapStringFromArrowResult);
+                        EnableStructuredTypes(connection, ResultFormat.JSON);
+                        reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                        var mapStringFromJsonResult = reader.GetString(0);
+                        Console.WriteLine("mapStringFromJsonResult");
+                        Console.WriteLine(mapStringFromJsonResult);
+                        Assert.AreEqual(mapStringFromJsonResult, mapStringFromArrowResult);
+                    }
                 }
             }
         }
