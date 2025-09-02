@@ -27,6 +27,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 false,
                 false,
                 3,
+                20,
                 true,
                 false,
                 CertRevocationCheckMode.Enabled.ToString(),
