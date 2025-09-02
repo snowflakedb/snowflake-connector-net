@@ -84,13 +84,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         reader = (SnowflakeDbDataReader)command.ExecuteReader();
                         var mapStringFromArrowResult = reader.GetString(0);
+                        Assert.IsTrue(reader.Read());
+
                         Console.WriteLine("mapStringFromArrowResult");
                         Console.WriteLine(mapStringFromArrowResult);
+
                         EnableStructuredTypes(connection, ResultFormat.JSON);
                         reader = (SnowflakeDbDataReader)command.ExecuteReader();
                         var mapStringFromJsonResult = reader.GetString(0);
+                        Assert.IsTrue(reader.Read());
+
                         Console.WriteLine("mapStringFromJsonResult");
                         Console.WriteLine(mapStringFromJsonResult);
+
                         Assert.AreEqual(mapStringFromJsonResult, mapStringFromArrowResult);
                     }
                 }
