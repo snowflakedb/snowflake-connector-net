@@ -555,20 +555,20 @@ namespace Snowflake.Data.Tests
         }
     }
 
-    public class IgnoreOnEnvNotDefined : Attribute, ITestAction
+    public class IgnoreConditional : Attribute, ITestAction
     {
-        private readonly string _key;
+        private readonly Func<bool> _condition;
 
-        public IgnoreOnEnvNotDefined(string key)
+        public IgnoreConditional(Func<bool> condition)
         {
-            _key = key;
+            _condition = condition;
         }
 
         public void BeforeTest(ITest test)
         {
-            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(_key)))
+            if (_condition())
             {
-                Assert.Ignore("Test is ignored when environment variable {0} is not set", _key);
+                Assert.Ignore("Test is ignored because condition is met");
             }
         }
 
@@ -579,10 +579,16 @@ namespace Snowflake.Data.Tests
         public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
     }
 
-    public class IgnoreWhenNotCI : IgnoreOnEnvNotDefined
+    public class IgnoreOnJenkins : IgnoreConditional
     {
-        public IgnoreWhenNotCI() : base("CI")
+        public IgnoreOnJenkins() : base(IsJenkins)
         {
+        }
+
+        private static bool IsJenkins()
+        {
+            var jenkinsHome = Environment.GetEnvironmentVariable("JENKINS_HOME");
+            return !string.IsNullOrEmpty(jenkinsHome);
         }
     }
 }

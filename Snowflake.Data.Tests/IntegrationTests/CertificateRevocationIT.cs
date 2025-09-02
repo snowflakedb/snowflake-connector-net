@@ -8,7 +8,7 @@ using Snowflake.Data.Core.Revocation;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture, IgnoreWhenNotCI]
+    [TestFixture, IgnoreOnJenkins]
     public class CertificateRevocationIT : SFBaseTest
     {
         [Test]
