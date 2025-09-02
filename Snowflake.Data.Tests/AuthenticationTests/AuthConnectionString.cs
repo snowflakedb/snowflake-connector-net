@@ -127,6 +127,16 @@ namespace Snowflake.Data.AuthenticationTests
             return properties;
         }
 
+        public static SFSessionProperties GetMfaConnectionString()
+        {
+            var properties = GetBaseConnectionParameters();
+            properties.Add(SFSessionProperty.AUTHENTICATOR, "USERNAME_PASSWORD_MFA");
+            properties.Add(SFSessionProperty.USER, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_MFA_USER"));
+            properties.Add(SFSessionProperty.PASSWORD, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_MFA_PASSWORD"));
+
+            return properties;
+        }
+
         public static SFSessionProperties GetKeyPairFromFileContentParameters(string privateKey)
         {
 
