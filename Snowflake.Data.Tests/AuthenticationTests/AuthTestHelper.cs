@@ -62,6 +62,53 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
+        public bool ConnectAndExecuteSimpleQueryWithMfaToken(string baseConnectionString, string[] totpCodes)
+        {
+            // Try each TOTP code until one works
+            for (int i = 0; i < totpCodes.Length; i++)
+            {
+                var totpCode = totpCodes[i];
+                s_logger.Info($"Trying TOTP code {i + 1}/{totpCodes.Length}");
+
+                // Clear previous exception
+                _exception = null;
+
+                // Add passcode to connection string
+                var connectionStringWithPasscode = baseConnectionString;
+                if (!string.IsNullOrEmpty(totpCode))
+                {
+                    connectionStringWithPasscode += $";PASSCODE={totpCode}";
+                }
+
+                // Attempt connection
+                ConnectAndExecuteSimpleQuery(connectionStringWithPasscode);
+
+                if (_exception == null)
+                {
+                    s_logger.Info($"Successfully connected with TOTP code {i + 1}");
+                    return true;
+                }
+                else
+                {
+                    var lastError = _exception.Message;
+                    s_logger.Warn($"TOTP code {i + 1} failed: {lastError}");
+
+                    if (lastError.Contains("TOTP Invalid") || lastError.Contains("Invalid MFA"))
+                    {
+                        s_logger.Info("TOTP/MFA error detected.");
+                    }
+                    else
+                    {
+                        s_logger.Error($"Non-TOTP error detected: {lastError}");
+                        break;
+                    }
+                }
+            }
+
+            s_logger.Error("All TOTP codes failed or non-recoverable error occurred");
+            return false;
+        }
+
         public string ConnectUsingOktaConnectionAndExecuteCustomCommand(string command, bool returnToken = false)
         {
             try
@@ -161,6 +208,58 @@ namespace Snowflake.Data.AuthenticationTests
         {
             var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(tokenHost, user, tokenType);
             SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKey);
+        }
+
+        public string[] GetTotp(string seed = "")
+        {
+            if (_runAuthTestsManually)
+            {
+                s_logger.Info("TOTP generation is not supported in manual test mode");
+                return Array.Empty<string>();
+            }
+            else
+            {
+                try
+                {
+                    string provideTotpGeneratorPath = "/externalbrowser/totpGenerator.js";
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = "node",
+                        Arguments = $"{provideTotpGeneratorPath} {seed}",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    using (var process = new Process { StartInfo = startInfo })
+                    {
+                        process.Start();
+                        if (!process.WaitForExit(40000))
+                        {
+                            process.Kill();
+                            throw new TimeoutException("TOTP generation process did not complete in the allotted time.");
+                        }
+
+                        string output = process.StandardOutput.ReadToEnd().Trim();
+                        string error = process.StandardError.ReadToEnd();
+
+                        s_logger.Debug($"OUTPUT: {output}, ERRORS: {error}");
+
+                        if (process.ExitCode != 0)
+                        {
+                            throw new Exception($"TOTP generation failed with exit code {process.ExitCode}: {error}");
+                        }
+
+                        return output.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _exception = e;
+                    throw new Exception(e.Message, e);
+                }
+            }
         }
 
         private void ProvideCredentials(string scenario, string login, string password)
