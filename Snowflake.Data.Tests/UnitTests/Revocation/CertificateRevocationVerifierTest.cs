@@ -84,6 +84,31 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [TestCase("2024-03-14 23:59:59Z", "2024-03-16 00:00:00Z", false)]
+        [TestCase("2024-03-15 00:00:00Z", "2024-03-25 00:00:00Z", true)]
+        [TestCase("2024-03-15 00:00:00Z", "2024-03-25 00:01:00Z", false)]
+        [TestCase("2026-03-15 00:00:00Z", "2026-03-22 00:00:00Z", true)]
+        [TestCase("2026-03-15 00:00:00Z", "2026-03-22 00:01:00Z", false)]
+        public void TestCheckIfCertificateIsShortLived(string notBeforeString, string notAfterString, bool expectedResult)
+        {
+            // arrange
+            var notBefore = DateTimeOffset.Parse(notBeforeString);
+            var notAfter = DateTimeOffset.Parse(notAfterString);
+            var certificate = CertificateGenerator.GenerateSelfSignedCertificate("other CA", notBefore, notAfter, null);
+            var config = GetHttpConfig();
+            var restRequester = new Mock<IRestRequester>();
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var isShortLived = verifier.IsShortLived(certificate);
+
+            // assert
+            Assert.AreEqual(expectedResult, isShortLived);
+        }
+
+        [Test]
         [TestCase("CN=other CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland", true)]
         [TestCase("C=Poland, CN=other CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian", true)]
         [TestCase("CN=different CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland", false)]

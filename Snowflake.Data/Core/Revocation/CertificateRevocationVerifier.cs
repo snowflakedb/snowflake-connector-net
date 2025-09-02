@@ -105,7 +105,11 @@ namespace Snowflake.Data.Core.Revocation
                 if (isRoot)
                     continue;
                 var certificate = chainElement.Certificate;
-                // TODO: skip CRL checking if the certificate is short lived
+                if (IsShortLived(certificate))
+                {
+                    s_logger.Debug($"Skipping certificate revocation check for a short-lived certificate: {certificate.Subject} on position: {index} in chain: '{chainSubjects}'");
+                    continue;
+                }
                 s_logger.Debug($"Checking certificate revocation status for certificate: {certificate.Subject} on position: {index} in chain: '{chainSubjects}'");
                 var crlUrls = _crlExtractor.Extract(certificate);
                 if (!ContainsAnyValue(crlUrls))
@@ -134,6 +138,23 @@ namespace Snowflake.Data.Core.Revocation
             }
             s_logger.Debug($"Certificate chain '{chainSubjects}' revocation status is: {chainResult.ToString()}");
             return chainResult;
+        }
+
+        internal bool IsShortLived(X509Certificate2 certificate) =>
+            IsShortLived(certificate.NotBefore.ToUniversalTime(), certificate.NotAfter.ToUniversalTime());
+
+        private bool IsShortLived(DateTime notBeforeUtc, DateTime notAfterUtc)
+        {
+            // see Short-lived Subscriber Certificate section in: https://cabforum.org/working-groups/server/baseline-requirements/requirements/
+            if (notBeforeUtc < new DateTime(2024, 3, 15, 0, 0, 0, DateTimeKind.Utc))
+            {
+                return false;
+            }
+            var maxDaysValidityPeriod = notBeforeUtc < new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Utc) ? 10 : 7;
+            var firstNotAfterWhenCertIsNotShortLived = notBeforeUtc
+                .AddHours(maxDaysValidityPeriod * 24) // adding hours not to bother about how adding days could be implemented
+                .AddMinutes(1); // fix for inclusion start and end time
+            return notAfterUtc < firstNotAfterWhenCertIsNotShortLived;
         }
 
         private bool ContainsAnyValue(string[] values)
