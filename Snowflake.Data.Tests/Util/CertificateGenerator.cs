@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.Util
             certGenerator.SetSerialNumber(BigInteger.ProbablePrime(128, new Random()));
             certGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(isCA)); // mark as CA
             var keyUsage = isCA ? X509KeyUsageFlags.KeyCertSign : X509KeyUsageFlags.DigitalSignature;
-            certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage((int) keyUsage));
+            certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage((int)keyUsage));
             if (crlUrls?.Length > 0)
             {
                 var distributionPoints = crlUrls

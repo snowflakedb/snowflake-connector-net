@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
             var shortLivedCertificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(offsetDays), null, certKeys[0]);
             var rootCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
-            var chain = CertificateGenerator.CreateChain(new [] {shortLivedCertificate, rootCertificate});
+            var chain = CertificateGenerator.CreateChain(new[] { shortLivedCertificate, rootCertificate });
             var config = GetHttpConfig();
             var restRequester = new Mock<IRestRequester>();
             var environmentOperation = new Mock<EnvironmentOperations>();
