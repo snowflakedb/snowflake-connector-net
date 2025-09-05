@@ -133,6 +133,8 @@ namespace Snowflake.Data.Core
         WORKLOAD_IDENTITY_ENTRA_RESOURCE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         OAUTHENABLESINGLEUSEREFRESHTOKENS,
+        [SFSessionPropertyAttr(required = false, defaultValue = "20")]
+        CONNECTION_LIMIT,
     }
 
     class SFSessionPropertyAttr : Attribute

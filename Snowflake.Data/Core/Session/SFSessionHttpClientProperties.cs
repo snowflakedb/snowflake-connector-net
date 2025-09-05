@@ -20,6 +20,7 @@ namespace Snowflake.Data.Core
         public static readonly TimeSpan DefaultExpirationTimeout = TimeSpan.FromHours(1);
         public const bool DefaultPoolingEnabled = true;
         public const int DefaultMaxHttpRetries = 7;
+        public const int DefaultConnectionLimit = 20;
         public static readonly TimeSpan DefaultRetryTimeout = TimeSpan.FromSeconds(300);
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFSessionHttpClientProperties>();
 
@@ -41,6 +42,7 @@ namespace Snowflake.Data.Core
         private TimeSpan _expirationTimeout;
         private bool _poolingEnabled;
         internal bool _clientStoreTemporaryCredential;
+        internal int _connectionLimit;
 
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
@@ -92,6 +94,7 @@ namespace Snowflake.Data.Core
                 ValidateHttpRetries();
                 ValidateMinMaxPoolSize();
                 ValidateWaitingForSessionIdleTimeout();
+                ValidateConnectionLimit();
             }
             catch (SnowflakeDbException)
             {
@@ -181,6 +184,15 @@ namespace Snowflake.Data.Core
             }
         }
 
+        private void ValidateConnectionLimit()
+        {
+            if (_connectionLimit < 1)
+            {
+                s_logger.Warn($"Connection limit cannot be less than 1. Using the default value of {DefaultConnectionLimit}");
+                _connectionLimit = DefaultConnectionLimit;
+            }
+        }
+
         public HttpClientConfig BuildHttpClientConfig()
         {
             return new HttpClientConfig(
@@ -193,6 +205,7 @@ namespace Snowflake.Data.Core
                 disableRetry,
                 forceRetryOn404,
                 maxHttpRetries,
+                _connectionLimit,
                 includeRetryReason);
         }
 
@@ -253,7 +266,8 @@ namespace Snowflake.Data.Core
                     _expirationTimeout = extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
                     _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
-                    _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL])
+                    _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]),
+                    _connectionLimit = int.Parse(propertiesDictionary[SFSessionProperty.CONNECTION_LIMIT]),
                 };
             }
 
