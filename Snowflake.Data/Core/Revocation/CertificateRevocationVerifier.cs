@@ -92,7 +92,7 @@ namespace Snowflake.Data.Core.Revocation
         private static object GetLock(string crlUrl) =>
             s_locksForCrlUrls.GetOrAdd(crlUrl, _ => new object());
 
-        private ChainRevocationCheckResult CheckChainRevocation(X509Chain chain)
+        internal ChainRevocationCheckResult CheckChainRevocation(X509Chain chain)
         {
             var chainSubjects = GetJoinedChainSubjects(chain);
             var chainResult = ChainRevocationCheckResult.ChainUnrevoked;

@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using NUnit.Framework;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
@@ -22,17 +24,32 @@ namespace Snowflake.Data.Tests.Util
             string[] crlUrls,
             int keySize = 2048)
         {
-            var keyPair = GenerateRsaKeyPair(keySize);
-            var certGenerator = new X509V3CertificateGenerator();
             var subjectName = $"CN={cn}, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
-            var distinguishedName = new X509Name(subjectName);
-            certGenerator.SetIssuerDN(distinguishedName);
-            certGenerator.SetSubjectDN(distinguishedName);
+            var keyPair = GenerateRsaKeyPair(keySize);
+            return GenerateCertificate(subjectName, subjectName, notBefore, notAfter, crlUrls, keyPair, true);
+        }
+
+        public static X509Certificate2 GenerateCertificate(
+            string subjectName,
+            string issuerName,
+            DateTimeOffset notBefore,
+            DateTimeOffset notAfter,
+            string[] crlUrls,
+            AsymmetricCipherKeyPair keyPair,
+            bool isCA = true)
+        {
+            var certGenerator = new X509V3CertificateGenerator();
+            var subjectDistinguishedName = new X509Name(subjectName);
+            certGenerator.SetSubjectDN(subjectDistinguishedName);
+            var issuerDistinguishedName = new X509Name(issuerName);
+            certGenerator.SetIssuerDN(issuerDistinguishedName);
             certGenerator.SetPublicKey(keyPair.Public);
             certGenerator.SetNotBefore(notBefore.UtcDateTime);
             certGenerator.SetNotAfter(notAfter.UtcDateTime);
             certGenerator.SetSerialNumber(BigInteger.ProbablePrime(128, new Random()));
-            certGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(true)); // mark as CA
+            certGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(isCA)); // mark as CA
+            var keyUsage = isCA ? X509KeyUsageFlags.KeyCertSign : X509KeyUsageFlags.DigitalSignature;
+            certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage((int) keyUsage));
             if (crlUrls?.Length > 0)
             {
                 var distributionPoints = crlUrls
@@ -44,6 +61,29 @@ namespace Snowflake.Data.Tests.Util
             var signatureFactory = new Asn1SignatureFactory("SHA256WithRSA", keyPair.Private, new SecureRandom());
             var bouncyCertificate = certGenerator.Generate(signatureFactory);
             return ConvertCertificate(bouncyCertificate);
+        }
+
+        public static AsymmetricCipherKeyPair[] GenerateKeysForCertAndItsParent(int keySize = 2048)
+        {
+            var certKeys = GenerateRsaKeyPair(keySize);
+            var rootKeys = GenerateRsaKeyPair(keySize);
+            return new[] { new AsymmetricCipherKeyPair(certKeys.Public, rootKeys.Private), rootKeys };
+        }
+
+        public static X509Chain CreateChain(IEnumerable<X509Certificate2> certificates)
+        {
+            var certCollection = new X509Certificate2Collection();
+            foreach (var certificate in certificates)
+            {
+                certCollection.Add(certificate);
+            }
+            var chain = new X509Chain();
+            chain.ChainPolicy.ExtraStore.AddRange(certCollection);
+            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllFlags;
+            var isBuilt = chain.Build(certificates.First());
+            Assert.IsTrue(isBuilt);
+            Assert.AreEqual(certificates.Count(), chain.ChainElements.Count);
+            return chain;
         }
 
         private static X509Certificate2 ConvertCertificate(Org.BouncyCastle.X509.X509Certificate bouncyCertificate)

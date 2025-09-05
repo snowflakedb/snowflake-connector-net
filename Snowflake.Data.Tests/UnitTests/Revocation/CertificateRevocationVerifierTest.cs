@@ -84,6 +84,32 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [TestCase(30, "ChainError")]
+        [TestCase(3, "ChainUnrevoked")]
+        public void TestSkipShortLivedCertificate(int offsetDays, string expectedResultString)
+        {
+            // arrange
+            var expectedResult = (ChainRevocationCheckResult)Enum.Parse(typeof(ChainRevocationCheckResult), expectedResultString, true);
+            var certSubject = "CN=ShortLivedCert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+            var shortLivedCertificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(offsetDays), null, certKeys[0]);
+            var rootCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
+            var chain = CertificateGenerator.CreateChain(new [] {shortLivedCertificate, rootCertificate});
+            var config = GetHttpConfig();
+            var restRequester = new Mock<IRestRequester>();
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.CheckChainRevocation(chain);
+
+            // assert
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [Test]
         [TestCase("2024-03-14 23:59:59Z", "2024-03-16 00:00:00Z", false)]
         [TestCase("2024-03-15 00:00:00Z", "2024-03-25 00:00:00Z", true)]
         [TestCase("2024-03-15 00:00:00Z", "2024-03-25 00:01:00Z", false)]
