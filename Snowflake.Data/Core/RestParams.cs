@@ -65,7 +65,7 @@ namespace Snowflake.Data.Core
         {
             ClientEnv = new LoginRequestClientEnv()
             {
-                application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
+                processName = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
                 osVersion = Environment.OSVersion.VersionString,
                 netRuntime = ExtractRuntime(),
                 netVersion = ExtractVersion(),

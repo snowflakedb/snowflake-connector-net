@@ -554,4 +554,11 @@ namespace Snowflake.Data.Tests
         {
         }
     }
+
+    public class IgnoreOnJenkins : IgnoreOnEnvIsSetAttribute
+    {
+        public IgnoreOnJenkins() : base("JENKINS_HOME")
+        {
+        }
+    }
 }

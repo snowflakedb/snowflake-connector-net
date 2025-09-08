@@ -1,0 +1,205 @@
+using System;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using Moq;
+using NUnit.Framework;
+using Snowflake.Data.Core;
+using Snowflake.Data.Core.Rest;
+using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
+
+namespace Snowflake.Data.Tests.UnitTests.Revocation
+{
+    [TestFixture]
+    public class CertificateRevocationVerifierTest : RevocationTests
+    {
+        [Test]
+        public void TestVerifyCertificateAsUnrevoked()
+        {
+            // arrange
+            var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
+            var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
+            var config = GetHttpConfig();
+            var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+            var restRequester = new Mock<IRestRequester>();
+            MockByteResponseForGet(restRequester, DigiCertCrlUrl1, crlBytes);
+            MockByteResponseForGet(restRequester, DigiCertCrlUrl2, crlBytes);
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls);
+
+            // assert
+            Assert.AreEqual(CertRevocationCheckResult.CertUnrevoked, result);
+        }
+
+        [Test]
+        public void TestVerifyCertificateAsErrorWhenCouldNotDownloadCrl()
+        {
+            // arrange
+            var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
+            var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
+            var config = GetHttpConfig();
+            var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+            var restRequester = new Mock<IRestRequester>();
+            MockByteResponseForGet(restRequester, DigiCertCrlUrl1, crlBytes);
+            MockErrorResponseForGet(restRequester, DigiCertCrlUrl2, NotFoundHttpExceptionProvider);
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls);
+
+            // assert
+            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+        }
+
+        [Test]
+        public void TestVerifyCertificateAsErrorWhenOneOfCrlsIsNotParsable()
+        {
+            // arrange
+            var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
+            var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
+            var config = GetHttpConfig();
+            var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+            var notParsableCrlBytes = Encoding.ASCII.GetBytes("not parsable crl");
+            var restRequester = new Mock<IRestRequester>();
+            MockByteResponseForGet(restRequester, DigiCertCrlUrl1, crlBytes);
+            MockByteResponseForGet(restRequester, DigiCertCrlUrl1, notParsableCrlBytes);
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls);
+
+            // assert
+            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+        }
+
+        [Test]
+        [TestCase(30, "ChainError")]
+        [TestCase(3, "ChainUnrevoked")]
+        public void TestSkipShortLivedCertificate(int offsetDays, string expectedResultString)
+        {
+            // arrange
+            var expectedResult = (ChainRevocationCheckResult)Enum.Parse(typeof(ChainRevocationCheckResult), expectedResultString, true);
+            var certSubject = "CN=ShortLivedCert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+            var shortLivedCertificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(offsetDays), null, certKeys[0]);
+            var rootCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
+            var chain = CertificateGenerator.CreateChain(new[] { shortLivedCertificate, rootCertificate });
+            var config = GetHttpConfig();
+            var restRequester = new Mock<IRestRequester>();
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.CheckChainRevocation(chain);
+
+            // assert
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [Test]
+        [TestCase("2024-03-14 23:59:59Z", "2024-03-16 00:00:00Z", false)]
+        [TestCase("2024-03-15 00:00:00Z", "2024-03-25 00:00:00Z", true)]
+        [TestCase("2024-03-15 00:00:00Z", "2024-03-25 00:01:00Z", false)]
+        [TestCase("2026-03-15 00:00:00Z", "2026-03-22 00:00:00Z", true)]
+        [TestCase("2026-03-15 00:00:00Z", "2026-03-22 00:01:00Z", false)]
+        public void TestCheckIfCertificateIsShortLived(string notBeforeString, string notAfterString, bool expectedResult)
+        {
+            // arrange
+            var notBefore = DateTimeOffset.Parse(notBeforeString);
+            var notAfter = DateTimeOffset.Parse(notAfterString);
+            var certificate = CertificateGenerator.GenerateSelfSignedCertificate("other CA", notBefore, notAfter, null);
+            var config = GetHttpConfig();
+            var restRequester = new Mock<IRestRequester>();
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var isShortLived = verifier.IsShortLived(certificate);
+
+            // assert
+            Assert.AreEqual(expectedResult, isShortLived);
+        }
+
+        [Test]
+        [TestCase("CN=other CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland", true)]
+        [TestCase("C=Poland, CN=other CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian", true)]
+        [TestCase("CN=different CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland", false)]
+        public void TestVerifyIfIssuerMatchesTheCertificateIssuer(string issuerName, bool expectedIsEquivalent)
+        {
+            // arrange
+            var certificate = CertificateGenerator.GenerateSelfSignedCertificate("other CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), new string[] { });
+            var config = GetHttpConfig();
+            var restRequester = new Mock<IRestRequester>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var crl = new Crl { IssuerName = issuerName };
+
+            // act
+            var isEquivalent = verifier.IsIssuerEquivalent(crl, certificate);
+
+            // assert
+            Assert.AreEqual(expectedIsEquivalent, isEquivalent);
+        }
+
+        private static HttpRequestException NotFoundHttpExceptionProvider() =>
+#if NETFRAMEWORK
+            new HttpRequestException("Response status code does not indicate success: 404 (Not Found).", null);
+#else
+            new HttpRequestException("Response status code does not indicate success: 404 (Not Found).", null, HttpStatusCode.NotFound);
+#endif
+
+        private static void MockByteResponseForGet(Mock<IRestRequester> restRequester, string url, byte[] bytes)
+        {
+            restRequester
+                .Setup(r => r.Get(
+                    It.Is<RestRequestWrapper>(wrapper => wrapper.ToRequestMessage(HttpMethod.Get).RequestUri.AbsoluteUri == url)))
+                .Returns(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new ByteArrayContent(bytes)
+                });
+        }
+
+        private static void MockErrorResponseForGet(Mock<IRestRequester> restRequester, string url, Func<Exception> exceptionProvider)
+        {
+            restRequester
+                .Setup(r => r.Get(
+                    It.Is<RestRequestWrapper>(wrapper =>
+                        wrapper.ToRequestMessage(HttpMethod.Get).RequestUri.AbsoluteUri == url)))
+                .Throws(exceptionProvider);
+        }
+
+        private HttpClientConfig GetHttpConfig() =>
+            new HttpClientConfig(
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                3,
+                true,
+                false,
+                CertRevocationCheckMode.Enabled.ToString(),
+                false,
+                false,
+                false);
+    }
+}

@@ -441,8 +441,9 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=http://okta.com/authorize;oauthTokenRequestUrl=https://okta.com/token-request", "Insecure OAUTHAUTHORIZATIONURL property value. It does not start with 'https://'")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize;oauthTokenRequestUrl=http://okta.com/token-request", "Insecure OAUTHTOKENREQUESTURL property value. It does not start with 'https://'")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;scheme=http", "Insecure SCHEME property value. Http protocol is not secure.")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthTokenRequestUrl=https://okta.com/token-request;scheme=http", "Insecure SCHEME property value. Http protocol is not secure.")]
         [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthTokenRequestUrl=http://okta.com/token-request;", "Insecure OAUTHTOKENREQUESTURL property value. It does not start with 'https://'")]
-        public void TestWarningOnHttpCommunicationWithIdentityProvider(string connectionString, string expectedWarning)
+        public void TestWarningOnHttpCommunicationWithIdentityProviderAndSnowflakeServer(string connectionString, string expectedWarning)
         {
             // arrange
             var logger = new Mock<SFLogger>();
@@ -560,8 +561,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [TestCase("authenticator=workload_identity;account=test;wifProvider=abc;", "Connection string is invalid: Unknown value of wifProvider parameter.")]
-        [TestCase("authenticator=workload_identity;account=test;wifProvider=OIDC;", "Required property TOKEN is not provided.")]
+        [TestCase("authenticator=workload_identity;account=test;workload_identity_provider=abc;", "Connection string is invalid: Unknown value of workload_identity_provider parameter.")]
+        [TestCase("authenticator=workload_identity;account=test;workload_identity_provider=OIDC;", "Required property TOKEN is not provided.")]
         public void TestFailOnWrongWifConfiguration(string connectionString, string expectedErrorMessage)
         {
             // act
