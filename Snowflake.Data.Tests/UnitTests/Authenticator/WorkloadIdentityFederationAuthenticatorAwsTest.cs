@@ -7,7 +7,6 @@ using Amazon.Runtime;
 using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
@@ -16,7 +15,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     public class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private const string AwsRegion = "eu-west-1";
@@ -59,25 +58,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         [Test]
-        public void TestFailWhenAuthenticationDisabled()
-        {
-            // arrange
-            var session = PrepareSessionForAws(SetupExperimentalAuthenticationDisabled);
-
-            // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
-
-            // assert
-            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.EXPERIMENTAL_AUTHENTICATION_DISABLED);
-            Assert.That(thrown.Message, Does.Contain("Experimental authentication of 'workload_identity' is disabled. You can enable it by SF_ENABLE_EXPERIMENTAL_AUTHENTICATION environmental variable."));
-        }
-
-        [Test]
         public void TestSuccessfulAwsAuthorization()
         {
             // arrange
             SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, s_awsRequestBase64);
-            var session = PrepareSessionForAws(SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForAws(NoEnvironmentSetup);
 
             // act
             session.Open();
@@ -91,7 +76,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, s_awsRequestBase64);
-            var session = PrepareSessionForAws(SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForAws(NoEnvironmentSetup);
 
             // act
             await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -104,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestSuccessfulAwsAttestation()
         {
             // arrange
-            var session = PrepareSessionForAws(SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForAws(NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act

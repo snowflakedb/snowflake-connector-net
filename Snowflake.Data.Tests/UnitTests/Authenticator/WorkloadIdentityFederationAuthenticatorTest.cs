@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Moq;
 using NUnit.Framework;
-using Snowflake.Data.Configuration;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
@@ -31,31 +31,47 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Action<Mock<TimeProvider>> timeProviderConfigurator,
             Action<Mock<AwsSdkWrapper>> awsSdkConfigurator)
         {
-            var wifProviderPart = attestationProvider == null ? string.Empty : $"wifProvider={attestationProvider.ToString()};";
+            var wifProviderPart = attestationProvider == null ? string.Empty : $"workload_identity_provider={attestationProvider.ToString()};";
             var connectionString = $"authenticator=workload_identity;account=testaccount;{wifProviderPart}{connectionStringSuffix ?? string.Empty};host=localhost;port={WiremockRunner.DefaultHttpPort};scheme=http;";
             var sessionContext = new SessionPropertiesContext();
             var session = new SFSession(connectionString, sessionContext);
             var environmentOperations = new Mock<EnvironmentOperations>();
             environmentOperationsConfigurator(environmentOperations);
-            var featureFlags = new ClientFeatureFlags(environmentOperations.Object);
             var timeProvider = new Mock<TimeProvider>();
             timeProviderConfigurator(timeProvider);
             var awsSdkWrapper = new Mock<AwsSdkWrapper>();
             awsSdkConfigurator(awsSdkWrapper);
-            var authenticator = new WorkloadIdentityFederationAuthenticator(session, featureFlags, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, s_wiremockUrl);
+            var authenticator = new WorkloadIdentityFederationAuthenticator(session, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, s_wiremockUrl);
             session.ReplaceAuthenticator(authenticator);
             return session;
         }
 
-        internal void SetupExperimentalAuthenticationEnabled(Mock<EnvironmentOperations> environmentOperations) =>
-            environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName))
-                .Returns("true");
+        [Test]
+        public void TestFailsAuthorizationWhenProviderIsNotGiven()
+        {
+            // arrange/act
+            var exception = Assert.Throws<SnowflakeDbException>(() => PrepareSession(null, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled));
 
-        internal void SetupExperimentalAuthenticationDisabled(Mock<EnvironmentOperations> environmentOperations) =>
-            environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName))
-                .Returns("");
+            // assert
+            Assert.That(exception?.Message, Does.Contain("Required property WORKLOAD_IDENTITY_PROVIDER is not provided"));
+        }
+
+        [Test]
+        public void TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
+        {
+            // arrange: throws exception with "Not available" message
+            var session = PrepareSession(AttestationProvider.AWS, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled);
+
+            // act
+            var exception = Assert.Throws<SnowflakeDbException>(() => session.Open());
+
+            // assert
+            Assert.That(exception?.Message, Does.Contain("Retrieving attestation for AWS failed. Not available"));
+        }
+
+        internal void NoEnvironmentSetup(Mock<EnvironmentOperations> environmentOperations)
+        {
+        }
 
         internal void SetupSystemTime(Mock<TimeProvider> timeProvider) =>
             timeProvider

@@ -9,9 +9,18 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
+    [TestFixture(ResultFormat.ARROW)]
+    [TestFixture(ResultFormat.JSON)]
     [TestFixture]
     class SFMultiStatementsIT : SFBaseTest
     {
+        private readonly ResultFormat _resultFormat;
+
+        public SFMultiStatementsIT(ResultFormat resultFormat)
+        {
+            _resultFormat = resultFormat;
+        }
+
         [Test]
         public void TestSelectWithoutBinding()
         {
@@ -21,7 +30,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 IDbCommand cmd = conn.CreateCommand();
                 var param = cmd.CreateParameter();
@@ -88,7 +97,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 DbCommand cmd = conn.CreateCommand();
                 var param = cmd.CreateParameter();
@@ -130,7 +139,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 IDbCommand cmd = conn.CreateCommand();
                 // Set statement count
@@ -183,8 +192,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -289,7 +297,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -358,7 +366,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -459,7 +467,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -547,7 +555,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {

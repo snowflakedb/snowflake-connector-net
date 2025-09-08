@@ -38,28 +38,24 @@ For Windows, the exact same tools are also available, but possibly you'll need t
    Again, this is just merely an example using shell scripting and `openssl`.
 ```shell
 export hostname="myaccount.eu-central-1.snowflakecomputing.com"
-echo | openssl s_client -showcerts -connect "$hostname":443 -servername "$hostname" 2>/dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in cert*.pem; do echo "--> $cert"; openssl x509 -text -in $cert | grep -A4 "X509v3 CRL Distribution Points" ; echo; done
+echo | openssl s_client -showcerts -connect "$hostname":443 -servername "$hostname" 2>/dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in cert*.pem; do echo "--> $cert"; openssl x509 -text -in $cert | awk '/X509v3 CRL Distribution Points/ {print; p=1} /Full Name:/ && p {print; getline; print}' ; echo; done
 ```
 
 Example output:
 ```shell
 --> cert1.pem
             X509v3 CRL Distribution Points:
-
                 Full Name:
                   URI:http://www.microsoft.com/pkiops/crl/Microsoft%20Azure%20RSA%20TLS%20Issuing%20CA%2007.crl
 
-
 --> cert2.pem
             X509v3 CRL Distribution Points:
-
                 Full Name:
                   URI:http://crl3.digicert.com/DigiCertGlobalRootG2.crl
 
 
 --> cert3.pem
             X509v3 CRL Distribution Points:
-
                 Full Name:
                   URI:http://crl.pki.goog/gsr1/gsr1.crl
 ```
