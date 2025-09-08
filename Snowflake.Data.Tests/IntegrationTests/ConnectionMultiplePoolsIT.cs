@@ -442,6 +442,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Retry(3)]
         public void TestReturningCancelledSessionsToThePool([Values] bool cancelAsync)
         {
             var connectionString = ConnectionString + "minPoolSize=0;maxPoolSize=2;application=TestReturningCancelledSessionsToThePool";

@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             AddGcpWiremockMapping(JWTGCPToken);
             SetupSnowflakeAuthentication(_runner, AttestationProvider.GCP, JWTGCPToken);
-            var session = PrepareSessionForGcp("", SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForGcp("", NoEnvironmentSetup);
 
             // act
             session.Open();
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             AddGcpWiremockMapping(JWTGCPToken);
             SetupSnowflakeAuthentication(_runner, AttestationProvider.GCP, JWTGCPToken);
-            var session = PrepareSessionForGcp("", SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForGcp("", NoEnvironmentSetup);
 
             // act
             await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             AddGcpWiremockMapping(JWTGCPToken);
-            var session = PrepareSessionForGcp("", SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForGcp("", NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
             // act
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             AddGcpWiremockMapping(token);
-            var session = PrepareSessionForGcp("", SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForGcp("", NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
             // act
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             _runner.AddMappings(s_wifGcpHttpErrorMappingPath);
-            var session = PrepareSessionForGcp("", SetupExperimentalAuthenticationEnabled);
+            var session = PrepareSessionForGcp("", NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
             // act
