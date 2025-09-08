@@ -5,7 +5,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Security;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Log;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
@@ -105,6 +108,7 @@ namespace Snowflake.Data.Core.Revocation
                 if (isRoot)
                     continue;
                 var certificate = chainElement.Certificate;
+                var parentCertificate = chain.ChainElements[index].Certificate;
                 if (IsShortLived(certificate))
                 {
                     s_logger.Debug($"Skipping certificate revocation check for a short-lived certificate: {certificate.Subject} on position: {index} in chain: '{chainSubjects}'");
@@ -125,7 +129,7 @@ namespace Snowflake.Data.Core.Revocation
                 }
                 var joinedCrlUrls = string.Join(", ", crlUrls);
                 s_logger.Debug($"Certificate '{certificate.Subject}' on position: {index} in chain: '{chainSubjects}' has following CRL Distribution Point URLs: {joinedCrlUrls}");
-                var certStatus = CheckCertRevocation(certificate, crlUrls);
+                var certStatus = CheckCertRevocation(certificate, crlUrls, parentCertificate);
                 if (certStatus == CertRevocationCheckResult.CertRevoked)
                 {
                     chainResult = ChainRevocationCheckResult.ChainRevoked;
@@ -164,12 +168,12 @@ namespace Snowflake.Data.Core.Revocation
             return values.Any(v => !string.IsNullOrEmpty(v));
         }
 
-        internal CertRevocationCheckResult CheckCertRevocation(X509Certificate2 certificate, string[] crlUrls)
+        internal CertRevocationCheckResult CheckCertRevocation(X509Certificate2 certificate, string[] crlUrls, X509Certificate2 parentCertificate)
         {
             var results = new HashSet<CertRevocationCheckResult>();
             foreach (var crlUrl in crlUrls)
             {
-                var result = CheckCertRevocationForOneCrlUrl(certificate, crlUrl);
+                var result = CheckCertRevocationForOneCrlUrl(certificate, crlUrl, parentCertificate);
                 if (result == CertRevocationCheckResult.CertRevoked)
                 {
                     s_logger.Debug($"Certificate revocation status for certificate '{certificate.Subject}' is {CertRevocationCheckResult.CertRevoked.ToString()} because for one of its CRL urls the status was {CertRevocationCheckResult.CertRevoked.ToString()}");
@@ -187,7 +191,7 @@ namespace Snowflake.Data.Core.Revocation
             return CertRevocationCheckResult.CertUnrevoked;
         }
 
-        private CertRevocationCheckResult CheckCertRevocationForOneCrlUrl(X509Certificate2 certificate, string crlUrl)
+        private CertRevocationCheckResult CheckCertRevocationForOneCrlUrl(X509Certificate2 certificate, string crlUrl, X509Certificate2 parentCertificate)
         {
             s_logger.Debug($"Checking certificate revocation for certificate: '{certificate.Subject}' with CRL url: '{crlUrl}'");
             Crl crl = null;
@@ -223,7 +227,7 @@ namespace Snowflake.Data.Core.Revocation
                 {
                     crl = cachedCrl;
                 }
-                if (!IsCrlSignatureAndIssuerValid(crl, certificate, crlUrl))
+                if (!IsCrlSignatureAndIssuerValid(crl, certificate, crlUrl, parentCertificate))
                 {
                     s_logger.Error($"Unable to verify CRL: '{crlUrl}' for certificate: '{certificate.Subject}' because of CRL and certificate details mismatch. Certificate revocation status is: {CertRevocationCheckResult.CertError.ToString()}");
                     return CertRevocationCheckResult.CertError;
@@ -242,9 +246,46 @@ namespace Snowflake.Data.Core.Revocation
             return CertRevocationCheckResult.CertUnrevoked;
         }
 
-        private bool IsCrlSignatureAndIssuerValid(Crl crl, X509Certificate2 certificate, string crlUrl) =>
-            // TODO: signature verification will be done later
-            IsIssuerEquivalent(crl, certificate) && IsIssuerDistributionPointValid(crl, crlUrl);
+        private bool IsCrlSignatureAndIssuerValid(Crl crl, X509Certificate2 certificate, string crlUrl, X509Certificate2 parentCertificate) =>
+            IsCrlSignatureValid(crl, parentCertificate) && IsIssuerEquivalent(crl, certificate) && IsIssuerDistributionPointValid(crl, crlUrl);
+
+        private bool IsCrlSignatureValid(Crl crl, X509Certificate2 parentCertificate)
+        {
+            try
+            {
+                var subjectPublicKey = ExtractSubjectPublicKeyInfo(parentCertificate);
+                if (subjectPublicKey == null)
+                    return false;
+                crl.VerifySignature(subjectPublicKey);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                s_logger.Error($"Checking if CRL is issued by '{crl.IssuerName}' failed: {exception.Message}", exception);
+                return false;
+            }
+        }
+
+        private AsymmetricKeyParameter ExtractSubjectPublicKeyInfo(X509Certificate2 certificate)
+        {
+            // 1. the simplest way would be just to use parentCertificate.PublicKey.ExportSubjectPublicKeyInfo(); but it is not available for .netstandard 2.0
+            // 2. another way would be to convert the certificate to Bouncy Castle type:
+            // var bouncyCert = DotNetUtilities.FromX509Certificate(certificate);
+            // var subjectPublicKeyInfo = bouncyCert.SubjectPublicKeyInfo;
+            // return PublicKeyFactory.CreateKey(subjectPublicKeyInfo);
+            // 3. following solution seems to be more efficient:
+            try
+            {
+                var algorithmId = new AlgorithmIdentifier(new DerObjectIdentifier(certificate.GetKeyAlgorithm()));
+                var subjectPublicKeyInfo = new SubjectPublicKeyInfo(algorithmId, certificate.GetPublicKey());
+                return PublicKeyFactory.CreateKey(subjectPublicKeyInfo);
+            }
+            catch (Exception exception)
+            {
+                s_logger.Error($"Checking if CRL is signed failed because could not extract the public key from the parent certificate: {exception.Message}", exception);
+                return null;
+            }
+        }
 
         private bool IsIssuerDistributionPointValid(Crl crl, string crlUrl)
         {

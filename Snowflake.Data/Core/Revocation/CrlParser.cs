@@ -43,7 +43,8 @@ namespace Snowflake.Data.Core.Revocation
                 IssuerName = parsedCrl.IssuerDN.ToString(),
                 IssuerDistributionPoints = ReadIdpFromCrl(parsedCrl),
                 RevokedCertificates = parsedCrl.GetRevokedCertificates().Select(cert => ConvertToHexadecimalString(cert.SerialNumber)).ToList(),
-                CrlCacheValidityTime = _crlCacheValidityTime
+                CrlCacheValidityTime = _crlCacheValidityTime,
+                BouncyCastleCrl = parsedCrl
             };
             return crl;
         }

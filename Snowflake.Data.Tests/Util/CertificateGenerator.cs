@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.Util
     {
         public static X509Certificate2 LoadFromFile(string filePath) => new(filePath);
 
-        public static X509Certificate2 GenerateSelfSignedCertificate(
+        public static X509Certificate2 GenerateSelfSignedCertificateWithDefaultSubject(
             string cn,
             DateTimeOffset notBefore,
             DateTimeOffset notAfter,
@@ -25,6 +25,16 @@ namespace Snowflake.Data.Tests.Util
             int keySize = 2048)
         {
             var subjectName = $"CN={cn}, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            return GenerateSelfSignedCertificate(subjectName, notBefore, notAfter, crlUrls, keySize);
+        }
+
+        public static X509Certificate2 GenerateSelfSignedCertificate(
+            string subjectName,
+            DateTimeOffset notBefore,
+            DateTimeOffset notAfter,
+            string[] crlUrls,
+            int keySize = 2048)
+        {
             var keyPair = GenerateRsaKeyPair(keySize);
             return GenerateCertificate(subjectName, subjectName, notBefore, notAfter, crlUrls, keyPair, true);
         }

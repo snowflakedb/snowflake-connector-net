@@ -23,6 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             // arrange
             var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
             var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
+            var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
             var config = GetHttpConfig();
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
             var restRequester = new Mock<IRestRequester>();
@@ -33,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
-            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls);
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
             Assert.AreEqual(CertRevocationCheckResult.CertUnrevoked, result);
@@ -45,6 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             // arrange
             var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
             var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
+            var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
             var config = GetHttpConfig();
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
             var restRequester = new Mock<IRestRequester>();
@@ -55,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
-            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls);
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
             Assert.AreEqual(CertRevocationCheckResult.CertError, result);
@@ -67,6 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             // arrange
             var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
             var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
+            var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
             var config = GetHttpConfig();
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
             var notParsableCrlBytes = Encoding.ASCII.GetBytes("not parsable crl");
@@ -78,7 +81,30 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
-            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls);
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
+
+            // assert
+            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+        }
+
+        [Test]
+        public void TestFailWhenCrlSignatureNotMatchingParentKey()
+        {
+            // arrange
+            var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
+            var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
+            var parentCertificate = CertificateGenerator.GenerateSelfSignedCertificate(DigiCertIssuer, DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), null);
+            var config = GetHttpConfig();
+            var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+            var restRequester = new Mock<IRestRequester>();
+            MockByteResponseForGet(restRequester, DigiCertCrlUrl1, crlBytes);
+            MockByteResponseForGet(restRequester, DigiCertCrlUrl2, crlBytes);
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
             Assert.AreEqual(CertRevocationCheckResult.CertError, result);
@@ -121,7 +147,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             // arrange
             var notBefore = DateTimeOffset.Parse(notBeforeString);
             var notAfter = DateTimeOffset.Parse(notAfterString);
-            var certificate = CertificateGenerator.GenerateSelfSignedCertificate("other CA", notBefore, notAfter, null);
+            var certificate = CertificateGenerator.GenerateSelfSignedCertificateWithDefaultSubject("other CA", notBefore, notAfter, null);
             var config = GetHttpConfig();
             var restRequester = new Mock<IRestRequester>();
             var environmentOperation = new Mock<EnvironmentOperations>();
@@ -142,7 +168,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestVerifyIfIssuerMatchesTheCertificateIssuer(string issuerName, bool expectedIsEquivalent)
         {
             // arrange
-            var certificate = CertificateGenerator.GenerateSelfSignedCertificate("other CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), new string[] { });
+            var certificate = CertificateGenerator.GenerateSelfSignedCertificateWithDefaultSubject("other CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), new string[] { });
             var config = GetHttpConfig();
             var restRequester = new Mock<IRestRequester>();
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
