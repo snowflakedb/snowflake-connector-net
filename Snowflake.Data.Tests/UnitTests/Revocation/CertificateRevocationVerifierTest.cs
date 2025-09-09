@@ -10,6 +10,7 @@ using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
+using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
@@ -29,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             MockByteResponseForGet(restRequester, DigiCertCrlUrl2, crlBytes);
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
-            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls);
@@ -51,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             MockErrorResponseForGet(restRequester, DigiCertCrlUrl2, NotFoundHttpExceptionProvider);
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
-            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls);
@@ -74,7 +75,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             MockByteResponseForGet(restRequester, DigiCertCrlUrl1, notParsableCrlBytes);
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
-            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls);
@@ -100,7 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var restRequester = new Mock<IRestRequester>();
             var environmentOperation = new Mock<EnvironmentOperations>();
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
-            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
             var result = verifier.CheckChainRevocation(chain);
@@ -125,7 +126,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var restRequester = new Mock<IRestRequester>();
             var environmentOperation = new Mock<EnvironmentOperations>();
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
-            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
             var isShortLived = verifier.IsShortLived(certificate);
@@ -146,7 +147,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var restRequester = new Mock<IRestRequester>();
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
-            var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
             var crl = new Crl { IssuerName = issuerName };
 
             // act
