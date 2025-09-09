@@ -84,7 +84,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         reader = (SnowflakeDbDataReader)command.ExecuteReader();
                         Assert.IsTrue(reader.Read());
-                        var mapStringFromArrowResult = reader.GetString(0).Trim();
+                        var mapStringFromArrowResult = reader.GetString(0);
 
                         Console.WriteLine("mapStringFromArrowResult");
                         Console.WriteLine(mapStringFromArrowResult);
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         EnableStructuredTypes(connection, ResultFormat.JSON);
                         reader = (SnowflakeDbDataReader)command.ExecuteReader();
                         Assert.IsTrue(reader.Read());
-                        var mapStringFromJsonResult = reader.GetString(0).Trim();
+                        var mapStringFromJsonResult = reader.GetString(0);
 
                         Console.WriteLine("mapStringFromJsonResult");
                         Console.WriteLine(mapStringFromJsonResult);
