@@ -110,6 +110,16 @@ namespace Snowflake.Data.Tests.Util
         }
 
         public static X509Crl GenerateCrl(
+            string caName,
+            DateTime thisUpdateUtc,
+            DateTime nextUpdateUtc,
+            DateTime revocationTimeUtc)
+        {
+            var keys = GenerateRsaKeyPair(2048);
+            return GenerateCrl(SHA256WithRsaAlgorithm, keys.Private, caName, thisUpdateUtc, nextUpdateUtc, revocationTimeUtc);
+        }
+
+        public static X509Crl GenerateCrl(
             string signatureAlgorithm,
             AsymmetricKeyParameter caPrivateKey,
             string caName,
