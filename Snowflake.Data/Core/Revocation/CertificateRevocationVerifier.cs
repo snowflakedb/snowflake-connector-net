@@ -7,8 +7,8 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using Org.BouncyCastle.Asn1.X509;
 using Snowflake.Data.Core.Rest;
-using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
+using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
 namespace Snowflake.Data.Core.Revocation
 {
