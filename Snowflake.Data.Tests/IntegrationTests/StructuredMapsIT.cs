@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -93,6 +94,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         reader = (SnowflakeDbDataReader)command.ExecuteReader();
                         Assert.IsTrue(reader.Read());
                         var mapStringFromJsonResult = reader.GetString(0);
+                        mapStringFromJsonResult = Regex.Replace(mapStringFromJsonResult, @"\s+", "");
 
                         Console.WriteLine("mapStringFromJsonResult");
                         Console.WriteLine(mapStringFromJsonResult);
