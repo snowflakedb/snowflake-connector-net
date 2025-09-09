@@ -13,7 +13,7 @@ namespace Snowflake.Data.Core.Authenticator
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthFlowAuthenticator>();
 
-        internal SecureString AccessToken { get; private set; } = null;
+        internal SecureString AccessToken { get; set; } = null;
 
         protected OAuthFlowAuthenticator(SFSession session, string authName) : base(session, authName)
         {
@@ -99,7 +99,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            data.OAuthType = GetAuthenticatorName();
+            data.clientEnv.oauthType = GetAuthenticatorName();
             data.Token = (AccessToken == null ? null : SecureStringHelper.Decode(AccessToken));
             if (string.IsNullOrEmpty(data.Token))
             {
@@ -239,6 +239,7 @@ namespace Snowflake.Data.Core.Authenticator
             }
             return value;
         }
+
         protected string ExtractPropertyOrEmptyString(SFSessionProperty property) => ExtractPropertyOrDefault(property, string.Empty);
 
         private string ExtractPropertyOrDefault(SFSessionProperty property, string defaultValue)

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core
@@ -126,6 +127,12 @@ namespace Snowflake.Data.Core
         OAUTHTOKENREQUESTURL,
         [SFSessionPropertyAttr(required = false, defaultValue = "true", defaultNonWindowsValue = "false")]
         CLIENT_STORE_TEMPORARY_CREDENTIAL,
+        [SFSessionPropertyAttr(required = false)]
+        WORKLOAD_IDENTITY_PROVIDER,
+        [SFSessionPropertyAttr(required = false)]
+        WORKLOAD_IDENTITY_ENTRA_RESOURCE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        OAUTHENABLESINGLEUSEREFRESHTOKENS,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -275,6 +282,7 @@ namespace Snowflake.Data.Core
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
+            WarnIfHttpUsed(properties);
             ValidateAuthenticatorFlowsProperties(properties);
 
             var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
@@ -365,6 +373,7 @@ namespace Snowflake.Data.Core
                 }
                 ValidateEitherScopeOrRoleDefined(properties);
                 ValidatePoolingEnabledOnlyWithUser(properties);
+                ValidateEnableSingleUseRefreshToken(properties);
             }
             else if (OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator(authenticator))
             {
@@ -375,6 +384,42 @@ namespace Snowflake.Data.Core
                 ValidateOAuthExternalTokenUrl(properties);
             }
             else if (ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator(authenticator))
+            {
+                CheckRequiredProperty(SFSessionProperty.TOKEN, properties);
+            }
+            else if (WorkloadIdentityFederationAuthenticator.IsWorkloadIdentityAuthenticator(authenticator))
+            {
+                var attestationProvider = ValidateWifProvider(properties);
+                ValidateAttestationParameters(attestationProvider, properties);
+            }
+        }
+
+        private static void ValidateEnableSingleUseRefreshToken(SFSessionProperties properties)
+        {
+            CheckRequiredProperty(SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS, properties);
+            var enableSingleUserRefreshTokens = properties[SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS];
+            if (!bool.TryParse(enableSingleUserRefreshTokens, out _))
+            {
+                SnowflakeDbException exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS.ToString()} value should be parsable as boolean.");
+                logger.Error(exception.Message);
+                throw exception;
+            }
+        }
+
+        private static AttestationProvider ValidateWifProvider(SFSessionProperties properties)
+        {
+            CheckRequiredProperty(SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER, properties);
+            var provider = properties[SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER];
+            if (!Enum.TryParse(provider, true, out AttestationProvider attestationProvider))
+            {
+                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, "Unknown value of workload_identity_provider parameter.");
+            }
+            return attestationProvider;
+        }
+
+        private static void ValidateAttestationParameters(AttestationProvider? attestationProvider, SFSessionProperties properties)
+        {
+            if (attestationProvider == AttestationProvider.OIDC)
             {
                 CheckRequiredProperty(SFSessionProperty.TOKEN, properties);
             }
@@ -432,7 +477,6 @@ namespace Snowflake.Data.Core
             }
             if (bothEmpty)
             {
-                WarnIfHttpUsed(properties);
                 return true;
             }
             var externalAuthorizationUrlHost = GetHost(externalAuthorizationUrl);
@@ -508,7 +552,8 @@ namespace Snowflake.Data.Core
                 MFACacheAuthenticator.IsMfaCacheAuthenticator,
                 OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
                 OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
-                ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
+                ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator,
+                WorkloadIdentityFederationAuthenticator.IsWorkloadIdentityAuthenticator
             };
 
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
@@ -733,7 +778,8 @@ namespace Snowflake.Data.Core
                     OAuthAuthenticator.IsOAuthAuthenticator,
                     OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
                     OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
-                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
+                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator,
+                    WorkloadIdentityFederationAuthenticator.IsWorkloadIdentityAuthenticator
                 };
                 // External browser, jwt and oauth don't require a password for authenticating
                 return !authenticatorDefined || !authenticatorsWithoutPassword.Any(func => func(authenticator));
@@ -749,7 +795,8 @@ namespace Snowflake.Data.Core
                     ExternalBrowserAuthenticator.IsExternalBrowserAuthenticator,
                     OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
                     OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
-                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
+                    ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator,
+                    WorkloadIdentityFederationAuthenticator.IsWorkloadIdentityAuthenticator
                 };
                 return !authenticatorDefined || !authenticatorsWithoutUsername.Any(func => func(authenticator));
             }

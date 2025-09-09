@@ -296,25 +296,23 @@ namespace Snowflake.Data.Core
         internal virtual void Open()
         {
             logger.Debug("Open Session");
-
-            if (authenticator == null)
-            {
-                authenticator = AuthenticatorFactory.GetAuthenticator(this);
-            }
-
+            InitialiseAuthenticator();
             authenticator.Authenticate();
         }
 
         internal virtual async Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Session Async");
+            InitialiseAuthenticator();
+            await authenticator.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
+        }
 
+        internal void InitialiseAuthenticator()
+        {
             if (authenticator == null)
             {
                 authenticator = AuthenticatorFactory.GetAuthenticator(this);
             }
-
-            await authenticator.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
         }
 
         internal void close()

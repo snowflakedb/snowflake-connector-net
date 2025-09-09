@@ -77,8 +77,18 @@ You can close this window now and go back where you started from.
                 ClientId = authorizationCodeRequest.ClientId,
                 ClientSecret = RequiredProperty(SFSessionProperty.OAUTHCLIENTSECRET),
                 CodeVerifier = authorizationData.Verifier.Value,
-                RedirectUri = authorizationCodeRequest.RedirectUri
+                RedirectUri = authorizationCodeRequest.RedirectUri,
+                EnableSingleUseRefreshTokens = GetEnableSingleUseRefreshTokens()
             };
+        }
+
+        private string GetEnableSingleUseRefreshTokens()
+        {
+            var enableSingleUseRefreshTokensString = ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS);
+            if (string.IsNullOrEmpty(enableSingleUseRefreshTokensString))
+                return null;
+            var enableSingleUseRefreshTokens = bool.Parse(enableSingleUseRefreshTokensString);
+            return enableSingleUseRefreshTokens ? "true" : null;
         }
 
         protected override BaseOAuthAccessTokenRequest GetRenewAccessTokenRequest(SnowflakeDbException exception, OAuthCacheKeys cacheKeys)
@@ -230,10 +240,11 @@ You can close this window now and go back where you started from.
             {
                 numberOfAttemptsLeft--;
                 var port = _listenerStarter.GetRandomUnusedPort();
-                redirectUri = $"http://{DefaultRedirectUriHost}:{port}/";
+                redirectUri = $"http://{DefaultRedirectUriHost}:{port}";
+                var redirectUriWithSlash = $"{redirectUri}/";
                 try
                 {
-                    listener = _listenerStarter.StartHttpListener(redirectUri);
+                    listener = _listenerStarter.StartHttpListener(redirectUriWithSlash);
                 }
                 catch (HttpListenerException)
                 {
