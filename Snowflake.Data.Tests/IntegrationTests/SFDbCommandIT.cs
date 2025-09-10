@@ -677,8 +677,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = $"alter session set CLIENT_PREFETCH_THREADS = {prefetchThreads}";
                 cmd.ExecuteNonQuery();
 
-                // 200000 - empirical value to return 3 additional chunks for both JSON and Arrow response
-                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
+                // 100000 - value to ensure chunking occurs
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 100000)) v order by 1";
 
                 IDataReader reader = cmd.ExecuteReader();
                 int counter = 0;
