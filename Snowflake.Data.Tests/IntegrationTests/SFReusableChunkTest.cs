@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestParseJson()
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
-            
+
             try
             {
                 ChunkParserFactory.Instance = new TestChunkParserFactory(1);
@@ -122,7 +122,6 @@ select parse_json('{{
             }
             finally
             {
-                // Always restore original factory, even if test fails
                 ChunkParserFactory.Instance = previous;
             }
         }
@@ -132,7 +131,7 @@ select parse_json('{{
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             TestChunkParserFactory testFactory = new TestChunkParserFactory(6); // lower than default retry of 7
-            
+
             try
             {
                 ChunkParserFactory.Instance = testFactory;
@@ -174,7 +173,7 @@ select parse_json('{{
                     Assert.AreEqual(largeTableRowCount, rowCount);
 
                     // Verify that retries actually occurred
-                    Assert.IsTrue(testFactory.ExceptionsThrown > 6, 
+                    Assert.IsTrue(testFactory.ExceptionsThrown > 6,
                         $"Expected retry mechanism to trigger, but only {testFactory.ExceptionsThrown} parser calls were made");
 
                     SessionParameterAlterer.RestoreResultFormat(conn);
@@ -183,7 +182,6 @@ select parse_json('{{
             }
             finally
             {
-                // Always restore original factory, even if test fails
                 ChunkParserFactory.Instance = previous;
             }
         }
@@ -192,7 +190,7 @@ select parse_json('{{
         public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
-            
+
             try
             {
                 ChunkParserFactory.Instance = new TestChunkParserFactory(8); // larger than default max retry of 7
@@ -240,7 +238,6 @@ select parse_json('{{
             }
             finally
             {
-                // Always restore original factory, even if test fails
                 ChunkParserFactory.Instance = previous;
             }
         }

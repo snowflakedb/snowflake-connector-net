@@ -26,7 +26,6 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             try
             {
-                // Set configuration settings
                 SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
 
                 // Get parser using sample stream with proper disposal
@@ -50,7 +49,6 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             finally
             {
-                // Ensure configuration is always restored, even if test fails
                 SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault;
             }
         }
