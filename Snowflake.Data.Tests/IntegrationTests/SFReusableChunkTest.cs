@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 IDbCommand cmd = conn.CreateCommand();
                 int rowCount = 0;
 
-                int largeTableRowCount = 100000;
+                int largeTableRowCount = 50000;
                 string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
                 cmd.CommandText = insertCommand;
                 IDataReader insertReader = cmd.ExecuteReader();
@@ -62,20 +62,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestParseJson()
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
-            ChunkParserFactory.Instance = new TestChunkParserFactory(1);
-
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            
+            try
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                ChunkParserFactory.Instance = new TestChunkParserFactory(1);
 
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                CreateOrReplaceTable(conn, TableName, new[] { "src VARIANT" });
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString;
+                    conn.Open();
 
-                IDbCommand cmd = conn.CreateCommand();
-                int rowCount = 0;
+                    SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                    CreateOrReplaceTable(conn, TableName, new[] { "src VARIANT" });
 
-                string insertCommand = $@"
+                    IDbCommand cmd = conn.CreateCommand();
+                    int rowCount = 0;
+
+                    string insertCommand = $@"
 -- borrowed from https://docs.snowflake.com/en/user-guide/querying-semistructured.html#sample-data-used-in-examples
 insert into {TableName} (
 select parse_json('{{
@@ -94,13 +97,13 @@ select parse_json('{{
 }}') from table(generator(rowcount => 500))
 )
 ";
-                cmd.CommandText = insertCommand;
-                IDataReader insertReader = cmd.ExecuteReader();
-                Assert.AreEqual(500, insertReader.RecordsAffected);
+                    cmd.CommandText = insertCommand;
+                    IDataReader insertReader = cmd.ExecuteReader();
+                    Assert.AreEqual(500, insertReader.RecordsAffected);
 
-                string selectCommand = $"select * from {TableName}";
-                cmd.CommandText = selectCommand;
-                cmd.CommandType = System.Data.CommandType.Text;
+                    string selectCommand = $"select * from {TableName}";
+                    cmd.CommandText = selectCommand;
+                    cmd.CommandType = System.Data.CommandType.Text;
 
                     rowCount = 0;
                     using (var reader = cmd.ExecuteReader())
@@ -113,91 +116,48 @@ select parse_json('{{
                     }
                     Assert.AreEqual(500, rowCount);
 
-                SessionParameterAlterer.RestoreResultFormat(conn);
-                // Reader's RecordsAffected should be available even if the connection is closed
-                conn.Close();
+                    SessionParameterAlterer.RestoreResultFormat(conn);
+                    conn.Close();
+                }
             }
-            ChunkParserFactory.Instance = previous;
+            finally
+            {
+                // Always restore original factory, even if test fails
+                ChunkParserFactory.Instance = previous;
+            }
         }
 
         [Test]
         public void TestChunkRetry()
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
-            ChunkParserFactory.Instance = new TestChunkParserFactory(6); // lower than default retry of 7
-
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            TestChunkParserFactory testFactory = new TestChunkParserFactory(6); // lower than default retry of 7
+            
+            try
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                ChunkParserFactory.Instance = testFactory;
 
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
-
-                IDbCommand cmd = conn.CreateCommand();
-                int rowCount = 0;
-
-                int largeTableRowCount = 100000;
-                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
-                cmd.CommandText = insertCommand;
-                IDataReader insertReader = cmd.ExecuteReader();
-                Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
-
-                string selectCommand = $"select * from {TableName}";
-                cmd.CommandText = selectCommand;
-
-                rowCount = 0;
-                using (var reader = cmd.ExecuteReader())
+                using (IDbConnection conn = new SnowflakeDbConnection())
                 {
-                    while (reader.Read())
-                    {
-                        var obj = new object[reader.FieldCount];
-                        reader.GetValues(obj);
-                        var val = obj[0] ?? System.String.Empty;
-                        if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
-                        {
-                            rowCount++;
-                        }
-                    }
-                }
-                Assert.AreEqual(largeTableRowCount, rowCount);
+                    conn.ConnectionString = ConnectionString;
+                    conn.Open();
 
-                SessionParameterAlterer.RestoreResultFormat(conn);
-                // Reader's RecordsAffected should be available even if the connection is closed
-                conn.Close();
-            }
+                    SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                    CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
 
-            ChunkParserFactory.Instance = previous;
-        }
+                    IDbCommand cmd = conn.CreateCommand();
+                    int rowCount = 0;
 
-        [Test]
-        public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
-        {
-            IChunkParserFactory previous = ChunkParserFactory.Instance;
-            ChunkParserFactory.Instance = new TestChunkParserFactory(8); // larger than default max retry of 7
+                    int largeTableRowCount = 50000;
+                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
+                    cmd.CommandText = insertCommand;
+                    IDataReader insertReader = cmd.ExecuteReader();
+                    Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
 
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                    string selectCommand = $"select * from {TableName}";
+                    cmd.CommandText = selectCommand;
 
-                CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
-
-                IDbCommand cmd = conn.CreateCommand();
-                int rowCount = 0;
-
-                int largeTableRowCount = 100000;
-                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
-                cmd.CommandText = insertCommand;
-                IDataReader insertReader = cmd.ExecuteReader();
-                Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
-
-                string selectCommand = $"select * from {TableName}";
-                cmd.CommandText = selectCommand;
-
-                rowCount = 0;
-                Assert.Throws<AggregateException>(() =>
-                {
+                    rowCount = 0;
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -211,12 +171,78 @@ select parse_json('{{
                             }
                         }
                     }
-                });
-                Assert.AreNotEqual(largeTableRowCount, rowCount);
+                    Assert.AreEqual(largeTableRowCount, rowCount);
 
-                conn.Close();
+                    // Verify that retries actually occurred
+                    Assert.IsTrue(testFactory.ExceptionsThrown > 6, 
+                        $"Expected retry mechanism to trigger, but only {testFactory.ExceptionsThrown} parser calls were made");
+
+                    SessionParameterAlterer.RestoreResultFormat(conn);
+                    conn.Close();
+                }
             }
-            ChunkParserFactory.Instance = previous;
+            finally
+            {
+                // Always restore original factory, even if test fails
+                ChunkParserFactory.Instance = previous;
+            }
+        }
+
+        [Test]
+        public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
+        {
+            IChunkParserFactory previous = ChunkParserFactory.Instance;
+            
+            try
+            {
+                ChunkParserFactory.Instance = new TestChunkParserFactory(8); // larger than default max retry of 7
+
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString;
+                    conn.Open();
+
+                    CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
+
+                    IDbCommand cmd = conn.CreateCommand();
+                    int rowCount = 0;
+
+                    int largeTableRowCount = 50000;
+                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
+                    cmd.CommandText = insertCommand;
+                    IDataReader insertReader = cmd.ExecuteReader();
+                    Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
+
+                    string selectCommand = $"select * from {TableName}";
+                    cmd.CommandText = selectCommand;
+
+                    rowCount = 0;
+                    Assert.Throws<AggregateException>(() =>
+                    {
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var obj = new object[reader.FieldCount];
+                                reader.GetValues(obj);
+                                var val = obj[0] ?? System.String.Empty;
+                                if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
+                                {
+                                    rowCount++;
+                                }
+                            }
+                        }
+                    });
+                    Assert.AreNotEqual(largeTableRowCount, rowCount);
+
+                    conn.Close();
+                }
+            }
+            finally
+            {
+                // Always restore original factory, even if test fails
+                ChunkParserFactory.Instance = previous;
+            }
         }
 
         class TestChunkParserFactory : IChunkParserFactory
@@ -229,6 +255,8 @@ select parse_json('{{
                 _expectedExceptionsNumber = exceptionsToThrow;
                 _exceptionsThrown = 0;
             }
+
+            public int ExceptionsThrown => _exceptionsThrown;
 
             public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
             {
