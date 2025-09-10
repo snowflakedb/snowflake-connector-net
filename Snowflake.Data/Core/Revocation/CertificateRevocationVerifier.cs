@@ -276,7 +276,10 @@ namespace Snowflake.Data.Core.Revocation
             // 3. following solution seems to be more efficient:
             try
             {
-                var algorithmId = new AlgorithmIdentifier(new DerObjectIdentifier(certificate.GetKeyAlgorithm()));
+                var algorithmId = new AlgorithmIdentifier(
+                    new DerObjectIdentifier(certificate.GetKeyAlgorithm()),
+                    ExtractPublicKeyParameters(certificate)
+                );
                 var subjectPublicKeyInfo = new SubjectPublicKeyInfo(algorithmId, certificate.GetPublicKey());
                 return PublicKeyFactory.CreateKey(subjectPublicKeyInfo);
             }
@@ -285,6 +288,15 @@ namespace Snowflake.Data.Core.Revocation
                 s_logger.Error($"Checking if CRL is signed failed because could not extract the public key from the parent certificate: {exception.Message}", exception);
                 return null;
             }
+        }
+
+        private Asn1Encodable ExtractPublicKeyParameters(X509Certificate2 certificate)
+        {
+            var parameters = certificate.PublicKey.EncodedParameters;
+            if (parameters == null)
+                return null;
+            using var asnStream = new Asn1InputStream(parameters.RawData);
+            return asnStream.ReadObject();
         }
 
         private bool IsIssuerDistributionPointValid(Crl crl, string crlUrl)
