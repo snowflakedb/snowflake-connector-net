@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -78,6 +79,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.AreEqual(3, array.Length);
                     CollectionAssert.AreEqual(new[] { "a", "b", "c" }, array);
+
+                    if (_nativeArrow)
+                    {
+                        var arrowString = reader.GetString(0);
+                        EnableStructuredTypes(connection, ResultFormat.JSON);
+                        reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                        Assert.IsTrue(reader.Read());
+                        var jsonString = reader.GetString(0);
+
+                        Assert.IsTrue(JToken.DeepEquals(JObject.Parse(jsonString), JObject.Parse(arrowString)));
+                    }
                 }
             }
         }

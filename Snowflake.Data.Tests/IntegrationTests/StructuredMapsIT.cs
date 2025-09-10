@@ -83,22 +83,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     if (_nativeArrow)
                     {
-                        reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                        Assert.IsTrue(reader.Read());
-                        var mapStringFromArrowResult = reader.GetString(0);
-
-                        Console.WriteLine("mapStringFromArrowResult");
-                        Console.WriteLine(mapStringFromArrowResult);
-
+                        var arrowString = reader.GetString(0);
                         EnableStructuredTypes(connection, ResultFormat.JSON);
                         reader = (SnowflakeDbDataReader)command.ExecuteReader();
                         Assert.IsTrue(reader.Read());
-                        var mapStringFromJsonResult = reader.GetString(0);
+                        var jsonString = reader.GetString(0);
 
-                        Console.WriteLine("mapStringFromJsonResult");
-                        Console.WriteLine(mapStringFromJsonResult);
-
-                        Assert.IsTrue(JToken.DeepEquals(JObject.Parse(mapStringFromArrowResult), JObject.Parse(mapStringFromJsonResult)));
+                        Assert.IsTrue(JToken.DeepEquals(JObject.Parse(jsonString), JObject.Parse(arrowString)));
                     }
                 }
             }
