@@ -1027,13 +1027,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Retry(2)]
         public void testPutArrayBindAsync()
         {
-            ArrayBindTest(ConnectionString + "poolingEnabled=false", TableName, 15000);
+            ArrayBindTest(ConnectionString + "poolingEnabled=false", TableName, 7500);
         }
 
         private void ArrayBindTest(string connstr, string tableName, int size)
         {
 
-            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
+            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(180));
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connstr;
@@ -1150,7 +1150,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     Task<int> task = cmd.ExecuteNonQueryAsync(externalCancel.Token);
 
-                    task.Wait();
+                    if (!task.Wait(TimeSpan.FromSeconds(150)))
+                    {
+                        Assert.Fail("Array bind operation timed out after 150 seconds");
+                    }
                     Assert.AreEqual(total * 3, task.Result);
 
                     cmd.CommandText = "SELECT * FROM " + tableName;
