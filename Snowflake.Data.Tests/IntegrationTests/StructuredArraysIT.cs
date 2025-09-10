@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         Assert.IsTrue(reader.Read());
                         var jsonString = reader.GetString(0);
 
-                        Assert.IsTrue(JToken.DeepEquals(JObject.Parse(jsonString), JObject.Parse(arrowString)));
+                        Assert.IsTrue(JToken.DeepEquals(JArray.Parse(jsonString), JArray.Parse(arrowString)));
                     }
                 }
             }
