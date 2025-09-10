@@ -111,6 +111,35 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TestVerifyCrlSignatureForEllipticCurveCertificates(bool signCrlWithCaPrivateKey)
+        {
+            // arrange
+            var certKeys = CertificateGenerator.GenerateEllipticKeysForCertAndItsParent();
+            var certSubject = "CN=cert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var signatureAlgorithm = CertificateGenerator.SHA256WithECDSA;
+            var certificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[0], false, signatureAlgorithm);
+            var parentCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1], true, signatureAlgorithm);
+            var privateKeyToSignCrl = signCrlWithCaPrivateKey ? certKeys[1].Private : CertificateGenerator.GenerateECDSAKeyPair().Private;
+            var bouncyCrl = CertificateGenerator.GenerateCrl(signatureAlgorithm, privateKeyToSignCrl, rootSubject, DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(7), DateTime.UtcNow.AddDays(-1));
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crlParser = new CrlParser(environmentOperation.Object);
+            var crl = crlParser.Create(bouncyCrl, DateTime.UtcNow);
+            var config = GetHttpConfig();
+            var restRequester = new Mock<IRestRequester>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.IsCrlSignatureValid(crl, parentCertificate);
+
+            // assert
+            Assert.AreEqual(signCrlWithCaPrivateKey, result);
+        }
+
+        [Test]
         [TestCase(30, "ChainError")]
         [TestCase(3, "ChainUnrevoked")]
         public void TestSkipShortLivedCertificate(int offsetDays, string expectedResultString)

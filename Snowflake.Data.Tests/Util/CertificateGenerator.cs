@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using NUnit.Framework;
+using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Operators;
+using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
@@ -15,6 +17,9 @@ namespace Snowflake.Data.Tests.Util
 {
     public static class CertificateGenerator
     {
+        public const string SHA256WithRsaAlgorithm = "SHA256withRSA";
+        public const string SHA256WithECDSA = "SHA256withECDSA";
+
         public static X509Certificate2 LoadFromFile(string filePath) => new(filePath);
 
         public static X509Certificate2 GenerateSelfSignedCertificateWithDefaultSubject(
@@ -46,7 +51,8 @@ namespace Snowflake.Data.Tests.Util
             DateTimeOffset notAfter,
             string[] crlUrls,
             AsymmetricCipherKeyPair keyPair,
-            bool isCA = true)
+            bool isCA = true,
+            string signatureAlgorithm = SHA256WithRsaAlgorithm)
         {
             var certGenerator = new X509V3CertificateGenerator();
             var subjectDistinguishedName = new X509Name(subjectName);
@@ -68,7 +74,7 @@ namespace Snowflake.Data.Tests.Util
                 var crlDistPoints = new CrlDistPoint(distributionPoints);
                 certGenerator.AddExtension(X509Extensions.CrlDistributionPoints, false, crlDistPoints);
             }
-            var signatureFactory = new Asn1SignatureFactory("SHA256WithRSA", keyPair.Private, new SecureRandom());
+            var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm, keyPair.Private, new SecureRandom());
             var bouncyCertificate = certGenerator.Generate(signatureFactory);
             return ConvertCertificate(bouncyCertificate);
         }
@@ -77,6 +83,13 @@ namespace Snowflake.Data.Tests.Util
         {
             var certKeys = GenerateRsaKeyPair(keySize);
             var rootKeys = GenerateRsaKeyPair(keySize);
+            return new[] { new AsymmetricCipherKeyPair(certKeys.Public, rootKeys.Private), rootKeys };
+        }
+
+        public static AsymmetricCipherKeyPair[] GenerateEllipticKeysForCertAndItsParent()
+        {
+            var certKeys = GenerateECDSAKeyPair();
+            var rootKeys = GenerateECDSAKeyPair();
             return new[] { new AsymmetricCipherKeyPair(certKeys.Public, rootKeys.Private), rootKeys };
         }
 
@@ -94,6 +107,24 @@ namespace Snowflake.Data.Tests.Util
             Assert.IsTrue(isBuilt);
             Assert.AreEqual(certificates.Count(), chain.ChainElements.Count);
             return chain;
+        }
+
+        public static X509Crl GenerateCrl(
+            string signatureAlgorithm,
+            AsymmetricKeyParameter caPrivateKey,
+            string caName,
+            DateTime thisUpdateUtc,
+            DateTime nextUpdateUtc,
+            DateTime revocationTimeUtc)
+        {
+            var crlGenerator = new X509V2CrlGenerator();
+            var issuerDN = new X509Name(caName);
+            crlGenerator.SetIssuerDN(issuerDN);
+            crlGenerator.SetThisUpdate(thisUpdateUtc);
+            crlGenerator.SetNextUpdate(nextUpdateUtc);
+            crlGenerator.AddCrlEntry(new BigInteger("12345"), revocationTimeUtc, CrlReason.KeyCompromise);
+            var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm, caPrivateKey);
+            return crlGenerator.Generate(signatureFactory);
         }
 
         private static X509Certificate2 ConvertCertificate(Org.BouncyCastle.X509.X509Certificate bouncyCertificate)
@@ -114,6 +145,17 @@ namespace Snowflake.Data.Tests.Util
         {
             var keyPairGenerator = new RsaKeyPairGenerator();
             keyPairGenerator.Init(new KeyGenerationParameters(new SecureRandom(), keySize));
+            return keyPairGenerator.GenerateKeyPair();
+        }
+
+        public static AsymmetricCipherKeyPair GenerateECDSAKeyPair()
+        {
+            var ecp = NistNamedCurves.GetByName("P-256");
+            var domainParams = new ECDomainParameters(ecp.Curve, ecp.G, ecp.N, ecp.H, ecp.GetSeed());
+            var secureRandom = new SecureRandom();
+            var keyPairGenerator = new ECKeyPairGenerator();
+            var keyGenerationParameters = new ECKeyGenerationParameters(domainParams, secureRandom);
+            keyPairGenerator.Init(keyGenerationParameters);
             return keyPairGenerator.GenerateKeyPair();
         }
     }

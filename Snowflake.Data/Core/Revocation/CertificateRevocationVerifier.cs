@@ -249,7 +249,7 @@ namespace Snowflake.Data.Core.Revocation
         private bool IsCrlSignatureAndIssuerValid(Crl crl, X509Certificate2 certificate, string crlUrl, X509Certificate2 parentCertificate) =>
             IsCrlSignatureValid(crl, parentCertificate) && IsIssuerEquivalent(crl, certificate) && IsIssuerDistributionPointValid(crl, crlUrl);
 
-        private bool IsCrlSignatureValid(Crl crl, X509Certificate2 parentCertificate)
+        internal bool IsCrlSignatureValid(Crl crl, X509Certificate2 parentCertificate)
         {
             try
             {
