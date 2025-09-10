@@ -102,16 +102,16 @@ select parse_json('{{
                 cmd.CommandText = selectCommand;
                 cmd.CommandType = System.Data.CommandType.Text;
 
-                rowCount = 0;
-                using (var reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
+                    rowCount = 0;
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        Newtonsoft.Json.JsonConvert.DeserializeObject(reader[0].ToString());
-                        rowCount++;
+                        while (reader.Read())
+                        {
+                            Newtonsoft.Json.JsonConvert.DeserializeObject(reader[0].ToString());
+                            rowCount++;
+                        }
                     }
-                }
-                Assert.AreEqual(500, rowCount);
+                    Assert.AreEqual(500, rowCount);
 
                 SessionParameterAlterer.RestoreResultFormat(conn);
                 // Reader's RecordsAffected should be available even if the connection is closed
