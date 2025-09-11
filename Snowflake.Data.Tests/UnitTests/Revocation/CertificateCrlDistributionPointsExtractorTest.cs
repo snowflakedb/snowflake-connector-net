@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestExtractCertificateDistributionPoints(string[] expectedCrlUrls)
         {
             // arrange
-            var certificate = CertificateGenerator.GenerateSelfSignedCertificate("other CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), expectedCrlUrls);
+            var certificate = CertificateGenerator.GenerateSelfSignedCertificateWithDefaultSubject("other CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), expectedCrlUrls);
             var crlExtractor = new CertificateCrlDistributionPointsExtractor();
 
             // act
