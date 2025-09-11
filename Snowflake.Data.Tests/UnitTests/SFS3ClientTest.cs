@@ -240,7 +240,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var amazonS3Client = new AmazonS3Config();
             var endpoint = "endpointWithNoHttps.com";
-            var expectedEndpoint = "https://endpointWithNoHttps.com";
+            var expectedEndpoint = "https://endpointWithNoHttps.com/";
             var mockRegion = "fakeRegion";
 
             // ACT
