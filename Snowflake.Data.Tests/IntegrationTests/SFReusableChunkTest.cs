@@ -138,14 +138,73 @@ select parse_json('{{
         public void TestChunkRetry()
         {
             const int RETRY_FAILURE_COUNT = 6;
-            const int TEST_ROW_COUNT = 5000;
+            const int TEST_ROW_COUNT = 10000;
 
             IChunkParserFactory previous = ChunkParserFactory.Instance;
             TestChunkParserFactory testFactory = new TestChunkParserFactory(RETRY_FAILURE_COUNT);
 
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                try
+                {
+                    ChunkParserFactory.Instance = testFactory;
+                    SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                    CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
+
+                    IDbCommand cmd = conn.CreateCommand();
+                    int rowCount = 0;
+
+                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TEST_ROW_COUNT})))";
+                    cmd.CommandText = insertCommand;
+                    IDataReader insertReader = cmd.ExecuteReader();
+                    Assert.AreEqual(TEST_ROW_COUNT, insertReader.RecordsAffected);
+
+                    string selectCommand = $"select * from {TableName}";
+                    cmd.CommandText = selectCommand;
+
+                    rowCount = 0;
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var obj = new object[reader.FieldCount];
+                            reader.GetValues(obj);
+                            var val = obj[0] ?? System.String.Empty;
+                            // Filter out rows containing literal "u007f" or "\u007fu" strings
+                            if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
+                            {
+                                rowCount++;
+                            }
+                        }
+                    }
+                    Assert.AreEqual(TEST_ROW_COUNT, rowCount);
+
+                    Assert.IsTrue(testFactory.ExceptionsThrown >= RETRY_FAILURE_COUNT,
+                        $"Expected at least {RETRY_FAILURE_COUNT} retry attempts, but only {testFactory.ExceptionsThrown} occurred");
+                }
+                finally
+                {
+                    ChunkParserFactory.Instance = previous;
+                    SessionParameterAlterer.RestoreResultFormat(conn);
+                    conn.Close();
+                }
+            }
+        }
+
+        [Test, NonParallelizable]
+        public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
+        {
+            const int EXCESSIVE_RETRY_COUNT = 8;
+            const int TEST_ROW_COUNT = 25000;
+
+            IChunkParserFactory previous = ChunkParserFactory.Instance;
+
             try
             {
-                ChunkParserFactory.Instance = testFactory;
+                ChunkParserFactory.Instance = new TestChunkParserFactory(EXCESSIVE_RETRY_COUNT);
 
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
@@ -169,86 +228,29 @@ select parse_json('{{
                         cmd.CommandText = selectCommand;
 
                         rowCount = 0;
-                        using (var reader = cmd.ExecuteReader())
+                        Assert.Throws<AggregateException>(() =>
                         {
-                            while (reader.Read())
+                            using (var reader = cmd.ExecuteReader())
                             {
-                                var obj = new object[reader.FieldCount];
-                                reader.GetValues(obj);
-                                var val = obj[0] ?? System.String.Empty;
-                                // Filter out rows containing literal "u007f" or "\u007fu" strings
-                                if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
+                                while (reader.Read())
                                 {
-                                    rowCount++;
+                                    var obj = new object[reader.FieldCount];
+                                    reader.GetValues(obj);
+                                    var val = obj[0] ?? System.String.Empty;
+                                    if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
+                                    {
+                                        rowCount++;
+                                    }
                                 }
                             }
-                        }
-                        Assert.AreEqual(TEST_ROW_COUNT, rowCount);
-
-                        Assert.IsTrue(testFactory.ExceptionsThrown >= RETRY_FAILURE_COUNT,
-                            $"Expected at least {RETRY_FAILURE_COUNT} retry attempts, but only {testFactory.ExceptionsThrown} occurred");
+                        });
+                        Assert.AreNotEqual(TEST_ROW_COUNT, rowCount, "Row count should not match due to retry failures");
                     }
                     finally
                     {
                         SessionParameterAlterer.RestoreResultFormat(conn);
                         conn.Close();
                     }
-                }
-            }
-            finally
-            {
-                ChunkParserFactory.Instance = previous;
-            }
-        }
-
-        [Test]
-        public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
-        {
-            IChunkParserFactory previous = ChunkParserFactory.Instance;
-
-            try
-            {
-                ChunkParserFactory.Instance = new TestChunkParserFactory(8); // larger than default max retry of 7
-
-                using (IDbConnection conn = new SnowflakeDbConnection())
-                {
-                    conn.ConnectionString = ConnectionString;
-                    conn.Open();
-
-                    CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
-
-                    IDbCommand cmd = conn.CreateCommand();
-                    int rowCount = 0;
-
-                    int largeTableRowCount = 50000;
-                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
-                    cmd.CommandText = insertCommand;
-                    IDataReader insertReader = cmd.ExecuteReader();
-                    Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
-
-                    string selectCommand = $"select * from {TableName}";
-                    cmd.CommandText = selectCommand;
-
-                    rowCount = 0;
-                    Assert.Throws<AggregateException>(() =>
-                    {
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                var obj = new object[reader.FieldCount];
-                                reader.GetValues(obj);
-                                var val = obj[0] ?? System.String.Empty;
-                                if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
-                                {
-                                    rowCount++;
-                                }
-                            }
-                        }
-                    });
-                    Assert.AreNotEqual(largeTableRowCount, rowCount);
-
-                    conn.Close();
                 }
             }
             finally
