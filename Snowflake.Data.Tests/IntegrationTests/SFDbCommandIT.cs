@@ -610,7 +610,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestUseV3ResultParser()
         {
             var connectionString = ConnectionString + "poolingEnabled=false";
-            
+
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connectionString;
@@ -634,7 +634,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestUseV3ChunkDownloader()
         {
             var connectionString = ConnectionString + "poolingEnabled=false";
-            
+
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connectionString;

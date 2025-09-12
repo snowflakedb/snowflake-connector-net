@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestDelCharPr431()
         {
             const int TEST_ROW_COUNT = 5000;
-            
+
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
