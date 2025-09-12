@@ -912,7 +912,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var bigBatchRowCount = bindingThreshold / 2;
             s_logger.Info(testCase);
 
-            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
             {
                 conn.Open();
 

@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestDelCharPr431()
         {
-            const int TEST_ROW_COUNT = 5000;
+            const int TestRowCount = 10000;
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -32,10 +32,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     int rowCount = 0;
 
                     // Insert data with DEL character (0x7F) embedded: "snow\x7FFLAKE"
-                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TEST_ROW_COUNT})))";
+                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                     cmd.CommandText = insertCommand;
                     IDataReader insertReader = cmd.ExecuteReader();
-                    Assert.AreEqual(TEST_ROW_COUNT, insertReader.RecordsAffected);
+                    Assert.AreEqual(TestRowCount, insertReader.RecordsAffected);
 
                     string selectCommand = $"select * from {TableName}";
                     cmd.CommandText = selectCommand;
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             var obj = new object[reader.FieldCount];
                             reader.GetValues(obj);
                             var val = obj[0] ?? System.String.Empty;
-                            // Filter out rows containing literal "u007f" or "\u007fu" strings
+                            // Count rows that don't contain literal "u007f" or "\u007fu" strings
                             // (The actual data contains DEL character but not these literal strings)
                             if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
                             {
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             }
                         }
                     }
-                    Assert.AreEqual(TEST_ROW_COUNT, rowCount, "All rows should be counted as they don't contain literal 'u007f' strings");
+                    Assert.AreEqual(TestRowCount, rowCount, "Expected all rows to be counted since none contain literal 'u007f' strings");
                 }
                 finally
                 {
@@ -137,11 +137,11 @@ select parse_json('{{
         [Test, NonParallelizable]
         public void TestChunkRetry()
         {
-            const int RETRY_FAILURE_COUNT = 6;
-            const int TEST_ROW_COUNT = 10000;
+            const int RetryFailureCount = 6;
+            const int TestRowCount = 10000;
 
             IChunkParserFactory previous = ChunkParserFactory.Instance;
-            TestChunkParserFactory testFactory = new TestChunkParserFactory(RETRY_FAILURE_COUNT);
+            TestChunkParserFactory testFactory = new TestChunkParserFactory(RetryFailureCount);
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -157,10 +157,10 @@ select parse_json('{{
                     IDbCommand cmd = conn.CreateCommand();
                     int rowCount = 0;
 
-                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TEST_ROW_COUNT})))";
+                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                     cmd.CommandText = insertCommand;
                     IDataReader insertReader = cmd.ExecuteReader();
-                    Assert.AreEqual(TEST_ROW_COUNT, insertReader.RecordsAffected);
+                    Assert.AreEqual(TestRowCount, insertReader.RecordsAffected);
 
                     string selectCommand = $"select * from {TableName}";
                     cmd.CommandText = selectCommand;
@@ -173,17 +173,17 @@ select parse_json('{{
                             var obj = new object[reader.FieldCount];
                             reader.GetValues(obj);
                             var val = obj[0] ?? System.String.Empty;
-                            // Filter out rows containing literal "u007f" or "\u007fu" strings
+                            // Count rows that don't contain literal "u007f" or "\u007fu" strings
                             if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
                             {
                                 rowCount++;
                             }
                         }
                     }
-                    Assert.AreEqual(TEST_ROW_COUNT, rowCount);
+                    Assert.AreEqual(TestRowCount, rowCount);
 
-                    Assert.IsTrue(testFactory.ExceptionsThrown >= RETRY_FAILURE_COUNT,
-                        $"Expected at least {RETRY_FAILURE_COUNT} retry attempts, but only {testFactory.ExceptionsThrown} occurred");
+                        Assert.IsTrue(testFactory.ExceptionsThrown >= RetryFailureCount,
+                            $"Expected at least {RetryFailureCount} retry attempts, but only {testFactory.ExceptionsThrown} occurred");
                 }
                 finally
                 {
@@ -197,14 +197,14 @@ select parse_json('{{
         [Test, NonParallelizable]
         public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
         {
-            const int EXCESSIVE_RETRY_COUNT = 8;
-            const int TEST_ROW_COUNT = 25000;
+            const int ExcessiveRetryCount = 8;
+            const int TestRowCount = 25000;
 
             IChunkParserFactory previous = ChunkParserFactory.Instance;
 
             try
             {
-                ChunkParserFactory.Instance = new TestChunkParserFactory(EXCESSIVE_RETRY_COUNT);
+                ChunkParserFactory.Instance = new TestChunkParserFactory(ExcessiveRetryCount);
 
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
@@ -219,10 +219,10 @@ select parse_json('{{
                         IDbCommand cmd = conn.CreateCommand();
                         int rowCount = 0;
 
-                        string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TEST_ROW_COUNT})))";
+                        string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                         cmd.CommandText = insertCommand;
                         IDataReader insertReader = cmd.ExecuteReader();
-                        Assert.AreEqual(TEST_ROW_COUNT, insertReader.RecordsAffected);
+                        Assert.AreEqual(TestRowCount, insertReader.RecordsAffected);
 
                         string selectCommand = $"select * from {TableName}";
                         cmd.CommandText = selectCommand;
@@ -244,7 +244,7 @@ select parse_json('{{
                                 }
                             }
                         });
-                        Assert.AreNotEqual(TEST_ROW_COUNT, rowCount, "Row count should not match due to retry failures");
+                        Assert.AreNotEqual(TestRowCount, rowCount, "Row count should not match due to retry failures");
                     }
                     finally
                     {
