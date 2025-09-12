@@ -64,42 +64,42 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(expectedConnectionLimit, extractedProperties._connectionLimit);
+            Assert.AreEqual(expectedConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
         [Test]
         public void TestSettingConnectionLimitPropertyToLessThan1()
         {
             // arrange
-            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CONNECTION_LIMIT={0}";
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT={0}";
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // act
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._connectionLimit);
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
         [Test]
         public void TestSettingConnectionLimitPropertyToNoValue()
         {
             // arrange
-            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CONNECTION_LIMIT=";
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT=";
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // act
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._connectionLimit);
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
         [Test]
         public void TestThrowsExceptionWhenSettingConnectionLimitPropertyToNonStringValue()
         {
             // arrange
-            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CONNECTION_LIMIT=abc";
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT=abc";
 
             // act
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());

@@ -42,7 +42,7 @@ namespace Snowflake.Data.Core
         private TimeSpan _expirationTimeout;
         private bool _poolingEnabled;
         internal bool _clientStoreTemporaryCredential;
-        internal int _connectionLimit;
+        internal int _servicePointConnectionLimit;
 
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
@@ -186,10 +186,10 @@ namespace Snowflake.Data.Core
 
         private void ValidateConnectionLimit()
         {
-            if (_connectionLimit < 1)
+            if (_servicePointConnectionLimit < 1)
             {
                 s_logger.Warn($"Connection limit cannot be less than 1. Using the default value of {DefaultConnectionLimit}");
-                _connectionLimit = DefaultConnectionLimit;
+                _servicePointConnectionLimit = DefaultConnectionLimit;
             }
         }
 
@@ -205,7 +205,7 @@ namespace Snowflake.Data.Core
                 disableRetry,
                 forceRetryOn404,
                 maxHttpRetries,
-                _connectionLimit,
+                _servicePointConnectionLimit,
                 includeRetryReason);
         }
 
@@ -267,7 +267,7 @@ namespace Snowflake.Data.Core
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
                     _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
                     _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]),
-                    _connectionLimit = int.Parse(propertiesDictionary[SFSessionProperty.CONNECTION_LIMIT]),
+                    _servicePointConnectionLimit = int.Parse(propertiesDictionary[SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT]),
                 };
             }
 
