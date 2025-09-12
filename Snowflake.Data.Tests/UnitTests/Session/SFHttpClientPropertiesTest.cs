@@ -82,6 +82,33 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        public void TestSettingConnectionLimitPropertyToNoValue()
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CONNECTION_LIMIT=";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+
+            // assert
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._connectionLimit);
+        }
+
+        [Test]
+        public void TestThrowsExceptionWhenSettingConnectionLimitPropertyToNonStringValue()
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CONNECTION_LIMIT=abc";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            var thrown = Assert.Throws<FormatException>(() => SFSessionHttpClientProperties.ExtractAndValidate(properties));
+        }
+
+        [Test]
         public void TestBuildHttpClientConfig()
         {
             // arrange
