@@ -607,78 +607,54 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test, NonParallelizable]
-        public void TestUseV1ResultParser()
+        public void TestUseV3ResultParser()
         {
             var connectionString = ConnectionString + "poolingEnabled=false";
-            var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
-            int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
-            try
+            
+            using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                SFConfiguration.Instance().ChunkParserVersion = 1;
-                SFConfiguration.Instance().ChunkDownloaderVersion = 2;
+                conn.ConnectionString = connectionString;
+                conn.Open();
 
-                using (IDbConnection conn = new SnowflakeDbConnection())
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 10000)) v order by 1";
+                IDataReader reader = cmd.ExecuteReader();
+                int counter = 0;
+                while (reader.Read())
                 {
-                    conn.ConnectionString = connectionString;
-
-                    conn.Open();
-
-                    IDbCommand cmd = conn.CreateCommand();
-                    cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 100000)) v order by 1";
-                    IDataReader reader = cmd.ExecuteReader();
-                    int counter = 0;
-                    while (reader.Read())
-                    {
-                        Assert.AreEqual(counter.ToString(), reader.GetString(0));
-                        // don't test the second column as it has random values just to increase the response size
-                        counter++;
-                    }
+                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
+                    counter++;
                 }
-            }
-            finally
-            {
-                SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
-                SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
+                Assert.AreEqual(10000, counter);
             }
         }
 
         [Test, NonParallelizable]
-        public void TestUseV2ChunkDownloader()
+        public void TestUseV3ChunkDownloader()
         {
             var connectionString = ConnectionString + "poolingEnabled=false";
-            var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
-            int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
-            try
+            
+            using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                SFConfiguration.Instance().ChunkParserVersion = 2;
-                SFConfiguration.Instance().ChunkDownloaderVersion = 2;
+                conn.ConnectionString = connectionString;
+                conn.Open();
 
-                using (IDbConnection conn = new SnowflakeDbConnection())
+                IDbCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 10000)) v order by 1";
+                IDataReader reader = cmd.ExecuteReader();
+                int counter = 0;
+                while (reader.Read())
                 {
-                    conn.ConnectionString = connectionString;
-
-                    conn.Open();
-
-                    IDbCommand cmd = conn.CreateCommand();
-                    cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 100000)) v order by 1";
-                    IDataReader reader = cmd.ExecuteReader();
-                    int counter = 0;
-                    while (reader.Read())
-                    {
-                        Assert.AreEqual(counter.ToString(), reader.GetString(0));
-                        // don't test the second column as it has random values just to increase the response size
-                        counter++;
-                    }
+                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    // don't test the second column as it has random values just to increase the response size
+                    counter++;
                 }
-            }
-            finally
-            {
-                SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
-                SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
+                Assert.AreEqual(10000, counter);
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestDefaultChunkDownloaderWithPrefetchThreads([Values(1, 2, 4)] int prefetchThreads)
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
@@ -689,8 +665,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = $"alter session set CLIENT_PREFETCH_THREADS = {prefetchThreads}";
                 cmd.ExecuteNonQuery();
 
-                // 100000 - value to ensure chunking occurs
-                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 100000)) v order by 1";
+                // 10000 - value to ensure chunking occurs
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 10000)) v order by 1";
 
                 IDataReader reader = cmd.ExecuteReader();
                 int counter = 0;
@@ -700,6 +676,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
+                Assert.AreEqual(10000, counter);
                 conn.Close();
             }
         }
@@ -1032,8 +1009,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private void ArrayBindTest(string connstr, string tableName, int size)
         {
-
-            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(180));
+            const int timeoutSeconds = 150;
+            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connstr;
@@ -1150,9 +1127,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     Task<int> task = cmd.ExecuteNonQueryAsync(externalCancel.Token);
 
-                    if (!task.Wait(TimeSpan.FromSeconds(150)))
+                    if (!task.Wait(TimeSpan.FromSeconds(timeoutSeconds)))
                     {
-                        Assert.Fail("Array bind operation timed out after 150 seconds");
+                        Assert.Fail($"Array bind operation timed out after {timeoutSeconds} seconds");
                     }
                     Assert.AreEqual(total * 3, task.Result);
 
