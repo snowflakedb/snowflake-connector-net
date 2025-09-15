@@ -182,8 +182,8 @@ select parse_json('{{
                     }
                     Assert.AreEqual(TestRowCount, rowCount);
 
-                        Assert.IsTrue(testFactory.ExceptionsThrown >= RetryFailureCount,
-                            $"Expected at least {RetryFailureCount} retry attempts, but only {testFactory.ExceptionsThrown} occurred");
+                    Assert.IsTrue(testFactory.ExceptionsThrown >= RetryFailureCount,
+                        $"Expected at least {RetryFailureCount} retry attempts, but only {testFactory.ExceptionsThrown} occurred");
                 }
                 finally
                 {
