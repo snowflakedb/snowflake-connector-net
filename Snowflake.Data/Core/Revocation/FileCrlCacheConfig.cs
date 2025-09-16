@@ -28,13 +28,15 @@ namespace Snowflake.Data.Core.Revocation
                 UnixUserId = 0;
                 UnixGroupId = 0;
                 DirectoryPath = Path.Combine(homeDirectory, "AppData", "Local", "Snowflake", "Caches", "crls");
-            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 IsWindows = false;
                 UnixUserId = unixOperations.GetCurrentUserId();
                 UnixGroupId = unixOperations.GetCurrentGroupId();
                 DirectoryPath = Path.Combine(homeDirectory, "Library", "Caches", "Snowflake", "crls");
-            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 IsWindows = false;
                 UnixUserId = unixOperations.GetCurrentUserId();

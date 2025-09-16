@@ -280,7 +280,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var randomBytes = TestDataGenarator.NextBytes(19);
             var filePath = Path.Combine(s_workingDirectory, $"small_file_{Path.GetRandomFileName()}");
             s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
-            s_unixOperations.WriteAllBytes(filePath, randomBytes, _ => {});
+            s_unixOperations.WriteAllBytes(filePath, randomBytes, _ => { });
 
             // act
             var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });

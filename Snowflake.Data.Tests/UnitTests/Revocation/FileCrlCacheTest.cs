@@ -19,11 +19,11 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         const string IssuerCa = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
         const long UnixUserId = 5;
         const long UnixGroupId = 6;
-        private static readonly DateTime s_thisUpdate = new (2025, 8, 10, 0, 0, 0, DateTimeKind.Utc);
-        private static readonly DateTime s_nextUpdate = new (2026, 8, 10, 0, 0, 0, DateTimeKind.Utc);
+        private static readonly DateTime s_thisUpdate = new(2025, 8, 10, 0, 0, 0, DateTimeKind.Utc);
+        private static readonly DateTime s_nextUpdate = new(2026, 8, 10, 0, 0, 0, DateTimeKind.Utc);
         private static readonly DateTime s_revocationTime = s_thisUpdate;
-        private static readonly DateTime s_downloadTime = new (2025, 8, 15, 8, 21, 33, DateTimeKind.Utc);
-        private static readonly CrlParser s_crlParser = new (TimeSpan.FromDays(10));
+        private static readonly DateTime s_downloadTime = new(2025, 8, 15, 8, 21, 33, DateTimeKind.Utc);
+        private static readonly CrlParser s_crlParser = new(TimeSpan.FromDays(10));
 
         [Test]
         public void TestGetAndSetCacheOperations()
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             // arrange
             var crl = CreateCrl();
             var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
-            var cacheConfig = CreateFileCrlCacheConfig(tempDirectory);;
+            var cacheConfig = CreateFileCrlCacheConfig(tempDirectory);
             var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance);
             try
             {
