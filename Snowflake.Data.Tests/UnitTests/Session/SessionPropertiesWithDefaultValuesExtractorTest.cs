@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 
@@ -154,7 +155,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, true);
 
             // act
-            var thrown = Assert.Throws<Exception>(() =>
+            var thrown = Assert.Throws<SnowflakeDbException>(() =>
                 extractor.ExtractPropertyWithDefaultValue(
                     SFSessionProperty.CONNECTION_TIMEOUT,
                     int.Parse,
@@ -163,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 ));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Invalid value of parameter CONNECTION_TIMEOUT"));
+            Assert.That(thrown.Message, Does.Contain("Invalid parameter value  for CONNECTION_TIMEOUT"));
         }
 
         [Test]
@@ -175,7 +176,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var defaultValue = GetDefaultIntSessionProperty(SFSessionProperty.CONNECTION_TIMEOUT);
 
             // act
-            var thrown = Assert.Throws<Exception>(() =>
+            var thrown = Assert.Throws<SnowflakeDbException>(() =>
                 extractor.ExtractPropertyWithDefaultValue(
                     SFSessionProperty.CONNECTION_TIMEOUT,
                     int.Parse,
@@ -184,7 +185,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 ));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Invalid value of parameter CONNECTION_TIMEOUT"));
+            Assert.That(thrown.Message, Does.Contain("Invalid parameter value  for CONNECTION_TIMEOUT"));
         }
 
         [Test]
@@ -195,7 +196,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractor = new SessionPropertiesWithDefaultValuesExtractor(properties, true);
 
             // act
-            var thrown = Assert.Throws<Exception>(() =>
+            var thrown = Assert.Throws<SnowflakeDbException>(() =>
                 extractor.ExtractPropertyWithDefaultValue(
                     SFSessionProperty.CONNECTION_TIMEOUT,
                     int.Parse,
@@ -204,7 +205,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 ));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Invalid value of parameter CONNECTION_TIMEOUT"));
+            Assert.That(thrown.Message, Does.Contain("Invalid parameter value  for CONNECTION_TIMEOUT"));
         }
 
         private int GetDefaultIntSessionProperty(SFSessionProperty property) =>
