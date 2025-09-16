@@ -107,10 +107,10 @@ namespace Snowflake.Data.Core
 
         private HttpUtil()
         {
-            SetDefaultConnectionLimit();
+            IncreaseLowDefaultConnectionLimitOfServicePointManager();
         }
 
-        internal void SetDefaultConnectionLimit()
+        internal void IncreaseLowDefaultConnectionLimitOfServicePointManager()
         {
             var currentLimit = ServicePointManager.DefaultConnectionLimit;
 

@@ -195,7 +195,7 @@ namespace Snowflake.Data.Tests.UnitTests
             ServicePointManager.DefaultConnectionLimit = expectedLimit;
 
             // when
-            HttpUtil.Instance.SetDefaultConnectionLimit();
+            HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
 
             // then
             Assert.AreEqual(expectedLimit, ServicePointManager.DefaultConnectionLimit);
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests
             ServicePointManager.DefaultConnectionLimit = 49;
 
             // when
-            HttpUtil.Instance.SetDefaultConnectionLimit();
+            HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
 
             // then
             Assert.AreEqual(HttpUtil.DefaultConnectionLimit, ServicePointManager.DefaultConnectionLimit);
