@@ -121,7 +121,7 @@ namespace Snowflake.Data.Core
                 // so we need to increase the default value of 2
                 // See: https://github.com/aws/aws-sdk-net/issues/152
                 ServicePointManager.DefaultConnectionLimit = DefaultConnectionLimit;
-                logger.Debug($"Setting ServicePointManager.DefaultConnectionLimit from {currentLimit} to minimum default value of {DefaultConnectionLimit}");
+                logger.Debug($"Increasing ServicePointManager.DefaultConnectionLimit from {currentLimit} to minimum default value of {DefaultConnectionLimit}");
             }
             else
             {
