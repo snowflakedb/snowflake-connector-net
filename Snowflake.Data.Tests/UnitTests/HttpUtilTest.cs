@@ -188,29 +188,29 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void ShouldNotChangeDefaultConnectionLimitIfOver50()
+        public void TestThatChangesDefaultConnectionLimitWhenOver50()
         {
-            // given
+            // arrange
             var expectedLimit = 51;
             ServicePointManager.DefaultConnectionLimit = expectedLimit;
 
-            // when
+            // act
             HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
 
-            // then
+            // assert
             Assert.AreEqual(expectedLimit, ServicePointManager.DefaultConnectionLimit);
         }
 
         [Test]
-        public void ShouldChangeDefaultConnectionLimitIfUnder50()
+        public void TestThatDoesNotChangeConnectionLimitWhenUnder50()
         {
-            // given
+            // arrange
             ServicePointManager.DefaultConnectionLimit = 49;
 
-            // when
+            // act
             HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
 
-            // then
+            // assert
             Assert.AreEqual(HttpUtil.DefaultConnectionLimit, ServicePointManager.DefaultConnectionLimit);
         }
     }
