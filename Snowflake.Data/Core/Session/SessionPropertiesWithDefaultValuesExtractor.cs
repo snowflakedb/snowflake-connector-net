@@ -109,7 +109,7 @@ namespace Snowflake.Data.Core.Session
             if (_failOnWrongValue)
             {
                 s_logger.Error($"Invalid value of parameter {property}: {value}");
-                throw new Exception($"Invalid value of parameter {property}");
+                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_PARAMETER_VALUE, "", property);
             }
             s_logger.Warn($"Invalid value of parameter {property}. Using a default value: {defaultValue}");
             return defaultValue;

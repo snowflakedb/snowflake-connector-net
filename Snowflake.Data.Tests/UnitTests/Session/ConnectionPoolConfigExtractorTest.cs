@@ -55,10 +55,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var connectionString = $"account=test;user=test;password=test;maxPoolSize={maxPoolSize}";
 
             // act
-            var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.MAXPOOLSIZE.ToString()}"));
+            Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for {SFSessionProperty.MAXPOOLSIZE.ToString()}"));
         }
 
         [Test]
@@ -86,10 +86,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var connectionString = $"account=test;user=test;password=test;minPoolSize={minPoolSize}";
 
             // act
-            var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.MINPOOLSIZE.ToString()}"));
+            Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for {SFSessionProperty.MINPOOLSIZE.ToString()}"));
         }
 
         [Test]
@@ -127,10 +127,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var connectionString = $"account=test;user=test;password=test;expirationTimeout={propertyValue}";
 
             // act
-            var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.EXPIRATIONTIMEOUT.ToString()}"));
+            Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for {SFSessionProperty.EXPIRATIONTIMEOUT.ToString()}"));
         }
 
         [Test]
@@ -168,10 +168,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var connectionString = $"account=test;user=test;password=test;waitingForIdleSessionTimeout={propertyValue}";
 
             // act
-            var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT.ToString()}"));
+            Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for {SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT.ToString()}"));
         }
 
         [Test]
@@ -196,10 +196,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var connectionString = $"account=test;user=test;password=test;CONNECTION_TIMEOUT={propertyValue}";
 
             // act
-            var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.CONNECTION_TIMEOUT.ToString()}"));
+            Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for {SFSessionProperty.CONNECTION_TIMEOUT.ToString()}"));
         }
 
         [Test]
@@ -250,10 +250,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var connectionString = $"account=test;user=test;password=test;poolingEnabled={propertyValue}";
 
             // act
-            var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.POOLINGENABLED.ToString()}"));
+            Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for {SFSessionProperty.POOLINGENABLED.ToString()}"));
         }
 
         [Test]
