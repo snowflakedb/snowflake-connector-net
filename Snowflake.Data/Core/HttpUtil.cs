@@ -96,7 +96,7 @@ namespace Snowflake.Data.Core
         private static readonly int s_baseBackOffTime = 1;
         private static readonly int s_exponentialFactor = 2;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
-        internal static readonly int DefaultConnectionLimit = 50;
+        internal const int DefaultConnectionLimit = 50;
 
         private static readonly List<string> s_supportedEndpointsForRetryPolicy = new List<string>
         {
