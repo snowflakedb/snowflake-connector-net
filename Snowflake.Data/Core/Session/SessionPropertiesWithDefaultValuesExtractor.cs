@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
@@ -88,7 +89,7 @@ namespace Snowflake.Data.Core.Session
                 if (_failOnWrongValue)
                 {
                     s_logger.Error($"Invalid value of parameter {property}. Error: {e}");
-                    throw new Exception($"Invalid value of parameter {property}", e);
+                    throw new SnowflakeDbException(SFError.INVALID_CONNECTION_PARAMETER_VALUE, "", property);
                 }
                 s_logger.Warn($"Invalid value of parameter {property}. Using a default a default value: {defaultValue}");
                 return defaultValue;

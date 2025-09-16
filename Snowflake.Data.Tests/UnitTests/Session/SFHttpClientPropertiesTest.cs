@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
@@ -99,13 +100,17 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestThrowsExceptionWhenSettingConnectionLimitPropertyToNonStringValue()
         {
             // arrange
-            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT=abc";
+            var parameterName = "SERVICE_POINT_CONNECTION_LIMIT";
+            var errorMessage = $"Error: Invalid parameter value  for {parameterName}";
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;{parameterName}=abc";
 
             // act
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            var thrown = Assert.Throws<FormatException>(() => SFSessionHttpClientProperties.ExtractAndValidate(properties));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionHttpClientProperties.ExtractAndValidate(properties));
+            Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.IsTrue(thrown.Message.Contains(errorMessage));
         }
 
         [Test]
