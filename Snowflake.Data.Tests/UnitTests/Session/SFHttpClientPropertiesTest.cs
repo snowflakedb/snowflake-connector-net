@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestSettingConnectionLimitProperty(int expectedConnectionLimit)
         {
             // arrange
-            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CONNECTION_LIMIT={expectedConnectionLimit}";
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT={expectedConnectionLimit}";
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // act
