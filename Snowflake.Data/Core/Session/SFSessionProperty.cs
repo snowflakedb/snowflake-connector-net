@@ -286,6 +286,7 @@ namespace Snowflake.Data.Core
             ValidateAccountDomain(properties);
             WarnIfHttpUsed(properties);
             ValidateAuthenticatorFlowsProperties(properties);
+            ValidateServicePointConnectionLimit(properties);
 
             var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
 
@@ -763,6 +764,23 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(
                     new Exception($"Value for parameter {propertyName} should be greater than 0"),
                     SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
+            }
+        }
+
+        private static void ValidateServicePointConnectionLimit(SFSessionProperties properties)
+        {
+            if (properties.TryGetValue(SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT, out var servicePointConnectionLimit))
+            {
+                if (!int.TryParse(servicePointConnectionLimit, out _))
+                {
+                    var errorMessage = $"Invalid value of {SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT.ToString()} parameter";
+                    logger.Error(errorMessage);
+                    throw new SnowflakeDbException(
+                        new Exception(errorMessage),
+                        SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                        "",
+                        SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT.ToString());
+                }
             }
         }
 
