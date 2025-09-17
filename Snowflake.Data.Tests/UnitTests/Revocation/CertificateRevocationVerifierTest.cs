@@ -197,7 +197,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestVerifyIfIssuerMatchesTheCertificateIssuer(string issuerName, bool expectedIsEquivalent)
         {
             // arrange
-            var certificate = CertificateGenerator.GenerateSelfSignedCertificateWithDefaultSubject("other CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), new string[] { });
+            var certificate = CertificateGenerator.GenerateSelfSignedCertificateWithDefaultSubject("other CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), new string[][] { });
             var config = GetHttpConfig();
             var restRequester = new Mock<IRestRequester>();
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
