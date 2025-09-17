@@ -11,6 +11,7 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
@@ -254,6 +255,53 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             // assert
             Assert.IsFalse(result);
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestReadBytesFromEmptyFile()
+        {
+            // arrange
+            var filePath = Path.Combine(s_workingDirectory, $"empty_file_{Path.GetRandomFileName()}");
+            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+
+            // act
+            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+
+            // assert
+            Assert.AreEqual(0, bytes.Length);
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestReadBytesFromSmallFile()
+        {
+            // arrange
+            var randomBytes = TestDataGenarator.NextBytes(19);
+            var filePath = Path.Combine(s_workingDirectory, $"small_file_{Path.GetRandomFileName()}");
+            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+            s_unixOperations.WriteAllBytes(filePath, randomBytes, _ => { });
+
+            // act
+            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+
+            // assert
+            CollectionAssert.AreEqual(randomBytes, bytes);
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestReadBytesFromLargeFile()
+        {
+            // arrange
+            var filePath = Path.Combine("crl", "DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl");
+            var expectedBytes = File.ReadAllBytes(filePath);
+
+            // act
+            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+
+            // assert
+            CollectionAssert.AreEqual(expectedBytes, bytes);
         }
 
         public static IEnumerable<FileAccessPermissions> UserPermissions()

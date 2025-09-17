@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Mono.Unix;
 using Mono.Unix.Native;
@@ -80,6 +82,12 @@ namespace Snowflake.Data.Core.Tools
             return new DirectoryUnixInformation(dirInfo);
         }
 
+        public virtual FileUnixInformation GetFileInfo(string path)
+        {
+            var fileInfo = new UnixFileInfo(path);
+            return new FileUnixInformation(fileInfo);
+        }
+
         public virtual long ChangeOwner(string path, int userId, int groupId) => Syscall.chown(path, userId, groupId);
 
         public virtual long ChangePermissions(string path, FileAccessPermissions permissions) => Syscall.chmod(path, (FilePermissions)permissions);
@@ -109,6 +117,48 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
+        public virtual byte[] ReadAllBytes(string path, Action<UnixStream> validator)
+        {
+            var fileInfo = new UnixFileInfo(path: path);
+            const int BufferSize = 200 * 1024; // 200kB
+            var result = new List<byte[]>();
+            using (var handle = fileInfo.OpenRead())
+            {
+                validator?.Invoke(handle);
+                using (var streamReader = new BinaryReader(handle, Encoding.ASCII))
+                {
+                    bool allRead = false;
+                    while (!allRead)
+                    {
+                        var bytes = streamReader.ReadBytes(BufferSize);
+                        if (bytes.Length > 0)
+                        {
+                            result.Add(bytes);
+                        }
+                        allRead = bytes.Length < BufferSize;
+                    }
+                }
+            }
+            return JoinArrays(result);
+        }
+
+        private byte[] JoinArrays(List<byte[]> arrays)
+        {
+            if (arrays == null || arrays.Count == 0)
+                return Array.Empty<byte>();
+            if (arrays.Count == 1)
+                return arrays[0];
+            var totalLength = arrays.Select(x => x.Length).Sum();
+            var result = new byte[totalLength];
+            var index = 0;
+            foreach (var array in arrays)
+            {
+                Array.Copy(array, 0, result, index, array.Length);
+                index += array.Length;
+            }
+            return result;
+        }
+
         public void WriteAllText(string path, string content, Action<UnixStream> validator)
         {
             var fileInfo = new UnixFileInfo(path: path);
@@ -119,6 +169,19 @@ namespace Snowflake.Data.Core.Tools
                 using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
                 {
                     streamWriter.Write(content);
+                }
+            }
+        }
+
+        public virtual void WriteAllBytes(string path, byte[] bytes, Action<UnixStream> validator)
+        {
+            var fileInfo = new UnixFileInfo(path: path);
+            using (var handle = fileInfo.Open(FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
+            {
+                validator?.Invoke(handle);
+                using (var writer = new BinaryWriter(handle, Encoding.ASCII))
+                {
+                    writer.Write(bytes);
                 }
             }
         }
