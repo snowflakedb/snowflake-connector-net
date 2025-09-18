@@ -32,5 +32,7 @@ namespace Snowflake.Data.Core.Revocation
         {
             BouncyCastleCrl.Verify(publicKey);
         }
+
+        public byte[] GetEncoded() => BouncyCastleCrl.GetEncoded();
     }
 }

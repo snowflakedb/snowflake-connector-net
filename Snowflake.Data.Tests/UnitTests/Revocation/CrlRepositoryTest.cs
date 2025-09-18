@@ -75,17 +75,23 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
         [Test]
         [TestCase(true, true, typeof(MemoryCrlCache), typeof(FileCrlCache))]
-        [TestCase(false, false, typeof(DisabledCrlCache), typeof(DisabledCrlCache))]
-        [TestCase(true, false, typeof(MemoryCrlCache), typeof(DisabledCrlCache))]
-        [TestCase(false, true, typeof(DisabledCrlCache), typeof(FileCrlCache))]
+        [TestCase(false, false, null, null)]
+        [TestCase(true, false, typeof(MemoryCrlCache), null)]
+        [TestCase(false, true, null, typeof(FileCrlCache))]
         public void TestConstructCaches(bool useMemoryCache, bool useFileCache, Type expectedMemoryCacheType, Type expectedFileCacheType)
         {
             // act
             var crlRepository = new CrlRepository(useMemoryCache, useFileCache);
 
             // assert
-            Assert.AreEqual(expectedMemoryCacheType, crlRepository._memoryCrlCache.GetType());
-            Assert.AreEqual(expectedFileCacheType, crlRepository._fileCrlCache.GetType());
+            if (expectedMemoryCacheType == null)
+                Assert.IsNull(crlRepository._memoryCrlCache);
+            else
+                Assert.AreEqual(expectedMemoryCacheType, crlRepository._memoryCrlCache.GetType());
+            if (expectedFileCacheType == null)
+                Assert.IsNull(crlRepository._fileCrlCache);
+            else
+                Assert.AreEqual(expectedFileCacheType, crlRepository._fileCrlCache.GetType());
         }
     }
 }
