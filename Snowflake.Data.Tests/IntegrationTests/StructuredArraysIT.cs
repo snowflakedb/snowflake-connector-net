@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -10,19 +11,33 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
+    [TestFixture(ResultFormat.ARROW, false)]
+    [TestFixture(ResultFormat.ARROW, true)]
+    [TestFixture(ResultFormat.JSON, false)]
     public class StructuredArraysIT : StructuredTypesIT
     {
+        private readonly ResultFormat _resultFormat;
+        private readonly bool _nativeArrow;
+
+        public StructuredArraysIT(ResultFormat resultFormat, bool nativeArrow)
+        {
+            _resultFormat = resultFormat;
+            _nativeArrow = nativeArrow;
+        }
+
         [Test]
         public void TestDataTableLoadOnStructuredArray()
         {
+            if (_resultFormat != ResultFormat.JSON)
+                Assert.Ignore("skip test on arrow");
+
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var expectedValueA = 'a';
                     var expectedValueB = 'b';
                     var expectedValueC = 'c';
@@ -52,7 +67,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arraySFString = "ARRAY_CONSTRUCT('a','b','c')::ARRAY(TEXT)";
                     command.CommandText = $"SELECT {arraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -64,6 +79,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.AreEqual(3, array.Length);
                     CollectionAssert.AreEqual(new[] { "a", "b", "c" }, array);
+
+                    if (_nativeArrow)
+                    {
+                        var arrowString = reader.GetString(0);
+                        EnableStructuredTypes(connection, ResultFormat.JSON);
+                        reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                        Assert.IsTrue(reader.Read());
+                        var jsonString = reader.GetString(0);
+
+                        Assert.IsTrue(JToken.DeepEquals(JArray.Parse(jsonString), JArray.Parse(arrowString)));
+                    }
                 }
             }
         }
@@ -77,7 +103,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arrayOfObjects =
                         "ARRAY_CONSTRUCT(OBJECT_CONSTRUCT('name', 'Alex'), OBJECT_CONSTRUCT('name', 'Brian'))::ARRAY(OBJECT(name VARCHAR))";
                     command.CommandText = $"SELECT {arrayOfObjects}";
@@ -103,7 +129,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arrayOfArrays = "ARRAY_CONSTRUCT(ARRAY_CONSTRUCT('a', 'b'), ARRAY_CONSTRUCT('c', 'd'))::ARRAY(ARRAY(TEXT))";
                     command.CommandText = $"SELECT {arrayOfArrays}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -128,7 +154,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arrayOfMap = "ARRAY_CONSTRUCT(OBJECT_CONSTRUCT('a', 'b'))::ARRAY(MAP(VARCHAR,VARCHAR))";
                     command.CommandText = $"SELECT {arrayOfMap}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -159,7 +185,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     command.CommandText = $"SELECT {valueSfString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
@@ -183,7 +209,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arrayOfIntegers = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(INTEGER)";
                     command.CommandText = $"SELECT {arrayOfIntegers}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -208,7 +234,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arrayOfLongs = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(BIGINT)";
                     command.CommandText = $"SELECT {arrayOfLongs}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -233,7 +259,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arrayOfFloats = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(FLOAT)";
                     command.CommandText = $"SELECT {arrayOfFloats}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -258,7 +284,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arrayOfDoubles = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(DOUBLE)";
                     command.CommandText = $"SELECT {arrayOfDoubles}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -283,7 +309,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arrayOfDoubles = "ARRAY_CONSTRUCT(1.0e100, 1.0e-100)::ARRAY(DOUBLE)";
                     command.CommandText = $"SELECT {arrayOfDoubles}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -308,7 +334,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arraySFString = "ARRAY_CONSTRUCT('a',NULL,'b')::ARRAY(TEXT)";
                     command.CommandText = $"SELECT {arraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -333,7 +359,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arrayOfNumberSFString = "ARRAY_CONSTRUCT(3,NULL,5)::ARRAY(INTEGER)";
                     command.CommandText = $"SELECT {arrayOfNumberSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -358,7 +384,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var nullArraySFString = "NULL::ARRAY(TEXT)";
                     command.CommandText = $"SELECT {nullArraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -382,7 +408,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arraySFString = "ARRAY_CONSTRUCT('x', 'y')::ARRAY";
                     command.CommandText = $"SELECT {arraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -408,7 +434,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arraySFString = "ARRAY_CONSTRUCT('a76dacad-0e35-497b-bf9b-7cd49262b68b', 'z76dacad-0e35-497b-bf9b-7cd49262b68b')::ARRAY(TEXT)";
                     command.CommandText = $"SELECT {arraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -419,7 +445,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
-                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]"));
+                    if (_resultFormat == ResultFormat.JSON || !_nativeArrow)
+                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]"));
+                    else
+                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an array."));
+
                 }
             }
         }
@@ -433,7 +463,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var arraySFString = @"ARRAY_CONSTRUCT(
                         OBJECT_CONSTRUCT('x', 'a', 'y', 'b')
                     )::ARRAY(OBJECT(x VARCHAR, y VARCHAR))";
@@ -445,9 +475,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<AnnotatedClassForConstructorConstruction>(0));
 
                     // assert
-                    SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
-                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[0][1]"));
-                    Assert.That(thrown.Message, Does.Contain("Could not read text type into System.Int32"));
+                    if (_resultFormat == ResultFormat.JSON || !_nativeArrow)
+                    {
+                        SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
+                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[0][1]"));
+                        Assert.That(thrown.Message, Does.Contain("Could not read text type into System.Int32"));
+                    }
+                    else
+                    {
+                        SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
+                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an array."));
+                    }
                 }
             }
         }
