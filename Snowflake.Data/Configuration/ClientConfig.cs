@@ -7,7 +7,7 @@ namespace Snowflake.Data.Configuration
         [JsonProperty(Required = Required.Always, PropertyName = "common")]
         public ClientConfigCommonProps CommonProps { get; set; }
 
-        [JsonProperty(Required = Required.DisallowNull, PropertyName = "dotnet")]
+        [JsonProperty(Required = Required.Default, PropertyName = "dotnet")]
         public ClientConfigDotnet Dotnet { get; set; }
     }
 }
