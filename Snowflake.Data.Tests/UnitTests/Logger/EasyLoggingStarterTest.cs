@@ -286,7 +286,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
                     FileAccessPermissions.UserReadWriteExecute), Times.Once);
             }
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath));
+            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
         }
 
         [Test]
