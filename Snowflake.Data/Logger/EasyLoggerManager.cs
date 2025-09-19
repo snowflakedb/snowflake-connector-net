@@ -45,7 +45,7 @@ namespace Snowflake.Data.Log
 
         internal static bool HasEasyLoggingAppender()
         {
-            return SFLoggerImpl.s_appenders.ToArray().Any();
+            return SFLoggerImpl.s_appenders.Any();
         }
 
         private static void RemoveOtherEasyLoggingAppenders(SFAppender appender)

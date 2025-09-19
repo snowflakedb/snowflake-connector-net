@@ -162,7 +162,6 @@ namespace Snowflake.Data.Tests.UnitTests
         private SFLogger GetLogger()
         {
             var logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
-            EasyLoggerManager.AddConsoleAppender();
             return logger;
         }
     }
