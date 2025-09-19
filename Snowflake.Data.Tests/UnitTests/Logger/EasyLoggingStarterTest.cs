@@ -55,6 +55,45 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             }
         };
 
+        private static readonly ClientConfig s_configWithValidLogPermission = new ClientConfig
+        {
+            CommonProps = new ClientConfigCommonProps
+            {
+                LogLevel = "Error",
+                LogPath = LogPath
+            },
+            Dotnet = new ClientConfigDotnet
+            {
+                LogFileUnixPermissions = "640"
+            }
+        };
+
+        private static readonly ClientConfig s_configWithInvalidLogPermission = new ClientConfig
+        {
+            CommonProps = new ClientConfigCommonProps
+            {
+                LogLevel = "Error",
+                LogPath = LogPath
+            },
+            Dotnet = new ClientConfigDotnet
+            {
+                LogFileUnixPermissions = "800"
+            }
+        };
+
+        private static readonly ClientConfig s_configWithIncorrectLogPermissionType = new ClientConfig
+        {
+            CommonProps = new ClientConfigCommonProps
+            {
+                LogLevel = "Error",
+                LogPath = LogPath
+            },
+            Dotnet = new ClientConfigDotnet
+            {
+                LogFileUnixPermissions = "abc"
+            }
+        };
+
         [ThreadStatic]
         private static Mock<EasyLoggingConfigProvider> t_easyLoggingProvider;
 
@@ -87,6 +126,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 t_unixOperations.Object,
                 t_directoryOperations.Object,
                 t_environmentOperations.Object);
+        }
+
+        [TearDown]
+        public void AfterEach()
+        {
+            EasyLoggingStarter.s_logFileUnixPermissions = FileAccessPermissions.UserWrite | FileAccessPermissions.UserRead;
         }
 
         [Test]
@@ -291,6 +336,64 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, "STDOUT"), Times.Once);
+        }
+
+        [Test]
+        public void TestSettingLogPermissionValue()
+        {
+            // arrange
+            const FileAccessPermissions expectedPermissions =
+                FileAccessPermissions.GroupRead |
+                FileAccessPermissions.UserRead |
+                FileAccessPermissions.UserWrite;
+
+            t_easyLoggingProvider
+                .Setup(provider => provider.ProvideConfig(ConfigPath))
+                .Returns(s_configWithValidLogPermission);
+
+            // act
+            t_easyLoggerStarter.Init(ConfigPath);
+
+            // assert
+            Assert.AreEqual(expectedPermissions, EasyLoggingStarter.s_logFileUnixPermissions);
+        }
+
+        [Test]
+        public void TestThatLogPermissionValueDefaultsTo600ForInvalidValue()
+        {
+            // arrange
+            const FileAccessPermissions expectedPermissions =
+                FileAccessPermissions.UserRead |
+                FileAccessPermissions.UserWrite;
+
+            t_easyLoggingProvider
+                .Setup(provider => provider.ProvideConfig(ConfigPath))
+                .Returns(s_configWithInvalidLogPermission);
+
+            // act
+            t_easyLoggerStarter.Init(ConfigPath);
+
+            // assert
+            Assert.AreEqual(expectedPermissions, EasyLoggingStarter.s_logFileUnixPermissions);
+        }
+
+        [Test]
+        public void TestThatLogPermissionValueDefaultsTo600ForIncorrectValueType()
+        {
+            // arrange
+            const FileAccessPermissions expectedPermissions =
+                FileAccessPermissions.UserRead |
+                FileAccessPermissions.UserWrite;
+
+            t_easyLoggingProvider
+                .Setup(provider => provider.ProvideConfig(ConfigPath))
+                .Returns(s_configWithIncorrectLogPermissionType);
+
+            // act
+            t_easyLoggerStarter.Init(ConfigPath);
+
+            // assert
+            Assert.AreEqual(expectedPermissions, EasyLoggingStarter.s_logFileUnixPermissions);
         }
     }
 }
