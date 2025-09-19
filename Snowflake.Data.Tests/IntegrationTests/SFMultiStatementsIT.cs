@@ -378,8 +378,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                       $"desc table {TableName};" +
                                       $"list @%{TableName};" +
                                       $"remove @%{TableName};" +
-                                      "create or replace temporary procedure P1() returns varchar language javascript as $$ return ''; $$;" +
-                                      "call p1();" +
+                                      $"create or replace temporary procedure P1_{TableName}() returns varchar language javascript as $$ return ''; $$;" +
+                                      $"call P1_{TableName}();" +
                                       $"use role {testConfig.role}";
 
                     // Set statement count
@@ -548,7 +548,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestResultSetReturnedForAllQueryTypes()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -572,8 +572,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                       $"copy into @%{TableName} from {TableName};" +
                                       $"list @%{TableName};" +
                                       $"remove @%{TableName};" +
-                                      "create or replace temporary procedure P1() returns varchar language javascript as $$ return ''; $$;" +
-                                      "call p1();" +
+                                      $"create or replace temporary procedure P1_{TableName}() returns varchar language javascript as $$ return ''; $$;" +
+                                      $"call P1_{TableName}();" +
                                       $"use role {testConfig.role}";
 
                     var stmtCount = 16;
