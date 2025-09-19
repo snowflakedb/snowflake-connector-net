@@ -16,7 +16,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private const string NotExistingFilePath = "../../../Resources/EasyLogging/not_existing_config.json";
         private const string LogLevel = "info";
         private const string LogPath = "./test-logs/log_file.log";
-        private const string LogFileUnixPermissions = "640";
         private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
 
         [OneTimeSetUp]

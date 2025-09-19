@@ -1,6 +1,5 @@
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
-using Snowflake.Data.Core;
 using Snowflake.Data.Log;
 using System;
 
