@@ -64,7 +64,7 @@ namespace Snowflake.Data.Core.Revocation
                 return true; // OPEN
             }
             var result = CheckChainRevocation(chain);
-            s_logger.Debug($"Revocation status for certificate: '{certificate.Subject}' with the best chain of: '{joinedChainSubjects}' is: {result.ToString()}. In the revocation check only the best chain was used.");
+            s_logger.Debug($"Revocation status for certificate: '{certificate.Subject}' with the chain provided by System.Net.Security: '{joinedChainSubjects}' is: {result.ToString()}. In the revocation check only the chain provided by System.Net.Security was used.");
             if (result == ChainRevocationCheckResult.ChainUnrevoked)
                 return true; // OPEN
             if (result == ChainRevocationCheckResult.ChainError && _certRevocationCheckMode == CertRevocationCheckMode.Advisory)
