@@ -191,6 +191,21 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
+        public void AppendToFile(string path, string message, Action<UnixStream> validator, Exception ex)
+        {
+            var fileInfo = new UnixFileInfo(path: path);
+            using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
+            {
+                validator?.Invoke(handle);
+                WriteAllText(handle, message, null);
+
+                if (ex != null)
+                {
+                    WriteAllText(handle, ex.ToString(), null);
+                }
+            }
+        }
+
         public virtual long GetCurrentUserId()
         {
             return Syscall.getuid();
