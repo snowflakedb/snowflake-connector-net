@@ -54,7 +54,7 @@ namespace Snowflake.Data.Core.Revocation
             return CheckCertificateRevocationStatus(certificate, chain);
         }
 
-        private bool CheckCertificateRevocationStatus(X509Certificate2 certificate, X509Chain chain)
+        internal bool CheckCertificateRevocationStatus(X509Certificate2 certificate, X509Chain chain)
         {
             var joinedChainSubjects = GetJoinedChainSubjects(chain);
             s_logger.Debug($"Checking revocation status for certificate: '{certificate.Subject}' with the best chain of: {joinedChainSubjects}");
@@ -64,21 +64,10 @@ namespace Snowflake.Data.Core.Revocation
                 return true; // OPEN
             }
             var result = CheckChainRevocation(chain);
-            s_logger.Debug($"Revocation status for certificate: '{certificate.Subject}' with the best chain of: '{joinedChainSubjects}' is: {result.ToString()}");
+            s_logger.Debug($"Revocation status for certificate: '{certificate.Subject}' with the best chain of: '{joinedChainSubjects}' is: {result.ToString()}. In the revocation check only the best chain was used.");
             if (result == ChainRevocationCheckResult.ChainUnrevoked)
                 return true; // OPEN
-            var unsuccessfulResults = new HashSet<ChainRevocationCheckResult> { result };
-            foreach (var alternativeChain in FindAlternativeValidChains(certificate, chain))
-            {
-                var alternativeChainSubjects = GetJoinedChainSubjects(alternativeChain);
-                s_logger.Debug($"Checking revocation status for certificate: '{certificate.Subject}' with alternative chain of: '{alternativeChainSubjects}'");
-                var alternativeResult = CheckChainRevocation(alternativeChain);
-                s_logger.Debug($"Revocation status for certificate: '{certificate.Subject}' with the alternative chain of: '{alternativeChainSubjects}' is: {alternativeResult.ToString()}");
-                if (alternativeResult == ChainRevocationCheckResult.ChainUnrevoked)
-                    return true; // OPEN
-                unsuccessfulResults.Add(alternativeResult);
-            }
-            if (unsuccessfulResults.Contains(ChainRevocationCheckResult.ChainError) && _certRevocationCheckMode == CertRevocationCheckMode.Advisory)
+            if (result == ChainRevocationCheckResult.ChainError && _certRevocationCheckMode == CertRevocationCheckMode.Advisory)
             {
                 s_logger.Debug($"Encountered errors when checking revocation status for the certificate chains for certificate: '{certificate.Subject}'. Allowing to accept the certificate due to Advisory mode (fail open)");
                 return true; // FAIL OPEN
@@ -357,11 +346,6 @@ namespace Snowflake.Data.Core.Revocation
                 s_logger.Error($"Parsing crl failed for the crl downloaded from: {crlUrl}", exception);
                 return null;
             }
-        }
-
-        private List<X509Chain> FindAlternativeValidChains(X509Certificate2 certificate, X509Chain chain)
-        {
-            return new List<X509Chain>(); // TODO: build alternative chains
         }
     }
 }

@@ -18,6 +18,33 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
     public class CertificateRevocationVerifierTest : RevocationTests
     {
         [Test]
+        [TestCase("Enabled", false)]
+        [TestCase("Advisory", true)]
+        [TestCase("Disabled", true)]
+        public void TestRevocationResultForErrorsBasedOnCheckMode(string checkMode, bool expectedResult)
+        {
+            // arrange
+            var certRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), checkMode, true);
+            var certSubject = "CN=ShortLivedCert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+            var certificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[0]);
+            var rootCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
+            var chain = CertificateGenerator.CreateChain(new[] { certificate, rootCertificate });
+            var config = GetHttpConfig(certRevocationCheckMode);
+            var restRequester = new Mock<IRestRequester>();
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.CheckCertificateRevocationStatus(certificate, chain); // there will be an error because we didn't configure crl distribution points
+
+            // assert
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [Test]
         public void TestVerifyCertificateAsUnrevoked()
         {
             // arrange
@@ -240,7 +267,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 .Throws(exceptionProvider);
         }
 
-        private HttpClientConfig GetHttpConfig() =>
+        private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled) =>
             new HttpClientConfig(
                 true,
                 null,
@@ -253,7 +280,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 3,
                 true,
                 false,
-                CertRevocationCheckMode.Enabled.ToString(),
+                checkMode.ToString(),
                 false,
                 false,
                 false);
