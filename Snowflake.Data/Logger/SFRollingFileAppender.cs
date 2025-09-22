@@ -1,9 +1,7 @@
-using Mono.Unix;
-using Mono.Unix.Native;
 using Snowflake.Data.Core;
-using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
+using Snowflake.Data.Logger;
 using System;
 using System.IO;
 using System.Linq;
@@ -37,7 +35,7 @@ internal class SFRollingFileAppender : SFAppender
             }
             else
             {
-                UnixOperations.Instance.AppendToFile(LogFilePath, formattedMessage, SFCredentialManagerFileImpl.Instance.ValidateLogFilePermissions, ex);
+                UnixOperations.Instance.AppendToFile(LogFilePath, formattedMessage, EasyLoggerValidator.Instance.ValidateLogFilePermissions, ex);
             }
         }
         catch
