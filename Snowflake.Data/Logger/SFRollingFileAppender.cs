@@ -33,9 +33,7 @@ internal class SFRollingFileAppender : SFAppender
 
             if (IsWindows)
             {
-                File.AppendAllText(LogFilePath, formattedMessage);
-                if (ex != null)
-                    File.AppendAllText(ex.ToString(), formattedMessage);
+                FileOperations.Instance.Append(LogFilePath, formattedMessage, ex);
             }
             else
             {
