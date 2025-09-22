@@ -269,7 +269,6 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
         private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled) =>
             new HttpClientConfig(
-                true,
                 null,
                 null,
                 null,

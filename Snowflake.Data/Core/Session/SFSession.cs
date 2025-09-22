@@ -54,8 +54,6 @@ namespace Snowflake.Data.Core
 
         internal TimeSpan connectionTimeout => _poolConfig.ConnectionTimeout;
 
-        internal bool InsecureMode;
-
         internal bool isHeartBeatEnabled;
 
         private HttpClient _HttpClient;
@@ -201,7 +199,6 @@ namespace Snowflake.Data.Core
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
-                InsecureMode = extractedProperties.insecureMode;
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);
                 _poolConfig = extractedProperties.BuildConnectionPoolConfig();

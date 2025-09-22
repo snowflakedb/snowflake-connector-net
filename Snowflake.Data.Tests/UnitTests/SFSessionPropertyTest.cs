@@ -572,6 +572,45 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
         }
 
+        [Test]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;", "disabled", "true", "true", "true", "false")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=enabled;useDotnetCrlCheck=false;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true;", "enabled", "false", "false", "false", "true")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=advisory;useDotnetCrlCheck=false;enableCrlDiskCaching=false;enableCrlInMemoryCaching=true;allowCertificatesWithoutCrlUrl=true;", "advisory", "false", "false", "true", "true")]
+        public void TestParseCrlCheckParameters(
+            string connectionString,
+            string expectedCertRevocationCheckMode,
+            string expectedUseDotnetCrlCheck,
+            string expectedEnableCrlDiskCaching,
+            string expectedEnableCrlInMemoryCaching,
+            string expectedAllowCertificatesWithoutCrlUrl)
+        {
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(expectedCertRevocationCheckMode, properties[SFSessionProperty.CERTREVOCATIONCHECKMODE]);
+            Assert.AreEqual(expectedUseDotnetCrlCheck, properties[SFSessionProperty.USEDOTNETCRLCHECK]);
+            Assert.AreEqual(expectedEnableCrlDiskCaching, properties[SFSessionProperty.ENABLECRLDISKCACHING]);
+            Assert.AreEqual(expectedEnableCrlInMemoryCaching, properties[SFSessionProperty.ENABLECRLINMEMORYCACHING]);
+            Assert.AreEqual(expectedAllowCertificatesWithoutCrlUrl, properties[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]);
+        }
+
+        [Test]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=unknown;", "Parameter CERTREVOCATIONCHECKMODE should have one of following values: ENABLED, ADVISORY, DISABLED.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;useDotnetCrlCheck=unknown;", "Parameter USEDOTNETCRLCHECK should have a boolean value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlDiskCaching=unknown;", "Parameter ENABLECRLDISKCACHING should have a boolean value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlInMemoryCaching=unknown;", "Parameter ENABLECRLINMEMORYCACHING should have a boolean value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;allowCertificatesWithoutCrlUrl=unknown;", "Parameter ALLOWCERTIFICATESWITHOUTCRLURL should have a boolean value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=advisory;useDotnetCrlCheck=true;", "'ADVISORY' value of the parameter CERTREVOCATIONCHECKMODE conflicts with 'true' value of the parameter USEDOTNETCRLCHECK.")]
+        public void TestFailOnInvalidCrlParameters(string connectionString, string expectedErrorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
+        }
+
         public static IEnumerable<TestCase> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";
@@ -610,7 +649,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -648,7 +686,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -684,7 +721,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PASSWORD, defPassword },
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -726,7 +762,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PASSWORD, defPassword },
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -770,7 +805,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -809,7 +843,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -846,7 +879,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -885,7 +917,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -926,7 +957,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -964,7 +994,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -1002,7 +1031,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -1042,7 +1070,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },

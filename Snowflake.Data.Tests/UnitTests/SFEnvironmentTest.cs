@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var clientCredentialAuthenticator = CreateAuthenticator("authenticator=oauth_client_credentials;account=test;db=testDb;role=testRole;oauthClientId=abc;oauthClientSecret=def;user=testUser;oauthTokenRequestUrl=https://test.snowflake.com;");
             ((OAuthClientCredentialsAuthenticator)clientCredentialAuthenticator).AccessToken = SecureStringHelper.Encode("qwe");
             var clientCredentialLoginClientEnv = clientCredentialAuthenticator.BuildLoginRequestData().clientEnv;
-            var insecurePatAuthenticator = CreateAuthenticator("authenticator=programmatic_access_token;account=test;db=testDb;role=testRole;token=xyz;user=testUser;application=MyApp;insecureMode=true;");
+            var insecurePatAuthenticator = CreateAuthenticator("authenticator=programmatic_access_token;account=test;db=testDb;role=testRole;token=xyz;user=testUser;application=MyApp;certRevocationCheckMode=enabled;");
             var insecurePatLoginClientEnv = insecurePatAuthenticator.BuildLoginRequestData().clientEnv;
             var clientCredentialLoginClientEnv2 = clientCredentialAuthenticator.BuildLoginRequestData().clientEnv;
 
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(netVersion, clientCredentialLoginClientEnv.netVersion);
             Assert.AreEqual(processName, clientCredentialLoginClientEnv.application);
             Assert.AreEqual(processName, clientCredentialLoginClientEnv.processName);
-            Assert.AreEqual("false", clientCredentialLoginClientEnv.insecureMode);
+            Assert.AreEqual("disabled", clientCredentialLoginClientEnv.certRevocationCheckMode);
             Assert.AreEqual("oauth_client_credentials", clientCredentialLoginClientEnv.oauthType);
             // asserts for client credential second login
             Assert.AreEqual(osVersion, clientCredentialLoginClientEnv2.osVersion);
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(netVersion, clientCredentialLoginClientEnv2.netVersion);
             Assert.AreEqual(processName, clientCredentialLoginClientEnv2.application);
             Assert.AreEqual(processName, clientCredentialLoginClientEnv2.processName);
-            Assert.AreEqual("false", clientCredentialLoginClientEnv2.insecureMode);
+            Assert.AreEqual("disabled", clientCredentialLoginClientEnv2.certRevocationCheckMode);
             Assert.AreEqual("oauth_client_credentials", clientCredentialLoginClientEnv2.oauthType);
             // asserts for PAT login
             Assert.AreEqual(osVersion, insecurePatLoginClientEnv.osVersion);
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(netVersion, insecurePatLoginClientEnv.netVersion);
             Assert.AreEqual("MyApp", insecurePatLoginClientEnv.application);
             Assert.AreEqual(processName, insecurePatLoginClientEnv.processName);
-            Assert.AreEqual("true", insecurePatLoginClientEnv.insecureMode);
+            Assert.AreEqual("enabled", insecurePatLoginClientEnv.certRevocationCheckMode);
             Assert.IsNull(insecurePatLoginClientEnv.oauthType);
             // asserts that first and second client credential login produced the same json
             var firstClientCredentialEnvJson = JsonConvert.SerializeObject(clientCredentialLoginClientEnv);

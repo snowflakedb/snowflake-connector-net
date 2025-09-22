@@ -56,8 +56,8 @@ namespace Snowflake.Data.Tests
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
 
-        private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
-                                                              "account={3};role={4};db={5};schema={6};warehouse={7}";
+        private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
+                                                              "account={3};role={4};db={5};schema={6};warehouse={7};";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         protected virtual string TestName => TestContext.CurrentContext.Test.MethodName;
         protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
@@ -162,7 +162,7 @@ namespace Snowflake.Data.Tests
     [SetUpFixture]
     public class TestEnvironment
     {
-        private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" +
+        private const string ConnectionStringFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                                                    "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
 
         public static TestConfig TestConfig { get; private set; }
