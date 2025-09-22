@@ -8,10 +8,17 @@ internal class SFConsoleAppender : SFAppender
     public void Append(string logLevel, string message, Type type, Exception ex = null)
     {
         var formattedMessage = PatternLayout.Format(logLevel, message, type);
-        Console.Write(formattedMessage);
-        if (ex != null)
+        try
         {
-            Console.WriteLine(ex.ToString());
+            Console.Write(formattedMessage);
+            if (ex != null)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+        catch (Exception consoleEx)
+        {
+            Console.WriteLine($"An error occured while logging to console: {consoleEx.Message}");
         }
     }
 }
