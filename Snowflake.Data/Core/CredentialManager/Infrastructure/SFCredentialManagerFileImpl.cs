@@ -269,28 +269,16 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal void ValidateFilePermissions(UnixStream stream)
         {
-            ValidateUserAndGroupPermissions(stream);
             var allowedPermissions = new[]
             {
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
             };
-            if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
-                ThrowSecurityException("Attempting to read or write a file with too broad permissions assigned");
-        }
-
-        internal void ValidateLogFilePermissions(UnixStream stream)
-        {
-            ValidateUserAndGroupPermissions(stream);
-            if ((stream.FileAccessPermissions & ~EasyLoggingStarter.Instance._logFileUnixPermissions) != 0)
-                ThrowSecurityException("Attempting to read or write to log file with too broad permissions assigned");
-        }
-
-        internal void ValidateUserAndGroupPermissions(UnixStream stream)
-        {
             if (stream.OwnerUser.UserId != _unixOperations.GetCurrentUserId())
                 ThrowSecurityException("Attempting to read or write a file not owned by the effective user of the current process");
             if (stream.OwnerGroup.GroupId != _unixOperations.GetCurrentGroupId())
                 ThrowSecurityException("Attempting to read or write a file not owned by the effective group of the current process");
+            if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
+                ThrowSecurityException("Attempting to read or write a file with too broad permissions assigned");
         }
 
         private void ThrowSecurityException(string errorMessage)
