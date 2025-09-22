@@ -63,7 +63,7 @@ namespace Snowflake.Data.Configuration
             {
                 var errorMessage = "Parsing easy logging configuration failed";
                 s_logger.Error(errorMessage, e);
-                throw new Exception(errorMessage);
+                throw new Exception(errorMessage, e);
             }
         }
 
@@ -72,6 +72,26 @@ namespace Snowflake.Data.Configuration
             if (config.CommonProps.LogLevel != null)
             {
                 EasyLoggingLogLevelExtensions.From(config.CommonProps.LogLevel);
+            }
+            if (config.Dotnet?.LogFileUnixPermissions != null)
+            {
+                int parsedPermissions;
+                try
+                {
+                    parsedPermissions = Convert.ToInt32(config.Dotnet.LogFileUnixPermissions);
+                }
+                catch
+                {
+                    var errorMessage = $"Invalid LogFileUnixPermissions value type: '{config.Dotnet.LogFileUnixPermissions}'. Value should be between 000-777";
+                    s_logger.Error(errorMessage);
+                    throw new Exception(errorMessage);
+                }
+                if (parsedPermissions < 0 || parsedPermissions > 777)
+                {
+                    var errorMessage = $"LogFileUnixPermissions '{config.Dotnet.LogFileUnixPermissions}' is out of valid range (000–777)";
+                    s_logger.Error(errorMessage);
+                    throw new Exception(errorMessage);
+                }
             }
         }
 

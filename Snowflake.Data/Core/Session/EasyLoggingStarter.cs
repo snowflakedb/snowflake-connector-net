@@ -170,24 +170,7 @@ namespace Snowflake.Data.Core
                 s_logger.Warn("LogFileUnixPermissions in client config not found. Using default value: 600");
                 return (FileAccessPermissions)defaultPermissions;
             }
-
-            int parsedPermissions;
-            try
-            {
-                parsedPermissions = Convert.ToInt32(logFileUnixPermissions, 8);
-                if (parsedPermissions < 0 || parsedPermissions > 777)
-                {
-                    s_logger.Warn($"LogFileUnixPermissions '{logFileUnixPermissions}' is out of valid range (000–777). Using default value: 600");
-                    parsedPermissions = defaultPermissions;
-                }
-            }
-            catch
-            {
-                s_logger.Warn($"Invalid LogFileUnixPermissions value '{logFileUnixPermissions}'. Using default value: 600");
-                parsedPermissions = defaultPermissions;
-            }
-
-            return (FileAccessPermissions)parsedPermissions;
+            return (FileAccessPermissions)Convert.ToInt32(logFileUnixPermissions, 8);
         }
 
         private void CheckDirPermissionsOnlyAllowUser(string dirPath)

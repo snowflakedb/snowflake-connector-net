@@ -59,6 +59,38 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             }
         }
 
+        [Test]
+        public void TestThatThrowsExceptionForInvalidPermissionValue()
+        {
+            // arrange
+            var invalidValue = "800";
+            var parser = new EasyLoggingConfigParser();
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, invalidValue));
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
+
+            // assert
+            Assert.IsNotNull(thrown);
+            Assert.That(thrown.InnerException.Message, Does.Contain($"LogFileUnixPermissions '{invalidValue}' is out of valid range (000–777)"));
+        }
+
+        [Test]
+        public void TestThatThrowsExceptionForIncorrectPermissionValueType()
+        {
+            // arrange
+            var incorrectValueType = "abc";
+            var parser = new EasyLoggingConfigParser();
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, incorrectValueType));
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
+
+            // assert
+            Assert.IsNotNull(thrown);
+            Assert.That(thrown.InnerException.Message, Does.Contain($"Invalid LogFileUnixPermissions value type: '{incorrectValueType}'. Value should be between 000-777"));
+        }
+
         [Test, TestCaseSource(nameof(ConfigFilesWithoutValues))]
         public void TestThatParsesConfigFileWithNullValues(string filePath)
         {
