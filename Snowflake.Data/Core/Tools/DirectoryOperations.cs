@@ -40,6 +40,8 @@ namespace Snowflake.Data.Core.Tools
 
         public virtual DirectoryInformation GetParentDirectoryInfo(string path) => new DirectoryInformation(Directory.GetParent(path));
 
+        public virtual string[] GetFiles(string path, string searchPattern) => Directory.GetFiles(path, searchPattern);
+
         public virtual bool IsDirectorySafe(string path)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

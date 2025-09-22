@@ -68,7 +68,7 @@ internal class SFRollingFileAppender : SFAppender
 
         var logDirectory = Path.GetDirectoryName(LogFilePath);
         var logFileName = Path.GetFileName(LogFilePath);
-        var rollFiles = Directory.GetFiles(logDirectory, $"{logFileName}.*.bak")
+        var rollFiles = DirectoryOperations.Instance.GetFiles(logDirectory, $"{logFileName}.*.bak")
             .OrderByDescending(f => f)
             .Skip(MaxSizeRollBackups);
         foreach (var oldRollFile in rollFiles)
