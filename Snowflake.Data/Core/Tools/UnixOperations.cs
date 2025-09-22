@@ -165,13 +165,13 @@ namespace Snowflake.Data.Core.Tools
 
             using (var handle = fileInfo.Open(FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
             {
-                WriteAllText(handle, content, validator);
+                validator?.Invoke(handle);
+                WriteAllText(handle, content);
             }
         }
 
-        public void WriteAllText(UnixStream handle, string content, Action<UnixStream> validator)
+        public void WriteAllText(UnixStream handle, string content)
         {
-            validator?.Invoke(handle);
             using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
             {
                 streamWriter.Write(content);
@@ -197,12 +197,9 @@ namespace Snowflake.Data.Core.Tools
             using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
             {
                 validator?.Invoke(handle);
-                WriteAllText(handle, message, null);
-
+                WriteAllText(handle, message);
                 if (ex != null)
-                {
-                    WriteAllText(handle, ex.ToString(), null);
-                }
+                    WriteAllText(handle, ex.ToString());
             }
         }
 
