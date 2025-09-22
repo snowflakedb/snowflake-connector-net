@@ -57,14 +57,14 @@ namespace Snowflake.Data.Core.Revocation
         internal bool CheckCertificateRevocationStatus(X509Certificate2 certificate, X509Chain chain)
         {
             var joinedChainSubjects = GetJoinedChainSubjects(chain);
-            s_logger.Debug($"Checking revocation status for certificate: '{certificate.Subject}' with the best chain of: {joinedChainSubjects}");
+            s_logger.Debug($"Checking revocation status for certificate: '{certificate.Subject}' with the chain of: {joinedChainSubjects} provided by System.Security");
             if (_certRevocationCheckMode == CertRevocationCheckMode.Disabled)
             {
                 s_logger.Debug($"Certificate revocation status checking is disabled. Allowing to use the certificate: '{certificate.Subject}'");
                 return true; // OPEN
             }
             var result = CheckChainRevocation(chain);
-            s_logger.Debug($"Revocation status for certificate: '{certificate.Subject}' with the chain provided by System.Net.Security: '{joinedChainSubjects}' is: {result.ToString()}. In the revocation check only the chain provided by System.Net.Security was used.");
+            s_logger.Debug($"Revocation status for certificate: '{certificate.Subject}' with the chain provided by System.Security: '{joinedChainSubjects}' is: {result.ToString()}. In the revocation check only the chain provided by System.Security was used.");
             if (result == ChainRevocationCheckResult.ChainUnrevoked)
                 return true; // OPEN
             if (result == ChainRevocationCheckResult.ChainError && _certRevocationCheckMode == CertRevocationCheckMode.Advisory)
