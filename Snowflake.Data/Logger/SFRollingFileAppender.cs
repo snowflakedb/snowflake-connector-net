@@ -19,6 +19,8 @@ internal class SFRollingFileAppender : SFAppender
 
     internal PatternLayout PatternLayout { get; set; }
 
+    private readonly bool IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
     public void Append(string logLevel, string message, Type type, Exception ex = null)
     {
         var formattedMessage = PatternLayout.Format(logLevel, message, type);
@@ -29,7 +31,7 @@ internal class SFRollingFileAppender : SFAppender
                 RollLogFile();
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (IsWindows)
             {
                 File.AppendAllText(LogFilePath, formattedMessage);
                 if (ex != null)
