@@ -128,12 +128,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 t_environmentOperations.Object);
         }
 
-        [TearDown]
-        public void AfterEach()
-        {
-            EasyLoggingStarter.s_logFileUnixPermissions = FileAccessPermissions.UserWrite | FileAccessPermissions.UserRead;
-        }
-
         [Test]
         public void TestThatThrowsErrorWhenLogPathAndHomeDirectoryIsNotSet()
         {
@@ -355,7 +349,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerStarter.Init(ConfigPath);
 
             // assert
-            Assert.AreEqual(expectedPermissions, EasyLoggingStarter.s_logFileUnixPermissions);
+            Assert.AreEqual(expectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
         }
 
         [Test]
@@ -374,7 +368,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerStarter.Init(ConfigPath);
 
             // assert
-            Assert.AreEqual(expectedPermissions, EasyLoggingStarter.s_logFileUnixPermissions);
+            Assert.AreEqual(expectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
         }
 
         [Test]
@@ -393,7 +387,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerStarter.Init(ConfigPath);
 
             // assert
-            Assert.AreEqual(expectedPermissions, EasyLoggingStarter.s_logFileUnixPermissions);
+            Assert.AreEqual(expectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
         }
     }
 }

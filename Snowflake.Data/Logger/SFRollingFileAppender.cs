@@ -52,7 +52,7 @@ internal class SFRollingFileAppender : SFAppender
         if (!DirectoryOperations.Instance.Exists(logDir))
             DirectoryOperations.Instance.CreateDirectory(logDir);
         if (!FileOperations.Instance.Exists(LogFilePath))
-            FileOperations.Instance.Create(LogFilePath, EasyLoggingStarter.s_logFileUnixPermissions).Dispose();
+            FileOperations.Instance.Create(LogFilePath, EasyLoggingStarter.Instance._logFileUnixPermissions).Dispose();
     }
 
     private bool LogFileIsTooLarge()
@@ -77,6 +77,6 @@ internal class SFRollingFileAppender : SFAppender
         }
 
         if (!FileOperations.Instance.Exists(LogFilePath))
-            FileOperations.Instance.Create(LogFilePath, EasyLoggingStarter.s_logFileUnixPermissions).Dispose();
+            FileOperations.Instance.Create(LogFilePath, EasyLoggingStarter.Instance._logFileUnixPermissions).Dispose();
     }
 }

@@ -26,7 +26,7 @@ namespace Snowflake.Data.Core
 
         private EasyLoggingInitTrialParameters _initTrialParameters = null;
 
-        internal static FileAccessPermissions s_logFileUnixPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
+        internal FileAccessPermissions _logFileUnixPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
 
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
             EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
@@ -73,10 +73,10 @@ namespace Snowflake.Data.Core
                 }
                 var logLevel = GetLogLevel(config.CommonProps.LogLevel);
                 var logPath = GetLogPath(config.CommonProps.LogPath);
-                s_logFileUnixPermissions = GetLogFileUnixPermissions(config.Dotnet?.LogFileUnixPermissions);
+                _logFileUnixPermissions = GetLogFileUnixPermissions(config.Dotnet?.LogFileUnixPermissions);
                 s_logger.Info($"LogLevel set to {logLevel}");
                 s_logger.Info($"LogPath set to {logPath}");
-                s_logger.Info($"LogFileUnixPermissions set to {s_logFileUnixPermissions}");
+                s_logger.Info($"LogFileUnixPermissions set to {_logFileUnixPermissions}");
                 _easyLoggerManager.ReconfigureEasyLogging(logLevel, logPath);
                 _initTrialParameters = new EasyLoggingInitTrialParameters(configFilePathFromConnectionString);
             }
