@@ -40,7 +40,7 @@ internal class SFRollingFileAppender : SFAppender
             else
             {
                 var fileInfo = new UnixFileInfo(path: LogFilePath);
-                using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, (FilePermissions)EasyLoggingStarter.s_logFileUnixPermissions))
+                using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
                 {
                     SFCredentialManagerFileImpl.Instance.ValidateLogFilePermissions(handle);
                     UnixOperations.Instance.WriteAllText(handle, formattedMessage, null);
