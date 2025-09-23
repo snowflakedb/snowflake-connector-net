@@ -6,7 +6,6 @@ using Snowflake.Data.Log;
 using System;
 using System.IO;
 using System.Linq;
-using System.Security;
 using System.Threading;
 using KeyTokenDict = System.Collections.Generic.Dictionary<string, string>;
 
@@ -269,22 +268,13 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal void ValidateFilePermissions(UnixStream stream)
         {
+            ValidatorOperations.Instance.ValidateUserAndGroupPermissions(stream);
             var allowedPermissions = new[]
             {
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
             };
-            if (stream.OwnerUser.UserId != _unixOperations.GetCurrentUserId())
-                ThrowSecurityException("Attempting to read or write a file not owned by the effective user of the current process");
-            if (stream.OwnerGroup.GroupId != _unixOperations.GetCurrentGroupId())
-                ThrowSecurityException("Attempting to read or write a file not owned by the effective group of the current process");
             if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
-                ThrowSecurityException("Attempting to read or write a file with too broad permissions assigned");
-        }
-
-        private void ThrowSecurityException(string errorMessage)
-        {
-            s_logger.Error(errorMessage);
-            throw new SecurityException(errorMessage);
+                ValidatorOperations.Instance.ThrowSecurityException("Attempting to read or write a file with too broad permissions assigned");
         }
     }
 }
