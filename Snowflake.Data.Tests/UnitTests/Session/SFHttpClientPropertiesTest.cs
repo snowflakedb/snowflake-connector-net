@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
@@ -48,6 +49,67 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
             Assert.AreEqual(clientSessionKeepAlive, parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
             Assert.AreEqual(clientStoreTemporaryCredential, parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
+        }
+
+        [Test]
+        [TestCase(1)]
+        [TestCase(10)]
+        [TestCase(100)]
+        public void TestSettingConnectionLimitProperty(int expectedConnectionLimit)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT={expectedConnectionLimit}";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+
+            // assert
+            Assert.AreEqual(expectedConnectionLimit, extractedProperties._servicePointConnectionLimit);
+        }
+
+        [Test]
+        public void TestSettingConnectionLimitPropertyToLessThan1()
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT={0}";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+
+            // assert
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+        }
+
+        [Test]
+        public void TestSettingConnectionLimitPropertyToNoValue()
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT=";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+
+            // assert
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+        }
+
+        [Test]
+        public void TestThrowsExceptionWhenSettingConnectionLimitPropertyToNonStringValue()
+        {
+            // arrange
+            var parameterName = "SERVICE_POINT_CONNECTION_LIMIT";
+            var expectedErrorMessage = $"Error: Invalid parameter value  for {parameterName}";
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;{parameterName}=abc";
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.IsTrue(thrown.Message.Contains(expectedErrorMessage));
         }
 
         [Test]
