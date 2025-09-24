@@ -306,7 +306,7 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, CRL_REVOCATION_CHECK_MODE: {4} }}",
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, CERT_REVOCATION_CHECK_MODE: {4} }}",
                 application, osVersion, netRuntime, netVersion, certRevocationCheckMode);
         }
 

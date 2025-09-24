@@ -1,4 +1,4 @@
-using System;
+using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Tests.Util
 {
@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.Util
     {
         public static string DisableCrlRevocationCheck(string connectionString)
         {
-            var modifiedConnectionString = connectionString.Replace("certRevocationCheckMode=enabled", "certRevocationCheckMode=disabled", StringComparison.InvariantCultureIgnoreCase);
+            var modifiedConnectionString = Regex.Replace(connectionString, "certRevocationCheckMode=enabled", "certRevocationCheckMode=disabled", RegexOptions.IgnoreCase);
             if (connectionString != modifiedConnectionString)
                 return modifiedConnectionString;
             return connectionString + "certRevocationCheckMode=disabled;";
