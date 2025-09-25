@@ -16,6 +16,8 @@ namespace Snowflake.Data.Log
 
         public void Debug(string message, Exception ex = null)
         {
+            if (!IsDebugEnabled())
+                return;
             message = SecretDetector.MaskSecrets(message).maskedText;
             _snowflakeLogger.Debug(message, ex);
             SFLoggerFactory.s_customLogger.LogDebug(FormatBrackets(message), ex);
@@ -23,6 +25,8 @@ namespace Snowflake.Data.Log
 
         public void Info(string message, Exception ex = null)
         {
+            if (!IsInfoEnabled())
+                return;
             message = SecretDetector.MaskSecrets(message).maskedText;
             _snowflakeLogger.Info(message, ex);
             SFLoggerFactory.s_customLogger.LogInformation(FormatBrackets(message), ex);
@@ -30,6 +34,8 @@ namespace Snowflake.Data.Log
 
         public void Warn(string message, Exception ex = null)
         {
+            if (!IsWarnEnabled())
+                return;
             message = SecretDetector.MaskSecrets(message).maskedText;
             _snowflakeLogger.Warn(message, ex);
             SFLoggerFactory.s_customLogger.LogWarning(FormatBrackets(message), ex);
@@ -37,6 +43,8 @@ namespace Snowflake.Data.Log
 
         public void Error(string message, Exception ex = null)
         {
+            if (!IsErrorEnabled())
+                return;
             message = SecretDetector.MaskSecrets(message).maskedText;
             _snowflakeLogger.Error(message, ex);
             SFLoggerFactory.s_customLogger.LogError(FormatBrackets(message), ex);

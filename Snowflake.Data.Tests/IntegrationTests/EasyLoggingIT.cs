@@ -29,12 +29,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public static void AfterAll()
         {
             Directory.Delete(s_workingDirectory, true);
+            EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
         }
 
         [TearDown]
         public static void AfterEach()
         {
-            EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Warn);
+            EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
         }
 
         [Test]

@@ -1,24 +1,26 @@
-using Snowflake.Data.Log;
 using System;
 
-internal class SFConsoleAppender : SFAppender
+namespace Snowflake.Data.Log
 {
-    internal PatternLayout PatternLayout { get; set; }
-
-    public void Append(string logLevel, string message, Type type, Exception ex = null)
+    internal class SFConsoleAppender : SFAppender
     {
-        var formattedMessage = PatternLayout.Format(logLevel, message, type);
-        try
+        internal PatternLayout PatternLayout { get; set; }
+
+        public void Append(string logLevel, string message, Type type, Exception ex = null)
         {
-            Console.Write(formattedMessage);
-            if (ex != null)
+            var formattedMessage = PatternLayout.Format(logLevel, message, type);
+            try
             {
-                Console.WriteLine(ex.ToString());
+                Console.Write(formattedMessage);
+                if (ex != null)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
             }
-        }
-        catch (Exception consoleEx)
-        {
-            Console.WriteLine($"An error occured while logging to console: {consoleEx.Message}");
+            catch (Exception consoleEx)
+            {
+                Console.WriteLine($"An error occured while logging to console: {consoleEx.Message}");
+            }
         }
     }
 }

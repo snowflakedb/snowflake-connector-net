@@ -8,7 +8,7 @@ namespace Snowflake.Data.Log
         private readonly Type _type;
         internal static List<SFAppender> s_appenders = new List<SFAppender>();
         internal static LoggingEvent s_level = LoggingEvent.OFF;
-
+        private static readonly object s_lock = new object();
         private static bool s_isDebugEnabled = false;
         private static bool s_isInfoEnabled = false;
         private static bool s_isWarnEnabled = false;
@@ -21,8 +21,11 @@ namespace Snowflake.Data.Log
 
         internal static void SetLevel(LoggingEvent level)
         {
-            s_level = level;
-            SetEnableValues();
+            lock (s_lock)
+            {
+                s_level = level;
+                SetEnableValues();
+            }
         }
 
         private static void SetEnableValues()

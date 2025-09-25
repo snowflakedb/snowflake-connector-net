@@ -41,11 +41,11 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
-        public virtual void Append(string path, string content, Exception ex)
+        public virtual void Append(string path, string mainContent, string additionalContent)
         {
-            File.AppendAllText(path, content);
-            if (ex != null)
-                File.AppendAllText(path, ex.ToString());
+            File.AppendAllText(path, mainContent);
+            if (additionalContent != null)
+                File.AppendAllText(path, additionalContent);
         }
 
         public virtual void WriteAllBytes(string path, byte[] bytes)

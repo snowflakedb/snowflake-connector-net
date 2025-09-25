@@ -20,5 +20,4 @@ namespace Snowflake.Data.Log
             return;
         }
     }
-
 }

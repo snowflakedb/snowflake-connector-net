@@ -11,8 +11,6 @@ namespace Snowflake.Data.Log
 
         private readonly object _lockForExclusiveConfigure = new object();
 
-        internal string AppenderPrefix = "SFEasyLogging";
-
         private readonly EasyLoggingLevelMapper _levelMapper = EasyLoggingLevelMapper.Instance;
 
         public virtual void ReconfigureEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel, string logsPath)
@@ -39,7 +37,8 @@ namespace Snowflake.Data.Log
             lock (_lockForExclusiveConfigure)
             {
                 SFLoggerImpl.SetLevel(sfLoggerLevel);
-                RemoveOtherEasyLoggingAppenders(null);
+                if (easyLoggingLogLevel == EasyLoggingLogLevel.Off)
+                    RemoveOtherEasyLoggingAppenders(null);
             }
         }
 

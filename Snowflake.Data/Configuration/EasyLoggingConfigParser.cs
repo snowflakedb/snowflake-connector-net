@@ -63,7 +63,7 @@ namespace Snowflake.Data.Configuration
             {
                 var errorMessage = "Parsing easy logging configuration failed";
                 s_logger.Error(errorMessage, e);
-                throw new Exception(errorMessage, e);
+                throw new Exception(errorMessage);
             }
         }
 

@@ -167,7 +167,7 @@ namespace Snowflake.Data.Core
             var defaultPermissions = Convert.ToInt32("600", 8); // User Read/Write
             if (string.IsNullOrEmpty(logFileUnixPermissions))
             {
-                s_logger.Warn("LogFileUnixPermissions in client config not found. Using default value: 600");
+                s_logger.Debug("LogFileUnixPermissions in client config not found. Using default value: 600");
                 return (FileAccessPermissions)defaultPermissions;
             }
             return (FileAccessPermissions)Convert.ToInt32(logFileUnixPermissions, 8);

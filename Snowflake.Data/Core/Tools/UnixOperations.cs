@@ -166,15 +166,10 @@ namespace Snowflake.Data.Core.Tools
             using (var handle = fileInfo.Open(FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
             {
                 validator?.Invoke(handle);
-                WriteAllText(handle, content);
-            }
-        }
-
-        public void WriteAllText(UnixStream handle, string content)
-        {
-            using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
-            {
-                streamWriter.Write(content);
+                using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
+                {
+                    streamWriter.Write(content);
+                }
             }
         }
 
@@ -191,15 +186,18 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
-        public void AppendToFile(string path, string message, Action<UnixStream> validator, Exception ex)
+        public void AppendToFile(string path, string mainContent, string additionalContent, Action<UnixStream> validator)
         {
             var fileInfo = new UnixFileInfo(path: path);
             using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
             {
                 validator?.Invoke(handle);
-                WriteAllText(handle, message);
-                if (ex != null)
-                    WriteAllText(handle, ex.ToString());
+                using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
+                {
+                    streamWriter.Write(mainContent);
+                    if (additionalContent != null)
+                        streamWriter.Write(additionalContent);
+                }
             }
         }
 
