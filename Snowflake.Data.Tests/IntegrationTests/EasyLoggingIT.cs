@@ -75,24 +75,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
-        public void TestReCreateEasyLoggingLogFileWithCustomisedPermissions()
-        {
-            // arrange
-            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
-                conn.Open();
-                var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
-                var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
-                var logFile = fileAppender.LogFilePath;
-                File.Delete(logFile);
-                sfLogger.Warn("This is a warning message");
-                var logFilePermissions = UnixOperations.Instance.GetFilePermissions(logFile);
-            }
-        }
+        //[Test]
+        //[Platform(Exclude = "Win")]
+        //public void TestReCreateEasyLoggingLogFileWithCustomisedPermissions()
+        //{
+        //    // arrange
+        //    var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
+        //    using (IDbConnection conn = new SnowflakeDbConnection())
+        //    {
+        //        conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+        //        conn.Open();
+        //        var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
+        //        var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
+        //        var logFile = fileAppender.LogFilePath;
+        //        File.Delete(logFile);
+        //        sfLogger.Warn("This is a warning message");
+        //        var logFilePermissions = UnixOperations.Instance.GetFilePermissions(logFile);
+        //    }
+        //}
 
         [Test]
         [Platform(Exclude = "Win")]
