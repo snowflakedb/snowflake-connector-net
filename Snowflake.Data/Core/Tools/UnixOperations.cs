@@ -189,6 +189,9 @@ namespace Snowflake.Data.Core.Tools
         public long AppendToFile(string path, string mainContent, string additionalContent, Action<UnixStream> validator)
         {
             var fileInfo = new UnixFileInfo(path: path);
+            if (!fileInfo.Exists)
+                CreateFileWithPermissions(path, EasyLoggingStarter.Instance._logFileUnixPermissions);
+
             using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
             {
                 validator?.Invoke(handle);

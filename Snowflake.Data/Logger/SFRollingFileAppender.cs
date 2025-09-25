@@ -33,7 +33,7 @@ namespace Snowflake.Data.Log
 
         private readonly bool _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
-        public void Append(string logLevel, string message, Type type, Exception ex = null, bool retryAppend = true)
+        public void Append(string logLevel, string message, Type type, Exception ex = null)
         {
             var formattedMessage = PatternLayout.Format(logLevel, message, type);
             try
@@ -54,16 +54,9 @@ namespace Snowflake.Data.Log
                     RollLogFile();
                 }
             }
-            catch (Exception error)
+            catch
             {
-                if (retryAppend && error is FileNotFoundException)
-                {
-                    Console.Error.WriteLine($"Writing to log file that doesn't exist. Attempting to retry append...");
-                    ActivateOptions();
-                    Append(logLevel, message, type, ex, false);
-                }
-                else
-                    Console.Error.WriteLine($"Encountered an error while writing log to file: {error.Message}");
+                Console.Error.WriteLine($"Encountered an error while writing log to file");
             }
         }
 
