@@ -76,7 +76,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [NonParallelizable]
         [Platform(Exclude = "Win")]
         public void TestReCreateEasyLoggingLogFileWithCustomisedPermissions()
         {
@@ -89,12 +88,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
                 var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
                 var logFile = fileAppender.LogFilePath;
-                Console.WriteLine($"Log file path: {logFile}");
-                Console.WriteLine($"Log file exists before delete: {File.Exists(logFile)}");
                 File.Delete(logFile);
-                Console.WriteLine($"Log file exists after delete: {File.Exists(logFile)}");
                 sfLogger.Warn("This is a warning message");
-                Console.WriteLine($"Log file exists after warn: {File.Exists(logFile)}");
                 var logFilePermissions = UnixOperations.Instance.GetFilePermissions(logFile);
             }
         }
