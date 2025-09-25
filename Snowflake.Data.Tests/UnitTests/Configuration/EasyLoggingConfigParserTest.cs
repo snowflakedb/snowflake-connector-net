@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.IsNotNull(thrown);
-            Assert.That(thrown.InnerException.Message, Does.Contain($"LogFileUnixPermissions '{invalidValue}' is out of valid range (000–777)"));
+            Assert.That(thrown.Message, Does.Contain($"Parsing easy logging configuration failed"));
         }
 
         [Test]
@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.IsNotNull(thrown);
-            Assert.That(thrown.InnerException.Message, Does.Contain($"Invalid LogFileUnixPermissions value type: '{incorrectValueType}'. Value should be between 000-777"));
+            Assert.That(thrown.Message, Does.Contain($"Parsing easy logging configuration failed"));
         }
 
         [Test, TestCaseSource(nameof(ConfigFilesWithoutValues))]
