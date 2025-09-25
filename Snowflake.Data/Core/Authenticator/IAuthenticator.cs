@@ -61,7 +61,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             this.session = session;
             this.authName = authName;
-            ClientEnv.insecureMode = session.properties[SFSessionProperty.INSECUREMODE];
+            ClientEnv.certRevocationCheckMode = session.properties[SFSessionProperty.CERTREVOCATIONCHECKMODE];
             if (session.properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
             {
                 ClientEnv.application = applicationName;
