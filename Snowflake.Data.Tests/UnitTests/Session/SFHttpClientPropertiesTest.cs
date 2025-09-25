@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestExtractProperties(PropertiesTestCase testCase)
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, new SessionPropertiesContext());
+            var properties = SFSessionProperties.ParseConnectionString(testCase.connectionString, new SessionPropertiesContext());
             var proxyProperties = new SFSessionHttpClientProxyProperties();
 
             // act
@@ -162,7 +162,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             var defaultProperties = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test",
+                connectionString = "account=test;user=test;password=test",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -182,7 +182,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithValidateDefaultParametersChanged = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;validate_default_parameters=false",
+                connectionString = "account=test;user=test;password=test;validate_default_parameters=false",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = false,
@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithClientSessionKeepAliveChanged = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;client_session_keep_alive=true",
+                connectionString = "account=test;user=test;password=test;client_session_keep_alive=true",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithTimeoutChanged = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;connection_timeout=15",
+                connectionString = "account=test;user=test;password=test;connection_timeout=15",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -242,7 +242,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithCertRevocationConfigChanged = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;useDotnetCrlCheck=false;certRevocationCheckMode=advisory;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true",
+                connectionString = "account=test;user=test;password=test;useDotnetCrlCheck=false;certRevocationCheckMode=advisory;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -263,7 +263,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithDisableRetryChanged = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;disableRetry=true",
+                connectionString = "account=test;user=test;password=test;disableRetry=true",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -283,7 +283,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithForceRetryOn404Changed = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;forceRetryOn404=true",
+                connectionString = "account=test;user=test;password=test;forceRetryOn404=true",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -303,7 +303,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithRetryTimeoutChangedToAValueAbove300 = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;retry_timeout=600",
+                connectionString = "account=test;user=test;password=test;retry_timeout=600",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -323,7 +323,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithRetryTimeoutChangedToAValueBelow300 = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;retry_timeout=15",
+                connectionString = "account=test;user=test;password=test;retry_timeout=15",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -343,7 +343,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithRetryTimeoutChangedToZero = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;retry_timeout=0",
+                connectionString = "account=test;user=test;password=test;retry_timeout=0",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -363,7 +363,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithMaxHttpRetriesChangedToAValueAbove7 = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;maxHttpRetries=10",
+                connectionString = "account=test;user=test;password=test;maxHttpRetries=10",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -383,7 +383,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithMaxHttpRetriesChangedToAValueBelow7 = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;maxHttpRetries=5",
+                connectionString = "account=test;user=test;password=test;maxHttpRetries=5",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -403,7 +403,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithMaxHttpRetriesChangedToZero = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;maxHttpRetries=0",
+                connectionString = "account=test;user=test;password=test;maxHttpRetries=0",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -441,7 +441,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         public class PropertiesTestCase
         {
-            internal string conectionString;
+            internal string connectionString;
             internal SFSessionHttpClientProperties expectedProperties;
         }
     }
