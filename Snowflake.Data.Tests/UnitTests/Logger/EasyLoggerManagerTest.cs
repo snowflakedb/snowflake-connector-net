@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
@@ -25,6 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         [OneTimeTearDown]
         public static void CleanUp()
         {
+            EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
             RemoveEasyLoggingLogFiles();
         }
 
@@ -119,7 +121,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         public void TestThatRollsLogIfSizeIsTooBig()
         {
             // arrange
-            const int expecetedBackupLogCount = 2;
+            const int ExpectedBackupLogCount = 2;
             var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Trace, t_directoryLogPath);
 
@@ -131,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             {
                 LogFilePath = Path.Combine(t_directoryLogPath, logFileName),
                 MaximumFileSizeInBytes = 1,
-                MaxSizeRollBackups = expecetedBackupLogCount,
+                MaxSizeRollBackups = ExpectedBackupLogCount,
                 PatternLayout = EasyLoggerManager.PatternLayout()
             };
             appender.ActivateOptions();
@@ -141,12 +143,12 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             for (int i = 0; i < 5; i++)
             {
                 logger.Debug(DebugMessage);
-                System.Threading.Thread.Sleep(1000);
+                Thread.Sleep(1000);
             }
             var backupLogs = Directory.GetFiles(t_directoryLogPath, $"{logFileName}.*.bak");
 
             // assert
-            Assert.AreEqual(expecetedBackupLogCount, backupLogs.Length);
+            Assert.AreEqual(ExpectedBackupLogCount, backupLogs.Length);
         }
 
         [Test]

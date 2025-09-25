@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture, NonParallelizable]
     class SFLoggerTest
     {
-        SFLogger _logger;
+        private SFLogger _logger;
 
         [OneTimeSetUp]
         public static void BeforeTest()
@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [OneTimeTearDown]
         public static void AfterAll()
         {
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Off, "STDOUT");
+            EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
         }
 
         [Test]

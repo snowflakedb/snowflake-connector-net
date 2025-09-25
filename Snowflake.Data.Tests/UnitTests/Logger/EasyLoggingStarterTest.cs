@@ -310,7 +310,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestSettingLogPermissionValue()
         {
             // arrange
-            const FileAccessPermissions expectedPermissions =
+            const FileAccessPermissions ExpectedPermissions =
                 FileAccessPermissions.GroupRead |
                 FileAccessPermissions.UserRead |
                 FileAccessPermissions.UserWrite;
@@ -323,7 +323,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerStarter.Init(ConfigPath);
 
             // assert
-            Assert.AreEqual(expectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
+            Assert.AreEqual(ExpectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
         }
     }
 }

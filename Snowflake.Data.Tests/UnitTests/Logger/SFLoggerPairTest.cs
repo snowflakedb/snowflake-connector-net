@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [OneTimeTearDown]
         public static void AfterAll()
         {
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Off, "STDOUT");
+            EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
         }
 
         [SetUp]
