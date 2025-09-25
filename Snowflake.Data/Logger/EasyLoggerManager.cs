@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Log
 {
@@ -63,7 +64,7 @@ namespace Snowflake.Data.Log
             var patternLayout = PatternLayout();
             var randomFileName = $"snowflake_dotnet_{Path.GetRandomFileName()}";
             var logFileName = randomFileName.Substring(0, randomFileName.Length - 4) + ".log";
-            var appender = new SFRollingFileAppender
+            var appender = new SFRollingFileAppender(FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance)
             {
                 PatternLayout = patternLayout,
                 LogFilePath = Path.Combine(directoryPath, logFileName),

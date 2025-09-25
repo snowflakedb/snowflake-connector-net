@@ -9,10 +9,13 @@ namespace Snowflake.Data.Core.Tools
 
         public DateTime LastWriteTimeUtc { get; internal set; }
 
+        public long Length { get; internal set; }
+
         public FileInformation(FileInfo fileInfo)
         {
             Exists = fileInfo.Exists;
             LastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
+            Length = fileInfo.Length;
         }
 
         public FileInformation()

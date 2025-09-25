@@ -18,6 +18,19 @@ namespace Snowflake.Data.Log
 
         internal PatternLayout PatternLayout { get; set; }
 
+        private readonly FileOperations _fileOperations;
+
+        private readonly UnixOperations _unixOperations;
+
+        private readonly DirectoryOperations _directoryOperations;
+
+        public SFRollingFileAppender(FileOperations fileOperations, UnixOperations unixOperations, DirectoryOperations directoryOperations)
+        {
+            _fileOperations = fileOperations;
+            _unixOperations = unixOperations;
+            _directoryOperations = directoryOperations;
+        }
+
         private readonly bool _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
         public void Append(string logLevel, string message, Type type, Exception ex = null)
@@ -25,20 +38,22 @@ namespace Snowflake.Data.Log
             var formattedMessage = PatternLayout.Format(logLevel, message, type);
             try
             {
-                if (LogFileIsTooLarge())
+                long fileSize;
+                if (_isWindows)
+                {
+                    _fileOperations.Append(LogFilePath, formattedMessage, ex?.ToString());
+                    fileSize = LogFileSize();
+                }
+                else
+                {
+                    fileSize = _unixOperations.AppendToFile(LogFilePath, formattedMessage, ex?.ToString(),
+                        EasyLoggerValidator.Instance.ValidateLogFilePermissions);
+                }
+                if (fileSize > MaximumFileSizeInBytes)
                 {
                     RollLogFile();
                 }
 
-                if (_isWindows)
-                {
-                    FileOperations.Instance.Append(LogFilePath, formattedMessage, ex?.ToString());
-                }
-                else
-                {
-                    UnixOperations.Instance.AppendToFile(LogFilePath, formattedMessage, ex?.ToString(),
-                        EasyLoggerValidator.Instance.ValidateLogFilePermissions);
-                }
             }
             catch
             {
@@ -49,16 +64,16 @@ namespace Snowflake.Data.Log
         public void ActivateOptions()
         {
             var logDir = Path.GetDirectoryName(LogFilePath);
-            if (!DirectoryOperations.Instance.Exists(logDir))
-                DirectoryOperations.Instance.CreateDirectory(logDir);
-            if (!FileOperations.Instance.Exists(LogFilePath))
-                FileOperations.Instance.Create(LogFilePath, EasyLoggingStarter.Instance._logFileUnixPermissions).Dispose();
+            if (!_directoryOperations.Exists(logDir))
+                _directoryOperations.CreateDirectory(logDir);
+            if (!_fileOperations.Exists(LogFilePath))
+                _fileOperations.Create(LogFilePath, EasyLoggingStarter.Instance._logFileUnixPermissions).Dispose();
         }
 
-        private bool LogFileIsTooLarge()
+        private long LogFileSize()
         {
-            FileInfo fileInfo = new FileInfo(LogFilePath);
-            return fileInfo.Exists && fileInfo.Length > MaximumFileSizeInBytes;
+            var fileInfo = _fileOperations.GetFileInfo(LogFilePath);
+            return fileInfo.Exists ? fileInfo.Length : 0;
         }
 
         private void RollLogFile()
@@ -68,7 +83,7 @@ namespace Snowflake.Data.Log
 
             var logDirectory = Path.GetDirectoryName(LogFilePath);
             var logFileName = Path.GetFileName(LogFilePath);
-            var rollFiles = DirectoryOperations.Instance.GetFiles(logDirectory, $"{logFileName}.*.bak")
+            var rollFiles = _directoryOperations.GetFiles(logDirectory, $"{logFileName}.*.bak")
                 .OrderByDescending(f => f)
                 .Skip(MaxSizeRollBackups);
             foreach (var oldRollFile in rollFiles)
@@ -76,8 +91,8 @@ namespace Snowflake.Data.Log
                 File.Delete(oldRollFile);
             }
 
-            if (!FileOperations.Instance.Exists(LogFilePath))
-                FileOperations.Instance.Create(LogFilePath, EasyLoggingStarter.Instance._logFileUnixPermissions).Dispose();
+            if (!_fileOperations.Exists(LogFilePath))
+                _fileOperations.Create(LogFilePath, EasyLoggingStarter.Instance._logFileUnixPermissions).Dispose();
         }
     }
 }

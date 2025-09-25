@@ -186,7 +186,7 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
-        public void AppendToFile(string path, string mainContent, string additionalContent, Action<UnixStream> validator)
+        public long AppendToFile(string path, string mainContent, string additionalContent, Action<UnixStream> validator)
         {
             var fileInfo = new UnixFileInfo(path: path);
             using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
@@ -199,6 +199,7 @@ namespace Snowflake.Data.Core.Tools
                         streamWriter.Write(additionalContent);
                 }
             }
+            return fileInfo.Length;
         }
 
         public virtual long GetCurrentUserId()

@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
@@ -126,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             appenders.Remove(appenders[0]);
             var randomFileName = $"snowflake_dotnet_{Path.GetRandomFileName()}";
             var logFileName = randomFileName.Substring(0, randomFileName.Length - 4) + ".log";
-            var appender = new SFRollingFileAppender()
+            var appender = new SFRollingFileAppender(FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance)
             {
                 LogFilePath = Path.Combine(t_directoryLogPath, logFileName),
                 MaximumFileSizeInBytes = 1,
