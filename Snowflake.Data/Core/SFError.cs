@@ -98,6 +98,12 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270064)]
         OAUTH_TOKEN_REQUEST_ERROR,
 
+        [SFErrorAttr(errorCode = 270065)]
+        EXPERIMENTAL_AUTHENTICATION_DISABLED,
+
+        [SFErrorAttr(errorCode = 270066)]
+        WIF_ATTESTATION_ERROR,
+
         [SFErrorAttr(errorCode = 390195)]
         ID_TOKEN_INVALID,
 

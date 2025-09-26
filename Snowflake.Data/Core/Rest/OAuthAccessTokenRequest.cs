@@ -12,6 +12,8 @@ namespace Snowflake.Data.Core.Rest
 
         public string RedirectUri { get; set; }
 
+        public string EnableSingleUseRefreshTokens { get; set; }
+
         protected override Dictionary<string, string> GetRequestValues()
         {
             var requestValues = new Dictionary<string, string>
@@ -25,6 +27,8 @@ namespace Snowflake.Data.Core.Rest
                 requestValues.Add("code_verifier", CodeVerifier);
             if (!string.IsNullOrEmpty(RedirectUri))
                 requestValues.Add("redirect_uri", RedirectUri);
+            if (!string.IsNullOrEmpty(EnableSingleUseRefreshTokens))
+                requestValues.Add("enable_single_use_refresh_tokens", EnableSingleUseRefreshTokens);
             return requestValues;
         }
     }

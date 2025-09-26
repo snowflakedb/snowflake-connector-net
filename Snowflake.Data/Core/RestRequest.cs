@@ -244,9 +244,6 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "AUTHENTICATOR", NullValueHandling = NullValueHandling.Ignore)]
         internal String Authenticator { get; set; }
 
-        [JsonProperty(PropertyName = "OAUTH_TYPE", NullValueHandling = NullValueHandling.Ignore)]
-        internal String OAuthType { get; set; }
-
         [JsonProperty(PropertyName = "CLIENT_ENVIRONMENT")]
         internal LoginRequestClientEnv clientEnv { get; set; }
 
@@ -264,6 +261,9 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "PASSCODE", NullValueHandling = NullValueHandling.Ignore)]
         internal string passcode;
+
+        [JsonProperty(PropertyName = "PROVIDER", NullValueHandling = NullValueHandling.Ignore)]
+        internal string Provider { get; set; }
 
         [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
         internal Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
@@ -292,16 +292,33 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "NET_VERSION")]
         internal string netVersion { get; set; }
 
-        [JsonProperty(PropertyName = "INSECURE_MODE")]
-        internal string insecureMode { get; set; }
+        [JsonProperty(PropertyName = "CERT_REVOCATION_CHECK_MODE")]
+        internal string certRevocationCheckMode { get; set; }
+
+        [JsonProperty(PropertyName = "OAUTH_TYPE")]
+        internal string oauthType { get; set; }
+
+        [JsonIgnore]
+        internal string processName { get; set; }
 
         [JsonIgnore]
         internal bool IsNetFramework => netRuntime.Contains("NETFramework");
 
         public override string ToString()
         {
-            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, INSECURE_MODE: {4} }}",
-                application, osVersion, netRuntime, netVersion, insecureMode);
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, CERT_REVOCATION_CHECK_MODE: {4} }}",
+                application, osVersion, netRuntime, netVersion, certRevocationCheckMode);
+        }
+
+        public LoginRequestClientEnv CopyUnchangingValues()
+        {
+            return new LoginRequestClientEnv()
+            {
+                osVersion = osVersion,
+                netRuntime = netRuntime,
+                netVersion = netVersion,
+                processName = processName
+            };
         }
     }
 

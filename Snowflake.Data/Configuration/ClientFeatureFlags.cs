@@ -1,4 +1,6 @@
 using System;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
@@ -17,6 +19,16 @@ namespace Snowflake.Data.Configuration
         internal ClientFeatureFlags(EnvironmentOperations environmentOperations)
         {
             IsEnabledExperimentalAuthentication = ReadEnabledExperimentalAuthentication(environmentOperations);
+        }
+
+        public void VerifyIfExperimentalAuthenticationEnabled(string authenticator)
+        {
+            if (!IsEnabledExperimentalAuthentication)
+            {
+                var exception = new SnowflakeDbException(SFError.EXPERIMENTAL_AUTHENTICATION_DISABLED, authenticator);
+                s_logger.Error(exception.Message);
+                throw exception;
+            }
         }
 
         private bool ReadEnabledExperimentalAuthentication(EnvironmentOperations environmentOperations)

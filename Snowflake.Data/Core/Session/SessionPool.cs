@@ -516,7 +516,7 @@ namespace Snowflake.Data.Core.Session
                 session.SetPooling(false);
             }
 
-            var sessionContext = new SessionPropertiesContext { Password = Password, Token = Token };
+            var sessionContext = new SessionPropertiesContext { Password = Password, OAuthClientSecret = OAuthClientSecret, Token = Token };
             if (!session.GetPooling())
             {
                 ReleaseBusySession(session);

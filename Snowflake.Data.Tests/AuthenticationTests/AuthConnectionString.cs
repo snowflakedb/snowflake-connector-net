@@ -33,7 +33,8 @@ namespace Snowflake.Data.AuthenticationTests
                 {SFSessionProperty.SCHEMA, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_SCHEMA") },
                 {SFSessionProperty.WAREHOUSE, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_WAREHOUSE") },
                 {SFSessionProperty.MINPOOLSIZE, "0"},
-                {SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, "false"}
+                {SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, "false"},
+                {SFSessionProperty.CERTREVOCATIONCHECKMODE, "enabled"}
             };
             return properties;
         }
@@ -123,6 +124,16 @@ namespace Snowflake.Data.AuthenticationTests
             properties.Add(SFSessionProperty.AUTHENTICATOR, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_OAUTH_URL"));
             properties.Add(SFSessionProperty.USER, SsoUser);
             properties.Add(SFSessionProperty.PASSWORD, SsoPassword);
+
+            return properties;
+        }
+
+        public static SFSessionProperties GetMfaConnectionString()
+        {
+            var properties = GetBaseConnectionParameters();
+            properties.Add(SFSessionProperty.AUTHENTICATOR, "USERNAME_PASSWORD_MFA");
+            properties.Add(SFSessionProperty.USER, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_MFA_USER"));
+            properties.Add(SFSessionProperty.PASSWORD, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_MFA_PASSWORD"));
 
             return properties;
         }

@@ -10,13 +10,15 @@ using System.Web;
 using System.Security.Authentication;
 using System.Linq;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Core.Tools;
+using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
 namespace Snowflake.Data.Core
 {
     internal class HttpClientConfig
     {
         public HttpClientConfig(
-            bool crlCheckEnabled,
             string proxyHost,
             string proxyPort,
             string proxyUser,
@@ -25,9 +27,13 @@ namespace Snowflake.Data.Core
             bool disableRetry,
             bool forceRetryOn404,
             int maxHttpRetries,
-            bool includeRetryReason = true)
+            bool includeRetryReason = true,
+            bool useDotnetCrlCheckMechanism = true,
+            string certRevocationCheckMode = "DISABLED",
+            bool enableCRLDiskCaching = true,
+            bool enableCRLInMemoryCaching = true,
+            bool allowCertificatesWithoutCrlUrl = true)
         {
-            CrlCheckEnabled = crlCheckEnabled;
             ProxyHost = proxyHost;
             ProxyPort = proxyPort;
             ProxyUser = proxyUser;
@@ -37,10 +43,14 @@ namespace Snowflake.Data.Core
             ForceRetryOn404 = forceRetryOn404;
             MaxHttpRetries = maxHttpRetries;
             IncludeRetryReason = includeRetryReason;
+            UseDotnetCrlCheckMechanism = useDotnetCrlCheckMechanism;
+            CertRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), certRevocationCheckMode, true);
+            EnableCRLDiskCaching = enableCRLDiskCaching;
+            EnableCRLInMemoryCaching = enableCRLInMemoryCaching;
+            AllowCertificatesWithoutCrlUrl = allowCertificatesWithoutCrlUrl;
 
             ConfKey = string.Join(";",
                 new string[] {
-                    crlCheckEnabled.ToString(),
                     proxyHost,
                     proxyPort,
                     proxyUser,
@@ -49,10 +59,15 @@ namespace Snowflake.Data.Core
                     disableRetry.ToString(),
                     forceRetryOn404.ToString(),
                     maxHttpRetries.ToString(),
-                    includeRetryReason.ToString()});
+                    includeRetryReason.ToString(),
+                    useDotnetCrlCheckMechanism.ToString(),
+                    certRevocationCheckMode.ToString(),
+                    enableCRLDiskCaching.ToString(),
+                    enableCRLInMemoryCaching.ToString(),
+                    allowCertificatesWithoutCrlUrl.ToString()
+                });
         }
 
-        public readonly bool CrlCheckEnabled;
         public readonly string ProxyHost;
         public readonly string ProxyPort;
         public readonly string ProxyUser;
@@ -62,9 +77,21 @@ namespace Snowflake.Data.Core
         public readonly bool ForceRetryOn404;
         public readonly int MaxHttpRetries;
         public readonly bool IncludeRetryReason;
+        internal readonly bool UseDotnetCrlCheckMechanism;
+        internal readonly CertRevocationCheckMode CertRevocationCheckMode;
+        internal readonly bool EnableCRLDiskCaching;
+        internal readonly bool EnableCRLInMemoryCaching;
+        internal readonly bool AllowCertificatesWithoutCrlUrl;
 
         // Key used to identify the HttpClient with the configuration matching the settings
         public readonly string ConfKey;
+
+        internal bool IsCustomCrlCheckConfigured() =>
+            !UseDotnetCrlCheckMechanism && (CertRevocationCheckMode == CertRevocationCheckMode.Enabled ||
+                                            CertRevocationCheckMode == CertRevocationCheckMode.Advisory);
+
+        internal bool IsDotnetCrlCheckEnabled() =>
+            UseDotnetCrlCheckMechanism && CertRevocationCheckMode == CertRevocationCheckMode.Enabled;
     }
 
     internal sealed class HttpUtil
@@ -91,18 +118,19 @@ namespace Snowflake.Data.Core
 
         internal static HttpUtil Instance { get; } = new HttpUtil();
 
-        private readonly object httpClientProviderLock = new object();
+        private readonly object _httpClientProviderLock = new object();
 
         private Dictionary<string, HttpClient> _HttpClients = new Dictionary<string, HttpClient>();
 
+        private IRestRequester _restRequesterForCrlCheck;
+
         internal HttpClient GetHttpClient(HttpClientConfig config, DelegatingHandler customHandler = null)
         {
-            lock (httpClientProviderLock)
+            lock (_httpClientProviderLock)
             {
                 return RegisterNewHttpClientIfNecessary(config, customHandler);
             }
         }
-
 
         private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config, DelegatingHandler customHandler = null)
         {
@@ -110,18 +138,39 @@ namespace Snowflake.Data.Core
             if (!_HttpClients.ContainsKey(name))
             {
                 logger.Debug("Http client not registered. Adding.");
-
-                var httpClient = new HttpClient(
-                    new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason))
-                {
-                    Timeout = Timeout.InfiniteTimeSpan
-                };
+                var httpClient = CreateNewHttpClient(config, customHandler);
 
                 // Add the new client key to the list
                 _HttpClients.Add(name, httpClient);
             }
 
             return _HttpClients[name];
+        }
+
+        internal HttpClient CreateNewHttpClient(HttpClientConfig config, DelegatingHandler customHandler = null) =>
+            new HttpClient(
+                new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason))
+            {
+                Timeout = Timeout.InfiniteTimeSpan
+            };
+
+
+        private IRestRequester GetHttpClientForCrlCheck()
+        {
+            if (_restRequesterForCrlCheck != null)
+            {
+                return _restRequesterForCrlCheck;
+            }
+            lock (_httpClientProviderLock)
+            {
+                if (_restRequesterForCrlCheck != null)
+                {
+                    return _restRequesterForCrlCheck;
+                }
+                var httpClient = new HttpClient();
+                _restRequesterForCrlCheck = new RestRequester(httpClient);
+                return _restRequesterForCrlCheck;
+            }
         }
 
         internal HttpMessageHandler SetupCustomHttpHandler(HttpClientConfig config, DelegatingHandler customHandler = null)
@@ -131,31 +180,7 @@ namespace Snowflake.Data.Core
                 return customHandler;
             }
 
-            HttpMessageHandler httpHandler;
-            try
-            {
-                httpHandler = new HttpClientHandler()
-                {
-                    // Verify no certificates have been revoked
-                    CheckCertificateRevocationList = config.CrlCheckEnabled,
-                    // Enforce tls v1.2
-                    SslProtocols = SslProtocols.Tls12,
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false, // Disable cookies
-                    UseProxy = false
-                };
-            }
-            // special logic for .NET framework 4.7.1 that
-            // CheckCertificateRevocationList and SslProtocols are not supported
-            catch (PlatformNotSupportedException)
-            {
-                httpHandler = new HttpClientHandler()
-                {
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false, // Disable cookies
-                    UseProxy = false
-                };
-            }
+            HttpMessageHandler httpHandler = CreateHttpClientHandler(config);
 
             // Add a proxy if necessary
             if (null != config.ProxyHost)
@@ -204,6 +229,69 @@ namespace Snowflake.Data.Core
                 return httpHandlerWithProxy;
             }
             return httpHandler;
+        }
+
+        private HttpClientHandler CreateHttpClientHandler(HttpClientConfig config)
+        {
+            bool customizedCrlCheck = false;
+            try
+            {
+                if (config.IsCustomCrlCheckConfigured())
+                {
+                    customizedCrlCheck = true;
+                    return CreateHttpClientHandlerWithCustomizedCrlCheck(config);
+                }
+                return CreateHttpClientHandlerWithDotnetCrlCheck(config);
+            }
+            // special logic for .NET framework 4.7.1 that
+            // CheckCertificateRevocationList and SslProtocols are not supported
+            catch (PlatformNotSupportedException)
+            {
+                if (customizedCrlCheck)
+                {
+                    logger.Error("Could not use customized Crl revocation check. Probably you are using old .net framework 4.6.2 or 4.7.1 where revocation check is done by Windows OS");
+                }
+                return new HttpClientHandler
+                {
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    UseCookies = false, // Disable cookies
+                    UseProxy = false
+                };
+            }
+        }
+
+        private HttpClientHandler CreateHttpClientHandlerWithDotnetCrlCheck(HttpClientConfig config)
+        {
+            logger.Debug("Creating HttpClientHandler without CRL check customizations");
+            return new HttpClientHandler
+            {
+                CheckCertificateRevocationList = config.IsDotnetCrlCheckEnabled(),
+                SslProtocols = SslProtocols.Tls12,
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                UseCookies = false, // Disable cookies
+                UseProxy = false
+            };
+        }
+
+        private HttpClientHandler CreateHttpClientHandlerWithCustomizedCrlCheck(HttpClientConfig config)
+        {
+            logger.Debug("Creating HttpClientHandler with customized CRL check");
+            var revocationVerifier = new CertificateRevocationVerifier(
+                config,
+                TimeProvider.Instance,
+                GetHttpClientForCrlCheck(),
+                CertificateCrlDistributionPointsExtractor.Instance,
+                new CrlParser(EnvironmentOperations.Instance),
+                new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching));
+            return new HttpClientHandler
+            {
+                CheckCertificateRevocationList = false,
+                ServerCertificateCustomValidationCallback = revocationVerifier.CertificateValidationCallback,
+                SslProtocols = SslProtocols.Tls12,
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                UseCookies = false, // Disable cookies
+                UseProxy = false
+            };
         }
 
         /// <summary>
@@ -520,6 +608,9 @@ namespace Snowflake.Data.Core
                 }
             }
         }
+
+        internal static Exception UnpackAggregateException(Exception exception) =>
+            exception is AggregateException ? ((AggregateException)exception).InnerException : exception;
 
         static private Exception GetInnerMostException(Exception exception)
         {

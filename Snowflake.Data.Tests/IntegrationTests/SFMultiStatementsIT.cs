@@ -2,16 +2,25 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
+using NUnit.Framework;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
-    using NUnit.Framework;
-
+    [TestFixture(ResultFormat.ARROW)]
+    [TestFixture(ResultFormat.JSON)]
     [TestFixture]
     class SFMultiStatementsIT : SFBaseTest
     {
+        private readonly ResultFormat _resultFormat;
+
+        public SFMultiStatementsIT(ResultFormat resultFormat)
+        {
+            _resultFormat = resultFormat;
+        }
+
         [Test]
         public void TestSelectWithoutBinding()
         {
@@ -21,6 +30,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 IDbCommand cmd = conn.CreateCommand();
                 var param = cmd.CreateParameter();
@@ -87,6 +97,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 DbCommand cmd = conn.CreateCommand();
                 var param = cmd.CreateParameter();
@@ -128,6 +139,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 IDbCommand cmd = conn.CreateCommand();
                 // Set statement count
@@ -180,6 +192,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -284,6 +297,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -352,6 +366,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -363,8 +378,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                       $"desc table {TableName};" +
                                       $"list @%{TableName};" +
                                       $"remove @%{TableName};" +
-                                      "create or replace temporary procedure P1() returns varchar language javascript as $$ return ''; $$;" +
-                                      "call p1();" +
+                                      $"create or replace temporary procedure P1_{TableName}() returns varchar language javascript as $$ return ''; $$;" +
+                                      $"call P1_{TableName}();" +
                                       $"use role {testConfig.role}";
 
                     // Set statement count
@@ -452,6 +467,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -532,13 +548,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Test, NonParallelizable]
         public void TestResultSetReturnedForAllQueryTypes()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
+                SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -555,8 +572,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                       $"copy into @%{TableName} from {TableName};" +
                                       $"list @%{TableName};" +
                                       $"remove @%{TableName};" +
-                                      "create or replace temporary procedure P1() returns varchar language javascript as $$ return ''; $$;" +
-                                      "call p1();" +
+                                      $"create or replace temporary procedure P1_{TableName}() returns varchar language javascript as $$ return ''; $$;" +
+                                      $"call P1_{TableName}();" +
                                       $"use role {testConfig.role}";
 
                     var stmtCount = 16;

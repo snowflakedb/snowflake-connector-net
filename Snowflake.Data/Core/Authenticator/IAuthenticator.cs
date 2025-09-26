@@ -51,7 +51,7 @@ namespace Snowflake.Data.Core.Authenticator
         protected SFSession session;
 
         // The client environment properties
-        private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv;
+        private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CopyUnchangingValues();
 
         /// <summary>
         /// The abstract base for all authenticators.
@@ -61,13 +61,14 @@ namespace Snowflake.Data.Core.Authenticator
         {
             this.session = session;
             this.authName = authName;
-            // Update the value for insecureMode because it can be different for each session
-            ClientEnv.insecureMode = session.properties[SFSessionProperty.INSECUREMODE];
+            ClientEnv.certRevocationCheckMode = session.properties[SFSessionProperty.CERTREVOCATIONCHECKMODE];
             if (session.properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
             {
-                // If an application name has been specified in the connection setting, use it
-                // Otherwise, it will default to the running process name
                 ClientEnv.application = applicationName;
+            }
+            else
+            {
+                ClientEnv.application = ClientEnv.processName;
             }
         }
 
@@ -126,8 +127,16 @@ namespace Snowflake.Data.Core.Authenticator
         {
             // build uri
             var loginUrl = session.BuildLoginUrl();
+            var data = BuildLoginRequestData();
 
-            LoginRequestData data = new LoginRequestData()
+            return data.HttpTimeout.HasValue ?
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data }, data.HttpTimeout.Value) :
+                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+        }
+
+        internal LoginRequestData BuildLoginRequestData()
+        {
+            var data = new LoginRequestData
             {
                 loginName = session.properties[SFSessionProperty.USER],
                 accountName = session.properties[SFSessionProperty.ACCOUNT],
@@ -138,10 +147,7 @@ namespace Snowflake.Data.Core.Authenticator
                 Authenticator = authName,
             };
             SetSpecializedAuthenticatorData(ref data);
-
-            return data.HttpTimeout.HasValue ?
-                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data }, data.HttpTimeout.Value) :
-                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            return data;
         }
     }
 
@@ -218,6 +224,10 @@ namespace Snowflake.Data.Core.Authenticator
             else if (ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator(type))
             {
                 return new ProgrammaticAccessTokenAuthenticator(session);
+            }
+            else if (WorkloadIdentityFederationAuthenticator.IsWorkloadIdentityAuthenticator(type))
+            {
+                return new WorkloadIdentityFederationAuthenticator(session);
             }
             // Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
             else if (OktaAuthenticator.IsOktaAuthenticator(type))

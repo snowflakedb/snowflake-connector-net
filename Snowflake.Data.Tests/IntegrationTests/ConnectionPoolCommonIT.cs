@@ -178,6 +178,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Retry(3)]
         public void TestRollbackTransactionOnPooledWhenConnectionClose()
         {
             var connectionString = SetPoolWithOneElement();

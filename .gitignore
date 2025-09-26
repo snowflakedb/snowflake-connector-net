@@ -318,3 +318,7 @@ parameters*.json
 Snowflake.Data.Tests/toml_config_folder
 *.toml
 *.p8
+
+# SSH private key for WIF tests
+ci/wif/parameters/rsa_wif_aws_azure
+ci/wif/parameters/rsa_wif_gcp

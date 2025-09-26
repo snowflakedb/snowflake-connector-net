@@ -207,5 +207,10 @@
   <data name="OAUTH_TOKEN_REQUEST_ERROR" xml:space="preserve">
     <value>Error on getting an OAuth token from IDP: {0}.</value>
   </data>
-
+  <data name="EXPERIMENTAL_AUTHENTICATION_DISABLED" xml:space="preserve">
+    <value>Experimental authentication of '{0}' is disabled. You can enable it by SF_ENABLE_EXPERIMENTAL_AUTHENTICATION environmental variable.</value>
+  </data>
+  <data name="WIF_ATTESTATION_ERROR" xml:space="preserve">
+    <value>Retrieving attestation for {0} failed. {1}</value>
+  </data>
 </root>

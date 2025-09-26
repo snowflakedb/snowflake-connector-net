@@ -1473,8 +1473,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 DbDataReader reader = cmd.ExecuteReader();
 
-                // multi statements are always returned in JSON
-                Assert.AreEqual(ResultFormat.JSON, ((SnowflakeDbDataReader)reader).ResultFormat);
+                Assert.AreEqual(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
 
                 // select 1
                 Assert.IsTrue(reader.HasRows);
