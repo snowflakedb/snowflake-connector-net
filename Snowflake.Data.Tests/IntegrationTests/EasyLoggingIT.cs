@@ -1,7 +1,6 @@
 using System.Data;
 using System.IO;
 using System.Linq;
-using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
 using Snowflake.Data.Client;
