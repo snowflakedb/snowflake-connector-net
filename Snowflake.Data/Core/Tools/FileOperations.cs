@@ -41,6 +41,13 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
+        public virtual void Append(string path, string mainContent, string additionalContent)
+        {
+            File.AppendAllText(path, mainContent);
+            if (additionalContent != null)
+                File.AppendAllText(path, additionalContent);
+        }
+
         public virtual void WriteAllBytes(string path, byte[] bytes)
         {
             File.WriteAllBytes(path, bytes);
@@ -66,13 +73,13 @@ namespace Snowflake.Data.Core.Tools
             return Create(absolutePath);
         }
 
-        public virtual Stream Create(string filePath)
+        public virtual Stream Create(string filePath, FileAccessPermissions fileAccessPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite)
         {
             var absolutePath = Path.GetFullPath(filePath);
 
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ?
                 File.Create(absolutePath) :
-                _unixOperations.CreateFileWithPermissions(absolutePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+                _unixOperations.CreateFileWithPermissions(absolutePath, fileAccessPermissions);
         }
 
         public virtual void CopyFile(string src, string dst)

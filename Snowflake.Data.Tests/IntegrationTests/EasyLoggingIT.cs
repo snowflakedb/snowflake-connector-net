@@ -1,11 +1,13 @@
 using System.Data;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Linq;
+using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
@@ -14,7 +16,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture, NonParallelizable]
     public class EasyLoggingIT : SFBaseTest
     {
-        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
+        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), $"easy_logging_test_configs_{Path.GetRandomFileName()}");
 
         [OneTimeSetUp]
         public static void BeforeAll()
@@ -28,13 +30,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [OneTimeTearDown]
         public static void AfterAll()
         {
+            EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
             Directory.Delete(s_workingDirectory, true);
         }
 
         [TearDown]
         public static void AfterEach()
         {
-            EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Warn);
+            EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
         }
 
         [Test]
@@ -73,13 +76,78 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
+        public void TestReCreateEasyLoggingUnixLogFileWithCustomisedPermissions()
+        {
+            // arrange
+            try
+            {
+                var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                    conn.Open();
+                    var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
+                    var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
+                    var logFile = fileAppender.LogFilePath;
+                    File.Delete(logFile);
+
+                    // act
+                    sfLogger.Warn("This is a warning message");
+                    sfLogger.Warn("This is another warning message");
+
+                    // assert
+                    var logFilePermissions = UnixOperations.Instance.GetFilePermissions(logFile);
+                    Assert.AreEqual(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupRead,
+                        logFilePermissions);
+                    var logs = FileOperations.Instance.ReadAllText(logFile);
+                    Assert.That(logs, Does.Contain("This is a warning message"));
+                    Assert.That(logs, Does.Contain("This is another warning message"));
+                }
+            }
+            finally
+            {
+                EasyLoggingStarter.Instance._logFileUnixPermissions = EasyLoggingStarter.DefaultFileUnixPermissions;
+            }
+        }
+
+        [Test]
+        [Platform("Win")]
+        public void TestReCreateEasyLoggingWindowsLogFileIgnoringCustomisedPermissions()
+        {
+            // arrange
+            try
+            {
+                var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                    conn.Open();
+                    var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
+                    var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
+                    var logFile = fileAppender.LogFilePath;
+                    File.Delete(logFile);
+
+                    // act
+                    sfLogger.Warn("This is a warning message");
+                    sfLogger.Warn("This is another warning message");
+
+                    // assert
+                    var logs = FileOperations.Instance.ReadAllText(logFile);
+                    Assert.That(logs, Does.Contain("This is a warning message"));
+                    Assert.That(logs, Does.Contain("This is another warning message"));
+                }
+            }
+            finally
+            {
+                EasyLoggingStarter.Instance._logFileUnixPermissions = EasyLoggingStarter.DefaultFileUnixPermissions;
+            }
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
         public void TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
             // arrange
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory));
             Syscall.chmod(configFilePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IWGRP);
@@ -97,13 +165,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestFailToEnableEasyLoggingWhenLogDirectoryNotAccessible()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
             // arrange
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", "/"));
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -118,7 +182,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.That(thrown.InnerException.Message, Does.Contain("Failed to create logs directory"));
                 Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
             }
-
         }
     }
 }

@@ -15,7 +15,7 @@ namespace Snowflake.Data.Core.Tools
         public static readonly UnixOperations Instance = new UnixOperations();
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<UnixOperations>();
 
-        public virtual void CreateDirectoryWithPermissions(string path, FileAccessPermissions permissions)
+        public virtual void CreateDirectoryWithPermissions(string path, FileAccessPermissions permissions, bool logEnabled = true)
         {
             var fullPath = Path.GetFullPath(path);
             var splitDirectories = fullPath.Split(Path.DirectorySeparatorChar);
@@ -30,7 +30,7 @@ namespace Snowflake.Data.Core.Tools
                     continue;
                 }
 
-                CreateSingleDirectory(dirPath, permissions);
+                CreateSingleDirectory(dirPath, permissions, logEnabled);
             }
         }
 
@@ -39,9 +39,10 @@ namespace Snowflake.Data.Core.Tools
             return Syscall.mkdir(path, (FilePermissions)permissions);
         }
 
-        private static void CreateSingleDirectory(string path, FileAccessPermissions permissions)
+        private static void CreateSingleDirectory(string path, FileAccessPermissions permissions, bool logEnabled)
         {
-            s_logger.Debug($"Creating a directory {path} with permissions: {permissions}");
+            if (logEnabled)
+                s_logger.Debug($"Creating a directory {path} with permissions: {permissions}");
             try
             {
                 new UnixDirectoryInfo(path).Create(permissions);
@@ -52,15 +53,15 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
-        public virtual Stream CreateFileWithPermissions(string path, FileAccessPermissions permissions)
+        public virtual Stream CreateFileWithPermissions(string path, FileAccessPermissions permissions, bool logEnabled = true)
         {
             var dirPath = Path.GetDirectoryName(path);
             if (dirPath != null)
             {
-                CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
+                CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute, logEnabled);
             }
-
-            s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
+            if (logEnabled)
+                s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
             return new UnixFileInfo(path).Create(permissions);
         }
 
@@ -184,6 +185,24 @@ namespace Snowflake.Data.Core.Tools
                     writer.Write(bytes);
                 }
             }
+        }
+
+        public long AppendToFile(string path, string mainContent, string additionalContent, Action<UnixStream> validator, FileAccessPermissions permissions)
+        {
+            var fileInfo = new UnixFileInfo(path: path);
+            if (!fileInfo.Exists)
+                CreateFileWithPermissions(path, permissions, false);
+            using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, (FilePermissions)permissions))
+            {
+                validator?.Invoke(handle);
+                using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
+                {
+                    streamWriter.Write(mainContent);
+                    if (additionalContent != null)
+                        streamWriter.Write(additionalContent);
+                }
+            }
+            return fileInfo.Length;
         }
 
         public virtual long GetCurrentUserId()

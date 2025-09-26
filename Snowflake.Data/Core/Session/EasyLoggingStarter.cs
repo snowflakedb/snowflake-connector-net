@@ -26,6 +26,10 @@ namespace Snowflake.Data.Core
 
         private EasyLoggingInitTrialParameters _initTrialParameters = null;
 
+        internal const FileAccessPermissions DefaultFileUnixPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
+
+        internal FileAccessPermissions _logFileUnixPermissions = DefaultFileUnixPermissions;
+
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
             EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
 
@@ -71,8 +75,10 @@ namespace Snowflake.Data.Core
                 }
                 var logLevel = GetLogLevel(config.CommonProps.LogLevel);
                 var logPath = GetLogPath(config.CommonProps.LogPath);
+                _logFileUnixPermissions = GetLogFileUnixPermissions(config.Dotnet?.LogFileUnixPermissions);
                 s_logger.Info($"LogLevel set to {logLevel}");
                 s_logger.Info($"LogPath set to {logPath}");
+                s_logger.Info($"LogFileUnixPermissions set to {_logFileUnixPermissions}");
                 _easyLoggerManager.ReconfigureEasyLogging(logLevel, logPath);
                 _initTrialParameters = new EasyLoggingInitTrialParameters(configFilePathFromConnectionString);
             }
@@ -156,6 +162,16 @@ namespace Snowflake.Data.Core
             CheckDirPermissionsOnlyAllowUser(pathWithDotnetSubdirectory);
 
             return pathWithDotnetSubdirectory;
+        }
+
+        private FileAccessPermissions GetLogFileUnixPermissions(string logFileUnixPermissions)
+        {
+            if (string.IsNullOrEmpty(logFileUnixPermissions))
+            {
+                s_logger.Debug("LogFileUnixPermissions in client config not found. Using default value: 600");
+                return DefaultFileUnixPermissions;
+            }
+            return (FileAccessPermissions)Convert.ToInt32(logFileUnixPermissions, 8);
         }
 
         private void CheckDirPermissionsOnlyAllowUser(string dirPath)
