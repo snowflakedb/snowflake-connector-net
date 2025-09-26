@@ -4,8 +4,10 @@
 
 Snowflake .NET Driver v4.0.0 provides multiple pools with couple of additional features in comparison to the previous implementation.
 
-Each pool is identified by the entire <b>connection string</b>. Order of connection string parameters is significant and the same connection parameters
-ordered differently lead to two different pools being used.
+Each pool is identified by the <b>entire connection string</b>. Order of connection string parameters is significant and the same connection parameters
+ordered differently, lead to two different pools being used.
+  - Please also note that this implies that if a connection string is changed (e.g. to apply a different `QUERY_TAG`), it will belong to a different Pool.
+  - Specifically for `QUERY_TAG`, if you wish to apply a different `QUERY_TAG` yet still make sure the connection belongs to the same Pool as the others, consider not applying it on the Connection string, but instead using [SnowflakeDbCommand.QueryTag](https://github.com/snowflakedb/snowflake-connector-net/blob/v4.1.0/Snowflake.Data.Tests/IntegrationTests/SFDbCommandIT.cs#L1636)
 
 All the pool parameters can be controlled from the connection string.
 
