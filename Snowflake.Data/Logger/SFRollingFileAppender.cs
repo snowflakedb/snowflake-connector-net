@@ -53,10 +53,11 @@ namespace Snowflake.Data.Log
                 {
                     RollLogFile();
                 }
+
             }
             catch
             {
-                Console.Error.WriteLine($"Encountered an error while writing log to file");
+                Console.Error.WriteLine("Encountered an error while writing log to file");
             }
         }
 

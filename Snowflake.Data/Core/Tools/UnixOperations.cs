@@ -189,10 +189,9 @@ namespace Snowflake.Data.Core.Tools
         public long AppendToFile(string path, string mainContent, string additionalContent, Action<UnixStream> validator)
         {
             var fileInfo = new UnixFileInfo(path: path);
-            using (var handle = fileInfo.Open(FileMode.OpenOrCreate, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
+            using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
             {
                 validator?.Invoke(handle);
-                handle.Seek(0, SeekOrigin.End);
                 using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
                 {
                     streamWriter.Write(mainContent);

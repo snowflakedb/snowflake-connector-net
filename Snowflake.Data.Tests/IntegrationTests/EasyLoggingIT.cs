@@ -1,7 +1,6 @@
 using System.Data;
 using System.IO;
 using System.Linq;
-using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -76,7 +75,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [NonParallelizable]
         [Platform(Exclude = "Win")]
         public void TestReCreateEasyLoggingLogFileWithCustomisedPermissions()
         {
@@ -93,8 +91,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 sfLogger.Warn("This is a warning message");
                 var logFilePermissions = UnixOperations.Instance.GetFilePermissions(logFile);
             }
-
-            EasyLoggingStarter.Instance._logFileUnixPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
         }
 
         [Test]
