@@ -26,7 +26,9 @@ namespace Snowflake.Data.Core
 
         private EasyLoggingInitTrialParameters _initTrialParameters = null;
 
-        internal FileAccessPermissions _logFileUnixPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
+        internal const FileAccessPermissions DefaultFileUnixPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
+
+        internal FileAccessPermissions _logFileUnixPermissions = DefaultFileUnixPermissions;
 
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
             EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
@@ -164,11 +166,10 @@ namespace Snowflake.Data.Core
 
         private FileAccessPermissions GetLogFileUnixPermissions(string logFileUnixPermissions)
         {
-            var defaultPermissions = Convert.ToInt32("600", 8); // User Read/Write
             if (string.IsNullOrEmpty(logFileUnixPermissions))
             {
                 s_logger.Debug("LogFileUnixPermissions in client config not found. Using default value: 600");
-                return (FileAccessPermissions)defaultPermissions;
+                return DefaultFileUnixPermissions;
             }
             return (FileAccessPermissions)Convert.ToInt32(logFileUnixPermissions, 8);
         }

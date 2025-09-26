@@ -59,8 +59,8 @@ namespace Snowflake.Data.Core.Tools
             {
                 CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
             }
-
-            s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
+            if (!path.Contains(".log"))
+                s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
             return new UnixFileInfo(path).Create(permissions);
         }
 
@@ -189,6 +189,8 @@ namespace Snowflake.Data.Core.Tools
         public long AppendToFile(string path, string mainContent, string additionalContent, Action<UnixStream> validator)
         {
             var fileInfo = new UnixFileInfo(path: path);
+            if (!fileInfo.Exists)
+                CreateDirectoryWithPermissions(path, EasyLoggingStarter.Instance._logFileUnixPermissions);
             using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
             {
                 validator?.Invoke(handle);
