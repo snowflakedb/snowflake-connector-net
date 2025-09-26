@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                     .ThenTransform(s_WifProviderReplacement, provider.ToString())
             );
 
-        protected void AssertSessionSuccessfullyCreated(SFSession session)
+        internal void AssertSessionSuccessfullyCreated(SFSession session)
         {
             Assert.AreEqual(SessionId, session.sessionId);
             Assert.AreEqual(MasterToken, session.masterToken);
