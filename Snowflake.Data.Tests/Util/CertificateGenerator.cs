@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.Util
             string cn,
             DateTimeOffset notBefore,
             DateTimeOffset notAfter,
-            string[] crlUrls,
+            string[][] crlUrls,
             int keySize = 2048)
         {
             var subjectName = $"CN={cn}, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.Util
             string subjectName,
             DateTimeOffset notBefore,
             DateTimeOffset notAfter,
-            string[] crlUrls,
+            string[][] crlUrls,
             int keySize = 2048)
         {
             var keyPair = GenerateRsaKeyPair(keySize);
@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.Util
             string issuerName,
             DateTimeOffset notBefore,
             DateTimeOffset notAfter,
-            string[] crlUrls,
+            string[][] crlUrls,
             AsymmetricCipherKeyPair keyPair,
             bool isCA = true,
             string signatureAlgorithm = SHA256WithRsaAlgorithm)
@@ -110,6 +110,16 @@ namespace Snowflake.Data.Tests.Util
         }
 
         public static X509Crl GenerateCrl(
+            string caName,
+            DateTime thisUpdateUtc,
+            DateTime nextUpdateUtc,
+            DateTime revocationTimeUtc)
+        {
+            var keys = GenerateRsaKeyPair(2048);
+            return GenerateCrl(SHA256WithRsaAlgorithm, keys.Private, caName, thisUpdateUtc, nextUpdateUtc, revocationTimeUtc);
+        }
+
+        public static X509Crl GenerateCrl(
             string signatureAlgorithm,
             AsymmetricKeyParameter caPrivateKey,
             string caName,
@@ -133,10 +143,10 @@ namespace Snowflake.Data.Tests.Util
             return new X509Certificate2(x509Certificate);
         }
 
-        private static DistributionPoint ConvertToDistributionPoint(string crlUrl)
+        private static DistributionPoint ConvertToDistributionPoint(string[] crlUrls)
         {
-            var generalName = new GeneralName(GeneralName.UniformResourceIdentifier, crlUrl);
-            var generalNames = new GeneralNames(generalName);
+            var generalNameArray = crlUrls.Select(url => new GeneralName(GeneralName.UniformResourceIdentifier, url)).ToArray();
+            var generalNames = new GeneralNames(generalNameArray);
             var distributionPointName = new DistributionPointName(generalNames);
             return new DistributionPoint(distributionPointName, null, null);
         }

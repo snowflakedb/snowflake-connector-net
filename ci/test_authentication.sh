@@ -2,6 +2,8 @@
 
 set -o pipefail
 export THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source "$THIS_DIR/scripts/setup_gpg.sh"
 export WORKSPACE=${WORKSPACE:-/tmp}
 export INTERNAL_REPO=nexus.int.snowflakecomputing.com:8086
 

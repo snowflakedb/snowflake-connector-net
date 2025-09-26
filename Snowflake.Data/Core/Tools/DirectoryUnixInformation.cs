@@ -3,16 +3,11 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Tools
 {
-    internal class DirectoryUnixInformation
+    internal class DirectoryUnixInformation : FileOrDirectoryUnixInformation
     {
         private const FileAccessPermissions SafePermissions = FileAccessPermissions.UserReadWriteExecute;
         private const FileAccessPermissions NotSafePermissions = FileAccessPermissions.AllPermissions & ~SafePermissions;
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<DirectoryUnixInformation>();
-
-        public string FullName { get; private set; }
-        public bool Exists { get; private set; }
-        public FileAccessPermissions Permissions { get; private set; }
-        public long Owner { get; private set; }
 
         public DirectoryUnixInformation(UnixDirectoryInfo directoryInfo)
         {
@@ -62,12 +57,5 @@ namespace Snowflake.Data.Core.Tools
             }
             return true;
         }
-
-
-        private bool HasAnyOfPermissions(FileAccessPermissions permissions) => (permissions & Permissions) != 0;
-
-        private bool IsOwnedBy(long userId) => Owner == userId;
-
-
     }
 }

@@ -16,10 +16,9 @@ using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
 namespace Snowflake.Data.Core
 {
-    public class HttpClientConfig
+    internal class HttpClientConfig
     {
         public HttpClientConfig(
-            bool crlCheckEnabled,
             string proxyHost,
             string proxyPort,
             string proxyUser,
@@ -35,7 +34,6 @@ namespace Snowflake.Data.Core
             bool enableCRLInMemoryCaching = true,
             bool allowCertificatesWithoutCrlUrl = true)
         {
-            CrlCheckEnabled = crlCheckEnabled;
             ProxyHost = proxyHost;
             ProxyPort = proxyPort;
             ProxyUser = proxyUser;
@@ -53,7 +51,6 @@ namespace Snowflake.Data.Core
 
             ConfKey = string.Join(";",
                 new string[] {
-                    crlCheckEnabled.ToString(),
                     proxyHost,
                     proxyPort,
                     proxyUser,
@@ -71,7 +68,6 @@ namespace Snowflake.Data.Core
                 });
         }
 
-        public readonly bool CrlCheckEnabled;
         public readonly string ProxyHost;
         public readonly string ProxyPort;
         public readonly string ProxyUser;
@@ -89,9 +85,16 @@ namespace Snowflake.Data.Core
 
         // Key used to identify the HttpClient with the configuration matching the settings
         public readonly string ConfKey;
+
+        internal bool IsCustomCrlCheckConfigured() =>
+            !UseDotnetCrlCheckMechanism && (CertRevocationCheckMode == CertRevocationCheckMode.Enabled ||
+                                            CertRevocationCheckMode == CertRevocationCheckMode.Advisory);
+
+        internal bool IsDotnetCrlCheckEnabled() =>
+            UseDotnetCrlCheckMechanism && CertRevocationCheckMode == CertRevocationCheckMode.Enabled;
     }
 
-    public sealed class HttpUtil
+    internal sealed class HttpUtil
     {
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly int s_baseBackOffTime = 1;
@@ -233,7 +236,7 @@ namespace Snowflake.Data.Core
             bool customizedCrlCheck = false;
             try
             {
-                if (!config.UseDotnetCrlCheckMechanism && config.CrlCheckEnabled)
+                if (config.IsCustomCrlCheckConfigured())
                 {
                     customizedCrlCheck = true;
                     return CreateHttpClientHandlerWithCustomizedCrlCheck(config);
@@ -262,8 +265,7 @@ namespace Snowflake.Data.Core
             logger.Debug("Creating HttpClientHandler without CRL check customizations");
             return new HttpClientHandler
             {
-                CheckCertificateRevocationList = config.CrlCheckEnabled,
-                // Enforce tls v1.2
+                CheckCertificateRevocationList = config.IsDotnetCrlCheckEnabled(),
                 SslProtocols = SslProtocols.Tls12,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
@@ -285,7 +287,6 @@ namespace Snowflake.Data.Core
             {
                 CheckCertificateRevocationList = false,
                 ServerCertificateCustomValidationCallback = revocationVerifier.CertificateValidationCallback,
-                // Enforce tls v1.2
                 SslProtocols = SslProtocols.Tls12,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
