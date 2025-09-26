@@ -47,13 +47,12 @@ namespace Snowflake.Data.Log
                 else
                 {
                     fileSize = _unixOperations.AppendToFile(LogFilePath, formattedMessage, ex?.ToString(),
-                        EasyLoggerValidator.Instance.ValidateLogFilePermissions);
+                        EasyLoggerValidator.Instance.ValidateLogFilePermissions, EasyLoggingStarter.Instance._logFileUnixPermissions);
                 }
                 if (fileSize > MaximumFileSizeInBytes)
                 {
                     RollLogFile();
                 }
-
             }
             catch
             {

@@ -1,6 +1,7 @@
 using System.Data;
 using System.IO;
 using System.Linq;
+using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -75,24 +76,72 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [NonParallelizable]
         [Platform(Exclude = "Win")]
-        public void TestReCreateEasyLoggingLogFileWithCustomisedPermissions()
+        public void TestReCreateEasyLoggingUnixLogFileWithCustomisedPermissions()
         {
             // arrange
-            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            try
             {
-                conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
-                conn.Open();
-                var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
-                var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
-                var logFile = fileAppender.LogFilePath;
-                File.Delete(logFile);
-                sfLogger.Warn("This is a warning message");
-                var logFilePermissions = UnixOperations.Instance.GetFilePermissions(logFile);
+                var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                    conn.Open();
+                    var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
+                    var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
+                    var logFile = fileAppender.LogFilePath;
+                    File.Delete(logFile);
+
+                    // act
+                    sfLogger.Warn("This is a warning message");
+                    sfLogger.Warn("This is another warning message");
+
+                    // assert
+                    var logFilePermissions = UnixOperations.Instance.GetFilePermissions(logFile);
+                    Assert.AreEqual(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupRead,
+                        logFilePermissions);
+                    var logs = FileOperations.Instance.ReadAllText(logFile);
+                    Assert.That(logs, Does.Contain("This is a warning message"));
+                    Assert.That(logs, Does.Contain("This is another warning message"));
+                }
             }
-            EasyLoggingStarter.Instance._logFileUnixPermissions = EasyLoggingStarter.DefaultFileUnixPermissions;
+            finally
+            {
+                EasyLoggingStarter.Instance._logFileUnixPermissions = EasyLoggingStarter.DefaultFileUnixPermissions;
+            }
+        }
+
+        [Test]
+        [Platform("Win")]
+        public void TestReCreateEasyLoggingWindowsLogFileIgnoringCustomisedPermissions()
+        {
+            // arrange
+            try
+            {
+                var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                    conn.Open();
+                    var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
+                    var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
+                    var logFile = fileAppender.LogFilePath;
+                    File.Delete(logFile);
+
+                    // act
+                    sfLogger.Warn("This is a warning message");
+                    sfLogger.Warn("This is another warning message");
+
+                    // assert
+                    var logs = FileOperations.Instance.ReadAllText(logFile);
+                    Assert.That(logs, Does.Contain("This is a warning message"));
+                    Assert.That(logs, Does.Contain("This is another warning message"));
+                }
+            }
+            finally
+            {
+                EasyLoggingStarter.Instance._logFileUnixPermissions = EasyLoggingStarter.DefaultFileUnixPermissions;
+            }
         }
 
         [Test]
