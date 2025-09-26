@@ -18,7 +18,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var config = new HttpClientConfig(
-                true,
                 null,
                 null,
                 null,

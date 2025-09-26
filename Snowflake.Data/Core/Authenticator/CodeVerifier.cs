@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Snowflake.Data.Core.Authenticator
 {
-    public class CodeVerifier
+    internal class CodeVerifier
     {
         public string Value { get; }
 

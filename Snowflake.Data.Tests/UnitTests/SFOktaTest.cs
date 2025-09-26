@@ -207,7 +207,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 $"OS_VERSION: , " +
                 $"NET_RUNTIME: , " +
                 $"NET_VERSION: , " +
-                $"INSECURE_MODE:  }},\n " +
+                $"CERT_REVOCATION_CHECK_MODE:  }},\n " +
                 $"authenticator: {expectedOktaUrl} }} }}",
                 loginRequest.ToString());
         }

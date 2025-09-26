@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 
 namespace Snowflake.Data.Core.Tools
 {
-    public static class StringUtils
+    internal static class StringUtils
     {
         internal static string ToSha256Hash(this string text)
         {
