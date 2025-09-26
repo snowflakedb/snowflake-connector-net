@@ -6,6 +6,8 @@ namespace Snowflake.Data.Log
     {
         internal PatternLayout PatternLayout { get; set; }
 
+        public void ActivateOptions() { }
+
         public void Append(string logLevel, string message, Type type, Exception ex = null)
         {
             var formattedMessage = PatternLayout.Format(logLevel, message, type);

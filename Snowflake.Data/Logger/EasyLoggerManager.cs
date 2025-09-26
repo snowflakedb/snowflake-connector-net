@@ -24,6 +24,7 @@ namespace Snowflake.Data.Log
                     ? AddConsoleAppender()
                     : AddRollingFileAppender(logsPath);
                 RemoveOtherEasyLoggingAppenders(appender);
+                appender.ActivateOptions();
             }
         }
 
@@ -71,7 +72,6 @@ namespace Snowflake.Data.Log
                 MaximumFileSizeInBytes = 1000000000, // "1GB"
                 MaxSizeRollBackups = 2,
             };
-            appender.ActivateOptions();
             SFLoggerImpl.s_appenders.Add(appender);
             return appender;
         }
