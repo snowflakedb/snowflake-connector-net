@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         {
             Assert.IsTrue(Directory.Exists(directoryLogPath));
             var files = Directory.GetFiles(directoryLogPath);
-            Assert.GreaterOrEqual(files.Length, 1);
+            Assert.AreEqual(1, files.Length);
             return files.First();
         }
 
