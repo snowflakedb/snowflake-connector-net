@@ -165,7 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                FileAccessPermissions.UserReadWriteExecute), Times.Never);
+                FileAccessPermissions.UserReadWriteExecute, true), Times.Never);
         }
 
         [Test]
@@ -184,7 +184,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 .Setup(d => d.CreateDirectory(s_expectedLogPath))
                 .Throws(() => new Exception("Unable to create directory"));
             t_unixOperations
-                .Setup(u => u.CreateDirectoryWithPermissions(s_expectedLogPath, FileAccessPermissions.UserReadWriteExecute))
+                .Setup(u => u.CreateDirectoryWithPermissions(s_expectedLogPath, FileAccessPermissions.UserReadWriteExecute, true))
                 .Throws(() => new Exception("Unable to create directory"));
 
             // act
@@ -219,7 +219,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             else
             {
                 t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                    FileAccessPermissions.UserReadWriteExecute), Times.Once);
+                    FileAccessPermissions.UserReadWriteExecute, true), Times.Once);
             }
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
 
@@ -252,7 +252,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             else
             {
                 t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                    FileAccessPermissions.UserReadWriteExecute), Times.Once);
+                    FileAccessPermissions.UserReadWriteExecute, true), Times.Once);
             }
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
         }
@@ -279,7 +279,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             else
             {
                 t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                    FileAccessPermissions.UserReadWriteExecute), Times.Once);
+                    FileAccessPermissions.UserReadWriteExecute, true), Times.Once);
             }
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
 
