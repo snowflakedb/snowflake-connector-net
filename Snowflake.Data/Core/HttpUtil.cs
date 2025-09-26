@@ -16,7 +16,7 @@ using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
 namespace Snowflake.Data.Core
 {
-    public class HttpClientConfig
+    internal class HttpClientConfig
     {
         public HttpClientConfig(
             string proxyHost,
@@ -94,7 +94,7 @@ namespace Snowflake.Data.Core
             UseDotnetCrlCheckMechanism && CertRevocationCheckMode == CertRevocationCheckMode.Enabled;
     }
 
-    public sealed class HttpUtil
+    internal sealed class HttpUtil
     {
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly int s_baseBackOffTime = 1;
