@@ -73,7 +73,6 @@ namespace Snowflake.Data.Log
                 MaximumFileSizeInBytes = 1000000000, // "1GB"
                 MaxSizeRollBackups = 2,
             };
-
             return appender;
         }
 
