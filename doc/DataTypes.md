@@ -4,15 +4,15 @@
 
 The .NET driver supports the following mappings from .NET to Snowflake data types.
 
-| .NET Framekwork Data Type | Data Type in Snowflake |
-| ------------------------- | ---------------------- |
-| `int`, `long`             | `NUMBER(38, 0)`        |
-| `decimal`                 | `NUMBER(38, <scale>)`  |
-| `double`                  | `REAL`                 |
-| `string`                  | `TEXT`                 |
-| `bool`                    | `BOOLEAN`              |
-| `byte`                    | `BINARY`               |
-| `datetime`                | `DATE`                 |
+| .NET Data Type | Data Type in Snowflake |
+| -------------- | ---------------------- |
+| `int`, `long`  | `NUMBER(38, 0)`        |
+| `decimal`      | `NUMBER(38, <scale>)`  |
+| `double`       | `REAL`                 |
+| `string`       | `TEXT`                 |
+| `bool`         | `BOOLEAN`              |
+| `byte`         | `BINARY`               |
+| `datetime`     | `DATE`                 |
 
 ## Arrow data format
 
