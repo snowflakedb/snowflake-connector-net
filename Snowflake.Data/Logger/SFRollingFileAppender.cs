@@ -56,7 +56,13 @@ namespace Snowflake.Data.Log
             }
             catch
             {
-                Console.Error.WriteLine("Encountered an error while writing log to file");
+                try
+                {
+                    Console.Error.WriteLine("Encountered an error while writing log to file");
+                }
+                catch (Exception)
+                {
+                }
             }
         }
 

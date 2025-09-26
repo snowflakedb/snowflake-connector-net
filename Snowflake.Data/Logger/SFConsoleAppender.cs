@@ -17,9 +17,15 @@ namespace Snowflake.Data.Log
                     Console.WriteLine(ex.ToString());
                 }
             }
-            catch (Exception consoleEx)
+            catch (Exception)
             {
-                Console.WriteLine($"An error occured while logging to console: {consoleEx.Message}");
+                try
+                {
+                    Console.Error.WriteLine("Encountered an error while writing to console");
+                }
+                catch (Exception)
+                {
+                }
             }
         }
     }
