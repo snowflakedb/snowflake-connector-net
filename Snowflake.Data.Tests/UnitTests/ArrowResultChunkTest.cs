@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -86,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = new ArrowResultChunk(_recordBatchOne);
 
             // move to the end of the batch
-            while (chunk.Next()) {}
+            while (chunk.Next()) { }
 
             for (var i = 0; i < RowCountBatchOne; ++i)
             {
@@ -102,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests
             chunk.AddRecordBatch(_recordBatchTwo);
 
             // move to the end of the batch
-            while (chunk.Next()) {}
+            while (chunk.Next()) { }
 
             for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
             {
@@ -497,46 +493,46 @@ namespace Snowflake.Data.Tests.UnitTests
                     break;
 
                 case SFDataType.TIME:
-                {
-                    var arr = values as DateTime[];
-                    column = new Int64Array.Builder()
-                        .AppendRange(arr.Select(dt => ConvertTicksToInt64(dt.Ticks, scale)))
-                        .Build();
-                    break;
-                }
+                    {
+                        var arr = values as DateTime[];
+                        column = new Int64Array.Builder()
+                            .AppendRange(arr.Select(dt => ConvertTicksToInt64(dt.Ticks, scale)))
+                            .Build();
+                        break;
+                    }
 
                 case SFDataType.TIMESTAMP_TZ:
-                {
-                    var arr = values as DateTimeOffset[];
-                    if (scale <= 3)
                     {
-                        var structField = new StructType(new[]
+                        var arr = values as DateTimeOffset[];
+                        if (scale <= 3)
                         {
+                            var structField = new StructType(new[]
+                            {
                             new Field("value", new Int64Type(), nullable: false),
                             new Field("timezone", new Int32Type(), nullable: false)
                         });
 
-                        column = new StructArray(structField, arr.Length, new IArrowArray[]
-                        {
+                            column = new StructArray(structField, arr.Length, new IArrowArray[]
+                            {
                             new Int64Array.Builder()
                                 .AppendRange(arr.Select(dt => ConvertTicksToInt64(dt.UtcTicks, scale)))
                                 .Build(),
                             new Int32Array.Builder()
                                 .AppendRange(arr.Select(dt => (int)(1440 + dt.Offset.TotalMinutes)))
                                 .Build()
-                        }, ArrowBuffer.Empty, nullCount: 0);
-                    }
-                    else
-                    {
-                        var structField = new StructType(new[]
+                            }, ArrowBuffer.Empty, nullCount: 0);
+                        }
+                        else
                         {
+                            var structField = new StructType(new[]
+                            {
                             new Field("epoch", new Int64Type(), nullable: false),
                             new Field("fraction", new Int32Type(), nullable: false),
                             new Field("timezone", new Int32Type(), nullable: false)
                         });
 
-                        column = new StructArray(structField, arr.Length, new IArrowArray[]
-                        {
+                            column = new StructArray(structField, arr.Length, new IArrowArray[]
+                            {
                             new Int64Array.Builder()
                                 .AppendRange(arr.Select(dt => dt.ToUnixTimeSeconds()))
                                 .Build(),
@@ -546,70 +542,70 @@ namespace Snowflake.Data.Tests.UnitTests
                             new Int32Array.Builder()
                                 .AppendRange(arr.Select(dt => (int)(1440 + dt.Offset.TotalMinutes)))
                                 .Build()
-                        }, ArrowBuffer.Empty, nullCount: 0);
-                    }
+                            }, ArrowBuffer.Empty, nullCount: 0);
+                        }
 
-                    break;
-                }
-                case SFDataType.TIMESTAMP_LTZ:
-                {
-                    var arr = values as DateTimeOffset[];
-                    if (scale <= 3)
-                    {
-                        column = new Int64Array.Builder()
-                            .AppendRange(arr.Select(dt => ConvertTicksToInt64(dt.UtcTicks, scale)))
-                            .Build();
+                        break;
                     }
-                    else
+                case SFDataType.TIMESTAMP_LTZ:
                     {
-                        var structField = new StructType(new[]
+                        var arr = values as DateTimeOffset[];
+                        if (scale <= 3)
                         {
+                            column = new Int64Array.Builder()
+                                .AppendRange(arr.Select(dt => ConvertTicksToInt64(dt.UtcTicks, scale)))
+                                .Build();
+                        }
+                        else
+                        {
+                            var structField = new StructType(new[]
+                            {
                             new Field("epoch", new Int64Type(), nullable: false),
                             new Field("fraction", new Int32Type(), nullable: false)
                         });
 
-                        column = new StructArray(structField, arr.Length, new IArrowArray[]
-                        {
+                            column = new StructArray(structField, arr.Length, new IArrowArray[]
+                            {
                             new Int64Array.Builder()
                                 .AppendRange(arr.Select(dt => dt.ToUnixTimeSeconds()))
                                 .Build(),
                             new Int32Array.Builder()
                                 .AppendRange(arr.Select(dt => (int)(100 * (dt.UtcTicks % 10000000))))
                                 .Build()
-                        }, ArrowBuffer.Empty, nullCount: 0);
+                            }, ArrowBuffer.Empty, nullCount: 0);
+                        }
+                        break;
                     }
-                    break;
-                }
                 case SFDataType.TIMESTAMP_NTZ:
-                {
-                    var arr = values as DateTime[];
-                    if (scale <= 3)
                     {
-                        column = new Int64Array.Builder()
-                            .AppendRange(arr.Select(dt => ConvertTicksToInt64(dt.Ticks, scale)))
-                            .Build();
-                    }
-                    else
-                    {
-                        var structField = new StructType(new[]
+                        var arr = values as DateTime[];
+                        if (scale <= 3)
                         {
+                            column = new Int64Array.Builder()
+                                .AppendRange(arr.Select(dt => ConvertTicksToInt64(dt.Ticks, scale)))
+                                .Build();
+                        }
+                        else
+                        {
+                            var structField = new StructType(new[]
+                            {
                             new Field("epoch", new Int64Type(), nullable: false),
                             new Field("fraction", new Int32Type(), nullable: false)
                         });
 
-                        column = new StructArray(structField, arr.Length, new IArrowArray[]
-                        {
+                            column = new StructArray(structField, arr.Length, new IArrowArray[]
+                            {
                             new Int64Array.Builder()
                                 .AppendRange(arr.Select(dt => (dt.Ticks - SFDataConverter.UnixEpoch.Ticks) / (long)10000000))
                                 .Build(),
                             new Int32Array.Builder()
                                 .AppendRange(arr.Select(dt => (int)(100 * (dt.Ticks % 10000000))))
                                 .Build()
-                        }, ArrowBuffer.Empty, nullCount: 0);
-                    }
+                            }, ArrowBuffer.Empty, nullCount: 0);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 default:
                     throw new NotSupportedException();
             }

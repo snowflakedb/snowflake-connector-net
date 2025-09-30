@@ -1,27 +1,21 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
-using Amazon.S3.Encryption;
+using NUnit.Framework;
+using Snowflake.Data.Core;
+using Snowflake.Data.Core.FileTransfer.StorageClient;
+using Snowflake.Data.Core.FileTransfer;
+using System.Collections.Generic;
+using Amazon.S3;
+using Snowflake.Data.Tests.Mock;
+using System.Threading.Tasks;
+using Amazon;
+using System.Threading;
+using System.IO;
+using Moq;
+using Amazon.S3.Model;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Core;
-    using Snowflake.Data.Core.FileTransfer.StorageClient;
-    using Snowflake.Data.Core.FileTransfer;
-    using System.Collections.Generic;
-    using Amazon.S3;
-    using Snowflake.Data.Tests.Mock;
-    using System.Threading.Tasks;
-    using Amazon;
-    using System.Threading;
-    using System.IO;
-    using Moq;
-    using Amazon.S3.Model;
-
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFS3ClientTest : SFBaseTest
     {
         // Mock data for file metadata
@@ -87,7 +81,6 @@ namespace Snowflake.Data.Tests.UnitTests
                 stageInfo = new PutGetStageInfo()
                 {
                     endPoint = Endpoint,
-                    isClientSideEncrypted = true,
                     location = Location,
                     locationType = SFRemoteStorageUtil.S3_FS,
                     path = LocationPath,
@@ -127,18 +120,15 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [TestCase(SFS3Client.NO_SUCH_KEY, ResultStatus.NOT_FOUND_FILE)]
         [TestCase(MockS3Client.AwsStatusError, ResultStatus.ERROR)] // Any error that isn't the above will return ResultStatus.ERROR
-        public void TestGetFileHeader(string requestKey, ResultStatus expectedResultStatus)
+        [TestCase("", ResultStatus.ERROR)] // For non-AWS exception will return ResultStatus.ERROR
+        public void TestGetFileHeader(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
             mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
-                .Returns<GetObjectRequest, CancellationToken>((request, cancellationToken) =>
-                {
-                    return MockS3Client.CreateResponseForGetFileHeader(request.BucketName, false);
-                });
+                .Returns(() => MockS3Client.CreateResponseForGetFileHeader(awsStatusCode, false));
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
-            _fileMetadata.stageInfo.location = requestKey;
 
             // Act
             FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
@@ -152,18 +142,15 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [TestCase(SFS3Client.NO_SUCH_KEY, ResultStatus.NOT_FOUND_FILE)]
         [TestCase(MockS3Client.AwsStatusError, ResultStatus.ERROR)] // Any error that isn't the above will return ResultStatus.ERROR
-        public async Task TestGetFileHeaderAsync(string requestKey, ResultStatus expectedResultStatus)
+        [TestCase("", ResultStatus.ERROR)] // For non-AWS exception will return ResultStatus.ERROR
+        public async Task TestGetFileHeaderAsync(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
             mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
-                .Returns<GetObjectRequest, CancellationToken>((request, cancellationToken) =>
-                {
-                    return MockS3Client.CreateResponseForGetFileHeader(request.BucketName, true);
-                });
+                .Returns(() => MockS3Client.CreateResponseForGetFileHeader(awsStatusCode, true));
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
-            _fileMetadata.stageInfo.location = requestKey;
 
             // Act
             FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
@@ -194,18 +181,15 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
         [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [TestCase(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
-        public void TestUploadFile(string requestKey, ResultStatus expectedResultStatus)
+        [TestCase("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
+        public void TestUploadFile(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
             mockAmazonS3Client.Setup(client => client.PutObjectAsync(It.IsAny<PutObjectRequest>(), It.IsAny<CancellationToken>()))
-                .Returns<PutObjectRequest, CancellationToken>((request, cancellationToken) =>
-                {
-                    return MockS3Client.CreateResponseForUploadFile(request.BucketName, false);
-                });
+                .Returns(() => MockS3Client.CreateResponseForUploadFile(awsStatusCode, false));
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
-            _fileMetadata.stageInfo.location = requestKey;
             _fileMetadata.uploadSize = UploadFileSize;
 
             // Act
@@ -226,7 +210,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var amazonS3Client = new AmazonS3Config();
             var endpoint = "endpointWithNoHttps.com";
-            var expectedEndpoint = "https://endpointWithNoHttps.com";
+            var expectedEndpoint = "https://endpointWithNoHttps.com/";
 
             // ACT
             SFS3Client.SetCommonClientConfig(amazonS3Client, string.Empty, endpoint, 1, 0);
@@ -241,7 +225,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var amazonS3Client = new AmazonS3Config();
             var endpoint = "[endpointWithNoHttps.com]";
-            var expectedEndpoint = "https://endpointWithNoHttps.com";
+            var expectedEndpoint = "https://endpointWithNoHttps.com/";
 
             // ACT
             SFS3Client.SetCommonClientConfig(amazonS3Client, string.Empty, endpoint, 1, 0);
@@ -251,21 +235,51 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestServiceUrlIsSetWhenEndpointAndRegionAreProvided()
+        {
+            // Arrange
+            var amazonS3Client = new AmazonS3Config();
+            var endpoint = "endpointWithNoHttps.com";
+            var expectedEndpoint = "https://endpointWithNoHttps.com/";
+            var mockRegion = "fakeRegion";
+
+            // ACT
+            SFS3Client.SetCommonClientConfig(amazonS3Client, mockRegion, endpoint, 1, 0);
+
+            // Assert
+            Assert.That(amazonS3Client.ServiceURL, Is.EqualTo(expectedEndpoint));
+            Assert.IsNull(amazonS3Client.RegionEndpoint);
+        }
+
+        [Test]
+        public void TestRegionEndpointIsSetWhenOnlyRegionIsProvided()
+        {
+            // Arrange
+            var amazonS3Client = new AmazonS3Config();
+            var expectedRegionEndpoint = RegionEndpoint.USEast2;
+            var region = expectedRegionEndpoint.SystemName;
+
+            // ACT
+            SFS3Client.SetCommonClientConfig(amazonS3Client, region, string.Empty, 1, 0);
+
+            // Assert
+            Assert.That(amazonS3Client.RegionEndpoint, Is.EqualTo(expectedRegionEndpoint));
+            Assert.IsNull(amazonS3Client.ServiceURL);
+        }
+
+        [Test]
         [TestCase(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
         [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [TestCase(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
-        public async Task TestUploadFileAsync(string requestKey, ResultStatus expectedResultStatus)
+        [TestCase("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
+        public async Task TestUploadFileAsync(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
             mockAmazonS3Client.Setup(client => client.PutObjectAsync(It.IsAny<PutObjectRequest>(), It.IsAny<CancellationToken>()))
-                .Returns<PutObjectRequest, CancellationToken>((request, cancellationToken) =>
-                {
-                    return MockS3Client.CreateResponseForUploadFile(request.BucketName, true);
-                });
+                .Returns(() => MockS3Client.CreateResponseForUploadFile(awsStatusCode, true));
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
-            _fileMetadata.stageInfo.location = requestKey;
             _fileMetadata.uploadSize = UploadFileSize;
 
             // Act
@@ -295,18 +309,15 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(MockS3Client.AwsStatusOk, ResultStatus.DOWNLOADED)]
         [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [TestCase(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
-        public void TestDownloadFile(string requestKey, ResultStatus expectedResultStatus)
+        [TestCase("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
+        public void TestDownloadFile(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
             mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
-                .Returns<GetObjectRequest, CancellationToken>((request, cancellationToken) =>
-                {
-                    return MockS3Client.CreateResponseForDownloadFile(request.BucketName, false);
-                });
+                .Returns(() => MockS3Client.CreateResponseForDownloadFile(awsStatusCode, false));
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
-            _fileMetadata.stageInfo.location = requestKey;
 
             // Act
             _client.DownloadFile(_fileMetadata, t_downloadFileName, Parallel);
@@ -319,24 +330,66 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(MockS3Client.AwsStatusOk, ResultStatus.DOWNLOADED)]
         [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [TestCase(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
-        public async Task TestDownloadFileAsync(string requestKey, ResultStatus expectedResultStatus)
+        [TestCase("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
+        public async Task TestDownloadFileAsync(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
             mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
-                .Returns<GetObjectRequest, CancellationToken>((request, cancellationToken) =>
-                {
-                    return MockS3Client.CreateResponseForDownloadFile(request.BucketName, true);
-                });
+                .Returns(() => MockS3Client.CreateResponseForDownloadFile(awsStatusCode, true));
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
-            _fileMetadata.stageInfo.location = requestKey;
 
             // Act
             await _client.DownloadFileAsync(_fileMetadata, t_downloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 
             // Assert
             AssertForDownloadFileTests(expectedResultStatus);
+        }
+
+        [Test]
+        public void TestEncryptionMetadataReadingIsCaseInsensitive()
+        {
+            // arrange
+            var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
+            _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
+            var response = new GetObjectResponse();
+            response.Metadata.Add(SFS3Client.AMZ_IV.ToUpper(), "initVector");
+            response.Metadata.Add(SFS3Client.AMZ_KEY.ToUpper(), "key");
+            response.Metadata.Add(SFS3Client.AMZ_MATDESC.ToUpper(), "description");
+            response.Metadata.Add(SFS3Client.SFC_DIGEST.ToUpper(), "something");
+
+            // act
+            var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, response);
+
+            // assert
+            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
+            Assert.AreEqual("something", fileHeader.digest);
+            Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
+            Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
+            Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
+        }
+
+        [Test]
+        public void TestReadingMetadataSucceedsWithoutSfcDigest()
+        {
+            // arrange
+            var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
+            _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
+            var response = new GetObjectResponse();
+            response.Metadata.Add(SFS3Client.AMZ_IV, "initVector");
+            response.Metadata.Add(SFS3Client.AMZ_KEY, "key");
+            response.Metadata.Add(SFS3Client.AMZ_MATDESC, "description");
+
+            // act
+            var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, response);
+
+            // assert
+            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
+            Assert.IsNull(fileHeader.digest);
+            Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
+            Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
+            Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
         }
 
         private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)

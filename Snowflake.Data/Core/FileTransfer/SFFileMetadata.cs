@@ -1,22 +1,25 @@
-﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using static Snowflake.Data.Core.FileTransfer.SFFileCompressionTypes;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
     public class SFEncryptionMetadata
     {
-        /// Initialization vector
+        /// Initialization vector for file content encryption
         public string iv { set; get; }
 
         /// File key
         public string key { set; get; }
+
+        /// Additional Authentication Data for file content encryption
+        public string aad { set; get; }
+
+        /// Initialization vector for key encryption
+        public string keyIV { set; get; }
+
+        /// Additional Authentication Data for key encryption
+        public string keyAad { set; get; }
 
         /// Encryption material descriptor
         public string matDesc { set; get; }
@@ -89,7 +92,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// File message digest (after compression if required)
         public string sha256Digest { set; get; }
 
-        /// Source compression 
+        /// Source compression
         public SFFileCompressionType sourceCompression { set; get; }
 
         /// Target compression
@@ -118,13 +121,13 @@ namespace Snowflake.Data.Core.FileTransfer
 
         public bool sourceFromStream { get; set; }
 
-        public MemoryStream memoryStream {get; set; }
+        public MemoryStream memoryStream { get; set; }
 
         // Proxy credentials of the remote storage client.
         public ProxyCredentials proxyCredentials { get; set; }
-        
+
         public int MaxBytesInMemory { get; set; }
-        
+
         internal CommandTypes _operationType;
 
         internal string RemoteFileName()
@@ -142,7 +145,7 @@ namespace Snowflake.Data.Core.FileTransfer
     {
 
         private const int OneMegabyteInBytes = 1024 * 1024;
-        
+
         public string TempDir { get; set; }
 
         public int MaxBytesInMemory { get; set; }

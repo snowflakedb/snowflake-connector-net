@@ -12,15 +12,15 @@ namespace Snowflake.Data.Core.Converter
             }
             if (timestampType == SFDataType.TIMESTAMP_NTZ)
             {
-                var dateTimeUtc = DateTime.Parse(value).ToUniversalTime();
+                var dateTimeNoTz = DateTime.Parse(value);
                 if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
-                    return dateTimeUtc;
+                    return dateTimeNoTz;
                 }
 
                 if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
-                    return (DateTimeOffset) dateTimeUtc;
+                    return (DateTimeOffset)DateTime.SpecifyKind(dateTimeNoTz, DateTimeKind.Utc);
                 }
 
                 throw new StructuredTypesReadingException($"Cannot read TIMESTAMP_NTZ into {fieldType} type");
@@ -35,21 +35,21 @@ namespace Snowflake.Data.Core.Converter
                 }
                 if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
-                    return dateTimeOffset.ToUniversalTime().DateTime.ToUniversalTime();
+                    return dateTimeOffset.UtcDateTime;
                 }
 
                 throw new StructuredTypesReadingException($"Cannot read TIMESTAMP_TZ into {fieldType} type");
             }
             if (timestampType == SFDataType.TIMESTAMP_LTZ)
             {
-                var dateTimeOffset = DateTimeOffset.Parse(value);
+                var dateTimeOffsetLocal = DateTimeOffset.Parse(value).ToLocalTime();
                 if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
-                    return dateTimeOffset;
+                    return dateTimeOffsetLocal;
                 }
                 if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
-                    return dateTimeOffset.UtcDateTime;
+                    return dateTimeOffsetLocal.LocalDateTime;
                 }
                 throw new StructuredTypesReadingException($"Cannot read TIMESTAMP_LTZ into {fieldType} type");
             }
@@ -63,13 +63,14 @@ namespace Snowflake.Data.Core.Converter
             }
             if (timestampType == SFDataType.DATE)
             {
-                if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
-                {
-                    return DateTimeOffset.Parse(value).ToUniversalTime();
-                }
+                var dateTime = DateTime.Parse(value);
                 if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
-                    return DateTime.Parse(value).ToUniversalTime();
+                    return dateTime;
+                }
+                if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
+                {
+                    return (DateTimeOffset)DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
                 }
                 throw new StructuredTypesReadingException($"Cannot not read DATE into {fieldType} type");
             }

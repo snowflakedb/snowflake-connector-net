@@ -12,7 +12,7 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture, NonParallelizable]
-    public class EasyLoggingIT: SFBaseTest
+    public class EasyLoggingIT : SFBaseTest
     {
         private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
 

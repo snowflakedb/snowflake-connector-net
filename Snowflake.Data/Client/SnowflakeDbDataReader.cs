@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Data.Common;
 using System.Collections;
@@ -31,6 +27,8 @@ namespace Snowflake.Data.Client
         private int RecordsAffectedInternal;
 
         internal ResultFormat ResultFormat => resultSet.ResultFormat;
+
+        private const int MaxStringLength = 16777216; // Default maximum allowed length for VARCHAR
 
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
         {
@@ -77,7 +75,7 @@ namespace Snowflake.Data.Client
         {
             get
             {
-                return resultSet.HasResultSet() && resultSet.HasRows();
+                return !resultSet.isClosed && resultSet.HasRows();
             }
         }
 
@@ -122,7 +120,7 @@ namespace Snowflake.Data.Client
 
                 row[SchemaTableColumn.ColumnName] = rowType.name;
                 row[SchemaTableColumn.ColumnOrdinal] = columnOrdinal;
-                row[SchemaTableColumn.ColumnSize] = (int)rowType.length;
+                row[SchemaTableColumn.ColumnSize] = IsStructuredOrSemiStructuredType(rowType.type) && rowType.length == 0 ? MaxStringLength : (int)rowType.length;
                 row[SchemaTableColumn.NumericPrecision] = (int)rowType.precision;
                 row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
                 row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
@@ -189,10 +187,7 @@ namespace Snowflake.Data.Client
             return resultSet.GetDouble(ordinal);
         }
 
-        public override IEnumerator GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
+        public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
 
         public override Type GetFieldType(int ordinal)
         {
@@ -249,14 +244,14 @@ namespace Snowflake.Data.Client
         public override int GetValues(object[] values)
         {
             int count = Math.Min(FieldCount, values.Length);
-            for (int i=0; i< count; i++)
+            for (int i = 0; i < count; i++)
             {
                 values[i] = GetValue(i);
             }
             return count;
         }
 
-        internal T GetObject<T>(int ordinal)
+        public T GetObject<T>(int ordinal)
             where T : class, new()
         {
             try
@@ -279,15 +274,17 @@ namespace Snowflake.Data.Client
             }
         }
 
-        internal T[] GetArray<T>(int ordinal)
+        public T[] GetArray<T>(int ordinal)
         {
             try
             {
                 var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
                 var fields = rowType.fields;
-                if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsArrayType(rowType.type))
+                var isArrayOrVector = JsonToStructuredTypeConverter.IsArrayType(rowType.type) ||
+                                      JsonToStructuredTypeConverter.IsVectorType(rowType.type);
+                if (fields == null || fields.Count == 0 || !isArrayOrVector)
                 {
-                    throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array");
+                    throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array or vector types");
                 }
 
                 var stringValue = GetString(ordinal);
@@ -302,7 +299,7 @@ namespace Snowflake.Data.Client
             }
         }
 
-        internal Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal)
+        public Dictionary<TKey, TValue> GetMap<TKey, TValue>(int ordinal)
         {
             try
             {
@@ -369,6 +366,12 @@ namespace Snowflake.Data.Client
             base.Close();
             resultSet.close();
             isClosed = true;
+        }
+
+        private bool IsStructuredOrSemiStructuredType(string type)
+        {
+            type = type.ToLower();
+            return type == "array" || type == "object" || type == "variant" || type == "map";
         }
     }
 }

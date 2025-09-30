@@ -1,9 +1,6 @@
-/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Apache.Arrow;
 
 namespace Snowflake.Data.Core
@@ -13,16 +10,16 @@ namespace Snowflake.Data.Core
         internal override ResultFormat ResultFormat => ResultFormat.ARROW;
 
         private static readonly DateTimeOffset s_epochDate = SFDataConverter.UnixEpoch;
-        
-        private static readonly long[] s_powersOf10 =  { 
-            1, 
-            10, 
-            100, 
-            1000, 
-            10000, 
-            100000, 
-            1000000, 
-            10000000, 
+
+        private static readonly long[] s_powersOf10 =  {
+            1,
+            10,
+            100,
+            1000,
+            10000,
+            100000,
+            1000000,
+            10000000,
             100000000,
             1000000000
         };
@@ -39,7 +36,6 @@ namespace Snowflake.Data.Core
 
         private byte[][] _byte;
         private double[][] _double;
-
 
         private int _currentBatchIndex;
         private int _currentRecordIndex = -1;
@@ -62,7 +58,7 @@ namespace Snowflake.Data.Core
             RowCount = recordBatch.Length;
             ColumnCount = recordBatch.ColumnCount;
             ChunkIndex = -1;
-            
+
             ResetTempTables();
         }
 
@@ -81,11 +77,11 @@ namespace Snowflake.Data.Core
         {
             RecordBatch.Add(recordBatch);
         }
-        
+
         internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
         {
             base.Reset(chunkInfo, chunkIndex);
-            
+
             _currentBatchIndex = 0;
             _currentRecordIndex = -1;
             RecordBatch.Clear();
@@ -97,7 +93,7 @@ namespace Snowflake.Data.Core
         {
             if (_currentBatchIndex >= RecordBatch.Count)
                 return false;
-            
+
             _currentRecordIndex += 1;
             if (_currentRecordIndex < RecordBatch[_currentBatchIndex].Length)
                 return true;
@@ -149,7 +145,7 @@ namespace Snowflake.Data.Core
 
             if (column.IsNull(_currentRecordIndex))
                 return DBNull.Value;
-            
+
             switch (srcType)
             {
                 case SFDataType.FIXED:
@@ -170,7 +166,7 @@ namespace Snowflake.Data.Core
                             if (scale == 0)
                                 return _short[columnIndex][_currentRecordIndex];
                             return _short[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
-                        
+
                         case Int32Array array:
                             if (_int[columnIndex] == null)
                                 _int[columnIndex] = array.Values.ToArray();
@@ -184,7 +180,7 @@ namespace Snowflake.Data.Core
                             if (scale == 0)
                                 return _long[columnIndex][_currentRecordIndex];
                             return _long[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
-                        
+
                         case Decimal128Array array:
                             return array.GetValue(_currentRecordIndex);
                     }
@@ -210,55 +206,89 @@ namespace Snowflake.Data.Core
                         _int[columnIndex] = ((StringArray)column).ValueOffsets.ToArray();
                     }
                     return StringArray.DefaultEncoding.GetString(
-                        _byte[columnIndex], 
-                        _int[columnIndex][_currentRecordIndex], 
+                        _byte[columnIndex],
+                        _int[columnIndex][_currentRecordIndex],
                         _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
-                    
+
+                case SFDataType.VECTOR:
+                    var col = (FixedSizeListArray)column;
+                    var values = col.Values;
+                    var vectorLength = values.Length / col.Length;
+                    StringBuilder sb = new StringBuilder("[");
+                    switch (values)
+                    {
+                        case Int32Array array:
+                            for (int i = 0; i < vectorLength; i++)
+                            {
+                                sb.Append(array.GetValue(i + (_currentRecordIndex * vectorLength)));
+                                sb.Append(',');
+                            }
+                            break;
+                        case FloatArray array:
+                            for (int i = 0; i < vectorLength; i++)
+                            {
+                                float.TryParse(array.GetValue(i + (_currentRecordIndex * vectorLength)).ToString(), out float val);
+                                if (val.ToString().Contains("E"))
+                                {
+                                    sb.Append(val);
+                                }
+                                else
+                                {
+                                    sb.Append(val.ToString("N6"));
+                                }
+                                sb.Append(',');
+                            }
+                            break;
+                    }
+                    sb.Length--;
+                    sb.Append("]");
+                    return sb.ToString();
+
                 case SFDataType.BINARY:
                     return ((BinaryArray)column).GetBytes(_currentRecordIndex).ToArray();
-                
+
                 case SFDataType.DATE:
                     if (_int[columnIndex] == null)
                         _int[columnIndex] = ((Date32Array)column).Values.ToArray();
-                    return SFDataConverter.UnixEpoch.AddTicks(_int[columnIndex][_currentRecordIndex] * TicksPerDay);
-                
+                    return DateTime.SpecifyKind(SFDataConverter.UnixEpoch.AddTicks(_int[columnIndex][_currentRecordIndex] * TicksPerDay), DateTimeKind.Unspecified);
+
                 case SFDataType.TIME:
-                {
-                    long value;
-                    
-                    if (column.GetType() == typeof(Int32Array))
                     {
-                        if (_int[columnIndex] == null)
+                        long value;
+
+                        if (column.GetType() == typeof(Int32Array))
                         {
-                            _int[columnIndex] = ((Int32Array)column).Values.ToArray();
+                            if (_int[columnIndex] == null)
+                            {
+                                _int[columnIndex] = ((Int32Array)column).Values.ToArray();
+                            }
+
+                            value = _int[columnIndex][_currentRecordIndex];
+                        }
+                        else
+                        {
+                            if (_long[columnIndex] == null)
+                            {
+                                _long[columnIndex] = ((Int64Array)column).Values.ToArray();
+                            }
+
+                            value = _long[columnIndex][_currentRecordIndex];
                         }
 
-                        value = _int[columnIndex][_currentRecordIndex];
+                        if (scale == 0)
+                            return DateTimeOffset.FromUnixTimeSeconds(value).DateTime;
+                        if (scale <= 3)
+                            return DateTimeOffset.FromUnixTimeMilliseconds(value * s_powersOf10[3 - scale])
+                                .DateTime;
+                        if (scale <= 7)
+                            return s_epochDate.AddTicks(value * s_powersOf10[7 - scale]).DateTime;
+                        return s_epochDate.AddTicks(value / s_powersOf10[scale - 7]).DateTime;
                     }
-                    else
-                    {
-                        if (_long[columnIndex] == null)
-                        {
-                            _long[columnIndex] = ((Int64Array)column).Values.ToArray();
-                        }
-
-                        value = _long[columnIndex][_currentRecordIndex];
-                    }
-                    
-                    if (scale == 0)
-                        return DateTimeOffset.FromUnixTimeSeconds(value).DateTime;
-                    if (scale <= 3)
-                        return DateTimeOffset.FromUnixTimeMilliseconds(value * s_powersOf10[3 - scale])
-                            .DateTime;
-                    if (scale <= 7)
-                        return s_epochDate.AddTicks(value * s_powersOf10[7 - scale]).DateTime;
-                    return s_epochDate.AddTicks(value / s_powersOf10[scale - 7]).DateTime;
-                }
                 case SFDataType.TIMESTAMP_TZ:
                     var structCol = (StructArray)column;
                     if (_long[columnIndex] == null)
                         _long[columnIndex] = ((Int64Array)structCol.Fields[0]).Values.ToArray();
-                    
+
                     if (structCol.Fields.Count == 2)
                     {
                         if (_int[columnIndex] == null)
@@ -275,7 +305,7 @@ namespace Snowflake.Data.Core
                             _fraction[columnIndex] = ((Int32Array)structCol.Fields[1]).Values.ToArray();
                         if (_int[columnIndex] == null)
                             _int[columnIndex] = ((Int32Array)structCol.Fields[2]).Values.ToArray();
-                        
+
                         var epoch = _long[columnIndex][_currentRecordIndex];
                         var fraction = _fraction[columnIndex][_currentRecordIndex];
                         var timezone = _int[columnIndex][_currentRecordIndex];
@@ -297,7 +327,7 @@ namespace Snowflake.Data.Core
                     {
                         if (_long[columnIndex] == null)
                             _long[columnIndex] = ((Int64Array)column).Values.ToArray();
-                            
+
                         var value = _long[columnIndex][_currentRecordIndex];
                         var epoch = ExtractEpoch(value, scale);
                         var fraction = ExtractFraction(value, scale);
@@ -319,7 +349,7 @@ namespace Snowflake.Data.Core
                     {
                         if (_long[columnIndex] == null)
                             _long[columnIndex] = ((Int64Array)column).Values.ToArray();
-                            
+
                         var value = _long[columnIndex][_currentRecordIndex];
                         var epoch = ExtractEpoch(value, scale);
                         var fraction = ExtractFraction(value, scale);
@@ -328,7 +358,7 @@ namespace Snowflake.Data.Core
             }
             throw new NotSupportedException($"Type {srcType} is not supported.");
         }
-        
+
         private long ExtractEpoch(long value, long scale)
         {
             return value / s_powersOf10[scale];

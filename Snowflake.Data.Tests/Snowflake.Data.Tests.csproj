@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0;net462;net471;net472;net48;net481</TargetFrameworks>
-    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0;net7.0;net8.0;</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net462;net471;net472;net48;net481</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
     <Title>Snowflake.Data.Tests</Title>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
@@ -11,6 +11,14 @@
     <DefineConstants>$(SEQUENTIAL_ENV)</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+      <Content Include="wiremock\**\*.*">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="crl\**\*.*">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="JunitXml.TestLogger" Version="3.1.12" />
     <PackageReference Include="Moq" Version="4.18.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.1" />
@@ -19,10 +27,11 @@
     <PackageReference Include="RichardSzalay.MockHttp" Version="6.0.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+    <PackageReference Include="Tomlyn.Signed" Version="0.17.0" />
     <ProjectReference Include="..\Snowflake.Data\Snowflake.Data.csproj" />
   </ItemGroup>
   <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
-    <Copy SourceFiles="parameters.json" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="parameters.json" DestinationFolder="$(OutDir)" ContinueOnError="true"/>
     <Copy SourceFiles="App.config" DestinationFolder="$(OutDir)" />
   </Target>
   <ItemGroup>

@@ -1,11 +1,12 @@
-﻿/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using Newtonsoft.Json;
 using Snowflake.Data.Core;
 using NUnit.Framework;
+using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
+using System.Net;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -17,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionGoneWhenClose()
         {
             var restRequester = new MockCloseSessionGone();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             Assert.DoesNotThrow(() => sfSession.close());
         }
@@ -26,7 +27,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionGoneWhenCloseNonBlocking()
         {
             var restRequester = new MockCloseSessionGone();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             Assert.DoesNotThrow(() => sfSession.CloseNonBlocking());
         }
@@ -48,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             // act
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
             sfSession.UpdateSessionProperties(queryExecResponseData);
 
             // assert
@@ -66,7 +67,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string schemaName = "SC_TEST";
             string warehouseName = "WH_TEST";
             string roleName = "ROLE_TEST";
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
             sfSession.database = databaseName;
             sfSession.warehouse = warehouseName;
             sfSession.role = roleName;
@@ -99,12 +100,68 @@ namespace Snowflake.Data.Tests.UnitTests
                 : $"{simpleConnectionString}client_config_file={configPath};";
 
             // act
-            new SFSession(connectionString, null, easyLoggingStarter.Object);
+            new SFSession(connectionString, new SessionPropertiesContext(), easyLoggingStarter.Object);
 
             // assert
             easyLoggingStarter.Verify(starter => starter.Init(configPath));
         }
 
+        [Test]
+        public void TestThatIdTokenIsStoredWhenCachingIsEnabled()
+        {
+            // arrange
+            var expectedIdToken = "mockIdToken";
+            var connectionString = $"account=account;user=user;password=test;authenticator=externalbrowser;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
+            var session = new SFSession(connectionString, new SessionPropertiesContext());
+            var authenticator = AuthenticatorFactory.GetAuthenticator(session);
+            var key = ((ExternalBrowserAuthenticator)authenticator)._idTokenKey;
+            LoginResponse authnResponse = new LoginResponse
+            {
+                data = new LoginResponseData()
+                {
+                    idToken = expectedIdToken,
+                    authResponseSessionInfo = new SessionInfo(),
+                },
+                success = true
+            };
+
+            // act
+            session.ProcessLoginResponse(authnResponse);
+
+            // assert
+            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty,
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
+        }
+
+        [Test]
+        public void TestThatIdTokenIsNotStoredWhenThereIsNoUserInTheConnectionString()
+        {
+            // arrange
+            var expectedIdToken = "";
+            var mockIdToken = "mockIdToken";
+            var connectionString = $"account=account;password=test;authenticator=externalbrowser;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
+            var session = new SFSession(connectionString, new SessionPropertiesContext());
+            var authenticator = AuthenticatorFactory.GetAuthenticator(session);
+            var key = ((ExternalBrowserAuthenticator)authenticator)._idTokenKey;
+            LoginResponse authnResponse = new LoginResponse
+            {
+                data = new LoginResponseData()
+                {
+                    idToken = mockIdToken,
+                    authResponseSessionInfo = new SessionInfo(),
+                },
+                success = true
+            };
+
+            // act
+            session.ProcessLoginResponse(authnResponse);
+
+            // assert
+            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty,
+                SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
+        }
+
+        [Test]
         [TestCase(null, "accountDefault", "accountDefault", false)]
         [TestCase("initial", "initial", "initial", false)]
         [TestCase("initial", null, "initial", false)]
@@ -121,7 +178,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionPropertyQuotationSafeUpdateOnServerResponse(string sessionInitialValue, string serverResponseFinalSessionValue, string unquotedExpectedFinalValue, bool wasChanged)
         {
             // Arrange
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", null);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
             var changedSessionValue = sessionInitialValue;
 
             // Act
@@ -140,7 +197,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", null, restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", new SessionPropertiesContext(), restRequester);
 
             // act
             sfSession.Open();
@@ -152,10 +209,171 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // act
             var json = JsonConvert.SerializeObject(loginRequest, JsonUtils.JsonSettings);
-            var deserializedLoginRequest = (LoginRequest) JsonConvert.DeserializeObject(json, typeof(LoginRequest));
+            var deserializedLoginRequest = (LoginRequest)JsonConvert.DeserializeObject(json, typeof(LoginRequest));
 
             // assert
             Assert.AreEqual(loginRequest.data.password, deserializedLoginRequest.data.password);
+        }
+
+        [Test]
+        public void TestHandlePasscodeParameter()
+        {
+            // arrange
+            var passcode = "123456";
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcode={passcode}", new SessionPropertiesContext(), restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.AreEqual(passcode, loginRequest.data.passcode);
+            Assert.AreEqual("passcode", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestHandlePasscodeAsSecureString()
+        {
+            // arrange
+            var passcode = "123456";
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            var sessionContext = new SessionPropertiesContext { Passcode = SecureStringHelper.Encode(passcode) };
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;", sessionContext, EasyLoggingStarter.Instance, restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.AreEqual(passcode, loginRequest.data.passcode);
+            Assert.AreEqual("passcode", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestHandlePasscodeInPasswordParameter()
+        {
+            // arrange
+            var passcode = "123456";
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test{passcode};passcodeInPassword=true;", new SessionPropertiesContext(), restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.IsNull(loginRequest.data.passcode);
+            Assert.AreEqual("passcode", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestPushWhenNoPasscodeAndPasscodeInPasswordIsFalse()
+        {
+            // arrange
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcodeInPassword=false;", new SessionPropertiesContext(), restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.IsNull(loginRequest.data.passcode);
+            Assert.AreEqual("push", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestPushAsDefaultSecondaryAuthentication()
+        {
+            // arrange
+            MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests[0];
+            Assert.IsNull(loginRequest.data.passcode);
+            Assert.AreEqual("push", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestPushMFAWithAuthenticationCacheMFAToken()
+        {
+            // arrange
+            var restRequester = new MockLoginMFATokenCacheRestRequester();
+            var sfSession = new SFSession($"account=test;user=test;password=test;authenticator=username_password_mfa", new SessionPropertiesContext(), restRequester);
+
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests.Dequeue();
+            Assert.IsNull(loginRequest.data.passcode);
+            Assert.IsTrue(loginRequest.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
+            Assert.AreEqual("push", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestMFATokenCacheReturnedToSession()
+        {
+            // arrange
+            var testToken = "testToken1234";
+            var restRequester = new MockLoginMFATokenCacheRestRequester();
+            var sfSession = new SFSession($"account=test;user=test;password=test;authenticator=username_password_mfa", new SessionPropertiesContext(), restRequester);
+            restRequester.LoginResponses.Enqueue(new LoginResponseData()
+            {
+                mfaToken = testToken,
+                authResponseSessionInfo = new SessionInfo()
+            });
+            // act
+            sfSession.Open();
+
+            // assert
+            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            var loginRequest = restRequester.LoginRequests.Dequeue();
+            Assert.AreEqual(SecureStringHelper.Decode(sfSession._mfaToken), testToken);
+            Assert.IsNull(loginRequest.data.passcode);
+            Assert.IsTrue(loginRequest.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
+            Assert.AreEqual("push", loginRequest.data.extAuthnDuoMethod);
+        }
+
+        [Test]
+        public void TestMFATokenCacheUsedInNewConnection()
+        {
+            // arrange
+            var testToken = "testToken1234";
+            var restRequester = new MockLoginMFATokenCacheRestRequester();
+            var connectionString = $"account=test;user=test;password=test;authenticator=username_password_mfa";
+            var sfSession = new SFSession(connectionString, new SessionPropertiesContext(), restRequester);
+            restRequester.LoginResponses.Enqueue(new LoginResponseData()
+            {
+                mfaToken = testToken,
+                authResponseSessionInfo = new SessionInfo()
+            });
+            sfSession.Open();
+            var sfSessionWithCachedToken = new SFSession(connectionString, new SessionPropertiesContext(), restRequester);
+            // act
+            sfSessionWithCachedToken.Open();
+
+            // assert
+            Assert.AreEqual(2, restRequester.LoginRequests.Count);
+            var firstLoginRequest = restRequester.LoginRequests.Dequeue();
+            Assert.AreEqual(SecureStringHelper.Decode(sfSession._mfaToken), testToken);
+            Assert.IsNull(firstLoginRequest.data.passcode);
+            Assert.IsTrue(firstLoginRequest.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
+            Assert.AreEqual("push", firstLoginRequest.data.extAuthnDuoMethod);
+
+            var secondLoginRequest = restRequester.LoginRequests.Dequeue();
+            Assert.AreEqual(secondLoginRequest.data.Token, testToken);
         }
     }
 }

@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,11 +10,13 @@ namespace Snowflake.Data.Tests.Mock
 
     class MockRestSessionExpired : IMockRestRequester
     {
-        static private readonly String EXPIRED_SESSION_TOKEN="session_expired_token";
+        static private readonly String EXPIRED_SESSION_TOKEN = "session_expired_token";
+
+        static private readonly String NEW_SESSION_TOKEN = "new_session_token";
 
         static private readonly String TOKEN_FMT = "Snowflake Token=\"{0}\"";
 
-        static private readonly int SESSION_EXPIRED_CODE = 390112;
+        static internal readonly int SESSION_EXPIRED_CODE = 390112;
 
         public string FirstTimeRequestID;
 
@@ -58,7 +56,7 @@ namespace Snowflake.Data.Tests.Mock
                     };
                     return Task.FromResult<T>((T)(object)queryExecResponse);
                 }
-                else if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, "new_session_token")))
+                else if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
                 {
                     SecondTimeRequestID = ExtractRequestID(sfRequest.Url.Query);
                     QueryExecResponse queryExecResponse = new QueryExecResponse
@@ -97,7 +95,7 @@ namespace Snowflake.Data.Tests.Mock
                     success = true,
                     data = new RenewSessionResponseData()
                     {
-                        sessionToken = "new_session_token",
+                        sessionToken = NEW_SESSION_TOKEN,
                         masterToken = "new_master_token"
                     }
                 });
@@ -120,6 +118,46 @@ namespace Snowflake.Data.Tests.Mock
 
         public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
+            SFRestRequest sfRequest = (SFRestRequest)request;
+            if (sfRequest.Url.ToString().Contains("retryId"))
+            {
+                QueryExecResponse queryExecResponse = new QueryExecResponse
+                {
+                    success = false,
+                    code = SESSION_EXPIRED_CODE
+                };
+                return Task.FromResult<T>((T)(object)queryExecResponse);
+            }
+            if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
+            {
+                QueryExecResponse queryExecResponse = new QueryExecResponse
+                {
+                    success = false,
+                    code = SESSION_EXPIRED_CODE
+                };
+                return Task.FromResult<T>((T)(object)queryExecResponse);
+            }
+            if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
+            {
+                QueryExecResponse queryExecResponse = new QueryExecResponse
+                {
+                    success = true,
+                    data = new QueryExecResponseData
+                    {
+                        rowSet = new string[,] { { "abc" } },
+                        rowType = new List<ExecResponseRowType>()
+                            {
+                                new ExecResponseRowType
+                                {
+                                    name = "colOne",
+                                    type = SFDataType.TEXT.ToString()
+                                }
+                            },
+                        parameters = new List<NameValueParameter>()
+                    }
+                };
+                return Task.FromResult<T>((T)(object)queryExecResponse);
+            }
             return Task.FromResult<T>((T)(object)null);
         }
 
@@ -132,7 +170,7 @@ namespace Snowflake.Data.Tests.Mock
         {
             return null;
         }
-        
+
         private string ExtractRequestID(string queries)
         {
             int start = queries.IndexOf("requestId=");

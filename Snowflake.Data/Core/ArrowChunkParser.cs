@@ -1,17 +1,11 @@
-/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Apache.Arrow;
 using Apache.Arrow.Ipc;
 
 namespace Snowflake.Data.Core
 {
-    public class ArrowChunkParser : IChunkParser
+    internal class ArrowChunkParser : IChunkParser
     {
         private readonly Stream stream;
 
@@ -22,7 +16,7 @@ namespace Snowflake.Data.Core
 
         public async Task ParseChunk(IResultChunk chunk)
         {
-            ArrowResultChunk resultChunk = (ArrowResultChunk)chunk; 
+            ArrowResultChunk resultChunk = (ArrowResultChunk)chunk;
 
             using (var reader = new ArrowStreamReader(stream))
             {

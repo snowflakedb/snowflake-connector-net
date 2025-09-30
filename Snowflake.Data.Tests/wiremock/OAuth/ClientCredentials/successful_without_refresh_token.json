@@ -1,0 +1,41 @@
+{
+    "mappings": [
+        {
+            "scenarioName": "Successful OAuth client credentials flow without refresh token",
+            "request": {
+                "urlPathPattern": "/oauth/token-request.*",
+                "method": "POST",
+                "headers": {
+                    "Authorization": {
+                        "contains": "Basic"
+                    },
+                    "Content-Type": {
+                        "contains": "application/x-www-form-urlencoded"
+                    },
+                    "Content-Encoding": {
+                        "contains": "utf-8"
+                    }
+                },
+                "bodyPatterns": [
+                    {
+                        "contains": "grant_type=client_credentials"
+                    },
+                    {
+                        "contains": "scope=session%3Arole%3AANALYST"
+                    }
+                ]
+            },
+            "response": {
+                "status": 200,
+                "jsonBody": {
+                    "access_token": "access-token-123",
+                    "token_type": "Bearer",
+                    "username": "user",
+                    "scope": "session:role:ANALYST",
+                    "expires_in": 600,
+                    "idpInitiated": false
+                }
+            }
+        }
+    ]
+}

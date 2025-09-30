@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO;
 using System.Linq;
@@ -21,7 +17,7 @@ namespace Snowflake.Data.Log
         private const string AppenderPrefix = "SFEasyLogging";
 
         private readonly EasyLoggingLevelMapper _levelMapper = EasyLoggingLevelMapper.Instance;
-        
+
         public virtual void ReconfigureEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel, string logsPath)
         {
             var log4netLevel = _levelMapper.ToLog4NetLevel(easyLoggingLogLevel);
@@ -30,12 +26,17 @@ namespace Snowflake.Data.Log
                 var repository = (log4net.Repository.Hierarchy.Hierarchy)LogManager.GetRepository();
                 var rootLogger = (log4net.Repository.Hierarchy.Logger)repository.GetLogger("Snowflake.Data");
                 rootLogger.Level = log4netLevel;
-                var appender = string.Equals(logsPath, "STDOUT", StringComparison.OrdinalIgnoreCase)
+                var appender = IsStdout(logsPath)
                     ? AddConsoleAppender(rootLogger)
                     : AddRollingFileAppender(rootLogger, logsPath);
                 RemoveOtherEasyLoggingAppenders(rootLogger, appender);
                 repository.RaiseConfigurationChanged(EventArgs.Empty);
             }
+        }
+
+        internal static bool IsStdout(string logsPath)
+        {
+            return string.Equals(logsPath, "STDOUT", StringComparison.OrdinalIgnoreCase);
         }
 
         internal void ResetEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel)
@@ -57,7 +58,7 @@ namespace Snowflake.Data.Log
             var rootLogger = (log4net.Repository.Hierarchy.Logger)repository.GetLogger("Snowflake.Data");
             return rootLogger.Appenders.ToArray().Any(IsEasyLoggingAppender);
         }
-        
+
         private static void RemoveOtherEasyLoggingAppenders(log4net.Repository.Hierarchy.Logger logger, IAppender appender)
         {
             var existingAppenders = logger.Appenders.ToArray();

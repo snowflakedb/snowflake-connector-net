@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,28 +25,28 @@ namespace Snowflake.Data.Core.Session
             }
         }
 
-        public SFSession GetSession(string connectionString, SecureString password)
+        public SFSession GetSession(string connectionString, SessionPropertiesContext sessionContext)
         {
             s_logger.Debug($"ConnectionPoolManager::GetSession");
-            return GetPool(connectionString, password).GetSession();
+            return GetPool(connectionString, sessionContext).GetSession(connectionString, sessionContext);
         }
 
-        public Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
+        public Task<SFSession> GetSessionAsync(string connectionString, SessionPropertiesContext sessionContext, CancellationToken cancellationToken)
         {
             s_logger.Debug($"ConnectionPoolManager::GetSessionAsync");
-            return GetPool(connectionString, password).GetSessionAsync(cancellationToken);
+            return GetPool(connectionString, sessionContext).GetSessionAsync(connectionString, sessionContext, cancellationToken);
         }
 
         public bool AddSession(SFSession session)
         {
             s_logger.Debug("ConnectionPoolManager::AddSession");
-            return GetPool(session.ConnectionString, session.Password).AddSession(session, true);
+            return GetPool(session.ConnectionString, session.PropertiesContext).AddSession(session, true);
         }
 
         public void ReleaseBusySession(SFSession session)
         {
             s_logger.Debug("ConnectionPoolManager::ReleaseBusySession");
-            GetPool(session.ConnectionString, session.Password).ReleaseBusySession(session);
+            GetPool(session.ConnectionString, session.PropertiesContext).ReleaseBusySession(session);
         }
 
         public void ClearAllPools()
@@ -95,7 +91,7 @@ namespace Snowflake.Data.Core.Session
             switch (values.Count)
             {
                 case 0:
-                    return (long) SFSessionHttpClientProperties.DefaultExpirationTimeout.TotalSeconds;
+                    return (long)SFSessionHttpClientProperties.DefaultExpirationTimeout.TotalSeconds;
                 case 1:
                     return values.First();
                 default:
@@ -120,14 +116,19 @@ namespace Snowflake.Data.Core.Session
             return true; // in new pool pooling is always enabled by default, disabling only by connection string parameter
         }
 
-        public SessionPool GetPool(string connectionString, SecureString password)
+        public SessionPool GetPool(string connectionString, SessionPropertiesContext sessionContext)
         {
             s_logger.Debug("ConnectionPoolManager::GetPool with connection string and secure password");
-            var poolKey = GetPoolKey(connectionString, password);
+            var password = sessionContext.Password;
+            var oauthClientSecret = sessionContext.OAuthClientSecret;
+            var token = sessionContext.Token;
+            var poolKey = GetPoolKey(connectionString, password, oauthClientSecret, token);
 
             if (_pools.TryGetValue(poolKey, out var item))
             {
                 item.ValidateSecurePassword(password);
+                item.ValidateSecureOAuthClientSecret(oauthClientSecret);
+                item.ValidateSecureToken(token);
                 return item;
             }
 
@@ -136,10 +137,12 @@ namespace Snowflake.Data.Core.Session
                 if (_pools.TryGetValue(poolKey, out var poolCreatedWhileWaitingOnLock))
                 {
                     poolCreatedWhileWaitingOnLock.ValidateSecurePassword(password);
+                    poolCreatedWhileWaitingOnLock.ValidateSecureOAuthClientSecret(oauthClientSecret);
+                    poolCreatedWhileWaitingOnLock.ValidateSecureToken(token);
                     return poolCreatedWhileWaitingOnLock;
                 }
                 s_logger.Info($"Creating new pool");
-                var pool = SessionPool.CreateSessionPool(connectionString, password);
+                var pool = SessionPool.CreateSessionPool(connectionString, password, oauthClientSecret, token);
                 _pools.Add(poolKey, pool);
                 return pool;
             }
@@ -148,12 +151,21 @@ namespace Snowflake.Data.Core.Session
         public SessionPool GetPool(string connectionString)
         {
             s_logger.Debug("ConnectionPoolManager::GetPool with connection string");
-            return GetPool(connectionString, null);
+            return GetPool(connectionString, new SessionPropertiesContext());
         }
 
-        private string GetPoolKey(string connectionString, SecureString password) =>
-            password != null && password.Length > 0
-                ? connectionString + ";password=" + SecureStringHelper.Decode(password) + ";"
-                : connectionString + ";password=;";
+        private string GetPoolKey(string connectionString, SecureString password, SecureString clientSecret, SecureString token)
+        {
+            var passwordPart = password != null && password.Length > 0
+                ? ";password=" + SecureStringHelper.Decode(password) + ";"
+                : ";password=;";
+            var clientSecretPart = clientSecret != null && clientSecret.Length > 0
+                ? ";client_secret=" + SecureStringHelper.Decode(clientSecret) + ";"
+                : ";client_secret=;";
+            var tokenPart = token != null && token.Length > 0
+                ? ";token=" + SecureStringHelper.Decode(token) + ";"
+                : ";token=;";
+            return connectionString + passwordPart + clientSecretPart + tokenPart;
+        }
     }
 }

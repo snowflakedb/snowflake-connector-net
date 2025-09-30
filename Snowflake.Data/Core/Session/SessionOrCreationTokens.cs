@@ -7,7 +7,7 @@ namespace Snowflake.Data.Core.Session
     internal class SessionOrCreationTokens
     {
         internal static readonly List<SessionCreationToken> s_emptySessionCreationTokenList = new List<SessionCreationToken>(); // used as a memory optimization not to create many short living empty list
-        
+
         public SFSession Session { get; }
         public List<SessionCreationToken> SessionCreationTokens { get; }
 

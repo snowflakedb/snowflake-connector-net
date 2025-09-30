@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -10,8 +11,38 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
-    public class StructuredArraysIT: StructuredTypesIT
+    public class StructuredArraysIT : StructuredTypesIT
     {
+        [Test]
+        public void TestDataTableLoadOnStructuredArray()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var expectedValueA = 'a';
+                    var expectedValueB = 'b';
+                    var expectedValueC = 'c';
+                    var arraySFString = $"ARRAY_CONSTRUCT('{expectedValueA}','{expectedValueB}','{expectedValueC}')::ARRAY(TEXT)";
+                    var colName = "colA";
+                    command.CommandText = $"SELECT {arraySFString} AS {colName}";
+
+                    // act
+                    using (var reader = command.ExecuteReader())
+                    {
+                        var dt = new DataTable();
+                        dt.Load(reader);
+
+                        // assert
+                        Assert.AreEqual($"{expectedValueA},{expectedValueB},{expectedValueC}", DataTableParser.GetFirstRowValue(dt, colName));
+                    }
+                }
+            }
+        }
+
         [Test]
         public void TestSelectArray()
         {
@@ -111,7 +142,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var map = array[0];
                     Assert.NotNull(map);
                     Assert.AreEqual(1, map.Count);
-                    Assert.AreEqual("b",map["a"]);
+                    Assert.AreEqual("b", map["a"]);
                 }
             }
         }
@@ -130,7 +161,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     EnableStructuredTypes(connection);
                     command.CommandText = $"SELECT {valueSfString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -138,7 +169,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(array);
-                    CollectionAssert.AreEqual(new [] { RemoveWhiteSpaces(expectedValue) }, array.Select(RemoveWhiteSpaces).ToArray());
+                    CollectionAssert.AreEqual(new[] { RemoveWhiteSpaces(expectedValue) }, array.Select(RemoveWhiteSpaces).ToArray());
                 }
             }
         }
@@ -155,7 +186,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection);
                     var arrayOfIntegers = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(INTEGER)";
                     command.CommandText = $"SELECT {arrayOfIntegers}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -180,7 +211,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection);
                     var arrayOfLongs = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(BIGINT)";
                     command.CommandText = $"SELECT {arrayOfLongs}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -205,7 +236,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection);
                     var arrayOfFloats = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(FLOAT)";
                     command.CommandText = $"SELECT {arrayOfFloats}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -230,7 +261,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection);
                     var arrayOfDoubles = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(DOUBLE)";
                     command.CommandText = $"SELECT {arrayOfDoubles}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -239,6 +270,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.AreEqual(3, array.Length);
                     CollectionAssert.AreEqual(new[] { 3.1d, 5.2d, 8.11d }, array);
+                }
+            }
+        }
+
+        [Test]
+        public void TestSelectArrayOfDoublesWithExponentNotation()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var arrayOfDoubles = "ARRAY_CONSTRUCT(1.0e100, 1.0e-100)::ARRAY(DOUBLE)";
+                    command.CommandText = $"SELECT {arrayOfDoubles}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var array = reader.GetArray<double>(0);
+
+                    // assert
+                    Assert.AreEqual(2, array.Length);
+                    CollectionAssert.AreEqual(new[] { 1.0e100d, 1.0e-100d }, array);
                 }
             }
         }

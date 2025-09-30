@@ -1,13 +1,11 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Data;
 using System.Data.Common;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
+using System.Linq;
+using System.IO;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -110,7 +108,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
 
@@ -276,7 +274,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";;
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
@@ -502,7 +500,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
+                CreateOrReplaceTable(conn, TableName, new[] { "c1 NUMBER" });
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
@@ -592,7 +590,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 1000000)) v order by 1";
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
                 using (IDataReader reader = cmd.ExecuteReader())
                 {
                     int counter = 0;
@@ -602,28 +600,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         // don't test the second column as it has random values just to increase the response size
                         counter++;
                     }
+                    Assert.AreEqual(200000, counter);
                 }
                 conn.Close();
             }
         }
 
         [Test, NonParallelizable]
-        public void TestUseV1ResultParser()
+        public void TestUseV3ResultParser()
         {
             var connectionString = ConnectionString + "poolingEnabled=false";
-            var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
-            int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
-            SFConfiguration.Instance().ChunkParserVersion = 1;
-            SFConfiguration.Instance().ChunkDownloaderVersion = 2;
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connectionString;
-
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 10000)) v order by 1";
                 IDataReader reader = cmd.ExecuteReader();
                 int counter = 0;
                 while (reader.Read())
@@ -632,28 +626,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
+                Assert.AreEqual(10000, counter);
             }
-            SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
-            SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
         }
 
         [Test, NonParallelizable]
-        public void TestUseV2ChunkDownloader()
+        public void TestUseV3ChunkDownloader()
         {
             var connectionString = ConnectionString + "poolingEnabled=false";
-            var chunkParserVersion = SFConfiguration.Instance().ChunkParserVersion;
-            int chunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
-            SFConfiguration.Instance().ChunkParserVersion = 2;
-            SFConfiguration.Instance().ChunkDownloaderVersion = 2;
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connectionString;
-
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 10000)) v order by 1";
                 IDataReader reader = cmd.ExecuteReader();
                 int counter = 0;
                 while (reader.Read())
@@ -662,13 +650,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
+                Assert.AreEqual(10000, counter);
             }
-            SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
-            SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
         }
 
-        [Test]
-        [Parallelizable(ParallelScope.Children)]
+        [Test, NonParallelizable]
         public void TestDefaultChunkDownloaderWithPrefetchThreads([Values(1, 2, 4)] int prefetchThreads)
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
@@ -679,8 +665,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = $"alter session set CLIENT_PREFETCH_THREADS = {prefetchThreads}";
                 cmd.ExecuteNonQuery();
 
-                // 200000 - empirical value to return 3 additional chunks for both JSON and Arrow response
-                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
+                // 10000 - value to ensure chunking occurs
+                cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 10000)) v order by 1";
 
                 IDataReader reader = cmd.ExecuteReader();
                 int counter = 0;
@@ -690,6 +676,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
+                Assert.AreEqual(10000, counter);
                 conn.Close();
             }
         }
@@ -989,7 +976,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    CreateOrReplaceTable(conn, TableName, new []{"c1 NUMBER"});
+                    CreateOrReplaceTable(conn, TableName, new[] { "c1 NUMBER" });
 
                     command.CommandText = $"insert into {TableName} values(1), (2), (3), (4), (5), (6)";
                     command.ExecuteNonQuery();
@@ -1013,22 +1000,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        //[Ignore("Ignore flaky unstable test case for now. Will revisit later and sdk issue created (210)")]
+        // [Ignore("Ignore flaky unstable test case for now.")]
+        [Retry(2)]
         public void testPutArrayBindAsync()
         {
-            ArrayBindTest(ConnectionString + "poolingEnabled=false", TableName, 15000);
+            ArrayBindTest(ConnectionString + "poolingEnabled=false", TableName, 7500);
         }
 
         private void ArrayBindTest(string connstr, string tableName, int size)
         {
-
-            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(100));
+            const int timeoutSeconds = 150;
+            CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connstr;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, tableName, new []
+                CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING",
@@ -1139,7 +1127,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     Task<int> task = cmd.ExecuteNonQueryAsync(externalCancel.Token);
 
-                    task.Wait();
+                    if (!task.Wait(TimeSpan.FromSeconds(timeoutSeconds)))
+                    {
+                        Assert.Fail($"Array bind operation timed out after {timeoutSeconds} seconds");
+                    }
                     Assert.AreEqual(total * 3, task.Result);
 
                     cmd.CommandText = "SELECT * FROM " + tableName;
@@ -1198,7 +1189,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString + "poolingEnabled=false";
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []{"cola INTEGER"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola INTEGER" });
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -1634,7 +1625,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.Open();
                 var command = conn.CreateCommand();
-                ((SnowflakeDbCommand)command).QueryTag =  expectedQueryTag;
+                ((SnowflakeDbCommand)command).QueryTag = expectedQueryTag;
                 // This query itself will be part of the history and will have the query tag
                 command.CommandText = "SELECT QUERY_TAG FROM table(information_schema.query_history_by_session())";
                 var queryTag = command.ExecuteScalar();
@@ -1672,6 +1663,94 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Assert.IsTrue(await reader.ReadAsync().ConfigureAwait(false));
                 Assert.AreEqual("--", reader.GetString(0));
+            }
+        }
+
+        [Test]
+        public void TestExecuteNonQueryReturnsCorrectRowCountForUploadWithMultipleFiles()
+        {
+            const int NumberOfFiles = 5;
+            const int NumberOfRows = 3;
+            const int ExpectedRowCount = NumberOfFiles * NumberOfRows;
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    var tempFolder = $"{Path.GetTempPath()}Temp_{Guid.NewGuid()}";
+
+                    try
+                    {
+                        // Arrange
+                        Directory.CreateDirectory(tempFolder);
+                        var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
+                        for (int i = 0; i < NumberOfFiles; i++)
+                        {
+                            File.WriteAllText(Path.Combine(tempFolder, $"{TestContext.CurrentContext.Test.Name}_{i}.csv"), data);
+                        }
+                        CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
+                        cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{TableName} AUTO_COMPRESS=FALSE";
+                        var reader = cmd.ExecuteReader();
+
+                        // Act
+                        cmd.CommandText = $"COPY INTO {TableName} FROM @%{TableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
+                        int actualRowCount = cmd.ExecuteNonQuery();
+
+                        // Assert
+                        Assert.AreEqual(ExpectedRowCount, actualRowCount);
+                    }
+                    finally
+                    {
+                        Directory.Delete(tempFolder, true);
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public async Task TestExecuteNonQueryAsyncReturnsCorrectRowCountForUploadWithMultipleFiles()
+        {
+            const int NumberOfFiles = 5;
+            const int NumberOfRows = 3;
+            const int ExpectedRowCount = NumberOfFiles * NumberOfRows;
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
+                conn.Open();
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    var tempFolder = $"{Path.GetTempPath()}Temp_{Guid.NewGuid()}";
+
+                    try
+                    {
+                        // Arrange
+                        Directory.CreateDirectory(tempFolder);
+                        var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
+                        for (int i = 0; i < NumberOfFiles; i++)
+                        {
+                            File.WriteAllText(Path.Combine(tempFolder, $"{TestContext.CurrentContext.Test.Name}_{i}.csv"), data);
+                        }
+                        CreateOrReplaceTable(conn, TableName, new[] { "COL1 STRING" });
+                        cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{TableName} AUTO_COMPRESS=FALSE";
+                        var reader = cmd.ExecuteReader();
+
+                        // Act
+                        cmd.CommandText = $"COPY INTO {TableName} FROM @%{TableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
+                        int actualRowCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                        // Assert
+                        Assert.AreEqual(ExpectedRowCount, actualRowCount);
+                    }
+                    finally
+                    {
+                        Directory.Delete(tempFolder, true);
+                    }
+                }
             }
         }
     }

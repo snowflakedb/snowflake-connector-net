@@ -1,8 +1,5 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -69,6 +66,10 @@ namespace Snowflake.Data.Tests.UnitTests
         // Mock file content
         const string FileContent = "FTAFileContent";
 
+        // Mock file paths
+        static readonly string s_filePathWithoutSpaces = Path.Combine("C:\\Users\\Test\\", "folder_without_space", "*.*");
+        static readonly string s_filePathWithSpaces = Path.Combine("C:\\Users\\Test\\", "folder with space", "*.*");
+
         [SetUp]
         public void BeforeEachTest()
         {
@@ -117,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             _cancellationToken = new CancellationToken();
 
-            _session = new SFSession(ConnectionStringMock, null);
+            _session = new SFSession(ConnectionStringMock, new SessionPropertiesContext());
         }
 
         [TearDown]
@@ -244,7 +245,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
             // Check the file size of the source file and destination file are the same
             Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
-            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize)); ;
+            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
         }
 
         [Test]
@@ -633,6 +634,36 @@ namespace Snowflake.Data.Tests.UnitTests
             var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
             Assert.IsInstanceOf<DirectoryNotFoundException>(innerException);
             Assert.That(innerException?.Message, Does.Match("Could not find a part of the path .*"));
+        }
+
+        [Test]
+        public void TestGetFilePathWithoutSpacesFromPutCommand()
+        {
+            TestGetFilePathFromPutCommand("PUT file://" + s_filePathWithoutSpaces + " @TestStage", s_filePathWithoutSpaces);
+        }
+
+        [Test]
+        public void TestGetFilePathWithSpacesFromPutCommand()
+        {
+            TestGetFilePathFromPutCommand("PUT file://" + s_filePathWithSpaces + "  @TestStage", s_filePathWithSpaces);
+        }
+
+        [Test]
+        public void TestGetFilePathWithoutSpacesAndWithSingleQuotesFromPutCommand()
+        {
+            TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithoutSpaces + "' @TestStage", s_filePathWithoutSpaces);
+        }
+
+        [Test]
+        public void TestGetFilePathWithSpacesAndWithSingleQuotesFromPutCommand()
+        {
+            TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithSpaces + "'  @TestStage", s_filePathWithSpaces);
+        }
+
+        public void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
+        {
+            var actualFilePath = SFFileTransferAgent.getFilePathFromPutCommand(query);
+            Assert.AreEqual(expectedFilePath, actualFilePath);
         }
     }
 }

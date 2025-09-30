@@ -38,4 +38,6 @@ In order to accurately debug the issue this information is required. Thanks!
    https://community.snowflake.com/s/article/How-to-generate-log-file-on-Snowflake-connectors
    
    There is an example in READMD.md file showing you how to enable logging.
-7. What is your Snowflake account identifier, if any? (Optional)
+
+   Before sharing any information, please be sure to review the log and remove any sensitive
+   information.

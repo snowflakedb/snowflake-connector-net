@@ -2,7 +2,7 @@ using System;
 
 namespace Snowflake.Data.Core.Session
 {
-    internal class NonCountingSessionCreationTokenCounter: ISessionCreationTokenCounter
+    internal class NonCountingSessionCreationTokenCounter : ISessionCreationTokenCounter
     {
         private static readonly TimeSpan s_irrelevantCreateSessionTimeout = SFSessionHttpClientProperties.DefaultConnectionTimeout; // in case of old caching pool or pooling disabled we do not remove expired ones nor even store them
 

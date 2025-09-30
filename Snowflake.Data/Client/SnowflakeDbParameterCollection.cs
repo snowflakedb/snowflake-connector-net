@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -13,7 +9,7 @@ namespace Snowflake.Data.Client
     public class SnowflakeDbParameterCollection : DbParameterCollection
     {
         internal List<SnowflakeDbParameter> parameterList;
-        
+
         internal SnowflakeDbParameterCollection()
         {
             parameterList = new List<SnowflakeDbParameter>();
@@ -45,13 +41,13 @@ namespace Snowflake.Data.Client
         {
             SnowflakeDbParameter parameter = new SnowflakeDbParameter(parameterName, dataType);
             parameterList.Add(parameter);
-            return parameter;   
+            return parameter;
         }
 
         public override void AddRange(Array values)
         {
             IEnumerator e = values.GetEnumerator();
-            while(e.MoveNext())
+            while (e.MoveNext())
             {
                 parameterList.Add(tryCastThrow(e.Current));
             }
@@ -92,7 +88,7 @@ namespace Snowflake.Data.Client
                 {
                     return index;
                 }
-                index++; 
+                index++;
             }
             return -1;
         }

@@ -1,11 +1,5 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
-using Mono.Unix;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
@@ -27,9 +21,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private static Mock<FileOperations> t_fileOperations;
 
         [ThreadStatic]
-        private static Mock<UnixOperations> t_unixOperations;
-
-        [ThreadStatic]
         private static Mock<EnvironmentOperations> t_environmentOperations;
 
         [ThreadStatic]
@@ -39,13 +30,12 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void Setup()
         {
             t_fileOperations = new Mock<FileOperations>();
-            t_unixOperations = new Mock<UnixOperations>();
             t_environmentOperations = new Mock<EnvironmentOperations>();
-            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_unixOperations.Object, t_environmentOperations.Object);
+            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_environmentOperations.Object);
             MockHomeDirectory();
             MockExecutionDirectory();
         }
-        
+
         [Test]
         public void TestThatTakesFilePathFromTheInput()
         {
@@ -53,10 +43,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             MockFileFromEnvironmentalVariable();
             MockFileOnDriverPath();
             MockFileOnHomePath();
-            
+
             // act
             var filePath = t_finder.FindConfigFilePath(InputConfigFilePath);
-            
+
             // assert
             Assert.AreEqual(InputConfigFilePath, filePath);
             t_fileOperations.VerifyNoOtherCalls();
@@ -71,14 +61,14 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             MockFileFromEnvironmentalVariable();
             MockFileOnDriverPath();
             MockFileOnHomePath();
-            
+
             // act
             var filePath = t_finder.FindConfigFilePath(inputFilePath);
-            
+
             // assert
             Assert.AreEqual(EnvironmentalConfigFilePath, filePath);
         }
-        
+
         [Test]
         public void TestThatTakesFilePathFromDriverLocationWhenNoInputParameterNorEnvironmentVariable()
         {
@@ -88,20 +78,20 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // act
             var filePath = t_finder.FindConfigFilePath(null);
-            
+
             // assert
             Assert.AreEqual(s_driverConfigFilePath, filePath);
         }
-        
+
         [Test]
         public void TestThatTakesFilePathFromHomeLocationWhenNoInputParamEnvironmentVarNorDriverLocation()
         {
             // arrange
             MockFileOnHomePath();
-            
+
             // act
             var filePath = t_finder.FindConfigFilePath(null);
-            
+
             // assert
             Assert.AreEqual(s_homeConfigFilePath, filePath);
         }
@@ -120,31 +110,11 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [Test]
-        public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
-            // arrange
-            MockFileOnHomePath();
-            MockHasFlagReturnsTrue();
-
-            // act
-            var thrown = Assert.Throws<Exception>(() => t_finder.FindConfigFilePath(null));
-
-            // assert
-            Assert.IsNotNull(thrown);
-            Assert.AreEqual(thrown.Message, $"Error due to other users having permission to modify the config file: {s_homeConfigFilePath}");
-        }
-        
-        [Test]
         public void TestThatReturnsNullIfNoWayOfGettingTheFile()
         {
             // act
             var filePath = t_finder.FindConfigFilePath(null);
-            
+
             // assert
             Assert.IsNull(filePath);
         }
@@ -157,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // act
             var filePath = t_finder.FindConfigFilePath(null);
-            
+
             // assert
             Assert.IsNull(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
@@ -186,18 +156,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // act
             var filePath = t_finder.FindConfigFilePath(null);
-            
+
             // assert
             Assert.IsNull(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
-        }
-
-        private static void MockHasFlagReturnsTrue()
-        {
-            t_unixOperations
-                .Setup(f => f.CheckFileHasAnyOfPermissions(s_homeConfigFilePath,
-                    It.Is<FileAccessPermissions>(p =>  p.Equals(FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))))
-                .Returns(true);
         }
 
         private static void MockHomeDirectory()
@@ -220,7 +182,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
                 .Setup(e => e.GetExecutionDirectory())
                 .Returns(DriverDirectory);
         }
-        
+
         private static void MockFileOnHomePathDoesNotExist()
         {
             t_fileOperations
@@ -232,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             t_environmentOperations
                 .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
-                .Returns((string) null);
+                .Returns((string)null);
         }
 
         private static void MockFileFromEnvironmentalVariable()

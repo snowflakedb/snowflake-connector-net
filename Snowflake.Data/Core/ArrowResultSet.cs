@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO;
 using System.Text;
@@ -18,7 +14,7 @@ namespace Snowflake.Data.Core
         internal override ResultFormat ResultFormat => ResultFormat.ARROW;
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ArrowResultSet>();
-        
+
         private readonly int _totalChunkCount;
         private BaseResultChunk _currentChunk;
         private readonly IChunkDownloader _chunkDownloader;
@@ -44,19 +40,19 @@ namespace Snowflake.Data.Core
                 isClosed = false;
 
                 queryId = responseData.queryId;
-                
+
                 ReadChunk(responseData);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                s_logger.Error("Result set error queryId="+responseData.queryId, ex);
+                s_logger.Error("Result set error queryId=" + responseData.queryId, ex);
                 throw;
             }
         }
 
         private void ReadChunk(QueryExecResponseData responseData)
         {
-            if (responseData.rowsetBase64.Length > 0)
+            if (responseData.rowsetBase64?.Length > 0)
             {
                 using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
                 {
@@ -95,21 +91,21 @@ namespace Snowflake.Data.Core
 
             return false;
         }
-        
+
         internal override bool Next()
         {
             ThrowIfClosed();
 
             if (_currentChunk.Next())
                 return true;
-            
+
             if (_totalChunkCount > 0)
             {
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
                                $" size uncompressed: {_currentChunk.UncompressedSize}");
-                _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
-                
+                _currentChunk = Task.Run(async () => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+
                 return _currentChunk?.Next() ?? false;
             }
 
@@ -154,21 +150,21 @@ namespace Snowflake.Data.Core
 
             return false;
         }
-        
+
         private object GetObjectInternal(int ordinal)
         {
             ThrowIfClosed();
             ThrowIfOutOfBounds(ordinal);
-            
+
             var type = sfResultSetMetaData.GetTypesByIndex(ordinal).Item1;
             var scale = sfResultSetMetaData.GetScaleByIndex(ordinal);
-            
+
             var value = ((ArrowResultChunk)_currentChunk).ExtractCell(ordinal, type, (int)scale);
 
             return value ?? DBNull.Value;
-   
+
         }
-        
+
         internal override object GetValue(int ordinal)
         {
             var value = GetObjectInternal(ordinal);
@@ -176,32 +172,45 @@ namespace Snowflake.Data.Core
             {
                 return value;
             }
-            
+
             object obj;
             checked
             {
                 switch (value)
                 {
-                    case decimal ret: obj =  ret;
+                    case decimal ret:
+                        obj = ret;
                         break;
-                    case long ret: obj =  ret;
+                    case long ret:
+                        obj = ret;
                         break;
-                    case int ret: obj =  (long)ret;
+                    case int ret:
+                        obj = (long)ret;
                         break;
-                    case short ret: obj =  (long)ret;
+                    case short ret:
+                        obj = (long)ret;
                         break;
-                    case sbyte ret: obj =  (long)ret;
+                    case sbyte ret:
+                        obj = (long)ret;
                         break;
-                    case string ret: obj =  ret;
+                    case string ret:
+                        obj = ret;
                         break;
-                    case bool ret: obj = ret;
+                    case bool ret:
+                        obj = ret;
+                        break;
+                    case DateTime ret:
+                        obj = ret;
+                        break;
+                    case DateTimeOffset ret:
+                        obj = ret;
                         break;
                     default:
-                    {
-                        var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
-                        obj = Convert.ChangeType(value, dstType);
-                        break;
-                    }
+                        {
+                            var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
+                            obj = Convert.ChangeType(value, dstType);
+                            break;
+                        }
                 }
             }
 
@@ -217,7 +226,7 @@ namespace Snowflake.Data.Core
         {
             return (bool)GetObjectInternal(ordinal);
         }
-        
+
         internal override byte GetByte(int ordinal)
         {
             var value = GetObjectInternal(ordinal);
@@ -244,7 +253,7 @@ namespace Snowflake.Data.Core
         {
             return ((string)GetObjectInternal(ordinal))[0];
         }
-        
+
         internal override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
         {
             return ReadSubset<char>(ordinal, dataOffset, buffer, bufferOffset, length);
@@ -283,12 +292,12 @@ namespace Snowflake.Data.Core
             switch (value)
             {
                 case double ret: return (decimal)ret;
-                case float  ret: return (decimal)ret;
-                case long   ret: return ret;
-                case int    ret: return ret;
-                case short  ret: return ret;
-                case sbyte  ret: return ret;
-                default: return (decimal)value;
+                case float ret: return (decimal)ret;
+                case long ret: return ret;
+                case int ret: return ret;
+                case short ret: return ret;
+                case sbyte ret: return ret;
+                default: return Convert.ToDecimal(value);
             }
         }
 
@@ -297,13 +306,13 @@ namespace Snowflake.Data.Core
             var value = GetObjectInternal(ordinal);
             switch (value)
             {
-                case float   ret: return ret;
+                case float ret: return ret;
                 case decimal ret: return (double)ret;
-                case long    ret: return ret;
-                case int     ret: return ret;
-                case short   ret: return ret;
-                case sbyte   ret: return ret;
-                default: return (double)value; 
+                case long ret: return ret;
+                case int ret: return ret;
+                case short ret: return ret;
+                case sbyte ret: return ret;
+                default: return Convert.ToDouble(value);
             }
         }
 
@@ -318,7 +327,7 @@ namespace Snowflake.Data.Core
                 case int ret: return ret;
                 case short ret: return ret;
                 case sbyte ret: return ret;
-                default: return (float)value;
+                default: return Convert.ToSingle(value);
             }
         }
 
@@ -335,10 +344,10 @@ namespace Snowflake.Data.Core
                 switch (value)
                 {
                     case decimal ret: return (short)ret;
-                    case long  ret: return (short)ret;
-                    case int   ret: return (short)ret;
+                    case long ret: return (short)ret;
+                    case int ret: return (short)ret;
                     case sbyte ret: return ret;
-                    default: return (short)value;
+                    default: return Convert.ToInt16(value);
                 }
             }
         }
@@ -354,7 +363,7 @@ namespace Snowflake.Data.Core
                     case long ret: return (int)ret;
                     case short ret: return ret;
                     case sbyte ret: return ret;
-                    default: return (int)value;
+                    default: return Convert.ToInt32(value);
                 }
             }
         }
@@ -370,11 +379,11 @@ namespace Snowflake.Data.Core
                     case int ret: return ret;
                     case short ret: return ret;
                     case sbyte ret: return ret;
-                    default: return (long)value;
+                    default: return Convert.ToInt64(value);
                 }
             }
         }
-        
+
         internal override string GetString(int ordinal)
         {
             var value = GetObjectInternal(ordinal);
@@ -388,20 +397,20 @@ namespace Snowflake.Data.Core
                     return ret;
                 case DateTime ret:
                     if (type == SFDataType.DATE)
-                        return SFDataConverter.toDateString(ret, sfResultSetMetaData.dateOutputFormat);
+                        return SFDataConverter.ToDateString(ret, sfResultSetMetaData.dateOutputFormat);
                     break;
             }
 
             return Convert.ToString(value);
         }
-        
+
         private void UpdateSessionStatus(QueryExecResponseData responseData)
         {
             SFSession session = this.sfStatement.SfSession;
             session.UpdateSessionProperties(responseData);
             session.UpdateSessionParameterMap(responseData.parameters);
         }
-        
+
         private long ReadSubset<T>(int ordinal, long dataOffset, T[] buffer, int bufferOffset, int length) where T : struct
         {
             if (dataOffset < 0)
@@ -417,7 +426,7 @@ namespace Snowflake.Data.Core
             if (buffer != null && bufferOffset > buffer.Length)
             {
                 throw new System.ArgumentException(
-                    "Destination buffer is not long enough. Check the buffer offset, length, and the buffer's lower bounds.", 
+                    "Destination buffer is not long enough. Check the buffer offset, length, and the buffer's lower bounds.",
                     nameof(buffer));
             }
 
@@ -446,14 +455,14 @@ namespace Snowflake.Data.Core
                     "Source data is not long enough. Check the data offset, length, and the data's lower bounds.",
                     nameof(dataOffset));
             }
-            
+
             long dataLength = data.Length - dataOffset;
             long elementsRead = Math.Min(length, dataLength);
             Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
 
             return elementsRead;
-            
+
         }
-        
+
     }
 }

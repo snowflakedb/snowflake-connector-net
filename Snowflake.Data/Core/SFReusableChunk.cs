@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,8 +7,8 @@ namespace Snowflake.Data.Core
     class SFReusableChunk : BaseResultChunk
     {
         internal override ResultFormat ResultFormat => ResultFormat.JSON;
-        
-        private readonly BlockResultData data;
+
+        internal readonly BlockResultData data;
 
         private int _currentRowIndex = -1;
 
@@ -29,11 +25,18 @@ namespace Snowflake.Data.Core
             data.Reset(RowCount, ColumnCount, chunkInfo.uncompressedSize);
         }
 
+        internal override void Clear()
+        {
+            base.Clear();
+            _currentRowIndex = -1;
+            data.Clear();
+        }
+
         internal override void ResetForRetry()
         {
             data.ResetForRetry();
         }
-        
+
         [Obsolete("ExtractCell with rowIndex is deprecated", false)]
         public override UTF8Buffer ExtractCell(int rowIndex, int columnIndex)
         {
@@ -62,21 +65,22 @@ namespace Snowflake.Data.Core
             _currentRowIndex += 1;
             return _currentRowIndex < RowCount;
         }
-        
+
         internal override bool Rewind()
         {
             _currentRowIndex -= 1;
             return _currentRowIndex >= 0;
         }
 
-        private class BlockResultData
+        internal class BlockResultData
         {
             private static readonly int NULL_VALUE = -100;
-            private int blockCount;
 
-            private static int blockLengthBits = 24;
+            internal int blockCount;
+            private static int blockLengthBits = 23;
             private static int blockLength = 1 << blockLengthBits;
-            int metaBlockCount;
+
+            internal int metaBlockCount;
             private static int metaBlockLengthBits = 15;
             private static int metaBlockLength = 1 << metaBlockLengthBits;
 
@@ -98,9 +102,22 @@ namespace Snowflake.Data.Core
                 savedColCount = colCount;
                 currentDatOffset = 0;
                 nextIndex = 0;
-                int bytesNeeded = uncompressedSize - (rowCount * 2) - (rowCount * colCount);
-                this.blockCount = getBlock(bytesNeeded - 1) + 1;
+                this.blockCount = 1; // init with 1 block only
                 this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
+            }
+
+            internal void Clear()
+            {
+                savedRowCount = 0;
+                savedColCount = 0;
+                currentDatOffset = 0;
+                nextIndex = 0;
+                blockCount = 0;
+                metaBlockCount = 0;
+
+                data.Clear();
+                offsets.Clear();
+                lengths.Clear();
             }
 
             internal void ResetForRetry()
@@ -157,6 +174,16 @@ namespace Snowflake.Data.Core
 
             public void add(byte[] bytes, int length)
             {
+                // check if a new block for data is needed
+                if (getBlock(currentDatOffset) == blockCount - 1)
+                {
+                    var neededSize = length - spaceLeftOnBlock(currentDatOffset);
+                    while (neededSize >= 0)
+                    {
+                        blockCount++;
+                        neededSize -= blockLength;
+                    }
+                }
                 if (data.Count < blockCount || offsets.Count < metaBlockCount)
                 {
                     allocateArrays();
@@ -232,12 +259,12 @@ namespace Snowflake.Data.Core
             {
                 while (data.Count < blockCount)
                 {
-                    data.Add(new byte[1 << blockLengthBits]);
+                    data.Add(new byte[blockLength]);
                 }
                 while (offsets.Count < metaBlockCount)
                 {
-                    offsets.Add(new int[1 << metaBlockLengthBits]);
-                    lengths.Add(new int[1 << metaBlockLengthBits]);
+                    offsets.Add(new int[metaBlockLength]);
+                    lengths.Add(new int[metaBlockLength]);
                 }
             }
         }

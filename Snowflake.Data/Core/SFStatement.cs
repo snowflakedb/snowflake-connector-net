@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -116,6 +112,8 @@ namespace Snowflake.Data.Core
         private const int SF_QUERY_IN_PROGRESS = 333333;
 
         private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
+
+        private const int GetResultWithIdMaxRetriesCount = 3;
 
         private string _requestId;
 
@@ -284,7 +282,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
+        internal SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
         {
             if ((response.data != null) && (response.data.queryId != null))
             {
@@ -308,8 +306,8 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            throw new SnowflakeDbException(response.data.sqlState,
-                response.code, response.message, response.data.queryId);
+            throw new SnowflakeDbException(response.data?.sqlState,
+                response.code, response.message, response.data?.queryId);
         }
 
         private void SetTimeout(int timeout)
@@ -383,11 +381,14 @@ namespace Snowflake.Data.Core
                     SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
                     await uploader.UploadAsync(bindings, cancellationToken).ConfigureAwait(false);
                     _bindStage = uploader.getStagePath();
-                    ClearQueryRequestId();
                 }
                 catch (Exception e)
                 {
-                    logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}", e);
+                    logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
+                }
+                finally
+                {
+                    ClearQueryRequestId();
                 }
             }
 
@@ -433,7 +434,12 @@ namespace Snowflake.Data.Core
 
                 return BuildResultSet(response, cancellationToken);
             }
-            catch
+            catch (OperationCanceledException)
+            {
+                logger.Warn("Query execution canceled.");
+                throw;
+            }
+            catch (Exception)
             {
                 logger.Error("Query execution failed.");
                 throw;
@@ -497,7 +503,7 @@ namespace Snowflake.Data.Core
             }
             catch (SnowflakeDbException ex)
             {
-                logger.Error($"Query execution failed, QueryId: {ex.QueryId??"unavailable"}", ex);
+                logger.Error($"Query execution failed, QueryId: {ex.QueryId ?? "unavailable"}", ex);
                 _lastQueryId = ex.QueryId ?? _lastQueryId;
                 throw;
             }
@@ -532,13 +538,14 @@ namespace Snowflake.Data.Core
                         SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
                         uploader.Upload(bindings);
                         _bindStage = uploader.getStagePath();
-                        ClearQueryRequestId();
                     }
                     catch (Exception e)
                     {
-                        logger.Warn(
-                            "Exception encountered trying to upload binds to stage. Attaching binds in payload instead. {0}",
-                            e);
+                        logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
+                    }
+                    finally
+                    {
+                        ClearQueryRequestId();
                     }
                 }
 
@@ -568,6 +575,12 @@ namespace Snowflake.Data.Core
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
             response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount && SessionExpired(response); retryCount++)
+            {
+                await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+                req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+            }
             return BuildResultSet(response, cancellationToken);
         }
 
@@ -576,6 +589,12 @@ namespace Snowflake.Data.Core
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
             response = _restRequester.Get<QueryExecResponse>(req);
+            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount && SessionExpired(response); retryCount++)
+            {
+                SfSession.renewSession();
+                req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                response = _restRequester.Get<QueryExecResponse>(req);
+            }
             return BuildResultSet(response, CancellationToken.None);
         }
 

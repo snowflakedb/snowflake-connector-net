@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using Moq;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
 using System.IO;
@@ -25,7 +21,7 @@ namespace Snowflake.Data.Tests.Mock
         internal const string GcsFileContent = "GCSClientTest";
 
         // Create a mock response for GetFileHeader
-        static internal HttpWebResponse CreateResponseForFileHeader(HttpStatusCode httpStatusCode)
+        internal static HttpWebResponse CreateResponseForFileHeader(HttpStatusCode httpStatusCode)
         {
             var response = new Mock<HttpWebResponse>();
 
@@ -46,14 +42,18 @@ namespace Snowflake.Data.Tests.Mock
         }
 
         // Create a mock response for UploadFile
-        static internal HttpWebResponse CreateResponseForUploadFile(HttpStatusCode httpStatusCode)
+        internal static HttpWebResponse CreateResponseForUploadFile(HttpStatusCode? httpStatusCode)
         {
             var response = new Mock<HttpWebResponse>();
 
-            if (httpStatusCode != HttpStatusCode.OK)
+            if (httpStatusCode is null)
+            {
+                throw new WebException("Mock GCS Error - no response", null, 0, null);
+            }
+            else if (httpStatusCode != HttpStatusCode.OK)
             {
                 response.SetupGet(c => c.StatusCode)
-                    .Returns(httpStatusCode);
+                    .Returns(httpStatusCode.Value);
                 throw new WebException("Mock GCS Error", null, 0, response.Object);
             }
 
@@ -61,11 +61,15 @@ namespace Snowflake.Data.Tests.Mock
         }
 
         // Create a mock response for DownloadFile
-        static internal HttpWebResponse CreateResponseForDownloadFile(HttpStatusCode httpStatusCode)
+        internal static HttpWebResponse CreateResponseForDownloadFile(HttpStatusCode? httpStatusCode)
         {
             var response = new Mock<HttpWebResponse>();
 
-            if (httpStatusCode == HttpStatusCode.OK)
+            if (httpStatusCode is null)
+            {
+                throw new WebException("Mock GCS Error - no response", null, 0, null);
+            }
+            else if (httpStatusCode == HttpStatusCode.OK)
             {
                 response.Setup(c => c.Headers).Returns(new WebHeaderCollection());
                 response.Object.Headers.Add(SFGCSClient.GCS_METADATA_ENCRYPTIONDATAPROP,
@@ -82,7 +86,7 @@ namespace Snowflake.Data.Tests.Mock
             else
             {
                 response.SetupGet(c => c.StatusCode)
-                    .Returns(httpStatusCode);
+                    .Returns(httpStatusCode.Value);
                 throw new WebException("Mock GCS Error", null, 0, response.Object);
             }
 

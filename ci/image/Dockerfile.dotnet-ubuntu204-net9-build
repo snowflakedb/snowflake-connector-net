@@ -1,0 +1,59 @@
+# Use the official Ubuntu base image from Docker Hub
+FROM ubuntu:20.04
+
+USER root
+WORKDIR /
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# create dir for workspace
+RUN mkdir -p /home/user
+RUN chmod 777 /home/user
+
+# Update packages and install any desired dependencies
+RUN apt-get update
+RUN apt-get install -y
+RUN apt-get install -y wget
+RUN apt-get install -y apt-transport-https
+RUN apt-get install -y build-essential
+RUN apt-get install -y libpng-dev
+RUN apt-get install -y libtiff-dev
+RUN apt-get install -y libjpeg-dev
+RUN apt-get install -y libx11-dev
+RUN apt-get install -y libgl1-mesa-dev
+RUN apt-get install -y libglu1-mesa-dev
+RUN apt-get install -y gcc
+RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+RUN dpkg -i packages-microsoft-prod.deb
+
+#  install basic tools
+RUN apt-get install -y git
+RUN apt-get install -y zstd
+RUN apt-get install -y jq
+
+# Install Java 17 for Wiremock Standalone
+RUN apt-get install -y openjdk-17-jre
+
+# Install .NET SDK 9.0
+RUN apt-get update
+RUN apt-get install -y dotnet-sdk-6.0
+RUN apt-get install -y dotnet-sdk-8.0
+RUN apt-get install -y dotnet-sdk-9.0
+
+# gosu
+RUN wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/1.14/gosu-$(dpkg --print-architecture)" && \
+chmod +x /usr/local/bin/gosu
+
+# clean up
+RUN apt-get clean
+RUN rm -rf /var/lib/apt/lists/*
+
+# workspace
+RUN mkdir -p /home/user && \
+chmod 777 /home/user
+WORKDIR /home/user
+
+# entry point
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

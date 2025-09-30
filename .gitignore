@@ -302,8 +302,6 @@ Snowflake.Data.Tests/parameters.json
 wss-*.config
 wss-unified-agent.jar
 whitesource/
-/testEnvironments.json
-/parameters.json
 
 # Test performance reports
 Snowflake.Data.Tests/macos_*_performance.csv
@@ -312,3 +310,15 @@ Snowflake.Data.Tests/unix_*_performance.csv
 
 # Ignore Mac files
 **/.DS_Store
+
+# Ignore config files
+/testEnvironments.json
+/parameters.json
+parameters*.json
+Snowflake.Data.Tests/toml_config_folder
+*.toml
+*.p8
+
+# SSH private key for WIF tests
+ci/wif/parameters/rsa_wif_aws_azure
+ci/wif/parameters/rsa_wif_gcp

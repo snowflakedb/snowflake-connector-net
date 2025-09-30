@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -21,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Azure;
     using Azure.Storage.Blobs.Models;
 
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFAzureClientTest : SFBaseTest
     {
         // Mock data for file metadata
@@ -69,7 +65,6 @@ namespace Snowflake.Data.Tests.UnitTests
                 stageInfo = new PutGetStageInfo()
                 {
                     endPoint = EndPoint,
-                    isClientSideEncrypted = true,
                     location = Location,
                     locationType = SFRemoteStorageUtil.AZURE_FS,
                     path = LocationPath,
@@ -251,7 +246,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .Returns<string>((blobName) =>
                     {
                         var mockBlobClient = new Mock<BlobClient>();
-                        mockBlobClient.Setup(client => client.UploadAsync(It.IsAny<Stream>(), It.IsAny<bool>(),It.IsAny<CancellationToken>()))
+                        mockBlobClient.Setup(client => client.UploadAsync(It.IsAny<Stream>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                         .Returns(async () => await Task.Run(() => MockAzureClient.createMockResponseForBlobContentInfo(key)).ConfigureAwait(false));
 
                         return mockBlobClient.Object;
@@ -304,7 +299,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .Returns<string>((blobName) =>
                     {
                         var mockBlobClient = new Mock<BlobClient>();
-                        mockBlobClient.Setup(client => client.DownloadTo(It.IsAny<string>()))
+                        mockBlobClient.Setup(client => client.DownloadTo(It.IsAny<Stream>()))
                         .Returns(() =>
                         {
                             if (key == HttpStatusCode.OK.ToString())
@@ -351,7 +346,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .Returns<string>((blobName) =>
                     {
                         var mockBlobClient = new Mock<BlobClient>();
-                        mockBlobClient.Setup(client => client.DownloadToAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                        mockBlobClient.Setup(client => client.DownloadToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
                         .Returns(async () =>
                         {
                             if (key == HttpStatusCode.OK.ToString())
@@ -377,6 +372,98 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+        }
+
+        [Test]
+        public void TestEncryptionMetadataReadingIsCaseInsensitive()
+        {
+            // arrange
+            var metadata = new Dictionary<string, string>
+            {
+                {
+                    "ENCRYPTIONDATA",
+                    @"{
+                        ""ContentEncryptionIV"": ""initVector"",
+                        ""WrappedContentKey"": {
+                            ""EncryptedKey"": ""key""
+                        }
+                    }"
+                },
+                { "MATDESC", "description" },
+                { "SFCDIGEST", "something"}
+            };
+            var blobProperties = BlobsModelFactory.BlobProperties(metadata: metadata, contentLength: 10);
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
+
+            // act
+            var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
+
+            // assert
+            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
+            Assert.AreEqual("something", fileHeader.digest);
+            Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
+            Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
+            Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
+        }
+
+        [Test]
+        public void TestEncryptionMetadataReadingSucceedsWithoutSfcDigest()
+        {
+            // arrange
+            var metadata = new Dictionary<string, string>
+            {
+                {
+                    "encryptiondata",
+                    @"{
+                        ""ContentEncryptionIV"": ""initVector"",
+                        ""WrappedContentKey"": {
+                            ""EncryptedKey"": ""key""
+                        }
+                    }"
+                },
+                { "matdesc", "description" }
+            };
+            var blobProperties = BlobsModelFactory.BlobProperties(metadata: metadata, contentLength: 10);
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
+
+            // act
+            var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
+
+            // assert
+            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
+            Assert.IsNull(fileHeader.digest);
+            Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
+            Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
+            Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
+        }
+
+        [Test]
+        public void TestEncryptionMetadataReadingFailsWhenMandatoryPropertyIsMissing()
+        {
+            // arrange
+            var metadataWithoutMatDesc = new Dictionary<string, string>
+            {
+                {
+                    "encryptiondata",
+                    @"{
+                        ""ContentEncryptionIV"": ""initVector"",
+                        ""WrappedContentKey"": {
+                            ""EncryptedKey"": ""key""
+                        }
+                    }"
+                }
+            };
+            var blobProperties = BlobsModelFactory.BlobProperties(metadata: metadataWithoutMatDesc, contentLength: 10);
+            var mockBlobServiceClient = new Mock<BlobServiceClient>();
+            _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
+
+            // act
+            var thrown = Assert.Throws<KeyNotFoundException>(() => _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain("The given key 'matdesc' was not present in the dictionary."));
         }
     }
 }

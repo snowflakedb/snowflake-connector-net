@@ -38,33 +38,80 @@ For Windows, the exact same tools are also available, but possibly you'll need t
    Again, this is just merely an example using shell scripting and `openssl`.
 ```shell
 export hostname="myaccount.eu-central-1.snowflakecomputing.com"
-echo | openssl s_client -showcerts -connect "$hostname":443 -servername "$hostname" 2>/dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in cert*.pem; do echo "--> $cert"; openssl x509 -text -in $cert | grep -A4 "X509v3 CRL Distribution Points" ; echo; done
+echo | openssl s_client -showcerts -connect "$hostname":443 -servername "$hostname" 2>/dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in cert*.pem; do echo "--> $cert"; openssl x509 -text -in $cert | awk '/X509v3 CRL Distribution Points/ {print; p=1} /Full Name:/ && p {print; getline; print}' ; echo; done
 ```
 
 Example output:
 ```shell
 --> cert1.pem
             X509v3 CRL Distribution Points:
-
                 Full Name:
                   URI:http://www.microsoft.com/pkiops/crl/Microsoft%20Azure%20RSA%20TLS%20Issuing%20CA%2007.crl
 
-
 --> cert2.pem
             X509v3 CRL Distribution Points:
-
                 Full Name:
                   URI:http://crl3.digicert.com/DigiCertGlobalRootG2.crl
 
 
 --> cert3.pem
             X509v3 CRL Distribution Points:
-
                 Full Name:
                   URI:http://crl.pki.goog/gsr1/gsr1.crl
 ```
 
 Please repeat the same for all the Snowflake-related endpoints from step 1.
+
+For Windows if you do not wish to download additional tools, you can also use the existing Powershell facility. Please find the below Powershell script as a simplistic example of a possible approach. In this example, you would put below contents into `checkCrl.ps1` script:
+```ps
+if ( $($args.Count) -ne 1 ) {
+	Write-Output "Please use the full name of your Snowflake account as an argument."
+	Write-Output "Example: powershell .\checkCrl.ps1 xy12345.eu-central-1.snowflakecomputing.com"
+	exit 1
+}
+$sfaccount = $args[0]
+$Connection = [System.Net.HttpWebRequest]::Create('https://' + $sfaccount)
+$Response = $Connection.GetResponse()
+$Response.Dispose()
+$Certificate = $Connection.ServicePoint.Certificate
+$Chain = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Chain
+$Chain.build($Certificate)
+$Chain.ChainElements.Certificate | % {set-content -value $($_.Export([Security.Cryptography.X509Certificates.X509ContentType]::Cert)) -encoding byte -path "$pwd\$($_.Thumbprint).sf.cer"}
+Get-ChildItem *.sf.cer | ForEach-Object { certutil $_ | Select-String -Pattern "Subject:" -Context 1 ; certutil $_ | Select-String -Pattern "Distribution Point Name" -Context 2 }
+Remove-Item *.sf.cer
+```
+
+After saving it, you can run it with specifying your Snowflake account's full name. An example execution and output, for a Snowflake account located in GCP US Central region:
+```shell
+c:\temp>powershell .\checkCrl.ps1 xy12345.us-central1.gcp.snowflakecomputing.com
+True
+
+
+> Subject:
+      CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1
+      CRL Distribution Points
+          [1]CRL Distribution Point
+>              Distribution Point Name:
+                    Full Name:
+                         URL=http://crl3.digicert.com/DigiCertGlobalRootG2.crl
+
+> Subject:
+      CN=*.us-central1.gcp.snowflakecomputing.com
+      CRL Distribution Points
+          [1]CRL Distribution Point
+>              Distribution Point Name:
+                    Full Name:
+                         URL=http://crl3.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl
+          [2]CRL Distribution Point
+>              Distribution Point Name:
+                    Full Name:
+                         URL=http://crl4.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl
+
+> Subject:
+      CN=DigiCert Global Root G2
+```
+
+Look for values of `URL` fields under `Distribution Point Name` sections.
 
 3. **Ensure (or work with your systems / network / cloud team to ensure) the CRL endpoints from step 2 are reachable from the _same host/network, over port 80_, on which host/network your application is running, which application is using the Snowflake .NET driver**
 
@@ -94,12 +141,29 @@ wget -e http_proxy=my.pro.xy:8080 http://crl.pki.goog/gsr1/gsr1.crl
 Expected result is for the file to be successfully downloaded to the local filesystem.
 Please make sure to **use the same proxy settings** as you will be using in your environment with the .NET driver.
 
-### (break-glass) turning off CRL validation temporarily
-**Snowflake does not recommend using it as a permanent configuration**, but for short periods of testing or perhaps getting out of a blocker situation, one can configure the .NET driver to not use CRL verification.
-The steps are outlined in the [How To: Turn Off OCSP Checking in Snowflake Client Drivers](https://community.snowflake.com/s/article/How-to-turn-off-OCSP-checking-in-Snowflake-client-drivers) article, and basically is adding `insecuremode=true` to your connection string.
+### Switching on/off certificate revocation checks (CRL)
+The new driver behavior starting from 5.0.0 driver version is to disable certificate revocation checks by default.
+If you would like to check certificate revocations (CRL) you need to add to your connection string `certRevocationCheckMode=enabled`.
+
+If you enable certificate revocation checks the default implementation is the one offered by the `System.Net.Http.HttpClientHandler` class.
+The driver allows you to use its own implementation of CRL checks - you just need to configure in your connection string `useDotnetCrlCheck=false`.
+If you use driver's own CRL check implementation you have much more configuration options.
+For instance, you can configure `certRevocationCheckMode=advisory` to perform CRL check but accept errors (e.g. errors in downloading CRL list).
+The `Advisory` mode means that the connection can be established even if there were errors when processing the certificate or its CRLs.
+
+The old `insecureMode` parameter is no longer supported by the driver.
 
 ### DigiCert Global Root G2 certificate authority (CA) TLS certificate updates
 This might or might not affect your installation. Since the .NET driver doesn't come with its own truststore, it depends on the system's own truststore,
 which (hopefully) already includes all the root certificates needing to verify the chain of trust for connecting to Snowflake services.
 If your installation is very old, this might not be the case. Please give the [FAQ: DigiCert Global Root G2 certificate authority (CA) TLS certificate updates](https://community.snowflake.com/s/article/check-impact-from-digicert-g2-certificate-update) article a read
 on the background and possibly necessary steps.
+
+### (Windows only) Hosts receiving their trusted roots and disallowed certificates other than Windows Update
+For reasons outside of Snowflake's control, even if all the CRL URLs are made available from the environment where you run the .NET driver, you might experience multiple seconds of delay in the driver attempting to connect to the Snowflake hosts when CRL checking is enabled.
+If this delay immediately goes away by no other change than turning off CRL validation, and especially if there's a possibility that your Windows host is located in an isolated environment which receives its trusted root certificates from other URL than the automatic updates, then please
+* read [this Microsoft document](https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/configure-trusted-roots-disallowed-certificates), especially the **Prerequisites** section
+* confirm the computer can resolve the hostname, and reach out to `ctldl.windowsupdate.com` over port 80
+  * you might want to monitor the outgoing traffic from your host to confirm it's indeed currently blocked on trying to download a `.cab` from `ctldl.windowsupdate.com`
+
+Please engage your sysadmin/team for any kind of assistance regarding this scenario.

@@ -18,5 +18,3 @@ otherwise continue here.
 
 ## References, Other Background
 
-## What is your Snowflake account identifier, if any?
- 

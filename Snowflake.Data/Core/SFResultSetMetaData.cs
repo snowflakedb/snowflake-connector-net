@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -65,7 +61,7 @@ namespace Snowflake.Data.Core
         private List<Tuple<SFDataType, Type>> InitColumnTypes()
         {
             List<Tuple<SFDataType, Type>> types = new List<Tuple<SFDataType, Type>>();
-            for(int i=0; i<columnCount; i++)
+            for (int i = 0; i < columnCount; i++)
             {
                 var column = rowTypes[i];
                 var dataType = GetSFDataType(column.type);
@@ -90,7 +86,7 @@ namespace Snowflake.Data.Core
                 int indexCounter = 0;
                 foreach (ExecResponseRowType rowType in rowTypes)
                 {
-                    if (String.Compare(rowType.name, targetColumnName, false) == 0 )
+                    if (String.Compare(rowType.name, targetColumnName, false) == 0)
                     {
                         logger.Info($"Found column name {targetColumnName} under index {indexCounter}");
                         columnNameToIndexCache[targetColumnName] = indexCounter;
@@ -130,7 +126,7 @@ namespace Snowflake.Data.Core
                 return rslt;
 
             throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
-                $"Unknow column type: {type}");
+                $"Unknown column type: {type}");
         }
 
         private Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
@@ -145,6 +141,7 @@ namespace Snowflake.Data.Core
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
                 case SFDataType.ARRAY:
+                case SFDataType.VECTOR:
                 case SFDataType.MAP:
                     return typeof(string);
                 case SFDataType.DATE:
@@ -160,7 +157,7 @@ namespace Snowflake.Data.Core
                     return typeof(bool);
                 default:
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
-                        $"Unknow column type: {sfType}");
+                        $"Unknown column type: {sfType}");
             }
         }
 

@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO;
 using System.Threading;
@@ -66,12 +62,12 @@ namespace Snowflake.Data.Core.FileTransfer
         /// Attempt upload of a file and retry if fails.
         /// </summary>
         void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata);
-        
+
         /// <summary>
         /// Attempt upload of a file and retry if fails.
         /// </summary>
         Task UploadFileAsync(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken);
-        
+
         /// <summary>
         /// Attempt download of a file and retry if fails.
         /// </summary>

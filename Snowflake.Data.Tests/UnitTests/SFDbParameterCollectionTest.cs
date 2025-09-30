@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 namespace Snowflake.Data.Tests
 {
     using NUnit.Framework;
@@ -94,7 +90,7 @@ namespace Snowflake.Data.Tests
             _parameterCollection.Clear();
             Assert.Zero(_parameterCollection.Count);
         }
-        
+
         [Test]
         public void TestDbParameterCollectionContainsName([Values] SFDataType SFDataType)
         {
@@ -116,7 +112,7 @@ namespace Snowflake.Data.Tests
         }
 
 
-        
+
         [Test]
         public void TestDbParameterCollectionGetEnumerator([Values] SFDataType SFDataType)
         {
@@ -154,7 +150,7 @@ namespace Snowflake.Data.Tests
 
             Assert.AreEqual(PARAM_COUNT - 1, _parameterCollection.IndexOf(paramName));
         }
-        
+
         [Test]
         public void TestDbParameterCollectionIndexOfNameNotExists([Values] SFDataType SFDataType)
         {
@@ -190,7 +186,7 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterCollectionInsertOutOfBounds([Values] SFDataType SFDataType)
         {
             int indexGreaterThanParameterCollectionSize = _parameterCollection.Count + 1;
-            SnowflakeDbParameter parameter = new SnowflakeDbParameter(1, SFDataType);            
+            SnowflakeDbParameter parameter = new SnowflakeDbParameter(1, SFDataType);
             Assert.Throws<ArgumentOutOfRangeException>(() => _parameterCollection.Insert(indexGreaterThanParameterCollectionSize, parameter));
         }
 

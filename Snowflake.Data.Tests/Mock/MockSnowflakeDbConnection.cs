@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Log;
@@ -9,6 +5,7 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.Mock
 {
@@ -49,7 +46,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            registerConnectionCancellationCallback(cancellationToken);
+            cancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
 
             SetMockSession();
 
@@ -58,8 +55,8 @@ namespace Snowflake.Data.Tests.Mock
                 {
                     if (previousTask.IsFaulted)
                     {
-                    // Exception from SfSession.OpenAsync
-                    Exception sfSessionEx = previousTask.Exception;
+                        // Exception from SfSession.OpenAsync
+                        Exception sfSessionEx = previousTask.Exception;
                         _connectionState = ConnectionState.Closed;
                         logger.Error("Unable to connect", sfSessionEx);
                         throw //sfSessionEx.InnerException;
@@ -78,10 +75,15 @@ namespace Snowflake.Data.Tests.Mock
                 cancellationToken);
 
         }
-        
+
         private void SetMockSession()
         {
-            SfSession = new SFSession(ConnectionString, Password, _restRequester);
+            var sessionContext = new SessionPropertiesContext
+            {
+                Password = Password,
+                Passcode = Passcode
+            };
+            SfSession = new SFSession(ConnectionString, sessionContext, EasyLoggingStarter.Instance, _restRequester);
 
             _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 
@@ -92,7 +94,7 @@ namespace Snowflake.Data.Tests.Mock
         {
             _connectionState = ConnectionState.Open;
         }
-        
+
         protected override bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
         {
             return false;

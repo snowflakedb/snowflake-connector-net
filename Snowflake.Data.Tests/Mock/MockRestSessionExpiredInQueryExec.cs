@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,7 +45,7 @@ namespace Snowflake.Data.Tests.Mock
                     code = QUERY_IN_EXEC_CODE
                 };
                 return Task.FromResult<T>((T)(object)queryExecResponse);
-                
+
             }
             else if (sfRequest.jsonBody is RenewSessionRequest)
             {

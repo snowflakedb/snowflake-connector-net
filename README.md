@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The Snowflake .NET connector supports the the following .NET framework and libraries versions:
+The Snowflake .NET connector supports the following .NET framework and libraries versions:
 
 - .NET Framework 4.6.2
 - .NET Framework 4.7.1
@@ -14,6 +14,7 @@ The Snowflake .NET connector supports the the following .NET framework and libra
 - .NET 6.0
 - .NET 7.0
 - .NET 8.0
+- .NET 9.0
 
 Disclaimer: While the connector targets netstandard2.0 and may work with versions in its [support matrix](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version), only the versions listed above are supported and tested by the connector
 
@@ -75,6 +76,22 @@ Alternatively, packages can also be downloaded using Package Manager Console:
 PM> Install-Package Snowflake.Data
 ```
 
+# Verifying the package signature
+
+Starting from version v4.2.0 the driver package is signed with a signature allowing to verify its authenticity and integrity.
+Steps to verify the signature:
+1. Install `cosign`
+2. Download the driver package file (`.nupkg`) from nuget, e.g.: https://www.nuget.org/packages/Snowflake.Data/4.2.0
+3. Download the signatures file from the release, e.g.: https://github.com/snowflakedb/snowflake-connector-net/releases/tag/v4.2.0
+4. Verify the signature, e.g:
+```shell
+cosign verify-blob snowflake.data.4.2.0.nupkg \
+--key snowflake-connector-net-v4.2.0.pub \
+--signature Snowflake.Data.4.2.0.nupkg.sig
+
+Verified OK
+```
+
 # Testing and Code Coverage
 
 [Running tests](doc/Testing.md)
@@ -104,6 +121,14 @@ Snowflake data types and their .NET types is covered in: [Data Types and Data Fo
 How execute a query, use query bindings, run queries synchronously and asynchronously:
 [Running Queries and Reading Results](doc/QueryingData.md)
 
+## Structured types
+
+Using structured types: [Structured types](doc/StructuredTypes.md)
+
+## Vector type
+
+Using vector type: [Vector type](doc/VectorType.md)
+
 ## Stage Files
 
 Using stage files within PUT/GET commands:
@@ -117,6 +142,12 @@ Logging description and configuration:
 ## Certificate validation
 Method of validating the connection's certificates in the .NET driver differs from the rest of the Snowflake drivers.
 Read more in [certificate validation](doc/CertficateValidation.md) docs.
+
+## Cache
+
+Storing tokens in cache for SSO/MFA authentication.
+
+Read more in [cache](doc/Cache.md) docs.
 
 ---------------
 
@@ -154,9 +185,10 @@ Read more in [certificate validation](doc/CertficateValidation.md) docs.
     were not performed where the insecureMode flag was set to false, which is the default setting.
     From version v2.1.5 CRL is working back as intended.
 
+5.  This driver currently does not support GCP regional endpoints. Please ensure that any workloads using through this driver do not require support for regional endpoints on GCP. If you have questions about this, please contact Snowflake Support.
+
 Note that the driver is now targeting .NET Standard 2.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
 
 See more:
 * [Security Policy](SECURITY.md)
-* [Security Advisories](/security/advisories)
-
+* [Security Advisories](../../security/advisories)

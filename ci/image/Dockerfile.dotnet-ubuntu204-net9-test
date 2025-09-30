@@ -1,0 +1,1 @@
+FROM nexus.int.snowflakecomputing.com:8086/docker/client-dotnet-ubuntu204-net9-build:1

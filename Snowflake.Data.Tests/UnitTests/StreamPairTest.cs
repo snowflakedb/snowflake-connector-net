@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var mockedHelperStream = new Mock<Stream>();
 
             // act
-            using (new StreamPair { MainStream = mockedMainStream.Object, HelperStream = mockedHelperStream.Object }) {}
+            using (new StreamPair { MainStream = mockedMainStream.Object, HelperStream = mockedHelperStream.Object }) { }
 
             // assert
             mockedMainStream.Verify(stream => stream.Close());
@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var mockedMainStream = new Mock<Stream>();
 
             // act
-            using (new StreamPair { MainStream = mockedMainStream.Object }) {}
+            using (new StreamPair { MainStream = mockedMainStream.Object }) { }
 
             // assert
             mockedMainStream.Verify(stream => stream.Close());

@@ -13,14 +13,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
-    public class ConnectionSinglePoolCacheAsyncIT: SFBaseTestAsync
+    public class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
         [SetUp]
         public new void BeforeTest()
         {
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
 
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     await conn.OpenAsync(connectionCancelToken.Token).ConfigureAwait(false);
                     Assert.Fail("OpenAsync should throw exception");
                 }
-                catch {}
+                catch { }
 
                 // act
                 await conn.CloseAsync(connectionCancelToken.Token).ConfigureAwait(false);
@@ -128,9 +128,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // add test case name in connection string to make in unique for each test case
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
-            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
-            SnowflakeDbConnectionPool.SetTimeout(3); // set short pooling timeout to cover the case that connection expired
-            ConcurrentPoolingAsyncHelper(connStr, true, 12, 100, 100);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(3);
+            SnowflakeDbConnectionPool.SetTimeout(1); // set short pooling timeout to cover the case that connection expired
+            ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3);
             SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
@@ -139,9 +139,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // add test case name in connection string to make in unique for each test case
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync";
-            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
-            SnowflakeDbConnectionPool.SetTimeout(3); // set short pooling timeout to cover the case that connection expired
-            ConcurrentPoolingAsyncHelper(connStr, false, 12, 100, 100);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(3);
+            SnowflakeDbConnectionPool.SetTimeout(1); // set short pooling timeout to cover the case that connection expired
+            ConcurrentPoolingAsyncHelper(connStr, false, 5, 5, 3);
             SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
@@ -208,7 +208,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                     conn.OpenAsync();
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                };
+                }
+
                 // wait 100ms each time so the invalid sessions are generated
                 // roughly at the same speed as connections for query tasks
                 await Task.Delay(100).ConfigureAwait(false);

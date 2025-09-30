@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     class ConnectingThreads
     {
-        private string _connectionString; 
+        private string _connectionString;
 
         private ConcurrentQueue<ThreadEvent> _events = new ConcurrentQueue<ThreadEvent>();
 
@@ -57,13 +57,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         public static SFLogger Logger() => SFLoggerFactory.GetLogger<IConnectionManager>(); // we have to choose a class from Snowflake.Data package otherwise it will be visible in GH build output
     }
-    
+
     class ConnectingThread
     {
         private static readonly SFLogger s_logger = ConnectingThreads.Logger();
 
         private string _name;
-        
+
         private ConcurrentQueue<ThreadEvent> _events;
 
         private string _connectionString;
@@ -73,9 +73,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private long _waitAfterConnectMillis;
 
         private bool _closeOnExit;
-        
+
         internal const string NamePrefix = "thread_";
-        
+
         public ConnectingThread(
             string name,
             ConcurrentQueue<ThreadEvent> events,
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 return;
             }
-            Thread.Sleep((int) millis);
+            Thread.Sleep((int)millis);
         }
     }
 
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public string ThreadName { get; set; }
 
         public string EventName { get; set; }
-        
+
         public Exception Error { get; set; }
 
         public long Timestamp { get; set; }
@@ -171,7 +171,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public bool IsConnectedEvent() => EventName.Equals(Connected);
 
         public bool IsWaitingEvent() => EventName.Equals(WaitingForSession);
-        
+
         public static ThreadEvent EventConnected(string threadName, long duration) =>
             new ThreadEvent(threadName, Connected, null, duration);
 
@@ -182,7 +182,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             new ThreadEvent(threadName, WaitingForSession, null, 0);
     }
 
-    class SessionPoolThreadEventHandler: SessionPoolEventHandler
+    class SessionPoolThreadEventHandler : SessionPoolEventHandler
     {
         private static readonly SFLogger s_logger = ConnectingThreads.Logger();
         private readonly ConnectingThreads _connectingThreads;
@@ -201,7 +201,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var waitingStartedEvent = ThreadEvent.EventWaitingForSessionStarted(realThreadName);
             _connectingThreads.Enqueue(waitingStartedEvent);
         }
-        
+
         public override void OnWaitingForSessionStarted(SessionPool sessionPool, long millisLeft)
         {
             s_logger.Warn($"Thread is going to wait with milliseconds timeout of {millisLeft}. Current time in milliseconds: {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");

@@ -3,9 +3,9 @@ name: DotNet Build and Test
 # Triggers the workflow on push or pull request events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ master, oauth_flows ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, oauth_flows ]
   workflow_dispatch:
     inputs:
       logLevel:
@@ -31,17 +31,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net462', 'net471', 'net472', 'net48', 'net481']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net462', 'net471', 'net472', 'net48', 'net481']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'temurin'
+            java-version: 17
+            java-package: 'jre'
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             6.0.x
+            7.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -64,7 +72,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build -l console;verbosity=normal" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml --verbosity normal" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -73,12 +81,16 @@ jobs:
         with:
           name: code-coverage-report_windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
-
       - name: Upload Test Performance Report
         uses: actions/upload-artifact@v4
         with:
           name: tests-performance_windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+      - name: Upload test results to Codecov
+        if: ${{!cancelled()}}
+        uses: codecov/test-results-action@v1
+        with:
+            token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -93,16 +105,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'temurin'
+            java-version: 17
+            java-package: 'jre'
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             6.0.x
+            7.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -124,7 +144,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build -l console;verbosity=normal" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml --verbosity normal" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -138,6 +158,11 @@ jobs:
         with:
           name: tests-performance_linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+      - name: Upload test results to Codecov
+        if: ${{!cancelled()}}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -152,16 +177,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'temurin'
+            java-version: 17
+            java-package: 'jre'
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             6.0.x
+            7.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -183,7 +216,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build -l console;verbosity=normal" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml --verbosity normal" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -197,6 +230,11 @@ jobs:
         with:
           name: tests-performance_macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+      - name: Upload test results to Codecov
+        if: ${{!cancelled()}}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:

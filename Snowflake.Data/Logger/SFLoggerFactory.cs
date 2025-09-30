@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using log4net;
 
 namespace Snowflake.Data.Log
@@ -32,7 +28,7 @@ namespace Snowflake.Data.Log
         }
 
         public static void Instance(SFLogger customLogger)
-        {            
+        {
             logger = customLogger;
         }
 

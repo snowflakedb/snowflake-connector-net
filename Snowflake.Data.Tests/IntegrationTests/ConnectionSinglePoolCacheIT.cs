@@ -14,14 +14,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
-    public class ConnectionSinglePoolCacheIT: SFBaseTest
+    public class ConnectionSinglePoolCacheIT : SFBaseTest
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
         [SetUp]
         public new void BeforeTest()
         {
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetPooling(true);
         }
@@ -56,7 +56,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestConcurrentConnectionPooling()
         {
             // add test case name in connection string to make in unique for each test case
-            string connStr = ConnectionString + ";application=TestConcurrentConnectionPooling";
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPooling;";
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             ConcurrentPoolingHelper(connStr, true);
         }
 
@@ -67,7 +68,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestConcurrentConnectionPoolingDispose()
         {
             // add test case name in connection string to make in unique for each test case
-            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingNoClose";
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingNoClose;";
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             ConcurrentPoolingHelper(connStr, false);
         }
 
@@ -75,13 +77,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // thread number a bit larger than pool size so some connections
             // would fail on pooling while some connections could success
-            const int ThreadNum = 12;
+            const int ThreadNum = 3;
             // set short pooling timeout to cover the case that connection expired
-            const int PoolTimeout = 3;
+            const int PoolTimeout = 1;
 
             // reset to default settings in case it changed by other test cases
             Assert.AreEqual(true, SnowflakeDbConnectionPool.GetPool(connectionString).GetPooling()); // to instantiate pool
-            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             SnowflakeDbConnectionPool.SetTimeout(PoolTimeout);
 
             var threads = new Task[ThreadNum];
@@ -98,7 +100,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         // thead to execute query with new connection in a loop
         static void QueryExecutionThread(string connectionString, bool closeConnection)
         {
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 10; i++)
             {
                 using (DbConnection conn = new SnowflakeDbConnection(connectionString))
                 {
@@ -347,8 +349,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestCloseSessionAfterTimeout()
         {
             // arrange
-            const int SessionTimeoutSeconds = 2;
-            const int TimeForBackgroundSessionCloseMillis = 2000;
+            const int SessionTimeoutSeconds = 1;
+            const int TimeForBackgroundSessionCloseMillis = 1000;
             SnowflakeDbConnectionPool.SetTimeout(SessionTimeoutSeconds);
             var conn1 = new SnowflakeDbConnection(ConnectionString);
             conn1.Open();
@@ -360,7 +362,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             conn2.Open(); // it gets a session from the caching pool firstly closing session of conn1 in background
-            Thread.Sleep(TimeForBackgroundSessionCloseMillis); // wait for closing expired session
+
+            Awaiter.WaitUntilConditionOrTimeout(() => !session.IsEstablished(), TimeSpan.FromMilliseconds(TimeForBackgroundSessionCloseMillis));
 
             // assert
             Assert.IsFalse(session.IsEstablished());

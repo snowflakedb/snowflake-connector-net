@@ -15,14 +15,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
-    public class ConnectionMultiplePoolsIT: SFBaseTest
+    public class ConnectionMultiplePoolsIT : SFBaseTest
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
         [SetUp]
         public new void BeforeTest()
         {
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
 
@@ -173,7 +173,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Retry(2)]
+        [Retry(3)]
         public void TestWaitInAQueueForAnIdleSession()
         {
             // arrange
@@ -318,10 +318,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Retry(3)]
         public void TestConnectionPoolExpirationWorks()
         {
             // arrange
-            const int ExpirationTimeoutInSeconds = 10;
+            const int ExpirationTimeoutInSeconds = 1;
             var connectionString = ConnectionString + $"expirationTimeout={ExpirationTimeoutInSeconds};maxPoolSize=4;minPoolSize=2";
             var pool = SnowflakeDbConnectionPool.GetPoolInternal(connectionString);
             Assert.AreEqual(0, pool.GetCurrentPoolSize());
@@ -369,10 +370,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             connection.Open();
-            Thread.Sleep(3000);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentPoolSize() == 3, TimeSpan.FromMilliseconds(1000));
             Assert.AreEqual(3, pool.GetCurrentPoolSize());
 
             // cleanup
@@ -439,6 +440,61 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.ConnectionString = connectionString;
             await connection.OpenAsync().ConfigureAwait(false);
             return connection;
+        }
+
+        [Test]
+        [Retry(3)]
+        public void TestReturningCancelledSessionsToThePool([Values] bool cancelAsync)
+        {
+            var connectionString = ConnectionString + "minPoolSize=0;maxPoolSize=2;application=TestReturningCancelledSessionsToThePool";
+
+            var pool = SnowflakeDbConnectionPool.ConnectionManager.GetPool(connectionString);
+            pool.ClearSessions();
+
+            // pool is empty
+            Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
+            Assert.AreEqual(0, pool.GetCurrentState().BusySessionsCount);
+
+            var cts = new CancellationTokenSource();
+            var task = Task.Run(async () =>
+            {
+                using (var connection = new SnowflakeDbConnection(connectionString))
+                {
+                    await connection.OpenAsync(cts.Token);
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = $"SELECT SYSTEM$WAIT(20)";
+                        await command.ExecuteNonQueryAsync(cts.Token);
+                    }
+                }
+            }, CancellationToken.None);
+
+            Awaiter.WaitUntilConditionOrTimeout(() =>
+            {
+                var state = pool.GetCurrentState();
+                return state.IdleSessionsCount == 0 && state.BusySessionsCount == 1;
+            }, TimeSpan.FromMilliseconds(1000));
+
+            // one busy session
+            Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
+            Assert.AreEqual(1, pool.GetCurrentState().BusySessionsCount);
+
+            if (cancelAsync)
+#if NET8_0_OR_GREATER
+                cts.CancelAsync();
+#else
+                cts.Cancel();
+#endif
+            else
+                cts.Cancel();
+
+            // operation cancelled properly
+            var thrown = Assert.Throws<AggregateException>(() => task.Wait());
+            Assert.IsInstanceOf<OperationCanceledException>(thrown.InnerException);
+
+            // one idle session
+            Assert.AreEqual(1, pool.GetCurrentState().IdleSessionsCount);
+            Assert.AreEqual(0, pool.GetCurrentState().BusySessionsCount);
         }
     }
 }

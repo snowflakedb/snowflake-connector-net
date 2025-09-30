@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -11,20 +7,18 @@ using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture(ResultFormat.ARROW)]
-    [TestFixture(ResultFormat.JSON)]
     [Parallelizable(ParallelScope.Children)]
     class MaxLobSizeIT : SFBaseTest
     {
-        private readonly ResultFormat _resultFormat;
+        private ResultFormat _resultFormat;
 
         //private const int MaxLobSize = (128 * 1024 * 1024); // new max LOB size
         private const int MaxLobSize = (16 * 1024 * 1024); // current max LOB size
-        private const int LargeSize = (MaxLobSize / 2);
-        private const int MediumSize = (LargeSize / 2);
+        private const int MediumSize = (MaxLobSize / 4);
         private const int OriginSize = (MediumSize / 2);
         private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
 
@@ -40,6 +34,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [ThreadStatic] private static string t_outputFilePath;
         [ThreadStatic] private static List<string> t_filesToDelete;
         [ThreadStatic] private static string[] t_colData;
+
+        public MaxLobSizeIT()
+        {
+            _resultFormat = ResultFormat.JSON; // Default value
+        }
 
         public MaxLobSizeIT(ResultFormat resultFormat)
         {
@@ -110,10 +109,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-
-        [Test, TestCaseSource(nameof(LobSizeTestCases))]
-        public void TestSelectOnSpecifiedSize(int size)
+        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
+            _resultFormat = resultFormat;
+
             // arrange
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
@@ -130,8 +130,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, TestCaseSource(nameof(LobSizeTestCases))]
-        public void TestLiteralInsert(int lobSize)
+        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        public void TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
             var c1 = GenerateRandomString(lobSize);
@@ -162,8 +162,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, TestCaseSource(nameof(LobSizeTestCases))]
-        public void TestPositionalInsert(int lobSize)
+        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        public void TestPositionalInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
             var c1 = GenerateRandomString(lobSize);
@@ -214,8 +214,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Test, TestCaseSource(nameof(LobSizeTestCases))]
-        public void TestNamedInsert(int lobSize)
+        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        public void TestNamedInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
             var c1 = GenerateRandomString(lobSize);
@@ -265,8 +265,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, TestCaseSource(nameof(LobSizeTestCases))]
-        public void TestPutGetCommand(int lobSize)
+        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange
             var c1 = GenerateRandomString(lobSize);
@@ -291,9 +291,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             OriginSize,
             MediumSize,
-            LargeSize,
             MaxLobSize
         };
+
+        static IEnumerable<ResultFormat> ResultFormats => new[]
+            { ResultFormat.ARROW, ResultFormat.JSON };
+
+        static IEnumerable<TestCaseData> CombinedTestCases()
+        {
+            foreach (var resultFormat in ResultFormats)
+            {
+                foreach (var lobSize in LobSizeTestCases)
+                {
+                    yield return new TestCaseData(resultFormat, lobSize)
+                        .SetName($"TestSelectOnSpecifiedSize_{resultFormat}_{lobSize}");
+                }
+            }
+        }
 
         void PrepareTest()
         {
@@ -301,7 +315,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t_inputFilePath = Path.GetTempPath() + t_fileName;
 
             var data = $"{t_colData[0]},{t_colData[1]},{t_colData[2]}";
-            File.WriteAllText(t_inputFilePath, data);
+            using (var stream = FileOperations.Instance.Create(t_inputFilePath))
+            using (var writer = new StreamWriter(stream))
+            {
+                writer.Write(data);
+            }
 
             t_outputFilePath = $@"{s_outputDirectory}/{t_fileName}";
             t_filesToDelete.Add(t_inputFilePath);

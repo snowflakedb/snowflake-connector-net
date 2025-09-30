@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     using System.Data;
@@ -59,8 +55,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                
-                CreateOrReplaceTable(conn, TableName, new []{"c INT"});
+
+                CreateOrReplaceTable(conn, TableName, new[] { "c INT" });
 
                 using (IDbTransaction t1 = conn.BeginTransaction())
                 {
@@ -85,13 +81,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = ConnectionString;
             conn.Open();
-            
-            CreateOrReplaceTable(conn, TableName, new []
+
+            CreateOrReplaceTable(conn, TableName, new[]
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
             });
-            
+
             using (DbTransaction transaction = conn.BeginTransaction())
             {
                 IDbCommand t1c1 = conn.CreateCommand();
@@ -136,13 +132,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = ConnectionString;
             conn.Open();
-            
-            CreateOrReplaceTable(conn, TableName, new []
+
+            CreateOrReplaceTable(conn, TableName, new[]
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
             });
-            
+
             using (DbTransaction transaction = conn.BeginTransaction())
             {
                 IDbCommand t1c1 = conn.CreateCommand();

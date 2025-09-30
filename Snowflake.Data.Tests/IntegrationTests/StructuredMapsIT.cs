@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -9,8 +10,37 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
-    public class StructuredMapsIT: StructuredTypesIT
+    public class StructuredMapsIT : StructuredTypesIT
     {
+        [Test]
+        public void TestDataTableLoadOnStructuredMap()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection);
+                    var key = "city";
+                    var value = "San Mateo";
+                    var addressAsSFString = $"OBJECT_CONSTRUCT('{key}','{value}')::MAP(VARCHAR, VARCHAR)";
+                    var colName = "colA";
+                    command.CommandText = $"SELECT {addressAsSFString} AS {colName}";
+
+                    // act
+                    using (var reader = command.ExecuteReader())
+                    {
+                        var dt = new DataTable();
+                        dt.Load(reader);
+
+                        // assert
+                        Assert.AreEqual($"{key}:{value}", DataTableParser.GetFirstRowValue(dt, colName));
+                    }
+                }
+            }
+        }
+
         [Test]
         public void TestSelectMap()
         {
@@ -145,8 +175,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(new string[] {"a"}, map.Keys);
-                    CollectionAssert.AreEqual(new string[] {"b", "c"}, map["a"]);
+                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
+                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
                 }
             }
         }
@@ -171,8 +201,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(new string[] {"a"}, map.Keys);
-                    CollectionAssert.AreEqual(new string[] {"b", "c"}, map["a"]);
+                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
+                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
                 }
             }
         }
@@ -218,7 +248,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     EnableStructuredTypes(connection);
                     command.CommandText = $"SELECT {valueSfString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act

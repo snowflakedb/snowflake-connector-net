@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -24,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            Assert.AreEqual("1", chunk.ExtractCell(0,0).SafeToString());
+            Assert.AreEqual("1", chunk.ExtractCell(0, 0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
             Assert.AreEqual("abcde", chunk.ExtractCell(0, 2).SafeToString());
 
@@ -219,6 +215,33 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(0, chunk.ChunkIndex);
             Assert.AreEqual(chunkInfo.url, chunk.Url);
             Assert.AreEqual(chunkInfo.rowCount, chunk.RowCount);
+            Assert.AreEqual(chunkInfo.uncompressedSize, chunk.UncompressedSize);
+            Assert.Greater(chunk.data.blockCount, 0);
+            Assert.Greater(chunk.data.metaBlockCount, 0);
+        }
+
+        [Test]
+        public void TestClearRemovesAllChunkData()
+        {
+            const int RowCount = 3;
+            string data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
+            var chunk = PrepareChunkAsync(data, 1, RowCount).Result;
+
+            ExecResponseChunk chunkInfo = new ExecResponseChunk()
+            {
+                url = "new_url",
+                uncompressedSize = 100,
+                rowCount = 200
+            };
+
+            chunk.Clear();
+
+            Assert.AreEqual(0, chunk.ChunkIndex);
+            Assert.AreEqual(null, chunk.Url);
+            Assert.AreEqual(0, chunk.RowCount);
+            Assert.AreEqual(0, chunk.UncompressedSize);
+            Assert.AreEqual(0, chunk.data.blockCount);
+            Assert.AreEqual(0, chunk.data.metaBlockCount);
         }
 
         private async Task<SFReusableChunk> PrepareChunkAsync(string stringData, int colCount, int rowCount)

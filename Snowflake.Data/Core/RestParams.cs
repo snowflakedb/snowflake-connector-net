@@ -46,6 +46,13 @@ namespace Snowflake.Data.Core
         internal const string SF_CONSOLE_LOGIN = "/console/login";
     }
 
+    internal static class OAuthFlowConfig
+    {
+        internal const string SnowflakeAuthorizeUrl = "/oauth/authorize";
+        internal const string SnowflakeTokenUrl = "/oauth/token-request";
+        internal const string DefaultScopePrefixBeforeRole = "session:role:";
+    }
+
     internal static class OktaUrl
     {
         internal const string DOMAIN = "okta.com";
@@ -58,7 +65,7 @@ namespace Snowflake.Data.Core
         {
             ClientEnv = new LoginRequestClientEnv()
             {
-                application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
+                processName = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
                 osVersion = Environment.OSVersion.VersionString,
                 netRuntime = ExtractRuntime(),
                 netVersion = ExtractVersion(),

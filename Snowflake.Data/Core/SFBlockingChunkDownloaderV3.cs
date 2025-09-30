@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO.Compression;
 using System.IO;
@@ -68,7 +64,7 @@ namespace Snowflake.Data.Core
             this.taskQueues = new List<Task<BaseResultChunk>>();
             externalCancellationToken = cancellationToken;
 
-            for (int i=0; i<prefetchSlot; i++)
+            for (int i = 0; i < prefetchSlot; i++)
             {
                 BaseResultChunk resultChunk =
                     resultFormat == ResultFormat.ARROW ? (BaseResultChunk)
@@ -99,7 +95,7 @@ namespace Snowflake.Data.Core
 
         public async Task<BaseResultChunk> GetNextChunkAsync()
         {
-            logger.Info($"NextChunkToConsume: {nextChunkToConsumeIndex}, NextChunkToDownload: {nextChunkToDownloadIndex}");
+            logger.Debug($"NextChunkToConsume: {nextChunkToConsumeIndex}, NextChunkToDownload: {nextChunkToDownloadIndex}");
             if (nextChunkToConsumeIndex < chunkInfos.Count)
             {
                 Task<BaseResultChunk> chunk = taskQueues[nextChunkToConsumeIndex % prefetchSlot];
@@ -192,6 +188,7 @@ namespace Snowflake.Data.Core
                     {
                         if ((maxRetry <= 0) || (retryCount < maxRetry))
                         {
+                            logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
                             retry = true;
                             // reset the chunk before retry in case there could be garbage
                             // data left from last attempt
@@ -208,12 +205,13 @@ namespace Snowflake.Data.Core
                         else
                         {
                             //parse error
-                            throw new Exception("parse stream to Chunk error. " + e);
+                            logger.Error("Failed retries of parse stream to chunk error: " + e.Message);
+                            throw new Exception("Parse stream to chunk error: " + e.Message);
                         }
                     }
                 }
             } while (retry);
-            logger.Info($"Succeed downloading chunk #{chunk.ChunkIndex}");
+            logger.Debug($"Succeed downloading chunk #{chunk.ChunkIndex}");
             return chunk;
         }
 

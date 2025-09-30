@@ -10,7 +10,7 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
-    public class StructuredTypesWithEmbeddedUnstructuredIT: StructuredTypesIT
+    public class StructuredTypesWithEmbeddedUnstructuredIT : StructuredTypesIT
     {
         [Test]
         public void TestSelectAllUnstructuredTypesObject()
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     ), '2024-07-11 14:20:05'::TIMESTAMP_LTZ";
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -293,7 +293,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var rawValueString = $"'{dbValue}'::{dbType}";
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act/assert
@@ -312,13 +312,90 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         internal static IEnumerable<object[]> DateTimeConversionCases()
         {
-            yield return new object[] { "2024-07-11 14:20:05", SFDataType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime() };
-            yield return new object[] { "2024-07-11 14:20:05 +5:00", SFDataType.TIMESTAMP_TZ.ToString(), null, DateTime.Parse("2024-07-11 09:20:05").ToUniversalTime() };
-            yield return new object[] {"2024-07-11 14:20:05 -7:00", SFDataType.TIMESTAMP_LTZ.ToString(), null, DateTime.Parse("2024-07-11 21:20:05").ToUniversalTime() };
-            yield return new object[] { "2024-07-11", SFDataType.DATE.ToString(), DateTime.Parse("2024-07-11").ToUniversalTime(), DateTime.Parse("2024-07-11").ToUniversalTime() };
-            yield return new object[] { "2024-07-11 14:20:05.123456789", SFDataType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05.1234567").ToUniversalTime(), DateTime.Parse("2024-07-11 14:20:05.1234568").ToUniversalTime()};
-            yield return new object[] { "2024-07-11 14:20:05.123456789 +5:00", SFDataType.TIMESTAMP_TZ.ToString(), null, DateTime.Parse("2024-07-11 09:20:05.1234568").ToUniversalTime() };
-            yield return new object[] {"2024-07-11 14:20:05.123456789 -7:00", SFDataType.TIMESTAMP_LTZ.ToString(), null, DateTime.Parse("2024-07-11 21:20:05.1234568").ToUniversalTime() };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05",
+                SFDataType.TIMESTAMP_NTZ.ToString(),
+                DateTime.Parse("2024-07-11 14:20:05"),
+                DateTime.Parse("2024-07-11 14:20:05") // kind -> Unspecified
+            };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05 +5:00",
+                SFDataType.TIMESTAMP_TZ.ToString(),
+                null,
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11 09:20:05"), DateTimeKind.Utc)
+            };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05 -7:00",
+                SFDataType.TIMESTAMP_LTZ.ToString(),
+                null,
+                DateTime.Parse("2024-07-11 21:20:05").ToLocalTime()
+            };
+            yield return new object[]
+            {
+                "2024-07-11",
+                SFDataType.DATE.ToString(),
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11"), DateTimeKind.Unspecified),
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11"), DateTimeKind.Unspecified)
+            };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05.123456789",
+                SFDataType.TIMESTAMP_NTZ.ToString(),
+                DateTime.Parse("2024-07-11 14:20:05.1234567"),
+                DateTime.Parse("2024-07-11 14:20:05.1234568")
+            };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05.123456789 +5:00",
+                SFDataType.TIMESTAMP_TZ.ToString(),
+                null,
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11 09:20:05.1234568"), DateTimeKind.Utc)
+            };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05.123456789 -7:00",
+                SFDataType.TIMESTAMP_LTZ.ToString(),
+                null,
+                DateTime.Parse("2024-07-11 21:20:05.1234568").ToLocalTime()
+            };
+            yield return new object[]
+            {
+                "9999-12-31 23:59:59.999999",
+                SFDataType.TIMESTAMP_NTZ.ToString(),
+                DateTime.Parse("9999-12-31 23:59:59.999999"),
+                DateTime.Parse("9999-12-31 23:59:59.999999")
+            };
+            yield return new object[]
+            {
+                "9999-12-31 23:59:59.999999 +1:00",
+                SFDataType.TIMESTAMP_TZ.ToString(),
+                null,
+                DateTime.SpecifyKind(DateTime.Parse("9999-12-31 22:59:59.999999"), DateTimeKind.Utc)
+            };
+            yield return new object[]
+            {
+                "9999-12-31 23:59:59.999999 +13:00",
+                SFDataType.TIMESTAMP_LTZ.ToString(),
+                null,
+                DateTime.Parse("9999-12-31 10:59:59.999999").ToLocalTime()
+            };
+            yield return new object[]
+            {
+                "0001-01-01 00:00:00",
+                SFDataType.TIMESTAMP_NTZ.ToString(),
+                DateTime.Parse("0001-01-01 00:00:00"),
+                DateTime.Parse("0001-01-01 00:00:00")
+            };
+            yield return new object[]
+            {
+                "0001-01-01 00:00:00 -1:00",
+                SFDataType.TIMESTAMP_TZ.ToString(),
+                null,
+                DateTime.SpecifyKind(DateTime.Parse("0001-01-01 01:00:00"), DateTimeKind.Utc)
+            };
         }
 
         [Test]
@@ -336,7 +413,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var rawValueString = $"'{dbValue}'::{dbType}";
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act/assert
@@ -354,13 +431,90 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         internal static IEnumerable<object[]> DateTimeOffsetConversionCases()
         {
-            yield return new object[] {"2024-07-11 14:20:05", SFDataType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05").ToUniversalTime(), DateTimeOffset.Parse("2024-07-11 14:20:05Z")};
-            yield return new object[] {"2024-07-11 14:20:05 +5:00", SFDataType.TIMESTAMP_TZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05 +5:00")};
-            yield return new object[] {"2024-07-11 14:20:05 -7:00", SFDataType.TIMESTAMP_LTZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05 -7:00")};
-            yield return new object[] {"2024-07-11", SFDataType.DATE.ToString(), DateTime.Parse("2024-07-11").ToUniversalTime(), DateTimeOffset.Parse("2024-07-11Z")};
-            yield return new object[] {"2024-07-11 14:20:05.123456789", SFDataType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05.1234567").ToUniversalTime(), DateTimeOffset.Parse("2024-07-11 14:20:05.1234568Z")};
-            yield return new object[] {"2024-07-11 14:20:05.123456789 +5:00", SFDataType.TIMESTAMP_TZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05.1234568 +5:00")};
-            yield return new object[] {"2024-07-11 14:20:05.123456789 -7:00", SFDataType.TIMESTAMP_LTZ.ToString(), null, DateTimeOffset.Parse("2024-07-11 14:20:05.1234568 -7:00")};
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05",
+                SFDataType.TIMESTAMP_NTZ.ToString(),
+                DateTime.Parse("2024-07-11 14:20:05"),
+                DateTimeOffset.Parse("2024-07-11 14:20:05Z")
+            };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05 +5:00",
+                SFDataType.TIMESTAMP_TZ.ToString(),
+                null,
+                DateTimeOffset.Parse("2024-07-11 14:20:05 +5:00")
+            };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05 -7:00",
+                SFDataType.TIMESTAMP_LTZ.ToString(),
+                null,
+                DateTimeOffset.Parse("2024-07-11 14:20:05 -7:00").ToLocalTime()
+            };
+            yield return new object[]
+            {
+                "2024-07-11",
+                SFDataType.DATE.ToString(),
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11"), DateTimeKind.Unspecified),
+                DateTimeOffset.Parse("2024-07-11Z")
+            };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05.123456789",
+                SFDataType.TIMESTAMP_NTZ.ToString(),
+                DateTime.Parse("2024-07-11 14:20:05.1234567"),
+                DateTimeOffset.Parse("2024-07-11 14:20:05.1234568Z")
+            };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05.123456789 +5:00",
+                SFDataType.TIMESTAMP_TZ.ToString(),
+                null,
+                DateTimeOffset.Parse("2024-07-11 14:20:05.1234568 +5:00")
+            };
+            yield return new object[]
+            {
+                "2024-07-11 14:20:05.123456789 -7:00",
+                SFDataType.TIMESTAMP_LTZ.ToString(),
+                null,
+                DateTimeOffset.Parse("2024-07-11 14:20:05.1234568 -7:00")
+            };
+            yield return new object[]
+            {
+                "9999-12-31 23:59:59.999999",
+                SFDataType.TIMESTAMP_NTZ.ToString(),
+                DateTime.Parse("9999-12-31 23:59:59.999999"),
+                DateTimeOffset.Parse("9999-12-31 23:59:59.999999Z")
+            };
+            yield return new object[]
+            {
+                "9999-12-31 23:59:59.999999 +1:00",
+                SFDataType.TIMESTAMP_TZ.ToString(),
+                null,
+                DateTimeOffset.Parse("9999-12-31 23:59:59.999999 +1:00")
+            };
+            yield return new object[]
+            {
+                "9999-12-31 23:59:59.999999 +13:00",
+                SFDataType.TIMESTAMP_LTZ.ToString(),
+                null,
+                DateTimeOffset.Parse("9999-12-31 23:59:59.999999 +13:00")
+            };
+            yield return new object[]
+            {
+                "0001-01-01 00:00:00",
+                SFDataType.TIMESTAMP_NTZ.ToString(),
+                DateTime.Parse("0001-01-01 00:00:00"),
+                DateTimeOffset.Parse("0001-01-01 00:00:00Z")
+            };
+            yield return new object[]
+            {
+                "0001-01-01 00:00:00 -1:00",
+                SFDataType.TIMESTAMP_TZ.ToString(),
+                null,
+                DateTimeOffset.Parse("0001-01-01 00:00:00 -1:00")
+            };
         }
 
         private TimeZoneInfo GetTimeZone(SnowflakeDbConnection connection)
@@ -368,7 +522,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "show parameters like 'timezone'";
-                var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                 Assert.IsTrue(reader.Read());
                 var timeZoneString = reader.GetString(1);
                 return TimeZoneInfoConverter.FindSystemTimeZoneById(timeZoneString);

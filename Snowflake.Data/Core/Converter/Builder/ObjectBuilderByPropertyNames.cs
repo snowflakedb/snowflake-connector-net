@@ -6,7 +6,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core.Converter.Builder
 {
-    internal class ObjectBuilderByPropertyNames: IObjectBuilder
+    internal class ObjectBuilderByPropertyNames : IObjectBuilder
     {
         private readonly Type _type;
         private readonly List<Tuple<PropertyInfo, object>> _result;

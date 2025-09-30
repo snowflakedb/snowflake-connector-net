@@ -1,9 +1,7 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Text;
+using Snowflake.Data.Client;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -36,8 +34,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 Thread.CurrentThread.CurrentCulture = ci;
 
-                System.Tuple<string, string> t = 
-                    SFDataConverter.csharpTypeValToSfTypeVal(System.Data.DbType.Double, 1.2345);
+                System.Tuple<string, string> t =
+                    SFDataConverter.CSharpTypeValToSfTypeVal(System.Data.DbType.Double, 1.2345);
 
                 Assert.AreEqual("REAL", t.Item1);
                 Assert.AreEqual("1.2345", t.Item2);
@@ -104,12 +102,12 @@ namespace Snowflake.Data.Tests.UnitTests
             TimeSpan expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
 
             // Generate the value as returned by the DB
-            TimeSpan val= TimeSpan.ParseExact(inputTimeStr.Substring(0, 8), "c", CultureInfo.InvariantCulture);
+            TimeSpan val = TimeSpan.ParseExact(inputTimeStr.Substring(0, 8), "c", CultureInfo.InvariantCulture);
             Console.WriteLine("val " + val.ToString());
             var tickDiff = val.Ticks;
             var inputStringAsItComesBackFromDatabase = (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
             inputStringAsItComesBackFromDatabase += inputTimeStr.Substring(8, inputTimeStr.Length - 8);
-    
+
             // Run the conversion
             var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputStringAsItComesBackFromDatabase), SFDataType.TIME, typeof(TimeSpan));
 
@@ -148,7 +146,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private void internalTestConvertDate(DateTime dtExpected, DateTime testValue)
         {
-            var result = SFDataConverter.csharpTypeValToSfTypeVal(System.Data.DbType.Date, testValue);
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(System.Data.DbType.Date, testValue);
             // Convert result to DateTime for easier interpretation
             var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             DateTime dtResult = unixEpoch.AddMilliseconds(Int64.Parse(result.Item2));
@@ -326,5 +324,25 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
         }
 
+        [Test]
+        [TestCase(SFDataType.TIMESTAMP_LTZ, typeof(DateTime))]
+        [TestCase(SFDataType.TIMESTAMP_TZ, typeof(DateTime))]
+        [TestCase(SFDataType.TIMESTAMP_NTZ, typeof(DateTimeOffset))]
+        [TestCase(SFDataType.TIME, typeof(DateTimeOffset))]
+        [TestCase(SFDataType.DATE, typeof(DateTimeOffset))]
+        public void TestInvalidTimestampConversion(SFDataType dataType, Type unsupportedType)
+        {
+            object unsupportedObject;
+            if (unsupportedType == typeof(DateTimeOffset))
+                unsupportedObject = new DateTimeOffset();
+            else if (unsupportedType == typeof(DateTime))
+                unsupportedObject = new DateTime();
+            else
+                unsupportedObject = null;
+
+            Assert.NotNull(unsupportedObject);
+            SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => SFDataConverter.CSharpValToSfVal(dataType, unsupportedObject));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
+        }
     }
 }

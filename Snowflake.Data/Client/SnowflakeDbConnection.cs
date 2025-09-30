@@ -1,14 +1,11 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
-using System.Data.Common;
-using Snowflake.Data.Core;
-using System.Security;
-using System.Threading.Tasks;
 using System.Data;
+using System.Data.Common;
+using System.Security;
 using System.Threading;
+using System.Threading.Tasks;
+using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
@@ -37,6 +34,8 @@ namespace Snowflake.Data.Client
         // Will fix that in a separated PR though as it's a different issue
         private static Boolean _isArrayBindStageCreated;
 
+        private readonly TomlConnectionBuilder _tomlConnectionBuilder;
+
         protected enum TransactionRollbackStatus
         {
             Undefined, // used to indicate ignored transaction status when pool disabled
@@ -44,19 +43,24 @@ namespace Snowflake.Data.Client
             Failure
         }
 
-        public SnowflakeDbConnection()
+        public SnowflakeDbConnection() : this(TomlConnectionBuilder.Instance)
         {
+        }
+
+        public SnowflakeDbConnection(string connectionString) : this()
+        {
+            ConnectionString = connectionString;
+        }
+
+        internal SnowflakeDbConnection(TomlConnectionBuilder tomlConnectionBuilder)
+        {
+            _tomlConnectionBuilder = tomlConnectionBuilder;
             _connectionState = ConnectionState.Closed;
             _connectionTimeout =
                 int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().
                     defaultValue);
             _isArrayBindStageCreated = false;
             ExplicitTransaction = null;
-        }
-
-        public SnowflakeDbConnection(string connectionString) : this()
-        {
-            ConnectionString = connectionString;
         }
 
         public override string ConnectionString
@@ -68,6 +72,12 @@ namespace Snowflake.Data.Client
         {
             get; set;
         }
+
+        public SecureString Passcode { get; set; }
+
+        public SecureString OAuthClientSecret { get; set; }
+
+        public SecureString Token { get; set; }
 
         public bool IsOpen()
         {
@@ -268,8 +278,16 @@ namespace Snowflake.Data.Client
             }
             try
             {
+                FillConnectionStringFromTomlConfigIfNotSet();
                 OnSessionConnecting();
-                SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, Password);
+                var sessionContext = new SessionPropertiesContext
+                {
+                    Password = Password,
+                    Passcode = Passcode,
+                    OAuthClientSecret = OAuthClientSecret,
+                    Token = Token
+                };
+                SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, sessionContext);
                 if (SfSession == null)
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Could not open session");
                 logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
@@ -292,6 +310,14 @@ namespace Snowflake.Data.Client
             }
         }
 
+        internal void FillConnectionStringFromTomlConfigIfNotSet()
+        {
+            if (string.IsNullOrEmpty(ConnectionString))
+            {
+                ConnectionString = _tomlConnectionBuilder.GetConnectionStringFromToml();
+            }
+        }
+
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Connection Async.");
@@ -300,10 +326,17 @@ namespace Snowflake.Data.Client
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
                 return Task.CompletedTask;
             }
-            registerConnectionCancellationCallback(cancellationToken);
             OnSessionConnecting();
+            FillConnectionStringFromTomlConfigIfNotSet();
+            var sessionContext = new SessionPropertiesContext
+            {
+                Password = Password,
+                Passcode = Passcode,
+                OAuthClientSecret = OAuthClientSecret,
+                Token = Token
+            };
             return SnowflakeDbConnectionPool
-                .GetSessionAsync(ConnectionString, Password, cancellationToken)
+                .GetSessionAsync(ConnectionString, sessionContext, cancellationToken)
                 .ContinueWith(previousTask =>
                 {
                     if (previousTask.IsFaulted)
@@ -406,20 +439,6 @@ namespace Snowflake.Data.Client
             }
 
             base.Dispose(disposing);
-        }
-
-
-        /// <summary>
-        ///     Register cancel callback. Two factors: either external cancellation token passed down from upper
-        ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
-        /// </summary>
-        /// <param name="externalCancellationToken">cancellation token from upper layer</param>
-        internal void registerConnectionCancellationCallback(CancellationToken externalCancellationToken)
-        {
-            if (!externalCancellationToken.IsCancellationRequested)
-            {
-                externalCancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
-            }
         }
 
         public bool IsStillRunning(QueryStatus status)

@@ -1,28 +1,14 @@
-﻿/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.IO;
 using System;
 using Snowflake.Data.Log;
 using System.Security.Cryptography;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
     /// <summary>
-    /// The encryption materials.
-    /// </summary>
-    internal class MaterialDescriptor
-    {
-        public string smkId { get; set; }
-
-        public string queryId { get; set; }
-
-        public string keySize { get; set; }
-    }
-
-    /// <summary>
     /// The encryptor/decryptor for PUT/GET files.
+    /// Handles encryption and decryption using AES CBC (for files) and ECB (for keys).
     /// </summary>
     class EncryptionProvider
     {
@@ -214,7 +200,7 @@ namespace Snowflake.Data.Core.FileTransfer
                        ivBytes,
                        transferConfiguration))
             {
-                using (var decryptedFileStream = File.Create(tempFileName))
+                using (var decryptedFileStream = FileOperations.Instance.CreateTempFile(tempFileName))
                 {
                     var decryptedBytesStream = decryptedBytesStreamPair.MainStream;
                     decryptedBytesStream.Position = 0;

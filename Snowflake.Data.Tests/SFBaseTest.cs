@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,10 +8,11 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
-[assembly:LevelOfParallelism(10)]
+[assembly: LevelOfParallelism(10)]
 
 namespace Snowflake.Data.Tests
 {
@@ -52,15 +49,15 @@ namespace Snowflake.Data.Tests
     [TestFixture]
     [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     [SetCulture("en-US")]
-    #if !SEQUENTIAL_TEST_RUN
+#if !SEQUENTIAL_TEST_RUN
     [Parallelizable(ParallelScope.All)]
-    #endif
+#endif
     public class SFBaseTestAsync
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
 
-        private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};" +
-                                                              "account={3};role={4};db={5};schema={6};warehouse={7}";
+        private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
+                                                              "account={3};role={4};db={5};schema={6};warehouse={7};";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         protected virtual string TestName => TestContext.CurrentContext.Test.MethodName;
         protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
@@ -165,7 +162,7 @@ namespace Snowflake.Data.Tests
     [SetUpFixture]
     public class TestEnvironment
     {
-        private const string ConnectionStringFmt = "scheme={0};host={1};port={2};" +
+        private const string ConnectionStringFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                                                    "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
 
         public static TestConfig TestConfig { get; private set; }
@@ -197,10 +194,70 @@ namespace Snowflake.Data.Tests
             var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
             Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
-            var reader = new StreamReader("parameters.json");
+            TestConfig = ReadTestConfig();
+            ModifySchema(TestConfig.schema, SchemaAction.CREATE);
+        }
 
+        private static TestConfig ReadTestConfig()
+        {
+            var fileName = "parameters.json";
+            var testConfig = File.Exists(fileName) ? ReadTestConfigFile(fileName) : ReadTestConfigEnvVariables();
+            testConfig.schema = testConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+            return testConfig;
+        }
+
+        private static TestConfig ReadTestConfigEnvVariables()
+        {
+            var config = new TestConfig();
+            config.user = ReadEnvVariableIfSet(config.user, "SNOWFLAKE_TEST_USER");
+            config.password = ReadEnvVariableIfSet(config.password, "SNOWFLAKE_TEST_PASSWORD");
+            config.account = ReadEnvVariableIfSet(config.account, "SNOWFLAKE_TEST_ACCOUNT");
+            config.host = ReadEnvVariableIfSet(config.host, "SNOWFLAKE_TEST_HOST");
+            config.port = ReadEnvVariableIfSet(config.port, "SNOWFLAKE_TEST_PORT");
+            config.warehouse = ReadEnvVariableIfSet(config.warehouse, "SNOWFLAKE_TEST_WAREHOUSE");
+            config.database = ReadEnvVariableIfSet(config.database, "SNOWFLAKE_TEST_DATABASE");
+            config.schema = ReadEnvVariableIfSet(config.schema, "SNOWFLAKE_TEST_SCHEMA");
+            config.role = ReadEnvVariableIfSet(config.role, "SNOWFLAKE_TEST_ROLE");
+            config.protocol = ReadEnvVariableIfSet(config.protocol, "SNOWFLAKE_TEST_PROTOCOL");
+            config.oktaUser = ReadEnvVariableIfSet(config.oktaUser, "SNOWFLAKE_TEST_OKTA_USER");
+            config.oktaPassword = ReadEnvVariableIfSet(config.oktaPassword, "SNOWFLAKE_TEST_OKTA_PASSWORD");
+            config.oktaUrl = ReadEnvVariableIfSet(config.oktaUrl, "SNOWFLAKE_TEST_OKTA_URL");
+            config.jwtAuthUser = ReadEnvVariableIfSet(config.jwtAuthUser, "SNOWFLAKE_TEST_JWT_USER");
+            config.pemFilePath = ReadEnvVariableIfSet(config.pemFilePath, "SNOWFLAKE_TEST_PEM_FILE");
+            config.p8FilePath = ReadEnvVariableIfSet(config.p8FilePath, "SNOWFLAKE_TEST_P8_FILE");
+            config.pwdProtectedPrivateKeyFilePath = ReadEnvVariableIfSet(config.pwdProtectedPrivateKeyFilePath, "SNOWFLAKE_TEST_PWD_PROTECTED_PK_FILE");
+            config.privateKey = ReadEnvVariableIfSet(config.privateKey, "SNOWFLAKE_TEST_PK_CONTENT");
+            config.pwdProtectedPrivateKey = ReadEnvVariableIfSet(config.pwdProtectedPrivateKey, "SNOWFLAKE_TEST_PROTECTED_PK_CONTENT");
+            config.privateKeyFilePwd = ReadEnvVariableIfSet(config.privateKeyFilePwd, "SNOWFLAKE_TEST_PK_PWD");
+            config.oauthToken = ReadEnvVariableIfSet(config.oauthToken, "SNOWFLAKE_TEST_OAUTH_TOKEN");
+            config.expOauthToken = ReadEnvVariableIfSet(config.expOauthToken, "SNOWFLAKE_TEST_EXP_OAUTH_TOKEN");
+            config.proxyHost = ReadEnvVariableIfSet(config.proxyHost, "SNOWFLAKE_TEST_PROXY_HOST");
+            config.proxyPort = ReadEnvVariableIfSet(config.proxyPort, "SNOWFLAKE_TEST_PROXY_PORT");
+            config.authProxyHost = ReadEnvVariableIfSet(config.authProxyHost, "SNOWFLAKE_TEST_AUTH_PROXY_HOST");
+            config.authProxyPort = ReadEnvVariableIfSet(config.authProxyPort, "SNOWFLAKE_TEST_AUTH_PROXY_PORT");
+            config.authProxyUser = ReadEnvVariableIfSet(config.authProxyUser, "SNOWFLAKE_TEST_AUTH_PROXY_USER");
+            config.authProxyPwd = ReadEnvVariableIfSet(config.authProxyPwd, "SNOWFLAKE_TEST_AUTH_PROXY_PWD");
+            config.nonProxyHosts = ReadEnvVariableIfSet(config.nonProxyHosts, "SNOWFLAKE_TEST_NON_PROXY_HOSTS");
+            config.oauthClientId = ReadEnvVariableIfSet(config.oauthClientId, "SNOWFLAKE_TEST_OAUTH_CLIENT_ID");
+            config.oauthClientSecret = ReadEnvVariableIfSet(config.oauthClientSecret, "SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET");
+            config.oauthScope = ReadEnvVariableIfSet(config.oauthScope, "SNOWFLAKE_TEST_OAUTH_SCOPE");
+            config.oauthRedirectUri = ReadEnvVariableIfSet(config.oauthRedirectUri, "SNOWFLAKE_TEST_OAUTH_REDIRECT_URI");
+            config.oauthAuthorizationUrl = ReadEnvVariableIfSet(config.oauthAuthorizationUrl, "SNOWFLAKE_TEST_OAUTH_AUTHORIZATION_URL");
+            config.oauthTokenRequestUrl = ReadEnvVariableIfSet(config.oauthTokenRequestUrl, "SNOWFLAKE_TEST_OAUTH_TOKEN_REQUEST_URL");
+            config.programmaticAccessToken = ReadEnvVariableIfSet(config.programmaticAccessToken, "SNOWFLAKE_TEST_PROGRAMMATIC_ACCESS_TOKEN");
+            return config;
+        }
+
+        private static string ReadEnvVariableIfSet(string defaultValue, string variableName)
+        {
+            var variableValue = Environment.GetEnvironmentVariable(variableName);
+            return string.IsNullOrEmpty(variableValue) ? defaultValue : variableValue;
+        }
+
+        internal static TestConfig ReadTestConfigFile(string fileName)
+        {
+            var reader = new StreamReader(fileName);
             var testConfigString = reader.ReadToEnd();
-
             // Local JSON settings to avoid using system wide settings which could be different
             // than the default ones
             var jsonSettings = new JsonSerializerSettings
@@ -211,18 +268,15 @@ namespace Snowflake.Data.Tests
                 }
             };
             var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
-
             if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
             {
-                TestConfig = testConnectionConfig;
-                TestConfig.schema = TestConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+                return testConnectionConfig;
             }
             else
             {
                 Assert.Fail("Failed to load test configuration");
+                throw new Exception("Failed to load test configuration");
             }
-
-            ModifySchema(TestConfig.schema, SchemaAction.CREATE);
         }
 
         [OneTimeTearDown]
@@ -242,7 +296,7 @@ namespace Snowflake.Data.Tests
         {
             var resultText = "test;time_in_ms\n";
             resultText += string.Join("\n",
-                s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds,0)}"));
+                s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}"));
 
             var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
             var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
@@ -409,6 +463,27 @@ namespace Snowflake.Data.Tests
         [JsonProperty(PropertyName = "NON_PROXY_HOSTS", NullValueHandling = NullValueHandling.Ignore)]
         internal string nonProxyHosts { get; set; }
 
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_CLIENT_ID", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthClientId { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthClientSecret { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_SCOPE", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthScope { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_REDIRECT_URI", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthRedirectUri { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_AUTHORIZATION_URL", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthAuthorizationUrl { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_TOKEN_REQUEST_URL", NullValueHandling = NullValueHandling.Ignore)]
+        internal string oauthTokenRequestUrl { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PROGRAMMATIC_ACCESS_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string programmaticAccessToken { get; set; }
+
         public TestConfig()
         {
             protocol = "https";
@@ -421,10 +496,14 @@ namespace Snowflake.Data.Tests
         private readonly string _key;
 
         private readonly string[] _values;
-        public IgnoreOnEnvIsAttribute(string key, string[] values)
+
+        private readonly string _reason;
+
+        public IgnoreOnEnvIsAttribute(string key, string[] values, string reason = null)
         {
             _key = key;
             _values = values;
+            _reason = reason;
         }
 
         public void BeforeTest(ITest test)
@@ -433,7 +512,7 @@ namespace Snowflake.Data.Tests
             {
                 if (Environment.GetEnvironmentVariable(_key) == value)
                 {
-                    Assert.Ignore("Test is ignored when environment variable {0} is {1} ", _key, value);
+                    Assert.Ignore("Test is ignored when environment variable {0} is {1}. {2}", _key, value, _reason);
                 }
             }
         }
@@ -467,5 +546,19 @@ namespace Snowflake.Data.Tests
         }
 
         public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
+    }
+
+    public class IgnoreOnCI : IgnoreOnEnvIsAttribute
+    {
+        public IgnoreOnCI(string reason = null) : base("CI", new[] { "true" }, reason)
+        {
+        }
+    }
+
+    public class IgnoreOnJenkins : IgnoreOnEnvIsSetAttribute
+    {
+        public IgnoreOnJenkins() : base("JENKINS_HOME")
+        {
+        }
     }
 }

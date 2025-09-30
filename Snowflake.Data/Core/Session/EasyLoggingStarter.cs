@@ -1,12 +1,7 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix;
-using Mono.Unix.Native;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -16,7 +11,7 @@ namespace Snowflake.Data.Core
     internal class EasyLoggingStarter
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingStarter>();
-        
+
         private readonly EasyLoggingConfigProvider _easyLoggingConfigProvider;
 
         private readonly EasyLoggerManager _easyLoggerManager;
@@ -28,12 +23,12 @@ namespace Snowflake.Data.Core
         private readonly EnvironmentOperations _environmentOperations;
 
         private readonly object _lockForExclusiveInit = new object();
-        
+
         private EasyLoggingInitTrialParameters _initTrialParameters = null;
 
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
             EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
-        
+
         internal EasyLoggingStarter(
             EasyLoggingConfigProvider easyLoggingConfigProvider,
             EasyLoggerManager easyLoggerManager,
@@ -91,7 +86,7 @@ namespace Snowflake.Data.Core
                 _easyLoggerManager.ResetEasyLogging(logLevel);
             }
         }
-        
+
         private bool AllowedToInitialize(string configFilePathFromConnectionString)
         {
             var everTriedToInitialize = _initTrialParameters != null;
@@ -128,6 +123,10 @@ namespace Snowflake.Data.Core
                     throw new Exception("No log path found for easy logging. Home directory is not configured and log path is not provided");
                 }
             }
+            if (EasyLoggerManager.IsStdout(logPath))
+            {
+                return logPath;
+            }
             var pathWithDotnetSubdirectory = Path.Combine(logPathOrDefault, "dotnet");
             if (!_directoryOperations.Exists(pathWithDotnetSubdirectory))
             {
@@ -141,9 +140,13 @@ namespace Snowflake.Data.Core
                     {
                         Directory.CreateDirectory(logPathOrDefault);
                     }
-                    var createDirResult = _unixOperations.CreateDirectoryWithPermissions(pathWithDotnetSubdirectory,
-                        FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
-                    if (createDirResult != 0)
+
+                    try
+                    {
+                        _unixOperations.CreateDirectoryWithPermissions(pathWithDotnetSubdirectory,
+                            FileAccessPermissions.UserReadWriteExecute);
+                    }
+                    catch (Exception)
                     {
                         s_logger.Error($"Failed to create logs directory: {pathWithDotnetSubdirectory}");
                         throw new Exception("Failed to create logs directory");
@@ -184,7 +187,7 @@ namespace Snowflake.Data.Core
         {
             return _configFilePathFromConnectionString != null;
         }
-        
+
         public bool HasDifferentConfigPath(string configFilePath)
         {
             return IsConfigFilePathGiven()

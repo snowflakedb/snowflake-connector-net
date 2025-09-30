@@ -1,8 +1,6 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Snowflake.Data.Core
 {
@@ -92,17 +90,73 @@ namespace Snowflake.Data.Core
         STRUCTURED_TYPE_READ_ERROR,
 
         [SFErrorAttr(errorCode = 270062)]
-        STRUCTURED_TYPE_READ_DETAILED_ERROR
+        STRUCTURED_TYPE_READ_DETAILED_ERROR,
+
+        [SFErrorAttr(errorCode = 270063)]
+        BROWSER_RESPONSE_ERROR,
+
+        [SFErrorAttr(errorCode = 270064)]
+        OAUTH_TOKEN_REQUEST_ERROR,
+
+        [SFErrorAttr(errorCode = 270065)]
+        EXPERIMENTAL_AUTHENTICATION_DISABLED,
+
+        [SFErrorAttr(errorCode = 270066)]
+        WIF_ATTESTATION_ERROR,
+
+        [SFErrorAttr(errorCode = 390195)]
+        ID_TOKEN_INVALID,
+
+        [SFErrorAttr(errorCode = 390120)]
+        EXT_AUTHN_DENIED,
+
+        [SFErrorAttr(errorCode = 390123)]
+        EXT_AUTHN_LOCKED,
+
+        [SFErrorAttr(errorCode = 390126)]
+        EXT_AUTHN_TIMEOUT,
+
+        [SFErrorAttr(errorCode = 390127)]
+        EXT_AUTHN_INVALID,
+
+        [SFErrorAttr(errorCode = 390129)]
+        EXT_AUTHN_EXCEPTION,
+
+        [SFErrorAttr(errorCode = 390318)]
+        EXT_OAUTH_ACCESS_TOKEN_EXPIRED,
+
+        [SFErrorAttr(errorCode = 390303)]
+        EXT_OAUTH_ACCESS_TOKEN_INVALID
+    }
+
+    class OAuthTokenErrors
+    {
+        public static bool IsAccessTokenExpired(int error) =>
+            SFError.EXT_OAUTH_ACCESS_TOKEN_EXPIRED.GetAttribute<SFErrorAttr>().errorCode == error;
+
+        public static bool IsAccessTokenInvalid(int error) =>
+            SFError.EXT_OAUTH_ACCESS_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode == error;
+    }
+
+    class SFMFATokenErrors
+    {
+        private static List<SFError> InvalidMFATokenErrors = new List<SFError>
+        {
+            SFError.EXT_AUTHN_DENIED,
+            SFError.EXT_AUTHN_LOCKED,
+            SFError.EXT_AUTHN_TIMEOUT,
+            SFError.EXT_AUTHN_INVALID,
+            SFError.EXT_AUTHN_EXCEPTION
+        };
+
+        public static bool IsInvalidMFATokenContinueError(int error)
+        {
+            return InvalidMFATokenErrors.Any(e => e.GetAttribute<SFErrorAttr>().errorCode == error);
+        }
     }
 
     class SFErrorAttr : Attribute
     {
         public int errorCode { get; set; }
     }
-
-    public class SqlState
-    {
-        public const string WARNING = "01000";
-    }
-
 }

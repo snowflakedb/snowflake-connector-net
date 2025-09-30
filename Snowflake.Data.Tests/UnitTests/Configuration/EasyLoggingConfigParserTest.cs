@@ -1,12 +1,11 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Mono.Unix;
+using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Core.Tools;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
@@ -33,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             Directory.Delete(s_workingDirectory, true);
         }
-        
+
         [Test]
         public void TestThatParsesConfigFile()
         {
@@ -59,12 +58,12 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // act
             var config = parser.Parse(filePath);
-            
+
             // assert
             Assert.IsNotNull(config);
             Assert.IsNotNull(config.CommonProps);
             Assert.IsNull(config.CommonProps.LogLevel);
-            Assert.IsNull(config.CommonProps.LogPath);            
+            Assert.IsNull(config.CommonProps.LogPath);
         }
 
         [Test]
@@ -77,23 +76,23 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // act
             var config = parser.Parse(noFilePath);
-            
+
             // assert
             Assert.IsNull(config);
         }
-        
+
         [Test]
         public void TestThatFailsWhenTheFileDoesNotExist()
         {
             // arrange
             var parser = new EasyLoggingConfigParser();
-            
+
             // act
             var thrown = Assert.Throws<Exception>(() => parser.Parse(NotExistingFilePath));
-            
+
             // assert
             Assert.IsNotNull(thrown);
-            Assert.AreEqual("Finding easy logging configuration failed", thrown.Message);
+            Assert.IsTrue(thrown.Message.Contains("Finding easy logging configuration failed"));
         }
 
         [Test, TestCaseSource(nameof(WrongConfigFiles))]
@@ -106,7 +105,80 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<Exception>(() => parser.Parse(filePath));
             // assert
             Assert.IsNotNull(thrown);
-            Assert.IsTrue(thrown.Message == "Parsing easy logging configuration failed");
+            Assert.AreEqual(thrown.Message, "Parsing easy logging configuration failed");
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
+        {
+            // arrange
+            var unixOperations = new Mock<UnixOperations>();
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, null);
+            var stream = new UnixFileInfo(configFilePath).OpenRead();
+            var parser = new EasyLoggingConfigParser(unixOperations.Object);
+            unixOperations
+                .Setup(u => u.CheckFileHasAnyOfPermissions(stream.FileAccessPermissions,
+                    It.Is<FileAccessPermissions>(p => p.Equals(FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))))
+                .Returns(true);
+            unixOperations
+                .Setup(u => u.GetCurrentUserId())
+                .Returns(stream.OwnerUserId);
+            unixOperations
+                .Setup(u => u.GetCurrentGroupId())
+                .Returns(stream.OwnerGroupId);
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
+
+            // assert
+            Assert.IsNotNull(thrown);
+            Assert.AreEqual(thrown.Message, "Finding easy logging configuration failed: Error due to other users having permission to modify the config file");
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestThatConfigFileIsNotUsedIfUserDoesNotOwnConfigFile()
+        {
+            // arrange
+            var unixOperations = new Mock<UnixOperations>();
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, null);
+            var stream = new UnixFileInfo(configFilePath).OpenRead();
+            var parser = new EasyLoggingConfigParser(unixOperations.Object);
+            unixOperations
+                .Setup(u => u.GetCurrentUserId())
+                .Returns(stream.OwnerUserId - 1);
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
+
+            // assert
+            Assert.IsNotNull(thrown);
+            Assert.AreEqual(thrown.Message, "Finding easy logging configuration failed: Error due to user not having ownership of the config file");
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestThatConfigFileIsNotUsedIfGroupDoesNotOwnConfigFile()
+        {
+            // arrange
+            var unixOperations = new Mock<UnixOperations>();
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, null);
+            var stream = new UnixFileInfo(configFilePath).OpenRead();
+            var parser = new EasyLoggingConfigParser(unixOperations.Object);
+            unixOperations
+                .Setup(u => u.GetCurrentUserId())
+                .Returns(stream.OwnerUserId);
+            unixOperations
+                .Setup(u => u.GetCurrentGroupId())
+                .Returns(stream.OwnerGroupId - 1);
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
+
+            // assert
+            Assert.IsNotNull(thrown);
+            Assert.AreEqual(thrown.Message, "Finding easy logging configuration failed: Error due to group not having ownership of the config file");
         }
 
         public static IEnumerable<string> ConfigFilesWithoutValues()

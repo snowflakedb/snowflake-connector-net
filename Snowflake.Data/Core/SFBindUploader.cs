@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Core
                 return;
             }
 
-            List<string> dataRows = new List<string>(); ;
+            List<string> dataRows = new List<string>();
             CreateDataRows(ref dataRows, bindings);
 
             int startIndex = 0;
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Core
                 return;
             }
 
-            List<string> dataRows = new List<string>(); ;
+            List<string> dataRows = new List<string>();
             CreateDataRows(ref dataRows, bindings);
 
             int startIndex = 0;
@@ -251,26 +251,38 @@ namespace Snowflake.Data.Core
                         return '"' + sValue.Replace("\"", "\"\"") + '"';
                     return sValue;
                 case "DATE":
-                    long msFromEpoch = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ms] from Epoch
+                    long msFromEpoch = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ms] from Epoch
                     DateTime date = epoch.AddMilliseconds(msFromEpoch);
                     return date.ToShortDateString();
                 case "TIME":
-                    long nsSinceMidnight = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ns] from Midnight
-                    DateTime time = epoch.AddTicks(nsSinceMidnight/100);
+                    long nsSinceMidnight = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ns] from Midnight
+                    DateTime time = epoch.AddTicks(nsSinceMidnight / 100);
                     return time.ToString("HH:mm:ss.fffffff");
                 case "TIMESTAMP_LTZ":
-                    long nsFromEpochLtz = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ns] from Epoch
-                    DateTime ltz = epoch.AddTicks(nsFromEpochLtz/100);
+                    long ticksFromEpochLtz =
+                        long.TryParse(sValue, out var nsLtz)
+                            ? nsLtz / 100
+                            : (long)(decimal.Parse(sValue) / 100);
+
+                    DateTime ltz = epoch.AddTicks(ticksFromEpochLtz);
                     return ltz.ToLocalTime().ToString("O"); // ISO 8601 format
                 case "TIMESTAMP_NTZ":
-                    long nsFromEpochNtz = long.Parse(sValue); // SFDateConverter.csharpValToSfVal provides in [ns] from Epoch
-                    DateTime ntz = epoch.AddTicks(nsFromEpochNtz/100);
+                    long ticksFromEpochNtz =
+                        long.TryParse(sValue, out var nsNtz)
+                            ? nsNtz / 100
+                            : (long)(decimal.Parse(sValue) / 100);
+
+                    DateTime ntz = epoch.AddTicks(ticksFromEpochNtz);
                     return ntz.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
                 case "TIMESTAMP_TZ":
                     string[] tstzString = sValue.Split(' ');
-                    long nsFromEpochTz = long.Parse(tstzString[0]); // SFDateConverter provides in [ns] from Epoch
+                    long ticksFromEpochTz =
+                        long.TryParse(tstzString[0], out var nsTz)
+                            ? nsTz / 100
+                            : (long)(decimal.Parse(tstzString[0]) / 100);
+
                     int timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m
-                    DateTime timestamp = epoch.AddTicks(nsFromEpochTz/100).AddMinutes(timeZoneOffset);
+                    DateTime timestamp = epoch.AddTicks(ticksFromEpochTz).AddMinutes(timeZoneOffset);
                     TimeSpan offset = TimeSpan.FromMinutes(timeZoneOffset);
                     DateTimeOffset tzDateTimeOffset = new DateTimeOffset(timestamp.Ticks, offset);
                     return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.fffffff zzz");
@@ -280,11 +292,11 @@ namespace Snowflake.Data.Core
 
         private void CreateStage()
         {
-            if(session.GetArrayBindStage() != null)
+            if (session.GetArrayBindStage() != null)
             {
                 return;
             }
-            lock(session)
+            lock (session)
             {
                 if (session.GetArrayBindStage() == null)
                 {

@@ -39,7 +39,7 @@ RUN apt-get install -y dotnet-sdk-8.0
 
 # gosu
 RUN wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/1.14/gosu-$(dpkg --print-architecture)" && \
-chmod +x /usr/local/bin/gosu && \
+chmod +x /usr/local/bin/gosu
 
 # clean up
 RUN apt-get clean

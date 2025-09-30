@@ -1,13 +1,10 @@
-﻿/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Client
@@ -19,33 +16,39 @@ namespace Snowflake.Data.Client
         private static IConnectionManager s_connectionManager;
         internal const ConnectionPoolType DefaultConnectionPoolType = ConnectionPoolType.MultipleConnectionPool;
 
-        private static IConnectionManager ConnectionManager
+        internal static IConnectionManager ConnectionManager
         {
             get
             {
                 if (s_connectionManager != null)
                     return s_connectionManager;
-                SetConnectionPoolVersion(DefaultConnectionPoolType);
+                SetConnectionPoolVersion(DefaultConnectionPoolType, false);
                 return s_connectionManager;
             }
         }
 
-        internal static SFSession GetSession(string connectionString, SecureString password)
+        internal static SFSession GetSession(string connectionString, SessionPropertiesContext sessionContext)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetSession");
-            return ConnectionManager.GetSession(connectionString, password);
+            return ConnectionManager.GetSession(connectionString, sessionContext);
         }
 
-        internal static Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
+        internal static Task<SFSession> GetSessionAsync(string connectionString, SessionPropertiesContext sessionContext, CancellationToken cancellationToken)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetSessionAsync");
-            return ConnectionManager.GetSessionAsync(connectionString, password, cancellationToken);
+            return ConnectionManager.GetSessionAsync(connectionString, sessionContext, cancellationToken);
         }
 
-        public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password)
+        public static SnowflakeDbSessionPool GetPool(string connectionString, SecureString password, SecureString oauthClientSecret = null, SecureString token = null)
         {
             s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
-            return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString, password));
+            var sessionContext = new SessionPropertiesContext
+            {
+                Password = password,
+                OAuthClientSecret = oauthClientSecret,
+                Token = token
+            };
+            return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString, sessionContext));
         }
 
         public static SnowflakeDbSessionPool GetPool(string connectionString)
@@ -122,13 +125,16 @@ namespace Snowflake.Data.Client
 
         public static void SetOldConnectionPoolVersion()
         {
-            SetConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
+            ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
         }
 
-        internal static void SetConnectionPoolVersion(ConnectionPoolType requestedPoolType)
+        private static void SetConnectionPoolVersion(ConnectionPoolType requestedPoolType, bool force)
         {
             lock (s_connectionManagerInstanceLock)
             {
+                if (s_connectionManager != null && !force)
+                    return;
+                Diagnostics.LogDiagnostics();
                 s_connectionManager?.ClearAllPools();
                 if (requestedPoolType == ConnectionPoolType.MultipleConnectionPool)
                 {
@@ -143,6 +149,11 @@ namespace Snowflake.Data.Client
             }
         }
 
+        internal static void ForceConnectionPoolVersion(ConnectionPoolType requestedPoolType)
+        {
+            SetConnectionPoolVersion(requestedPoolType, true);
+        }
+
         internal static ConnectionPoolType GetConnectionPoolVersion()
         {
             if (ConnectionManager != null)
@@ -154,6 +165,13 @@ namespace Snowflake.Data.Client
                 }
             }
             return DefaultConnectionPoolType;
+        }
+
+        internal static IConnectionManager ReplaceConnectionManager(IConnectionManager connectionManager)
+        {
+            var oldConnectionManager = s_connectionManager;
+            s_connectionManager = connectionManager;
+            return oldConnectionManager;
         }
     }
 }

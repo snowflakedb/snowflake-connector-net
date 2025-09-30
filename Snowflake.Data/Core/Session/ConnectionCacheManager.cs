@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
-using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,9 +6,9 @@ namespace Snowflake.Data.Core.Session
     internal sealed class ConnectionCacheManager : IConnectionManager
     {
         private readonly SessionPool _sessionPool = SessionPool.CreateSessionCache();
-        public SFSession GetSession(string connectionString, SecureString password) => _sessionPool.GetSession(connectionString, password);
-        public Task<SFSession> GetSessionAsync(string connectionString, SecureString password, CancellationToken cancellationToken)
-            => _sessionPool.GetSessionAsync(connectionString, password, cancellationToken);
+        public SFSession GetSession(string connectionString, SessionPropertiesContext sessionContext) => _sessionPool.GetSession(connectionString, sessionContext);
+        public Task<SFSession> GetSessionAsync(string connectionString, SessionPropertiesContext sessionContext, CancellationToken cancellationToken)
+            => _sessionPool.GetSessionAsync(connectionString, sessionContext, cancellationToken);
         public bool AddSession(SFSession session) => _sessionPool.AddSession(session, false);
         public void ReleaseBusySession(SFSession session) => _sessionPool.ReleaseBusySession(session);
         public void ClearAllPools() => _sessionPool.ClearSessions();
@@ -25,6 +20,6 @@ namespace Snowflake.Data.Core.Session
         public bool SetPooling(bool poolingEnabled) => _sessionPool.SetPooling(poolingEnabled);
         public bool GetPooling() => _sessionPool.GetPooling();
         public SessionPool GetPool(string connectionString) => _sessionPool;
-        public SessionPool GetPool(string connectionString, SecureString password) => _sessionPool;
+        public SessionPool GetPool(string connectionString, SessionPropertiesContext sessionContext) => _sessionPool;
     }
 }

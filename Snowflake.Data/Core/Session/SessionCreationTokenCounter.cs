@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Snowflake.Data.Core.Session
 {
-    internal class SessionCreationTokenCounter: ISessionCreationTokenCounter
+    internal class SessionCreationTokenCounter : ISessionCreationTokenCounter
     {
         private readonly TimeSpan _timeout;
         private readonly ReaderWriterLockSlim _tokenLock = new ReaderWriterLockSlim();

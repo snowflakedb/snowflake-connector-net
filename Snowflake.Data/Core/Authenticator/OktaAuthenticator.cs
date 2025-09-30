@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using Newtonsoft.Json;
 using System.Net.Http;
@@ -45,6 +41,9 @@ namespace Snowflake.Data.Core.Authenticator
         {
             _oktaUrl = new Uri(oktaUriString);
         }
+
+        public static bool IsOktaAuthenticator(string authenticator) =>
+            authenticator.Contains("okta") && authenticator.StartsWith("https://");
 
         /// <see cref="IAuthenticator"/>
         async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
@@ -248,6 +247,7 @@ namespace Snowflake.Data.Core.Authenticator
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
             data.RawSamlResponse = _rawSamlTokenHtmlString;
+            SetSecondaryAuthenticationData(ref data);
         }
 
         private void VerifyUrls(Uri tokenOrSsoUrl, Uri sessionUrl)
@@ -273,7 +273,8 @@ namespace Snowflake.Data.Core.Authenticator
             try
             {
                 postBackUrl = new Uri(HttpUtility.HtmlDecode(_rawSamlTokenHtmlString.Substring(startIndex, length)));
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 s_logger.Error("Fail to extract SAML from html", e);
                 throw new SnowflakeDbException(e, SFError.IDP_SAML_POSTBACK_NOTFOUND);

@@ -1,13 +1,10 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.FileTransfer;
 
 namespace Snowflake.Data.Core
 {
@@ -16,8 +13,10 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "message")]
         internal String message { get; set; }
 
+
         [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
         internal int code { get; set; }
+
 
         [JsonProperty(PropertyName = "success")]
         internal bool success { get; set; }
@@ -26,14 +25,14 @@ namespace Snowflake.Data.Core
         {
             if (!success)
             {
-                SnowflakeDbException e = new SnowflakeDbException("",code, message, "");
+                SnowflakeDbException e = new SnowflakeDbException("", code, message, "");
                 throw e;
             }
 
         }
     }
 
-    public interface IQueryExecResponseData
+    internal interface IQueryExecResponseData
     {
         string queryId { get; }
 
@@ -64,10 +63,11 @@ namespace Snowflake.Data.Core
         internal LoginResponseData data { get; set; }
     }
 
-    internal class RenewSessionResponse : BaseRestResponse {
-		[JsonProperty(PropertyName = "data")]
-		internal RenewSessionResponseData data { get; set; }
-	}
+    internal class RenewSessionResponse : BaseRestResponse
+    {
+        [JsonProperty(PropertyName = "data")]
+        internal RenewSessionResponseData data { get; set; }
+    }
 
     internal class LoginResponseData
     {
@@ -91,6 +91,12 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "masterValidityInSeconds", NullValueHandling = NullValueHandling.Ignore)]
         internal int masterValidityInSeconds { get; set; }
+
+        [JsonProperty(PropertyName = "idToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string idToken { get; set; }
+
+        [JsonProperty(PropertyName = "mfaToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string mfaToken { get; set; }
     }
 
     internal class AuthenticatorResponseData
@@ -106,23 +112,24 @@ namespace Snowflake.Data.Core
     }
 
 
-	internal class RenewSessionResponseData {
+    internal class RenewSessionResponseData
+    {
 
-		[JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string sessionToken { get; set; }
+        [JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string sessionToken { get; set; }
 
-		[JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 sessionTokenValidityInSeconds { get; set; }
+        [JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int16 sessionTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string masterToken { get; set; }
+        [JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string masterToken { get; set; }
 
-		[JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 masterTokenValidityInSeconds { get; set; }
+        [JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int16 masterTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int64 sessionId { get; set; }
-	}
+        [JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int64 sessionId { get; set; }
+    }
 
     internal class SessionInfo
     {
@@ -439,6 +446,30 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "endPoint", NullValueHandling = NullValueHandling.Ignore)]
         internal string endPoint { get; set; }
+
+        [JsonProperty(PropertyName = "useRegionalUrl", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool useRegionalUrl { get; set; }
+
+        [JsonProperty(PropertyName = "useVirtualUrl", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool useVirtualUrl { get; set; }
+
+        private const string GcsRegionMeCentral2 = "me-central2";
+
+        internal string GcsCustomEndpoint()
+        {
+            if (!(locationType ?? string.Empty).Equals(SFRemoteStorageUtil.GCS_FS, StringComparison.OrdinalIgnoreCase))
+                return null;
+            if (!string.IsNullOrWhiteSpace(endPoint) && endPoint != "null")
+                return endPoint;
+            if (useVirtualUrl)
+            {
+                var bucketName = location.Contains("/") ? location.Substring(0, location.IndexOf('/')) : location;
+                return $"{bucketName}.storage.googleapis.com";
+            }
+            if (GcsRegionMeCentral2.Equals(region, StringComparison.OrdinalIgnoreCase) || useRegionalUrl)
+                return $"storage.{region.ToLower()}.rep.googleapis.com";
+            return null;
+        }
     }
 
     internal class PutGetEncryptionMaterial

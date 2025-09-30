@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
- */
-
 using Newtonsoft.Json;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;

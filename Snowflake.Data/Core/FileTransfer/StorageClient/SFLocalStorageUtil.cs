@@ -1,8 +1,5 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.IO;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer
 {
@@ -20,7 +17,7 @@ namespace Snowflake.Data.Core.FileTransfer
             // Create directory if doesn't exist
             if (!Directory.Exists(fileMetadata.stageInfo.location))
             {
-                Directory.CreateDirectory(fileMetadata.stageInfo.location);
+                DirectoryOperations.Instance.CreateDirectory(fileMetadata.stageInfo.location);
             }
 
             // Create reader stream
@@ -36,7 +33,7 @@ namespace Snowflake.Data.Core.FileTransfer
             stream.Position = 0;
 
             // Write stream to file
-            using (var fileStream = File.Create(Path.Combine(fileMetadata.stageInfo.location, fileMetadata.destFileName)))
+            using (var fileStream = FileOperations.Instance.Create(Path.Combine(fileMetadata.stageInfo.location, fileMetadata.destFileName)))
             {
                 stream.CopyTo(fileStream);
             }
@@ -58,12 +55,12 @@ namespace Snowflake.Data.Core.FileTransfer
             // Create directory if doesn't exist
             if (!Directory.Exists(fileMetadata.localLocation))
             {
-                Directory.CreateDirectory(fileMetadata.localLocation);
+                DirectoryOperations.Instance.CreateDirectory(fileMetadata.localLocation);
             }
 
             // Create stream object for reader and writer
             Stream stream = new MemoryStream(File.ReadAllBytes(realSrcFilePath));
-            using (var fileStream = File.Create(output))
+            using (var fileStream = FileOperations.Instance.Create(output))
             {
                 // Write file
                 stream.CopyTo(fileStream);

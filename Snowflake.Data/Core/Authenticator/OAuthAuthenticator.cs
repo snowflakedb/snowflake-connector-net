@@ -1,7 +1,5 @@
-﻿using Snowflake.Data.Log;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,6 +27,9 @@ namespace Snowflake.Data.Core.Authenticator
             this.session = session;
         }
 
+        public static bool IsOAuthAuthenticator(string authenticator)
+            => AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
+
         /// <see cref="IAuthenticator.Authenticate"/>
         public void Authenticate()
         {
@@ -48,6 +49,7 @@ namespace Snowflake.Data.Core.Authenticator
             data.Token = session.properties[SFSessionProperty.TOKEN];
             // Remove the login name for an OAuth session
             data.loginName = "";
+            SetSecondaryAuthenticationData(ref data);
         }
     }
 }

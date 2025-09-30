@@ -1,6 +1,4 @@
-﻿/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -41,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests
         private SFResultSet mockSFResultSet(QueryExecResponseData responseData, CancellationToken token)
         {
             string connectionString = "user=user;password=password;account=account;";
-            SFSession session = new SFSession(connectionString, null);
+            SFSession session = new SFSession(connectionString, new SessionPropertiesContext());
             List<NameValueParameter> list = new List<NameValueParameter>
             {
                 new NameValueParameter { name = "CLIENT_PREFETCH_THREADS", value = "3" }

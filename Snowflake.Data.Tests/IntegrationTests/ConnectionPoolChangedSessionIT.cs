@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public static void BeforeAllTests()
         {
             s_previousPoolConfigRestorer = new PoolConfig();
-            SnowflakeDbConnectionPool.SetConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
         }
 
         [SetUp]
@@ -138,6 +138,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Retry(3)]
         public void TestPoolDestroysAndRecreatesConnection()
         {
             var connectionString = ConnectionString + "application=DestroyRecreateSession;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3";

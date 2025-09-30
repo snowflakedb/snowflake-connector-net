@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
@@ -31,7 +27,7 @@ namespace Snowflake.Data.Client
             QuotePrefix = DEFAULT_QUOTE_PREFIX;
             QuoteSuffix = DEFAULT_QUOTE_SUFFIX;
         }
-        
+
         /// <summary>
         /// Gets or sets the beginning character or characters to use when specifying database objects (for example, tables or columns) whose names contain characters such as spaces or reserved tokens.
         /// </summary>

@@ -1,24 +1,21 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
+using NUnit.Framework;
+using Snowflake.Data.Core;
+using Snowflake.Data.Core.FileTransfer.StorageClient;
+using Snowflake.Data.Core.FileTransfer;
+using System.Collections.Generic;
+using System.Net;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Threading;
+using Snowflake.Data.Tests.Mock;
+using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Core;
-    using Snowflake.Data.Core.FileTransfer.StorageClient;
-    using Snowflake.Data.Core.FileTransfer;
-    using System.Collections.Generic;
-    using System.Net;
-    using System.IO;
-    using System.Threading.Tasks;
-    using System.Threading;
-    using Snowflake.Data.Tests.Mock;
-    using Moq;
-
-    [TestFixture]
+    [TestFixture, NonParallelizable]
     class SFGCSClientTest : SFBaseTest
     {
         // Mock data for file metadata
@@ -62,7 +59,6 @@ namespace Snowflake.Data.Tests.UnitTests
                 stageInfo = new PutGetStageInfo()
                 {
                     endPoint = null,
-                    isClientSideEncrypted = true,
                     location = Location,
                     locationType = SFRemoteStorageUtil.GCS_FS,
                     path = LocationPath,
@@ -223,16 +219,14 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public void TestUploadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [TestCase(null, ResultStatus.ERROR)]
+        public void TestUploadFile(HttpStatusCode? httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockWebRequest = new Mock<WebRequest>();
             mockWebRequest.Setup(c => c.Headers).Returns(new WebHeaderCollection());
             mockWebRequest.Setup(client => client.GetResponse())
-                .Returns(() =>
-                {
-                    return MockGCSClient.CreateResponseForUploadFile(httpStatusCode);
-                });
+                .Returns(() => MockGCSClient.CreateResponseForUploadFile(httpStatusCode));
             mockWebRequest.Setup(client => client.GetRequestStream())
                 .Returns(() => new MemoryStream());
             _client.SetCustomWebRequest(mockWebRequest.Object);
@@ -257,18 +251,16 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public async Task TestUploadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [TestCase(null, ResultStatus.ERROR)]
+        public async Task TestUploadFileAsync(HttpStatusCode? httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockWebRequest = new Mock<WebRequest>();
             mockWebRequest.Setup(c => c.Headers).Returns(new WebHeaderCollection());
             mockWebRequest.Setup(client => client.GetResponseAsync())
-                .Returns(() =>
-                {
-                    return Task.FromResult((WebResponse)MockGCSClient.CreateResponseForUploadFile(httpStatusCode));
-                });
+                .Returns(() => Task.FromResult((WebResponse)MockGCSClient.CreateResponseForUploadFile(httpStatusCode)));
             mockWebRequest.Setup(client => client.GetRequestStreamAsync())
-                .Returns(() => Task.FromResult((Stream) new MemoryStream()));
+                .Returns(() => Task.FromResult((Stream)new MemoryStream()));
             _client.SetCustomWebRequest(mockWebRequest.Object);
             _fileMetadata.uploadSize = UploadFileSize;
 
@@ -301,7 +293,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public void TestDownloadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [TestCase(null, ResultStatus.ERROR)]
+        public void TestDownloadFile(HttpStatusCode? httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockWebRequest = new Mock<WebRequest>();
@@ -325,7 +318,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public async Task TestDownloadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [TestCase(null, ResultStatus.ERROR)]
+        public async Task TestDownloadFileAsync(HttpStatusCode? httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
             var mockWebRequest = new Mock<WebRequest>();
@@ -341,6 +335,127 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             AssertForDownloadFileTests(expectedResultStatus);
+        }
+
+        [Test]
+        [TestCase("us-central1", null, null, "https://storage.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("us-central1", "example.com", null, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("us-central1", "https://example.com", null, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("us-central1", null, true, "https://storage.us-central1.rep.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [TestCase("me-central2", null, null, "https://storage.me-central2.rep.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        public void TestUseUriWithRegionsWhenNeeded(string region, string endPoint, bool useRegionalUrl, string expectedRequestUri)
+        {
+            var fileMetadata = new SFFileMetadata()
+            {
+                stageInfo = new PutGetStageInfo()
+                {
+                    endPoint = endPoint,
+                    location = Location,
+                    locationType = SFRemoteStorageUtil.GCS_FS,
+                    path = LocationPath,
+                    presignedUrl = null,
+                    region = region,
+                    stageCredentials = _stageCredentials,
+                    storageAccount = null,
+                    useRegionalUrl = useRegionalUrl
+                }
+            };
+
+            // act
+            var uri = _client.FormBaseRequest(fileMetadata, "PUT").RequestUri.ToString();
+
+            // assert
+            Assert.AreEqual(expectedRequestUri, uri);
+        }
+
+        [Test]
+        [TestCase("mock-stage", null, false, true, "https://mock-stage.storage.googleapis.com/")]
+        [TestCase("mock-stage/mock-id/mock-key", null, false, true, "https://mock-stage.storage.googleapis.com/mock-id/mock-key/")]
+        [TestCase("mock-stage/mock-id/mock-key", null, true, true, "https://mock-stage.storage.googleapis.com/mock-id/mock-key/")]
+        [TestCase("mock-stage/mock-id/mock-key", "https://example.com", true, true, "https://example.com/mock-id/mock-key/")]
+        public void TestUsesVirtualUrlWhenExpected(string location, string endPoint, bool useRegionalUrl, bool useVirtualUrl, string expectedRequestUri)
+        {
+            var fileMetadata = new SFFileMetadata()
+            {
+                stageInfo = new PutGetStageInfo()
+                {
+                    endPoint = endPoint,
+                    location = location,
+                    locationType = SFRemoteStorageUtil.GCS_FS,
+                    path = LocationPath,
+                    presignedUrl = null,
+                    region = null,
+                    stageCredentials = _stageCredentials,
+                    storageAccount = null,
+                    useRegionalUrl = useRegionalUrl,
+                    useVirtualUrl = useVirtualUrl
+                }
+            };
+
+            // act
+            var uri = _client.FormBaseRequest(fileMetadata, "PUT").RequestUri.ToString();
+
+            // assert
+            Assert.AreEqual(expectedRequestUri, uri);
+        }
+
+        [Test]
+        [TestCase("some-header-name", "SOME-HEADER-NAME")]
+        [TestCase("SOME-HEADER-NAME", "some-header-name")]
+        public void TestGcsHeadersAreCaseInsensitiveForHttpResponseMessage(string headerNameToAdd, string headerNameToGet)
+        {
+            // arrange
+            const string HeaderValue = "someValue";
+            var responseMessage = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Response content") };
+            responseMessage.Headers.Add(headerNameToAdd, HeaderValue);
+
+            // act
+            var header = responseMessage.Headers.GetValues(headerNameToGet);
+
+            // assert
+            Assert.NotNull(header);
+            Assert.AreEqual(1, header.Count());
+            Assert.AreEqual(HeaderValue, header.First());
+        }
+
+        [Test]
+        [TestCase("some-header-name", "SOME-HEADER-NAME")]
+        [TestCase("SOME-HEADER-NAME", "some-header-name")]
+        public void TestGcsHeadersAreCaseInsensitiveForWebHeaderCollection(string headerNameToAdd, string headerNameToGet)
+        {
+            // arrange
+            const string HeaderValue = "someValue";
+            var headers = new WebHeaderCollection();
+            headers.Add(headerNameToAdd, HeaderValue);
+
+            // act
+            var header = headers.GetValues(headerNameToGet);
+
+            // assert
+            Assert.NotNull(header);
+            Assert.AreEqual(1, header.Count());
+            Assert.AreEqual(HeaderValue, header.First());
+        }
+
+        [Test]
+        public void TestHandleGetFileHeaderResponseWithoutSfcDigest()
+        {
+            // arrange
+            var headers = new WebHeaderCollection();
+            headers.Add("content-length", "123");
+            var stageInfo = new PutGetStageInfo() { stageCredentials = new Dictionary<string, string>() };
+            var client = new SFGCSClient(stageInfo);
+            var response = new Mock<HttpWebResponse>();
+            response.Setup(r => r.Headers).Returns(headers);
+            var fileMetadata = new SFFileMetadata();
+
+            // act
+            var fileHeader = client.handleGetFileHeaderResponse(response.Object, fileMetadata);
+
+            // assert
+            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), fileMetadata.resultStatus);
+            Assert.IsNull(fileHeader.digest);
+            Assert.AreEqual(123, fileHeader.contentLength);
         }
 
         private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)

@@ -17,7 +17,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
 	    cmd.CommandText = "PUT file://some_data.csv @my_schema.my_stage AUTO_COMPRESS=TRUE";
 	    var reader = cmd.ExecuteReader();
-	    Assert.IsTrue(reader.read());
+	    Assert.IsTrue(reader.Read());
         Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
     }
     catch (SnowflakeDbException e)
@@ -50,7 +50,7 @@ To use the command in a driver similar code can be executed in a client app:
 
 	    cmd.CommandText = "GET @my_schema.my_stage/stage_file.csv file://local_file.csv AUTO_COMPRESS=TRUE";
 	    var reader = cmd.ExecuteReader();
-	    Assert.IsTrue(reader.read()); // True on success, False if failure
+	    Assert.IsTrue(reader.Read()); // True on success, False if failure
         Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
     }
     catch (SnowflakeDbException e)

@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 
 namespace Snowflake.Data.Core
@@ -12,7 +8,7 @@ namespace Snowflake.Data.Core
         ARROW
     }
 
-    public interface IResultChunk
+    internal interface IResultChunk
     {
         [Obsolete("ExtractCell with rowIndex is deprecated", false)]
         UTF8Buffer ExtractCell(int rowIndex, int columnIndex);

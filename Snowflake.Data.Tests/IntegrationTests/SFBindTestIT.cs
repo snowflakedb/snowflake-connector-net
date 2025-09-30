@@ -1,6 +1,4 @@
-﻿/*
- * Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
- */
+#nullable enable
 
 using System;
 using System.Data;
@@ -33,7 +31,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING"
@@ -65,7 +63,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestBindNullValue()
+        [TestCaseSource(nameof(NullTestCases))]
+        public void TestBindNullValue(object nullValue)
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -87,7 +86,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 foreach (DbType type in Enum.GetValues(typeof(DbType)))
                 {
                     bool isTypeSupported = true;
-                    string colName = null;
+                    string colName;
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
                         var param = command.CreateParameter();
@@ -121,6 +120,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 break;
 
                             case DbType.Guid:
+                            case DbType.AnsiString:
                             case DbType.String:
                             case DbType.StringFixedLength:
                                 colName = "stringData";
@@ -156,7 +156,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         if (isTypeSupported)
                         {
                             command.CommandText = $"insert into {TableName}({colName}) values(:p0)";
-                            param.Value = DBNull.Value;
+                            param.Value = nullValue;
                             command.Parameters.Add(param);
                             int rowsInserted = command.ExecuteNonQuery();
                             Assert.AreEqual(1, rowsInserted);
@@ -166,7 +166,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             try
                             {
                                 command.CommandText = $"insert into {TableName}(stringData) values(:p0)";
-                                param.Value = DBNull.Value;
+                                param.Value = nullValue;
                                 command.Parameters.Add(param);
                                 int rowsInserted = command.ExecuteNonQuery();
                             }
@@ -201,6 +201,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        private static IEnumerable<object?> NullTestCases() =>
+            new object?[] { DBNull.Value, null };
+
         [Test]
         public void TestBindValue()
         {
@@ -226,7 +229,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 foreach (DbType type in Enum.GetValues(typeof(DbType)))
                 {
                     bool isTypeSupported = true;
-                    string colName = null;
+                    string colName;
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
                         var param = command.CreateParameter();
@@ -267,6 +270,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 break;
 
                             case DbType.Guid:
+                            case DbType.AnsiString:
                             case DbType.String:
                             case DbType.StringFixedLength:
                                 colName = "stringData";
@@ -361,7 +365,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 dbConnection.Open();
                 foreach (SFDataType type in Enum.GetValues(typeof(SFDataType)))
                 {
-                    if (!type.Equals(SFDataType.None) && !type.Equals(SFDataType.MAP))
+                    if (!type.Equals(SFDataType.None) && !type.Equals(SFDataType.MAP) && !type.Equals(SFDataType.VECTOR))
                     {
                         bool isTypeSupported = true;
                         string[] columns;
@@ -537,7 +541,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING",
@@ -555,7 +559,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     int total = 250000;
 
                     List<int> arrint = new List<int>();
-                    for (int i=0; i<total; i++)
+                    for (int i = 0; i < total; i++)
                     {
                         arrint.Add(i * 10 + 1);
                         arrint.Add(i * 10 + 2);
@@ -568,7 +572,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p1);
 
                     List<string> arrstring = new List<string>();
-                    for (int i=0; i<total; i++)
+                    for (int i = 0; i < total; i++)
                     {
                         arrstring.Add("str1");
                         arrstring.Add("str2");
@@ -584,7 +588,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     DateTime date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
                     DateTime date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
                     List<DateTime> arrDate = new List<DateTime>();
-                    for (int i=0; i<total; i++)
+                    for (int i = 0; i < total; i++)
                     {
                         arrDate.Add(date1);
                         arrDate.Add(date2);
@@ -649,6 +653,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var count = cmd.ExecuteNonQuery();
                     Assert.AreEqual(total * 3, count);
 
+                    cmd.Parameters.Clear();
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.IsTrue(reader.Read());
@@ -661,7 +666,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
         {
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings {
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
                 TypeNameHandling = TypeNameHandling.Auto
             };
 
@@ -669,7 +675,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "cola REAL",
                     "colb TEXT",
@@ -686,15 +692,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     List<double> arrdouble = new List<double>();
                     List<string> arrstring = new List<string>();
                     List<int> arrint = new List<int>();
-                    for (int i=0; i<total; i++)
+                    for (int i = 0; i < total; i++)
                     {
                         arrdouble.Add(i * 10 + 1);
                         arrdouble.Add(i * 10 + 2);
                         arrdouble.Add(i * 10 + 3);
 
-                        arrstring.Add("stra"+i);
-                        arrstring.Add("strb"+i);
-                        arrstring.Add("strc"+i);
+                        arrstring.Add("stra" + i);
+                        arrstring.Add("strb" + i);
+                        arrstring.Add("strc" + i);
 
                         arrint.Add(i * 10 + 1);
                         arrint.Add(i * 10 + 2);
@@ -738,7 +744,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "cola INTEGER"
                 });
@@ -844,14 +850,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         // STANDARD Tables
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, null,  DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, 6,  DbType.Time, FormatHmsf, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, null,  DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, 6,  DbType.Time, FormatHmsf, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
@@ -884,13 +890,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         */
         // Session TimeZone cases
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
+        [Test, NonParallelizable]
         public void TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
         {
             // Arrange
-            var timestamp = "2023/03/15 13:17:29.207 +05:00"; // 08:17:29.207 UTC
-            var expected = ExpectedTimestampWrapper.From(timestamp, columnType);
+            string[] timestamps =
+            {
+                "2023/03/15 13:17:29.207 +05:00",
+                "9999/12/30 23:24:25.987 +07:00",
+                "0001/01/02 02:06:07.000 -04:00"
+            };
+            var expected = ExpectedTimestampWrapper.From(timestamps, columnType);
             var columnWithPrecision = ColumnTypeWithPrecision(columnType, columnPrecision);
             var testCase = $"ResultFormat={resultFormat}, TableType={tableType}, ColumnType={columnWithPrecision}, BindingType={bindingType}, ComparisonFormat={comparisonFormat}";
             var bindingThreshold = 65280; // when exceeded enforces bindings via file on stage
@@ -898,7 +912,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var bigBatchRowCount = bindingThreshold / 2;
             s_logger.Info(testCase);
 
-            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
             {
                 conn.Open();
 
@@ -906,24 +920,34 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 if (!timeZone.IsNullOrEmpty()) // Driver ignores this setting and relies on local environment timezone
                     conn.ExecuteNonQuery($"alter session set TIMEZONE = '{timeZone}'");
 
+                // prepare initial column
+                var columns = new List<String> { "id number(10,0) not null primary key" };
+                var sql_columns = "id";
+                var sql_values = "?";
+
+                // prepare additional columns
+                for (int i = 1; i <= timestamps.Length; ++i)
+                {
+                    columns.Add($"ts_{i} {columnWithPrecision}");
+                    sql_columns += $",ts_{i}";
+                    sql_values += ",?";
+                }
+
                 CreateOrReplaceTable(conn,
                     TableName,
                     tableType.TableDDLCreationPrefix(),
-                    new[] {
-                        "id number(10,0) not null primary key", // necessary only for HYBRID tables
-                        $"ts {columnWithPrecision}"
-                    },
+                    columns,
                     tableType.TableDDLCreationFlags());
 
                 // Act+Assert
-                var sqlInsert = $"insert into {TableName} (id, ts) values (?, ?)";
+                var sqlInsert = $"insert into {TableName} ({sql_columns}) values ({sql_values})";
                 InsertSingleRecord(conn, sqlInsert, bindingType, 1, expected);
                 InsertMultipleRecords(conn, sqlInsert, bindingType, 2, expected, smallBatchRowCount, false);
-                InsertMultipleRecords(conn, sqlInsert, bindingType, smallBatchRowCount+2, expected, bigBatchRowCount, true);
+                InsertMultipleRecords(conn, sqlInsert, bindingType, smallBatchRowCount + 2, expected, bigBatchRowCount, true);
 
                 // Assert
                 var row = 0;
-                using (var select = conn.CreateCommand($"select id, ts from {TableName} order by id"))
+                using (var select = conn.CreateCommand($"select {sql_columns} from {TableName} order by id"))
                 {
                     s_logger.Debug(select.CommandText);
                     var reader = select.ExecuteReader();
@@ -932,10 +956,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         ++row;
                         string faultMessage = $"Mismatch for row: {row}, {testCase}";
                         Assert.AreEqual(row, reader.GetInt32(0));
-                        expected.AssertEqual(reader.GetValue(1), comparisonFormat, faultMessage);
+
+                        for (int i = 0; i < timestamps.Length; ++i)
+                        {
+                            expected.AssertEqual(reader.GetValue(i + 1), comparisonFormat, faultMessage, i);
+                        }
                     }
                 }
-                Assert.AreEqual(1+smallBatchRowCount+bigBatchRowCount, row);
+                Assert.AreEqual(1 + smallBatchRowCount + bigBatchRowCount, row);
             }
         }
 
@@ -947,12 +975,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 insert.Add("1", DbType.Int32, identifier);
                 if (ExpectedTimestampWrapper.IsOffsetType(ts.ExpectedColumnType()))
                 {
-                    var parameter = (SnowflakeDbParameter)insert.Add("2", binding, ts.GetDateTimeOffset());
-                    parameter.SFDataType = ts.ExpectedColumnType();
+                    var dateTimeOffsets = ts.GetDateTimeOffsets();
+                    for (int i = 0; i < dateTimeOffsets.Length; ++i)
+                    {
+                        var parameterName = (i + 2).ToString();
+                        var parameterValue = dateTimeOffsets[i];
+                        var parameter = insert.Add(parameterName, binding, parameterValue);
+                        parameter.SFDataType = ts.ExpectedColumnType();
+                    }
                 }
                 else
                 {
-                    insert.Add("2", binding, ts.GetDateTime());
+                    var dateTimes = ts.GetDateTimes();
+                    for (int i = 0; i < dateTimes.Length; ++i)
+                    {
+                        var parameterName = (i + 2).ToString();
+                        var parameterValue = dateTimes[i];
+                        insert.Add(parameterName, binding, parameterValue);
+                    }
                 }
 
                 // Act
@@ -973,12 +1013,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 insert.Add("1", DbType.Int32, Enumerable.Range(initialIdentifier, rowsCount).ToArray());
                 if (ExpectedTimestampWrapper.IsOffsetType(ts.ExpectedColumnType()))
                 {
-                    var parameter = (SnowflakeDbParameter)insert.Add("2", binding, Enumerable.Repeat(ts.GetDateTimeOffset(), rowsCount).ToArray());
-                    parameter.SFDataType = ts.ExpectedColumnType();
+                    var dateTimeOffsets = ts.GetDateTimeOffsets();
+                    for (int i = 0; i < dateTimeOffsets.Length; ++i)
+                    {
+                        var parameterName = (i + 2).ToString();
+                        var parameterValue = Enumerable.Repeat(dateTimeOffsets[i], rowsCount).ToArray();
+                        var parameter = insert.Add(parameterName, binding, parameterValue);
+                        parameter.SFDataType = ts.ExpectedColumnType();
+                    }
+
                 }
                 else
                 {
-                    insert.Add("2", binding, Enumerable.Repeat(ts.GetDateTime(), rowsCount).ToArray());
+                    var dateTimes = ts.GetDateTimes();
+                    for (int i = 0; i < dateTimes.Length; ++i)
+                    {
+                        var parameterName = (i + 2).ToString();
+                        var parameterValue = Enumerable.Repeat(dateTimes[i], rowsCount).ToArray();
+                        insert.Add(parameterName, binding, parameterValue);
+                    }
                 }
 
                 // Act
@@ -1001,57 +1054,66 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class ExpectedTimestampWrapper
     {
         private readonly SFDataType _columnType;
-        private readonly DateTime? _expectedDateTime;
-        private readonly DateTimeOffset? _expectedDateTimeOffset;
+        private readonly DateTime[]? _expectedDateTimes;
+        private readonly DateTimeOffset[]? _expectedDateTimeOffsets;
 
-        internal static ExpectedTimestampWrapper From(string timestampWithTimeZone, SFDataType columnType)
+        internal static ExpectedTimestampWrapper From(string[] timestampsWithTimeZone, SFDataType columnType)
         {
             if (IsOffsetType(columnType))
             {
-                var dateTimeOffset = DateTimeOffset.ParseExact(timestampWithTimeZone, "yyyy/MM/dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
-                return new ExpectedTimestampWrapper(dateTimeOffset, columnType);
+                var dateTimeOffsets =
+                    timestampsWithTimeZone
+                        .Select(ts => DateTimeOffset.ParseExact(ts, "yyyy/MM/dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture))
+                        .ToArray();
+                return new ExpectedTimestampWrapper(dateTimeOffsets, columnType);
             }
 
-            var dateTime = DateTime.ParseExact(timestampWithTimeZone, "yyyy/MM/dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
-            return new ExpectedTimestampWrapper(dateTime, columnType);
+            var dateTimes =
+                timestampsWithTimeZone
+                    .Select(ts => DateTime.ParseExact(ts, "yyyy/MM/dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture))
+                    .ToArray();
+
+            return new ExpectedTimestampWrapper(dateTimes, columnType);
         }
 
-        private ExpectedTimestampWrapper(DateTime dateTime, SFDataType columnType)
+        private ExpectedTimestampWrapper(DateTime[] dateTimes, SFDataType columnType)
         {
-            _expectedDateTime = dateTime;
-            _expectedDateTimeOffset = null;
+            _expectedDateTimes = dateTimes;
+            _expectedDateTimeOffsets = null;
             _columnType = columnType;
         }
 
-        private ExpectedTimestampWrapper(DateTimeOffset dateTimeOffset, SFDataType columnType)
+        private ExpectedTimestampWrapper(DateTimeOffset[] dateTimeOffsets, SFDataType columnType)
         {
-            _expectedDateTimeOffset = dateTimeOffset;
-            _expectedDateTime = null;
+            _expectedDateTimeOffsets = dateTimeOffsets;
+            _expectedDateTimes = null;
             _columnType = columnType;
         }
 
         internal SFDataType ExpectedColumnType() => _columnType;
 
-        internal void AssertEqual(object actual, string comparisonFormat, string faultMessage)
+        internal void AssertEqual(object actual, string comparisonFormat, string faultMessage, int index)
         {
             switch (_columnType)
             {
                 case SFDataType.TIMESTAMP_TZ:
-                    Assert.AreEqual(GetDateTimeOffset().ToString(comparisonFormat), ((DateTimeOffset)actual).ToString(comparisonFormat), faultMessage);
+                    Assert.AreEqual(GetDateTimeOffsets()[index].ToString(comparisonFormat), ((DateTimeOffset)actual).ToString(comparisonFormat), faultMessage);
                     break;
                 case SFDataType.TIMESTAMP_LTZ:
-                    Assert.AreEqual(GetDateTimeOffset().ToUniversalTime().ToString(comparisonFormat), ((DateTimeOffset)actual).ToUniversalTime().ToString(comparisonFormat), faultMessage);
+                    Assert.AreEqual(GetDateTimeOffsets()[index].ToUniversalTime().ToString(comparisonFormat), ((DateTimeOffset)actual).ToUniversalTime().ToString(comparisonFormat), faultMessage);
                     break;
                 default:
-                    Assert.AreEqual(GetDateTime().ToString(comparisonFormat), ((DateTime)actual).ToString(comparisonFormat), faultMessage);
+                    Assert.AreEqual(GetDateTimes()[index].ToString(comparisonFormat), ((DateTime)actual).ToString(comparisonFormat), faultMessage);
                     break;
             }
         }
 
-        internal DateTime GetDateTime() => _expectedDateTime ?? throw new Exception($"Column {_columnType} is not matching the expected value type {typeof(DateTime)}");
+        internal DateTime[] GetDateTimes() => _expectedDateTimes ?? throw new Exception($"Column {_columnType} is not matching the expected value type {typeof(DateTime)}");
 
-        internal DateTimeOffset GetDateTimeOffset() => _expectedDateTimeOffset ?? throw new Exception($"Column {_columnType} is not matching the expected value type {typeof(DateTime)}");
+        internal DateTimeOffset[] GetDateTimeOffsets() => _expectedDateTimeOffsets ?? throw new Exception($"Column {_columnType} is not matching the expected value type {typeof(DateTime)}");
 
         internal static bool IsOffsetType(SFDataType type) => type == SFDataType.TIMESTAMP_LTZ || type == SFDataType.TIMESTAMP_TZ;
     }
 }
+
+#nullable restore

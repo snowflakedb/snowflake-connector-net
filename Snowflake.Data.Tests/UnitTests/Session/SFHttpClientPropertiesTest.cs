@@ -1,11 +1,10 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
@@ -17,7 +16,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [Test]
         public void TestConvertToMapOnly2Properties(
             [Values(true, false)] bool validateDefaultParameters,
-            [Values(true, false)] bool clientSessionKeepAlive)
+            [Values(true, false)] bool clientSessionKeepAlive,
+            [Values(true, false)] bool clientStoreTemporaryCredential)
         {
             // arrange
             var proxyProperties = new SFSessionHttpClientProxyProperties()
@@ -32,8 +32,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             {
                 validateDefaultParameters = validateDefaultParameters,
                 clientSessionKeepAlive = clientSessionKeepAlive,
+                _clientStoreTemporaryCredential = clientStoreTemporaryCredential,
                 connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                insecureMode = false,
+                _certRevocationCheckMode = CertRevocationCheckMode.Enabled,
                 disableRetry = false,
                 forceRetryOn404 = false,
                 retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
@@ -45,9 +46,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var parameterMap = properties.ToParameterMap();
 
             // assert
-            Assert.AreEqual(2, parameterMap.Count);
+            Assert.AreEqual(3, parameterMap.Count);
             Assert.AreEqual(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
             Assert.AreEqual(clientSessionKeepAlive, parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
+            Assert.AreEqual(clientStoreTemporaryCredential, parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
         }
 
         [Test]
@@ -60,7 +62,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var config = properties.BuildHttpClientConfig();
 
             // assert
-            Assert.AreEqual(!properties.insecureMode, config.CrlCheckEnabled);
+            Assert.AreEqual(properties._useDotnetCrlCheck, config.UseDotnetCrlCheckMechanism);
+            Assert.AreEqual(properties._certRevocationCheckMode, config.CertRevocationCheckMode);
+            Assert.AreEqual(properties._enableCrlDiskCaching, config.EnableCRLDiskCaching);
+            Assert.AreEqual(properties._enableCrlInMemoryCaching, config.EnableCRLInMemoryCaching);
+            Assert.AreEqual(properties._allowCertificatesWithoutCrlUrl, config.AllowCertificatesWithoutCrlUrl);
             Assert.AreEqual(properties.proxyProperties.proxyHost, config.ProxyHost);
             Assert.AreEqual(properties.proxyProperties.proxyPort, config.ProxyPort);
             Assert.AreEqual(properties.proxyProperties.proxyUser, config.ProxyUser);
@@ -72,17 +78,26 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        public void TestCrlCheckEnabledToBeOppositeInsecureMode([Values] bool insecureMode)
+        [TestCase("enabled", true, false, true)]
+        [TestCase("enabled", false, true, false)]
+        [TestCase("disabled", true, false, false)]
+        [TestCase("disabled", false, false, false)]
+        [TestCase("advisory", false, true, false)]
+        public void TestIsCustomCrlCheckConfigured(string checkMode, bool useDotnetCrlCheck, bool expectedCustomCrlCheck, bool expectedDotnetCrlCheck)
         {
             // arrange
             var properties = RandomSFSessionHttpClientProperties();
-            properties.insecureMode = insecureMode;
-
-            // act
+            properties._certRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), checkMode, true);
+            properties._useDotnetCrlCheck = useDotnetCrlCheck;
             var config = properties.BuildHttpClientConfig();
 
+            // act
+            var isCustomCrlCheck = config.IsCustomCrlCheckConfigured();
+            var isDotnetCrlCheck = config.IsDotnetCrlCheckEnabled();
+
             // assert
-            Assert.AreEqual(!insecureMode, config.CrlCheckEnabled);
+            Assert.AreEqual(expectedCustomCrlCheck, isCustomCrlCheck);
+            Assert.AreEqual(expectedDotnetCrlCheck, isDotnetCrlCheck);
         }
 
         private SFSessionHttpClientProperties RandomSFSessionHttpClientProperties()
@@ -95,17 +110,23 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 proxyPassword = TestDataGenarator.NextAlphaNumeric(),
                 proxyUser = TestDataGenarator.NextAlphaNumeric()
             };
+            var randomCertRevocationCheckMode = TestDataGenarator.GetRandomEnumValue<CertRevocationCheckMode>();
+            var randomUseDotnetCrlCheck = randomCertRevocationCheckMode != CertRevocationCheckMode.Advisory && TestDataGenarator.NextBool();
             return new SFSessionHttpClientProperties()
             {
                 validateDefaultParameters = TestDataGenarator.NextBool(),
                 clientSessionKeepAlive = TestDataGenarator.NextBool(),
                 connectionTimeout = TimeSpan.FromSeconds(TestDataGenarator.NextInt(30, 151)),
-                insecureMode = TestDataGenarator.NextBool(),
                 disableRetry = TestDataGenarator.NextBool(),
                 forceRetryOn404 = TestDataGenarator.NextBool(),
                 retryTimeout = TimeSpan.FromSeconds(TestDataGenarator.NextInt(300, 600)),
                 maxHttpRetries = TestDataGenarator.NextInt(0, 15),
-                proxyProperties = proxyProperties
+                proxyProperties = proxyProperties,
+                _useDotnetCrlCheck = randomUseDotnetCrlCheck,
+                _certRevocationCheckMode = randomCertRevocationCheckMode,
+                _enableCrlDiskCaching = TestDataGenarator.NextBool(),
+                _enableCrlInMemoryCaching = TestDataGenarator.NextBool(),
+                _allowCertificatesWithoutCrlUrl = TestDataGenarator.NextBool()
             };
         }
 
@@ -113,7 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public void TestExtractProperties(PropertiesTestCase testCase)
         {
             // arrange
-            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(testCase.connectionString, new SessionPropertiesContext());
             var proxyProperties = new SFSessionHttpClientProxyProperties();
 
             // act
@@ -123,7 +144,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(testCase.expectedProperties.validateDefaultParameters, extractedProperties.validateDefaultParameters);
             Assert.AreEqual(testCase.expectedProperties.clientSessionKeepAlive, extractedProperties.clientSessionKeepAlive);
             Assert.AreEqual(testCase.expectedProperties.connectionTimeout, extractedProperties.connectionTimeout);
-            Assert.AreEqual(testCase.expectedProperties.insecureMode, extractedProperties.insecureMode);
+            Assert.AreEqual(testCase.expectedProperties._clientStoreTemporaryCredential, extractedProperties._clientStoreTemporaryCredential);
+            Assert.AreEqual(testCase.expectedProperties._certRevocationCheckMode, extractedProperties._certRevocationCheckMode);
+            Assert.AreEqual(testCase.expectedProperties._useDotnetCrlCheck, extractedProperties._useDotnetCrlCheck);
+            Assert.AreEqual(testCase.expectedProperties._enableCrlDiskCaching, extractedProperties._enableCrlDiskCaching);
+            Assert.AreEqual(testCase.expectedProperties._enableCrlInMemoryCaching, extractedProperties._enableCrlInMemoryCaching);
+            Assert.AreEqual(testCase.expectedProperties._allowCertificatesWithoutCrlUrl, extractedProperties._allowCertificatesWithoutCrlUrl);
             Assert.AreEqual(testCase.expectedProperties.disableRetry, extractedProperties.disableRetry);
             Assert.AreEqual(testCase.expectedProperties.forceRetryOn404, extractedProperties.forceRetryOn404);
             Assert.AreEqual(testCase.expectedProperties.retryTimeout, extractedProperties.retryTimeout);
@@ -133,208 +159,275 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         public static IEnumerable<PropertiesTestCase> PropertiesProvider()
         {
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             var defaultProperties = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test",
+                connectionString = "account=test;user=test;password=test",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
             var propertiesWithValidateDefaultParametersChanged = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;validate_default_parameters=false",
+                connectionString = "account=test;user=test;password=test;validate_default_parameters=false",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = false,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
             var propertiesWithClientSessionKeepAliveChanged = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;client_session_keep_alive=true",
+                connectionString = "account=test;user=test;password=test;client_session_keep_alive=true",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = true,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
             var propertiesWithTimeoutChanged = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;connection_timeout=15",
+                connectionString = "account=test;user=test;password=test;connection_timeout=15",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = TimeSpan.FromSeconds(15),
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
-            var propertiesWithInsecureModeChanged = new PropertiesTestCase()
+            var propertiesWithCertRevocationConfigChanged = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;insecureMode=true",
+                connectionString = "account=test;user=test;password=test;useDotnetCrlCheck=false;certRevocationCheckMode=advisory;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = true,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = false,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Advisory,
+                    _enableCrlDiskCaching = false,
+                    _enableCrlInMemoryCaching = false,
+                    _allowCertificatesWithoutCrlUrl = true
+
                 }
             };
             var propertiesWithDisableRetryChanged = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;disableRetry=true",
+                connectionString = "account=test;user=test;password=test;disableRetry=true",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = false,
                     disableRetry = true,
                     forceRetryOn404 = false,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
             var propertiesWithForceRetryOn404Changed = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;forceRetryOn404=true",
+                connectionString = "account=test;user=test;password=test;forceRetryOn404=true",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = true,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
             var propertiesWithRetryTimeoutChangedToAValueAbove300 = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;retry_timeout=600",
+                connectionString = "account=test;user=test;password=test;retry_timeout=600",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = TimeSpan.FromSeconds(600),
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
             var propertiesWithRetryTimeoutChangedToAValueBelow300 = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;retry_timeout=15",
+                connectionString = "account=test;user=test;password=test;retry_timeout=15",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
             var propertiesWithRetryTimeoutChangedToZero = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;retry_timeout=0",
+                connectionString = "account=test;user=test;password=test;retry_timeout=0",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultConnectionTimeout,
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = TimeoutHelper.Infinity(),
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
             var propertiesWithMaxHttpRetriesChangedToAValueAbove7 = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;maxHttpRetries=10",
+                connectionString = "account=test;user=test;password=test;maxHttpRetries=10",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = 10
+                    maxHttpRetries = 10,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
             var propertiesWithMaxHttpRetriesChangedToAValueBelow7 = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;maxHttpRetries=5",
+                connectionString = "account=test;user=test;password=test;maxHttpRetries=5",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
             var propertiesWithMaxHttpRetriesChangedToZero = new PropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;maxHttpRetries=0",
+                connectionString = "account=test;user=test;password=test;maxHttpRetries=0",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
                     clientSessionKeepAlive = false,
                     connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    insecureMode = false,
                     disableRetry = false,
                     forceRetryOn404 = false,
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
-                    maxHttpRetries = 0
+                    maxHttpRetries = 0,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
                 }
             };
-            return new []
+            return new[]
             {
                 defaultProperties,
                 propertiesWithValidateDefaultParametersChanged,
                 propertiesWithClientSessionKeepAliveChanged,
                 propertiesWithTimeoutChanged,
-                propertiesWithInsecureModeChanged,
+                propertiesWithCertRevocationConfigChanged,
                 propertiesWithDisableRetryChanged,
                 propertiesWithForceRetryOn404Changed,
                 propertiesWithRetryTimeoutChangedToAValueAbove300,
@@ -348,7 +441,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         public class PropertiesTestCase
         {
-            internal string conectionString;
+            internal string connectionString;
             internal SFSessionHttpClientProperties expectedProperties;
         }
     }

@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
- */
-
 using System;
 using Snowflake.Data.Core;
 using System.Data.Common;
@@ -127,7 +123,7 @@ namespace Snowflake.Data.Client
                     throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
                 }
 
-                var sfc = (SnowflakeDbConnection) value;
+                var sfc = (SnowflakeDbConnection)value;
                 if (connection != null && connection != sfc)
                 {
                     // Connection already set.
@@ -170,7 +166,7 @@ namespace Snowflake.Data.Client
             long total = 0;
             do
             {
-                if (resultSet.HasResultSet()) continue;
+                if (resultSet.IsDQL()) continue;
                 int count = resultSet.CalculateUpdateCount();
                 if (count < 0)
                 {
@@ -197,7 +193,7 @@ namespace Snowflake.Data.Client
             long total = 0;
             do
             {
-                if (resultSet.HasResultSet()) continue;
+                if (resultSet.IsDQL()) continue;
                 int count = resultSet.CalculateUpdateCount();
                 if (count < 0)
                 {
@@ -220,7 +216,7 @@ namespace Snowflake.Data.Client
             logger.Debug($"ExecuteScalar");
             SFBaseResultSet resultSet = ExecuteInternal();
 
-            if(resultSet.Next())
+            if (resultSet.Next())
                 return resultSet.GetValue(0);
             else
                 return DBNull.Value;
@@ -233,7 +229,7 @@ namespace Snowflake.Data.Client
 
             var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
 
-            if(await result.NextAsync().ConfigureAwait(false))
+            if (await result.NextAsync().ConfigureAwait(false))
                 return result.GetValue(0);
             else
                 return DBNull.Value;
@@ -374,18 +370,23 @@ namespace Snowflake.Data.Client
             else
             {
                 Dictionary<string, BindingDTO> binding = new Dictionary<string, BindingDTO>();
-                foreach(SnowflakeDbParameter parameter in parameters)
+                foreach (SnowflakeDbParameter parameter in parameters)
                 {
                     string bindingType = "";
                     object bindingVal;
 
+                    if (parameter.Value == null)
+                    {
+                        parameter.Value = DBNull.Value;
+                    }
+
+                    // byte array and char array will not be treated as array binding
                     if (parameter.Value.GetType().IsArray &&
-                        // byte array and char array will not be treated as array binding
                         parameter.Value.GetType().GetElementType() != typeof(char) &&
                         parameter.Value.GetType().GetElementType() != typeof(byte))
                     {
                         List<object> vals = new List<object>();
-                        foreach(object val in (Array)parameter.Value)
+                        foreach (object val in (Array)parameter.Value)
                         {
                             // if the user is using interface, SFDataType will be None and there will
                             // a conversion from DbType to SFDataType
@@ -393,7 +394,7 @@ namespace Snowflake.Data.Client
                             if (parameter.SFDataType == SFDataType.None)
                             {
                                 Tuple<string, string> typeAndVal = SFDataConverter
-                                    .csharpTypeValToSfTypeVal(parameter.DbType, val);
+                                    .CSharpTypeValToSfTypeVal(parameter.DbType, val);
 
                                 bindingType = typeAndVal.Item1;
                                 vals.Add(typeAndVal.Item2);
@@ -401,7 +402,7 @@ namespace Snowflake.Data.Client
                             else
                             {
                                 bindingType = parameter.SFDataType.ToString();
-                                vals.Add(SFDataConverter.csharpValToSfVal(parameter.SFDataType, val));
+                                vals.Add(SFDataConverter.CSharpValToSfVal(parameter.SFDataType, val));
                             }
                         }
                         bindingVal = vals;
@@ -411,14 +412,14 @@ namespace Snowflake.Data.Client
                         if (parameter.SFDataType == SFDataType.None)
                         {
                             Tuple<string, string> typeAndVal = SFDataConverter
-                                .csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
+                                .CSharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
                             bindingType = typeAndVal.Item1;
                             bindingVal = typeAndVal.Item2;
                         }
                         else
                         {
                             bindingType = parameter.SFDataType.ToString();
-                            bindingVal = SFDataConverter.csharpValToSfVal(parameter.SFDataType, parameter.Value);
+                            bindingVal = SFDataConverter.CSharpValToSfVal(parameter.SFDataType, parameter.Value);
                         }
                     }
 

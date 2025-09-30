@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
@@ -13,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
     {
         private const string FilePathFromConnectionString = "/Users/dotnet/config.json";
         private const string FilePathToUse = "/home/config.json";
-        
+
         [Test]
         public void TestThatProvidesConfiguration()
         {
@@ -31,7 +27,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // act
             var result = configProvider.ProvideConfig(FilePathFromConnectionString);
-            
+
             // assert
             Assert.AreSame(config, result);
         }
@@ -45,11 +41,11 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var configProvider = new EasyLoggingConfigProvider(configFinder.Object, configParser.Object);
             configFinder
                 .Setup(finder => finder.FindConfigFilePath(FilePathFromConnectionString))
-                .Returns((string) null);
-            
+                .Returns((string)null);
+
             // act
             var result = configProvider.ProvideConfig(FilePathFromConnectionString);
-            
+
             // assert
             Assert.IsNull(result);
             configParser.Verify(parser => parser.Parse(It.IsAny<string>()), Times.Never);

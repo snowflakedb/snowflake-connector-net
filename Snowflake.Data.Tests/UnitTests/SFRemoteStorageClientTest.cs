@@ -1,7 +1,3 @@
-﻿/*
- * Copyright (c) 2012-2023 Snowflake Computing Inc. All rights reserved.
- */
-
 namespace Snowflake.Data.Tests.UnitTests
 {
     using NUnit.Framework;
@@ -87,7 +83,6 @@ namespace Snowflake.Data.Tests.UnitTests
                 stageInfo = new PutGetStageInfo()
                 {
                     endPoint = EndPoint,
-                    isClientSideEncrypted = true,
                     location = Location,
                     locationType = SFRemoteStorageUtil.GCS_FS,
                     path = LocationPath,

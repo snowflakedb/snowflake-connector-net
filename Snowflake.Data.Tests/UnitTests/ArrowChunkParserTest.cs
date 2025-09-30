@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2023 Snowflake Computing Inc. All rights reserved.
- */
-
 using System.Linq;
 using Apache.Arrow;
 using Apache.Arrow.Ipc;
@@ -25,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             MemoryStream stream = new MemoryStream();
-            
+
             for (var i = 0; i < numberOfRecordBatch; i++)
             {
                 var numberOfRecordsInBatch = 10 * i;
@@ -37,14 +33,14 @@ namespace Snowflake.Data.Tests.UnitTests
                 writer.WriteRecordBatch(recordBatch);
             }
             stream.Position = 0;
-            
+
             var parser = new ArrowChunkParser(stream);
-            
+
             // Act
             var chunk = new ArrowResultChunk(1);
             var task = parser.ParseChunk(chunk);
             task.Wait();
-            
+
             // Assert
             Assert.AreEqual(numberOfRecordBatch, chunk.RecordBatch.Count);
             for (var i = 0; i < numberOfRecordBatch; i++)
