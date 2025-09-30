@@ -108,7 +108,11 @@ namespace Snowflake.Data.Core
                 restRequestTimeout.Token))
                 {
                     HttpResponseMessage response = null;
+#if SF_PUBLIC_ENVIRONMENT
+                    logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri.AbsolutePath} HTTP/{message.Version}");
+#else
                     logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
+#endif
                     var watch = new Stopwatch();
                     try
                     {
@@ -119,11 +123,19 @@ namespace Snowflake.Data.Core
                         watch.Stop();
                         if (!response.IsSuccessStatusCode)
                         {
+#if SF_PUBLIC_ENVIRONMENT
+                            logger.Error($"Failed response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri.AbsolutePath} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+#else
                             logger.Error($"Failed response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+#endif
                         }
                         else
                         {
+#if SF_PUBLIC_ENVIRONMENT
+                            logger.Debug($"Succeeded response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri.AbsolutePath}");
+#else
                             logger.Debug($"Succeeded response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri}");
+#endif
                         }
                         response.EnsureSuccessStatusCode();
 
@@ -134,7 +146,11 @@ namespace Snowflake.Data.Core
                         if (watch.IsRunning)
                         {
                             watch.Stop();
+#if SF_PUBLIC_ENVIRONMENT
+                            logger.Error($"Response receiving interrupted by exception after {watch.ElapsedMilliseconds} ms. {sid} {message.Method} {message.RequestUri.AbsolutePath}");
+#else
                             logger.Error($"Response receiving interrupted by exception after {watch.ElapsedMilliseconds} ms. {sid} {message.Method} {message.RequestUri}");
+#endif
                         }
                         // Disposing of the response if not null now that we don't need it anymore
                         response?.Dispose();

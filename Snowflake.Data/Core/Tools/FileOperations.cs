@@ -41,6 +41,11 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
+        public virtual void WriteAllBytes(string path, byte[] bytes)
+        {
+            File.WriteAllBytes(path, bytes);
+        }
+
         public virtual string ReadAllText(string path)
         {
             return ReadAllText(path, null);
@@ -51,6 +56,8 @@ namespace Snowflake.Data.Core.Tools
             var contentFile = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || validator == null ? File.ReadAllText(path) : _unixOperations.ReadAllText(path, validator);
             return contentFile;
         }
+
+        public virtual byte[] ReadAllBytes(string path) => File.ReadAllBytes(path);
 
         public virtual Stream CreateTempFile(string filePath)
         {
@@ -116,6 +123,17 @@ namespace Snowflake.Data.Core.Tools
         {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
                    _unixOperations.GetOwnerIdOfFile(path) == _unixOperations.GetCurrentUserId();
+        }
+
+        public virtual void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
+        {
+            File.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
+        }
+
+        public virtual FileInformation GetFileInfo(string path)
+        {
+            var fileInfo = new FileInfo(path);
+            return new FileInformation(fileInfo);
         }
     }
 }

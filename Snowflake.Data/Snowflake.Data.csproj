@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="Apache.Arrow" Version="14.0.2" />
-    <PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.4" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="Azure.Storage.Common" Version="12.12.0" />

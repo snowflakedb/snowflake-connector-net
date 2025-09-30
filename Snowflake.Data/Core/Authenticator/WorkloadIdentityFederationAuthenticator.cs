@@ -5,6 +5,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
+using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
 namespace Snowflake.Data.Core.Authenticator
 {

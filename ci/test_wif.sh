@@ -18,6 +18,8 @@ run_tests_and_set_result() {
       set -o pipefail
       docker run \
         --rm \
+        --cpus=1 \
+        -m 1g \
         -e BRANCH \
         -e SNOWFLAKE_TEST_WIF_PROVIDER \
         -e SNOWFLAKE_TEST_WIF_HOST \
@@ -60,6 +62,7 @@ get_branch() {
 }
 
 setup_parameters() {
+  source "$THIS_DIR/scripts/setup_gpg.sh"
   gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETERS_SECRET" --output "$RSA_KEY_PATH_AWS_AZURE" "${RSA_KEY_PATH_AWS_AZURE}.gpg"
   gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETERS_SECRET" --output "$RSA_KEY_PATH_GCP" "${RSA_KEY_PATH_GCP}.gpg"
   chmod 600 "$RSA_KEY_PATH_AWS_AZURE"
