@@ -266,7 +266,7 @@ namespace Snowflake.Data.Core
             return new HttpClientHandler
             {
                 CheckCertificateRevocationList = config.IsDotnetCrlCheckEnabled(),
-                SslProtocols = SslProtocols.Tls12,
+                SslProtocols = SslProtocolsExtensions.EnforcedTlsProtocols,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
                 UseProxy = false
@@ -287,7 +287,7 @@ namespace Snowflake.Data.Core
             {
                 CheckCertificateRevocationList = false,
                 ServerCertificateCustomValidationCallback = revocationVerifier.CertificateValidationCallback,
-                SslProtocols = SslProtocols.Tls12,
+                SslProtocols = SslProtocolsExtensions.EnforcedTlsProtocols,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
                 UseProxy = false

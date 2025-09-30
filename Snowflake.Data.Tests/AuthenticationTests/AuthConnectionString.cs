@@ -202,7 +202,7 @@ namespace Snowflake.Data.AuthenticationTests
                 using (var client = new HttpClient(new HttpClientHandler
                 {
                     CheckCertificateRevocationList = true,
-                    SslProtocols = SslProtocols.Tls12,
+                    SslProtocols = SslProtocolsExtensions.EnforcedTlsProtocols,
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseProxy = false,
                     UseCookies = false
