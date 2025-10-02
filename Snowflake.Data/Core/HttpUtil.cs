@@ -51,8 +51,8 @@ namespace Snowflake.Data.Core
             EnableCRLDiskCaching = enableCRLDiskCaching;
             EnableCRLInMemoryCaching = enableCRLInMemoryCaching;
             AllowCertificatesWithoutCrlUrl = allowCertificatesWithoutCrlUrl;
-            MinTlsProtocol = SslProtocolsExtensions.FromString(minTlsProtocol);
-            MaxTlsProtocol = SslProtocolsExtensions.FromString(maxTlsProtocol);
+            MinTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(minTlsProtocol) : SslProtocols.None;
+            MaxTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(maxTlsProtocol) : SslProtocols.None;
 
             ConfKey = string.Join(";",
                 new string[] {
