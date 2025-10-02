@@ -32,7 +32,10 @@ namespace Snowflake.Data.Core
             string certRevocationCheckMode = "DISABLED",
             bool enableCRLDiskCaching = true,
             bool enableCRLInMemoryCaching = true,
-            bool allowCertificatesWithoutCrlUrl = true)
+            bool allowCertificatesWithoutCrlUrl = true,
+            string minTlsProtocol = "TLS12",
+            string maxTlsProtocol = "TLS13"
+            )
         {
             ProxyHost = proxyHost;
             ProxyPort = proxyPort;
@@ -48,6 +51,8 @@ namespace Snowflake.Data.Core
             EnableCRLDiskCaching = enableCRLDiskCaching;
             EnableCRLInMemoryCaching = enableCRLInMemoryCaching;
             AllowCertificatesWithoutCrlUrl = allowCertificatesWithoutCrlUrl;
+            MinTlsProtocol = SslProtocolsExtensions.FromString(minTlsProtocol);
+            MaxTlsProtocol = SslProtocolsExtensions.FromString(maxTlsProtocol);
 
             ConfKey = string.Join(";",
                 new string[] {
@@ -61,10 +66,12 @@ namespace Snowflake.Data.Core
                     maxHttpRetries.ToString(),
                     includeRetryReason.ToString(),
                     useDotnetCrlCheckMechanism.ToString(),
-                    certRevocationCheckMode.ToString(),
+                    certRevocationCheckMode,
                     enableCRLDiskCaching.ToString(),
                     enableCRLInMemoryCaching.ToString(),
-                    allowCertificatesWithoutCrlUrl.ToString()
+                    allowCertificatesWithoutCrlUrl.ToString(),
+                    minTlsProtocol,
+                    maxTlsProtocol
                 });
         }
 
@@ -82,6 +89,8 @@ namespace Snowflake.Data.Core
         internal readonly bool EnableCRLDiskCaching;
         internal readonly bool EnableCRLInMemoryCaching;
         internal readonly bool AllowCertificatesWithoutCrlUrl;
+        internal readonly SslProtocols MinTlsProtocol;
+        internal readonly SslProtocols MaxTlsProtocol;
 
         // Key used to identify the HttpClient with the configuration matching the settings
         public readonly string ConfKey;
@@ -92,6 +101,11 @@ namespace Snowflake.Data.Core
 
         internal bool IsDotnetCrlCheckEnabled() =>
             UseDotnetCrlCheckMechanism && CertRevocationCheckMode == CertRevocationCheckMode.Enabled;
+
+        public SslProtocols GetRequestedTlsProtocolsRange()
+        {
+            return MinTlsProtocol | MaxTlsProtocol;
+        }
     }
 
     internal sealed class HttpUtil
@@ -266,7 +280,7 @@ namespace Snowflake.Data.Core
             return new HttpClientHandler
             {
                 CheckCertificateRevocationList = config.IsDotnetCrlCheckEnabled(),
-                SslProtocols = SslProtocolsExtensions.EnforcedTlsProtocols,
+                SslProtocols = config.GetRequestedTlsProtocolsRange(),
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
                 UseProxy = false
@@ -287,7 +301,7 @@ namespace Snowflake.Data.Core
             {
                 CheckCertificateRevocationList = false,
                 ServerCertificateCustomValidationCallback = revocationVerifier.CertificateValidationCallback,
-                SslProtocols = SslProtocolsExtensions.EnforcedTlsProtocols,
+                SslProtocols = config.GetRequestedTlsProtocolsRange(),
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
                 UseProxy = false

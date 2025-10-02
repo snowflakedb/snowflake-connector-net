@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Session;
@@ -128,6 +129,38 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 _enableCrlInMemoryCaching = TestDataGenarator.NextBool(),
                 _allowCertificatesWithoutCrlUrl = TestDataGenarator.NextBool()
             };
+        }
+
+        [Test]
+        [TestCase("account=test;user=test;password=test;minTls=tls13;maxTls=tls13", "tls13", "tls13")]
+        [TestCase("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", "tls12", "tls13")]
+        [TestCase("account=test;user=test;password=test;minTls=tls12;maxTls=tls12", "tls12", "tls12")]
+        [TestCase("account=test;user=test;password=test", "tls12", "tls13")]
+        public void TestSslProperties(string connectionString, string expectedMinTls, string expectedMaxTls)
+        {
+            // arrange
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+            // assert
+            Assert.AreEqual(extractedProperties._minTlsProtocol, expectedMinTls);
+            Assert.AreEqual(extractedProperties._maxTlsProtocol, expectedMaxTls);
+        }
+
+        [Test]
+        public void TestSslPropertiesFailure()
+        {
+            // act & assert
+            var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;minTls=tls13;maxTls=tls12", new SessionPropertiesContext()));
+            Assert.That(exception.Message.Contains("Connection string is invalid: Parameter MINTLS value cannot be higher than MAXTLS value."));
+        }
+
+        [Test]
+        public void TestSslInvalidPropertyFailure()
+        {
+            // act & assert
+            var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;minTls=tls11;maxTls=tls11", new SessionPropertiesContext()));
+            Assert.That(exception.Message.Contains("Connection string is invalid: Parameter MINTLS should have one of the following values: TLS12, TLS13."));
         }
 
         [Test, TestCaseSource(nameof(PropertiesProvider))]
