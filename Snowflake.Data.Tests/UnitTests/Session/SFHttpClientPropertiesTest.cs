@@ -265,7 +265,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithCertRevocationConfigEnabled = new PropertiesTestCase()
             {
-                connectionString = "account=test;user=test;password=test;useDotnetCrlCheck=false;certRevocationCheckMode=enabled;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true",
+                connectionString = "account=test;user=test;password=test;certRevocationCheckMode=enabled;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -285,7 +285,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var propertiesWithCertRevocationConfigAdvisory = new PropertiesTestCase()
             {
-                connectionString = "account=test;user=test;password=test;useDotnetCrlCheck=false;certRevocationCheckMode=advisory;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=false",
+                connectionString = "account=test;user=test;password=test;certRevocationCheckMode=advisory;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=false",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
