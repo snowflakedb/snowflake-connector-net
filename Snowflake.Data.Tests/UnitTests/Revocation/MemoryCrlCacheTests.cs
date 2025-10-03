@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using Snowflake.Data.Core.Revocation;
 
@@ -14,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         [Test]
         public void TestCacheOperations()
         {
-            var cache = new MemoryCrlCache();
+            var cache = new MemoryCrlCache(TimeSpan.FromDays(1));
             Assert.Null(cache.Get(CrlUrl1));
             Assert.Null(cache.Get(CrlUrl2));
             cache.Set(CrlUrl1, _crl1);

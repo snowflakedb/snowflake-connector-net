@@ -29,6 +29,11 @@ namespace Snowflake.Data.Core.Revocation
             _crlCacheValidityTime = crlCacheValidityTime;
         }
 
+        internal TimeSpan GetCacheValidityTime()
+        {
+            return _crlCacheValidityTime;
+        }
+
         public Crl Parse(byte[] bytes, DateTime now)
         {
             var crlParser = new X509CrlParser();
@@ -49,7 +54,6 @@ namespace Snowflake.Data.Core.Revocation
                 IssuerName = crl.IssuerDN.ToString(),
                 IssuerDistributionPoints = ReadIdpFromCrl(crl),
                 RevokedCertificates = crl.GetRevokedCertificates().Select(cert => ConvertToHexadecimalString(cert.SerialNumber)).ToList(),
-                CrlCacheValidityTime = _crlCacheValidityTime,
                 BouncyCastleCrl = crl
             };
         }
