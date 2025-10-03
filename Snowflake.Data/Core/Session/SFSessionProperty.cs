@@ -142,6 +142,10 @@ namespace Snowflake.Data.Core
         ENABLECRLINMEMORYCACHING,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         ALLOWCERTIFICATESWITHOUTCRLURL,
+        [SFSessionPropertyAttr(required = false, defaultValue = "tls12")]
+        MINTLS,
+        [SFSessionPropertyAttr(required = false, defaultValue = "tls13")]
+        MAXTLS,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -299,6 +303,7 @@ namespace Snowflake.Data.Core
             WarnIfHttpUsed(properties);
             ValidateAuthenticatorFlowsProperties(properties);
             ValidateCrlParameters(properties);
+            ValidateTlsParameters(properties);
 
             var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
 
@@ -337,6 +342,31 @@ namespace Snowflake.Data.Core
             ValidateBooleanParameter(SFSessionProperty.ENABLECRLDISKCACHING, properties);
             ValidateBooleanParameter(SFSessionProperty.ENABLECRLINMEMORYCACHING, properties);
             ValidateBooleanParameter(SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL, properties);
+        }
+
+        private static void ValidateTlsParameters(SFSessionProperties properties)
+        {
+            var minTls = properties.ExtractPropertyOrDefault(SFSessionProperty.MINTLS, "tls12").ToLower();
+            var maxTls = properties.ExtractPropertyOrDefault(SFSessionProperty.MAXTLS, "tls13").ToLower();
+            var validTlsValues = new List<string> { "tls12", "tls13" };
+            if (!validTlsValues.Contains(minTls))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.MINTLS.ToString()} should have one of the following values: TLS12, TLS13.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            if (!validTlsValues.Contains(maxTls))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.MAXTLS.ToString()} should have one of the following values: TLS12, TLS13.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            if (validTlsValues.IndexOf(minTls) > validTlsValues.IndexOf(maxTls))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.MINTLS.ToString()} value cannot be higher than {SFSessionProperty.MAXTLS.ToString()} value.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
         }
 
         private static void ValidateCombinationOfCrlCheckModes(bool useDotnetCrlCheck, CertRevocationCheckMode certRevocationCheckMode)
