@@ -36,33 +36,13 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.IsTrue(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
             Assert.IsFalse(crl.RevokedCertificates.Contains(DigiCertUnrevokedCertSerialNumber));
             Assert.IsFalse(crl.IsRevoked(DigiCertUnrevokedCertSerialNumber));
-            Assert.IsFalse(crl.NeedsFreshCrl(now));
-            Assert.AreEqual(TimeSpan.FromDays(10), crl.CrlCacheValidityTime);
-        }
-
-        [Test]
-        public void TestCrlParseWithCustomValidityTime()
-        {
-            // arrange
-            var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
-            var environmentOperations = new Mock<EnvironmentOperations>();
-            environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(CrlParser.CrlValidityTimeEnvName))
-                .Returns("1");
-            var crlParser = new CrlParser(environmentOperations.Object);
-            var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
-
-            // act
-            var crl = crlParser.Parse(crlBytes, now);
-
-            // assert
-            Assert.AreEqual(TimeSpan.FromDays(1), crl.CrlCacheValidityTime);
+            Assert.IsFalse(crl.IsExpiredOrEvicted(now, TimeSpan.FromDays(1)));
         }
 
         [Test]
         [TestCase("2025-07-25T16:57:00.0000000Z", false)]
         [TestCase("2025-08-02T16:57:00.0000000Z", true)]
-        public void TestIfFreshCrlIsNeededDependingOnNextUpdate(string nowString, bool expectedIsFreshCrlNeeded)
+        public void TestCrlExpiredDependingOnNextUpdate(string nowString, bool expectedIsExpired)
         {
             // arrange
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
@@ -72,14 +52,45 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crl = crlParser.Parse(crlBytes, now);
 
             // act
-            var isFreshCrlNeeded = crl.NeedsFreshCrl(now);
+            var isExpired = crl.IsExpiredOrEvicted(now, TimeSpan.FromDays(365));
 
             // assert
-            Assert.AreEqual(expectedIsFreshCrlNeeded, isFreshCrlNeeded);
+            Assert.AreEqual(expectedIsExpired, isExpired);
         }
 
         [Test]
-        public void TestFreshCrlIsNeededDependingOnValidityTime()
+        public void TestCrlParserDefaultValidityTime()
+        {
+            // arrange
+            var environmentOperations = new Mock<EnvironmentOperations>();
+            var crlParser = new CrlParser(environmentOperations.Object);
+
+            // act
+            var validityTime = crlParser.GetCacheValidityTime();
+
+            // assert
+            Assert.AreEqual(TimeSpan.FromDays(10), validityTime);
+        }
+
+        [Test]
+        public void TestCrlParserCustomValidityTime()
+        {
+            // arrange
+            var environmentOperations = new Mock<EnvironmentOperations>();
+            environmentOperations
+                .Setup(e => e.GetEnvironmentVariable(CrlParser.CrlValidityTimeEnvName))
+                .Returns("7");
+            var crlParser = new CrlParser(environmentOperations.Object);
+
+            // act
+            var validityTime = crlParser.GetCacheValidityTime();
+
+            // assert
+            Assert.AreEqual(TimeSpan.FromDays(7), validityTime);
+        }
+
+        [Test]
+        public void TestCrlIsEvictedAfterValidityTime()
         {
             // arrange
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
@@ -87,14 +98,15 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlParser = new CrlParser(environmentOperations.Object);
             var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
             var crl = crlParser.Parse(crlBytes, now);
-            Assert.False(crl.NeedsFreshCrl(now));
-            var justAfterValidityTime = now.Add(crl.CrlCacheValidityTime).AddSeconds(1);
+            var cacheValidityTime = TimeSpan.FromDays(1);
+            Assert.False(crl.IsExpiredOrEvicted(now, cacheValidityTime));
+            var justAfterValidityTime = now.Add(cacheValidityTime).AddSeconds(1);
 
             // act
-            var isFreshCrlNeeded = crl.NeedsFreshCrl(justAfterValidityTime);
+            var isExpiredOrEvicted = crl.IsExpiredOrEvicted(justAfterValidityTime, cacheValidityTime);
 
             // assert
-            Assert.True(isFreshCrlNeeded);
+            Assert.True(isExpiredOrEvicted);
         }
 
         [Test]

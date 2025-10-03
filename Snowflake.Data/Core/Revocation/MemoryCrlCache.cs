@@ -1,18 +1,21 @@
+using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Revocation
 {
     internal class MemoryCrlCache : ICrlCache
     {
-        public static readonly MemoryCrlCache Instance = new MemoryCrlCache();
-
         private readonly ConcurrentDictionary<string, Crl> _cache = new ConcurrentDictionary<string, Crl>();
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<MemoryCrlCache>();
 
-        internal MemoryCrlCache()
+        private readonly TimeSpan _cacheValidityTime;
+
+        internal MemoryCrlCache(TimeSpan cacheValidityTime)
         {
+            _cacheValidityTime = cacheValidityTime;
         }
 
         public Crl Get(string crlUrl)
@@ -28,6 +31,38 @@ namespace Snowflake.Data.Core.Revocation
         {
             s_logger.Debug($"Updating in memory crl cache for crl url: {crlUrl}");
             _cache.AddOrUpdate(crlUrl, crl, (key, oldValue) => crl);
+        }
+
+        public void Cleanup()
+        {
+            var now = DateTime.UtcNow;
+            s_logger.Debug($"Cleaning up in-memory CRL cache at {now}");
+
+            var initialSize = _cache.Count;
+            var keysToRemove = _cache
+                .Where(entry =>
+                {
+                    var crl = entry.Value;
+                    var shouldRemove = crl.IsExpiredOrEvicted(now, _cacheValidityTime);
+                    if (shouldRemove)
+                    {
+                        s_logger.Debug($"Removing in-memory CRL cache entry for {entry.Key}");
+                    }
+                    return shouldRemove;
+                })
+                .Select(entry => entry.Key)
+                .ToList();
+
+            foreach (var key in keysToRemove)
+            {
+                _cache.TryRemove(key, out _);
+            }
+
+            var removedCount = keysToRemove.Count;
+            if (removedCount > 0)
+            {
+                s_logger.Debug($"Removed {removedCount} expired/evicted entries from in-memory CRL cache");
+            }
         }
     }
 }

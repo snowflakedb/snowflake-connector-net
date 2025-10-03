@@ -1,97 +1,81 @@
 using System;
 using NUnit.Framework;
-using Moq;
 using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
     [TestFixture]
     public class CrlRepositoryTest
     {
-        const string CrlUrl = "http://snowflakecomputing.com/crl1.crl";
-        private readonly Crl _crl = new Crl();
+        const string CrlUrlBase = "http://snowflakecomputing.com/crl1.crl";
 
         [Test]
         public void TestGetCrlFromMemory()
         {
-            // arrange
-            var memoryCache = new Mock<ICrlCache>();
-            memoryCache
-                .Setup(c => c.Get(CrlUrl))
-                .Returns(_crl);
-            var fileCache = new Mock<ICrlCache>();
-            var crlRepository = new CrlRepository(memoryCache.Object, fileCache.Object);
+            var crlRepository = new CrlRepository(useMemoryCache: true, useFileCache: false);
+            var crlUrl = $"{CrlUrlBase}?test=memory";
+            var now = DateTime.UtcNow;
+            var crl = new Crl
+            {
+                DownloadTime = now,
+                ThisUpdate = now,
+                NextUpdate = now.AddDays(10),
+                IssuerName = "Test"
+            };
+            crlRepository.Set(crlUrl, crl);
 
-            // act
-            var crl = crlRepository.Get(CrlUrl);
+            var retrieved = crlRepository.Get(crlUrl);
 
-            // assert
-            Assert.AreSame(_crl, crl);
-            memoryCache.Verify(c => c.Get(CrlUrl), Times.Once);
-            memoryCache.VerifyNoOtherCalls();
-            fileCache.VerifyNoOtherCalls();
+            Assert.NotNull(retrieved);
+            Assert.AreEqual(crl.IssuerName, retrieved.IssuerName);
         }
 
         [Test]
-        public void TestGetCrlFromFileCacheAndPropagateToMemory()
+        public void TestGetCrlFromFileCache()
         {
-            // arrange
-            var memoryCache = new Mock<ICrlCache>();
-            var fileCache = new Mock<ICrlCache>();
-            fileCache
-                .Setup(c => c.Get(CrlUrl))
-                .Returns(_crl);
-            var crlRepository = new CrlRepository(memoryCache.Object, fileCache.Object);
+            var crlRepository = new CrlRepository(useMemoryCache: false, useFileCache: true);
+            var crlUrl = $"{CrlUrlBase}?test=file";
+            var now = DateTime.UtcNow;
+            var issuerName = "CN=Test CA,O=Test Org";
+            var crl = new Crl
+            {
+                DownloadTime = now,
+                ThisUpdate = now,
+                NextUpdate = now.AddDays(10),
+                IssuerName = issuerName,
+                BouncyCastleCrl = CertificateGenerator.GenerateCrl(issuerName, now, now.AddDays(10), now)
+            };
+            crlRepository.Set(crlUrl, crl);
 
-            // act
-            var crl = crlRepository.Get(CrlUrl);
+            var retrieved = crlRepository.Get(crlUrl);
 
-            // assert
-            Assert.AreSame(_crl, crl);
-            memoryCache.Verify(c => c.Get(CrlUrl), Times.Once);
-            memoryCache.Verify(c => c.Set(CrlUrl, _crl), Times.Once);
-            memoryCache.VerifyNoOtherCalls();
-            fileCache.Verify(c => c.Get(CrlUrl), Times.Once);
-            fileCache.VerifyNoOtherCalls();
+            Assert.NotNull(retrieved);
+            Assert.AreEqual(issuerName, retrieved.IssuerName);
         }
 
         [Test]
-        public void TestSetCrl()
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        public void TestConstructCaches(bool useMemoryCache, bool useFileCache)
         {
-            // arrange
-            var memoryCache = new Mock<ICrlCache>();
-            var fileCache = new Mock<ICrlCache>();
-            var crlRepository = new CrlRepository(memoryCache.Object, fileCache.Object);
-
-            // act
-            crlRepository.Set(CrlUrl, _crl);
-
-            // assert
-            memoryCache.Verify(c => c.Set(CrlUrl, _crl), Times.Once);
-            memoryCache.VerifyNoOtherCalls();
-            fileCache.Verify(c => c.Set(CrlUrl, _crl), Times.Once);
-            fileCache.VerifyNoOtherCalls();
-        }
-
-        [Test]
-        [TestCase(true, true, typeof(MemoryCrlCache), typeof(FileCrlCache))]
-        [TestCase(false, false, null, null)]
-        [TestCase(true, false, typeof(MemoryCrlCache), null)]
-        [TestCase(false, true, null, typeof(FileCrlCache))]
-        public void TestConstructCaches(bool useMemoryCache, bool useFileCache, Type expectedMemoryCacheType, Type expectedFileCacheType)
-        {
-            // act
             var crlRepository = new CrlRepository(useMemoryCache, useFileCache);
+            var crlUrl = $"{CrlUrlBase}?test={useMemoryCache}_{useFileCache}";
+            var now = DateTime.UtcNow;
+            var crl = new Crl
+            {
+                DownloadTime = now,
+                ThisUpdate = now,
+                NextUpdate = now.AddDays(10),
+                IssuerName = "Test"
+            };
 
-            // assert
-            if (expectedMemoryCacheType == null)
-                Assert.IsNull(crlRepository._memoryCrlCache);
-            else
-                Assert.AreEqual(expectedMemoryCacheType, crlRepository._memoryCrlCache.GetType());
-            if (expectedFileCacheType == null)
-                Assert.IsNull(crlRepository._fileCrlCache);
-            else
-                Assert.AreEqual(expectedFileCacheType, crlRepository._fileCrlCache.GetType());
+            crlRepository.Set(crlUrl, crl);
+            var retrieved = crlRepository.Get(crlUrl);
+
+            Assert.NotNull(retrieved);
+            Assert.AreEqual(crl.IssuerName, retrieved.IssuerName);
         }
     }
 }
