@@ -1,33 +1,13 @@
 ## Logging
 
-The Snowflake Connector for .NET uses [log4net](http://logging.apache.org/log4net/) as the logging framework.
+The Snowflake Connector for .NET can use its own logging implementation or a custom logger that implements the `ILogger` interface from `Microsoft.Extensions.Logging`.
 
-Here is a sample app.config file that uses [log4net](http://logging.apache.org/log4net/)
+Snowflake's built-in logger is **OFF** by default and can be enabled through a configuration file, as shown in the [Easy logging](https://github.com/snowflakedb/snowflake-connector-net/edit/SNOW-834781-Remove-log4net/doc/Logging.md#easy-logging) section
 
-```xml
-  <configSections>
-    <section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler, log4net"/>
-  </configSections>
-
-  <log4net>
-    <appender name="MyRollingFileAppender" type="log4net.Appender.RollingFileAppender">
-      <file value="snowflake_dotnet.log" />
-      <appendToFile value="true"/>
-      <rollingStyle value="Size" />
-      <maximumFileSize value="10MB" />
-      <staticLogFileName value="true" />
-      <maxSizeRollBackups value="10" />
-      <layout type="log4net.Layout.PatternLayout">
-        <!-- <header value="[DateTime]  [Thread]  [Level]  [ClassName] Message&#13;&#10;" /> -->
-        <conversionPattern value="[%date] [%t] [%-5level] [%logger] %message%newline" />
-      </layout>
-    </appender>
-
-    <root>
-      <level value="ALL" />
-      <appender-ref ref="MyRollingFileAppender" />
-    </root>
-  </log4net>
+A custom logger can be enabled or disabled using the following methods:
+```
+SnowflakeDbLoggerConfig.SetCustomLogger(customILogger); // Enables the custom logger that implements the ILogger interface
+SnowflakeDbLoggerConfig.ResetCustomLogger(); // Disables the custom logger
 ```
 
 ## Easy logging
@@ -46,13 +26,16 @@ This logging configuration file features support only the following log levels:
 - DEBUG
 - TRACE
 
-This configuration file uses JSON to define the `log_level` and `log_path` logging parameters, as follows:
+This configuration file uses JSON to define the `log_level`, `log_path` logging parameters, and `log_file_unix_permissions` as follows:
 
 ```json
 {
   "common": {
     "log_level": "INFO",
     "log_path": "c:\\some-path\\some-directory"
+  },
+  "dotnet": {
+	  "log_file_unix_permissions": 640
   }
 }
 ```
@@ -61,6 +44,7 @@ where:
 
 - `log_level` is the desired logging level.
 - `log_path` is the location to store the log files. The driver automatically creates a `dotnet` subdirectory in the specified `log_path`. For example, if you set log_path to `c:\logs`, the drivers creates the `c:\logs\dotnet` directory and stores the logs there.
+- `log_file_unix_permissions` is the desired log file permission level for Unix.
 
 The driver looks for the location of the configuration file in the following order:
 
