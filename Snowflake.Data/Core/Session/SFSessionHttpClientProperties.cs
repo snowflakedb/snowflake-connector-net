@@ -46,6 +46,8 @@ namespace Snowflake.Data.Core
         internal bool _enableCrlDiskCaching;
         internal bool _enableCrlInMemoryCaching;
         internal bool _allowCertificatesWithoutCrlUrl;
+        internal string _minTlsProtocol;
+        internal string _maxTlsProtocol;
 
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
@@ -202,7 +204,9 @@ namespace Snowflake.Data.Core
                 _certRevocationCheckMode.ToString(),
                 _enableCrlDiskCaching,
                 _enableCrlInMemoryCaching,
-                _allowCertificatesWithoutCrlUrl
+                _allowCertificatesWithoutCrlUrl,
+                _minTlsProtocol,
+                _maxTlsProtocol
                 );
         }
 
@@ -268,6 +272,8 @@ namespace Snowflake.Data.Core
                     _enableCrlDiskCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLDISKCACHING]),
                     _enableCrlInMemoryCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLINMEMORYCACHING]),
                     _allowCertificatesWithoutCrlUrl = Boolean.Parse(propertiesDictionary[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]),
+                    _minTlsProtocol = propertiesDictionary[SFSessionProperty.MINTLS],
+                    _maxTlsProtocol = propertiesDictionary[SFSessionProperty.MAXTLS]
                 };
             }
 
