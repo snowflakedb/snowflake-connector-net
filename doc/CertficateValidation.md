@@ -1,15 +1,15 @@
 ## Validating certificates
 
 ### OCSP and CRL
-At the moment of writing (autumn 2024) Snowflake .NET driver still uses a method to verify the validity
-of certificates upon connection, which is different from all the other Snowflake drivers.
-* .NET driver - uses Certificate Revocation List  (CRL) ([wikipage](https://en.wikipedia.org/wiki/Certificate_revocation_list))
+At the moment of writing (autumn 2025) Snowflake .NET driver still uses a method to verify the validate
+certificates upon connection, which is different from all the other Snowflake drivers.
+* .NET driver - uses Certificate Revocation List (CRL) ([wikipage](https://en.wikipedia.org/wiki/Certificate_revocation_list))
 * all other Snowflake drivers (JDBC, ODBC, Python, etc.) - use Online Certificate Status Protocol (OCSP) ([Snowflake documentation for OCSP](https://docs.snowflake.com/en/user-guide/ocsp))
 
-Therefore all network reachability requirements we documents for OCSP endpoints, also apply here, only difference that instead of the OCSP endpoints exposed by the certificate authorities,
+Therefore, all network reachability requirements we document for OCSP endpoints, also apply here, the only difference is that instead of the OCSP endpoints exposed by the certificate authorities,
 their CRL endpoints must be reachable.
 
-Both methods operate on port 80, unencrypted HTTP. Click [here](https://community.snowflake.com/s/article/Why-do-OCSP-use-Port-80-and-not-Port-443) if you wish to read more about the reasons.
+Both methods operate on port 80, unencrypted HTTP. Click [Why OCSP uses port 80](https://community.snowflake.com/s/article/Why-do-OCSP-use-Port-80-and-not-Port-443) if you wish to read more about the reasons.
 The certificate authorities operating their CRL/OCSP services over unencrypted HTTP does not introduce any security risk in itself, because no customer data is actually transmitted unencrypted.
 Only the data necessary for verifying certificates, which is publicly available information.
 
@@ -113,7 +113,7 @@ True
 
 Look for values of `URL` fields under `Distribution Point Name` sections.
 
-3. **Ensure (or work with your systems / network / cloud team to ensure) the CRL endpoints from step 2 are reachable from the _same host/network, over port 80_, on which host/network your application is running, which application is using the Snowflake .NET driver**
+3. **Ensure (or work with your systems /network/ cloud team to ensure) the CRL endpoints from step 2 are reachable from the _same host/network, over port 80_, on which host/network your application is running, which application is using the Snowflake .NET driver**
 
 If your network includes any proxies through which the connection is sent, do make sure those proxies allow the connectivity to the CRL endpoints over port 80.
 If those proxies also employ **SSL inspection technologies**, you'll need to configure them to **bypass the Snowflake-related endpoints** and not use SSL inspection, as [it is not supported in Snowflake](https://docs.snowflake.com/en/user-guide/client-connectivity-troubleshooting/common-issues#firewall-or-proxy-ssl-inspection-issues).
@@ -145,11 +145,14 @@ Please make sure to **use the same proxy settings** as you will be using in your
 The new driver behavior starting from 5.0.0 driver version is to disable certificate revocation checks by default.
 If you would like to check certificate revocations (CRL) you need to add to your connection string `certRevocationCheckMode=enabled`.
 
-If you enable certificate revocation checks the default implementation is the one offered by the `System.Net.Http.HttpClientHandler` class.
-The driver allows you to use its own implementation of CRL checks - you just need to configure in your connection string `useDotnetCrlCheck=false`.
-If you use driver's own CRL check implementation you have much more configuration options.
-For instance, you can configure `certRevocationCheckMode=advisory` to perform CRL check but accept errors (e.g. errors in downloading CRL list).
+If you enable certificate revocation checks the default implementation is the one offered by the driver. If you use driver's own CRL check implementation
+you have some configuration options. For instance, you can configure `certRevocationCheckMode=advisory` to perform CRL check but accept errors (e.g. errors in downloading CRL list).
 The `Advisory` mode means that the connection can be established even if there were errors when processing the certificate or its CRLs.
+However, when Advisory mode is used, the driver will not bypass certificate which was successfully checked and is revoked.
+
+If you prefer to rely on the .NET framework's own implementation of CRL checks, you can configure `certRevocationCheckMode=native` in your connection string.
+This will make use of the `System.Net.Http.HttpClientHandler` class. Keep in mind that this implementation may result in huge memory consumption
+on specific memory-limited environments (k8s, vm).
 
 The old `insecureMode` parameter is no longer supported by the driver.
 

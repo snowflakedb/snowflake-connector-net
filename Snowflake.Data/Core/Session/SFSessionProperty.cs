@@ -336,9 +336,7 @@ namespace Snowflake.Data.Core
 
         private static void ValidateCrlParameters(SFSessionProperties properties)
         {
-            var useDotnetCrlCheck = ValidateBooleanParameter(SFSessionProperty.USEDOTNETCRLCHECK, properties);
-            var certRevocationCheckMode = ValidateCertRevocationCheckModeParameter(properties);
-            ValidateCombinationOfCrlCheckModes(useDotnetCrlCheck, certRevocationCheckMode);
+            ValidateCertRevocationCheckModeParameter(properties);
             ValidateBooleanParameter(SFSessionProperty.ENABLECRLDISKCACHING, properties);
             ValidateBooleanParameter(SFSessionProperty.ENABLECRLINMEMORYCACHING, properties);
             ValidateBooleanParameter(SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL, properties);
@@ -369,22 +367,12 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static void ValidateCombinationOfCrlCheckModes(bool useDotnetCrlCheck, CertRevocationCheckMode certRevocationCheckMode)
-        {
-            if (useDotnetCrlCheck && certRevocationCheckMode == CertRevocationCheckMode.Advisory)
-            {
-                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"'ADVISORY' value of the parameter {SFSessionProperty.CERTREVOCATIONCHECKMODE.ToString()} conflicts with 'true' value of the parameter {SFSessionProperty.USEDOTNETCRLCHECK}.");
-                logger.Error(exception.Message, exception);
-                throw exception;
-            }
-        }
-
         private static CertRevocationCheckMode ValidateCertRevocationCheckModeParameter(SFSessionProperties properties)
         {
             var certRevocationCheckModeString = properties[SFSessionProperty.CERTREVOCATIONCHECKMODE];
             if (!Enum.TryParse<CertRevocationCheckMode>(certRevocationCheckModeString, true, out var certRevocationCheckMode))
             {
-                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.CERTREVOCATIONCHECKMODE.ToString()} should have one of following values: ENABLED, ADVISORY, DISABLED.");
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.CERTREVOCATIONCHECKMODE.ToString()} should have one of following values: ENABLED, ADVISORY, DISABLED, NATIVE.");
                 logger.Error(exception.Message, exception);
                 throw exception;
             }
