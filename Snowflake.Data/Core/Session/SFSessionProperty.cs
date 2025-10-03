@@ -132,7 +132,7 @@ namespace Snowflake.Data.Core
         WORKLOAD_IDENTITY_ENTRA_RESOURCE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         OAUTHENABLESINGLEUSEREFRESHTOKENS,
-        [SFSessionPropertyAttr(required = false, defaultValue = "true")]
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         USEDOTNETCRLCHECK,
         [SFSessionPropertyAttr(required = false, defaultValue = "disabled")]
         CERTREVOCATIONCHECKMODE,

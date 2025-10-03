@@ -206,7 +206,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -226,7 +226,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -246,7 +246,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -266,7 +266,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -294,6 +294,27 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
                 }
             };
+            var propertiesWithCertRevocationConfigViaDotNet = new PropertiesTestCase()
+            {
+                connectionString = "account=test;user=test;password=test;useDotnetCrlCheck=true",
+                expectedProperties = new SFSessionHttpClientProperties()
+                {
+                    validateDefaultParameters = true,
+                    clientSessionKeepAlive = false,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    disableRetry = false,
+                    forceRetryOn404 = false,
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _useDotnetCrlCheck = true,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
+
+                }
+            };
             var propertiesWithDisableRetryChanged = new PropertiesTestCase()
             {
                 connectionString = "account=test;user=test;password=test;disableRetry=true",
@@ -307,7 +328,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -327,7 +348,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -347,7 +368,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = TimeSpan.FromSeconds(600),
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -367,7 +388,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -387,7 +408,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = TimeoutHelper.Infinity(),
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -407,7 +428,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = 10,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -427,7 +448,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -447,7 +468,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = 0,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
+                    _useDotnetCrlCheck = false,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -468,7 +489,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 propertiesWithRetryTimeoutChangedToZero,
                 propertiesWithMaxHttpRetriesChangedToAValueAbove7,
                 propertiesWithMaxHttpRetriesChangedToAValueBelow7,
-                propertiesWithMaxHttpRetriesChangedToZero
+                propertiesWithMaxHttpRetriesChangedToZero,
+                propertiesWithCertRevocationConfigViaDotNet
             };
         }
 

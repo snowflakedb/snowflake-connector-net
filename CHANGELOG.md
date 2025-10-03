@@ -8,4 +8,5 @@
     - Upgraded AWS SDK library to v4.
     - Added the `changelog.yml` GitHub workflow to ensure changelog is updated on release PRs.
     - Removed internal classes from public API.
+    - Disabled CRL checks by default.
 
