@@ -4,6 +4,7 @@ namespace Snowflake.Data.Core.Revocation
     {
         Disabled,
         Enabled,
-        Advisory
+        Advisory,
+        Native
     }
 }

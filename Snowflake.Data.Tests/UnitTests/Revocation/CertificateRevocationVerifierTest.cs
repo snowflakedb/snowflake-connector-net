@@ -278,7 +278,6 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 false,
                 3,
                 true,
-                false,
                 checkMode.ToString(),
                 false,
                 false,
