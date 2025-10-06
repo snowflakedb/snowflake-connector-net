@@ -598,6 +598,9 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlDiskCaching=unknown;", "Parameter ENABLECRLDISKCACHING should have a boolean value.")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlInMemoryCaching=unknown;", "Parameter ENABLECRLINMEMORYCACHING should have a boolean value.")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;allowCertificatesWithoutCrlUrl=unknown;", "Parameter ALLOWCERTIFICATESWITHOUTCRLURL should have a boolean value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=abc;", "Parameter CRLDOWNLOADTIMEOUT should have an integer value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=0;", "Parameter CRLDOWNLOADTIMEOUT should be greater than 0.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=-5;", "Parameter CRLDOWNLOADTIMEOUT should be greater than 0.")]
         public void TestFailOnInvalidCrlParameters(string connectionString, string expectedErrorMessage)
         {
             // act
@@ -605,6 +608,19 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
+        }
+
+        [Test]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;", "10")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=30;", "30")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=120;", "120")]
+        public void TestParseCrlDownloadTimeout(string connectionString, string expectedTimeout)
+        {
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(expectedTimeout, properties[SFSessionProperty.CRLDOWNLOADTIMEOUT]);
         }
 
         public static IEnumerable<TestCase> ConnectionStringTestCases()
