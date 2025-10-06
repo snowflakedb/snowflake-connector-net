@@ -1,5 +1,9 @@
 ## Validating certificates
 
+### Brief
+Starting with Snowflake .NET driver v5.0.0 the driver will **no longer perform certificate revocation checks by default**
+while connecting with a secure connection.
+
 ### OCSP and CRL
 At the moment of writing (autumn 2025) Snowflake .NET driver still uses a method to verify the validate
 certificates upon connection, which is different from all the other Snowflake drivers.
