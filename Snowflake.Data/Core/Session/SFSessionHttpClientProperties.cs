@@ -41,7 +41,6 @@ namespace Snowflake.Data.Core
         private TimeSpan _expirationTimeout;
         private bool _poolingEnabled;
         internal bool _clientStoreTemporaryCredential;
-        internal bool _useDotnetCrlCheck;
         internal CertRevocationCheckMode _certRevocationCheckMode;
         internal bool _enableCrlDiskCaching;
         internal bool _enableCrlInMemoryCaching;
@@ -201,7 +200,6 @@ namespace Snowflake.Data.Core
                 forceRetryOn404,
                 maxHttpRetries,
                 includeRetryReason,
-                _useDotnetCrlCheck,
                 _certRevocationCheckMode.ToString(),
                 _enableCrlDiskCaching,
                 _enableCrlInMemoryCaching,
@@ -269,7 +267,6 @@ namespace Snowflake.Data.Core
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
                     _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
                     _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]),
-                    _useDotnetCrlCheck = Boolean.Parse(propertiesDictionary[SFSessionProperty.USEDOTNETCRLCHECK]),
                     _certRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), propertiesDictionary[SFSessionProperty.CERTREVOCATIONCHECKMODE], true),
                     _enableCrlDiskCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLDISKCACHING]),
                     _enableCrlInMemoryCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLINMEMORYCACHING]),

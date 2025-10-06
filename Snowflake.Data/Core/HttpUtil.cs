@@ -28,7 +28,6 @@ namespace Snowflake.Data.Core
             bool forceRetryOn404,
             int maxHttpRetries,
             bool includeRetryReason = true,
-            bool useDotnetCrlCheckMechanism = true,
             string certRevocationCheckMode = "DISABLED",
             bool enableCRLDiskCaching = true,
             bool enableCRLInMemoryCaching = true,
@@ -47,7 +46,6 @@ namespace Snowflake.Data.Core
             ForceRetryOn404 = forceRetryOn404;
             MaxHttpRetries = maxHttpRetries;
             IncludeRetryReason = includeRetryReason;
-            UseDotnetCrlCheckMechanism = useDotnetCrlCheckMechanism;
             CertRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), certRevocationCheckMode, true);
             EnableCRLDiskCaching = enableCRLDiskCaching;
             EnableCRLInMemoryCaching = enableCRLInMemoryCaching;
@@ -67,7 +65,6 @@ namespace Snowflake.Data.Core
                     forceRetryOn404.ToString(),
                     maxHttpRetries.ToString(),
                     includeRetryReason.ToString(),
-                    useDotnetCrlCheckMechanism.ToString(),
                     certRevocationCheckMode,
                     enableCRLDiskCaching.ToString(),
                     enableCRLInMemoryCaching.ToString(),
@@ -87,7 +84,6 @@ namespace Snowflake.Data.Core
         public readonly bool ForceRetryOn404;
         public readonly int MaxHttpRetries;
         public readonly bool IncludeRetryReason;
-        internal readonly bool UseDotnetCrlCheckMechanism;
         internal readonly CertRevocationCheckMode CertRevocationCheckMode;
         internal readonly bool EnableCRLDiskCaching;
         internal readonly bool EnableCRLInMemoryCaching;
@@ -100,11 +96,9 @@ namespace Snowflake.Data.Core
         public readonly string ConfKey;
 
         internal bool IsCustomCrlCheckConfigured() =>
-            !UseDotnetCrlCheckMechanism && (CertRevocationCheckMode == CertRevocationCheckMode.Enabled ||
-                                            CertRevocationCheckMode == CertRevocationCheckMode.Advisory);
+            CertRevocationCheckMode == CertRevocationCheckMode.Enabled || CertRevocationCheckMode == CertRevocationCheckMode.Advisory;
 
-        internal bool IsDotnetCrlCheckEnabled() =>
-            UseDotnetCrlCheckMechanism && CertRevocationCheckMode == CertRevocationCheckMode.Enabled;
+        internal bool IsDotnetCrlCheckEnabled() => CertRevocationCheckMode == CertRevocationCheckMode.Native;
 
         public SslProtocols GetRequestedTlsProtocolsRange()
         {
