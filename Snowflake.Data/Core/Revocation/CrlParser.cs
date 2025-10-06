@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.Revocation
     internal class CrlParser
     {
         internal const string CrlValidityTimeEnvName = "SF_CRL_VALIDITY_TIME";
-        private const int CrlValidityTimeDefaultDays = 10;
+        private const int CrlValidityTimeDefaultDays = 1;
 
         private readonly TimeSpan _crlCacheValidityTime;
 

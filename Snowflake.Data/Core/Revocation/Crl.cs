@@ -21,7 +21,7 @@ namespace Snowflake.Data.Core.Revocation
 
         public X509Crl BouncyCastleCrl { get; set; }
 
-        public bool IsExpiredOrEvicted(DateTime now, TimeSpan cacheValidityTime) =>
+        public bool IsExpiredOrStale(DateTime now, TimeSpan cacheValidityTime) =>
             NextUpdate < now || DownloadTime.Add(cacheValidityTime) < now;
 
         public bool IsRevoked(string serialNumber) => RevokedCertificates.Contains(serialNumber);

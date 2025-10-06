@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.IsTrue(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
             Assert.IsFalse(crl.RevokedCertificates.Contains(DigiCertUnrevokedCertSerialNumber));
             Assert.IsFalse(crl.IsRevoked(DigiCertUnrevokedCertSerialNumber));
-            Assert.IsFalse(crl.IsExpiredOrEvicted(now, TimeSpan.FromDays(1)));
+            Assert.IsFalse(crl.IsExpiredOrStale(now, TimeSpan.FromDays(1)));
         }
 
         [Test]
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crl = crlParser.Parse(crlBytes, now);
 
             // act
-            var isExpired = crl.IsExpiredOrEvicted(now, TimeSpan.FromDays(365));
+            var isExpired = crl.IsExpiredOrStale(now, TimeSpan.FromDays(365));
 
             // assert
             Assert.AreEqual(expectedIsExpired, isExpired);
@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var validityTime = crlParser.GetCacheValidityTime();
 
             // assert
-            Assert.AreEqual(TimeSpan.FromDays(10), validityTime);
+            Assert.AreEqual(TimeSpan.FromDays(1), validityTime);
         }
 
         [Test]
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
-        public void TestCrlIsEvictedAfterValidityTime()
+        public void TestCrlIsStaleAfterValidityTime()
         {
             // arrange
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
@@ -99,14 +99,14 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
             var crl = crlParser.Parse(crlBytes, now);
             var cacheValidityTime = TimeSpan.FromDays(1);
-            Assert.False(crl.IsExpiredOrEvicted(now, cacheValidityTime));
+            Assert.False(crl.IsExpiredOrStale(now, cacheValidityTime));
             var justAfterValidityTime = now.Add(cacheValidityTime).AddSeconds(1);
 
             // act
-            var isExpiredOrEvicted = crl.IsExpiredOrEvicted(justAfterValidityTime, cacheValidityTime);
+            var isExpiredOrStale = crl.IsExpiredOrStale(justAfterValidityTime, cacheValidityTime);
 
             // assert
-            Assert.True(isExpiredOrEvicted);
+            Assert.True(isExpiredOrStale);
         }
 
         [Test]

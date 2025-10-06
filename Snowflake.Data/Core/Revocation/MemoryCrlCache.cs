@@ -36,20 +36,8 @@ namespace Snowflake.Data.Core.Revocation
         public void Cleanup()
         {
             var now = DateTime.UtcNow;
-            s_logger.Debug($"Cleaning up in-memory CRL cache at {now}");
-
-            var initialSize = _cache.Count;
             var keysToRemove = _cache
-                .Where(entry =>
-                {
-                    var crl = entry.Value;
-                    var shouldRemove = crl.IsExpiredOrEvicted(now, _cacheValidityTime);
-                    if (shouldRemove)
-                    {
-                        s_logger.Debug($"Removing in-memory CRL cache entry for {entry.Key}");
-                    }
-                    return shouldRemove;
-                })
+                .Where(entry => entry.Value.IsExpiredOrStale(now, _cacheValidityTime))
                 .Select(entry => entry.Key)
                 .ToList();
 
@@ -58,10 +46,9 @@ namespace Snowflake.Data.Core.Revocation
                 _cache.TryRemove(key, out _);
             }
 
-            var removedCount = keysToRemove.Count;
-            if (removedCount > 0)
+            if (keysToRemove.Count > 0)
             {
-                s_logger.Debug($"Removed {removedCount} expired/evicted entries from in-memory CRL cache");
+                s_logger.Info($"Removed {keysToRemove.Count} expired/stale entries from in-memory CRL cache");
             }
         }
     }

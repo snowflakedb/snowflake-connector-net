@@ -280,15 +280,10 @@ namespace Snowflake.Data.Core.Revocation
                         try
                         {
                             var fileBytes = ReadCrlBytes(filePath);
-                            if (fileBytes == null)
-                            {
-                                continue;
-                            }
-
                             var fileInfo = _fileOperations.GetFileInfo(filePath);
                             var crl = _parser.Parse(fileBytes, fileInfo.LastWriteTimeUtc);
 
-                            if (crl.IsExpiredOrEvicted(now, _removalDelay))
+                            if (crl.IsExpiredOrStale(now, _removalDelay))
                             {
                                 File.Delete(filePath);
                                 removedCount++;
@@ -297,24 +292,23 @@ namespace Snowflake.Data.Core.Revocation
                         }
                         catch (Exception exception)
                         {
-                            // If we can't parse the file, it's probably corrupted - remove it
                             try
                             {
                                 File.Delete(filePath);
                                 removedCount++;
-                                s_logger.Warn($"Deleted corrupted CRL file {filePath}: {exception.Message}");
+                                s_logger.Warn($"Deleted invalid CRL cache file {filePath}: {exception.Message}");
                             }
                             catch (Exception deleteError)
                             {
                                 s_logger.Warn(
-                                    $"Failed to delete corrupted CRL file {filePath}: {deleteError.Message}");
+                                    $"Failed to delete invalid CRL cache file {filePath}: {deleteError.Message}");
                             }
                         }
                     }
 
                     if (removedCount > 0)
                     {
-                        s_logger.Debug($"Removed {removedCount} expired/corrupted files from disk CRL cache");
+                        s_logger.Info($"Removed {removedCount} expired/corrupted files from disk CRL cache");
                     }
                 }
             }
