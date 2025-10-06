@@ -142,7 +142,7 @@ namespace Snowflake.Data.Core
         ENABLECRLINMEMORYCACHING,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         ALLOWCERTIFICATESWITHOUTCRLURL,
-        [SFSessionPropertyAttr(required = false, defaultValue = "60")]
+        [SFSessionPropertyAttr(required = false, defaultValue = "10")]
         CRLDOWNLOADTIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls12")]
         MINTLS,

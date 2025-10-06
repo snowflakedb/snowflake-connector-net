@@ -33,7 +33,7 @@ namespace Snowflake.Data.Core
             bool enableCRLDiskCaching = true,
             bool enableCRLInMemoryCaching = true,
             bool allowCertificatesWithoutCrlUrl = true,
-            int crlDownloadTimeout = 60,
+            int crlDownloadTimeout = 10,
             string minTlsProtocol = "TLS12",
             string maxTlsProtocol = "TLS13"
             )
