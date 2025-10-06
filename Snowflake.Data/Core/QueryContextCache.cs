@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Linq;
@@ -189,6 +189,14 @@ namespace Snowflake.Data.Core
             _logger.Debug($"clearCache() returns. Number of entries in cache now {_cacheSet.Count}");
         }
 
+        public void ClearCacheSafely()
+        {
+            lock (_qccLock)
+            {
+                ClearCache();
+            }
+        }
+
         public void SetCapacity(int cap)
         {
             // check without locking first for performance reason
@@ -228,7 +236,7 @@ namespace Snowflake.Data.Core
          */
         public void Update(ResponseQueryContext queryContext)
         {
-            lock(_qccLock)
+            lock (_qccLock)
             {
                 // Log existing cache entries
                 LogCacheEntries();
@@ -261,7 +269,7 @@ namespace Snowflake.Data.Core
         {
             RequestQueryContext reqQCC = new RequestQueryContext();
             reqQCC.Entries = new List<RequestQueryContextElement>();
-            lock(_qccLock)
+            lock (_qccLock)
             {
                 foreach (QueryContextElement elem in _cacheSet)
                 {

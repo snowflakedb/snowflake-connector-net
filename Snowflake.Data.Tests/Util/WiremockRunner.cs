@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace Snowflake.Data.Tests.Util
         private const int RetryInterval = 200;
         private const int WarmupTime = 1000;
         private const string WiremockVersion = "3.11.0";
+        private const string WiremockJarFileSha256 = "85f47eecd54ddf6aa275c9a3ceaf8e200cad30d26b529a706dd55e3bf3a4787e"; // pragma: allowlist secret
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WiremockRunner>();
         private static readonly string s_userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         private static readonly string s_wiremockPath = Path.Combine(s_userProfilePath, ".m2", "repository", "org", "wiremock", "wiremock-standalone", WiremockVersion);
@@ -30,7 +32,7 @@ namespace Snowflake.Data.Tests.Util
         private static readonly string s_wiremockUrl =
             $"https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/{WiremockVersion}/wiremock-standalone-{WiremockVersion}.jar";
         private static readonly HttpClient s_httpClient = new();
-        private static readonly object s_lock = new ();
+        private static readonly object s_lock = new();
 
         internal const string Host = "127.0.0.1";
         private int HttpsPort { get; }
@@ -157,12 +159,14 @@ namespace Snowflake.Data.Tests.Util
             }
         }
 
-        public void AddMappings(string file)
+        public void AddMappings(string file, StringTransformations transformations = null)
         {
             s_logger.Debug($"Adding wiremock mappings from {file}");
             var fileContent = File.ReadAllText(file);
-
-            var payload = new StringContent(fileContent.Replace("'", "\'"), Encoding.UTF8, "application/json");
+            var transformedContent = (transformations ?? StringTransformations.NoTransformationsInstance)
+                .Transform(fileContent)
+                .Replace("'", "\'");
+            var payload = new StringContent(transformedContent, Encoding.UTF8, "application/json");
             var response = Task.Run(async () => await s_httpClient.PostAsync(
                 WiremockBaseHttpUrl + "/__admin/mappings/import",
                 payload)
@@ -182,8 +186,16 @@ namespace Snowflake.Data.Tests.Util
             {
                 if (File.Exists(s_wiremockJarPath))
                 {
-                    s_logger.Debug($"Wiremock v{WiremockVersion} exists.");
-                    return;
+                    if (CheckFileSHA256(s_wiremockJarPath, WiremockJarFileSha256))
+                    {
+                        s_logger.Debug($"Wiremock v{WiremockVersion} exists.");
+                        return;
+                    }
+                    else
+                    {
+                        s_logger.Debug($"Wiremock v{WiremockVersion} exists but is corrupted. Deleting and downloading again.");
+                        File.Delete(s_wiremockJarPath);
+                    }
                 }
 
                 try
@@ -203,6 +215,31 @@ namespace Snowflake.Data.Tests.Util
 
                     throw;
                 }
+            }
+        }
+
+        private static bool CheckFileSHA256(string filePath, string expectedShaValue)
+        {
+            byte[] bytes;
+            try
+            {
+                bytes = File.ReadAllBytes(filePath);
+            }
+            catch (IOException exception)
+            {
+                if (exception.Message.Contains("The process cannot access the file") &&
+                    exception.Message.Contains("because it is being used by another process"))
+                {
+                    s_logger.Debug("Could not read wiremock jar file content because it was used by another process. Assuming the file is not corrupted.");
+                    return true;
+                }
+                throw;
+            }
+            using (var sha256Encoder = SHA256.Create())
+            {
+                byte[] sha256Hash = sha256Encoder.ComputeHash(bytes);
+                var hash = BitConverter.ToString(sha256Hash).Replace("-", string.Empty);
+                return expectedShaValue.Equals(hash, StringComparison.OrdinalIgnoreCase);
             }
         }
     }

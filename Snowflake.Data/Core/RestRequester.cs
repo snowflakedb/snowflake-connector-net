@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Newtonsoft.Json;
 using System.Net.Http;
 using System.Threading;
@@ -98,7 +99,7 @@ namespace Snowflake.Data.Core
         protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
                                                               TimeSpan restTimeout,
                                                               CancellationToken externalCancellationToken,
-                                                              string sid="")
+                                                              string sid = "")
         {
             // merge multiple cancellation token
             using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(restTimeout))
@@ -107,20 +108,34 @@ namespace Snowflake.Data.Core
                 restRequestTimeout.Token))
                 {
                     HttpResponseMessage response = null;
+#if SF_PUBLIC_ENVIRONMENT
+                    logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri.AbsolutePath} HTTP/{message.Version}");
+#else
+                    logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
+#endif
+                    var watch = new Stopwatch();
                     try
                     {
-                        logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
-
+                        watch.Start();
                         response = await _HttpClient
                             .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                             .ConfigureAwait(false);
+                        watch.Stop();
                         if (!response.IsSuccessStatusCode)
                         {
-                            logger.Error($"Failed Response: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+#if SF_PUBLIC_ENVIRONMENT
+                            logger.Error($"Failed response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri.AbsolutePath} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+#else
+                            logger.Error($"Failed response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
+#endif
                         }
                         else
                         {
-                            logger.Debug($"Succeeded Response: {sid} {message.Method} {message.RequestUri}");
+#if SF_PUBLIC_ENVIRONMENT
+                            logger.Debug($"Succeeded response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri.AbsolutePath}");
+#else
+                            logger.Debug($"Succeeded response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri}");
+#endif
                         }
                         response.EnsureSuccessStatusCode();
 
@@ -128,6 +143,15 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
+                        if (watch.IsRunning)
+                        {
+                            watch.Stop();
+#if SF_PUBLIC_ENVIRONMENT
+                            logger.Error($"Response receiving interrupted by exception after {watch.ElapsedMilliseconds} ms. {sid} {message.Method} {message.RequestUri.AbsolutePath}");
+#else
+                            logger.Error($"Response receiving interrupted by exception after {watch.ElapsedMilliseconds} ms. {sid} {message.Method} {message.RequestUri}");
+#endif
+                        }
                         // Disposing of the response if not null now that we don't need it anymore
                         response?.Dispose();
                         if (restRequestTimeout.IsCancellationRequested)

@@ -18,7 +18,7 @@ namespace Snowflake.Data.Client
         private bool isCommittedOrRollbacked = false;
 
         internal bool IsActive => !disposed && !isCommittedOrRollbacked;
-        
+
         public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
         {
             logger.Debug("Begin transaction.");

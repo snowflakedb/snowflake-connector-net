@@ -2,6 +2,8 @@
 
 set -o pipefail
 export THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source "$THIS_DIR/scripts/setup_gpg.sh"
 export WORKSPACE=${WORKSPACE:-/tmp}
 export INTERNAL_REPO=nexus.int.snowflakecomputing.com:8086
 
@@ -24,5 +26,5 @@ docker run \
   -v $(cd $THIS_DIR/.. && pwd):/mnt/host \
   -v $WORKSPACE:/mnt/workspace \
   --rm \
-  nexus.int.snowflakecomputing.com:8086/docker/snowdrivers-test-external-browser-dotnet:1 \
+  nexus.int.snowflakecomputing.com:8086/docker/snowdrivers-test-external-browser-dotnet:4 \
   "/mnt/host/ci/container/test_authentication.sh"

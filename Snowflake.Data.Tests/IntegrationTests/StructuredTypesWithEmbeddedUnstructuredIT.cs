@@ -10,7 +10,7 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
-    public class StructuredTypesWithEmbeddedUnstructuredIT: StructuredTypesIT
+    public class StructuredTypesWithEmbeddedUnstructuredIT : StructuredTypesIT
     {
         [Test]
         public void TestSelectAllUnstructuredTypesObject()
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     ), '2024-07-11 14:20:05'::TIMESTAMP_LTZ";
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
@@ -293,7 +293,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var rawValueString = $"'{dbValue}'::{dbType}";
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act/assert
@@ -413,7 +413,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var rawValueString = $"'{dbValue}'::{dbType}";
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act/assert
@@ -522,7 +522,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "show parameters like 'timezone'";
-                var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                 Assert.IsTrue(reader.Read());
                 var timeZoneString = reader.GetString(1);
                 return TimeZoneInfoConverter.FindSystemTimeZoneById(timeZoneString);

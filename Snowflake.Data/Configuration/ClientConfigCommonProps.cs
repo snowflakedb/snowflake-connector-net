@@ -6,7 +6,7 @@ namespace Snowflake.Data.Configuration
     {
         [JsonProperty(PropertyName = "log_level")]
         public string LogLevel { get; set; }
-        
+
         [JsonProperty(PropertyName = "log_path")]
         public string LogPath { get; set; }
     }

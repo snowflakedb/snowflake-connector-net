@@ -137,7 +137,7 @@ namespace Snowflake.Data.Tests.Mock
                 throw new WebException(ErrorMessage, null, 0, response.Object);
             }
 
-            return response.Object;            
+            return response.Object;
         }
     }
 }

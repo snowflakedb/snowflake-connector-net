@@ -264,7 +264,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="metadata"> The header metadata</param>
         /// <param name="fileMetadata">The Azure file metadata.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        private BlobClient GetUploadFileBlobClient(ref IDictionary<string, string>metadata, SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
+        private BlobClient GetUploadFileBlobClient(ref IDictionary<string, string> metadata, SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
         {
             if (fileMetadata.stageInfo.isClientSideEncrypted)
             {

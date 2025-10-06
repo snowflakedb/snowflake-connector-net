@@ -9,7 +9,7 @@ namespace Snowflake.Data.Core.Tools
         {
             if (IsInfinite(timeout))
                 return false;
-            var timeoutInMillis = (long) timeout.TotalMilliseconds;
+            var timeoutInMillis = (long)timeout.TotalMilliseconds;
             return startedAtMillis + timeoutInMillis <= nowMillis;
         }
 
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Core.Tools
                 throw new Exception("Infinite timeout cannot be used to determine milliseconds left");
             }
             var passedMillis = nowMillis - startedAtMillis;
-            return Math.Max((long) timeout.TotalMilliseconds - passedMillis, 0);
+            return Math.Max((long)timeout.TotalMilliseconds - passedMillis, 0);
         }
     }
 }

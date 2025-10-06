@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Snowflake.Data.Core.Converter.Builder
 {
-    internal class ObjectBuilderByConstructor: IObjectBuilder
+    internal class ObjectBuilderByConstructor : IObjectBuilder
     {
         private Type _type;
         private List<object> _result;

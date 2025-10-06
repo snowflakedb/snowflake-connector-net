@@ -41,7 +41,7 @@ namespace Snowflake.Data.Client
         }
 
         public SnowflakeDbException(SFError error, string queryId, Exception innerException)
-            : base(FormatExceptionMessage(error, new object[] {innerException.Message}, string.Empty, queryId), innerException)
+            : base(FormatExceptionMessage(error, new object[] { innerException.Message }, string.Empty, queryId), innerException)
         {
             VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
             QueryId = queryId;

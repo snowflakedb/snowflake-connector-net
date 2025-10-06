@@ -102,7 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TimeSpan expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
 
             // Generate the value as returned by the DB
-            TimeSpan val= TimeSpan.ParseExact(inputTimeStr.Substring(0, 8), "c", CultureInfo.InvariantCulture);
+            TimeSpan val = TimeSpan.ParseExact(inputTimeStr.Substring(0, 8), "c", CultureInfo.InvariantCulture);
             Console.WriteLine("val " + val.ToString());
             var tickDiff = val.Ticks;
             var inputStringAsItComesBackFromDatabase = (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);

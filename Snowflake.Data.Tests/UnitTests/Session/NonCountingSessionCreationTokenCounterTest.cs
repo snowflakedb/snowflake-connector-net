@@ -12,28 +12,28 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // arrange
             var tokens = new NonCountingSessionCreationTokenCounter();
-            
+
             // act
             tokens.NewToken();
-            
+
             // assert
             Assert.AreEqual(0, tokens.Count());
         }
-        
+
         [Test]
         public void TestCompleteSessionCreation()
         {
             // arrange
             var tokens = new NonCountingSessionCreationTokenCounter();
             var token = tokens.NewToken();
-            
+
             // act
             tokens.RemoveToken(token);
-            
+
             // assert
             Assert.AreEqual(0, tokens.Count());
         }
-        
+
         [Test]
         public void TestCompleteUnknownTokenDoesNotThrowExceptions()
         {
@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var tokens = new NonCountingSessionCreationTokenCounter();
             tokens.NewToken();
             var unknownToken = new SessionCreationToken(SFSessionHttpClientProperties.DefaultConnectionTimeout);
-            
+
             // act
             tokens.RemoveToken(unknownToken);
 

@@ -23,6 +23,7 @@ namespace Snowflake.Data.Core
 
         internal const string SnowflakeDefaultConnectionName = "SNOWFLAKE_DEFAULT_CONNECTION_NAME";
         internal const string SnowflakeHome = "SNOWFLAKE_HOME";
+        internal const string SkipWarningForReadPermissions = "SF_SKIP_WARNING_FOR_READ_PERMISSIONS_ON_CONFIG_FILE";
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
@@ -33,6 +34,8 @@ namespace Snowflake.Data.Core
 
         private readonly FileOperations _fileOperations;
         private readonly EnvironmentOperations _environmentOperations;
+
+        private static bool _skipWarningForReadPermissions = false;
 
         public static readonly TomlConnectionBuilder Instance = new TomlConnectionBuilder();
 
@@ -98,7 +101,7 @@ namespace Snowflake.Data.Core
         private string LoadTokenFromFile(string tokenFilePathValue)
         {
             string tokenFile;
-            if(string.IsNullOrEmpty(tokenFilePathValue))
+            if (string.IsNullOrEmpty(tokenFilePathValue))
             {
                 tokenFile = DefaultTokenPath;
             }
@@ -155,6 +158,9 @@ namespace Snowflake.Data.Core
         {
             var allowedPermissions = new[]
             {
+                FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead,
+                FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.OtherRead,
+                FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupRead,
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite,
                 FileAccessPermissions.UserRead
             };
@@ -162,6 +168,19 @@ namespace Snowflake.Data.Core
                 throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
             if (stream.OwnerGroup.GroupId != Syscall.getegid())
                 throw new SecurityException("Attempting to read a file not owned by the effective group of the current process");
+
+            bool.TryParse(EnvironmentOperations.Instance.GetEnvironmentVariable(SkipWarningForReadPermissions), out _skipWarningForReadPermissions);
+            if (!_skipWarningForReadPermissions)
+            {
+                var nonUserReadPermissions = new[]
+                {
+                    FileAccessPermissions.GroupRead,
+                    FileAccessPermissions.OtherRead
+                };
+                if (nonUserReadPermissions.Any(p => (stream.FileAccessPermissions & p) == p))
+                    s_logger.Warn("File is readable by someone other than the owner");
+            }
+
             if (!(allowedPermissions.Any(a => stream.FileAccessPermissions == a)))
                 throw new SecurityException("Attempting to read a file with too broad permissions assigned");
         }

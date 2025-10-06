@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
-using Mono.Unix;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
@@ -23,9 +21,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private static Mock<FileOperations> t_fileOperations;
 
         [ThreadStatic]
-        private static Mock<UnixOperations> t_unixOperations;
-
-        [ThreadStatic]
         private static Mock<EnvironmentOperations> t_environmentOperations;
 
         [ThreadStatic]
@@ -35,9 +30,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void Setup()
         {
             t_fileOperations = new Mock<FileOperations>();
-            t_unixOperations = new Mock<UnixOperations>();
             t_environmentOperations = new Mock<EnvironmentOperations>();
-            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_unixOperations.Object, t_environmentOperations.Object);
+            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_environmentOperations.Object);
             MockHomeDirectory();
             MockExecutionDirectory();
         }
@@ -116,26 +110,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [Test]
-        public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
-            // arrange
-            MockFileOnHomePath();
-            MockHasFlagReturnsTrue();
-
-            // act
-            var thrown = Assert.Throws<Exception>(() => t_finder.FindConfigFilePath(null));
-
-            // assert
-            Assert.IsNotNull(thrown);
-            Assert.AreEqual(thrown.Message, $"Error due to other users having permission to modify the config file: {s_homeConfigFilePath}");
-        }
-
-        [Test]
         public void TestThatReturnsNullIfNoWayOfGettingTheFile()
         {
             // act
@@ -188,14 +162,6 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
 
-        private static void MockHasFlagReturnsTrue()
-        {
-            t_unixOperations
-                .Setup(f => f.CheckFileHasAnyOfPermissions(s_homeConfigFilePath,
-                    It.Is<FileAccessPermissions>(p =>  p.Equals(FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))))
-                .Returns(true);
-        }
-
         private static void MockHomeDirectory()
         {
             t_environmentOperations
@@ -228,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
             t_environmentOperations
                 .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
-                .Returns((string) null);
+                .Returns((string)null);
         }
 
         private static void MockFileFromEnvironmentalVariable()

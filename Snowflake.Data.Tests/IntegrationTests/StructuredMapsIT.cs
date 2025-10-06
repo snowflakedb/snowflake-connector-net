@@ -10,7 +10,7 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
-    public class StructuredMapsIT: StructuredTypesIT
+    public class StructuredMapsIT : StructuredTypesIT
     {
         [Test]
         public void TestDataTableLoadOnStructuredMap()
@@ -175,8 +175,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(new string[] {"a"}, map.Keys);
-                    CollectionAssert.AreEqual(new string[] {"b", "c"}, map["a"]);
+                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
+                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
                 }
             }
         }
@@ -201,8 +201,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(new string[] {"a"}, map.Keys);
-                    CollectionAssert.AreEqual(new string[] {"b", "c"}, map["a"]);
+                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
+                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
                 }
             }
         }
@@ -248,7 +248,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     EnableStructuredTypes(connection);
                     command.CommandText = $"SELECT {valueSfString}";
-                    var reader = (SnowflakeDbDataReader) command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act

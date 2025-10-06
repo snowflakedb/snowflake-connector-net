@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 .Returns(false);
             t_unixOperations
                 .Setup(u => u.CreateFileWithPermissions(s_customJsonPath,
-                    FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite))
+                    FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite, true))
                 .Throws<IOException>();
             t_environmentOperations
                 .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileStorage.CredentialCacheDirectoryEnvironmentName))
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // arrange
             t_unixOperations
                 .Setup(u => u.CreateFileWithPermissions(s_customJsonPath,
-                    FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
+                    FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite, true));
             t_unixOperations
                 .Setup(u => u.GetFilePermissions(s_customJsonPath))
                 .Returns(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
@@ -312,6 +312,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         private SFCredentialManagerFileImpl CreateFileCredentialManagerWithMockedEnvironmentalVariables() =>
-            new (FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, t_environmentOperations.Object);
+            new(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, t_environmentOperations.Object);
     }
 }

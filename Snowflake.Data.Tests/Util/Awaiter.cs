@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.Util
         {
             WaitUntilConditionOrTimeout(condition, timeout, s_defaultDelay);
         }
-        
+
         public static void WaitUntilConditionOrTimeout(Func<bool> condition, TimeSpan timeout, TimeSpan delay)
         {
             var startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

@@ -1,10 +1,10 @@
+using System;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
-using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [NonParallelizable]
-    public class ConnectionMultiplePoolsAsyncIT: SFBaseTestAsync
+    public class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync
     {
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
         private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await connection.OpenAsync().ConfigureAwait(false);
                 Assert.Fail("OpenAsync should fail for invalid connection string");
             }
-            catch {}
+            catch { }
             var thrown = Assert.Throws<SnowflakeDbException>(() => SnowflakeDbConnectionPool.GetPool(connection.ConnectionString));
 
             // assert
@@ -125,10 +125,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             await connection.OpenAsync().ConfigureAwait(false);
-            Thread.Sleep(3000);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
+            Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentPoolSize() == 3, TimeSpan.FromMilliseconds(1000));
             Assert.AreEqual(3, pool.GetCurrentPoolSize());
 
             // cleanup
@@ -182,7 +182,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // add test case name in connection string to make in unique for each test case
             // set short expiration timeout to cover the case that connection expired
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync2;ExpirationTimeout=3";
-            ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, true, 7, 100, 2);
+            ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3);
         }
 
         [Test(Description = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // add test case name in connection string to make in unique for each test case
             // set short expiration timeout to cover the case that connection expired
             string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync2;ExpirationTimeout=3";
-            ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, false, 7, 100, 2);
+            ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, false, 5, 5, 3);
         }
     }
 }

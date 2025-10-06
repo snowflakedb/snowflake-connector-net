@@ -7,7 +7,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    class MockLoginStoringRestRequester: IMockRestRequester
+    class MockLoginStoringRestRequester : IMockRestRequester
     {
         internal List<LoginRequest> LoginRequests { get; } = new();
 
@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.Mock
             SFRestRequest sfRequest = (SFRestRequest)postRequest;
             if (sfRequest.jsonBody is LoginRequest)
             {
-                LoginRequests.Add((LoginRequest) sfRequest.jsonBody);
+                LoginRequests.Add((LoginRequest)sfRequest.jsonBody);
                 LoginResponse authnResponse = new LoginResponse
                 {
                     data = new LoginResponseData()

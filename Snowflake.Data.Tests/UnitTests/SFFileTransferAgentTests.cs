@@ -1,4 +1,5 @@
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -117,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             _cancellationToken = new CancellationToken();
 
-            _session = new SFSession(ConnectionStringMock, null);
+            _session = new SFSession(ConnectionStringMock, new SessionPropertiesContext());
         }
 
         [TearDown]
@@ -244,7 +245,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
             // Check the file size of the source file and destination file are the same
             Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
-            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize)); ;
+            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
         }
 
         [Test]

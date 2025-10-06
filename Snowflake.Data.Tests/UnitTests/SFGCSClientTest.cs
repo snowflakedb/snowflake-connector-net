@@ -260,7 +260,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockWebRequest.Setup(client => client.GetResponseAsync())
                 .Returns(() => Task.FromResult((WebResponse)MockGCSClient.CreateResponseForUploadFile(httpStatusCode)));
             mockWebRequest.Setup(client => client.GetRequestStreamAsync())
-                .Returns(() => Task.FromResult((Stream) new MemoryStream()));
+                .Returns(() => Task.FromResult((Stream)new MemoryStream()));
             _client.SetCustomWebRequest(mockWebRequest.Object);
             _fileMetadata.uploadSize = UploadFileSize;
 
@@ -369,13 +369,44 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase("mock-stage", null, false, true, "https://mock-stage.storage.googleapis.com/")]
+        [TestCase("mock-stage/mock-id/mock-key", null, false, true, "https://mock-stage.storage.googleapis.com/mock-id/mock-key/")]
+        [TestCase("mock-stage/mock-id/mock-key", null, true, true, "https://mock-stage.storage.googleapis.com/mock-id/mock-key/")]
+        [TestCase("mock-stage/mock-id/mock-key", "https://example.com", true, true, "https://example.com/mock-id/mock-key/")]
+        public void TestUsesVirtualUrlWhenExpected(string location, string endPoint, bool useRegionalUrl, bool useVirtualUrl, string expectedRequestUri)
+        {
+            var fileMetadata = new SFFileMetadata()
+            {
+                stageInfo = new PutGetStageInfo()
+                {
+                    endPoint = endPoint,
+                    location = location,
+                    locationType = SFRemoteStorageUtil.GCS_FS,
+                    path = LocationPath,
+                    presignedUrl = null,
+                    region = null,
+                    stageCredentials = _stageCredentials,
+                    storageAccount = null,
+                    useRegionalUrl = useRegionalUrl,
+                    useVirtualUrl = useVirtualUrl
+                }
+            };
+
+            // act
+            var uri = _client.FormBaseRequest(fileMetadata, "PUT").RequestUri.ToString();
+
+            // assert
+            Assert.AreEqual(expectedRequestUri, uri);
+        }
+
+        [Test]
         [TestCase("some-header-name", "SOME-HEADER-NAME")]
         [TestCase("SOME-HEADER-NAME", "some-header-name")]
         public void TestGcsHeadersAreCaseInsensitiveForHttpResponseMessage(string headerNameToAdd, string headerNameToGet)
         {
             // arrange
             const string HeaderValue = "someValue";
-            var responseMessage = new HttpResponseMessage( HttpStatusCode.OK ) {Content =  new StringContent( "Response content" ) };
+            var responseMessage = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Response content") };
             responseMessage.Headers.Add(headerNameToAdd, HeaderValue);
 
             // act

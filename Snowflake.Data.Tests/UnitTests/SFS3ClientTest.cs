@@ -210,7 +210,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var amazonS3Client = new AmazonS3Config();
             var endpoint = "endpointWithNoHttps.com";
-            var expectedEndpoint = "https://endpointWithNoHttps.com";
+            var expectedEndpoint = "https://endpointWithNoHttps.com/";
 
             // ACT
             SFS3Client.SetCommonClientConfig(amazonS3Client, string.Empty, endpoint, 1, 0);
@@ -225,13 +225,46 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var amazonS3Client = new AmazonS3Config();
             var endpoint = "[endpointWithNoHttps.com]";
-            var expectedEndpoint = "https://endpointWithNoHttps.com";
+            var expectedEndpoint = "https://endpointWithNoHttps.com/";
 
             // ACT
             SFS3Client.SetCommonClientConfig(amazonS3Client, string.Empty, endpoint, 1, 0);
 
             // Assert
             Assert.That(amazonS3Client.ServiceURL, Is.EqualTo(expectedEndpoint));
+        }
+
+        [Test]
+        public void TestServiceUrlIsSetWhenEndpointAndRegionAreProvided()
+        {
+            // Arrange
+            var amazonS3Client = new AmazonS3Config();
+            var endpoint = "endpointWithNoHttps.com";
+            var expectedEndpoint = "https://endpointWithNoHttps.com/";
+            var mockRegion = "fakeRegion";
+
+            // ACT
+            SFS3Client.SetCommonClientConfig(amazonS3Client, mockRegion, endpoint, 1, 0);
+
+            // Assert
+            Assert.That(amazonS3Client.ServiceURL, Is.EqualTo(expectedEndpoint));
+            Assert.IsNull(amazonS3Client.RegionEndpoint);
+        }
+
+        [Test]
+        public void TestRegionEndpointIsSetWhenOnlyRegionIsProvided()
+        {
+            // Arrange
+            var amazonS3Client = new AmazonS3Config();
+            var expectedRegionEndpoint = RegionEndpoint.USEast2;
+            var region = expectedRegionEndpoint.SystemName;
+
+            // ACT
+            SFS3Client.SetCommonClientConfig(amazonS3Client, region, string.Empty, 1, 0);
+
+            // Assert
+            Assert.That(amazonS3Client.RegionEndpoint, Is.EqualTo(expectedRegionEndpoint));
+            Assert.IsNull(amazonS3Client.ServiceURL);
         }
 
         [Test]

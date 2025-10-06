@@ -1,14 +1,13 @@
 using System;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
-using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Snowflake.Data.Core.CredentialManager;
 using System.Security;
+using Snowflake.Data.Core.Authenticator.Browser;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Authenticator
@@ -21,32 +20,30 @@ namespace Snowflake.Data.Core.Authenticator
         public const string AUTH_NAME = "externalbrowser";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
         private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
-        private static readonly byte[] SUCCESS_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
+
+        private static readonly string SuccessResponse =
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
             "<title> SAML Response for Snowflake </title></head>" +
             "<body>Your identity was confirmed and propagated to Snowflake .NET driver. You can close this window now and go back where you started from." +
-            "</body></html>"
-            );
-        private static readonly byte[] ERROR_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
+            "</body></html>";
+
+        private static readonly string ErrorResponse =
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
             "<title> SAML Response for Snowflake </title></head>" +
             "<body>Authentication failed due to an error and was unable to extract a SAML response token." +
-            "</body></html>"
-            );
+            "</body></html>";
+
         // The saml token to send in the login request.
         private string _samlResponseToken;
         // The proof key to send in the login request.
         private string _proofKey;
-        // Event for successful authentication.
-        private ManualResetEvent _successEvent;
-        // Placeholder in case an exception occurs while extracting the token from the browser response.
-        private Exception _tokenExtractionException;
 
         internal string _idTokenKey = "";
 
         private SecureString _idToken;
 
-        internal BrowserOperations _browserOperations = BrowserOperations.Instance;
+        private readonly WebBrowserStarter _browserStarter = WebBrowserStarter.Instance;
+        private readonly WebListenerStarter _listenerStarter = WebListenerStarter.Instance;
 
         /// <summary>
         /// Constructor of the External authenticator
@@ -65,9 +62,9 @@ namespace Snowflake.Data.Core.Authenticator
             }
         }
 
-        internal ExternalBrowserAuthenticator(SFSession session, BrowserOperations browserOperations) : this(session)
+        internal ExternalBrowserAuthenticator(SFSession session, IWebBrowserRunner browserRunner) : this(session)
         {
-            _browserOperations = browserOperations;
+            _browserStarter = new WebBrowserStarter(browserRunner);
         }
 
         public static bool IsExternalBrowserAuthenticator(string authenticator) =>
@@ -82,17 +79,14 @@ namespace Snowflake.Data.Core.Authenticator
             _idToken = string.IsNullOrEmpty(idToken) ? null : SecureStringHelper.Encode(idToken);
             if (_idToken == null)
             {
-                int localPort = GetRandomUnusedPort();
-                using (var httpListener = GetHttpListener(localPort))
+                int localPort = _listenerStarter.GetRandomUnusedPort();
+                var localhostEndpoints = GetLocalhostEndpoints(localPort);
+                using (var httpListener = _listenerStarter.StartHttpListener(localhostEndpoints))
                 {
-                    httpListener.Start();
                     logger.Debug("Get IdpUrl and ProofKey");
                     var loginUrl = await GetIdpUrlAndProofKeyAsync(localPort, cancellationToken).ConfigureAwait(false);
-                    logger.Debug("Open browser");
-                    StartBrowser(loginUrl);
                     logger.Debug("Get the redirect SAML request");
-                    GetRedirectSamlRequest(httpListener);
-                    httpListener.Stop();
+                    _samlResponseToken = GetRedirectSamlRequest(httpListener, loginUrl);
                 }
             }
 
@@ -123,17 +117,14 @@ namespace Snowflake.Data.Core.Authenticator
             _idToken = string.IsNullOrEmpty(idToken) ? null : SecureStringHelper.Encode(idToken);
             if (_idToken == null)
             {
-                int localPort = GetRandomUnusedPort();
-                using (var httpListener = GetHttpListener(localPort))
+                int localPort = _listenerStarter.GetRandomUnusedPort();
+                var localhostEndpoints = GetLocalhostEndpoints(localPort);
+                using (var httpListener = _listenerStarter.StartHttpListener(localhostEndpoints))
                 {
-                    httpListener.Start();
                     logger.Debug("Get IdpUrl and ProofKey");
                     var loginUrl = GetIdpUrlAndProofKey(localPort);
-                    logger.Debug("Open browser");
-                    StartBrowser(loginUrl);
                     logger.Debug("Get the redirect SAML request");
-                    GetRedirectSamlRequest(httpListener);
-                    httpListener.Stop();
+                    _samlResponseToken = GetRedirectSamlRequest(httpListener, loginUrl);
                 }
             }
 
@@ -206,120 +197,54 @@ namespace Snowflake.Data.Core.Authenticator
             }
         }
 
-        private void GetRedirectSamlRequest(HttpListener httpListener)
+        private string GetRedirectSamlRequest(HttpListener httpListener, string loginUrl)
         {
-            _successEvent = new ManualResetEvent(false);
-            _tokenExtractionException = null;
-            httpListener.BeginGetContext(GetContextCallback, httpListener);
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
-            if (!_successEvent.WaitOne(timeoutInSec * 1000))
+            var timeout = TimeSpan.FromSeconds(timeoutInSec);
+            var extractor = new Func<HttpListenerRequest, Result<ExternalBrowserToken, IBrowserError>>(ValidateAndExtractToken);
+            using (var browserListener = new WebBrowserListener<ExternalBrowserToken>(httpListener, extractor, SuccessResponse, ErrorResponse))
             {
-                logger.Error("Browser response timeout has been reached");
-                throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_TIMEOUT, timeoutInSec);
-            }
-            if (_tokenExtractionException != null)
-            {
-                throw _tokenExtractionException;
+                logger.Debug("Open browser");
+                _browserStarter.StartBrowser(new Url(loginUrl));
+                return browserListener.WaitAndGetResult(timeout).Token;
             }
         }
 
-        private void GetContextCallback(IAsyncResult result)
-        {
-            HttpListener httpListener = (HttpListener)result.AsyncState;
-            if (httpListener.IsListening)
-            {
-                HttpListenerContext context = null;
-                try
-                {
-                    context = httpListener.EndGetContext(result);
-                }
-                catch (HttpListenerException ex)
-                {
-                    logger.Error("Error while trying to get context from HttpListener", ex);
-                }
-                if (context != null)
-                {
-                    HttpListenerRequest request = context.Request;
+        private static string[] GetLocalhostEndpoints(int port) =>
+            new[] { $"http://{IPAddress.Loopback}:{port}/", $"http://localhost:{port}/" };
 
-                    _samlResponseToken = ValidateAndExtractToken(request);
-                    HttpListenerResponse response = context.Response;
-                    try
-                    {
-                        using (var output = response.OutputStream)
-                        {
-                            if (!string.IsNullOrEmpty(_samlResponseToken))
-                            {
-                                output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
-                            }
-                            else
-                            {
-                                output.Write(ERROR_RESPONSE, 0, ERROR_RESPONSE.Length);
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore the exception as it does not affect the overall authentication flow
-                        logger.Warn("External browser response not sent out");
-                    }
-                }
-            }
-
-            _successEvent.Set();
-        }
-
-        private static int GetRandomUnusedPort()
-        {
-            var listener = new TcpListener(IPAddress.Loopback, 0);
-            listener.Start();
-            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-            listener.Stop();
-            return port;
-        }
-
-        private static HttpListener GetHttpListener(int port)
-        {
-            HttpListener listener = new HttpListener();
-            listener.Prefixes.Add($"http://{IPAddress.Loopback}:{port}/");
-            listener.Prefixes.Add($"http://localhost:{port}/");
-            return listener;
-        }
-
-        private void StartBrowser(string url)
-        {
-            string regexStr = "^http(s?)\\:\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z@:])*(:(0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\&\\(\\)\\/\\\\\\+&%\\$#_=@]*)?$";
-            Match m = Regex.Match(url, regexStr, RegexOptions.IgnoreCase);
-            if (!m.Success || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
-            {
-                logger.Error("Failed to start browser. Invalid url.");
-                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, url);
-            }
-            var uri = new Uri(url);
-            if (url != uri.ToString())
-            {
-                logger.Error("Failed to start browser. Invalid uri.");
-                throw new SnowflakeDbException(SFError.INVALID_BROWSER_URL, url);
-            }
-            _browserOperations.OpenUrl(uri);
-        }
-
-        private string ValidateAndExtractToken(HttpListenerRequest request)
+        private Result<ExternalBrowserToken, IBrowserError> ValidateAndExtractToken(HttpListenerRequest request)
         {
             if (request.HttpMethod != "GET")
             {
                 logger.Error("Failed to extract token due to invalid HTTP method.");
-                _tokenExtractionException = new SnowflakeDbException(SFError.BROWSER_RESPONSE_WRONG_METHOD, request.Url.Query);
-                return null;
+                return Result<ExternalBrowserToken, IBrowserError>.CreateError(new BrowserError
+                {
+                    BrowserMessage = ErrorResponse,
+                    Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_WRONG_METHOD, request.HttpMethod)
+                });
             }
 
             if (request.Url.Query == null || !request.Url.Query.StartsWith(TOKEN_REQUEST_PREFIX))
             {
                 logger.Error("Failed to extract token due to invalid query.");
-                _tokenExtractionException = new SnowflakeDbException(SFError.BROWSER_RESPONSE_INVALID_PREFIX, request.Url.Query);
-                return null;
+                return Result<ExternalBrowserToken, IBrowserError>.CreateError(new BrowserError
+                {
+                    BrowserMessage = ErrorResponse,
+                    Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_INVALID_PREFIX, request.Url.Query)
+                });
             }
 
-            return Uri.UnescapeDataString(request.Url.Query.Substring(TOKEN_REQUEST_PREFIX.Length));
+            var token = Uri.UnescapeDataString(request.Url.Query.Substring(TOKEN_REQUEST_PREFIX.Length));
+            if (string.IsNullOrEmpty(token))
+            {
+                return Result<ExternalBrowserToken, IBrowserError>.CreateError(new BrowserError
+                {
+                    BrowserMessage = ErrorResponse,
+                    Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_ERROR, "could not retrieve token")
+                });
+            }
+            return Result<ExternalBrowserToken, IBrowserError>.CreateResult(new ExternalBrowserToken(token));
         }
 
         private SFRestRequest BuildAuthenticatorRestRequest(int port)

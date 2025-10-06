@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Microsoft.IdentityModel.Tokens;
 
-    class MockLoginMFATokenCacheRestRequester: IMockRestRequester
+    class MockLoginMFATokenCacheRestRequester : IMockRestRequester
     {
         internal Queue<LoginRequest> LoginRequests { get; } = new();
 
@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.Mock
             SFRestRequest sfRequest = (SFRestRequest)postRequest;
             if (sfRequest.jsonBody is LoginRequest)
             {
-                LoginRequests.Enqueue((LoginRequest) sfRequest.jsonBody);
+                LoginRequests.Enqueue((LoginRequest)sfRequest.jsonBody);
                 var responseData = this.LoginResponses.IsNullOrEmpty() ? new LoginResponseData()
                 {
                     token = "session_token",

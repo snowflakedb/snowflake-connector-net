@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.Mock
             return DirectoryPermissionsReturn;
         }
 
-        public override bool CheckFileHasAnyOfPermissions(string path, FileAccessPermissions permissions)
+        public override bool CheckFileHasAnyOfPermissions(FileAccessPermissions actualPermissions, FileAccessPermissions expectedPermissions)
         {
             return FilePermissionsReturn;
         }

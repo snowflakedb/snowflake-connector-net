@@ -26,7 +26,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// <see cref="IAuthenticator.Authenticate"/>
         void IAuthenticator.Authenticate()
         {
-             base.Login();
+            base.Login();
         }
 
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>

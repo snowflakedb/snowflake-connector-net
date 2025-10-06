@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Data.Common;
 using System.Data;
@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []{"cola NUMBER"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola NUMBER" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []{"cola NUMBER"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola NUMBER" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -121,14 +121,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []{"cola DOUBLE"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola DOUBLE" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
                 float numFloat = (float)1.23;
                 double numDouble = (double)1.2345678;
 
-                string insertCommand = $"insert into {TableName} values (?),(?)" ;
+                string insertCommand = $"insert into {TableName} values (?),(?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -249,7 +249,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Insert data
                 int fractionalPartIndex = inputTimeStr.IndexOf('.');
                 var precision = fractionalPartIndex > 0 ? inputTimeStr.Length - (inputTimeStr.IndexOf('.') + 1) : 0;
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     $"cola TIME{ (precision > 0 ? string.Empty : $"({precision})")}"
                 });
@@ -291,7 +291,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Only Time data can be retrieved using GetTimeSpan, other type will fail
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "C1 NUMBER",
                     "C2 FLOAT",
@@ -312,7 +312,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Insert data
                 IDbCommand cmd = conn.CreateCommand();
 
-                string insertCommand = $"insert into {TableName}(C1, C10, C11, C12) select 1, "+
+                string insertCommand = $"insert into {TableName}(C1, C10, C11, C12) select 1, " +
                 "PARSE_JSON('{ \"key1\": \"value1\", \"key2\": \"value2\" }')" +
                  ", PARSE_JSON(' { \"outer_key1\": { \"inner_key1A\": \"1a\", \"inner_key1B\": NULL }, '||' \"outer_key2\": { \"inner_key2\": 2 } '||' } ')," +
                  " ARRAY_CONSTRUCT(1, 2, 3, NULL)";
@@ -387,7 +387,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     $"cola {dataType}{ (precision == null ? string.Empty : $"({precision})" )}"
                 });
@@ -493,7 +493,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []{"cola TIMESTAMP_TZ"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola TIMESTAMP_TZ" });
 
                 DateTimeOffset now = DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(timezoneOffsetInHours));
 
@@ -533,7 +533,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []{"cola TIMESTAMP_LTZ"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola TIMESTAMP_LTZ" });
 
                 DateTimeOffset now = DateTimeOffset.Now;
 
@@ -569,11 +569,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestGetBoolean([Values]bool value)
+        public void TestGetBoolean([Values] bool value)
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []{"cola BOOLEAN"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola BOOLEAN" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -648,7 +648,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "col1 BINARY",
                     "col2 VARCHAR(50)",
@@ -821,7 +821,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "col1 VARCHAR(50)",
                     "col2 BINARY",
@@ -1009,7 +1009,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "col1 VARCHAR(50)",
                     "col2 BINARY",
@@ -1033,7 +1033,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(1, count);
 
                 cmd.CommandText = $"select * from {TableName}";
-                DbDataReader reader = (DbDataReader) cmd.ExecuteReader();
+                DbDataReader reader = (DbDataReader)cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
@@ -1099,7 +1099,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     reader.GetInt16(-1);
                     Assert.Fail();
                 }
-                catch(SnowflakeDbException e)
+                catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(270002, e.ErrorCode);
                 }
@@ -1109,7 +1109,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     reader.GetInt16(1);
                     Assert.Fail();
                 }
-                catch(SnowflakeDbException e)
+                catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(270002, e.ErrorCode);
                 }
@@ -1159,7 +1159,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             reader.Read();
                             Assert.Fail();
                         }
-                        catch(SnowflakeDbException e)
+                        catch (SnowflakeDbException e)
                         {
                             Assert.AreEqual(270010, e.ErrorCode);
                         }
@@ -1169,7 +1169,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             reader.GetInt16(0);
                             Assert.Fail();
                         }
-                        catch(SnowflakeDbException e)
+                        catch (SnowflakeDbException e)
                         {
                             Assert.AreEqual(270010, e.ErrorCode);
                         }
@@ -1185,7 +1185,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "a INTEGER",
                     "b STRING"
@@ -1221,7 +1221,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []{"cola STRING"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 string insertCommand = $"insert into {TableName} values (?)";
@@ -1266,7 +1266,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var stageName = TestName;
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []{"cola STRING"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = $"create or replace stage {stageName}";
@@ -1298,7 +1298,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var stageName = TestName;
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []{"cola STRING"});
+                CreateOrReplaceTable(conn, TableName, new[] { "cola STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = $"create or replace stage {stageName}";
@@ -1339,7 +1339,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                     {
                         "cola VARIANT",
                         "colb ARRAY",
@@ -1369,7 +1369,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "c1 NUMBER(20, 4)",
                     "c2 STRING(100)",
@@ -1473,8 +1473,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 DbDataReader reader = cmd.ExecuteReader();
 
-                // multi statements are always returned in JSON
-                Assert.AreEqual(ResultFormat.JSON, ((SnowflakeDbDataReader)reader).ResultFormat);
+                Assert.AreEqual(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
 
                 // select 1
                 Assert.IsTrue(reader.HasRows);

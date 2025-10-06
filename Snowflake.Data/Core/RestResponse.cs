@@ -25,14 +25,14 @@ namespace Snowflake.Data.Core
         {
             if (!success)
             {
-                SnowflakeDbException e = new SnowflakeDbException("",code, message, "");
+                SnowflakeDbException e = new SnowflakeDbException("", code, message, "");
                 throw e;
             }
 
         }
     }
 
-    public interface IQueryExecResponseData
+    internal interface IQueryExecResponseData
     {
         string queryId { get; }
 
@@ -63,10 +63,11 @@ namespace Snowflake.Data.Core
         internal LoginResponseData data { get; set; }
     }
 
-    internal class RenewSessionResponse : BaseRestResponse {
-		[JsonProperty(PropertyName = "data")]
-		internal RenewSessionResponseData data { get; set; }
-	}
+    internal class RenewSessionResponse : BaseRestResponse
+    {
+        [JsonProperty(PropertyName = "data")]
+        internal RenewSessionResponseData data { get; set; }
+    }
 
     internal class LoginResponseData
     {
@@ -111,23 +112,24 @@ namespace Snowflake.Data.Core
     }
 
 
-	internal class RenewSessionResponseData {
+    internal class RenewSessionResponseData
+    {
 
-		[JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string sessionToken { get; set; }
+        [JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string sessionToken { get; set; }
 
-		[JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 sessionTokenValidityInSeconds { get; set; }
+        [JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int16 sessionTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string masterToken { get; set; }
+        [JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string masterToken { get; set; }
 
-		[JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 masterTokenValidityInSeconds { get; set; }
+        [JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int16 masterTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int64 sessionId { get; set; }
-	}
+        [JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int64 sessionId { get; set; }
+    }
 
     internal class SessionInfo
     {
@@ -448,6 +450,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "useRegionalUrl", NullValueHandling = NullValueHandling.Ignore)]
         internal bool useRegionalUrl { get; set; }
 
+        [JsonProperty(PropertyName = "useVirtualUrl", NullValueHandling = NullValueHandling.Ignore)]
+        internal bool useVirtualUrl { get; set; }
+
         private const string GcsRegionMeCentral2 = "me-central2";
 
         internal string GcsCustomEndpoint()
@@ -456,6 +461,11 @@ namespace Snowflake.Data.Core
                 return null;
             if (!string.IsNullOrWhiteSpace(endPoint) && endPoint != "null")
                 return endPoint;
+            if (useVirtualUrl)
+            {
+                var bucketName = location.Contains("/") ? location.Substring(0, location.IndexOf('/')) : location;
+                return $"{bucketName}.storage.googleapis.com";
+            }
             if (GcsRegionMeCentral2.Equals(region, StringComparison.OrdinalIgnoreCase) || useRegionalUrl)
                 return $"storage.{region.ToLower()}.rep.googleapis.com";
             return null;

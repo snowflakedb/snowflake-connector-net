@@ -1,13 +1,12 @@
 using System.IO;
 using System.Text;
-using Newtonsoft.Json;
 
 namespace Snowflake.Data.Core
 {
     using Snowflake.Data.Client;
     using System.Threading.Tasks;
 
-    public class FastStreamWrapper
+    internal class FastStreamWrapper
     {
         Stream wrappedStream;
         byte[] buffer = new byte[32768];
@@ -51,7 +50,7 @@ namespace Snowflake.Data.Core
         }
     }
 
-    public class ReusableChunkParser : IChunkParser
+    internal class ReusableChunkParser : IChunkParser
     {
         // Very fast parser, only supports strings and nulls
         // Never generates parsing errors
@@ -73,65 +72,65 @@ namespace Snowflake.Data.Core
             var ms = new FastMemoryStream();
             await Task.Run(() =>
             {
-            while ((c = input.ReadByte()) >= 0)
-            {
-                if (!inString)
+                while ((c = input.ReadByte()) >= 0)
                 {
-                    // n means null
-                    // " quote means begin string
-                    // all else are ignored
-                    if (c == '"')
+                    if (!inString)
                     {
-                        inString = true;
-                    }
-                    else if (c == 'n')
-                    {
-                        rc.AddCell(null, 0);
-                    }
-                    // ignore anything else
-                }
-                else
-                {
-                    // Inside a string, look for end string
-                    // Anything else is saved in the buffer
-                    if (c == '"')
-                    {
-                        rc.AddCell(ms.GetBuffer(), ms.Length);
-                        ms.Clear();
-                        inString = false;
-                    }
-                    else if (c == '\\')
-                    {
-                        bool caseU = false;
-                        // Process next character
-                        c = input.ReadByte();
-                        switch (c)
+                        // n means null
+                        // " quote means begin string
+                        // all else are ignored
+                        if (c == '"')
                         {
-                            case 'n':
-                                c = '\n';
-                                break;
-                            case 'r':
-                                c = '\r';
-                                break;
-                            case 'b':
-                                c = '\b';
-                                break;
-                            case 't':
-                                c = '\t';
-                                break;
-                            case 'u':
-                                caseU = true;
-                                StringBuilder byteStr = new StringBuilder("");
-                                for (int i = 0; i < 4; i++)
-                                {
-                                    byteStr.Append((char)input.ReadByte());
-                                }
-                                int ascii = int.Parse(byteStr.ToString(), System.Globalization.NumberStyles.HexNumber);
-                                char asciiChar = (char)ascii;
-                                ms.WriteByte((byte)asciiChar);
-                                break;
-                            case -1:
-                                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
+                            inString = true;
+                        }
+                        else if (c == 'n')
+                        {
+                            rc.AddCell(null, 0);
+                        }
+                        // ignore anything else
+                    }
+                    else
+                    {
+                        // Inside a string, look for end string
+                        // Anything else is saved in the buffer
+                        if (c == '"')
+                        {
+                            rc.AddCell(ms.GetBuffer(), ms.Length);
+                            ms.Clear();
+                            inString = false;
+                        }
+                        else if (c == '\\')
+                        {
+                            bool caseU = false;
+                            // Process next character
+                            c = input.ReadByte();
+                            switch (c)
+                            {
+                                case 'n':
+                                    c = '\n';
+                                    break;
+                                case 'r':
+                                    c = '\r';
+                                    break;
+                                case 'b':
+                                    c = '\b';
+                                    break;
+                                case 't':
+                                    c = '\t';
+                                    break;
+                                case 'u':
+                                    caseU = true;
+                                    StringBuilder byteStr = new StringBuilder("");
+                                    for (int i = 0; i < 4; i++)
+                                    {
+                                        byteStr.Append((char)input.ReadByte());
+                                    }
+                                    int ascii = int.Parse(byteStr.ToString(), System.Globalization.NumberStyles.HexNumber);
+                                    char asciiChar = (char)ascii;
+                                    ms.WriteByte((byte)asciiChar);
+                                    break;
+                                case -1:
+                                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
                             }
                             // The 'u' case already writes to stream so skip to prevent re-writing
                             // If not skipped, unicode characters are added an extra u (e.g "/u007f" becomes "/u007fu")

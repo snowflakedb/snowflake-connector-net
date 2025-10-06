@@ -6,7 +6,7 @@ namespace Snowflake.Data.Configuration
     {
         public int ChunkDownloaderVersion;
         public int ChunkParserVersion;
-        
+
         private SFConfiguration()
         {
             ChunkDownloaderVersion = 3;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Core
                 return;
             }
 
-            List<string> dataRows = new List<string>(); ;
+            List<string> dataRows = new List<string>();
             CreateDataRows(ref dataRows, bindings);
 
             int startIndex = 0;
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Core
                 return;
             }
 
-            List<string> dataRows = new List<string>(); ;
+            List<string> dataRows = new List<string>();
             CreateDataRows(ref dataRows, bindings);
 
             int startIndex = 0;
@@ -256,7 +256,7 @@ namespace Snowflake.Data.Core
                     return date.ToShortDateString();
                 case "TIME":
                     long nsSinceMidnight = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ns] from Midnight
-                    DateTime time = epoch.AddTicks(nsSinceMidnight/100);
+                    DateTime time = epoch.AddTicks(nsSinceMidnight / 100);
                     return time.ToString("HH:mm:ss.fffffff");
                 case "TIMESTAMP_LTZ":
                     long ticksFromEpochLtz =
@@ -292,11 +292,11 @@ namespace Snowflake.Data.Core
 
         private void CreateStage()
         {
-            if(session.GetArrayBindStage() != null)
+            if (session.GetArrayBindStage() != null)
             {
                 return;
             }
-            lock(session)
+            lock (session)
             {
                 if (session.GetArrayBindStage() == null)
                 {

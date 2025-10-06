@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using System;
 using System.Data;
@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING"
@@ -541,7 +541,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING",
@@ -559,7 +559,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     int total = 250000;
 
                     List<int> arrint = new List<int>();
-                    for (int i=0; i<total; i++)
+                    for (int i = 0; i < total; i++)
                     {
                         arrint.Add(i * 10 + 1);
                         arrint.Add(i * 10 + 2);
@@ -572,7 +572,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p1);
 
                     List<string> arrstring = new List<string>();
-                    for (int i=0; i<total; i++)
+                    for (int i = 0; i < total; i++)
                     {
                         arrstring.Add("str1");
                         arrstring.Add("str2");
@@ -588,7 +588,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     DateTime date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
                     DateTime date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
                     List<DateTime> arrDate = new List<DateTime>();
-                    for (int i=0; i<total; i++)
+                    for (int i = 0; i < total; i++)
                     {
                         arrDate.Add(date1);
                         arrDate.Add(date2);
@@ -666,7 +666,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
         {
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings {
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
                 TypeNameHandling = TypeNameHandling.Auto
             };
 
@@ -674,7 +675,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "cola REAL",
                     "colb TEXT",
@@ -691,15 +692,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     List<double> arrdouble = new List<double>();
                     List<string> arrstring = new List<string>();
                     List<int> arrint = new List<int>();
-                    for (int i=0; i<total; i++)
+                    for (int i = 0; i < total; i++)
                     {
                         arrdouble.Add(i * 10 + 1);
                         arrdouble.Add(i * 10 + 2);
                         arrdouble.Add(i * 10 + 3);
 
-                        arrstring.Add("stra"+i);
-                        arrstring.Add("strb"+i);
-                        arrstring.Add("strc"+i);
+                        arrstring.Add("stra" + i);
+                        arrstring.Add("strb" + i);
+                        arrstring.Add("strc" + i);
 
                         arrint.Add(i * 10 + 1);
                         arrint.Add(i * 10 + 2);
@@ -743,7 +744,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []
+                CreateOrReplaceTable(conn, TableName, new[]
                 {
                     "cola INTEGER"
                 });
@@ -849,14 +850,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         // STANDARD Tables
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, null,  DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, 6,  DbType.Time, FormatHmsf, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, null,  DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, 6,  DbType.Time, FormatHmsf, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
@@ -893,6 +894,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
         [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
+        [Test, NonParallelizable]
         public void TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
         {
             // Arrange
@@ -910,7 +912,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var bigBatchRowCount = bindingThreshold / 2;
             s_logger.Info(testCase);
 
-            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
             {
                 conn.Open();
 
@@ -941,7 +943,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var sqlInsert = $"insert into {TableName} ({sql_columns}) values ({sql_values})";
                 InsertSingleRecord(conn, sqlInsert, bindingType, 1, expected);
                 InsertMultipleRecords(conn, sqlInsert, bindingType, 2, expected, smallBatchRowCount, false);
-                InsertMultipleRecords(conn, sqlInsert, bindingType, smallBatchRowCount+2, expected, bigBatchRowCount, true);
+                InsertMultipleRecords(conn, sqlInsert, bindingType, smallBatchRowCount + 2, expected, bigBatchRowCount, true);
 
                 // Assert
                 var row = 0;
@@ -961,7 +963,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         }
                     }
                 }
-                Assert.AreEqual(1+smallBatchRowCount+bigBatchRowCount, row);
+                Assert.AreEqual(1 + smallBatchRowCount + bigBatchRowCount, row);
             }
         }
 

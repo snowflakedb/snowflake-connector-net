@@ -22,42 +22,42 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-         [Test, IgnoreOnCI]
-         public void TestAuthenticateUsingKeyPairFileContentInvalidKey()
-         {
-             AuthTestHelper authTestHelper = new AuthTestHelper();
+        [Test, IgnoreOnCI]
+        public void TestAuthenticateUsingKeyPairFileContentInvalidKey()
+        {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-             var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH");
-             var parameters = AuthConnectionString.GetKeyPairFromFileContentParameters(privateKey);
-             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
+            var privateKey = AuthConnectionString.GetPrivateKeyContentForKeypairAuth("SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH");
+            var parameters = AuthConnectionString.GetKeyPairFromFileContentParameters(privateKey);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-             authTestHelper.VerifyExceptionIsThrown("Error: JWT token is invalid");
-         }
+            authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+            authTestHelper.VerifyExceptionIsThrown("Error: JWT token is invalid");
+        }
 
-          [Test, IgnoreOnCI]
-          public void TestAuthenticateUsingKeyPairFilePathSuccessful()
-          {
-               AuthTestHelper authTestHelper = new AuthTestHelper();
-               var privateKeyPath = AuthConnectionString.GetPrivateKeyPathForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
-               var parameters = AuthConnectionString.GetKeyPairFromFilePathConnectionString(privateKeyPath);
-               _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
+        [Test, IgnoreOnCI]
+        public void TestAuthenticateUsingKeyPairFilePathSuccessful()
+        {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
+            var privateKeyPath = AuthConnectionString.GetPrivateKeyPathForKeypairAuth("SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH");
+            var parameters = AuthConnectionString.GetKeyPairFromFilePathConnectionString(privateKeyPath);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-               authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-               authTestHelper.VerifyExceptionIsNotThrown();
-           }
+            authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+            authTestHelper.VerifyExceptionIsNotThrown();
+        }
 
-          [Test, IgnoreOnCI]
-          public void TestAuthenticateUsingKeyPairFilePathInvalidKey()
-          {
-              AuthTestHelper authTestHelper = new AuthTestHelper();
+        [Test, IgnoreOnCI]
+        public void TestAuthenticateUsingKeyPairFilePathInvalidKey()
+        {
+            AuthTestHelper authTestHelper = new AuthTestHelper();
 
-              var privateKeyPath = AuthConnectionString.GetPrivateKeyPathForKeypairAuth("SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH");
-              var parameters = AuthConnectionString.GetKeyPairFromFilePathConnectionString(privateKeyPath);
-              _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
+            var privateKeyPath = AuthConnectionString.GetPrivateKeyPathForKeypairAuth("SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH");
+            var parameters = AuthConnectionString.GetKeyPairFromFilePathConnectionString(privateKeyPath);
+            _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-              authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
-              authTestHelper.VerifyExceptionIsThrown("Error: JWT token is invalid");
-          }
-     }
+            authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
+            authTestHelper.VerifyExceptionIsThrown("Error: JWT token is invalid");
+        }
+    }
 }

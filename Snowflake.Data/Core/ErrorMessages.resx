@@ -201,4 +201,16 @@
   <data name="STRUCTURED_TYPE_READ_DETAILED_ERROR" xml:space="preserve">
     <value>Failed to read structured type {0}. \n : Error : {1}</value>
   </data>
+  <data name="BROWSER_RESPONSE_ERROR" xml:space="preserve">
+    <value>Invalid response from browser: {0}.</value>
+  </data>
+  <data name="OAUTH_TOKEN_REQUEST_ERROR" xml:space="preserve">
+    <value>Error on getting an OAuth token from IDP: {0}.</value>
+  </data>
+  <data name="EXPERIMENTAL_AUTHENTICATION_DISABLED" xml:space="preserve">
+    <value>Experimental authentication of '{0}' is disabled. You can enable it by SF_ENABLE_EXPERIMENTAL_AUTHENTICATION environmental variable.</value>
+  </data>
+  <data name="WIF_ATTESTATION_ERROR" xml:space="preserve">
+    <value>Retrieving attestation for {0} failed. {1}</value>
+  </data>
 </root>

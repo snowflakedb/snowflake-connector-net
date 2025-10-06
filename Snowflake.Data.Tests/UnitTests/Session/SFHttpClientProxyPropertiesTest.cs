@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
@@ -13,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // given
             var extractor = new SFSessionHttpClientProxyProperties.Extractor();
-            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(testCase.conectionString, new SessionPropertiesContext());
 
             // when
             var proxyProperties = extractor.ExtractProperties(properties);
@@ -77,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     proxyUser = "Chris"
                 }
             };
-            return new []
+            return new[]
             {
                 noProxyPropertiesCase,
                 proxyPropertiesConfiguredButDisabledCase,

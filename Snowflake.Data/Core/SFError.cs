@@ -92,6 +92,18 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270062)]
         STRUCTURED_TYPE_READ_DETAILED_ERROR,
 
+        [SFErrorAttr(errorCode = 270063)]
+        BROWSER_RESPONSE_ERROR,
+
+        [SFErrorAttr(errorCode = 270064)]
+        OAUTH_TOKEN_REQUEST_ERROR,
+
+        [SFErrorAttr(errorCode = 270065)]
+        EXPERIMENTAL_AUTHENTICATION_DISABLED,
+
+        [SFErrorAttr(errorCode = 270066)]
+        WIF_ATTESTATION_ERROR,
+
         [SFErrorAttr(errorCode = 390195)]
         ID_TOKEN_INVALID,
 
@@ -109,6 +121,21 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 390129)]
         EXT_AUTHN_EXCEPTION,
+
+        [SFErrorAttr(errorCode = 390318)]
+        EXT_OAUTH_ACCESS_TOKEN_EXPIRED,
+
+        [SFErrorAttr(errorCode = 390303)]
+        EXT_OAUTH_ACCESS_TOKEN_INVALID
+    }
+
+    class OAuthTokenErrors
+    {
+        public static bool IsAccessTokenExpired(int error) =>
+            SFError.EXT_OAUTH_ACCESS_TOKEN_EXPIRED.GetAttribute<SFErrorAttr>().errorCode == error;
+
+        public static bool IsAccessTokenInvalid(int error) =>
+            SFError.EXT_OAUTH_ACCESS_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode == error;
     }
 
     class SFMFATokenErrors
@@ -132,10 +159,4 @@ namespace Snowflake.Data.Core
     {
         public int errorCode { get; set; }
     }
-
-    public class SqlState
-    {
-        public const string WARNING = "01000";
-    }
-
 }

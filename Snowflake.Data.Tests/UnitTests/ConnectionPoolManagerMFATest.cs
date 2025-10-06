@@ -1,10 +1,6 @@
-
-
 namespace Snowflake.Data.Tests.UnitTests
 {
     using System;
-    using System.Linq;
-    using System.Security;
     using Mock;
     using NUnit.Framework;
     using Snowflake.Data.Core;
@@ -60,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 authResponseSessionInfo = new SessionInfo()
             });
             // Act
-            var session = _connectionPoolManager.GetSession(ConnectionStringMFACache, null, null);
+            var session = _connectionPoolManager.GetSession(ConnectionStringMFACache, new SessionPropertiesContext());
 
             // Assert
             Awaiter.WaitUntilConditionOrTimeout(() => s_restRequester.LoginRequests.Count == 2, TimeSpan.FromSeconds(15));
@@ -82,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=true";
             // Act and assert
-            var thrown = Assert.Throws<SnowflakeDbException>(() =>_connectionPoolManager.GetSession(connectionString, null,null));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => _connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
             Assert.That(thrown.Message, Does.Contain("Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication"));
         }
 
@@ -91,8 +87,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;POOLINGENABLED=true";
+            var sessionContext = new SessionPropertiesContext { Passcode = SecureStringHelper.Encode("12345") };
+
             // Act and assert
-            var thrown = Assert.Throws<SnowflakeDbException>(() =>_connectionPoolManager.GetSession(connectionString, null,SecureStringHelper.Encode("12345")));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => _connectionPoolManager.GetSession(connectionString, sessionContext));
             Assert.That(thrown.Message, Does.Contain("Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication"));
         }
 
@@ -102,7 +100,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;POOLINGENABLED=false";
             // Act and assert
-            Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, null, null));
+            Assert.DoesNotThrow(() => _connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
         }
 
         [Test]
@@ -111,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=0;passcode=12345;POOLINGENABLED=true";
             // Act and assert
-            Assert.DoesNotThrow(() =>_connectionPoolManager.GetSession(connectionString, null, null));
+            Assert.DoesNotThrow(() => _connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
         }
     }
 
@@ -124,9 +122,9 @@ namespace Snowflake.Data.Tests.UnitTests
             this.restRequester = restRequester;
         }
 
-        public SFSession NewSession(string connectionString, SecureString password, SecureString passcode)
+        public SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext)
         {
-            return new SFSession(connectionString, password, passcode, EasyLoggingStarter.Instance, restRequester);
+            return new SFSession(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester);
         }
     }
 }

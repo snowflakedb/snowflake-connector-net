@@ -43,16 +43,16 @@ namespace Snowflake.Data.Core
 
                 ReadChunk(responseData);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                s_logger.Error("Result set error queryId="+responseData.queryId, ex);
+                s_logger.Error("Result set error queryId=" + responseData.queryId, ex);
                 throw;
             }
         }
 
         private void ReadChunk(QueryExecResponseData responseData)
         {
-            if (responseData.rowsetBase64.Length > 0)
+            if (responseData.rowsetBase64?.Length > 0)
             {
                 using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
                 {
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Core
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
                                $" size uncompressed: {_currentChunk.UncompressedSize}");
-                _currentChunk = Task.Run(async() => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+                _currentChunk = Task.Run(async () => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
 
                 return _currentChunk?.Next() ?? false;
             }
@@ -178,30 +178,39 @@ namespace Snowflake.Data.Core
             {
                 switch (value)
                 {
-                    case decimal ret: obj =  ret;
+                    case decimal ret:
+                        obj = ret;
                         break;
-                    case long ret: obj =  ret;
+                    case long ret:
+                        obj = ret;
                         break;
-                    case int ret: obj =  (long)ret;
+                    case int ret:
+                        obj = (long)ret;
                         break;
-                    case short ret: obj =  (long)ret;
+                    case short ret:
+                        obj = (long)ret;
                         break;
-                    case sbyte ret: obj =  (long)ret;
+                    case sbyte ret:
+                        obj = (long)ret;
                         break;
-                    case string ret: obj =  ret;
+                    case string ret:
+                        obj = ret;
                         break;
-                    case bool ret: obj = ret;
+                    case bool ret:
+                        obj = ret;
                         break;
-                    case DateTime ret: obj = ret;
+                    case DateTime ret:
+                        obj = ret;
                         break;
-                    case DateTimeOffset ret: obj = ret;
+                    case DateTimeOffset ret:
+                        obj = ret;
                         break;
                     default:
-                    {
-                        var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
-                        obj = Convert.ChangeType(value, dstType);
-                        break;
-                    }
+                        {
+                            var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
+                            obj = Convert.ChangeType(value, dstType);
+                            break;
+                        }
                 }
             }
 
@@ -283,12 +292,12 @@ namespace Snowflake.Data.Core
             switch (value)
             {
                 case double ret: return (decimal)ret;
-                case float  ret: return (decimal)ret;
-                case long   ret: return ret;
-                case int    ret: return ret;
-                case short  ret: return ret;
-                case sbyte  ret: return ret;
-                default: return (decimal)value;
+                case float ret: return (decimal)ret;
+                case long ret: return ret;
+                case int ret: return ret;
+                case short ret: return ret;
+                case sbyte ret: return ret;
+                default: return Convert.ToDecimal(value);
             }
         }
 
@@ -297,13 +306,13 @@ namespace Snowflake.Data.Core
             var value = GetObjectInternal(ordinal);
             switch (value)
             {
-                case float   ret: return ret;
+                case float ret: return ret;
                 case decimal ret: return (double)ret;
-                case long    ret: return ret;
-                case int     ret: return ret;
-                case short   ret: return ret;
-                case sbyte   ret: return ret;
-                default: return (double)value;
+                case long ret: return ret;
+                case int ret: return ret;
+                case short ret: return ret;
+                case sbyte ret: return ret;
+                default: return Convert.ToDouble(value);
             }
         }
 
@@ -318,7 +327,7 @@ namespace Snowflake.Data.Core
                 case int ret: return ret;
                 case short ret: return ret;
                 case sbyte ret: return ret;
-                default: return (float)value;
+                default: return Convert.ToSingle(value);
             }
         }
 
@@ -335,10 +344,10 @@ namespace Snowflake.Data.Core
                 switch (value)
                 {
                     case decimal ret: return (short)ret;
-                    case long  ret: return (short)ret;
-                    case int   ret: return (short)ret;
+                    case long ret: return (short)ret;
+                    case int ret: return (short)ret;
                     case sbyte ret: return ret;
-                    default: return (short)value;
+                    default: return Convert.ToInt16(value);
                 }
             }
         }
@@ -354,7 +363,7 @@ namespace Snowflake.Data.Core
                     case long ret: return (int)ret;
                     case short ret: return ret;
                     case sbyte ret: return ret;
-                    default: return (int)value;
+                    default: return Convert.ToInt32(value);
                 }
             }
         }
@@ -370,7 +379,7 @@ namespace Snowflake.Data.Core
                     case int ret: return ret;
                     case short ret: return ret;
                     case sbyte ret: return ret;
-                    default: return (long)value;
+                    default: return Convert.ToInt64(value);
                 }
             }
         }

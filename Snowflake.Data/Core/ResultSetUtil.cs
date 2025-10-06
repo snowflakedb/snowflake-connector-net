@@ -26,7 +26,7 @@ namespace Snowflake.Data.Core
                     {
                         updateCount += resultSet.GetInt64(i);
                     }
-
+                    resultSet.Rewind();
                     break;
                 case SFStatementType.COPY:
                     var index = resultSet.sfResultSetMetaData.GetColumnIndexByName("rows_loaded");
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core
                         {
                             updateCount += resultSet.GetInt64(index);
                         }
-                        while (resultSet.Rewind()) {}
+                        while (resultSet.Rewind()) { }
                     }
                     break;
                 case SFStatementType.COPY_UNLOAD:
@@ -49,6 +49,7 @@ namespace Snowflake.Data.Core
                     }
                     break;
                 case SFStatementType.SELECT:
+                    // DbDataReader.RecordsAffected returns -1 for SELECT statement
                     updateCount = -1;
                     break;
                 default:
@@ -62,7 +63,7 @@ namespace Snowflake.Data.Core
             return (int)updateCount;
         }
 
-        internal static bool HasResultSet(this SFBaseResultSet resultSet)
+        internal static bool IsDQL(this SFBaseResultSet resultSet)
         {
             if (resultSet.isClosed) return false;
 

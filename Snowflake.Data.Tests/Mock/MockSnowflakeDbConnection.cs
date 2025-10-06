@@ -5,6 +5,7 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.Mock
 {
@@ -45,7 +46,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            registerConnectionCancellationCallback(cancellationToken);
+            cancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
 
             SetMockSession();
 
@@ -54,8 +55,8 @@ namespace Snowflake.Data.Tests.Mock
                 {
                     if (previousTask.IsFaulted)
                     {
-                    // Exception from SfSession.OpenAsync
-                    Exception sfSessionEx = previousTask.Exception;
+                        // Exception from SfSession.OpenAsync
+                        Exception sfSessionEx = previousTask.Exception;
                         _connectionState = ConnectionState.Closed;
                         logger.Error("Unable to connect", sfSessionEx);
                         throw //sfSessionEx.InnerException;
@@ -77,7 +78,12 @@ namespace Snowflake.Data.Tests.Mock
 
         private void SetMockSession()
         {
-            SfSession = new SFSession(ConnectionString, Password, Passcode, EasyLoggingStarter.Instance, _restRequester);
+            var sessionContext = new SessionPropertiesContext
+            {
+                Password = Password,
+                Passcode = Passcode
+            };
+            SfSession = new SFSession(ConnectionString, sessionContext, EasyLoggingStarter.Instance, _restRequester);
 
             _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 

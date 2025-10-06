@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.Session
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPropertiesWithDefaultValuesExtractor>();
         private static readonly Regex s_timeoutFormatRegex = new Regex(@"^(-)?[0-9]{1,10}[mM]?[sS]?$");
-        
+
         private readonly SFSessionProperties _propertiesDictionary;
         private readonly bool _failOnWrongValue;
 
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core.Session
                 s => true,
                 i => i > 0
             );
-        
+
         public int ExtractNonNegativeIntegerWithDefaultValue(
             SFSessionProperty property) =>
             ExtractPropertyWithDefaultValue(
@@ -111,12 +111,12 @@ namespace Snowflake.Data.Core.Session
                 throw new Exception($"Invalid value of parameter {property}");
             }
             s_logger.Warn($"Invalid value of parameter {property}. Using a default value: {defaultValue}");
-            return defaultValue;            
+            return defaultValue;
         }
 
         private static bool ValidateTimeoutFormat(string value) =>
             !string.IsNullOrEmpty(value) && s_timeoutFormatRegex.IsMatch(value);
-        
+
         private static TimeSpan ExtractTimeout(string value)
         {
             var numericValueString = string.Concat(value.Where(IsNumberOrMinus));

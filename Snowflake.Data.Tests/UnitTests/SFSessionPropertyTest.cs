@@ -1,25 +1,30 @@
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Snowflake.Data.Core;
 using System.Security;
+using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
-using System.Runtime.InteropServices;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
 
     class SFSessionPropertyTest
     {
+        private const string DifferentHostsWarning = "Properties OAUTHAUTHORIZATIONURL and OAUTHTOKENREQUESTURL are configured for a different host";
 
         [Test, TestCaseSource(nameof(ConnectionStringTestCases))]
         public void TestThatPropertiesAreParsed(TestCase testcase)
         {
+            // arrange
+            var propertiesContext = new SessionPropertiesContext { Password = testcase.SecurePassword };
+
             // act
-            var properties = SFSessionProperties.ParseConnectionString(
-                testcase.ConnectionString,
-                testcase.SecurePassword);
+            var properties = SFSessionProperties.ParseConnectionString(testcase.ConnectionString, propertiesContext);
 
             // assert
             CollectionAssert.IsSubsetOf(testcase.ExpectedProperties, properties);
@@ -39,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT={accountName};USER=test;PASSWORD=test;";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(expectedAccountName, properties[SFSessionProperty.ACCOUNT]);
@@ -59,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.ParseConnectionString(connectionString, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext())
             );
 
             // assert
@@ -74,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.ParseConnectionString(connectionString, null)
+                () => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext())
             );
 
             // assert
@@ -90,10 +95,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var securePassword = password == null ? null : SecureStringHelper.Encode(password);
+            var propertiesContext = new SessionPropertiesContext { Password = securePassword };
 
             // act
             var exception = Assert.Throws<SnowflakeDbException>(
-                () => SFSessionProperties.ParseConnectionString(connectionString, securePassword)
+                () => SFSessionProperties.ParseConnectionString(connectionString, propertiesContext)
             );
 
             // assert
@@ -109,7 +115,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;PASSCODE={expectedPasscode}";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
@@ -122,9 +128,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedPasscode = "abc";
             var connectionString = $"ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword";
             var securePasscode = SecureStringHelper.Encode(expectedPasscode);
+            var propertiesContext = new SessionPropertiesContext { Passcode = securePasscode };
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null, securePasscode);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, propertiesContext);
 
             // assert
             Assert.AreEqual(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
@@ -136,7 +143,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestDoNotParsePasscodeWhenNotProvided(string connectionString)
         {
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.False(properties.TryGetValue(SFSessionProperty.PASSCODE, out _));
@@ -152,7 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestParsePasscodeInPassword(string connectionString, string expectedPasscodeInPassword)
         {
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.IsTrue(properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPassword));
@@ -166,7 +173,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var invalidConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;passcodeInPassword=abc";
 
             // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, null));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, new SessionPropertiesContext()));
 
             Assert.That(thrown.Message, Does.Contain("Invalid parameter value  for PASSCODEINPASSWORD"));
         }
@@ -182,7 +189,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=test;{propertyName}={value};USER=test;PASSWORD=test;";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(value, properties[sessionProperty]);
@@ -200,7 +207,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=test;{propertyName}={value};USER=test;PASSWORD=test;";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(expectedValue, properties[sessionProperty]);
@@ -215,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;DISABLE_SAML_URL_CHECK={expectedDisableSamlUrlCheck}";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(expectedDisableSamlUrlCheck, properties[SFSessionProperty.DISABLE_SAML_URL_CHECK]);
@@ -242,7 +249,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CLIENT_STORE_TEMPORARY_CREDENTIAL={expectedClientStoreTemporaryCredential}";
 
             // act
-            var properties = SFSessionProperties.ParseConnectionString(connectionString, null);
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
             Assert.AreEqual(expectedClientStoreTemporaryCredential, properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
@@ -256,9 +263,352 @@ namespace Snowflake.Data.Tests.UnitTests
             var invalidConnectionString = $"ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;CLIENT_STORE_TEMPORARY_CREDENTIAL={invalidValue}";
 
             // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, null));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, new SessionPropertiesContext()));
 
             Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for CLIENT_STORE_TEMPORARY_CREDENTIAL"));
+        }
+
+        [Test]
+        [TestCase("ACCOUNT=test;USER=test;PASSWORD=test;")]
+        [TestCase("ACCOUNT=test;USER=test;PASSWORD=test;OAUTHCLIENTSECRET=ignored_value;")]
+        public void TestParseOAuthClientSecretProvidedExternally(string connectionString)
+        {
+            // arrange
+            var oauthClientSecret = "abc";
+            var secureOAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret);
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext { OAuthClientSecret = secureOAuthClientSecret });
+
+            // assert
+            Assert.AreEqual(oauthClientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+        }
+
+        [Test]
+        public void TestNoOAuthPropertiesFound()
+        {
+            // arrange
+            var connectionString = "ACCOUNT=test;USER=test;PASSWORD=test";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHCLIENTID, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHCLIENTSECRET, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHSCOPE, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHREDIRECTURI, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHAUTHORIZATIONURL, out var _));
+            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHTOKENREQUESTURL, out var _));
+        }
+
+        [Test]
+        public void TestOAuthAuthorizationCodeAllParameters()
+        {
+            // arrange
+            var clientId = "abc";
+            var clientSecret = "def";
+            var scope = "ghi";
+            var redirectUri = "http://localhost";
+            var authorizationUrl = "https://okta.com/authorize";
+            var tokenUrl = "https://okta.com/token-request";
+            var enableSingleUseRefreshTokens = "true";
+            var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId={clientId};oauthClientSecret={clientSecret};oauthScope={scope};oauthRedirectUri={redirectUri};oauthAuthorizationUrl={authorizationUrl};oauthTokenRequestUrl={tokenUrl};oauthEnableSingleUseRefreshTokens={enableSingleUseRefreshTokens}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.AreEqual(scope, properties[SFSessionProperty.OAUTHSCOPE]);
+            Assert.AreEqual(redirectUri, properties[SFSessionProperty.OAUTHREDIRECTURI]);
+            Assert.AreEqual(authorizationUrl, properties[SFSessionProperty.OAUTHAUTHORIZATIONURL]);
+            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
+            Assert.AreEqual(enableSingleUseRefreshTokens, properties[SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS]);
+        }
+
+        [Test]
+        public void TestOAuthClientCredentialsAllParameters()
+        {
+            // arrange
+            var clientId = "abc";
+            var clientSecret = "def";
+            var scope = "ghi";
+            var tokenUrl = "https://okta.com/token-request";
+            var connectionString = $"AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId={clientId};oauthClientSecret={clientSecret};oauthScope={scope};oauthTokenRequestUrl={tokenUrl};";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.AreEqual(scope, properties[SFSessionProperty.OAUTHSCOPE]);
+            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
+        }
+
+        [Test]
+        public void TestOAuthAuthorizationCodeFlowWithMinimalParameters()
+        {
+            // arrange
+            var clientId = "abc";
+            var clientSecret = "def";
+            var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientId={clientId};oauthClientSecret={clientSecret};";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+        }
+
+        [Test]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthAuthorizationUrl=https://test.snowflakecomputing.com/authorize;oauthTokenRequestUrl=https://test.snowflakecomputing.com/token-request;")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthAuthorizationUrl=https://test.snowflakecomputing.cn/authorize;oauthTokenRequestUrl=https://test.snowflakecomputing.cn/token-request;")]
+        public void TestOAuthAuthorizationCodeFlowDefaultClientIdAndSecret(string connectionString)
+        {
+            // arrange
+            const string ExpectedClientIdAndSecret = "LOCAL_APPLICATION";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(ExpectedClientIdAndSecret, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.AreEqual(ExpectedClientIdAndSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+        }
+
+        [Test]
+        public void TestOAuthClientCredentialsWithMinimalParameters()
+        {
+            // arrange
+            var clientId = "abc";
+            var clientSecret = "def";
+            var tokenUrl = "https://okta.com/token_request";
+            var connectionString = $"AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;ROLE=ANALYST;oauthClientId={clientId};oauthClientSecret={clientSecret};oauthTokenRequestUrl={tokenUrl}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
+        }
+
+
+        [Test]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientSecret=def;", "Required property OAUTHCLIENTID is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;", "Required property OAUTHCLIENTSECRET is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;", "Required property OAUTHSCOPE or ROLE is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize", "Required property OAUTHTOKENREQUESTURL is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthTokenRequestUrl=https://okta.com/token-request", "Required property OAUTHAUTHORIZATIONURL is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=okta.com/authorize;oauthTokenRequestUrl=https://okta.com/token-request", "Missing or invalid protocol in the OAUTHAUTHORIZATIONURL url")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize;oauthTokenRequestUrl=okta.com/token-request", "Missing or invalid protocol in the OAUTHTOKENREQUESTURL url")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize;oauthTokenRequestUrl=https://okta.com/token-request", "Required property OAUTHCLIENTID is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;oauthClientSecret=def;poolingEnabled=true;", "You cannot enable pooling for oauth authorization code authentication without specifying a user in the connection string.")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;oauthClientSecret=def;oauthEnableSingleUseRefreshTokens=xyz;", "Parameter OAUTHENABLESINGLEUSEREFRESHTOKENS value should be parsable as boolean.")]
+        public void TestOAuthAuthorizationCodeMissingOrInvalidParameters(string connectionString, string errorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(errorMessage));
+        }
+
+        [Test]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;ROLE=ANALYST;oauthClientSecret=def;oauthTokenRequestUrl=http://okta.com/token-request;", "Required property OAUTHCLIENTID is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;oauthTokenRequestUrl=http://okta.com/token-request;", "Required property OAUTHCLIENTSECRET is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthTokenRequestUrl=http://okta.com/token-request;", "Required property OAUTHSCOPE or ROLE is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;", "Required property OAUTHTOKENREQUESTURL is not provided")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthTokenRequestUrl=okta.com/token-request;", "Missing or invalid protocol in the OAUTHTOKENREQUESTURL url")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthScope=ghi;oauthTokenRequestUrl=https://test.snowflakecomputing.com;", "Required property OAUTHCLIENTID is not provided")]
+        public void TestOAuthClientCredentialsMissingOrInvalidParameters(string connectionString, string errorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(errorMessage));
+        }
+
+
+        [Test, NonParallelizable]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=http://okta.com/authorize;oauthTokenRequestUrl=https://okta.com/token-request", "Insecure OAUTHAUTHORIZATIONURL property value. It does not start with 'https://'")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize;oauthTokenRequestUrl=http://okta.com/token-request", "Insecure OAUTHTOKENREQUESTURL property value. It does not start with 'https://'")]
+        [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;scheme=http", "Insecure SCHEME property value. Http protocol is not secure.")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthTokenRequestUrl=https://okta.com/token-request;scheme=http", "Insecure SCHEME property value. Http protocol is not secure.")]
+        [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthTokenRequestUrl=http://okta.com/token-request;", "Insecure OAUTHTOKENREQUESTURL property value. It does not start with 'https://'")]
+        public void TestWarningOnHttpCommunicationWithIdentityProviderAndSnowflakeServer(string connectionString, string expectedWarning)
+        {
+            // arrange
+            var logger = new Mock<SFLogger>();
+            var oldLogger = SFSessionProperties.ReplaceLogger(logger.Object);
+            try
+            {
+                // act
+                SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+                // assert
+                logger.Verify(l => l.Warn(It.Is<string>(s => s.Contains(expectedWarning)), null), Times.Once);
+            }
+            finally
+            {
+                SFSessionProperties.ReplaceLogger(oldLogger);
+            }
+        }
+
+        [Test, NonParallelizable]
+        [TestCase("https://okta.com/authorize", "https://other.okta.com/token-request")]
+        public void TestWarningOnDifferentOAuthHosts(string authorizationUrl, string tokenUrl)
+        {
+            // arrange
+            var logger = new Mock<SFLogger>();
+            var oldLogger = SFSessionProperties.ReplaceLogger(logger.Object);
+            try
+            {
+                var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl={authorizationUrl};oauthTokenRequestUrl={tokenUrl};";
+
+                // act
+                SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+                // assert
+                logger.Verify(l => l.Warn(It.Is<string>(s => s.Contains(DifferentHostsWarning)), null), Times.Once);
+            }
+            finally
+            {
+                SFSessionProperties.ReplaceLogger(oldLogger);
+            }
+        }
+
+        [Test, NonParallelizable]
+        [TestCase("https://okta.com/authorize", "https://okta.com/token-request")]
+        public void TestNoWarningOnTheSameOAuthHosts(string authorizationUrl, string tokenUrl)
+        {
+            // arrange
+            var logger = new Mock<SFLogger>();
+            var oldLogger = SFSessionProperties.ReplaceLogger(logger.Object);
+            try
+            {
+                var connectionString = $"AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl={authorizationUrl};oauthTokenRequestUrl={tokenUrl};";
+
+                // act
+                SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+                // assert
+                logger.Verify(l => l.Warn(It.Is<string>(s => s.Contains(DifferentHostsWarning)), null), Times.Never);
+            }
+            finally
+            {
+                SFSessionProperties.ReplaceLogger(oldLogger);
+            }
+        }
+
+        [Test]
+        public void TestProgrammaticAccessTokenParameters()
+        {
+            // arrange
+            var token = "testToken";
+            var connectionString = $"AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;TOKEN={token};";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(token, properties[SFSessionProperty.TOKEN]);
+        }
+
+        [Test]
+        public void TestProgrammaticAccessTokenProvidedExternally()
+        {
+            // arrange
+            var token = "testToken";
+            var connectionString = $"AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;";
+            var secureToken = SecureStringHelper.Encode(token);
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext { Token = secureToken });
+
+            // assert
+            Assert.AreEqual(token, properties[SFSessionProperty.TOKEN]);
+        }
+
+        [Test]
+        [TestCase("AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER=testUser;", "Required property TOKEN is not provided.")]
+        public void TestInvalidProgrammaticAccessTokenParameters(string connectionString, string expectedErrorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
+        }
+
+        [Test]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;PORT=abc;", "Invalid parameter value PORT for a non integer value")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;HOST=http://test.snowflakecomputing.com;", "Connection string is invalid: scheme/host/port properties do not combine into a valid uri")]
+        public void TestFailOnInvalidSchemeHostPortConfiguration(string connectionString, string expectedErrorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
+        }
+
+        [Test]
+        [TestCase("authenticator=workload_identity;account=test;workload_identity_provider=abc;", "Connection string is invalid: Unknown value of workload_identity_provider parameter.")]
+        [TestCase("authenticator=workload_identity;account=test;workload_identity_provider=OIDC;", "Required property TOKEN is not provided.")]
+        public void TestFailOnWrongWifConfiguration(string connectionString, string expectedErrorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
+        }
+
+        [Test]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;", "disabled", "true", "true", "true", "false")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=enabled;useDotnetCrlCheck=false;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true;", "enabled", "false", "false", "false", "true")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=advisory;useDotnetCrlCheck=false;enableCrlDiskCaching=false;enableCrlInMemoryCaching=true;allowCertificatesWithoutCrlUrl=true;", "advisory", "false", "false", "true", "true")]
+        public void TestParseCrlCheckParameters(
+            string connectionString,
+            string expectedCertRevocationCheckMode,
+            string expectedUseDotnetCrlCheck,
+            string expectedEnableCrlDiskCaching,
+            string expectedEnableCrlInMemoryCaching,
+            string expectedAllowCertificatesWithoutCrlUrl)
+        {
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(expectedCertRevocationCheckMode, properties[SFSessionProperty.CERTREVOCATIONCHECKMODE]);
+            Assert.AreEqual(expectedUseDotnetCrlCheck, properties[SFSessionProperty.USEDOTNETCRLCHECK]);
+            Assert.AreEqual(expectedEnableCrlDiskCaching, properties[SFSessionProperty.ENABLECRLDISKCACHING]);
+            Assert.AreEqual(expectedEnableCrlInMemoryCaching, properties[SFSessionProperty.ENABLECRLINMEMORYCACHING]);
+            Assert.AreEqual(expectedAllowCertificatesWithoutCrlUrl, properties[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]);
+        }
+
+        [Test]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=unknown;", "Parameter CERTREVOCATIONCHECKMODE should have one of following values: ENABLED, ADVISORY, DISABLED.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;useDotnetCrlCheck=unknown;", "Parameter USEDOTNETCRLCHECK should have a boolean value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlDiskCaching=unknown;", "Parameter ENABLECRLDISKCACHING should have a boolean value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlInMemoryCaching=unknown;", "Parameter ENABLECRLINMEMORYCACHING should have a boolean value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;allowCertificatesWithoutCrlUrl=unknown;", "Parameter ALLOWCERTIFICATESWITHOUTCRLURL should have a boolean value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=advisory;useDotnetCrlCheck=true;", "'ADVISORY' value of the parameter CERTREVOCATIONCHECKMODE conflicts with 'true' value of the parameter USEDOTNETCRLCHECK.")]
+        public void TestFailOnInvalidCrlParameters(string connectionString, string expectedErrorMessage)
+        {
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
         }
 
         public static IEnumerable<TestCase> ConnectionStringTestCases()
@@ -299,7 +649,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -318,8 +667,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 }
             };
 
@@ -337,7 +686,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -356,8 +704,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 }
             };
             var testCaseWithProxySettings = new TestCase()
@@ -373,7 +721,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PASSWORD, defPassword },
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -396,8 +743,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};useProxy=true;proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -415,7 +762,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PASSWORD, defPassword },
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -438,8 +784,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};proxyHost=proxy.com;proxyPort=1234;nonProxyHosts=localhost"
@@ -459,7 +805,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -479,8 +824,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 }
             };
             var testCaseWithIncludeRetryReason = new TestCase()
@@ -498,7 +843,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -517,8 +861,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 }
             };
             var testCaseWithDisableQueryContextCache = new TestCase()
@@ -535,7 +879,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -554,8 +897,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLEQUERYCONTEXTCACHE=true"
@@ -574,7 +917,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -593,8 +935,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 },
                 ConnectionString =
                     $"ACCOUNT={defAccount};USER={defUser};PASSWORD={defPassword};DISABLE_CONSOLE_LOGIN=false"
@@ -615,7 +957,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -634,8 +975,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 }
             };
             var testCaseUnderscoredAccountName = new TestCase()
@@ -653,7 +994,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -672,8 +1012,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 }
             };
             var testCaseUnderscoredAccountNameWithEnabledAllowUnderscores = new TestCase()
@@ -691,7 +1031,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -710,8 +1049,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 }
             };
 
@@ -731,7 +1070,6 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.PORT, defPort },
                     { SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS, "true" },
                     { SFSessionProperty.USEPROXY, "false" },
-                    { SFSessionProperty.INSECUREMODE, "false" },
                     { SFSessionProperty.DISABLERETRY, "false" },
                     { SFSessionProperty.FORCERETRYON404, "false" },
                     { SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE, "false" },
@@ -751,8 +1089,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.EXPIRATIONTIMEOUT, DefaultValue(SFSessionProperty.EXPIRATIONTIMEOUT) },
                     { SFSessionProperty.POOLINGENABLED, DefaultValue(SFSessionProperty.POOLINGENABLED) },
                     { SFSessionProperty.DISABLE_SAML_URL_CHECK, DefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK) },
-                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) },
-                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) }
+                    { SFSessionProperty.PASSCODEINPASSWORD, DefaultValue(SFSessionProperty.PASSCODEINPASSWORD) },
+                    { SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, DefaultValue(SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL) }
                 }
             };
 

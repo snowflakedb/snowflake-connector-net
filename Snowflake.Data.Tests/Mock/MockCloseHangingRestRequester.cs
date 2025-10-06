@@ -7,7 +7,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    internal class MockCloseHangingRestRequester: IMockRestRequester
+    internal class MockCloseHangingRestRequester : IMockRestRequester
     {
         internal List<SFRestRequest> CloseRequests { get; } = new();
 

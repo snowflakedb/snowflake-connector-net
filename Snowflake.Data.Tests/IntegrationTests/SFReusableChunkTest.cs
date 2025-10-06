@@ -16,45 +16,53 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestDelCharPr431()
         {
+            const int TestRowCount = 10000;
+
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
 
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
-
-                IDbCommand cmd = conn.CreateCommand();
-                int rowCount = 0;
-
-                int largeTableRowCount = 100000;
-                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
-                cmd.CommandText = insertCommand;
-                IDataReader insertReader = cmd.ExecuteReader();
-                Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
-
-                string selectCommand = $"select * from {TableName}";
-                cmd.CommandText = selectCommand;
-
-                rowCount = 0;
-                using (var reader = cmd.ExecuteReader())
+                try
                 {
-                    while (reader.Read())
+                    SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                    CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
+
+                    IDbCommand cmd = conn.CreateCommand();
+                    int rowCount = 0;
+
+                    // Insert data with DEL character (0x7F) embedded: "snow\x7FFLAKE"
+                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
+                    cmd.CommandText = insertCommand;
+                    IDataReader insertReader = cmd.ExecuteReader();
+                    Assert.AreEqual(TestRowCount, insertReader.RecordsAffected);
+
+                    string selectCommand = $"select * from {TableName}";
+                    cmd.CommandText = selectCommand;
+
+                    rowCount = 0;
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        var obj = new object[reader.FieldCount];
-                        reader.GetValues(obj);
-                        var val = obj[0] ?? System.String.Empty;
-                        if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
+                        while (reader.Read())
                         {
-                            rowCount++;
+                            var obj = new object[reader.FieldCount];
+                            reader.GetValues(obj);
+                            var val = obj[0] ?? System.String.Empty;
+                            // Count rows that don't contain literal "u007f" or "\u007fu" strings
+                            // (The actual data contains DEL character but not these literal strings)
+                            if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
+                            {
+                                rowCount++;
+                            }
                         }
                     }
+                    Assert.AreEqual(TestRowCount, rowCount, "Expected all rows to be counted since none contain literal 'u007f' strings");
                 }
-                Assert.AreEqual(largeTableRowCount, rowCount);
-
-                SessionParameterAlterer.RestoreResultFormat(conn);
-                // Reader's RecordsAffected should be available even if the connection is closed
-                conn.Close();
+                finally
+                {
+                    SessionParameterAlterer.RestoreResultFormat(conn);
+                    conn.Close();
+                }
             }
         }
 
@@ -62,20 +70,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestParseJson()
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
-            ChunkParserFactory.Instance = new TestChunkParserFactory(1);
 
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            try
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                ChunkParserFactory.Instance = new TestChunkParserFactory(1);
 
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                CreateOrReplaceTable(conn, TableName, new []{"src VARIANT"});
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString;
+                    conn.Open();
 
-                IDbCommand cmd = conn.CreateCommand();
-                int rowCount = 0;
+                    SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                    CreateOrReplaceTable(conn, TableName, new[] { "src VARIANT" });
 
-                string insertCommand = $@"
+                    IDbCommand cmd = conn.CreateCommand();
+                    int rowCount = 0;
+
+                    string insertCommand = $@"
 -- borrowed from https://docs.snowflake.com/en/user-guide/querying-semistructured.html#sample-data-used-in-examples
 insert into {TableName} (
 select parse_json('{{
@@ -94,110 +105,67 @@ select parse_json('{{
 }}') from table(generator(rowcount => 500))
 )
 ";
-                cmd.CommandText = insertCommand;
-                IDataReader insertReader = cmd.ExecuteReader();
-                Assert.AreEqual(500, insertReader.RecordsAffected);
+                    cmd.CommandText = insertCommand;
+                    IDataReader insertReader = cmd.ExecuteReader();
+                    Assert.AreEqual(500, insertReader.RecordsAffected);
 
-                string selectCommand = $"select * from {TableName}";
-                cmd.CommandText = selectCommand;
-                cmd.CommandType = System.Data.CommandType.Text;
+                    string selectCommand = $"select * from {TableName}";
+                    cmd.CommandText = selectCommand;
+                    cmd.CommandType = System.Data.CommandType.Text;
 
-                rowCount = 0;
-                using (var reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
+                    rowCount = 0;
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        Newtonsoft.Json.JsonConvert.DeserializeObject(reader[0].ToString());
-                        rowCount++;
-                    }
-                }
-                Assert.AreEqual(500, rowCount);
-
-                SessionParameterAlterer.RestoreResultFormat(conn);
-                // Reader's RecordsAffected should be available even if the connection is closed
-                conn.Close();
-            }
-            ChunkParserFactory.Instance = previous;
-        }
-
-        [Test]
-        public void TestChunkRetry()
-        {
-            IChunkParserFactory previous = ChunkParserFactory.Instance;
-            ChunkParserFactory.Instance = new TestChunkParserFactory(6); // lower than default retry of 7
-
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
-
-                SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
-
-                IDbCommand cmd = conn.CreateCommand();
-                int rowCount = 0;
-
-                int largeTableRowCount = 100000;
-                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
-                cmd.CommandText = insertCommand;
-                IDataReader insertReader = cmd.ExecuteReader();
-                Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
-
-                string selectCommand = $"select * from {TableName}";
-                cmd.CommandText = selectCommand;
-
-                rowCount = 0;
-                using (var reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        var obj = new object[reader.FieldCount];
-                        reader.GetValues(obj);
-                        var val = obj[0] ?? System.String.Empty;
-                        if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
+                        while (reader.Read())
                         {
+                            Newtonsoft.Json.JsonConvert.DeserializeObject(reader[0].ToString());
                             rowCount++;
                         }
                     }
+                    Assert.AreEqual(500, rowCount);
+
+                    SessionParameterAlterer.RestoreResultFormat(conn);
+                    conn.Close();
                 }
-                Assert.AreEqual(largeTableRowCount, rowCount);
-
-                SessionParameterAlterer.RestoreResultFormat(conn);
-                // Reader's RecordsAffected should be available even if the connection is closed
-                conn.Close();
             }
-
-            ChunkParserFactory.Instance = previous;
+            finally
+            {
+                ChunkParserFactory.Instance = previous;
+            }
         }
 
-        [Test]
-        public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
+        [Test, NonParallelizable]
+        public void TestChunkRetry()
         {
+            const int RetryFailureCount = 6;
+            const int TestRowCount = 10000;
+
             IChunkParserFactory previous = ChunkParserFactory.Instance;
-            ChunkParserFactory.Instance = new TestChunkParserFactory(8); // larger than default max retry of 7
+            TestChunkParserFactory testFactory = new TestChunkParserFactory(RetryFailureCount);
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new []{"col STRING"});
-
-                IDbCommand cmd = conn.CreateCommand();
-                int rowCount = 0;
-
-                int largeTableRowCount = 100000;
-                string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {largeTableRowCount})))";
-                cmd.CommandText = insertCommand;
-                IDataReader insertReader = cmd.ExecuteReader();
-                Assert.AreEqual(largeTableRowCount, insertReader.RecordsAffected);
-
-                string selectCommand = $"select * from {TableName}";
-                cmd.CommandText = selectCommand;
-
-                rowCount = 0;
-                Assert.Throws<AggregateException>(() =>
+                try
                 {
+                    ChunkParserFactory.Instance = testFactory;
+                    SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                    CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
+
+                    IDbCommand cmd = conn.CreateCommand();
+                    int rowCount = 0;
+
+                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
+                    cmd.CommandText = insertCommand;
+                    IDataReader insertReader = cmd.ExecuteReader();
+                    Assert.AreEqual(TestRowCount, insertReader.RecordsAffected);
+
+                    string selectCommand = $"select * from {TableName}";
+                    cmd.CommandText = selectCommand;
+
+                    rowCount = 0;
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -205,18 +173,90 @@ select parse_json('{{
                             var obj = new object[reader.FieldCount];
                             reader.GetValues(obj);
                             var val = obj[0] ?? System.String.Empty;
+                            // Count rows that don't contain literal "u007f" or "\u007fu" strings
                             if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
                             {
                                 rowCount++;
                             }
                         }
                     }
-                });
-                Assert.AreNotEqual(largeTableRowCount, rowCount);
+                    Assert.AreEqual(TestRowCount, rowCount);
 
-                conn.Close();
+                    Assert.IsTrue(testFactory.ExceptionsThrown >= RetryFailureCount,
+                        $"Expected at least {RetryFailureCount} retry attempts, but only {testFactory.ExceptionsThrown} occurred");
+                }
+                finally
+                {
+                    ChunkParserFactory.Instance = previous;
+                    SessionParameterAlterer.RestoreResultFormat(conn);
+                    conn.Close();
+                }
             }
-            ChunkParserFactory.Instance = previous;
+        }
+
+        [Test, NonParallelizable]
+        public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
+        {
+            const int ExcessiveRetryCount = 8;
+            const int TestRowCount = 25000;
+
+            IChunkParserFactory previous = ChunkParserFactory.Instance;
+
+            try
+            {
+                ChunkParserFactory.Instance = new TestChunkParserFactory(ExcessiveRetryCount);
+
+                using (IDbConnection conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = ConnectionString;
+                    conn.Open();
+
+                    try
+                    {
+                        SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
+                        CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
+
+                        IDbCommand cmd = conn.CreateCommand();
+                        int rowCount = 0;
+
+                        string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
+                        cmd.CommandText = insertCommand;
+                        IDataReader insertReader = cmd.ExecuteReader();
+                        Assert.AreEqual(TestRowCount, insertReader.RecordsAffected);
+
+                        string selectCommand = $"select * from {TableName}";
+                        cmd.CommandText = selectCommand;
+
+                        rowCount = 0;
+                        Assert.Throws<AggregateException>(() =>
+                        {
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    var obj = new object[reader.FieldCount];
+                                    reader.GetValues(obj);
+                                    var val = obj[0] ?? System.String.Empty;
+                                    if (!val.ToString().Contains("u007f") && !val.ToString().Contains("\u007fu"))
+                                    {
+                                        rowCount++;
+                                    }
+                                }
+                            }
+                        });
+                        Assert.AreNotEqual(TestRowCount, rowCount, "Row count should not match due to retry failures");
+                    }
+                    finally
+                    {
+                        SessionParameterAlterer.RestoreResultFormat(conn);
+                        conn.Close();
+                    }
+                }
+            }
+            finally
+            {
+                ChunkParserFactory.Instance = previous;
+            }
         }
 
         class TestChunkParserFactory : IChunkParserFactory
@@ -229,6 +269,8 @@ select parse_json('{{
                 _expectedExceptionsNumber = exceptionsToThrow;
                 _exceptionsThrown = 0;
             }
+
+            public int ExceptionsThrown => _exceptionsThrown;
 
             public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
             {

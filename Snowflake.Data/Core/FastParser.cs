@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
-    public class FastParser
+    internal class FastParser
     {
         private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<FastParser>();
 
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Core
             if (decimalPos < 0)
             {
                 // If len > 19 (the number of digits in int64.MaxValue), the value is likely bigger
-                // than max int64. Potentially, if it is a negative number it could be ok, but it 
+                // than max int64. Potentially, if it is a negative number it could be ok, but it
                 // is better to not to find out during the call to FastParseInt64.
                 // Fallback to regular decimal constructor from string instead.
                 if (len > 19)

@@ -1,6 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-
+using System.Linq;
 using System.Text;
 using Mono.Unix;
 using Mono.Unix.Native;
@@ -14,7 +15,7 @@ namespace Snowflake.Data.Core.Tools
         public static readonly UnixOperations Instance = new UnixOperations();
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<UnixOperations>();
 
-        public virtual void CreateDirectoryWithPermissions(string path, FileAccessPermissions permissions)
+        public virtual void CreateDirectoryWithPermissions(string path, FileAccessPermissions permissions, bool logEnabled = true)
         {
             var fullPath = Path.GetFullPath(path);
             var splitDirectories = fullPath.Split(Path.DirectorySeparatorChar);
@@ -29,7 +30,7 @@ namespace Snowflake.Data.Core.Tools
                     continue;
                 }
 
-                CreateSingleDirectory(dirPath, permissions);
+                CreateSingleDirectory(dirPath, permissions, logEnabled);
             }
         }
 
@@ -38,9 +39,10 @@ namespace Snowflake.Data.Core.Tools
             return Syscall.mkdir(path, (FilePermissions)permissions);
         }
 
-        private static void CreateSingleDirectory(string path, FileAccessPermissions permissions)
+        private static void CreateSingleDirectory(string path, FileAccessPermissions permissions, bool logEnabled)
         {
-            s_logger.Debug($"Creating a directory {path} with permissions: {permissions}");
+            if (logEnabled)
+                s_logger.Debug($"Creating a directory {path} with permissions: {permissions}");
             try
             {
                 new UnixDirectoryInfo(path).Create(permissions);
@@ -51,15 +53,15 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
-        public virtual Stream CreateFileWithPermissions(string path, FileAccessPermissions permissions)
+        public virtual Stream CreateFileWithPermissions(string path, FileAccessPermissions permissions, bool logEnabled = true)
         {
             var dirPath = Path.GetDirectoryName(path);
             if (dirPath != null)
             {
-                CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
+                CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute, logEnabled);
             }
-
-            s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
+            if (logEnabled)
+                s_logger.Debug($"Creating a file {path} with permissions: {permissions}");
             return new UnixFileInfo(path).Create(permissions);
         }
 
@@ -81,14 +83,19 @@ namespace Snowflake.Data.Core.Tools
             return new DirectoryUnixInformation(dirInfo);
         }
 
-        public virtual long ChangeOwner(string path, int userId, int groupId) => Syscall.chown(path, userId, groupId);
-
-        public virtual long ChangePermissions(string path, FileAccessPermissions permissions) => Syscall.chmod(path, (FilePermissions) permissions);
-
-        public virtual bool CheckFileHasAnyOfPermissions(string path, FileAccessPermissions permissions)
+        public virtual FileUnixInformation GetFileInfo(string path)
         {
             var fileInfo = new UnixFileInfo(path);
-            return (permissions & fileInfo.FileAccessPermissions) != 0;
+            return new FileUnixInformation(fileInfo);
+        }
+
+        public virtual long ChangeOwner(string path, int userId, int groupId) => Syscall.chown(path, userId, groupId);
+
+        public virtual long ChangePermissions(string path, FileAccessPermissions permissions) => Syscall.chmod(path, (FilePermissions)permissions);
+
+        public virtual bool CheckFileHasAnyOfPermissions(FileAccessPermissions actualPermissions, FileAccessPermissions expectedPermissions)
+        {
+            return (expectedPermissions & actualPermissions) != 0;
         }
 
         public virtual bool CheckDirectoryHasAnyOfPermissions(string path, FileAccessPermissions permissions)
@@ -111,11 +118,53 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
+        public virtual byte[] ReadAllBytes(string path, Action<UnixStream> validator)
+        {
+            var fileInfo = new UnixFileInfo(path: path);
+            const int BufferSize = 200 * 1024; // 200kB
+            var result = new List<byte[]>();
+            using (var handle = fileInfo.OpenRead())
+            {
+                validator?.Invoke(handle);
+                using (var streamReader = new BinaryReader(handle, Encoding.ASCII))
+                {
+                    bool allRead = false;
+                    while (!allRead)
+                    {
+                        var bytes = streamReader.ReadBytes(BufferSize);
+                        if (bytes.Length > 0)
+                        {
+                            result.Add(bytes);
+                        }
+                        allRead = bytes.Length < BufferSize;
+                    }
+                }
+            }
+            return JoinArrays(result);
+        }
+
+        private byte[] JoinArrays(List<byte[]> arrays)
+        {
+            if (arrays == null || arrays.Count == 0)
+                return Array.Empty<byte>();
+            if (arrays.Count == 1)
+                return arrays[0];
+            var totalLength = arrays.Select(x => x.Length).Sum();
+            var result = new byte[totalLength];
+            var index = 0;
+            foreach (var array in arrays)
+            {
+                Array.Copy(array, 0, result, index, array.Length);
+                index += array.Length;
+            }
+            return result;
+        }
+
         public void WriteAllText(string path, string content, Action<UnixStream> validator)
         {
             var fileInfo = new UnixFileInfo(path: path);
 
-            using (var handle = fileInfo.Open(FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR |  FilePermissions.S_IRUSR))
+            using (var handle = fileInfo.Open(FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
             {
                 validator?.Invoke(handle);
                 using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
@@ -123,6 +172,37 @@ namespace Snowflake.Data.Core.Tools
                     streamWriter.Write(content);
                 }
             }
+        }
+
+        public virtual void WriteAllBytes(string path, byte[] bytes, Action<UnixStream> validator)
+        {
+            var fileInfo = new UnixFileInfo(path: path);
+            using (var handle = fileInfo.Open(FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
+            {
+                validator?.Invoke(handle);
+                using (var writer = new BinaryWriter(handle, Encoding.ASCII))
+                {
+                    writer.Write(bytes);
+                }
+            }
+        }
+
+        public long AppendToFile(string path, string mainContent, string additionalContent, Action<UnixStream> validator, FileAccessPermissions permissions)
+        {
+            var fileInfo = new UnixFileInfo(path: path);
+            if (!fileInfo.Exists)
+                CreateFileWithPermissions(path, permissions, false);
+            using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, (FilePermissions)permissions))
+            {
+                validator?.Invoke(handle);
+                using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
+                {
+                    streamWriter.Write(mainContent);
+                    if (additionalContent != null)
+                        streamWriter.Write(additionalContent);
+                }
+            }
+            return fileInfo.Length;
         }
 
         public virtual long GetCurrentUserId()

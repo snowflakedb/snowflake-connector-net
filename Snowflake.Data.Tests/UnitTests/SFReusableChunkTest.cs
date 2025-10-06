@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            Assert.AreEqual("1", chunk.ExtractCell(0,0).SafeToString());
+            Assert.AreEqual("1", chunk.ExtractCell(0, 0).SafeToString());
             Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
             Assert.AreEqual("abcde", chunk.ExtractCell(0, 2).SafeToString());
 

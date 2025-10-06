@@ -70,7 +70,7 @@ namespace Snowflake.Data.AuthenticationTests
 
             authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
-            }
+        }
 
         [Test, IgnoreOnCI]
         public void TestAuthenticateUsingExternalBrowserTimeout()
@@ -87,5 +87,5 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
-      }
+    }
 }

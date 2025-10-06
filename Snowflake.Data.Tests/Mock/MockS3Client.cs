@@ -33,9 +33,9 @@ namespace Snowflake.Data.Tests.Mock
         // Create AWS exception for mock requests
         static Exception CreateMockAwsResponseError(string awsErrorCode, bool isAsync)
         {
-             Exception exception = awsErrorCode.Length > 0
-                ? new AmazonS3Exception(S3ErrorMessage) { ErrorCode = awsErrorCode }
-                : new Exception("Non-AWS exception");
+            Exception exception = awsErrorCode.Length > 0
+               ? new AmazonS3Exception(S3ErrorMessage) { ErrorCode = awsErrorCode }
+               : new Exception("Non-AWS exception");
 
             if (isAsync)
             {

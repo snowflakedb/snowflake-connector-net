@@ -335,12 +335,10 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
                 clientConfig.ServiceURL = endpoint;
             }
-
             // The region information used to determine the endpoint for the service.
             // RegionEndpoint and ServiceURL are mutually exclusive properties.
-            // If both stageInfo.endPoint and stageInfo.region have a value, stageInfo.region takes
-            // precedence and ServiceUrl will be reset to null.
-            if ((null != region) && (0 != region.Length))
+            // If both stageInfo.endPoint and stageInfo.region have a value, the endPoint takes precedence
+            else if ((null != region) && (0 != region.Length))
             {
                 RegionEndpoint regionEndpoint = RegionEndpoint.GetBySystemName(region);
                 clientConfig.RegionEndpoint = regionEndpoint;

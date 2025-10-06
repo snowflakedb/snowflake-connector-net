@@ -7,13 +7,13 @@ namespace Snowflake.Data.Tests.Util
     public class AwaiterTest
     {
         private readonly TimeSpan _maxDurationRegardedAsImmediately = TimeSpan.FromSeconds(1);
-        
+
         [Test]
         public void TestReturnsImmediatelyWhenConditionIsMet()
         {
             // act
             var millis = MillisecondsOfWaiting(() => true, TimeSpan.FromHours(1));
-            
+
             // assert
             Assert.LessOrEqual(millis, _maxDurationRegardedAsImmediately.TotalMilliseconds);
         }
@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.Util
         {
             // act
             var millis = MillisecondsOfWaiting(() => false, TimeSpan.FromMilliseconds(0));
-            
+
             // assert
             Assert.LessOrEqual(millis, _maxDurationRegardedAsImmediately.TotalMilliseconds);
         }
@@ -33,10 +33,10 @@ namespace Snowflake.Data.Tests.Util
         {
             // arrange
             var timeout = TimeSpan.FromSeconds(2);
-            
+
             // act
             var millis = MillisecondsOfWaiting(() => false, TimeSpan.FromSeconds(2));
-            
+
             // assert
             Assert.GreaterOrEqual(millis, _maxDurationRegardedAsImmediately.TotalMilliseconds);
             Assert.LessOrEqual(millis, timeout.TotalMilliseconds + _maxDurationRegardedAsImmediately.TotalMilliseconds);

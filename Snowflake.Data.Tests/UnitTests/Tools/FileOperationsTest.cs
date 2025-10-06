@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
             var filePermissions = userAllowedFilePermissions;
 
-            Syscall.chmod(filePath, (FilePermissions) filePermissions);
+            Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
             var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             // arrange
             var absoluteFilePath = Path.Combine(s_workingDirectory, s_fileName);
-            Syscall.creat(absoluteFilePath, (FilePermissions) (FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
+            Syscall.creat(absoluteFilePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
 
             // act and assert
             Assert.IsTrue(s_fileOperations.IsFileSafe(absoluteFilePath));
@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             // arrange
             var absolutePath = Path.Combine(s_workingDirectory, s_fileName);
-            var mockUnixOperations = new MockUnixOperations{ CurrentUserId = 1, FileOwnerId = 1 };
+            var mockUnixOperations = new MockUnixOperations { CurrentUserId = 1, FileOwnerId = 1 };
             var fileOps = new FileOperations(mockUnixOperations);
 
             // act and assert
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             // arrange
             var absolutePath = Path.Combine(s_workingDirectory, s_fileName);
-            var mockUnixOperations = new MockUnixOperations{ CurrentUserId = 1, FileOwnerId = 2 };
+            var mockUnixOperations = new MockUnixOperations { CurrentUserId = 1, FileOwnerId = 2 };
             var fileOps = new FileOperations(mockUnixOperations);
 
             // act and assert
@@ -155,11 +155,19 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             // arrange
             var absolutePath = Path.Combine(s_workingDirectory, s_fileName);
-            var mockUnixOperations = new MockUnixOperations{ CurrentUserId = 1, FileOwnerId = 2 };
-            var fileOps = new FileOperations(mockUnixOperations);
+            File.Create(absolutePath);
+            try
+            {
+                var mockUnixOperations = new MockUnixOperations { CurrentUserId = 1, FileOwnerId = 2 };
+                var fileOps = new FileOperations(mockUnixOperations);
 
-            // act and assert
-            Assert.IsFalse(fileOps.IsFileSafe(absolutePath));
+                // act and assert
+                Assert.IsFalse(fileOps.IsFileSafe(absolutePath));
+            }
+            finally
+            {
+                File.Delete(absolutePath);
+            }
         }
 
         [Test]
@@ -195,7 +203,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var DestFilePath = Path.Combine(s_workingDirectory, DestFile);
 
             s_fileOperations.Create(SrcFilePath).Close();
-            Syscall.chmod(SrcFilePath, (FilePermissions) FileAccessPermissions.AllPermissions);
+            Syscall.chmod(SrcFilePath, (FilePermissions)FileAccessPermissions.AllPermissions);
             File.WriteAllText(SrcFilePath, s_content);
 
             // act and assert

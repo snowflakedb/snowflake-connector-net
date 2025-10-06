@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.Mock
                     code = QUERY_IN_EXEC_CODE
                 };
                 return Task.FromResult<T>((T)(object)queryExecResponse);
-                
+
             }
             else if (sfRequest.jsonBody is RenewSessionRequest)
             {

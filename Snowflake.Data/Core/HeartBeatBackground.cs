@@ -1,14 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
-    public sealed class HeartBeatBackground
+    internal sealed class HeartBeatBackground
     {
         private static HeartBeatBackground instance = null;
         private static readonly object heartBeatLock = new object();
@@ -53,7 +50,7 @@ namespace Snowflake.Data.Core
             {
                 lock (heartBeatLock)
                 {
-                    if(instance == null)
+                    if (instance == null)
                     {
                         instance = new HeartBeatBackground();
                     }
@@ -69,7 +66,7 @@ namespace Snowflake.Data.Core
 
         public void addConnection(SFSession conn, long masterTokenValidityInSecs)
         {
-            lock(heartBeatLock)
+            lock (heartBeatLock)
             {
                 if (heartBeatConns == null)
                 {
@@ -94,7 +91,7 @@ namespace Snowflake.Data.Core
 
         public void removeConnection(SFSession conn)
         {
-            lock(heartBeatLock)
+            lock (heartBeatLock)
             {
                 heartBeatConns.Remove(conn);
             }
@@ -105,7 +102,7 @@ namespace Snowflake.Data.Core
             while (true)
             {
                 List<SFSession> copyOfHeartBeatQueue = new List<SFSession>();
-                
+
                 long heartBeatInterval = getHeartBeatInterval(masterTokenValidationTimeInSec);
                 Thread.Sleep(TimeSpan.FromSeconds(heartBeatInterval));
 
@@ -121,7 +118,7 @@ namespace Snowflake.Data.Core
                     }
                 }
 
-                for(int i = 0; i < copyOfHeartBeatQueue.Count(); i++)
+                for (int i = 0; i < copyOfHeartBeatQueue.Count(); i++)
                 {
                     copyOfHeartBeatQueue[i].heartbeat();
                 }

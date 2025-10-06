@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests
             PopulateStreamWithRandomJson(numberOfLines, memoryStream);
             return memoryStream;
         }
-        
+
         private static void PopulateStreamWithRandomJson(int numberOfLines, Stream outputStream)
         {
             WriteToStream("{\n", outputStream);

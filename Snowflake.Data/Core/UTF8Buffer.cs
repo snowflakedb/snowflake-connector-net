@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Text;
 
 namespace Snowflake.Data.Core
 {
-    public class UTF8Buffer
+    internal class UTF8Buffer
     {
         // Cache for maximum performance
         public static Encoding UTF8 = Encoding.UTF8;
@@ -39,7 +38,7 @@ namespace Snowflake.Data.Core
 
     }
 
-    public static class UTF8BufferExtension
+    internal static class UTF8BufferExtension
     {
         // Define an extension method that can safely be called even on null objects
         // Calling ToString() on a null object causes an exception
