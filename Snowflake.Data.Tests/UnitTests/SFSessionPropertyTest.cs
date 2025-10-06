@@ -615,7 +615,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;", "60")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;", "10")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=30;", "30")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=120;", "120")]
         public void TestParseCrlDownloadTimeout(string connectionString, string expectedTimeout)
