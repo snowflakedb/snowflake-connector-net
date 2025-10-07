@@ -132,8 +132,6 @@ namespace Snowflake.Data.Core
         WORKLOAD_IDENTITY_ENTRA_RESOURCE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         OAUTHENABLESINGLEUSEREFRESHTOKENS,
-        [SFSessionPropertyAttr(required = false, defaultValue = "true")]
-        USEDOTNETCRLCHECK,
         [SFSessionPropertyAttr(required = false, defaultValue = "disabled")]
         CERTREVOCATIONCHECKMODE,
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
@@ -142,6 +140,8 @@ namespace Snowflake.Data.Core
         ENABLECRLINMEMORYCACHING,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         ALLOWCERTIFICATESWITHOUTCRLURL,
+        [SFSessionPropertyAttr(required = false, defaultValue = "10")]
+        CRLDOWNLOADTIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls12")]
         MINTLS,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls13")]
@@ -336,12 +336,11 @@ namespace Snowflake.Data.Core
 
         private static void ValidateCrlParameters(SFSessionProperties properties)
         {
-            var useDotnetCrlCheck = ValidateBooleanParameter(SFSessionProperty.USEDOTNETCRLCHECK, properties);
-            var certRevocationCheckMode = ValidateCertRevocationCheckModeParameter(properties);
-            ValidateCombinationOfCrlCheckModes(useDotnetCrlCheck, certRevocationCheckMode);
+            ValidateCertRevocationCheckModeParameter(properties);
             ValidateBooleanParameter(SFSessionProperty.ENABLECRLDISKCACHING, properties);
             ValidateBooleanParameter(SFSessionProperty.ENABLECRLINMEMORYCACHING, properties);
             ValidateBooleanParameter(SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL, properties);
+            ValidatePositiveIntegerParameter(SFSessionProperty.CRLDOWNLOADTIMEOUT, properties);
         }
 
         private static void ValidateTlsParameters(SFSessionProperties properties)
@@ -369,22 +368,12 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static void ValidateCombinationOfCrlCheckModes(bool useDotnetCrlCheck, CertRevocationCheckMode certRevocationCheckMode)
-        {
-            if (useDotnetCrlCheck && certRevocationCheckMode == CertRevocationCheckMode.Advisory)
-            {
-                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"'ADVISORY' value of the parameter {SFSessionProperty.CERTREVOCATIONCHECKMODE.ToString()} conflicts with 'true' value of the parameter {SFSessionProperty.USEDOTNETCRLCHECK}.");
-                logger.Error(exception.Message, exception);
-                throw exception;
-            }
-        }
-
         private static CertRevocationCheckMode ValidateCertRevocationCheckModeParameter(SFSessionProperties properties)
         {
             var certRevocationCheckModeString = properties[SFSessionProperty.CERTREVOCATIONCHECKMODE];
             if (!Enum.TryParse<CertRevocationCheckMode>(certRevocationCheckModeString, true, out var certRevocationCheckMode))
             {
-                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.CERTREVOCATIONCHECKMODE.ToString()} should have one of following values: ENABLED, ADVISORY, DISABLED.");
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.CERTREVOCATIONCHECKMODE.ToString()} should have one of following values: ENABLED, ADVISORY, DISABLED, NATIVE.");
                 logger.Error(exception.Message, exception);
                 throw exception;
             }
@@ -397,6 +386,24 @@ namespace Snowflake.Data.Core
             if (!bool.TryParse(propertyString, out var result))
             {
                 var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have a boolean value.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            return result;
+        }
+
+        private static int ValidatePositiveIntegerParameter(SFSessionProperty property, SFSessionProperties properties)
+        {
+            var propertyString = properties[property];
+            if (!int.TryParse(propertyString, out var result))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have an integer value.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            if (result <= 0)
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should be greater than 0.");
                 logger.Error(exception.Message, exception);
                 throw exception;
             }

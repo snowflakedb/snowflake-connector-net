@@ -28,11 +28,11 @@ namespace Snowflake.Data.Core
             bool forceRetryOn404,
             int maxHttpRetries,
             bool includeRetryReason = true,
-            bool useDotnetCrlCheckMechanism = true,
             string certRevocationCheckMode = "DISABLED",
             bool enableCRLDiskCaching = true,
             bool enableCRLInMemoryCaching = true,
             bool allowCertificatesWithoutCrlUrl = true,
+            int crlDownloadTimeout = 10,
             string minTlsProtocol = "TLS12",
             string maxTlsProtocol = "TLS13"
             )
@@ -46,11 +46,11 @@ namespace Snowflake.Data.Core
             ForceRetryOn404 = forceRetryOn404;
             MaxHttpRetries = maxHttpRetries;
             IncludeRetryReason = includeRetryReason;
-            UseDotnetCrlCheckMechanism = useDotnetCrlCheckMechanism;
             CertRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), certRevocationCheckMode, true);
             EnableCRLDiskCaching = enableCRLDiskCaching;
             EnableCRLInMemoryCaching = enableCRLInMemoryCaching;
             AllowCertificatesWithoutCrlUrl = allowCertificatesWithoutCrlUrl;
+            CrlDownloadTimeout = crlDownloadTimeout;
             MinTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(minTlsProtocol) : SslProtocols.None;
             MaxTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(maxTlsProtocol) : SslProtocols.None;
 
@@ -65,11 +65,11 @@ namespace Snowflake.Data.Core
                     forceRetryOn404.ToString(),
                     maxHttpRetries.ToString(),
                     includeRetryReason.ToString(),
-                    useDotnetCrlCheckMechanism.ToString(),
                     certRevocationCheckMode,
                     enableCRLDiskCaching.ToString(),
                     enableCRLInMemoryCaching.ToString(),
                     allowCertificatesWithoutCrlUrl.ToString(),
+                    crlDownloadTimeout.ToString(),
                     minTlsProtocol,
                     maxTlsProtocol
                 });
@@ -84,11 +84,11 @@ namespace Snowflake.Data.Core
         public readonly bool ForceRetryOn404;
         public readonly int MaxHttpRetries;
         public readonly bool IncludeRetryReason;
-        internal readonly bool UseDotnetCrlCheckMechanism;
         internal readonly CertRevocationCheckMode CertRevocationCheckMode;
         internal readonly bool EnableCRLDiskCaching;
         internal readonly bool EnableCRLInMemoryCaching;
         internal readonly bool AllowCertificatesWithoutCrlUrl;
+        internal readonly int CrlDownloadTimeout;
         internal readonly SslProtocols MinTlsProtocol;
         internal readonly SslProtocols MaxTlsProtocol;
 
@@ -96,11 +96,9 @@ namespace Snowflake.Data.Core
         public readonly string ConfKey;
 
         internal bool IsCustomCrlCheckConfigured() =>
-            !UseDotnetCrlCheckMechanism && (CertRevocationCheckMode == CertRevocationCheckMode.Enabled ||
-                                            CertRevocationCheckMode == CertRevocationCheckMode.Advisory);
+            CertRevocationCheckMode == CertRevocationCheckMode.Enabled || CertRevocationCheckMode == CertRevocationCheckMode.Advisory;
 
-        internal bool IsDotnetCrlCheckEnabled() =>
-            UseDotnetCrlCheckMechanism && CertRevocationCheckMode == CertRevocationCheckMode.Enabled;
+        internal bool IsDotnetCrlCheckEnabled() => CertRevocationCheckMode == CertRevocationCheckMode.Native;
 
         public SslProtocols GetRequestedTlsProtocolsRange()
         {

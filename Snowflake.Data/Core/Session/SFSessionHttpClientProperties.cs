@@ -41,11 +41,11 @@ namespace Snowflake.Data.Core
         private TimeSpan _expirationTimeout;
         private bool _poolingEnabled;
         internal bool _clientStoreTemporaryCredential;
-        internal bool _useDotnetCrlCheck;
         internal CertRevocationCheckMode _certRevocationCheckMode;
         internal bool _enableCrlDiskCaching;
         internal bool _enableCrlInMemoryCaching;
         internal bool _allowCertificatesWithoutCrlUrl;
+        private int _crlDownloadTimeout;
         internal string _minTlsProtocol;
         internal string _maxTlsProtocol;
 
@@ -200,11 +200,11 @@ namespace Snowflake.Data.Core
                 forceRetryOn404,
                 maxHttpRetries,
                 includeRetryReason,
-                _useDotnetCrlCheck,
                 _certRevocationCheckMode.ToString(),
                 _enableCrlDiskCaching,
                 _enableCrlInMemoryCaching,
                 _allowCertificatesWithoutCrlUrl,
+                _crlDownloadTimeout,
                 _minTlsProtocol,
                 _maxTlsProtocol
                 );
@@ -267,11 +267,11 @@ namespace Snowflake.Data.Core
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
                     _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
                     _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]),
-                    _useDotnetCrlCheck = Boolean.Parse(propertiesDictionary[SFSessionProperty.USEDOTNETCRLCHECK]),
                     _certRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), propertiesDictionary[SFSessionProperty.CERTREVOCATIONCHECKMODE], true),
                     _enableCrlDiskCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLDISKCACHING]),
                     _enableCrlInMemoryCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLINMEMORYCACHING]),
                     _allowCertificatesWithoutCrlUrl = Boolean.Parse(propertiesDictionary[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]),
+                    _crlDownloadTimeout = int.Parse(propertiesDictionary[SFSessionProperty.CRLDOWNLOADTIMEOUT]),
                     _minTlsProtocol = propertiesDictionary[SFSessionProperty.MINTLS],
                     _maxTlsProtocol = propertiesDictionary[SFSessionProperty.MAXTLS]
                 };
