@@ -283,7 +283,7 @@ namespace Snowflake.Data.Core.Revocation
                             var fileInfo = _fileOperations.GetFileInfo(filePath);
                             var crl = _parser.Parse(fileBytes, fileInfo.LastWriteTimeUtc);
 
-                            if (crl.IsExpiredOrStale(now, _removalDelay))
+                            if (crl.NeedsReplacement(now, _removalDelay))
                             {
                                 File.Delete(filePath);
                                 removedCount++;

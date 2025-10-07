@@ -160,6 +160,17 @@ on specific memory-limited environments (k8s, vm).
 
 The old `insecureMode` parameter is no longer supported by the driver.
 
+### CRL caching configuration
+
+The driver caches downloaded CRLs to avoid repeatedly fetching them from the network. Two environment variables control caching behavior:
+
+| Environment Variable | Default | Description |
+|---------------------|---------|-------------|
+| `SF_CRL_VALIDITY_TIME` | 1 day | Maximum age (in days) for a cached CRL to be considered fresh. After this time, the driver will attempt to download a newer version. |
+| `SF_CRL_CACHE_REMOVAL_DELAY` | 7 days | Interval (in days) for periodic cleanup of expired/stale CRLs from cache. |
+
+For connection string parameters related to CRL checking, see [Connecting.md](Connecting.md).
+
 ### DigiCert Global Root G2 certificate authority (CA) TLS certificate updates
 This might or might not affect your installation. Since the .NET driver doesn't come with its own truststore, it depends on the system's own truststore,
 which (hopefully) already includes all the root certificates needing to verify the chain of trust for connecting to Snowflake services.

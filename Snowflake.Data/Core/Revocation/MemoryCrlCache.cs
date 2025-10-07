@@ -37,7 +37,7 @@ namespace Snowflake.Data.Core.Revocation
         {
             var now = DateTime.UtcNow;
             var keysToRemove = _cache
-                .Where(entry => entry.Value.IsExpiredOrStale(now, _cacheValidityTime))
+                .Where(entry => entry.Value.NeedsReplacement(now, _cacheValidityTime))
                 .Select(entry => entry.Key)
                 .ToList();
 

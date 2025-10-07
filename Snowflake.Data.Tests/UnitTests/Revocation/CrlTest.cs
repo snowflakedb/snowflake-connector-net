@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.IsTrue(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
             Assert.IsFalse(crl.RevokedCertificates.Contains(DigiCertUnrevokedCertSerialNumber));
             Assert.IsFalse(crl.IsRevoked(DigiCertUnrevokedCertSerialNumber));
-            Assert.IsFalse(crl.IsExpiredOrStale(now, TimeSpan.FromDays(1)));
+            Assert.IsFalse(crl.NeedsReplacement(now, TimeSpan.FromDays(1)));
         }
 
         [Test]
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crl = crlParser.Parse(crlBytes, now);
 
             // act
-            var isExpired = crl.IsExpiredOrStale(now, TimeSpan.FromDays(365));
+            var isExpired = crl.NeedsReplacement(now, TimeSpan.FromDays(365));
 
             // assert
             Assert.AreEqual(expectedIsExpired, isExpired);
@@ -99,14 +99,14 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
             var crl = crlParser.Parse(crlBytes, now);
             var cacheValidityTime = TimeSpan.FromDays(1);
-            Assert.False(crl.IsExpiredOrStale(now, cacheValidityTime));
+            Assert.False(crl.NeedsReplacement(now, cacheValidityTime));
             var justAfterValidityTime = now.Add(cacheValidityTime).AddSeconds(1);
 
             // act
-            var isExpiredOrStale = crl.IsExpiredOrStale(justAfterValidityTime, cacheValidityTime);
+            var needsReplacement = crl.NeedsReplacement(justAfterValidityTime, cacheValidityTime);
 
             // assert
-            Assert.True(isExpiredOrStale);
+            Assert.True(needsReplacement);
         }
 
         [Test]

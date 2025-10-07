@@ -18,7 +18,7 @@ namespace Snowflake.Data.Core.Revocation
             _cacheManager = CrlCacheManager.Build(useMemoryCache, useFileCache, cleanupInterval, cacheValidityTime);
         }
 
-        private static TimeSpan GetCleanupInterval()
+        internal static TimeSpan GetCleanupInterval()
         {
             const string envName = "SF_CRL_CACHE_REMOVAL_DELAY";
             const int defaultDays = 7;
