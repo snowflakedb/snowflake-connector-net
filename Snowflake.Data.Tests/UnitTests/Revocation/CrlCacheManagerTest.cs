@@ -37,41 +37,15 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
-        public void TestGetFromMemoryCacheOnly()
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(true, true)]
+        public void TestGetWithDifferentCacheConfigurations(bool inMemoryCacheEnabled, bool onDiskCacheEnabled)
         {
             // arrange
             var manager = CrlCacheManager.Build(
-                inMemoryCacheEnabled: true,
-                onDiskCacheEnabled: false,
-                cleanupInterval: TimeSpan.FromDays(1),
-                cacheValidityTime: TimeSpan.FromDays(1));
-
-            var now = DateTime.UtcNow;
-            var issuerName = "CN=Test CA,O=Test Org";
-            var crl = new Crl
-            {
-                DownloadTime = now,
-                ThisUpdate = now,
-                NextUpdate = now.AddDays(10),
-                IssuerName = issuerName
-            };
-
-            // act
-            manager.Set(CrlUrl1, crl);
-            var retrieved = manager.Get(CrlUrl1);
-
-            // assert
-            Assert.NotNull(retrieved);
-            Assert.AreEqual(issuerName, retrieved.IssuerName);
-        }
-
-        [Test]
-        public void TestGetFromDiskCacheOnly()
-        {
-            // arrange
-            var manager = CrlCacheManager.Build(
-                inMemoryCacheEnabled: false,
-                onDiskCacheEnabled: true,
+                inMemoryCacheEnabled: inMemoryCacheEnabled,
+                onDiskCacheEnabled: onDiskCacheEnabled,
                 cleanupInterval: TimeSpan.FromDays(1),
                 cacheValidityTime: TimeSpan.FromDays(1));
 
@@ -83,37 +57,9 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 ThisUpdate = now,
                 NextUpdate = now.AddDays(10),
                 IssuerName = issuerName,
-                BouncyCastleCrl = CertificateGenerator.GenerateCrl(issuerName, now, now.AddDays(10), now)
-            };
-
-            // act
-            manager.Set(CrlUrl1, crl);
-            var retrieved = manager.Get(CrlUrl1);
-
-            // assert
-            Assert.NotNull(retrieved);
-            Assert.AreEqual(issuerName, retrieved.IssuerName);
-        }
-
-        [Test]
-        public void TestGetWhenMemoryAndDiskCacheEnabled()
-        {
-            // arrange
-            var manager = CrlCacheManager.Build(
-                inMemoryCacheEnabled: true,
-                onDiskCacheEnabled: true,
-                cleanupInterval: TimeSpan.FromDays(1),
-                cacheValidityTime: TimeSpan.FromDays(1));
-
-            var now = DateTime.UtcNow;
-            var issuerName = "CN=Test CA,O=Test Org";
-            var crl = new Crl
-            {
-                DownloadTime = now,
-                ThisUpdate = now,
-                NextUpdate = now.AddDays(10),
-                IssuerName = issuerName,
-                BouncyCastleCrl = CertificateGenerator.GenerateCrl(issuerName, now, now.AddDays(10), now)
+                BouncyCastleCrl = onDiskCacheEnabled
+                    ? CertificateGenerator.GenerateCrl(issuerName, now, now.AddDays(10), now)
+                    : null
             };
 
             // act
@@ -150,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var manager = CrlCacheManager.Build(
                 inMemoryCacheEnabled: true,
                 onDiskCacheEnabled: false,
-                cleanupInterval: TimeSpan.FromMilliseconds(200),
+                cleanupInterval: TimeSpan.FromSeconds(1),
                 cacheValidityTime: TimeSpan.FromDays(1));
 
             var now = DateTime.UtcNow;
@@ -171,15 +117,15 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
             manager.Set(CrlUrl1, expiredCrl);
             manager.Set(CrlUrl2, validCrl);
-            Assert.NotNull(manager.Get(CrlUrl1));
-            Assert.NotNull(manager.Get(CrlUrl2));
+            Assert.NotNull(manager.Get(CrlUrl1), "CRL should be in cache before cleanup runs");
+            Assert.NotNull(manager.Get(CrlUrl2), "CRL should be in cache before cleanup runs");
 
             // act
-            Thread.Sleep(500);
+            Thread.Sleep(1500);
 
             // assert
-            Assert.Null(manager.Get(CrlUrl1));
-            Assert.NotNull(manager.Get(CrlUrl2));
+            Assert.Null(manager.Get(CrlUrl1), "Expired CRL should have been removed by cleanup");
+            Assert.NotNull(manager.Get(CrlUrl2), "Valid CRL should remain in cache");
         }
 
         [Test]
@@ -189,7 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var manager = CrlCacheManager.Build(
                 inMemoryCacheEnabled: true,
                 onDiskCacheEnabled: false,
-                cleanupInterval: TimeSpan.FromMilliseconds(200),
+                cleanupInterval: TimeSpan.FromSeconds(1),
                 cacheValidityTime: TimeSpan.FromDays(1));
 
             var now = DateTime.UtcNow;
@@ -200,15 +146,25 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 NextUpdate = now.AddDays(10),
                 IssuerName = "Test Issuer"
             };
+            var validCrl = new Crl
+            {
+                DownloadTime = now,
+                ThisUpdate = now,
+                NextUpdate = now.AddDays(10),
+                IssuerName = "Test Issuer 2"
+            };
 
             manager.Set(CrlUrl1, staleCrl);
-            Assert.NotNull(manager.Get(CrlUrl1));
+            manager.Set(CrlUrl2, validCrl);
+            Assert.NotNull(manager.Get(CrlUrl1), "CRL should be in cache before cleanup runs");
+            Assert.NotNull(manager.Get(CrlUrl2), "CRL should be in cache before cleanup runs");
 
-            // act:
-            Thread.Sleep(500);
+            // act
+            Thread.Sleep(1500);
 
             // assert
-            Assert.Null(manager.Get(CrlUrl1));
+            Assert.Null(manager.Get(CrlUrl1), "Stale CRL should have been removed by cleanup");
+            Assert.NotNull(manager.Get(CrlUrl2), "Valid CRL should remain in cache");
         }
 
         [Test]
@@ -218,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var manager = CrlCacheManager.Build(
                 inMemoryCacheEnabled: true,
                 onDiskCacheEnabled: false,
-                cleanupInterval: TimeSpan.FromMilliseconds(200),
+                cleanupInterval: TimeSpan.FromSeconds(1),
                 cacheValidityTime: TimeSpan.FromDays(1));
 
             var now = DateTime.UtcNow;
@@ -231,13 +187,13 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             };
 
             manager.Set(CrlUrl1, validCrl);
-            Assert.NotNull(manager.Get(CrlUrl1));
+            Assert.NotNull(manager.Get(CrlUrl1), "Valid CRL should be in cache");
 
             // act
-            Thread.Sleep(500);
+            Thread.Sleep(1500);
 
             // assert
-            Assert.NotNull(manager.Get(CrlUrl1));
+            Assert.NotNull(manager.Get(CrlUrl1), "Valid CRL should remain in cache after cleanup");
         }
 
         [Test]

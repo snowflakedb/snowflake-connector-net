@@ -87,6 +87,7 @@ namespace Snowflake.Data.Core.Revocation
         {
             _memoryCache?.Set(crlUrl, crl);
             _fileCache?.Set(crlUrl, crl);
+            s_logger.Debug($"CRL cached for {crlUrl}");
         }
 
         private void StartPeriodicCleanup()

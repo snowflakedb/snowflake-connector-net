@@ -44,6 +44,7 @@ namespace Snowflake.Data.Core.Revocation
             foreach (var key in keysToRemove)
             {
                 _cache.TryRemove(key, out _);
+                s_logger.Debug($"Removing in-memory CRL cache entry for {key}");
             }
 
             if (keysToRemove.Count > 0)

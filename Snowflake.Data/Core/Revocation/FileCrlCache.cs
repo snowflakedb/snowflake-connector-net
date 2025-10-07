@@ -173,6 +173,12 @@ namespace Snowflake.Data.Core.Revocation
             return Path.Combine(_config.DirectoryPath, encodedUrl);
         }
 
+        private string DecodeCrlUrlFromFilePath(string filePath)
+        {
+            var fileName = Path.GetFileName(filePath);
+            return HttpUtility.UrlDecode(fileName, Encoding.UTF8);
+        }
+
         private byte[] ReadCrlBytes(string filePath)
         {
             if (!_fileOperations.Exists(filePath))
@@ -277,6 +283,7 @@ namespace Snowflake.Data.Core.Revocation
 
                     foreach (var filePath in files)
                     {
+                        var crlUrl = DecodeCrlUrlFromFilePath(filePath);
                         try
                         {
                             var fileBytes = ReadCrlBytes(filePath);
@@ -287,7 +294,7 @@ namespace Snowflake.Data.Core.Revocation
                             {
                                 File.Delete(filePath);
                                 removedCount++;
-                                s_logger.Debug($"Removing file based CRL cache entry for {filePath}");
+                                s_logger.Debug($"Removing file based CRL cache entry for {crlUrl}");
                             }
                         }
                         catch (Exception exception)
@@ -296,12 +303,12 @@ namespace Snowflake.Data.Core.Revocation
                             {
                                 File.Delete(filePath);
                                 removedCount++;
-                                s_logger.Warn($"Deleted invalid CRL cache file {filePath}: {exception.Message}");
+                                s_logger.Warn($"Deleted invalid CRL cache file for {crlUrl}: {exception.Message}");
                             }
                             catch (Exception deleteError)
                             {
                                 s_logger.Warn(
-                                    $"Failed to delete invalid CRL cache file {filePath}: {deleteError.Message}");
+                                    $"Failed to delete invalid CRL cache file for {crlUrl}: {deleteError.Message}");
                             }
                         }
                     }
