@@ -292,8 +292,8 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "NET_VERSION")]
         internal string netVersion { get; set; }
 
-        [JsonProperty(PropertyName = "INSECURE_MODE")]
-        internal string insecureMode { get; set; }
+        [JsonProperty(PropertyName = "CERT_REVOCATION_CHECK_MODE")]
+        internal string certRevocationCheckMode { get; set; }
 
         [JsonProperty(PropertyName = "OAUTH_TYPE")]
         internal string oauthType { get; set; }
@@ -306,8 +306,8 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, INSECURE_MODE: {4} }}",
-                application, osVersion, netRuntime, netVersion, insecureMode);
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, CERT_REVOCATION_CHECK_MODE: {4} }}",
+                application, osVersion, netRuntime, netVersion, certRevocationCheckMode);
         }
 
         public LoginRequestClientEnv CopyUnchangingValues()

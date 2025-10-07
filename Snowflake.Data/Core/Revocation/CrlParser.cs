@@ -35,17 +35,23 @@ namespace Snowflake.Data.Core.Revocation
             var parsedCrl = crlParser.ReadCrl(bytes);
             if (parsedCrl == null)
                 return null;
-            var crl = new Crl
+            var crl = Create(parsedCrl, now);
+            return crl;
+        }
+
+        public Crl Create(X509Crl crl, DateTime now)
+        {
+            return new Crl
             {
                 DownloadTime = now,
-                ThisUpdate = parsedCrl.ThisUpdate,
-                NextUpdate = parsedCrl.NextUpdate,
-                IssuerName = parsedCrl.IssuerDN.ToString(),
-                IssuerDistributionPoints = ReadIdpFromCrl(parsedCrl),
-                RevokedCertificates = parsedCrl.GetRevokedCertificates().Select(cert => ConvertToHexadecimalString(cert.SerialNumber)).ToList(),
-                CrlCacheValidityTime = _crlCacheValidityTime
+                ThisUpdate = crl.ThisUpdate,
+                NextUpdate = crl.NextUpdate,
+                IssuerName = crl.IssuerDN.ToString(),
+                IssuerDistributionPoints = ReadIdpFromCrl(crl),
+                RevokedCertificates = crl.GetRevokedCertificates().Select(cert => ConvertToHexadecimalString(cert.SerialNumber)).ToList(),
+                CrlCacheValidityTime = _crlCacheValidityTime,
+                BouncyCastleCrl = crl
             };
-            return crl;
         }
 
         private string[] ReadIdpFromCrl(X509Crl crl)

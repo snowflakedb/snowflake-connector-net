@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
+using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Core
@@ -49,8 +50,6 @@ namespace Snowflake.Data.Core
         PRIVATE_KEY,
         [SFSessionPropertyAttr(required = false, IsSecret = true)]
         TOKEN,
-        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
-        INSECUREMODE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         USEPROXY,
         [SFSessionPropertyAttr(required = false)]
@@ -133,6 +132,20 @@ namespace Snowflake.Data.Core
         WORKLOAD_IDENTITY_ENTRA_RESOURCE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         OAUTHENABLESINGLEUSEREFRESHTOKENS,
+        [SFSessionPropertyAttr(required = false, defaultValue = "disabled")]
+        CERTREVOCATIONCHECKMODE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "true")]
+        ENABLECRLDISKCACHING,
+        [SFSessionPropertyAttr(required = false, defaultValue = "true")]
+        ENABLECRLINMEMORYCACHING,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        ALLOWCERTIFICATESWITHOUTCRLURL,
+        [SFSessionPropertyAttr(required = false, defaultValue = "10")]
+        CRLDOWNLOADTIMEOUT,
+        [SFSessionPropertyAttr(required = false, defaultValue = "tls12")]
+        MINTLS,
+        [SFSessionPropertyAttr(required = false, defaultValue = "tls13")]
+        MAXTLS,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -167,6 +180,8 @@ namespace Snowflake.Data.Core
             "\\w$",
             "^[\\w.-]+$"
         };
+
+        private static readonly string[] s_noLongerSupportedProperties = { "insecureMode".ToUpper() };
 
         public override bool Equals(object obj)
         {
@@ -237,7 +252,10 @@ namespace Snowflake.Data.Core
                 }
                 catch (ArgumentException)
                 {
-                    logger.Debug($"Property {keys[i]} not found ignored.");
+                    if (s_noLongerSupportedProperties.Contains(keys[i].ToUpper()))
+                        logger.Warn($"Property {keys[i]} is no longer supported. Its value is ignored.");
+                    else
+                        logger.Debug($"Property {keys[i]} not found - ignored.");
                 }
             }
 
@@ -284,6 +302,8 @@ namespace Snowflake.Data.Core
             ValidateAccountDomain(properties);
             WarnIfHttpUsed(properties);
             ValidateAuthenticatorFlowsProperties(properties);
+            ValidateCrlParameters(properties);
+            ValidateTlsParameters(properties);
 
             var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
 
@@ -312,6 +332,82 @@ namespace Snowflake.Data.Core
             properties[SFSessionProperty.ACCOUNT] = properties[SFSessionProperty.ACCOUNT].Split('.')[0];
 
             return properties;
+        }
+
+        private static void ValidateCrlParameters(SFSessionProperties properties)
+        {
+            ValidateCertRevocationCheckModeParameter(properties);
+            ValidateBooleanParameter(SFSessionProperty.ENABLECRLDISKCACHING, properties);
+            ValidateBooleanParameter(SFSessionProperty.ENABLECRLINMEMORYCACHING, properties);
+            ValidateBooleanParameter(SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL, properties);
+            ValidatePositiveIntegerParameter(SFSessionProperty.CRLDOWNLOADTIMEOUT, properties);
+        }
+
+        private static void ValidateTlsParameters(SFSessionProperties properties)
+        {
+            var minTls = properties.ExtractPropertyOrDefault(SFSessionProperty.MINTLS, "tls12").ToLower();
+            var maxTls = properties.ExtractPropertyOrDefault(SFSessionProperty.MAXTLS, "tls13").ToLower();
+            var validTlsValues = new List<string> { "tls12", "tls13" };
+            if (!validTlsValues.Contains(minTls))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.MINTLS.ToString()} should have one of the following values: TLS12, TLS13.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            if (!validTlsValues.Contains(maxTls))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.MAXTLS.ToString()} should have one of the following values: TLS12, TLS13.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            if (validTlsValues.IndexOf(minTls) > validTlsValues.IndexOf(maxTls))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.MINTLS.ToString()} value cannot be higher than {SFSessionProperty.MAXTLS.ToString()} value.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+        }
+
+        private static CertRevocationCheckMode ValidateCertRevocationCheckModeParameter(SFSessionProperties properties)
+        {
+            var certRevocationCheckModeString = properties[SFSessionProperty.CERTREVOCATIONCHECKMODE];
+            if (!Enum.TryParse<CertRevocationCheckMode>(certRevocationCheckModeString, true, out var certRevocationCheckMode))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.CERTREVOCATIONCHECKMODE.ToString()} should have one of following values: ENABLED, ADVISORY, DISABLED, NATIVE.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            return certRevocationCheckMode;
+        }
+
+        private static bool ValidateBooleanParameter(SFSessionProperty property, SFSessionProperties properties)
+        {
+            var propertyString = properties[property];
+            if (!bool.TryParse(propertyString, out var result))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have a boolean value.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            return result;
+        }
+
+        private static int ValidatePositiveIntegerParameter(SFSessionProperty property, SFSessionProperties properties)
+        {
+            var propertyString = properties[property];
+            if (!int.TryParse(propertyString, out var result))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have an integer value.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            if (result <= 0)
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should be greater than 0.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            return result;
         }
 
         private static void ValidateSchemeHostPort(SFSessionProperties properties)
@@ -837,7 +933,7 @@ namespace Snowflake.Data.Core
         }
     }
 
-    public static class EnumExtensions
+    internal static class EnumExtensions
     {
         public static TAttribute GetAttribute<TAttribute>(this Enum value)
             where TAttribute : Attribute
