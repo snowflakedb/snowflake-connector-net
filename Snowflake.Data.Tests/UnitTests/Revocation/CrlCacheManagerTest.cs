@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         [Test]
         public void TestGetFromMemoryCacheOnly()
         {
-            // arrange: manager with only memory cache
+            // arrange
             var manager = CrlCacheManager.Build(
                 inMemoryCacheEnabled: true,
                 onDiskCacheEnabled: false,
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         [Test]
         public void TestGetFromDiskCacheOnly()
         {
-            // arrange: manager with only disk cache
+            // arrange
             var manager = CrlCacheManager.Build(
                 inMemoryCacheEnabled: false,
                 onDiskCacheEnabled: true,
