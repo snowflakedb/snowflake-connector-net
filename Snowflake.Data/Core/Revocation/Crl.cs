@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.X509;
 
 namespace Snowflake.Data.Core.Revocation
 {
@@ -19,9 +21,18 @@ namespace Snowflake.Data.Core.Revocation
 
         public TimeSpan CrlCacheValidityTime { get; set; } = TimeSpan.FromDays(10);
 
+        public X509Crl BouncyCastleCrl { get; set; }
+
         public bool NeedsFreshCrl(DateTime now) =>
             NextUpdate < now || DownloadTime.Add(CrlCacheValidityTime) < now;
 
         public bool IsRevoked(string serialNumber) => RevokedCertificates.Contains(serialNumber);
+
+        public void VerifySignature(AsymmetricKeyParameter publicKey)
+        {
+            BouncyCastleCrl.Verify(publicKey);
+        }
+
+        public byte[] GetEncoded() => BouncyCastleCrl.GetEncoded();
     }
 }

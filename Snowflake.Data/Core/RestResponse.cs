@@ -32,7 +32,7 @@ namespace Snowflake.Data.Core
         }
     }
 
-    public interface IQueryExecResponseData
+    internal interface IQueryExecResponseData
     {
         string queryId { get; }
 

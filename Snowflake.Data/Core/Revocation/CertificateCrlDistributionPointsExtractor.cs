@@ -1,7 +1,8 @@
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.X509;
 
 namespace Snowflake.Data.Core.Revocation
 {
@@ -23,53 +24,33 @@ namespace Snowflake.Data.Core.Revocation
             foreach (var extension in extensions)
             {
                 if (extension.Oid?.Value == CrlDistributionPointsOid)
-                    return ReadCrlDistributionPoints(extension);
+                {
+                    var asn1Object = ReadAsn1Object(extension.RawData);
+                    var crlDistPoint = CrlDistPoint.GetInstance(asn1Object);
+                    return ReadCrlDistributionPoints(crlDistPoint);
+                }
             }
             return Array.Empty<string>();
         }
 
-        private string[] ReadCrlDistributionPoints(X509Extension extension)
+        private Asn1Object ReadAsn1Object(byte[] rawData)
         {
-            var rawData = extension.RawData;
-            List<string> crlUrls = new List<string>();
-
-            // Search for URI tags (0x86) and extract the subsequent string
-            int i = 0;
-            while (i < rawData.Length)
+            using (var asn1InputStream = new Asn1InputStream(rawData))
             {
-                // Look for the tag that signifies a GeneralName (Context-specific, Tag 6 for URI)
-                // This is a common pattern for URIs in this extension
-                if (rawData[i] == 0x86) // ASN.1 tag for Context-specific, Primitive, Tag 6 (GeneralName: UniformResourceIdentifier)
-                {
-                    // The next byte is the length of the URI string
-                    if (i + 1 < rawData.Length)
-                    {
-                        int length = rawData[i + 1];
-                        if (i + 2 + length <= rawData.Length)
-                        {
-                            string url = Encoding.ASCII.GetString(rawData, i + 2, length);
-                            crlUrls.Add(url);
-                            i += (2 + length); // Move past this URI
-                        }
-                        else
-                        {
-                            // Malformed length
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        // Malformed tag-length-value
-                        break;
-                    }
-                }
-                else
-                {
-                    // Move to the next byte, hoping to find a tag, or implement more robust ASN.1 TLV parsing
-                    i++;
-                }
+                return asn1InputStream.ReadObject();
             }
-            return crlUrls.ToArray();
         }
+
+        private string[] ReadCrlDistributionPoints(CrlDistPoint crlDistPoint) =>
+            crlDistPoint.GetDistributionPoints()
+                .Select(distributionPoint => distributionPoint.DistributionPointName)
+                .Where(distributionPointName => distributionPointName != null)
+                .Select(distributionPointName => GeneralNames.GetInstance(distributionPointName.Name))
+                .SelectMany(names => names.GetNames())
+                .Where(name => name.TagNo == GeneralName.UniformResourceIdentifier)
+                .Select(name => ((DerStringBase)name.Name).GetString())
+                .Where(url => url.StartsWith("http://", StringComparison.InvariantCultureIgnoreCase))
+                .Distinct()
+                .ToArray();
     }
 }

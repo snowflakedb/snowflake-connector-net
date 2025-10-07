@@ -24,7 +24,7 @@ namespace Snowflake.Data.WIFTests
         [Test, IgnoreOnCI]
         public void TestAuthenticateUsingWifWithDefinedProvider()
         {
-            var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY;workload_identity_provider={s_provider}";
+            var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY;workload_identity_provider={s_provider};certRevocationCheckMode=enabled;";
             ConnectAndExecuteSimpleQuery(connectionString);
         }
 
@@ -37,7 +37,7 @@ namespace Snowflake.Data.WIFTests
             }
 
             var token = GetGcpAccessToken();
-            var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY;workload_identity_provider=OIDC;token={token}";
+            var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY;workload_identity_provider=OIDC;token={token};certRevocationCheckMode=enabled;";
             ConnectAndExecuteSimpleQuery(connectionString);
         }
 

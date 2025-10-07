@@ -11,6 +11,8 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
+using Snowflake.Data.Logger;
+using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
@@ -210,6 +212,26 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
         [Test]
         [Platform(Exclude = "Win")]
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
+            [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
+            [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
+        {
+            if (groupPermissions == 0 && othersPermissions == 0)
+            {
+                Assert.Ignore("Skip test when group and others have no permissions");
+            }
+            var content = "random text";
+            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+
+            var filePermissions = userPermissions | groupPermissions | othersPermissions;
+            Syscall.chmod(filePath, (FilePermissions)filePermissions);
+
+            // act and assert
+            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", EasyLoggerValidator.Instance.ValidateLogFilePermissions), "Attempting to read or write to log file with too broad permissions assigned");
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
         public void TestCreateFileWithUserRwPermissions()
         {
             // arrange
@@ -254,6 +276,53 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             // assert
             Assert.IsFalse(result);
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestReadBytesFromEmptyFile()
+        {
+            // arrange
+            var filePath = Path.Combine(s_workingDirectory, $"empty_file_{Path.GetRandomFileName()}");
+            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+
+            // act
+            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+
+            // assert
+            Assert.AreEqual(0, bytes.Length);
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestReadBytesFromSmallFile()
+        {
+            // arrange
+            var randomBytes = TestDataGenarator.NextBytes(19);
+            var filePath = Path.Combine(s_workingDirectory, $"small_file_{Path.GetRandomFileName()}");
+            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+            s_unixOperations.WriteAllBytes(filePath, randomBytes, _ => { });
+
+            // act
+            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+
+            // assert
+            CollectionAssert.AreEqual(randomBytes, bytes);
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestReadBytesFromLargeFile()
+        {
+            // arrange
+            var filePath = Path.Combine("crl", "DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl");
+            var expectedBytes = File.ReadAllBytes(filePath);
+
+            // act
+            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+
+            // assert
+            CollectionAssert.AreEqual(expectedBytes, bytes);
         }
 
         public static IEnumerable<FileAccessPermissions> UserPermissions()

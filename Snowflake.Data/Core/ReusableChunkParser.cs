@@ -1,13 +1,12 @@
 using System.IO;
 using System.Text;
-using Newtonsoft.Json;
 
 namespace Snowflake.Data.Core
 {
     using Snowflake.Data.Client;
     using System.Threading.Tasks;
 
-    public class FastStreamWrapper
+    internal class FastStreamWrapper
     {
         Stream wrappedStream;
         byte[] buffer = new byte[32768];
@@ -51,7 +50,7 @@ namespace Snowflake.Data.Core
         }
     }
 
-    public class ReusableChunkParser : IChunkParser
+    internal class ReusableChunkParser : IChunkParser
     {
         // Very fast parser, only supports strings and nulls
         // Never generates parsing errors

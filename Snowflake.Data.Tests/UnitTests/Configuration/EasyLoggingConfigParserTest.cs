@@ -34,11 +34,13 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [Test]
-        public void TestThatParsesConfigFile()
+        [TestCase(null)]
+        [TestCase("640")]
+        public void TestThatParsesConfigFile(string logFileUnixPermissions)
         {
             // arrange
             var parser = new EasyLoggingConfigParser();
-            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath));
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, logFileUnixPermissions));
 
             // act
             var config = parser.Parse(configFilePath);
@@ -48,6 +50,45 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.IsNotNull(config.CommonProps);
             Assert.AreEqual(LogLevel, config.CommonProps.LogLevel);
             Assert.AreEqual(LogPath, config.CommonProps.LogPath);
+            if (logFileUnixPermissions == null)
+                Assert.IsNull(config.Dotnet);
+            else
+            {
+                Assert.IsNotNull(config.Dotnet);
+                Assert.AreEqual(logFileUnixPermissions, config.Dotnet.LogFileUnixPermissions);
+            }
+        }
+
+        [Test]
+        public void TestThatThrowsExceptionForInvalidPermissionValue()
+        {
+            // arrange
+            var invalidValue = "800";
+            var parser = new EasyLoggingConfigParser();
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, invalidValue));
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
+
+            // assert
+            Assert.IsNotNull(thrown);
+            Assert.That(thrown.Message, Does.Contain($"Parsing easy logging configuration failed"));
+        }
+
+        [Test]
+        public void TestThatThrowsExceptionForIncorrectPermissionValueType()
+        {
+            // arrange
+            var incorrectValueType = "abc";
+            var parser = new EasyLoggingConfigParser();
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, incorrectValueType));
+
+            // act
+            var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
+
+            // assert
+            Assert.IsNotNull(thrown);
+            Assert.That(thrown.Message, Does.Contain($"Parsing easy logging configuration failed"));
         }
 
         [Test, TestCaseSource(nameof(ConfigFilesWithoutValues))]
