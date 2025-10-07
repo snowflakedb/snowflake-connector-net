@@ -95,6 +95,36 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.AreEqual(issuerName, retrieved.IssuerName);
         }
 
+        [Test]
+        public void TestGetWhenMemoryAndDiskCacheEnabled()
+        {
+            // arrange
+            var manager = CrlCacheManager.Build(
+                inMemoryCacheEnabled: true,
+                onDiskCacheEnabled: true,
+                cleanupInterval: TimeSpan.FromDays(1),
+                cacheValidityTime: TimeSpan.FromDays(1));
+
+            var now = DateTime.UtcNow;
+            var issuerName = "CN=Test CA,O=Test Org";
+            var crl = new Crl
+            {
+                DownloadTime = now,
+                ThisUpdate = now,
+                NextUpdate = now.AddDays(10),
+                IssuerName = issuerName,
+                BouncyCastleCrl = CertificateGenerator.GenerateCrl(issuerName, now, now.AddDays(10), now)
+            };
+
+            // act
+            manager.Set(CrlUrl1, crl);
+            var retrieved = manager.Get(CrlUrl1);
+
+            // assert
+            Assert.NotNull(retrieved);
+            Assert.AreEqual(issuerName, retrieved.IssuerName);
+        }
+
 
         [Test]
         public void TestGetReturnsNullForMissingEntry()
