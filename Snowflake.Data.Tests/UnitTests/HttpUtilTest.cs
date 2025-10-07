@@ -1,18 +1,17 @@
 using System.Net.Http;
+using NUnit.Framework;
+using Snowflake.Data.Core;
+using RichardSzalay.MockHttp;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Net;
+using System;
+using System.Security.Authentication;
+using Moq;
+using Moq.Protected;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Core;
-    using RichardSzalay.MockHttp;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using System.Net;
-    using System;
-    using System.Security.Authentication;
-    using Moq;
-    using Moq.Protected;
-
     [TestFixture]
     class HttpUtilTest
     {
@@ -36,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests
             .ThrowsAsync(new HttpRequestException("", new AuthenticationException()));
 
             var httpClient = HttpUtil.Instance.GetHttpClient(
-                new HttpClientConfig(false, "fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7, 20),
+                new HttpClientConfig("fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7, 20, certRevocationCheckMode: "ENABLED"),
                 handler.Object);
 
             try
@@ -140,11 +139,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void ShouldCreateHttpClientHandlerWithProxy()
+        public void TestCreateHttpClientHandlerWithProxy()
         {
-            // given
+            // arrange
             var config = new HttpClientConfig(
-                true,
                 "snowflake.com",
                 "123",
                 "testUser",
@@ -156,20 +154,19 @@ namespace Snowflake.Data.Tests.UnitTests
                 20
             );
 
-            // when
+            // act
             var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
 
-            // then
+            // assert
             Assert.IsTrue(handler.UseProxy);
             Assert.IsNotNull(handler.Proxy);
         }
 
         [Test]
-        public void ShouldCreateHttpClientHandlerWithoutProxy()
+        public void TestCreateHttpClientHandlerWithoutProxy()
         {
-            // given
+            // arrange
             var config = new HttpClientConfig(
-                true,
                 null,
                 null,
                 null,
@@ -181,10 +178,10 @@ namespace Snowflake.Data.Tests.UnitTests
                 0
             );
 
-            // when
+            // act
             var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
 
-            // then
+            // assert
             Assert.IsFalse(handler.UseProxy);
             Assert.IsNull(handler.Proxy);
         }

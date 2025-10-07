@@ -1,4 +1,6 @@
-## Cache
+# Cache
+
+## Tokens Caching
 
 The Snowflake .NET driver provides the ability to cache tokens using different implementations.
 
@@ -56,3 +58,18 @@ SnowflakeCredentialManagerFactory.UseFileCredentialManager();
 ```cs
 SnowflakeCredentialManagerFactory.SetCredentialManager(CustomCredentialManagerImplementation);
 ```
+
+## Certificate Revocation List (CRL) Caching
+
+Starting with version 5.0.0, Snowflake .NET driver uses by default a new algorithm for Certificate Revocation List-driven revocation checks.
+If you need to use CRL checks please make sure to enable that with connection parameter `CERTREVOCATIONCHECKMODE = enabled`.
+To ensure optimal performance, the driver uses both in-memory and on-disk cache for CRL data.
+Parameters `ENABLECRLCACHING` and `ENABLECRLDISKCACHING` allow you to control the caching behavior when CRL checks are turned on.
+
+The location for CRL cache file depends on the operating system as in the table below:
+
+| Operating System | CRL Cache File Location                              |
+|------------------|------------------------------------------------------|
+| Windows          | `%USERPROFILE%\AppData\Local\Snowflake\Caches\crls\` |
+| Linux            | `$HOME/.cache/snowflake/crls/`                       |
+| MacOS            | `$HOME/Library/Caches/Snowflake/crls/`               |

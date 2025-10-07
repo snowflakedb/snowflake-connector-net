@@ -8,7 +8,7 @@ namespace Snowflake.Data.Core
         ARROW
     }
 
-    public interface IResultChunk
+    internal interface IResultChunk
     {
         [Obsolete("ExtractCell with rowIndex is deprecated", false)]
         UTF8Buffer ExtractCell(int rowIndex, int columnIndex);

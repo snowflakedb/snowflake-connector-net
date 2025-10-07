@@ -18,7 +18,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var config = new HttpClientConfig(
-                true,
                 null,
                 null,
                 null,
@@ -29,7 +28,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 3,
                 20,
                 true,
-                false,
                 CertRevocationCheckMode.Enabled.ToString(),
                 true,
                 true,

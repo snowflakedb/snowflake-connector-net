@@ -7,6 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         protected static readonly string s_crlPath = Path.Combine("crl");
         protected static readonly string s_digiCertCrlPath = Path.Combine(s_crlPath, "DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl");
         protected static readonly string s_digiCertCertificatePath = Path.Combine(s_crlPath, "digicert_certificate.crt");
+        protected static readonly string s_digiCertParentCertificatePath = Path.Combine(s_crlPath, "digicert_parent_certificate.crt");
         protected const string DigiCertIssuer = "C=US,O=DigiCert Inc,CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1";
         protected const string DigiCertThisUpdateString = "2025-07-25T00:18:54.0000000Z";
         protected const string DigiCertNextUpdateString = "2025-08-01T00:18:54.0000000Z";
