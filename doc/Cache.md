@@ -66,6 +66,8 @@ If you need to use CRL checks please make sure to enable that with connection pa
 To ensure optimal performance, the driver uses both in-memory and on-disk cache for CRL data.
 Parameters `ENABLECRLCACHING` and `ENABLECRLDISKCACHING` allow you to control the caching behavior when CRL checks are turned on.
 
+### Cache File Location
+
 The location for CRL cache file depends on the operating system as in the table below:
 
 | Operating System | CRL Cache File Location                              |
@@ -73,3 +75,12 @@ The location for CRL cache file depends on the operating system as in the table 
 | Windows          | `%USERPROFILE%\AppData\Local\Snowflake\Caches\crls\` |
 | Linux            | `$HOME/.cache/snowflake/crls/`                       |
 | MacOS            | `$HOME/Library/Caches/Snowflake/crls/`               |
+
+### Cache Behavior Configuration
+
+Two environment variables control how long CRLs are cached:
+
+| Environment Variable | Default | Description |
+|---------------------|---------|-------------|
+| `SF_CRL_VALIDITY_TIME` | 1 day | Maximum age (in days) for a cached CRL to be considered fresh. After this time, the driver will attempt to download a newer version. |
+| `SF_CRL_CACHE_REMOVAL_DELAY` | 7 days | Interval (in days) for periodic cleanup of expired/stale CRLs from cache. |
