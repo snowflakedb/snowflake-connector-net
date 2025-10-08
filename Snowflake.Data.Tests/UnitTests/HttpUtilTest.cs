@@ -183,5 +183,50 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.IsFalse(handler.UseProxy);
             Assert.IsNull(handler.Proxy);
         }
+
+        [NonParallelizable]
+        [Test]
+        public void TestThatChangesDefaultConnectionLimitWhenOver50()
+        {
+            // arrange
+            var expectedLimit = 51;
+            var originalLimit = ServicePointManager.DefaultConnectionLimit;
+            ServicePointManager.DefaultConnectionLimit = expectedLimit;
+
+            try
+            {
+                // act
+                HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
+
+                // assert
+                Assert.AreEqual(expectedLimit, ServicePointManager.DefaultConnectionLimit);
+            }
+            finally
+            {
+                ServicePointManager.DefaultConnectionLimit = originalLimit;
+            }
+        }
+
+        [NonParallelizable]
+        [Test]
+        public void TestThatDoesNotChangeConnectionLimitWhenUnder50()
+        {
+            // arrange
+            var originalLimit = ServicePointManager.DefaultConnectionLimit;
+            ServicePointManager.DefaultConnectionLimit = 49;
+
+            try
+            {
+                // act
+                HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
+
+                // assert
+                Assert.AreEqual(HttpUtil.DefaultConnectionLimit, ServicePointManager.DefaultConnectionLimit);
+            }
+            finally
+            {
+                ServicePointManager.DefaultConnectionLimit = originalLimit;
+            }
+        }
     }
 }
