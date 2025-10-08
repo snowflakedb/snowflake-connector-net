@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 }
                 catch
                 {
-                    // Ignore errors if files are already deleted
+                    // Ignore any cleanup errors
                 }
             }
         }
