@@ -407,6 +407,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
+                _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 sessionToken = response.data.sessionToken;
                 masterToken = response.data.masterToken;
             }
