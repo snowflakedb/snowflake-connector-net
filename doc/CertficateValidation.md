@@ -160,6 +160,8 @@ on specific memory-limited environments (k8s, vm).
 
 The old `insecureMode` parameter is no longer supported by the driver.
 
+For information about CRL caching configuration (cache file locations, environment variables), see [Cache.md](Cache.md#certificate-revocation-list-crl-caching).
+
 ### DigiCert Global Root G2 certificate authority (CA) TLS certificate updates
 This might or might not affect your installation. Since the .NET driver doesn't come with its own truststore, it depends on the system's own truststore,
 which (hopefully) already includes all the root certificates needing to verify the chain of trust for connecting to Snowflake services.

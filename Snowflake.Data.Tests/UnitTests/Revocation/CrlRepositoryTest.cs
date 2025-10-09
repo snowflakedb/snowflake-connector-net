@@ -1,6 +1,5 @@
 using System;
 using NUnit.Framework;
-using Moq;
 using Snowflake.Data.Core.Revocation;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
@@ -8,90 +7,49 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
     [TestFixture]
     public class CrlRepositoryTest
     {
-        const string CrlUrl = "http://snowflakecomputing.com/crl1.crl";
-        private readonly Crl _crl = new Crl();
-
-        [Test]
-        public void TestGetCrlFromMemory()
+        [SetUp]
+        public void SetUp()
         {
-            // arrange
-            var memoryCache = new Mock<ICrlCache>();
-            memoryCache
-                .Setup(c => c.Get(CrlUrl))
-                .Returns(_crl);
-            var fileCache = new Mock<ICrlCache>();
-            var crlRepository = new CrlRepository(memoryCache.Object, fileCache.Object);
-
-            // act
-            var crl = crlRepository.Get(CrlUrl);
-
-            // assert
-            Assert.AreSame(_crl, crl);
-            memoryCache.Verify(c => c.Get(CrlUrl), Times.Once);
-            memoryCache.VerifyNoOtherCalls();
-            fileCache.VerifyNoOtherCalls();
+            Environment.SetEnvironmentVariable("SF_CRL_CACHE_REMOVAL_DELAY", null);
         }
 
         [Test]
-        public void TestGetCrlFromFileCacheAndPropagateToMemory()
+        public void TestDefaultCleanupInterval()
         {
-            // arrange
-            var memoryCache = new Mock<ICrlCache>();
-            var fileCache = new Mock<ICrlCache>();
-            fileCache
-                .Setup(c => c.Get(CrlUrl))
-                .Returns(_crl);
-            var crlRepository = new CrlRepository(memoryCache.Object, fileCache.Object);
-
-            // act
-            var crl = crlRepository.Get(CrlUrl);
+            // arrange & act
+            var cleanupInterval = CrlRepository.GetCleanupInterval();
 
             // assert
-            Assert.AreSame(_crl, crl);
-            memoryCache.Verify(c => c.Get(CrlUrl), Times.Once);
-            memoryCache.Verify(c => c.Set(CrlUrl, _crl), Times.Once);
-            memoryCache.VerifyNoOtherCalls();
-            fileCache.Verify(c => c.Get(CrlUrl), Times.Once);
-            fileCache.VerifyNoOtherCalls();
+            Assert.AreEqual(TimeSpan.FromDays(7), cleanupInterval,
+                "Default cleanup interval should be 7 days");
         }
 
         [Test]
-        public void TestSetCrl()
+        public void TestCustomCleanupIntervalFromEnvironmentVariable()
         {
             // arrange
-            var memoryCache = new Mock<ICrlCache>();
-            var fileCache = new Mock<ICrlCache>();
-            var crlRepository = new CrlRepository(memoryCache.Object, fileCache.Object);
+            Environment.SetEnvironmentVariable("SF_CRL_CACHE_REMOVAL_DELAY", "14");
 
             // act
-            crlRepository.Set(CrlUrl, _crl);
+            var cleanupInterval = CrlRepository.GetCleanupInterval();
 
             // assert
-            memoryCache.Verify(c => c.Set(CrlUrl, _crl), Times.Once);
-            memoryCache.VerifyNoOtherCalls();
-            fileCache.Verify(c => c.Set(CrlUrl, _crl), Times.Once);
-            fileCache.VerifyNoOtherCalls();
+            Assert.AreEqual(TimeSpan.FromDays(14), cleanupInterval,
+                "Cleanup interval should be 14 days when SF_CRL_CACHE_REMOVAL_DELAY=14");
         }
 
         [Test]
-        [TestCase(true, true, typeof(MemoryCrlCache), typeof(FileCrlCache))]
-        [TestCase(false, false, null, null)]
-        [TestCase(true, false, typeof(MemoryCrlCache), null)]
-        [TestCase(false, true, null, typeof(FileCrlCache))]
-        public void TestConstructCaches(bool useMemoryCache, bool useFileCache, Type expectedMemoryCacheType, Type expectedFileCacheType)
+        public void TestInvalidCleanupIntervalUsesDefault()
         {
+            // arrange
+            Environment.SetEnvironmentVariable("SF_CRL_CACHE_REMOVAL_DELAY", "invalid");
+
             // act
-            var crlRepository = new CrlRepository(useMemoryCache, useFileCache);
+            var cleanupInterval = CrlRepository.GetCleanupInterval();
 
             // assert
-            if (expectedMemoryCacheType == null)
-                Assert.IsNull(crlRepository._memoryCrlCache);
-            else
-                Assert.AreEqual(expectedMemoryCacheType, crlRepository._memoryCrlCache.GetType());
-            if (expectedFileCacheType == null)
-                Assert.IsNull(crlRepository._fileCrlCache);
-            else
-                Assert.AreEqual(expectedFileCacheType, crlRepository._fileCrlCache.GetType());
+            Assert.AreEqual(TimeSpan.FromDays(7), cleanupInterval,
+                "Should use default 7 days when environment variable is invalid");
         }
     }
 }
