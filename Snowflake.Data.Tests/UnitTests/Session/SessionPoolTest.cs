@@ -359,7 +359,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         private SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)
         {
-            var session = new SFSession(connectionString, new SessionPropertiesContext(), restRequester);
+            var session = restRequester == null ? new SFSession(connectionString, new SessionPropertiesContext()) :
+                new SFSession(connectionString, new SessionPropertiesContext(), restRequester);
             var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             session.SetStartTime(now);
             return session;
