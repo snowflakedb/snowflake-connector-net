@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.Mock
     {
         static private readonly String EXPIRED_SESSION_TOKEN = "session_expired_token";
 
-        static private readonly String NEW_SESSION_TOKEN = "new_session_token";
+        static internal readonly String NEW_SESSION_TOKEN = "new_session_token";
 
         static private readonly String TOKEN_FMT = "Snowflake Token=\"{0}\"";
 

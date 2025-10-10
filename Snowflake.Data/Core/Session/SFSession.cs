@@ -65,6 +65,9 @@ namespace Snowflake.Data.Core
         private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
         private long _startTime = 0;
+
+        private long _timeSinceLastRenew = 0;
+
         internal string ConnectionString { get; }
 
         internal SessionPropertiesContext PropertiesContext { get; }
@@ -129,6 +132,7 @@ namespace Snowflake.Data.Core
                 }
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                _timeSinceLastRenew = _startTime;
             }
             else
             {
@@ -404,6 +408,7 @@ namespace Snowflake.Data.Core
             }
             else
             {
+                _timeSinceLastRenew = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 sessionToken = response.data.sessionToken;
                 masterToken = response.data.masterToken;
             }
@@ -702,7 +707,7 @@ namespace Snowflake.Data.Core
         internal virtual bool IsExpired(TimeSpan timeout, long utcTimeInMillis)
         {
             var hasEverBeenOpened = !IsNotOpen();
-            return hasEverBeenOpened && TimeoutHelper.IsExpired(_startTime, utcTimeInMillis, timeout);
+            return hasEverBeenOpened && TimeoutHelper.IsExpired(_timeSinceLastRenew, utcTimeInMillis, timeout);
         }
 
         internal long GetStartTime() => _startTime;
@@ -710,6 +715,7 @@ namespace Snowflake.Data.Core
         internal void SetStartTime(long startTime)
         {
             _startTime = startTime;
+            _timeSinceLastRenew = _startTime;
         }
 
         internal void ReplaceAuthenticator(IAuthenticator authenticator)
