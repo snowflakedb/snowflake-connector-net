@@ -9,3 +9,4 @@
     - Upgraded AWS SDK library to v4.
     - Added the `changelog.yml` GitHub workflow to ensure changelog is updated on release PRs.
     - Removed internal classes from public API.
+    - Added support for explicitly setting Azure managed identity client ID via `MANAGED_IDENTITY_CLIENT_ID` environment variable.
