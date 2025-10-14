@@ -1,3 +1,4 @@
+using System;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -180,6 +181,28 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // assert
                 Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
                 Assert.That(thrown.InnerException.Message, Does.Contain("Failed to create logs directory"));
+                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
+            }
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
+        public void TestFailToEnableEasyLoggingWhenPathIsAccessibleForOthers()
+        {
+            // arrange
+            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
+            Syscall.chmod(configFilePath, FilePermissions.S_IRGRP | FilePermissions.S_IWGRP | FilePermissions.S_IXGRP);
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+
+                // act
+                var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+
+                Console.WriteLine(thrown.Message);
+                // assert
+                Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
+                Assert.That(thrown.InnerException.Message, Does.Contain("Too broad access permissions for logs directory"));
                 Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
