@@ -16,7 +16,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
 {
-    public class SFSession
+    internal class SFSession
     {
         public const int SF_SESSION_EXPIRED_CODE = 390112;
 
@@ -53,8 +53,6 @@ namespace Snowflake.Data.Core
         private readonly ConnectionPoolConfig _poolConfig;
 
         internal TimeSpan connectionTimeout => _poolConfig.ConnectionTimeout;
-
-        internal bool InsecureMode;
 
         internal bool isHeartBeatEnabled;
 
@@ -205,7 +203,6 @@ namespace Snowflake.Data.Core
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
-                InsecureMode = extractedProperties.insecureMode;
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);
                 _poolConfig = extractedProperties.BuildConnectionPoolConfig();

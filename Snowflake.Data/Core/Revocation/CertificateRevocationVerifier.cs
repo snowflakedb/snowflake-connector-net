@@ -24,10 +24,10 @@ namespace Snowflake.Data.Core.Revocation
         private readonly CertificateCrlDistributionPointsExtractor _crlExtractor;
         private readonly CrlParser _crlParser;
         private readonly CrlRepository _crlRepository;
+        private readonly TimeSpan _httpTimeout;
 
         private static readonly ConcurrentDictionary<string, object> s_locksForCrlUrls = new ConcurrentDictionary<string, object>();
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<CertificateRevocationVerifier>();
-        private static readonly TimeSpan s_httpTimeout = TimeSpan.FromSeconds(60);
 
         public CertificateRevocationVerifier(
             HttpClientConfig config,
@@ -39,6 +39,7 @@ namespace Snowflake.Data.Core.Revocation
         {
             _certRevocationCheckMode = config.CertRevocationCheckMode;
             _allowCertificatesWithoutCrlUrl = config.AllowCertificatesWithoutCrlUrl;
+            _httpTimeout = TimeSpan.FromSeconds(config.CrlDownloadTimeout);
             _timeProvider = timeProvider;
             _restRequester = restRequester;
             _crlExtractor = crlExtractor;
@@ -189,7 +190,8 @@ namespace Snowflake.Data.Core.Revocation
             {
                 var cachedCrl = _crlRepository.Get(crlUrl);
                 var now = _timeProvider.UtcNow();
-                var needsFreshCrl = cachedCrl == null || cachedCrl.NeedsFreshCrl(now);
+                var needsFreshCrl = cachedCrl == null
+                    || cachedCrl.NeedsReplacement(now, _crlParser.GetCacheValidityTime());
                 var shouldUpdateCrl = false;
                 if (needsFreshCrl)
                 {
@@ -314,8 +316,8 @@ namespace Snowflake.Data.Core.Revocation
         private Crl FetchCrl(string crlUrl)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, crlUrl);
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, s_httpTimeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, s_httpTimeout);
+            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, _httpTimeout);
+            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, _httpTimeout);
             byte[] crlBytes = null;
             DateTime now;
             try

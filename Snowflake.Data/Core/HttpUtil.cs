@@ -16,10 +16,9 @@ using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
 namespace Snowflake.Data.Core
 {
-    public class HttpClientConfig
+    internal class HttpClientConfig
     {
         public HttpClientConfig(
-            bool crlCheckEnabled,
             string proxyHost,
             string proxyPort,
             string proxyUser,
@@ -29,13 +28,15 @@ namespace Snowflake.Data.Core
             bool forceRetryOn404,
             int maxHttpRetries,
             bool includeRetryReason = true,
-            bool useDotnetCrlCheckMechanism = true,
             string certRevocationCheckMode = "DISABLED",
             bool enableCRLDiskCaching = true,
             bool enableCRLInMemoryCaching = true,
-            bool allowCertificatesWithoutCrlUrl = true)
+            bool allowCertificatesWithoutCrlUrl = true,
+            int crlDownloadTimeout = 10,
+            string minTlsProtocol = "TLS12",
+            string maxTlsProtocol = "TLS13"
+            )
         {
-            CrlCheckEnabled = crlCheckEnabled;
             ProxyHost = proxyHost;
             ProxyPort = proxyPort;
             ProxyUser = proxyUser;
@@ -45,15 +46,16 @@ namespace Snowflake.Data.Core
             ForceRetryOn404 = forceRetryOn404;
             MaxHttpRetries = maxHttpRetries;
             IncludeRetryReason = includeRetryReason;
-            UseDotnetCrlCheckMechanism = useDotnetCrlCheckMechanism;
             CertRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), certRevocationCheckMode, true);
             EnableCRLDiskCaching = enableCRLDiskCaching;
             EnableCRLInMemoryCaching = enableCRLInMemoryCaching;
             AllowCertificatesWithoutCrlUrl = allowCertificatesWithoutCrlUrl;
+            CrlDownloadTimeout = crlDownloadTimeout;
+            MinTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(minTlsProtocol) : SslProtocols.None;
+            MaxTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(maxTlsProtocol) : SslProtocols.None;
 
             ConfKey = string.Join(";",
                 new string[] {
-                    crlCheckEnabled.ToString(),
                     proxyHost,
                     proxyPort,
                     proxyUser,
@@ -63,15 +65,16 @@ namespace Snowflake.Data.Core
                     forceRetryOn404.ToString(),
                     maxHttpRetries.ToString(),
                     includeRetryReason.ToString(),
-                    useDotnetCrlCheckMechanism.ToString(),
-                    certRevocationCheckMode.ToString(),
+                    certRevocationCheckMode,
                     enableCRLDiskCaching.ToString(),
                     enableCRLInMemoryCaching.ToString(),
-                    allowCertificatesWithoutCrlUrl.ToString()
+                    allowCertificatesWithoutCrlUrl.ToString(),
+                    crlDownloadTimeout.ToString(),
+                    minTlsProtocol,
+                    maxTlsProtocol
                 });
         }
 
-        public readonly bool CrlCheckEnabled;
         public readonly string ProxyHost;
         public readonly string ProxyPort;
         public readonly string ProxyUser;
@@ -81,17 +84,29 @@ namespace Snowflake.Data.Core
         public readonly bool ForceRetryOn404;
         public readonly int MaxHttpRetries;
         public readonly bool IncludeRetryReason;
-        internal readonly bool UseDotnetCrlCheckMechanism;
         internal readonly CertRevocationCheckMode CertRevocationCheckMode;
         internal readonly bool EnableCRLDiskCaching;
         internal readonly bool EnableCRLInMemoryCaching;
         internal readonly bool AllowCertificatesWithoutCrlUrl;
+        internal readonly int CrlDownloadTimeout;
+        internal readonly SslProtocols MinTlsProtocol;
+        internal readonly SslProtocols MaxTlsProtocol;
 
         // Key used to identify the HttpClient with the configuration matching the settings
         public readonly string ConfKey;
+
+        internal bool IsCustomCrlCheckConfigured() =>
+            CertRevocationCheckMode == CertRevocationCheckMode.Enabled || CertRevocationCheckMode == CertRevocationCheckMode.Advisory;
+
+        internal bool IsDotnetCrlCheckEnabled() => CertRevocationCheckMode == CertRevocationCheckMode.Native;
+
+        public SslProtocols GetRequestedTlsProtocolsRange()
+        {
+            return MinTlsProtocol | MaxTlsProtocol;
+        }
     }
 
-    public sealed class HttpUtil
+    internal sealed class HttpUtil
     {
         static internal readonly int MAX_BACKOFF = 16;
         private static readonly int s_baseBackOffTime = 1;
@@ -233,7 +248,7 @@ namespace Snowflake.Data.Core
             bool customizedCrlCheck = false;
             try
             {
-                if (!config.UseDotnetCrlCheckMechanism && config.CrlCheckEnabled)
+                if (config.IsCustomCrlCheckConfigured())
                 {
                     customizedCrlCheck = true;
                     return CreateHttpClientHandlerWithCustomizedCrlCheck(config);
@@ -262,9 +277,8 @@ namespace Snowflake.Data.Core
             logger.Debug("Creating HttpClientHandler without CRL check customizations");
             return new HttpClientHandler
             {
-                CheckCertificateRevocationList = config.CrlCheckEnabled,
-                // Enforce tls v1.2
-                SslProtocols = SslProtocols.Tls12,
+                CheckCertificateRevocationList = config.IsDotnetCrlCheckEnabled(),
+                SslProtocols = config.GetRequestedTlsProtocolsRange(),
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
                 UseProxy = false
@@ -285,8 +299,7 @@ namespace Snowflake.Data.Core
             {
                 CheckCertificateRevocationList = false,
                 ServerCertificateCustomValidationCallback = revocationVerifier.CertificateValidationCallback,
-                // Enforce tls v1.2
-                SslProtocols = SslProtocols.Tls12,
+                SslProtocols = config.GetRequestedTlsProtocolsRange(),
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
                 UseProxy = false

@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
-    public sealed class HeartBeatBackground
+    internal sealed class HeartBeatBackground
     {
         private static HeartBeatBackground instance = null;
         private static readonly object heartBeatLock = new object();

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Security;
 using System.Text;
 using System.Web;
@@ -22,21 +23,23 @@ namespace Snowflake.Data.Core.Revocation
         private readonly FileOperations _fileOperations;
         private readonly UnixOperations _unixOperations;
         private readonly DirectoryOperations _directoryOperations;
+        private readonly TimeSpan _removalDelay;
 
-        internal FileCrlCache(FileCrlCacheConfig config, CrlParser parser, FileOperations fileOperations, UnixOperations unixOperations, DirectoryOperations directoryOperations)
+        internal FileCrlCache(FileCrlCacheConfig config, CrlParser parser, FileOperations fileOperations, UnixOperations unixOperations, DirectoryOperations directoryOperations, TimeSpan removalDelay)
         {
             _config = config;
             _parser = parser;
             _fileOperations = fileOperations;
             _unixOperations = unixOperations;
             _directoryOperations = directoryOperations;
+            _removalDelay = removalDelay;
         }
 
-        public static FileCrlCache CreateInstance()
+        public static FileCrlCache CreateInstance(TimeSpan removalDelay)
         {
             var config = new FileCrlCacheConfig(EnvironmentOperations.Instance, UnixOperations.Instance);
             var parser = new CrlParser(EnvironmentOperations.Instance);
-            return new FileCrlCache(config, parser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance);
+            return new FileCrlCache(config, parser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, removalDelay);
         }
 
         public Crl Get(string crlUrl)
@@ -170,6 +173,12 @@ namespace Snowflake.Data.Core.Revocation
             return Path.Combine(_config.DirectoryPath, encodedUrl);
         }
 
+        private string DecodeCrlUrlFromFilePath(string filePath)
+        {
+            var fileName = Path.GetFileName(filePath);
+            return HttpUtility.UrlDecode(fileName, Encoding.UTF8);
+        }
+
         private byte[] ReadCrlBytes(string filePath)
         {
             if (!_fileOperations.Exists(filePath))
@@ -252,6 +261,67 @@ namespace Snowflake.Data.Core.Revocation
                 var errorMessage = $"Error due to other users having permission to modify the config file";
                 s_logger.Error(errorMessage);
                 throw new SecurityException(errorMessage);
+            }
+        }
+
+        public void Cleanup()
+        {
+            var now = DateTime.UtcNow;
+            s_logger.Debug($"Cleaning up on-disk CRL cache at {now}");
+
+            try
+            {
+                lock (_lock)
+                {
+                    if (!_directoryOperations.Exists(_config.DirectoryPath))
+                    {
+                        return;
+                    }
+
+                    var removedCount = 0;
+                    var files = Directory.GetFiles(_config.DirectoryPath);
+
+                    foreach (var filePath in files)
+                    {
+                        var crlUrl = DecodeCrlUrlFromFilePath(filePath);
+                        try
+                        {
+                            var fileBytes = ReadCrlBytes(filePath);
+                            var fileInfo = _fileOperations.GetFileInfo(filePath);
+                            var crl = _parser.Parse(fileBytes, fileInfo.LastWriteTimeUtc);
+
+                            if (crl.NeedsReplacement(now, _removalDelay))
+                            {
+                                File.Delete(filePath);
+                                removedCount++;
+                                s_logger.Debug($"Removing file based CRL cache entry for {crlUrl}");
+                            }
+                        }
+                        catch (Exception exception)
+                        {
+                            try
+                            {
+                                File.Delete(filePath);
+                                removedCount++;
+                                s_logger.Warn($"Deleted invalid CRL cache file for {crlUrl}: {exception.Message}");
+                            }
+                            catch (Exception deleteError)
+                            {
+                                s_logger.Warn(
+                                    $"Failed to delete invalid CRL cache file for {crlUrl}: {deleteError.Message}");
+                            }
+                        }
+                    }
+
+                    if (removedCount > 0)
+                    {
+                        s_logger.Info($"Removed {removedCount} expired/corrupted files from disk CRL cache");
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                s_logger.Warn($"Failed to cleanup disk CRL cache: {exception.Message}");
             }
         }
     }

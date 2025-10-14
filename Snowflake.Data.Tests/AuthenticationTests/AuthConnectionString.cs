@@ -33,7 +33,8 @@ namespace Snowflake.Data.AuthenticationTests
                 {SFSessionProperty.SCHEMA, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_SCHEMA") },
                 {SFSessionProperty.WAREHOUSE, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_WAREHOUSE") },
                 {SFSessionProperty.MINPOOLSIZE, "0"},
-                {SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, "false"}
+                {SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, "false"},
+                {SFSessionProperty.CERTREVOCATIONCHECKMODE, "enabled"}
             };
             return properties;
         }
@@ -201,7 +202,7 @@ namespace Snowflake.Data.AuthenticationTests
                 using (var client = new HttpClient(new HttpClientHandler
                 {
                     CheckCertificateRevocationList = true,
-                    SslProtocols = SslProtocols.Tls12,
+                    SslProtocols = SslProtocols.Tls12 | SslProtocolsExtensions.Tls13,
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseProxy = false,
                     UseCookies = false
