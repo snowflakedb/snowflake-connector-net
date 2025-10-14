@@ -19,8 +19,8 @@ namespace Snowflake.Data.Log
             if (!IsDebugEnabled())
                 return;
             message = SecretDetector.MaskSecrets(message).maskedText;
-            _snowflakeLogger.Debug(message, ex);
-            SFLoggerFactory.s_customLogger.LogDebug(FormatBrackets(message), ex);
+            _snowflakeLogger.Debug(message, new MaskedException(ex));
+            SFLoggerFactory.s_customLogger.LogDebug(FormatBrackets(message), new MaskedException(ex));
         }
 
         public void Info(string message, Exception ex = null)
@@ -28,8 +28,8 @@ namespace Snowflake.Data.Log
             if (!IsInfoEnabled())
                 return;
             message = SecretDetector.MaskSecrets(message).maskedText;
-            _snowflakeLogger.Info(message, ex);
-            SFLoggerFactory.s_customLogger.LogInformation(FormatBrackets(message), ex);
+            _snowflakeLogger.Info(message, new MaskedException(ex));
+            SFLoggerFactory.s_customLogger.LogInformation(FormatBrackets(message), new MaskedException(ex));
         }
 
         public void Warn(string message, Exception ex = null)
@@ -37,8 +37,8 @@ namespace Snowflake.Data.Log
             if (!IsWarnEnabled())
                 return;
             message = SecretDetector.MaskSecrets(message).maskedText;
-            _snowflakeLogger.Warn(message, ex);
-            SFLoggerFactory.s_customLogger.LogWarning(FormatBrackets(message), ex);
+            _snowflakeLogger.Warn(message, new MaskedException(ex));
+            SFLoggerFactory.s_customLogger.LogWarning(FormatBrackets(message), new MaskedException(ex));
         }
 
         public void Error(string message, Exception ex = null)
@@ -46,8 +46,8 @@ namespace Snowflake.Data.Log
             if (!IsErrorEnabled())
                 return;
             message = SecretDetector.MaskSecrets(message).maskedText;
-            _snowflakeLogger.Error(message, ex);
-            SFLoggerFactory.s_customLogger.LogError(FormatBrackets(message), ex);
+            _snowflakeLogger.Error(message, new MaskedException(ex));
+            SFLoggerFactory.s_customLogger.LogError(FormatBrackets(message), new MaskedException(ex));
         }
 
         public bool IsDebugEnabled()
@@ -98,6 +98,25 @@ namespace Snowflake.Data.Log
         {
             var sb = new StringBuilder(message).Replace("{", "{{").Replace("}", "}}");
             return sb.ToString();
+        }
+
+        private class MaskedException : Exception
+        {
+            private readonly Exception _innerException;
+
+            public MaskedException(Exception innerException)
+            {
+                _innerException = innerException;
+            }
+
+            public override string ToString()
+            {
+                return SecretDetector.MaskSecrets(_innerException?.ToString()).maskedText;
+            }
+
+            public override string Message => SecretDetector.MaskSecrets(_innerException?.Message).maskedText;
+
+            public override string StackTrace => SecretDetector.MaskSecrets(_innerException?.StackTrace).maskedText;
         }
     }
 }

@@ -36,17 +36,18 @@ namespace Snowflake.Data.Log
         public void Append(string logLevel, string message, Type type, Exception ex = null)
         {
             var formattedMessage = PatternLayout.Format(logLevel, message, type);
+            var maskedExceptionString = SecretDetector.MaskSecrets(ex?.ToString()).maskedText;
             try
             {
                 long fileSize;
                 if (_isWindows)
                 {
-                    _fileOperations.Append(LogFilePath, formattedMessage, ex?.ToString());
+                    _fileOperations.Append(LogFilePath, formattedMessage, maskedExceptionString);
                     fileSize = LogFileSize();
                 }
                 else
                 {
-                    fileSize = _unixOperations.AppendToFile(LogFilePath, formattedMessage, ex?.ToString(),
+                    fileSize = _unixOperations.AppendToFile(LogFilePath, formattedMessage, maskedExceptionString,
                         EasyLoggerValidator.Instance.ValidateLogFilePermissions, EasyLoggingStarter.Instance._logFileUnixPermissions);
                 }
                 if (fileSize > MaximumFileSizeInBytes)
