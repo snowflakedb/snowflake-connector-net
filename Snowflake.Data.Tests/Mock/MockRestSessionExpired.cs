@@ -100,6 +100,13 @@ namespace Snowflake.Data.Tests.Mock
                     }
                 });
             }
+            else if (sfRequest.jsonBody == null)
+            {
+                return Task.FromResult<T>((T)(object)new NullDataResponse
+                {
+                    success = true
+                });
+            }
             else
             {
                 return Task.FromResult<T>((T)(object)null);
