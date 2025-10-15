@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         [NonParallelizable]
         [Test]
-        public void TestThatChangesDefaultConnectionLimitWhenOver50()
+        public void TestDefaultConnectionLimitIsNotChangedWhenOver50()
         {
             // arrange
             var expectedLimit = 51;
@@ -209,7 +209,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         [NonParallelizable]
         [Test]
-        public void TestThatDoesNotChangeConnectionLimitWhenUnder50()
+        public void TestDefaultConnectionLimitIsChangedToDefaultWhenUnder50()
         {
             // arrange
             var originalLimit = ServicePointManager.DefaultConnectionLimit;
