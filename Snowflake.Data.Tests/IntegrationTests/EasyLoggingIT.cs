@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public static void AfterEach()
         {
             EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
- 
+
             var logDirectory = Path.Combine(s_workingDirectory, LogDirectoryName);
             if (Directory.Exists(logDirectory))
             {
@@ -213,7 +213,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // act
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
 
-                Console.WriteLine(thrown.Message);
                 // assert
                 Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
                 Assert.That(thrown.InnerException.Message, Does.Contain("Too broad access permissions for logs directory"));
