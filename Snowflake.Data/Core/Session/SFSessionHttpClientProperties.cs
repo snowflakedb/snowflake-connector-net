@@ -24,6 +24,7 @@ namespace Snowflake.Data.Core
         public const int DefaultConnectionLimit = 20;
         public static readonly TimeSpan DefaultRetryTimeout = TimeSpan.FromSeconds(300);
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFSessionHttpClientProperties>();
+        internal static readonly int MaxConnectionLimit = 1000;
 
         internal bool validateDefaultParameters;
         internal bool clientSessionKeepAlive;
@@ -193,9 +194,9 @@ namespace Snowflake.Data.Core
 
         private void ValidateConnectionLimit()
         {
-            if (_servicePointConnectionLimit < 1)
+            if (_servicePointConnectionLimit < 1 || _servicePointConnectionLimit > MaxConnectionLimit)
             {
-                s_logger.Warn($"Connection limit must be a positive integer. Using the default value of {DefaultConnectionLimit}");
+                s_logger.Warn($"Connection limit must be between 1 and {MaxConnectionLimit}. Using the default value of {DefaultConnectionLimit}");
                 _servicePointConnectionLimit = DefaultConnectionLimit;
             }
         }

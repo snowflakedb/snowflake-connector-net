@@ -85,6 +85,20 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        public void TestSettingConnectionLimitPropertyToGreaterThanMaxConnectionLimit()
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT={SFSessionHttpClientProperties.MaxConnectionLimit + 1}";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+
+            // assert
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+        }
+
+        [Test]
         public void TestSettingConnectionLimitPropertyToNoValue()
         {
             // arrange
