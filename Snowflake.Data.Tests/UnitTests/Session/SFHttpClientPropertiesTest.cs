@@ -99,12 +99,17 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        public void TestThrowsExceptionWhenSettingConnectionLimitPropertyToNonStringValue()
+        [TestCase("abc")]
+        [TestCase("1.5")]
+        [TestCase("true")]
+        [TestCase("-2.3")]
+        [TestCase("null")]
+        public void TestThrowsExceptionWhenSettingConnectionLimitPropertyToNonIntegerValue(string nonIntegerValue)
         {
             // arrange
             var parameterName = "SERVICE_POINT_CONNECTION_LIMIT";
             var expectedErrorMessage = $"Error: Invalid parameter value  for {parameterName}";
-            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;{parameterName}=abc";
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;{parameterName}={nonIntegerValue}";
 
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
