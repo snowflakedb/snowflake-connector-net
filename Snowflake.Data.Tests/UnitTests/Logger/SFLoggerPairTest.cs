@@ -2,6 +2,7 @@ using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
 using System;
+using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -9,6 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests
     class SFLoggerPairTest
     {
         SFLogger _loggerPair;
+        TestAppender _testAppender;
 
         [OneTimeSetUp]
         public static void BeforeAll()
@@ -28,6 +30,13 @@ namespace Snowflake.Data.Tests.UnitTests
         public void BeforeTest()
         {
             _loggerPair = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
+            _testAppender = new TestAppender();
+        }
+
+        [TearDown]
+        public void AfterTest()
+        {
+            SFLoggerImpl.s_appenders.Remove(_testAppender);
         }
 
         [Test]
@@ -114,6 +123,42 @@ namespace Snowflake.Data.Tests.UnitTests
             var logger = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
             EasyLoggerManager.AddConsoleAppender();
             return logger;
+        }
+
+        [Test]
+        public void TestMaskedExceptionWithSensitiveData()
+        {
+            // Arrange
+            SFLoggerImpl.s_appenders.Add(_testAppender);
+            var sensitiveMessage = "Connection failed with password='MySecretPass123'";
+            var exception = new Exception(sensitiveMessage);
+            _loggerPair = GetLogger();
+            SFLoggerImpl.SetLevel(LoggingEvent.ERROR);
+
+            // Act
+            _loggerPair.Error("Test error with sensitive exception", exception);
+
+            // Assert
+            var loggedExceptionString = _testAppender.LoggedExceptions[0]?.ToString() ?? "";
+            var expectedMaskedString = "System.Exception: Connection failed with password=****";
+            Assert.AreEqual(expectedMaskedString, loggedExceptionString);
+        }
+
+        private class TestAppender : SFAppender
+        {
+            public List<string> LoggedMessages = new();
+            public List<Exception> LoggedExceptions = new();
+
+            public void Append(string logLevel, string message, Type type, Exception ex = null)
+            {
+                LoggedMessages.Add(message);
+                LoggedExceptions.Add(ex);
+            }
+
+            public void ActivateOptions()
+            {
+                // No-op for testing
+            }
         }
     }
 }

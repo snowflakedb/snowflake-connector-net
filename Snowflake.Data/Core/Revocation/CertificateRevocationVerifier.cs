@@ -190,7 +190,8 @@ namespace Snowflake.Data.Core.Revocation
             {
                 var cachedCrl = _crlRepository.Get(crlUrl);
                 var now = _timeProvider.UtcNow();
-                var needsFreshCrl = cachedCrl == null || cachedCrl.NeedsFreshCrl(now);
+                var needsFreshCrl = cachedCrl == null
+                    || cachedCrl.NeedsReplacement(now, _crlParser.GetCacheValidityTime());
                 var shouldUpdateCrl = false;
                 if (needsFreshCrl)
                 {
