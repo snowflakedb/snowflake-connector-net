@@ -47,7 +47,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    Syscall.chmod(logDirectory, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
+                    var result = Syscall.chmod(logDirectory, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR);
+                    if (result != 0)
+                    {
+                        throw new Exception($"Failed to restore directory permissions in teardown for {logDirectory}");
+                    }
                 }
             }
         }
@@ -198,12 +202,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Platform(Exclude = "Win")]
-        public void TestFailToEnableEasyLoggingWhenPathIsAccessibleForOthers()
+        public void TestFailToEnableEasyLoggingWhenPathIsAccessibleForGroup()
         {
             // arrange
             var logDirectory = Path.Combine(s_workingDirectory, LogDirectoryName);
             Directory.CreateDirectory(logDirectory);
-            Syscall.chmod(logDirectory, FilePermissions.S_IRGRP | FilePermissions.S_IWGRP | FilePermissions.S_IXGRP);
+            Syscall.chmod(logDirectory, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR | FilePermissions.S_IRGRP);
 
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
             using (IDbConnection conn = new SnowflakeDbConnection())
