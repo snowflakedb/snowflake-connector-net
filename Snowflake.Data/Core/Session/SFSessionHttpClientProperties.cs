@@ -195,7 +195,7 @@ namespace Snowflake.Data.Core
         {
             if (_servicePointConnectionLimit < 1)
             {
-                s_logger.Warn($"Connection limit cannot be less than 1. Using the default value of {DefaultConnectionLimit}");
+                s_logger.Warn($"Connection limit must be a positive integer. Using the default value of {DefaultConnectionLimit}");
                 _servicePointConnectionLimit = DefaultConnectionLimit;
             }
         }
