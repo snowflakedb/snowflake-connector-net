@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core.Session
         private static ISessionFactory s_sessionFactory = new SessionFactory();
 
         private readonly Guid _id = Guid.NewGuid();
-        private readonly List<SFSession> _idleSessions;
+        internal readonly List<SFSession> _idleSessions;
         private readonly IWaitingQueue _waitingForIdleSessionQueue;
         private readonly ISessionCreationTokenCounter _sessionCreationTokenCounter;
         private readonly ISessionCreationTokenCounter _noPoolingSessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
@@ -358,7 +358,7 @@ namespace Snowflake.Data.Core.Session
 
         private static Exception WaitingFailedException() => new Exception("Could not obtain a connection from the pool within a given timeout");
 
-        private SFSession ExtractIdleSession(string connStr)
+        internal SFSession ExtractIdleSession(string connStr)
         {
             for (int i = 0; i < _idleSessions.Count; i++)
             {
@@ -369,8 +369,19 @@ namespace Snowflake.Data.Core.Session
                     var timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                     if (session.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
                     {
-                        Task.Run(() => session.close());
-                        i--;
+                        s_logger.Debug($"session {session.sessionId}{PoolIdentification()} has expired");
+                        if (session.isHeartBeatEnabled)
+                        {
+                            s_logger.Debug($"keep alive enabled: renewing session {session.sessionId}{PoolIdentification()}");
+                            session.renewSession();
+                            return session;
+                        }
+                        else
+                        {
+                            s_logger.Debug($"keep alive disabled: closing the expired session {session.sessionId}{PoolIdentification()}");
+                            Task.Run(() => session.close());
+                            i--;
+                        }
                     }
                     else
                     {
