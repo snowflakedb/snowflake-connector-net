@@ -392,6 +392,7 @@ namespace Snowflake.Data.Core
                 case Decimal128Array decimals: return decimals.GetValue(index);
                 case Int32Array ints: return ints.GetValue(index);
                 case Int64Array longs: return longs.GetValue(index);
+                case BooleanArray booleans: return booleans.GetValue(index);
                 case StringArray strArray:
                     var str = strArray.GetString(index);
                     return string.IsNullOrEmpty(str) ? null : str;
