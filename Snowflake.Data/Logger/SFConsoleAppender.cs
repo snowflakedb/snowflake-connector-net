@@ -16,7 +16,8 @@ namespace Snowflake.Data.Log
                 Console.Write(formattedMessage);
                 if (ex != null)
                 {
-                    Console.WriteLine(ex.ToString());
+                    var maskedExceptionString = SecretDetector.MaskSecrets(ex.ToString()).maskedText;
+                    Console.WriteLine(maskedExceptionString);
                 }
             }
             catch (Exception)
