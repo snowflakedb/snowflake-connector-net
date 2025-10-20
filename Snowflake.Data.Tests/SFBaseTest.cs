@@ -147,28 +147,58 @@ namespace Snowflake.Data.Tests
 
         private string GetAuthenticationString()
         {
-            Console.WriteLine("=== FORCED KEY-PAIR TESTING ===");
+            Console.WriteLine("=== Authentication Method Selection ===");
             
-            // TESTING: Force key-pair authentication only
+            // 1. Jenkins override - always use password authentication
+            if (IsRunningInJenkins())
+            {
+                Console.WriteLine("AUTH: Using Jenkins password authentication (Jenkins environment detected)");
+                var result = string.Format(ConnectionStringSnowflakeAuthFmt,
+                    testConfig.user,
+                    testConfig.password);
+                Console.WriteLine($"CONNECTION STRING: {result}");
+                return result;
+            }
+            
+            // 2. Try RSA key file path (discovered file)
             var keyFilePath = DiscoverRsaKeyFile();
             if (!string.IsNullOrEmpty(keyFilePath))
             {
-                Console.WriteLine($"FORCED AUTH: Using RSA key file path - private_key_file='{keyFilePath}'");
-                var result = string.Format(ConnectionStringJwtAuthFmt, testConfig.user, keyFilePath);
+                Console.WriteLine($"AUTH: Using RSA key file path - private_key_file='{keyFilePath}'");
+                var result = string.Format(ConnectionStringJwtAuthFmt,
+                    testConfig.user,
+                    keyFilePath);
                 Console.WriteLine($"CONNECTION STRING: {result}");
                 return result;
             }
 
+            // 3. Try RSA key content (from parameters)
             if (!string.IsNullOrEmpty(testConfig.privateKey))
             {
-                Console.WriteLine("FORCED AUTH: Using RSA key content - private_key=<content>");
-                var result = string.Format(ConnectionStringJwtContentFmt, testConfig.user, testConfig.privateKey);
+                Console.WriteLine("AUTH: Using RSA key content - private_key=<content>");
+                var result = string.Format(ConnectionStringJwtContentFmt,
+                    testConfig.user,
+                    testConfig.privateKey);
                 Console.WriteLine($"CONNECTION STRING: {result}");
                 return result;
             }
             
-            Console.WriteLine("FORCED AUTH: NO KEY-PAIR CREDENTIALS FOUND - FAILING!");
-            throw new Exception("TESTING: No key-pair credentials available!");
+            // 4. Explicit authenticator override (for non-JWT auth like externalbrowser, etc.)
+            if (!string.IsNullOrEmpty(testConfig.authenticator))
+            {
+                Console.WriteLine($"AUTH: Using explicit authenticator '{testConfig.authenticator}' with password");
+                var result = $";authenticator={testConfig.authenticator};user={testConfig.user};password={testConfig.password};";
+                Console.WriteLine($"CONNECTION STRING: {result}");
+                return result;
+            }
+            
+            // 5. Fallback to password authentication
+            Console.WriteLine("AUTH: Using password authentication (fallback)");
+            var fallbackResult = string.Format(ConnectionStringSnowflakeAuthFmt,
+                testConfig.user,
+                testConfig.password);
+            Console.WriteLine($"CONNECTION STRING: {fallbackResult}");
+            return fallbackResult;
         }
 
         private string DiscoverRsaKeyFile()
