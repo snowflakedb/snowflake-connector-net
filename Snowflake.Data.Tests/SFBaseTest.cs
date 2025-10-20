@@ -147,65 +147,45 @@ namespace Snowflake.Data.Tests
 
         private string GetAuthenticationString()
         {
-            Console.WriteLine("=== Authentication Method Selection ===");
-            
             // 1. Jenkins override - always use password authentication
             if (IsRunningInJenkins())
             {
-                Console.WriteLine("AUTH: Using Jenkins password authentication (Jenkins environment detected)");
-                var result = string.Format(ConnectionStringSnowflakeAuthFmt,
+                return string.Format(ConnectionStringSnowflakeAuthFmt,
                     testConfig.user,
                     testConfig.password);
-                Console.WriteLine($"CONNECTION STRING: {result}");
-                return result;
             }
             
             // 2. Try RSA key file path (discovered file)
             var keyFilePath = DiscoverRsaKeyFile();
             if (!string.IsNullOrEmpty(keyFilePath))
             {
-                Console.WriteLine($"AUTH: Using RSA key file path - private_key_file='{keyFilePath}'");
-                var result = string.Format(ConnectionStringJwtAuthFmt,
+                return string.Format(ConnectionStringJwtAuthFmt,
                     testConfig.user,
                     keyFilePath);
-                Console.WriteLine($"CONNECTION STRING: {result}");
-                return result;
             }
 
             // 3. Try RSA key content (from parameters)
             if (!string.IsNullOrEmpty(testConfig.privateKey))
             {
-                Console.WriteLine("AUTH: Using RSA key content - private_key=<content>");
-                var result = string.Format(ConnectionStringJwtContentFmt,
+                return string.Format(ConnectionStringJwtContentFmt,
                     testConfig.user,
                     testConfig.privateKey);
-                Console.WriteLine($"CONNECTION STRING: {result}");
-                return result;
             }
             
             // 4. Explicit authenticator override (for non-JWT auth like externalbrowser, etc.)
             if (!string.IsNullOrEmpty(testConfig.authenticator))
             {
-                Console.WriteLine($"AUTH: Using explicit authenticator '{testConfig.authenticator}' with password");
-                var result = $";authenticator={testConfig.authenticator};user={testConfig.user};password={testConfig.password};";
-                Console.WriteLine($"CONNECTION STRING: {result}");
-                return result;
+                return $";authenticator={testConfig.authenticator};user={testConfig.user};password={testConfig.password};";
             }
             
             // 5. Fallback to password authentication
-            Console.WriteLine("AUTH: Using password authentication (fallback)");
-            var fallbackResult = string.Format(ConnectionStringSnowflakeAuthFmt,
+            return string.Format(ConnectionStringSnowflakeAuthFmt,
                 testConfig.user,
                 testConfig.password);
-            Console.WriteLine($"CONNECTION STRING: {fallbackResult}");
-            return fallbackResult;
         }
 
         private string DiscoverRsaKeyFile()
         {
-            Console.WriteLine("RSA Discovery: Looking for rsa_key_dotnet_*.p8 files...");
-            Console.WriteLine($"RSA Discovery: Current directory = {Directory.GetCurrentDirectory()}");
-            
             // Search locations in priority order - start with CI/CD location first
             string[] searchPaths = {
                 "../../..",            // From bin/Debug/net6.0 back to Snowflake.Data.Tests (CI/CD) - MOST COMMON
@@ -216,34 +196,18 @@ namespace Snowflake.Data.Tests
             
             foreach (var searchPath in searchPaths)
             {
-                Console.WriteLine($"RSA Discovery: Searching in '{searchPath}'...");
-                Console.WriteLine($"RSA Discovery: Full search path = {Path.GetFullPath(searchPath)}");
-                
                 if (Directory.Exists(searchPath))
                 {
                     var keyFiles = Directory.GetFiles(searchPath, "rsa_key_dotnet_*.p8");
-                    Console.WriteLine($"RSA Discovery: Found {keyFiles.Length} matching files in '{searchPath}'");
-                    
                     if (keyFiles.Length > 0)
                     {
                         var fullPath = Path.GetFullPath(keyFiles[0]);
-                        var fileName = Path.GetFileName(keyFiles[0]);
-                        Console.WriteLine($"RSA Discovery: Using key file '{fileName}'");
-                        Console.WriteLine($"RSA Discovery: Full path = {fullPath}");
-                        
                         // Return relative path from current directory
-                        var relativePath = Path.GetRelativePath(".", fullPath);
-                        Console.WriteLine($"RSA Discovery: Relative path = {relativePath}");
-                        return relativePath;
+                        return Path.GetRelativePath(".", fullPath);
                     }
-                }
-                else
-                {
-                    Console.WriteLine($"RSA Discovery: Directory '{searchPath}' does not exist");
                 }
             }
             
-            Console.WriteLine("RSA Discovery: No rsa_key_dotnet_*.p8 files found in any search location");
             return null;
         }
 
