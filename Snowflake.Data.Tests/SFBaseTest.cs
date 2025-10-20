@@ -203,13 +203,16 @@ namespace Snowflake.Data.Tests
                     {
                         var fileName = Path.GetFileName(keyFiles[0]);
                         
-                        // For current directory, just return filename
+                        // For current directory, just return filename  
                         if (searchPath == ".")
                         {
                             return fileName;
                         }
                         
-                        return Path.GetFullPath(Path.Combine(searchPath, fileName));
+                        // For other paths, use consistent relative path that works cross-platform
+                        // Use Path.Combine but normalize to forward slashes for consistency
+                        var relativePath = Path.Combine(searchPath, fileName);
+                        return relativePath.Replace(Path.DirectorySeparatorChar, '/');
                     }
                 }
             }
