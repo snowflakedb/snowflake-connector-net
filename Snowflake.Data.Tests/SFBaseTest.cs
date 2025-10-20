@@ -147,58 +147,48 @@ namespace Snowflake.Data.Tests
 
         private string GetAuthenticationString()
         {
-            // Jenkins is the only exception - always use password authentication
+            // 1. Jenkins override - always use password authentication
             if (IsRunningInJenkins())
             {
                 return string.Format(ConnectionStringSnowflakeAuthFmt,
                     testConfig.user,
                     testConfig.password);
             }
-
-            // If explicit authenticator is set, use it
+            
+            // 2. Explicit authenticator override
             if (!string.IsNullOrEmpty(testConfig.authenticator))
             {
                 return $";authenticator={testConfig.authenticator};user={testConfig.user};password={testConfig.password};";
             }
-
-            // Prefer key-pair authentication if available (auto-detect)
-            if (HasKeyPairCredentials())
-            {
-                return GetKeyPairAuthenticationString();
-            }
-
-            // Fallback to password authentication (no authenticator = basic auth)
-            return string.Format(ConnectionStringSnowflakeAuthFmt,
-                testConfig.user,
-                testConfig.password);
-        }
-
-        private string GetKeyPairAuthenticationString()
-        {
-            // Use private_key_file parameter for any file path (P8 or PEM)
-            if (!string.IsNullOrEmpty(testConfig.p8FilePath))
+            
+            // 3. Try RSA key file path (discovered file)
+            var keyFilePath = DiscoverRsaKeyFile();
+            if (!string.IsNullOrEmpty(keyFilePath))
             {
                 return string.Format(ConnectionStringJwtAuthFmt,
                     testConfig.user,
-                    testConfig.p8FilePath);
+                    keyFilePath);
             }
 
-            if (!string.IsNullOrEmpty(testConfig.pemFilePath))
-            {
-                return string.Format(ConnectionStringJwtAuthFmt,
-                    testConfig.user,
-                    testConfig.pemFilePath);
-            }
-
-            // Use private_key parameter for content
+            // 4. Try RSA key content (from parameters)
             if (!string.IsNullOrEmpty(testConfig.privateKey))
             {
                 return string.Format(ConnectionStringJwtContentFmt,
                     testConfig.user,
                     testConfig.privateKey);
             }
+            
+            // 5. Fallback to password authentication
+            return string.Format(ConnectionStringSnowflakeAuthFmt,
+                testConfig.user,
+                testConfig.password);
+        }
 
-            return null; // This shouldn't happen if HasKeyPairCredentials() returned true
+        private string DiscoverRsaKeyFile()
+        {
+            // Find any rsa_key_dotnet_*.p8 file - same pattern as parameters.json
+            var keyFiles = Directory.GetFiles(".", "rsa_key_dotnet_*.p8");
+            return keyFiles.Length > 0 ? Path.GetFileName(keyFiles[0]) : null;
         }
 
         private bool IsRunningInJenkins()
@@ -209,13 +199,6 @@ namespace Snowflake.Data.Tests
                    !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JOB_NAME"));
         }
 
-        private bool HasKeyPairCredentials()
-        {
-            return !string.IsNullOrEmpty(testConfig.user) &&
-                   (!string.IsNullOrEmpty(testConfig.p8FilePath) ||
-                    !string.IsNullOrEmpty(testConfig.privateKey) ||
-                    !string.IsNullOrEmpty(testConfig.pemFilePath));
-        }
 
         protected string ConnectionStringWithInvalidUserName => ConnectionStringWithoutAuth +
                                              string.Format(ConnectionStringSnowflakeAuthFmt,
