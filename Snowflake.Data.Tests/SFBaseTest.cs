@@ -147,38 +147,45 @@ namespace Snowflake.Data.Tests
 
         private string GetAuthenticationString()
         {
+            s_logger.Debug("=== Authentication Method Selection ===");
+            
             // 1. Jenkins override - always use password authentication
             if (IsRunningInJenkins())
             {
+                s_logger.Debug("AUTH: Using Jenkins password authentication (Jenkins environment detected)");
                 return string.Format(ConnectionStringSnowflakeAuthFmt,
                     testConfig.user,
                     testConfig.password);
             }
             
-            // 2. Explicit authenticator override
-            if (!string.IsNullOrEmpty(testConfig.authenticator))
-            {
-                return $";authenticator={testConfig.authenticator};user={testConfig.user};password={testConfig.password};";
-            }
-            
-            // 3. Try RSA key file path (discovered file)
+            // 2. Try RSA key file path (discovered file)
             var keyFilePath = DiscoverRsaKeyFile();
             if (!string.IsNullOrEmpty(keyFilePath))
             {
+                s_logger.Debug($"AUTH: Using RSA key file path - private_key_file='{keyFilePath}'");
                 return string.Format(ConnectionStringJwtAuthFmt,
                     testConfig.user,
                     keyFilePath);
             }
 
-            // 4. Try RSA key content (from parameters)
+            // 3. Try RSA key content (from parameters)
             if (!string.IsNullOrEmpty(testConfig.privateKey))
             {
+                s_logger.Debug("AUTH: Using RSA key content - private_key=<content>");
                 return string.Format(ConnectionStringJwtContentFmt,
                     testConfig.user,
                     testConfig.privateKey);
             }
             
+            // 4. Explicit authenticator override (for non-JWT auth like externalbrowser, etc.)
+            if (!string.IsNullOrEmpty(testConfig.authenticator))
+            {
+                s_logger.Debug($"AUTH: Using explicit authenticator '{testConfig.authenticator}' with password");
+                return $";authenticator={testConfig.authenticator};user={testConfig.user};password={testConfig.password};";
+            }
+            
             // 5. Fallback to password authentication
+            s_logger.Debug("AUTH: Using password authentication (fallback)");
             return string.Format(ConnectionStringSnowflakeAuthFmt,
                 testConfig.user,
                 testConfig.password);
@@ -188,7 +195,15 @@ namespace Snowflake.Data.Tests
         {
             // Find any rsa_key_dotnet_*.p8 file - same pattern as parameters.json
             var keyFiles = Directory.GetFiles(".", "rsa_key_dotnet_*.p8");
-            return keyFiles.Length > 0 ? Path.GetFileName(keyFiles[0]) : null;
+            if (keyFiles.Length > 0)
+            {
+                var fileName = Path.GetFileName(keyFiles[0]);
+                s_logger.Debug($"RSA Discovery: Found key file '{fileName}'");
+                return fileName;
+            }
+            
+            s_logger.Debug("RSA Discovery: No rsa_key_dotnet_*.p8 files found");
+            return null;
         }
 
         private bool IsRunningInJenkins()
