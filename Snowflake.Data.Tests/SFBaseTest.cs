@@ -206,10 +206,10 @@ namespace Snowflake.Data.Tests
             Console.WriteLine("RSA Discovery: Looking for rsa_key_dotnet_*.p8 files...");
             Console.WriteLine($"RSA Discovery: Current directory = {Directory.GetCurrentDirectory()}");
             
-            // Search locations in priority order
+            // Search locations in priority order - start with CI/CD location first
             string[] searchPaths = {
-                ".",                    // Current directory (local dev)
-                "../../..",            // From bin/Debug/net6.0 back to Snowflake.Data.Tests (CI/CD)
+                "../../..",            // From bin/Debug/net6.0 back to Snowflake.Data.Tests (CI/CD) - MOST COMMON
+                ".",                   // Current directory (local dev)
                 "../../../..",         // From bin/Debug/net6.0/publish back to Snowflake.Data.Tests
                 "../../../../.."       // From deeper nested directories
             };
