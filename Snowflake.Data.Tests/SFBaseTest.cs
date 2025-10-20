@@ -176,20 +176,44 @@ namespace Snowflake.Data.Tests
             Console.WriteLine("RSA Discovery: Looking for rsa_key_dotnet_*.p8 files...");
             Console.WriteLine($"RSA Discovery: Current directory = {Directory.GetCurrentDirectory()}");
             
-            var keyFiles = Directory.GetFiles(".", "rsa_key_dotnet_*.p8");
-            Console.WriteLine($"RSA Discovery: Found {keyFiles.Length} matching files");
+            // Search locations in priority order
+            string[] searchPaths = {
+                ".",                    // Current directory (local dev)
+                "../../..",            // From bin/Debug/net6.0 back to Snowflake.Data.Tests (CI/CD)
+                "../../../..",         // From bin/Debug/net6.0/publish back to Snowflake.Data.Tests
+                "../../../../.."       // From deeper nested directories
+            };
             
-            if (keyFiles.Length > 0)
+            foreach (var searchPath in searchPaths)
             {
-                var fileName = Path.GetFileName(keyFiles[0]);
-                Console.WriteLine($"RSA Discovery: Using key file '{fileName}'");
-                Console.WriteLine($"RSA Discovery: Full path = {Path.GetFullPath(keyFiles[0])}");
-                return fileName;
+                Console.WriteLine($"RSA Discovery: Searching in '{searchPath}'...");
+                Console.WriteLine($"RSA Discovery: Full search path = {Path.GetFullPath(searchPath)}");
+                
+                if (Directory.Exists(searchPath))
+                {
+                    var keyFiles = Directory.GetFiles(searchPath, "rsa_key_dotnet_*.p8");
+                    Console.WriteLine($"RSA Discovery: Found {keyFiles.Length} matching files in '{searchPath}'");
+                    
+                    if (keyFiles.Length > 0)
+                    {
+                        var fullPath = Path.GetFullPath(keyFiles[0]);
+                        var fileName = Path.GetFileName(keyFiles[0]);
+                        Console.WriteLine($"RSA Discovery: Using key file '{fileName}'");
+                        Console.WriteLine($"RSA Discovery: Full path = {fullPath}");
+                        
+                        // Return relative path from current directory
+                        var relativePath = Path.GetRelativePath(".", fullPath);
+                        Console.WriteLine($"RSA Discovery: Relative path = {relativePath}");
+                        return relativePath;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"RSA Discovery: Directory '{searchPath}' does not exist");
+                }
             }
             
-            Console.WriteLine("RSA Discovery: No rsa_key_dotnet_*.p8 files found");
-            var allFiles = Directory.GetFiles(".", "*.p8");
-            Console.WriteLine($"RSA Discovery: All .p8 files in directory: {string.Join(", ", allFiles.Select(Path.GetFileName))}");
+            Console.WriteLine("RSA Discovery: No rsa_key_dotnet_*.p8 files found in any search location");
             return null;
         }
 
