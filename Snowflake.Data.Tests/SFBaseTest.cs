@@ -188,9 +188,9 @@ namespace Snowflake.Data.Tests
         {
             // Search locations in priority order - start with CI/CD location first
             string[] searchPaths = {
-                "../../..",            // From bin/Debug/net6.0 back to Snowflake.Data.Tests (CI/CD) - MOST COMMON
+                "../../..",            // From bin/Debug/netX.0 back to Snowflake.Data.Tests (CI/CD)
                 ".",                   // Current directory (local dev)
-                "../../../..",         // From bin/Debug/net6.0/publish back to Snowflake.Data.Tests
+                "../../../..",         // From bin/Debug/netX.0/publish back to Snowflake.Data.Tests
                 "../../../../.."       // From deeper nested directories
             };
             
@@ -201,9 +201,15 @@ namespace Snowflake.Data.Tests
                     var keyFiles = Directory.GetFiles(searchPath, "rsa_key_dotnet_*.p8");
                     if (keyFiles.Length > 0)
                     {
-                        var fullPath = Path.GetFullPath(keyFiles[0]);
-                        // Return relative path from current directory
-                        return Path.GetRelativePath(".", fullPath);
+                        var fileName = Path.GetFileName(keyFiles[0]);
+                        
+                        // For current directory, just return filename
+                        if (searchPath == ".")
+                        {
+                            return fileName;
+                        }
+                        
+                        return Path.GetFullPath(Path.Combine(searchPath, fileName));
                     }
                 }
             }
