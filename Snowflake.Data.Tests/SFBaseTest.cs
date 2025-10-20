@@ -147,62 +147,49 @@ namespace Snowflake.Data.Tests
 
         private string GetAuthenticationString()
         {
-            s_logger.Debug("=== Authentication Method Selection ===");
+            Console.WriteLine("=== FORCED KEY-PAIR TESTING ===");
             
-            // 1. Jenkins override - always use password authentication
-            if (IsRunningInJenkins())
-            {
-                s_logger.Debug("AUTH: Using Jenkins password authentication (Jenkins environment detected)");
-                return string.Format(ConnectionStringSnowflakeAuthFmt,
-                    testConfig.user,
-                    testConfig.password);
-            }
-            
-            // 2. Try RSA key file path (discovered file)
+            // TESTING: Force key-pair authentication only
             var keyFilePath = DiscoverRsaKeyFile();
             if (!string.IsNullOrEmpty(keyFilePath))
             {
-                s_logger.Debug($"AUTH: Using RSA key file path - private_key_file='{keyFilePath}'");
-                return string.Format(ConnectionStringJwtAuthFmt,
-                    testConfig.user,
-                    keyFilePath);
+                Console.WriteLine($"FORCED AUTH: Using RSA key file path - private_key_file='{keyFilePath}'");
+                var result = string.Format(ConnectionStringJwtAuthFmt, testConfig.user, keyFilePath);
+                Console.WriteLine($"CONNECTION STRING: {result}");
+                return result;
             }
 
-            // 3. Try RSA key content (from parameters)
             if (!string.IsNullOrEmpty(testConfig.privateKey))
             {
-                s_logger.Debug("AUTH: Using RSA key content - private_key=<content>");
-                return string.Format(ConnectionStringJwtContentFmt,
-                    testConfig.user,
-                    testConfig.privateKey);
+                Console.WriteLine("FORCED AUTH: Using RSA key content - private_key=<content>");
+                var result = string.Format(ConnectionStringJwtContentFmt, testConfig.user, testConfig.privateKey);
+                Console.WriteLine($"CONNECTION STRING: {result}");
+                return result;
             }
             
-            // 4. Explicit authenticator override (for non-JWT auth like externalbrowser, etc.)
-            if (!string.IsNullOrEmpty(testConfig.authenticator))
-            {
-                s_logger.Debug($"AUTH: Using explicit authenticator '{testConfig.authenticator}' with password");
-                return $";authenticator={testConfig.authenticator};user={testConfig.user};password={testConfig.password};";
-            }
-            
-            // 5. Fallback to password authentication
-            s_logger.Debug("AUTH: Using password authentication (fallback)");
-            return string.Format(ConnectionStringSnowflakeAuthFmt,
-                testConfig.user,
-                testConfig.password);
+            Console.WriteLine("FORCED AUTH: NO KEY-PAIR CREDENTIALS FOUND - FAILING!");
+            throw new Exception("TESTING: No key-pair credentials available!");
         }
 
         private string DiscoverRsaKeyFile()
         {
-            // Find any rsa_key_dotnet_*.p8 file - same pattern as parameters.json
+            Console.WriteLine("RSA Discovery: Looking for rsa_key_dotnet_*.p8 files...");
+            Console.WriteLine($"RSA Discovery: Current directory = {Directory.GetCurrentDirectory()}");
+            
             var keyFiles = Directory.GetFiles(".", "rsa_key_dotnet_*.p8");
+            Console.WriteLine($"RSA Discovery: Found {keyFiles.Length} matching files");
+            
             if (keyFiles.Length > 0)
             {
                 var fileName = Path.GetFileName(keyFiles[0]);
-                s_logger.Debug($"RSA Discovery: Found key file '{fileName}'");
+                Console.WriteLine($"RSA Discovery: Using key file '{fileName}'");
+                Console.WriteLine($"RSA Discovery: Full path = {Path.GetFullPath(keyFiles[0])}");
                 return fileName;
             }
             
-            s_logger.Debug("RSA Discovery: No rsa_key_dotnet_*.p8 files found");
+            Console.WriteLine("RSA Discovery: No rsa_key_dotnet_*.p8 files found");
+            var allFiles = Directory.GetFiles(".", "*.p8");
+            Console.WriteLine($"RSA Discovery: All .p8 files in directory: {string.Join(", ", allFiles.Select(Path.GetFileName))}");
             return null;
         }
 
