@@ -100,6 +100,26 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestApplicationPathIsSentDuringAuthentication()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                var authenticator = (BaseAuthenticator)conn.SfSession.authenticator;
+                var clientEnv = authenticator.BuildLoginRequestData().clientEnv;
+                var lowerPath = clientEnv.applicationPath.ToLower();
+                Assert.IsTrue(
+                    lowerPath.Contains("snowflake.data.tests") &&
+                    lowerPath.Contains("bin") &&
+                    lowerPath.Contains("testhost") &&
+                    (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
+                    $"APPLICATION_PATH should contain 'snowflake.data.tests', 'bin', 'testhost' and end with .dll or .exe. Got: {clientEnv.applicationPath}");
+            }
+        }
+
+        [Test]
         public void TestIncorrectUserOrPasswordBasicConnection()
         {
             using (var conn = new SnowflakeDbConnection())

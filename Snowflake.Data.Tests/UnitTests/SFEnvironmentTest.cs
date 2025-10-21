@@ -41,6 +41,27 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestApplicationPathExtraction()
+        {
+            // Act
+            var applicationPath = SFEnvironment.ExtractApplicationPath();
+
+            // Assert
+            Assert.IsNotNull(applicationPath);
+            Assert.IsNotEmpty(applicationPath);
+            Assert.IsTrue(System.IO.Path.IsPathRooted(applicationPath),
+                $"Application path should be absolute. Got: {applicationPath}");
+
+            var lowerPath = applicationPath.ToLower();
+            Assert.IsTrue(
+                lowerPath.Contains("snowflake.data.tests") &&
+                lowerPath.Contains("bin") &&
+                lowerPath.Contains("testhost") &&
+                (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
+                $"Application path should contain 'snowflake.data.tests', 'bin', 'testhost' and end with .dll or .exe. Got: {applicationPath}");
+        }
+
+        [Test]
         public void TestClientEnvironmentDoesNotInterfereForDifferentAuthenticators()
         {
             // arrange/act
@@ -48,6 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var osVersion = Environment.OSVersion.VersionString;
             var netRuntime = SFEnvironment.ExtractRuntime();
             var netVersion = SFEnvironment.ExtractVersion();
+            var applicationPath = SFEnvironment.ExtractApplicationPath();
             var clientCredentialAuthenticator = CreateAuthenticator("authenticator=oauth_client_credentials;account=test;db=testDb;role=testRole;oauthClientId=abc;oauthClientSecret=def;user=testUser;oauthTokenRequestUrl=https://test.snowflake.com;");
             ((OAuthClientCredentialsAuthenticator)clientCredentialAuthenticator).AccessToken = SecureStringHelper.Encode("qwe");
             var clientCredentialLoginClientEnv = clientCredentialAuthenticator.BuildLoginRequestData().clientEnv;
@@ -62,6 +84,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(netVersion, clientCredentialLoginClientEnv.netVersion);
             Assert.AreEqual(processName, clientCredentialLoginClientEnv.application);
             Assert.AreEqual(processName, clientCredentialLoginClientEnv.processName);
+            Assert.AreEqual(applicationPath, clientCredentialLoginClientEnv.applicationPath);
             Assert.AreEqual("disabled", clientCredentialLoginClientEnv.certRevocationCheckMode);
             Assert.AreEqual("oauth_client_credentials", clientCredentialLoginClientEnv.oauthType);
             // asserts for client credential second login
@@ -70,6 +93,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(netVersion, clientCredentialLoginClientEnv2.netVersion);
             Assert.AreEqual(processName, clientCredentialLoginClientEnv2.application);
             Assert.AreEqual(processName, clientCredentialLoginClientEnv2.processName);
+            Assert.AreEqual(applicationPath, clientCredentialLoginClientEnv2.applicationPath);
             Assert.AreEqual("disabled", clientCredentialLoginClientEnv2.certRevocationCheckMode);
             Assert.AreEqual("oauth_client_credentials", clientCredentialLoginClientEnv2.oauthType);
             // asserts for PAT login
@@ -78,6 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(netVersion, insecurePatLoginClientEnv.netVersion);
             Assert.AreEqual("MyApp", insecurePatLoginClientEnv.application);
             Assert.AreEqual(processName, insecurePatLoginClientEnv.processName);
+            Assert.AreEqual(applicationPath, insecurePatLoginClientEnv.applicationPath);
             Assert.AreEqual("enabled", insecurePatLoginClientEnv.certRevocationCheckMode);
             Assert.IsNull(insecurePatLoginClientEnv.oauthType);
             // asserts that first and second client credential login produced the same json

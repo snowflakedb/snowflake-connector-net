@@ -69,6 +69,7 @@ namespace Snowflake.Data.Core
                 osVersion = Environment.OSVersion.VersionString,
                 netRuntime = ExtractRuntime(),
                 netVersion = ExtractVersion(),
+                applicationPath = ExtractApplicationPath(),
             };
 
             DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -90,6 +91,21 @@ namespace Snowflake.Data.Core
             var version = RuntimeInformation.FrameworkDescription.Substring(RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
             int secondPeriodIndex = version.IndexOf('.', version.IndexOf('.') + 1);
             return version.Substring(0, secondPeriodIndex);
+        }
+
+        internal static string ExtractApplicationPath()
+        {
+            try
+            {
+                var assembly = Assembly.GetEntryAssembly();
+                var location = assembly?.Location;
+
+                return !string.IsNullOrEmpty(location) ? location : "UNKNOWN";
+            }
+            catch (Exception)
+            {
+                return "UNKNOWN";
+            }
         }
     }
 }
