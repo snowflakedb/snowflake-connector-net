@@ -7,13 +7,13 @@
     <PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageIconUrl>https://raw.githubusercontent.com/snowflakedb/snowflake-connector-net/master/Snowflake.Data/snowflake.ico</PackageIconUrl>
-    <RepositoryUrl>https://github.com/snowflakedb/snowflake-connector-net</RepositoryUrl> 
+    <RepositoryUrl>https://github.com/snowflakedb/snowflake-connector-net</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Authors>Snowflake</Authors>
-    <Version>4.8.0</Version>
+    <Version>5.0.0</Version>
     <DebugType>Full</DebugType>
     <LangVersion>8</LangVersion>
   </PropertyGroup>

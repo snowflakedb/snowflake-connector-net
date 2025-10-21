@@ -182,9 +182,13 @@ namespace Snowflake.Data.Core
             var dirPermissions = _unixOperations.GetDirPermissions(dirPath);
             if (dirPermissions != FileAccessPermissions.UserReadWriteExecute)
             {
-                s_logger.Warn($"Access permission for the logs directory is currently " +
+                string errorMessage = $"Access permission for the logs directory {dirPath} are currently " +
                     $"{UnixFilePermissionsConverter.ConvertFileAccessPermissionsToInt(dirPermissions)} " +
-                    $"and is potentially accessible to users other than the owner of the logs directory");
+                    $"and is potentially accessible to users other than the owner of the logs directory. " +
+                    $"Please correct access permission to ensure that only the owner can access the logs directory.";
+                Console.Write(errorMessage);
+                s_logger.Warn(errorMessage);
+                throw new Exception($"Too broad access permissions for logs directory: {dirPath}");
             }
         }
     }
