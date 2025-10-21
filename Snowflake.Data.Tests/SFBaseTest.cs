@@ -154,7 +154,7 @@ namespace Snowflake.Data.Tests
                     testConfig.user,
                     testConfig.password);
             }
-            
+
             // 2. Try RSA key file path (discovered file)
             var keyFilePath = DiscoverRsaKeyFile();
             if (!string.IsNullOrEmpty(keyFilePath))
@@ -171,13 +171,13 @@ namespace Snowflake.Data.Tests
                     testConfig.user,
                     testConfig.privateKey);
             }
-            
+
             // 4. Explicit authenticator override (for non-JWT auth like externalbrowser, etc.)
             if (!string.IsNullOrEmpty(testConfig.authenticator))
             {
                 return $";authenticator={testConfig.authenticator};user={testConfig.user};password={testConfig.password};";
             }
-            
+
             // 5. Fallback to password authentication
             return string.Format(ConnectionStringSnowflakeAuthFmt,
                 testConfig.user,
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests
                 "../../../..",         // From bin/Debug/netX.0/publish back to Snowflake.Data.Tests
                 "../../../../.."       // From deeper nested directories
             };
-            
+
             foreach (var searchPath in searchPaths)
             {
                 if (Directory.Exists(searchPath))
@@ -202,13 +202,13 @@ namespace Snowflake.Data.Tests
                     if (keyFiles.Length > 0)
                     {
                         var fileName = Path.GetFileName(keyFiles[0]);
-                        
-                        // For current directory, just return filename  
+
+                        // For current directory, just return filename
                         if (searchPath == ".")
                         {
                             return fileName;
                         }
-                        
+
                         // For other paths, use consistent relative path that works cross-platform
                         // Use Path.Combine but normalize to forward slashes for consistency
                         var relativePath = Path.Combine(searchPath, fileName);
@@ -216,7 +216,7 @@ namespace Snowflake.Data.Tests
                     }
                 }
             }
-            
+
             return null;
         }
 
