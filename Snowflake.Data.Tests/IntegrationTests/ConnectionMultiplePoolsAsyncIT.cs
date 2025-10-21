@@ -19,6 +19,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
         private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
+        private async Task<int> WaitForPoolSizeAsync(SnowflakeDbSessionPool pool, int expectedSize, int maxRetries = 10)
+        {
+            var retryCount = 0;
+            while (pool.GetCurrentPoolSize() != expectedSize && retryCount < maxRetries)
+            {
+                await Task.Delay(50).ConfigureAwait(false);
+                retryCount++;
+            }
+            return pool.GetCurrentPoolSize();
+        }
+
         [SetUp]
         public new void BeforeTest()
         {
@@ -43,7 +54,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            var actualSize = await WaitForPoolSizeAsync(pool, 1);
+            Assert.AreEqual(1, actualSize);
 
             // cleanup
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -143,7 +155,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connection = new SnowflakeDbConnection(connectionString);
             await connection.OpenAsync().ConfigureAwait(false);
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            var actualSize = await WaitForPoolSizeAsync(pool, 1);
+            Assert.AreEqual(1, actualSize);
 
             // act
             connection.PreventPooling();
