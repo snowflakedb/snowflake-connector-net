@@ -84,7 +84,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // assert - wait for key-pair auth to complete
             Assert.AreEqual(ConnectionState.Closed, conn1.State);
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
-            var actualSize = WaitForPoolSize(pool, 1);
+            var actualSize = WaitForPoolSize(pool, 1, 50); // Increase retries for key-pair auth
             Assert.AreEqual(1, actualSize);
             Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(connectionString, null).GetCurrentPoolSize());
         }
@@ -277,7 +277,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.Open();
 
             // assert - wait for key-pair auth to complete
-            var actualSize = WaitForPoolSize(pool, 1);
+            var actualSize = WaitForPoolSize(pool, 1, 50); // Increase retries for key-pair auth
             Assert.AreEqual(1, actualSize);
 
             // act
@@ -343,8 +343,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn2.Close();
             var pool1 = SnowflakeDbConnectionPool.GetPool(conn1.ConnectionString);
             var pool2 = SnowflakeDbConnectionPool.GetPool(conn2.ConnectionString);
-            var actualSize1 = WaitForPoolSize(pool1, 1);
-            var actualSize2 = WaitForPoolSize(pool2, 1);
+            var actualSize1 = WaitForPoolSize(pool1, 1, 50); // Increase retries for key-pair auth
+            var actualSize2 = WaitForPoolSize(pool2, 1, 50); // Increase retries for key-pair auth
             Assert.AreEqual(1, actualSize1);
             Assert.AreEqual(1, actualSize2);
             SnowflakeDbConnectionPool.ClearAllPools();
@@ -375,7 +375,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var conn4 = OpenConnection(connectionString);
 
             // assert - wait for key-pair auth to complete
-            var actualSize = WaitForPoolSize(pool, 4);
+            var actualSize = WaitForPoolSize(pool, 4, 50); // Increase retries for key-pair auth
             Assert.AreEqual(4, actualSize);
 
             // act
@@ -415,8 +415,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
-            Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentPoolSize() == 3, TimeSpan.FromMilliseconds(1000));
-            var actualSize = WaitForPoolSize(pool, 3);
+            var actualSize = WaitForPoolSize(pool, 3, 50); // Increase retries for key-pair auth
             Assert.AreEqual(3, actualSize);
 
             // cleanup
@@ -430,7 +429,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connectionString = ConnectionString + "minPoolSize=0";
             var connection = OpenConnection(connectionString);
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
-            var actualSize = WaitForPoolSize(pool, 1);
+            var actualSize = WaitForPoolSize(pool, 1, 50); // Increase retries for key-pair auth
             Assert.AreEqual(1, actualSize);
 
             // act
