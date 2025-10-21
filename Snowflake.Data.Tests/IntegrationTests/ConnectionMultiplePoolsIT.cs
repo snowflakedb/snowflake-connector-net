@@ -286,7 +286,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestNewConnectionPoolClean()
         {
-            var connectionString = ConnectionString + "maxPoolSize=2;minPoolSize=1;";
+            var connectionString = ConnectionString + "maxPoolSize=2;minPoolSize=1;poolingEnabled=true";
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = connectionString;
             conn1.Open();

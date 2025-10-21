@@ -161,7 +161,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestCompareSessionChangesCaseInsensitiveWhenUnquoted()
         {
-            var connectionString = ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3";
+            var connectionString = ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var responseData = new QueryExecResponseData()
             {
@@ -189,7 +189,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestCompareSessionChangesCaseSensitiveWhenQuoted()
         {
-            var connectionString = ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3";
+            var connectionString = ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var responseData = new QueryExecResponseData()
             {
