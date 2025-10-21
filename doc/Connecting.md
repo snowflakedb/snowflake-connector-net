@@ -338,9 +338,13 @@ Using Workload Identity Federation for AWS cloud:
 
 Using Workload Identity Federation for Azure cloud:
 ```csharp
-    var conn1 = new SnowflakeDbConnection("authenticator=workload_identity;workload_identity_provider=azure;account=test;"); // with default entra resource
-    var conn2 = new SnowflakeDbConnection("authenticator=workload_identity;workload_identity_provider=azure;workload_identity_entra_resource=api://fd3f753b-eed3-462c-b6a7-a4b5bb650aad;account=test;"); // with provided entra resource
+    // with default entra resource
+    var conn1 = new SnowflakeDbConnection("authenticator=workload_identity;workload_identity_provider=azure;account=test;");
+
+    // with custom entra resource
+    var conn2 = new SnowflakeDbConnection("authenticator=workload_identity;workload_identity_provider=azure;workload_identity_entra_resource=api://fd3f753b-eed3-462c-b6a7-a4b5bb650aad;account=test;");
 ```
+The client ID can be set explicitly using the `MANAGED_IDENTITY_CLIENT_ID` environment variable.
 
 Using Workload Identity Federation for GCP cloud:
 ```csharp

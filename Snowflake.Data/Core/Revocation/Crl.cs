@@ -19,12 +19,10 @@ namespace Snowflake.Data.Core.Revocation
 
         public List<string> RevokedCertificates { get; set; }
 
-        public TimeSpan CrlCacheValidityTime { get; set; } = TimeSpan.FromDays(10);
-
         public X509Crl BouncyCastleCrl { get; set; }
 
-        public bool NeedsFreshCrl(DateTime now) =>
-            NextUpdate < now || DownloadTime.Add(CrlCacheValidityTime) < now;
+        public bool NeedsReplacement(DateTime now, TimeSpan cacheValidityTime) =>
+            NextUpdate < now || DownloadTime.Add(cacheValidityTime) < now;
 
         public bool IsRevoked(string serialNumber) => RevokedCertificates.Contains(serialNumber);
 
