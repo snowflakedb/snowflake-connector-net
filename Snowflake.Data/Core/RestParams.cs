@@ -98,9 +98,19 @@ namespace Snowflake.Data.Core
             try
             {
                 var assembly = Assembly.GetEntryAssembly();
-                var location = assembly?.Location;
+                if (assembly != null && !string.IsNullOrEmpty(assembly.Location))
+                {
+                    return assembly.Location;
+                }
+                
+                var process = System.Diagnostics.Process.GetCurrentProcess();
+                var mainModule = process.MainModule;
+                if (mainModule != null && !string.IsNullOrEmpty(mainModule.FileName))
+                {
+                    return mainModule.FileName;
+                }
 
-                return !string.IsNullOrEmpty(location) ? location : "UNKNOWN";
+                return "UNKNOWN";
             }
             catch (Exception)
             {

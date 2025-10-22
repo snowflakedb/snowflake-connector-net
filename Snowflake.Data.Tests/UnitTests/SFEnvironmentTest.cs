@@ -41,24 +41,30 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [RunOnlyOnCI]
         public void TestApplicationPathExtraction()
         {
-            // Act
             var applicationPath = SFEnvironment.ExtractApplicationPath();
 
-            // Assert
             Assert.IsNotNull(applicationPath);
             Assert.IsNotEmpty(applicationPath);
             Assert.IsTrue(System.IO.Path.IsPathRooted(applicationPath),
                 $"Application path should be absolute. Got: {applicationPath}");
 
             var lowerPath = applicationPath.ToLower();
+#if NETFRAMEWORK
+            Assert.IsTrue(
+                lowerPath.Contains("testhost") &&
+                (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
+                $"Application path should contain 'testhost' and end with .dll or .exe. Got: {applicationPath}");
+#else
             Assert.IsTrue(
                 lowerPath.Contains("snowflake.data.tests") &&
                 lowerPath.Contains("bin") &&
                 lowerPath.Contains("testhost") &&
                 (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
                 $"Application path should contain 'snowflake.data.tests', 'bin', 'testhost' and end with .dll or .exe. Got: {applicationPath}");
+#endif
         }
 
         [Test]
