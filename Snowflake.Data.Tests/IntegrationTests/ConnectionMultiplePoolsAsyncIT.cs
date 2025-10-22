@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestAddToPoolOnOpenAsync()
         {
             // arrange
-            var connection = new SnowflakeDbConnection(ConnectionString + "minPoolSize=1");
+            var connection = new SnowflakeDbConnection(ConnectionString + "minPoolSize=1;poolingEnabled=true");
 
             // act
             await connection.OpenAsync().ConfigureAwait(false);
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // make the connection string unique so it won't pick up connection
             // pooled by other test cases.
-            string connStr = ConnectionString + "minPoolSize=0;maxPoolSize=10;application=conn_pool_test_invalid_openasync2";
+            string connStr = ConnectionString + "minPoolSize=0;maxPoolSize=10;application=conn_pool_test_invalid_openasync2;poolingEnabled=true";
             using (var connection = new SnowflakeDbConnection())
             {
                 connection.ConnectionString = connStr;
@@ -121,7 +121,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var connection = new SnowflakeDbConnection();
-            connection.ConnectionString = ConnectionString + "application=TestMinPoolSizeAsync;minPoolSize=3";
+            connection.ConnectionString = ConnectionString + "application=TestMinPoolSizeAsync;minPoolSize=3;poolingEnabled=true";
 
             // act
             await connection.OpenAsync().ConfigureAwait(false);
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestPreventConnectionFromReturningToPool()
         {
             // arrange
-            var connectionString = ConnectionString + "minPoolSize=0";
+            var connectionString = ConnectionString + "minPoolSize=0;poolingEnabled=true";
             var connection = new SnowflakeDbConnection(connectionString);
             await connection.OpenAsync().ConfigureAwait(false);
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
@@ -157,7 +157,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestReleaseConnectionWhenRollbackFailsAsync()
         {
             // arrange
-            var connectionString = ConnectionString + "minPoolSize=0";
+            var connectionString = ConnectionString + "minPoolSize=0;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             var commandThrowingExceptionOnlyForRollback = MockHelper.CommandThrowingExceptionOnlyForRollback();
             var mockDbProviderFactory = new Mock<DbProviderFactory>();
@@ -181,7 +181,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // add test case name in connection string to make in unique for each test case
             // set short expiration timeout to cover the case that connection expired
-            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync2;ExpirationTimeout=3";
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync2;ExpirationTimeout=3;poolingEnabled=true";
             ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3);
         }
 
@@ -190,7 +190,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // add test case name in connection string to make in unique for each test case
             // set short expiration timeout to cover the case that connection expired
-            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync2;ExpirationTimeout=3";
+            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync2;ExpirationTimeout=3;poolingEnabled=true";
             ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, false, 5, 5, 3);
         }
     }
