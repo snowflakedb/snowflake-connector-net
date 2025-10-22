@@ -102,7 +102,7 @@ namespace Snowflake.Data.Core
                 {
                     return assembly.Location;
                 }
-                
+
                 var process = System.Diagnostics.Process.GetCurrentProcess();
                 var mainModule = process.MainModule;
                 if (mainModule != null && !string.IsNullOrEmpty(mainModule.FileName))
