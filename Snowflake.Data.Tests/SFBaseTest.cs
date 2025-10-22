@@ -59,6 +59,8 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7};";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
+        private const string ConnectionStringJwtAuthFmt = ";authenticator=snowflake_jwt;user={0};private_key_file={1};";
+        private const string ConnectionStringJwtContentFmt = ";authenticator=snowflake_jwt;user={0};private_key={1};";
         protected virtual string TestName => TestContext.CurrentContext.Test.MethodName;
         protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
         protected string TableName => TestNameWithWorker;
@@ -141,10 +143,91 @@ namespace Snowflake.Data.Tests
                     testConfig.schema,
                     testConfig.warehouse);
 
-        protected string ConnectionString => ConnectionStringWithoutAuth +
-                                             string.Format(ConnectionStringSnowflakeAuthFmt,
-                                                 testConfig.user,
-                                                 testConfig.password);
+        protected string ConnectionString => ConnectionStringWithoutAuth + GetAuthenticationString();
+
+        private string GetAuthenticationString()
+        {
+            // 1. Jenkins override - always use password authentication
+            if (IsRunningInJenkins())
+            {
+                return string.Format(ConnectionStringSnowflakeAuthFmt,
+                    testConfig.user,
+                    testConfig.password);
+            }
+
+            // 2. Try RSA key file path (discovered file)
+            var keyFilePath = DiscoverRsaKeyFile();
+            if (!string.IsNullOrEmpty(keyFilePath))
+            {
+                return string.Format(ConnectionStringJwtAuthFmt,
+                    testConfig.user,
+                    keyFilePath);
+            }
+
+            // 3. Try RSA key content (from parameters)
+            if (!string.IsNullOrEmpty(testConfig.privateKey))
+            {
+                return string.Format(ConnectionStringJwtContentFmt,
+                    testConfig.user,
+                    testConfig.privateKey);
+            }
+
+            // 4. Explicit authenticator override (for non-JWT auth like externalbrowser, etc.)
+            if (!string.IsNullOrEmpty(testConfig.authenticator))
+            {
+                return $";authenticator={testConfig.authenticator};user={testConfig.user};password={testConfig.password};";
+            }
+
+            // 5. Fallback to password authentication
+            return string.Format(ConnectionStringSnowflakeAuthFmt,
+                testConfig.user,
+                testConfig.password);
+        }
+
+        private string DiscoverRsaKeyFile()
+        {
+            // Search locations in priority order - start with CI/CD location first
+            string[] searchPaths = {
+                "../../..",            // From bin/Debug/netX.0 back to Snowflake.Data.Tests (CI/CD)
+                ".",                   // Current directory (local dev)
+                "../../../..",         // From bin/Debug/netX.0/publish back to Snowflake.Data.Tests
+                "../../../../.."       // From deeper nested directories
+            };
+
+            foreach (var searchPath in searchPaths)
+            {
+                if (Directory.Exists(searchPath))
+                {
+                    var keyFiles = Directory.GetFiles(searchPath, "rsa_key_dotnet_*.p8");
+                    if (keyFiles.Length > 0)
+                    {
+                        var fileName = Path.GetFileName(keyFiles[0]);
+
+                        // For current directory, just return filename
+                        if (searchPath == ".")
+                        {
+                            return fileName;
+                        }
+
+                        // For other paths, use consistent relative path that works cross-platform
+                        // Use Path.Combine but normalize to forward slashes for consistency
+                        var relativePath = Path.Combine(searchPath, fileName);
+                        return relativePath.Replace(Path.DirectorySeparatorChar, '/');
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private bool IsRunningInJenkins()
+        {
+            // Jenkins typically sets these environment variables
+            return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JENKINS_URL")) ||
+                   !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BUILD_NUMBER")) ||
+                   !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JOB_NAME"));
+        }
+
 
         protected string ConnectionStringWithInvalidUserName => ConnectionStringWithoutAuth +
                                              string.Format(ConnectionStringSnowflakeAuthFmt,
@@ -162,8 +245,6 @@ namespace Snowflake.Data.Tests
     [SetUpFixture]
     public class TestEnvironment
     {
-        private const string ConnectionStringFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
-                                                   "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
 
         public static TestConfig TestConfig { get; private set; }
 
@@ -219,6 +300,7 @@ namespace Snowflake.Data.Tests
             config.schema = ReadEnvVariableIfSet(config.schema, "SNOWFLAKE_TEST_SCHEMA");
             config.role = ReadEnvVariableIfSet(config.role, "SNOWFLAKE_TEST_ROLE");
             config.protocol = ReadEnvVariableIfSet(config.protocol, "SNOWFLAKE_TEST_PROTOCOL");
+            config.authenticator = ReadEnvVariableIfSet(config.authenticator, "SNOWFLAKE_TEST_AUTHENTICATOR");
             config.oktaUser = ReadEnvVariableIfSet(config.oktaUser, "SNOWFLAKE_TEST_OKTA_USER");
             config.oktaPassword = ReadEnvVariableIfSet(config.oktaPassword, "SNOWFLAKE_TEST_OKTA_PASSWORD");
             config.oktaUrl = ReadEnvVariableIfSet(config.oktaUrl, "SNOWFLAKE_TEST_OKTA_URL");
@@ -307,6 +389,9 @@ namespace Snowflake.Data.Tests
             // Snowflake.Data.Tests/bin/debug/{.net_version}/
             File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
         }
+
+        private const string ConnectionStringFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
+                                                   "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
 
         private static string s_connectionString => string.Format(ConnectionStringFmt,
             TestConfig.protocol,
@@ -405,6 +490,9 @@ namespace Snowflake.Data.Tests
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_PROTOCOL", NullValueHandling = NullValueHandling.Ignore)]
         internal string protocol { get; set; }
+
+        [JsonProperty(PropertyName = "SNOWFLAKE_TEST_AUTHENTICATOR", NullValueHandling = NullValueHandling.Ignore)]
+        internal string authenticator { get; set; }
 
         [JsonProperty(PropertyName = "SNOWFLAKE_TEST_OKTA_USER", NullValueHandling = NullValueHandling.Ignore)]
         internal string oktaUser { get; set; }

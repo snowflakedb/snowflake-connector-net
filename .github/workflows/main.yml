@@ -64,6 +64,13 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Decrypt RSA Key
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/rsa_keys/rsa_key_dotnet_${{ matrix.cloud_env }}.p8.gpg > Snowflake.Data.Tests/rsa_key_dotnet_${{ matrix.cloud_env }}.p8
       - name: Build Driver
         run: |
           cd Snowflake.Data.Tests
@@ -137,6 +144,13 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Decrypt RSA Key
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/rsa_keys/rsa_key_dotnet_${{ matrix.cloud_env }}.p8.gpg > Snowflake.Data.Tests/rsa_key_dotnet_${{ matrix.cloud_env }}.p8
       - name: Build Driver
         run: |
           dotnet restore
@@ -209,6 +223,13 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Decrypt RSA Key
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/rsa_keys/rsa_key_dotnet_${{ matrix.cloud_env }}.p8.gpg > Snowflake.Data.Tests/rsa_key_dotnet_${{ matrix.cloud_env }}.p8
       - name: Build Driver
         run: |
           dotnet restore
