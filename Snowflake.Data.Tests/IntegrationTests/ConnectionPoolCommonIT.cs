@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 SnowflakeDbConnectionPool.SetMaxPoolSize(1);
                 return ConnectionString;
             }
-            return ConnectionString + "maxPoolSize=1;minPoolSize=0";
+            return ConnectionString + "maxPoolSize=1;minPoolSize=0;poolingEnabled=true";
         }
 
         private int ExpectedPoolCountAfterOpen()
