@@ -33,6 +33,7 @@ namespace Snowflake.Data.Core
             bool enableCRLInMemoryCaching = true,
             bool allowCertificatesWithoutCrlUrl = true,
             int crlDownloadTimeout = 10,
+            long crlDownloadMaxSize = 209715200,
             string minTlsProtocol = "TLS12",
             string maxTlsProtocol = "TLS13"
             )
@@ -51,6 +52,7 @@ namespace Snowflake.Data.Core
             EnableCRLInMemoryCaching = enableCRLInMemoryCaching;
             AllowCertificatesWithoutCrlUrl = allowCertificatesWithoutCrlUrl;
             CrlDownloadTimeout = crlDownloadTimeout;
+            CrlDownloadMaxSize = crlDownloadMaxSize;
             MinTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(minTlsProtocol) : SslProtocols.None;
             MaxTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(maxTlsProtocol) : SslProtocols.None;
 
@@ -70,6 +72,7 @@ namespace Snowflake.Data.Core
                     enableCRLInMemoryCaching.ToString(),
                     allowCertificatesWithoutCrlUrl.ToString(),
                     crlDownloadTimeout.ToString(),
+                    crlDownloadMaxSize.ToString(),
                     minTlsProtocol,
                     maxTlsProtocol
                 });
@@ -89,6 +92,7 @@ namespace Snowflake.Data.Core
         internal readonly bool EnableCRLInMemoryCaching;
         internal readonly bool AllowCertificatesWithoutCrlUrl;
         internal readonly int CrlDownloadTimeout;
+        internal readonly long CrlDownloadMaxSize;
         internal readonly SslProtocols MinTlsProtocol;
         internal readonly SslProtocols MaxTlsProtocol;
 

@@ -25,6 +25,7 @@ namespace Snowflake.Data.Core.Revocation
         private readonly CrlParser _crlParser;
         private readonly CrlRepository _crlRepository;
         private readonly TimeSpan _httpTimeout;
+        private readonly long _crlDownloadMaxSize;
 
         private static readonly ConcurrentDictionary<string, object> s_locksForCrlUrls = new ConcurrentDictionary<string, object>();
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<CertificateRevocationVerifier>();
@@ -40,6 +41,7 @@ namespace Snowflake.Data.Core.Revocation
             _certRevocationCheckMode = config.CertRevocationCheckMode;
             _allowCertificatesWithoutCrlUrl = config.AllowCertificatesWithoutCrlUrl;
             _httpTimeout = TimeSpan.FromSeconds(config.CrlDownloadTimeout);
+            _crlDownloadMaxSize = config.CrlDownloadMaxSize;
             _timeProvider = timeProvider;
             _restRequester = restRequester;
             _crlExtractor = crlExtractor;
@@ -324,7 +326,39 @@ namespace Snowflake.Data.Core.Revocation
             {
                 var response = _restRequester.Get(new RestRequestWrapper(request));
                 now = _timeProvider.UtcNow();
-                crlBytes = response.Content?.ReadAsByteArrayAsync().Result;
+
+                if (response?.Content?.Headers?.ContentLength.HasValue == true)
+                {
+                    var contentLength = response.Content.Headers.ContentLength.Value;
+                    if (contentLength > _crlDownloadMaxSize)
+                    {
+                        s_logger.Error($"CRL from {crlUrl} exceeds maximum allowed size. Content-Length: {contentLength} bytes, Max allowed: {_crlDownloadMaxSize} bytes");
+                        return null;
+                    }
+                }
+
+                if (response?.Content == null)
+                {
+                    s_logger.Error($"Downloading crl from {crlUrl} failed: response or content is null");
+                    return null;
+                }
+
+                try
+                {
+                    response.Content.LoadIntoBufferAsync(_crlDownloadMaxSize)
+                        .ConfigureAwait(false)
+                        .GetAwaiter()
+                        .GetResult();
+                    crlBytes = response.Content.ReadAsByteArrayAsync()
+                        .ConfigureAwait(false)
+                        .GetAwaiter()
+                        .GetResult();
+                }
+                catch (HttpRequestException ex)
+                {
+                    s_logger.Error($"CRL from {crlUrl} exceeds maximum allowed size during download. Max allowed: {_crlDownloadMaxSize} bytes. Error: {ex.Message}");
+                    return null;
+                }
             }
             catch (Exception exception)
             {
