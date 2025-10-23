@@ -162,6 +162,14 @@ The old `insecureMode` parameter is no longer supported by the driver.
 
 For information about CRL caching configuration (cache file locations, environment variables), see [Cache.md](Cache.md#certificate-revocation-list-crl-caching).
 
+### Alternative certificate chains are not supported
+The Snowflake .NET driver does **not support alternative certificate chains** during custom CRL revocation checking. While .NET can validate alternative certificate chains, the driver's custom CRL implementation only performs revocation checks on the primary chain.
+This is a limitation of the .NET, which only allows additional custom validation logic to be applied to a single preselected chain. This means that if the primary chain contains a revoked certificate (appears on a CRL list), the connection will fail even if an alternative valid chain exists that is not revoked.
+
+**What are alternative certificate chains?**
+
+In X.509 certificate validation, a server certificate might have multiple valid paths to different trusted root certificates. This is known as having "alternative chains." For example, a server certificate might be signed by Intermediate CA A, which chains to Root CA X, but the same server certificate could also be validated through Intermediate CA B, which chains to Root CA Y.
+
 ### DigiCert Global Root G2 certificate authority (CA) TLS certificate updates
 This might or might not affect your installation. Since the .NET driver doesn't come with its own truststore, it depends on the system's own truststore,
 which (hopefully) already includes all the root certificates needing to verify the chain of trust for connecting to Snowflake services.
