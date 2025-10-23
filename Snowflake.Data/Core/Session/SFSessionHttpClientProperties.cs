@@ -46,6 +46,7 @@ namespace Snowflake.Data.Core
         internal bool _enableCrlInMemoryCaching;
         internal bool _allowCertificatesWithoutCrlUrl;
         private int _crlDownloadTimeout;
+        private long _crlDownloadMaxSize;
         internal string _minTlsProtocol;
         internal string _maxTlsProtocol;
 
@@ -205,6 +206,7 @@ namespace Snowflake.Data.Core
                 _enableCrlInMemoryCaching,
                 _allowCertificatesWithoutCrlUrl,
                 _crlDownloadTimeout,
+                _crlDownloadMaxSize,
                 _minTlsProtocol,
                 _maxTlsProtocol
                 );
@@ -272,6 +274,7 @@ namespace Snowflake.Data.Core
                     _enableCrlInMemoryCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLINMEMORYCACHING]),
                     _allowCertificatesWithoutCrlUrl = Boolean.Parse(propertiesDictionary[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]),
                     _crlDownloadTimeout = int.Parse(propertiesDictionary[SFSessionProperty.CRLDOWNLOADTIMEOUT]),
+                    _crlDownloadMaxSize = long.Parse(propertiesDictionary[SFSessionProperty.CRLDOWNLOADMAXSIZE]),
                     _minTlsProtocol = propertiesDictionary[SFSessionProperty.MINTLS],
                     _maxTlsProtocol = propertiesDictionary[SFSessionProperty.MAXTLS]
                 };
