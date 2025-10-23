@@ -16,6 +16,8 @@ namespace Snowflake.Data.Tests.Mock
 
         static private readonly String TOKEN_FMT = "Snowflake Token=\"{0}\"";
 
+        static internal readonly String THROW_ERROR_TOKEN = "throw_error_token";
+
         static internal readonly int SESSION_EXPIRED_CODE = 390112;
 
         public string FirstTimeRequestID;
@@ -88,8 +90,12 @@ namespace Snowflake.Data.Tests.Mock
                     return Task.FromResult<T>((T)(object)queryExecResponse);
                 }
             }
-            else if (sfRequest.jsonBody is RenewSessionRequest)
+            else if (sfRequest.jsonBody is RenewSessionRequest renewSessionRequest)
             {
+                if (renewSessionRequest.oldSessionToken == THROW_ERROR_TOKEN)
+                {
+                    throw new Exception("Error while renewing session");
+                }
                 return Task.FromResult<T>((T)(object)new RenewSessionResponse
                 {
                     success = true,
@@ -102,6 +108,13 @@ namespace Snowflake.Data.Tests.Mock
             }
             else if (sfRequest.jsonBody == null)
             {
+                if (typeof(T) == typeof(CloseResponse))
+                {
+                    return Task.FromResult<T>((T)(object)new CloseResponse
+                    {
+                        success = true
+                    });
+                }
                 return Task.FromResult<T>((T)(object)new NullDataResponse
                 {
                     success = true

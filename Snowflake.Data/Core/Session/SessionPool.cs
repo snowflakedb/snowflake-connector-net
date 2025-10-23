@@ -373,8 +373,18 @@ namespace Snowflake.Data.Core.Session
                         if (session.isHeartBeatEnabled)
                         {
                             s_logger.Debug($"keep alive enabled: renewing session {session.sessionId}{PoolIdentification()}");
-                            session.renewSession();
-                            return session;
+                            try
+                            {
+                                session.renewSession();
+                                _busySessionsCounter.Increase();
+                                return session;
+                            }
+                            catch (Exception e)
+                            {
+                                s_logger.Error($"failed to renew session {session.sessionId}{PoolIdentification()} due to error: {e.Message}");
+                                Task.Run(() => session.close());
+                                i--;
+                            }
                         }
                         else
                         {

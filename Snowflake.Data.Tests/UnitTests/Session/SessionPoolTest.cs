@@ -340,6 +340,32 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        public void TestShouldContinueExecutionIfRenewingFails()
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+            var session = CreateSessionWithCurrentStartTime(connectionString, new MockRestSessionExpired());
+            session.startHeartBeatForThisSession();
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            pool.SetTimeout(0);
+            pool._idleSessions.Add(session);
+            session.sessionToken = MockRestSessionExpired.THROW_ERROR_TOKEN;
+
+            // act
+            try
+            {
+                pool.ExtractIdleSession(connectionString);
+            }
+            catch
+            {
+                Assert.Fail("Should not throw exception even if session renewal fails");
+            }
+
+            // assert
+            Assert.AreNotEqual(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
+        }
+
+        [Test]
         public void TestShouldNotRenewSessionIfKeepAliveIsDisabled()
         {
             // arrange
