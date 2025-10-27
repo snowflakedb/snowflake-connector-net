@@ -112,6 +112,7 @@ namespace Snowflake.Data.Core
         private static readonly int s_baseBackOffTime = 1;
         private static readonly int s_exponentialFactor = 2;
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
+        internal const int DefaultConnectionLimit = 50;
 
         private static readonly List<string> s_supportedEndpointsForRetryPolicy = new List<string>
         {
@@ -122,10 +123,26 @@ namespace Snowflake.Data.Core
 
         private HttpUtil()
         {
-            // This value is used by AWS SDK and can cause deadlock,
-            // so we need to increase the default value of 2
-            // See: https://github.com/aws/aws-sdk-net/issues/152
-            ServicePointManager.DefaultConnectionLimit = 50;
+            IncreaseLowDefaultConnectionLimitOfServicePointManager();
+        }
+
+        internal void IncreaseLowDefaultConnectionLimitOfServicePointManager()
+        {
+            var currentLimit = ServicePointManager.DefaultConnectionLimit;
+
+            // Only increase if below Snowflake's minimum requirement
+            if (currentLimit < DefaultConnectionLimit)
+            {
+                // This value is used by AWS SDK and can cause deadlock,
+                // so we need to increase the default value of 2
+                // See: https://github.com/aws/aws-sdk-net/issues/152
+                ServicePointManager.DefaultConnectionLimit = DefaultConnectionLimit;
+                logger.Debug($"Increasing ServicePointManager.DefaultConnectionLimit from {currentLimit} to minimum default value of {DefaultConnectionLimit}");
+            }
+            else
+            {
+                logger.Debug($"Using the current ServicePointManager.DefaultConnectionLimit value of {currentLimit}");
+            }
         }
 
         internal static HttpUtil Instance { get; } = new HttpUtil();
