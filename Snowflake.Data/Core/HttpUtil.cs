@@ -27,6 +27,7 @@ namespace Snowflake.Data.Core
             bool disableRetry,
             bool forceRetryOn404,
             int maxHttpRetries,
+            int connectionLimit,
             bool includeRetryReason = true,
             string certRevocationCheckMode = "DISABLED",
             bool enableCRLDiskCaching = true,
@@ -46,6 +47,7 @@ namespace Snowflake.Data.Core
             ForceRetryOn404 = forceRetryOn404;
             MaxHttpRetries = maxHttpRetries;
             IncludeRetryReason = includeRetryReason;
+            ConnectionLimit = connectionLimit;
             CertRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), certRevocationCheckMode, true);
             EnableCRLDiskCaching = enableCRLDiskCaching;
             EnableCRLInMemoryCaching = enableCRLInMemoryCaching;
@@ -65,6 +67,7 @@ namespace Snowflake.Data.Core
                     forceRetryOn404.ToString(),
                     maxHttpRetries.ToString(),
                     includeRetryReason.ToString(),
+                    connectionLimit.ToString(),
                     certRevocationCheckMode,
                     enableCRLDiskCaching.ToString(),
                     enableCRLInMemoryCaching.ToString(),
@@ -84,6 +87,7 @@ namespace Snowflake.Data.Core
         public readonly bool ForceRetryOn404;
         public readonly int MaxHttpRetries;
         public readonly bool IncludeRetryReason;
+        public readonly int ConnectionLimit;
         internal readonly CertRevocationCheckMode CertRevocationCheckMode;
         internal readonly bool EnableCRLDiskCaching;
         internal readonly bool EnableCRLInMemoryCaching;
@@ -178,7 +182,7 @@ namespace Snowflake.Data.Core
 
         internal HttpClient CreateNewHttpClient(HttpClientConfig config, DelegatingHandler customHandler = null) =>
             new HttpClient(
-                new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason))
+                new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason, config.ConnectionLimit))
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
@@ -451,13 +455,15 @@ namespace Snowflake.Data.Core
             private bool forceRetryOn404;
             private int maxRetryCount;
             private bool includeRetryReason;
+            private int connectionLimit;
 
-            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetryCount, bool includeRetryReason) : base(innerHandler)
+            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetryCount, bool includeRetryReason, int connectionLimit) : base(innerHandler)
             {
                 this.disableRetry = disableRetry;
                 this.forceRetryOn404 = forceRetryOn404;
                 this.maxRetryCount = maxRetryCount;
                 this.includeRetryReason = includeRetryReason;
+                this.connectionLimit = connectionLimit;
             }
 
             protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage requestMessage,
@@ -474,7 +480,7 @@ namespace Snowflake.Data.Core
                 ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
                 p.Expect100Continue = false; // Saves about 100 ms per request
                 p.UseNagleAlgorithm = false; // Saves about 200 ms per request
-                p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
+                p.ConnectionLimit = connectionLimit;    // Default value is 2, we need more connections for performing multiple parallel queries
 
                 TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
                 TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[BaseRestRequest.REST_REQUEST_TIMEOUT_KEY];
