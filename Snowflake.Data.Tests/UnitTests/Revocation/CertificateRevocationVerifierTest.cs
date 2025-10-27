@@ -299,18 +299,17 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var expectedCrlUrls = new[] { DigiCertCrlUrl1 };
             var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
             var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
-            var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
-            var actualCrlSize = crlBytes.Length;
 
-            var maxSize = actualCrlSize - 1; // Set max size to be smaller than actual CRL size
+            var maxSize = 1000;
+            var contentLengthTooLarge = maxSize + 1;
             var config = GetHttpConfig(CertRevocationCheckMode.Enabled, maxSize);
 
             var restRequester = new Mock<IRestRequester>();
             var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new ByteArrayContent(crlBytes)
+                Content = new ByteArrayContent(Array.Empty<byte>())
             };
-            mockResponse.Content.Headers.ContentLength = actualCrlSize;
+            mockResponse.Content.Headers.ContentLength = contentLengthTooLarge;
 
             restRequester
                 .Setup(requester => requester.Get(

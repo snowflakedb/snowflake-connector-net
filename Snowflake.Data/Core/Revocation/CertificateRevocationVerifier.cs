@@ -356,13 +356,13 @@ namespace Snowflake.Data.Core.Revocation
                 s_logger.Error($"Downloading crl from {crlUrl} failed", exception);
                 return null;
             }
-            
+
             if (crlBytes == null || crlBytes.Length == 0)
             {
                 s_logger.Error($"Downloading crl from {crlUrl} failed");
                 return null;
             }
-            
+
             try
             {
                 var crl = _crlParser.Parse(crlBytes, now);
