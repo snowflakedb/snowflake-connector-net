@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests
             .ThrowsAsync(new HttpRequestException("", new AuthenticationException()));
 
             var httpClient = HttpUtil.Instance.GetHttpClient(
-                new HttpClientConfig("fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7, certRevocationCheckMode: "ENABLED"),
+                new HttpClientConfig("fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7, 20, certRevocationCheckMode: "ENABLED"),
                 handler.Object);
 
             try
@@ -150,7 +150,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 "localhost",
                 false,
                 false,
-                7
+                7,
+                20
             );
 
             // act
@@ -173,6 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 null,
                 false,
                 false,
+                20,
                 0
             );
 
@@ -182,6 +184,51 @@ namespace Snowflake.Data.Tests.UnitTests
             // assert
             Assert.IsFalse(handler.UseProxy);
             Assert.IsNull(handler.Proxy);
+        }
+
+        [NonParallelizable]
+        [Test]
+        public void TestDefaultConnectionLimitIsNotChangedWhenOver50()
+        {
+            // arrange
+            var expectedLimit = 51;
+            var originalLimit = ServicePointManager.DefaultConnectionLimit;
+            ServicePointManager.DefaultConnectionLimit = expectedLimit;
+
+            try
+            {
+                // act
+                HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
+
+                // assert
+                Assert.AreEqual(expectedLimit, ServicePointManager.DefaultConnectionLimit);
+            }
+            finally
+            {
+                ServicePointManager.DefaultConnectionLimit = originalLimit;
+            }
+        }
+
+        [NonParallelizable]
+        [Test]
+        public void TestDefaultConnectionLimitIsChangedToDefaultWhenUnder50()
+        {
+            // arrange
+            var originalLimit = ServicePointManager.DefaultConnectionLimit;
+            ServicePointManager.DefaultConnectionLimit = 49;
+
+            try
+            {
+                // act
+                HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
+
+                // assert
+                Assert.AreEqual(HttpUtil.DefaultConnectionLimit, ServicePointManager.DefaultConnectionLimit);
+            }
+            finally
+            {
+                ServicePointManager.DefaultConnectionLimit = originalLimit;
+            }
         }
     }
 }
