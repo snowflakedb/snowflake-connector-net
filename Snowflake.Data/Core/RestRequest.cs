@@ -298,6 +298,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "OAUTH_TYPE")]
         internal string oauthType { get; set; }
 
+        [JsonProperty(PropertyName = "APPLICATION_PATH")]
+        internal string applicationPath { get; set; }
+
         [JsonIgnore]
         internal string processName { get; set; }
 
@@ -306,8 +309,8 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, CERT_REVOCATION_CHECK_MODE: {4} }}",
-                application, osVersion, netRuntime, netVersion, certRevocationCheckMode);
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, CERT_REVOCATION_CHECK_MODE: {4}, APPLICATION_PATH: {5} }}",
+                application, osVersion, netRuntime, netVersion, certRevocationCheckMode, applicationPath);
         }
 
         public LoginRequestClientEnv CopyUnchangingValues()
@@ -317,7 +320,8 @@ namespace Snowflake.Data.Core
                 osVersion = osVersion,
                 netRuntime = netRuntime,
                 netVersion = netVersion,
-                processName = processName
+                processName = processName,
+                applicationPath = applicationPath
             };
         }
     }
