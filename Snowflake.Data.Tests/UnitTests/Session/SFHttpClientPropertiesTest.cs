@@ -134,6 +134,62 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        [TestCase(100)]
+        [TestCase(209715200)]
+        public void TestValidCrlDownloadMaxSize(long validMaxSize)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CRLDOWNLOADMAXSIZE={validMaxSize}";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+            var config = extractedProperties.BuildHttpClientConfig();
+
+            // assert
+            Assert.AreEqual(validMaxSize, config.CrlDownloadMaxSize);
+        }
+
+        [Test]
+        [TestCase(0)]
+        [TestCase(-100)]
+        public void TestInvalidNumericCrlDownloadMaxSizeThrowsException(long invalidMaxSize)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CRLDOWNLOADMAXSIZE={invalidMaxSize}";
+
+            // act & assert
+            var thrown = Assert.Throws<SnowflakeDbException>(() =>
+            {
+                var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+                SFSessionHttpClientProperties.ExtractAndValidate(properties);
+            });
+            Assert.That(thrown.Message, Does.Contain($"CrlDownloadMaxSize must be positive, but was {invalidMaxSize}"));
+        }
+
+        [Test]
+        [TestCase("abc")]
+        [TestCase("1.5")]
+        [TestCase("true")]
+        [TestCase("")]
+        public void TestNonNumericCrlDownloadMaxSizeThrowsException(string nonNumericValue)
+        {
+            // arrange
+            var parameterName = "CRLDOWNLOADMAXSIZE";
+            var expectedErrorMessage = $"Error: Invalid parameter value  for {parameterName}";
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;{parameterName}={nonNumericValue}";
+
+            // act & assert
+            var thrown = Assert.Throws<SnowflakeDbException>(() =>
+            {
+                var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+                SFSessionHttpClientProperties.ExtractAndValidate(properties);
+            });
+            Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.IsTrue(thrown.Message.Contains(expectedErrorMessage));
+        }
+
+        [Test]
         public void TestBuildHttpClientConfig()
         {
             // arrange

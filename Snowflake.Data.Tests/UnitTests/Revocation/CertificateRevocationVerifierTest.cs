@@ -280,7 +280,18 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var config = GetHttpConfig(CertRevocationCheckMode.Enabled, maxSize);
 
             var restRequester = new Mock<IRestRequester>();
-            MockByteResponseForGet(restRequester, DigiCertCrlUrl1, crlBytes);
+            var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(crlBytes)
+            };
+            mockResponse.Content.Headers.ContentLength = null; // Remove Content-Length to bypass early check
+
+            restRequester
+                .Setup(requester => requester.Get(
+                    It.Is<RestRequestWrapper>(wrapper =>
+                        wrapper.ToRequestMessage(HttpMethod.Get).RequestUri.AbsoluteUri == DigiCertCrlUrl1)))
+                .Returns(mockResponse);
+
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
             var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
