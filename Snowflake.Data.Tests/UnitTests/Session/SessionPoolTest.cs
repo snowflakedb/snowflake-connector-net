@@ -6,6 +6,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
@@ -320,9 +321,72 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(0, session.GetQueryContextRequest().Entries.Count);
         }
 
-        private SFSession CreateSessionWithCurrentStartTime(string connectionString)
+        [Test]
+        public void TestShouldRenewSessionIfKeepAliveIsEnabled()
         {
-            var session = new SFSession(connectionString, new SessionPropertiesContext());
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+            var session = CreateSessionWithCurrentStartTime(connectionString, new MockRestSessionExpired());
+            session.startHeartBeatForThisSession();
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            pool.SetTimeout(0);
+            pool._idleSessions.Add(session);
+
+            // act
+            pool.ExtractIdleSession(connectionString);
+
+            // assert
+            Assert.AreEqual(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
+        }
+
+        [Test]
+        public void TestShouldContinueExecutionIfRenewingFails()
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+            var session = CreateSessionWithCurrentStartTime(connectionString, new MockRestSessionExpired());
+            session.startHeartBeatForThisSession();
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            pool.SetTimeout(0);
+            pool._idleSessions.Add(session);
+            session.sessionToken = MockRestSessionExpired.THROW_ERROR_TOKEN;
+
+            // act
+            try
+            {
+                pool.ExtractIdleSession(connectionString);
+            }
+            catch
+            {
+                Assert.Fail("Should not throw exception even if session renewal fails");
+            }
+
+            // assert
+            Assert.AreNotEqual(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
+        }
+
+        [Test]
+        public void TestShouldNotRenewSessionIfKeepAliveIsDisabled()
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+            var session = CreateSessionWithCurrentStartTime(connectionString, new MockRestSessionExpired());
+            session.stopHeartBeatForThisSession();
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            pool.SetTimeout(0);
+            pool._idleSessions.Add(session);
+
+            // act
+            pool.ExtractIdleSession(connectionString);
+
+            // assert
+            Assert.IsNull(session.sessionToken);
+        }
+
+        private SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)
+        {
+            var session = restRequester == null ? new SFSession(connectionString, new SessionPropertiesContext()) :
+                new SFSession(connectionString, new SessionPropertiesContext(), restRequester);
             var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             session.SetStartTime(now);
             return session;
