@@ -104,7 +104,6 @@ namespace Snowflake.Data.Core
                 ValidateMinMaxPoolSize();
                 ValidateWaitingForSessionIdleTimeout();
                 ValidateConnectionLimit();
-                ValidateCrlDownloadMaxSize();
             }
             catch (SnowflakeDbException)
             {
@@ -200,14 +199,6 @@ namespace Snowflake.Data.Core
             {
                 s_logger.Warn($"Connection limit must be between 1 and {MaxConnectionLimit}. Using the default value of {DefaultConnectionLimit}");
                 _servicePointConnectionLimit = DefaultConnectionLimit;
-            }
-        }
-
-        private void ValidateCrlDownloadMaxSize()
-        {
-            if (_crlDownloadMaxSize <= 0)
-            {
-                throw new Exception($"CrlDownloadMaxSize must be positive, but was {_crlDownloadMaxSize}");
             }
         }
 
