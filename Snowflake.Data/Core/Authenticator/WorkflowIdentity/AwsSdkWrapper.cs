@@ -10,6 +10,6 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             FallbackCredentialsFactory.GetCredentials()?.GetCredentials();
 
         public virtual string GetAwsRegion() =>
-            Amazon.Util.EC2InstanceMetadata.Region?.SystemName;
+            FallbackRegionFactory.GetRegionEndpoint()?.SystemName;
     }
 }

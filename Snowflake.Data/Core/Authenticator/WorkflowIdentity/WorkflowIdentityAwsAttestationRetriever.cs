@@ -88,11 +88,6 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
         private string GetAwsRegion()
         {
-            var regionFromEnv = _environmentOperations.GetEnvironmentVariable("AWS_REGION");
-            if (!string.IsNullOrEmpty(regionFromEnv))
-            {
-                return regionFromEnv;
-            }
             var region = _awsSdkWrapper.GetAwsRegion();
             if (string.IsNullOrEmpty(region))
             {

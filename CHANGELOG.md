@@ -4,6 +4,7 @@
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
     - Renew idle sessions in the pool if keep alive is enabled.
+    - AWS WIF will now also check the application config and AWS profile credential store when determining the current AWS region
 - v5.0.0
     - Disabled CRL checks by default.
     - Added support for alternative, memory efficient and thread safe CRL (Certificate Revocation List) checks.
