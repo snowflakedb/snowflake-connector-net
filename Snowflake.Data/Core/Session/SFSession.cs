@@ -165,14 +165,19 @@ namespace Snowflake.Data.Core
             string schemaValue;
             string roleName;
             queryParams[RestParams.SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out warehouseValue) ? warehouseValue : "";
-            queryParams[RestParams.SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out dbValue) ? dbValue : "";
-            queryParams[RestParams.SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "";
+            queryParams[RestParams.SF_QUERY_DB] = EscapeDbObjectForUrl(properties.TryGetValue(SFSessionProperty.DB, out dbValue) ? dbValue : "");
+            queryParams[RestParams.SF_QUERY_SCHEMA] = EscapeDbObjectForUrl(properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "");
             queryParams[RestParams.SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out roleName) ? roleName : "";
             queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
             var loginUrl = BuildUri(RestPath.SF_LOGIN_PATH, queryParams);
             return loginUrl;
+        }
+
+        private string EscapeDbObjectForUrl(string name)
+        {
+            return name == string.Empty ? name : $"\"{name.Replace("\"", "\"\"")}\"";
         }
 
         /// <summary>
