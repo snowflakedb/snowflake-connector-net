@@ -146,7 +146,18 @@ namespace Snowflake.Data.Tests.Util
 
         public void Stop()
         {
-            _process?.Kill();
+            if (_process != null && !_process.HasExited)
+            {
+                try
+                {
+                    _process.Kill();
+                }
+                catch (InvalidOperationException)
+                {
+                    // Process already exited, ignore
+                }
+                _process = null;
+            }
             IsAvailable = false;
         }
 
