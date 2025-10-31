@@ -387,15 +387,20 @@ namespace Snowflake.Data.Core
                 case StructArray strct: return ExtractStructArray(strct, index);
                 case MapArray map: return ExtractMapArray(map, index);
                 case ListArray list: return ExtractListArray(list, index);
+                case FixedSizeListArray fixedSizeList: return ExtractFixedSizeListArray(fixedSizeList, index);
                 case DoubleArray doubles: return doubles.GetValue(index);
                 case FloatArray floats: return floats.GetValue(index);
                 case Decimal128Array decimals: return decimals.GetValue(index);
+                case Date32Array  dates: return dates.GetValue(index);
+                case Int8Array bytes: return bytes.GetValue(index);
+                case Int16Array shorts: return shorts.GetValue(index);
                 case Int32Array ints: return ints.GetValue(index);
                 case Int64Array longs: return longs.GetValue(index);
                 case BooleanArray booleans: return booleans.GetValue(index);
                 case StringArray strArray:
                     var str = strArray.GetString(index);
                     return string.IsNullOrEmpty(str) ? null : str;
+                case BinaryArray binary: return binary.GetBytes(index).ToArray();
                 default:
                     throw new NotSupportedException($"Unsupported array type: {array.GetType()}");
             }
@@ -459,6 +464,22 @@ namespace Snowflake.Data.Core
                 var key = ConvertArrowValue(keyArray, i);
                 var value = ConvertArrowValue(valueArray, i);
                 result[key] = value;
+            }
+
+            return result;
+        }
+
+        private List<object> ExtractFixedSizeListArray(FixedSizeListArray fixedSizeListArray, int index)
+        {
+            var subArray = fixedSizeListArray.GetSlicedValues(index);
+
+            if (subArray.Length == 0)
+                return null;
+
+            var result = new List<object>(subArray.Length);
+            for (int i = 0; i < subArray.Length; i++)
+            {
+                result.Add(ConvertArrowValue(subArray, i));
             }
 
             return result;
