@@ -4,6 +4,7 @@
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
     - Renew idle sessions in the pool if keep alive is enabled.
+    - Added support for native arrow structured types.
 - v5.0.0
     - Disabled CRL checks by default.
     - Added support for alternative, memory efficient and thread safe CRL (Certificate Revocation List) checks.
@@ -12,5 +13,4 @@
     - Upgraded AWS SDK library to v4.
     - Added the `changelog.yml` GitHub workflow to ensure changelog is updated on release PRs.
     - Removed internal classes from public API.
-    - Added support for explicitly setting Azure managed identity client ID via `MANAGED_IDENTITY_CLIENT_ID` environmen
-
+    - Added support for explicitly setting Azure managed identity client ID via `MANAGED_IDENTITY_CLIENT_ID` environment variable.
