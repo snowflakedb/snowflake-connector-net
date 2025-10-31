@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPoolDestroysConnectionWhenChangedSessionProperties()
         {
-            var connectionString = ConnectionString + "application=Destroy;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3";
+            var connectionString = ConnectionString + "application=Destroy;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
@@ -86,7 +86,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPoolingWhenSessionPropertiesUnchanged()
         {
-            var connectionString = ConnectionString + "application=NoSessionChanges;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3";
+            var connectionString = ConnectionString + "application=NoSessionChanges;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
@@ -99,7 +99,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPoolingWhenConnectionPropertiesChangedForOriginalPoolMode()
         {
-            var connectionString = ConnectionString + "application=OriginalPoolMode;ChangedSession=OriginalPool;minPoolSize=0;maxPoolSize=3";
+            var connectionString = ConnectionString + "application=OriginalPoolMode;ChangedSession=OriginalPool;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestPoolingWhenConnectionPropertiesChangedForDefaultPoolMode()
         {
-            var connectionString = ConnectionString + "application=DefaultPoolMode;minPoolSize=0;maxPoolSize=3";
+            var connectionString = ConnectionString + "application=DefaultPoolMode;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Retry(3)]
         public void TestPoolDestroysAndRecreatesConnection()
         {
-            var connectionString = ConnectionString + "application=DestroyRecreateSession;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3";
+            var connectionString = ConnectionString + "application=DestroyRecreateSession;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var connection = new SnowflakeDbConnection(connectionString);
             connection.Open();
@@ -161,7 +161,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestCompareSessionChangesCaseInsensitiveWhenUnquoted()
         {
-            var connectionString = ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3";
+            var connectionString = ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var responseData = new QueryExecResponseData()
             {
@@ -189,7 +189,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestCompareSessionChangesCaseSensitiveWhenQuoted()
         {
-            var connectionString = ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3";
+            var connectionString = ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var responseData = new QueryExecResponseData()
             {
