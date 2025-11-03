@@ -15,17 +15,16 @@ namespace Snowflake.Data.Core.Converter
             if (type.GetCustomAttributes(false).Any(attribute => attribute.GetType() == typeof(SnowflakeObject)))
             {
                 var constructionMethod = JsonToStructuredTypeConverter.GetConstructionMethod(type);
-                if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)
+                switch (constructionMethod)
                 {
-                    MapPropertiesByNames(obj, dict, type);
-                }
-                else if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
-                {
-                    MapPropertiesByOrder(obj, dict, type);
-                }
-                else if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
-                {
-                    return MapUsingConstructor<T>(dict, type);
+                    case SnowflakeObjectConstructionMethod.PROPERTIES_NAMES:
+                        MapPropertiesByNames(obj, dict, type);
+                        break;
+                    case SnowflakeObjectConstructionMethod.PROPERTIES_ORDER:
+                        MapPropertiesByOrder(obj, dict, type);
+                        break;
+                    case SnowflakeObjectConstructionMethod.CONSTRUCTOR:
+                        return MapUsingConstructor<T>(dict, type);
                 }
             }
             else
