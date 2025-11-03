@@ -263,14 +263,18 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetObject<{typeof(T)}> can be used only for structured object");
                 }
                 var val = GetValue(ordinal);
-                if (val is string stringValue)
+                switch (val)
                 {
-                    var json = stringValue == null ? null : JObject.Parse(stringValue);
-                    return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
+                    case string stringValue:
+                        {
+                            var json = JObject.Parse(stringValue);
+                            return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
+                        }
+                    case Dictionary<string, object> structArray:
+                        return ArrowConverter.ConvertObject<T>(structArray);
+                    default:
+                        return null;
                 }
-                if (val is Dictionary<string, object> structArray)
-                    return ArrowConverter.ConvertObject<T>(structArray);
-                return null;
             }
             catch (Exception e)
             {
@@ -293,14 +297,18 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array or vector types");
                 }
                 var val = GetValue(ordinal);
-                if (val is string stringValue)
+                switch (val)
                 {
-                    var json = stringValue == null ? null : JArray.Parse(stringValue);
-                    return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
+                    case string stringValue:
+                        {
+                            var json = stringValue == null ? null : JArray.Parse(stringValue);
+                            return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
+                        }
+                    case List<object> listArray:
+                        return ArrowConverter.ConvertArray<T>(listArray);
+                    default:
+                        return null;
                 }
-                if (val is List<object> listArray)
-                    return ArrowConverter.ConvertArray<T>(listArray);
-                return null;
             }
             catch (Exception e)
             {
@@ -321,14 +329,18 @@ namespace Snowflake.Data.Client
                     throw new StructuredTypesReadingException($"Method GetMap<{typeof(TKey)}, {typeof(TValue)}> can be used only for structured map");
                 }
                 var val = GetValue(ordinal);
-                if (val is string stringValue)
+                switch (val)
                 {
-                    var json = stringValue == null ? null : JObject.Parse(stringValue);
-                    return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
+                    case string stringValue:
+                        {
+                            var json = stringValue == null ? null : JObject.Parse(stringValue);
+                            return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
+                        }
+                    case Dictionary<object, object> mapArray:
+                        return ArrowConverter.ConvertMap<TKey, TValue>(mapArray);
+                    default:
+                        return null;
                 }
-                if (val is Dictionary<object, object> mapArray)
-                    return ArrowConverter.ConvertMap<TKey, TValue>(mapArray);
-                return null;
             }
             catch (Exception e)
             {
