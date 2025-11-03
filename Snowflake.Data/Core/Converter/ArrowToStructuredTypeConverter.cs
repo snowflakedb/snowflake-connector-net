@@ -147,33 +147,34 @@ namespace Snowflake.Data.Core.Converter
 
         private static object ConvertValue(object value, Type targetType)
         {
-            if (value == null)
-                return null;
-            if (targetType.IsAssignableFrom(value.GetType()))
-                return value;
-            if (value is Dictionary<string, object> objDict)
-                return CallMethod(targetType, objDict, nameof(ConvertObject));
-            if (value is Dictionary<object, object> mapDict)
+            switch (value)
             {
-                var genericArgs = targetType.GetGenericArguments();
-                var keyType = genericArgs[0];
-                var valueType = genericArgs[1];
-                return CallMethod(keyType, mapDict, nameof(ConvertMap), valueType);
+                case null:
+                    return null;
+                case var _ when targetType.IsAssignableFrom(value.GetType()):
+                    return value;
+                case Dictionary<string, object> objDict:
+                    return CallMethod(targetType, objDict, nameof(ConvertObject));
+                case Dictionary<object, object> mapDict:
+                    var genericArgs = targetType.GetGenericArguments();
+                    var keyType = genericArgs[0];
+                    var valueType = genericArgs[1];
+                    return CallMethod(keyType, mapDict, nameof(ConvertMap), valueType);
+                case List<object> objList:
+                    if (targetType.IsArray)
+                    {
+                        var elementType = targetType.GetElementType();
+                        return CallMethod(elementType, objList, nameof(ConvertArray));
+                    }
+                    else if (targetType.IsGenericType)
+                    {
+                        var elementType = targetType.GetGenericArguments()[0];
+                        return CallMethod(elementType, objList, nameof(ConvertList));
+                    }
+                    goto default;
+                default:
+                    return Convert.ChangeType(value, targetType);
             }
-            if (value is List<object> objList)
-            {
-                if (targetType.IsArray)
-                {
-                    var elementType = targetType.GetElementType();
-                    return CallMethod(elementType, objList, nameof(ConvertArray));
-                }
-                else if (targetType.IsGenericType)
-                {
-                    var elementType = targetType.GetGenericArguments()[0];
-                    return CallMethod(elementType, objList, nameof(ConvertList));
-                }
-            }
-            return Convert.ChangeType(value, targetType);
         }
     }
 }
