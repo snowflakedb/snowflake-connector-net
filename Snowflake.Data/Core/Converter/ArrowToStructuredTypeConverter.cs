@@ -45,27 +45,25 @@ namespace Snowflake.Data.Core.Converter
         {
             foreach (var kvp in dict)
             {
-                var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                var prop = FindPropertyByName(type, kvp.Key);
                 if (prop != null)
                 {
                     var converted = ConvertValue(kvp.Value, prop.PropertyType);
                     prop.SetValue(obj, converted);
                 }
-                else
-                {
-                    foreach (var property in type.GetProperties())
-                    {
-                        foreach (var attr in property.GetCustomAttributes().OfType<SnowflakeColumn>())
-                        {
-                            if (attr?.Name == kvp.Key)
-                            {
-                                var converted = ConvertValue(kvp.Value, property.PropertyType);
-                                property.SetValue(obj, converted);
-                            }
-                        }
-                    }
-                }
             }
+        }
+
+        private static PropertyInfo FindPropertyByName(Type type, string name)
+        {
+            var prop = type.GetProperty(name, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+            if (prop != null)
+                return prop;
+
+            return type.GetProperties()
+                .FirstOrDefault(p => p.GetCustomAttributes()
+                    .OfType<SnowflakeColumn>()
+                    .Any(attr => attr?.Name == name));
         }
 
         private static void MapPropertiesByOrder(object obj, Dictionary<string, object> dict, Type type)
