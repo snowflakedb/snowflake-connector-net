@@ -1,0 +1,52 @@
+{
+    "mappings": [
+        {
+            "scenarioName": "HTTP 307 retry",
+            "requiredScenarioState": "Started",
+            "newScenarioState": "Query attempt with HTTP 307 response",
+            "request": {
+                "urlPathPattern": "/queries/v1/query-request.*",
+                "method": "POST"
+            },
+            "response": {
+                "status": 307,
+                "headers": {
+                    "Location": "/temp-redirect-1"
+                }
+            }
+        },
+        {
+            "scenarioName": "HTTP 307 retry",
+            "requiredScenarioState": "Query attempt with HTTP 307 response",
+            "newScenarioState": "307 redirect followed and times out",
+            "request": {
+                "urlPathPattern": "/temp-redirect-1",
+                "method": "POST"
+            },
+            "response": {
+                "fixedDelayMilliseconds": 5000
+            }
+        },
+        {
+            "scenarioName": "HTTP 307 retry",
+            "requiredScenarioState": "307 redirect followed and times out",
+            "newScenarioState": "Retry attempt successful",
+            "request": {
+                "urlPathPattern": "/queries/v1/query-request.*",
+                "method": "POST"
+            },
+            "response": {
+                "status": 200,
+                "jsonBody": {
+                    "data": {
+                        "queryId": "http_307_retry_queryId"
+                    },
+                    "code": null,
+                    "message": null,
+                    "success": true
+                }
+            }
+        }
+    ]
+}
+

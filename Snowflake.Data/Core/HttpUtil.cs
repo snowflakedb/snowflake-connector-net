@@ -267,7 +267,8 @@ namespace Snowflake.Data.Core
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseCookies = false, // Disable cookies
-                    UseProxy = false
+                    UseProxy = false,
+                    AllowAutoRedirect = true
                 };
             }
         }
@@ -281,7 +282,8 @@ namespace Snowflake.Data.Core
                 SslProtocols = config.GetRequestedTlsProtocolsRange(),
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
-                UseProxy = false
+                UseProxy = false,
+                AllowAutoRedirect = true
             };
         }
 
@@ -302,7 +304,8 @@ namespace Snowflake.Data.Core
                 SslProtocols = config.GetRequestedTlsProtocolsRange(),
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
-                UseProxy = false
+                UseProxy = false,
+                AllowAutoRedirect = true
             };
         }
 
