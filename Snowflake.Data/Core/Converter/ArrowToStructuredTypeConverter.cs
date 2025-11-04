@@ -108,10 +108,10 @@ namespace Snowflake.Data.Core.Converter
         {
             var targetType = typeof(T);
             var result = new T[list.Count];
+            if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    targetType = Nullable.GetUnderlyingType(targetType);
             for (int i = 0; i < list.Count; i++)
             {
-                if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
-                    targetType = Nullable.GetUnderlyingType(targetType);
                 result[i] = (T)ConvertValue(list[i], targetType);
             }
             return result;
