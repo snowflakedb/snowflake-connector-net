@@ -134,6 +134,23 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        [TestCase(100)]
+        [TestCase(209715200)]
+        public void TestValidCrlDownloadMaxSize(long validMaxSize)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CRLDOWNLOADMAXSIZE={validMaxSize}";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+            var config = extractedProperties.BuildHttpClientConfig();
+
+            // assert
+            Assert.AreEqual(validMaxSize, config.CrlDownloadMaxSize);
+        }
+
+        [Test]
         public void TestBuildHttpClientConfig()
         {
             // arrange
