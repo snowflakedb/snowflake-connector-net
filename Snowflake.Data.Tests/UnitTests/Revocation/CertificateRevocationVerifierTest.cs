@@ -115,6 +115,78 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        public void TestVerifyCertificateAsErrorWhenCrlExceedsMaxSize()
+        {
+            // arrange
+            var expectedCrlUrls = new[] { DigiCertCrlUrl1 };
+            var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
+            var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
+            var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+
+            var maxSize = crlBytes.Length - 1;
+            var config = GetHttpConfig(CertRevocationCheckMode.Enabled, maxSize);
+
+            var restRequester = new Mock<IRestRequester>();
+            var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(new MemoryStream(crlBytes))
+            };
+            mockResponse.Content.Headers.ContentLength = null; // Remove Content-Length to bypass early check
+
+            restRequester
+                .Setup(requester => requester.Get(
+                    It.Is<RestRequestWrapper>(wrapper =>
+                        wrapper.ToRequestMessage(HttpMethod.Get).RequestUri.AbsoluteUri == DigiCertCrlUrl1)))
+                .Returns(mockResponse);
+
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
+
+            // assert
+            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+        }
+
+        [Test]
+        public void TestVerifyCertificateAsErrorWhenContentLengthHeaderExceedsMaxSize()
+        {
+            // arrange
+            var expectedCrlUrls = new[] { DigiCertCrlUrl1 };
+            var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
+            var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
+
+            var maxSize = 1000;
+            var contentLengthTooLarge = maxSize + 1;
+            var config = GetHttpConfig(CertRevocationCheckMode.Enabled, maxSize);
+
+            var restRequester = new Mock<IRestRequester>();
+            var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(Array.Empty<byte>())
+            };
+            mockResponse.Content.Headers.ContentLength = contentLengthTooLarge;
+
+            restRequester
+                .Setup(requester => requester.Get(
+                    It.Is<RestRequestWrapper>(wrapper =>
+                        wrapper.ToRequestMessage(HttpMethod.Get).RequestUri.AbsoluteUri == DigiCertCrlUrl1)))
+                .Returns(mockResponse);
+
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
+
+            // assert
+            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+        }
+
+        [Test]
         public void TestFailWhenCrlSignatureNotMatchingParentKey()
         {
             // arrange
@@ -267,7 +339,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 .Throws(exceptionProvider);
         }
 
-        private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled) =>
+        private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled, long crlDownloadMaxSize = 209715200) =>
             new HttpClientConfig(
                 null,
                 null,
@@ -282,6 +354,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 checkMode.ToString(),
                 false,
                 false,
-                false);
+                false,
+                10,
+                crlDownloadMaxSize);
     }
 }

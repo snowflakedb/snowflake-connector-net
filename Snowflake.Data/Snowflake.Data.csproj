@@ -13,7 +13,7 @@
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Authors>Snowflake</Authors>
-    <Version>5.0.0</Version>
+    <Version>5.1.0</Version>
     <DebugType>Full</DebugType>
     <LangVersion>8</LangVersion>
   </PropertyGroup>
