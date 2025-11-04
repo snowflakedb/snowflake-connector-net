@@ -601,6 +601,11 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=abc;", "Parameter CRLDOWNLOADTIMEOUT should have an integer value.")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=0;", "Parameter CRLDOWNLOADTIMEOUT should be greater than 0.")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=-5;", "Parameter CRLDOWNLOADTIMEOUT should be greater than 0.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadMaxSize=abc;", "Parameter CRLDOWNLOADMAXSIZE should have a long value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadMaxSize=1.5;", "Parameter CRLDOWNLOADMAXSIZE should have a long value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadMaxSize=9223372036854775808;", "Parameter CRLDOWNLOADMAXSIZE should have a long value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadMaxSize=0;", "Parameter CRLDOWNLOADMAXSIZE should be greater than 0.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadMaxSize=-100;", "Parameter CRLDOWNLOADMAXSIZE should be greater than 0.")]
         public void TestFailOnInvalidCrlParameters(string connectionString, string expectedErrorMessage)
         {
             // act
