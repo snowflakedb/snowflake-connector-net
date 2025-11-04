@@ -132,6 +132,8 @@ namespace Snowflake.Data.Core
         WORKLOAD_IDENTITY_ENTRA_RESOURCE,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         OAUTHENABLESINGLEUSEREFRESHTOKENS,
+        [SFSessionPropertyAttr(required = false, defaultValue = "20")]
+        SERVICE_POINT_CONNECTION_LIMIT,
         [SFSessionPropertyAttr(required = false, defaultValue = "disabled")]
         CERTREVOCATIONCHECKMODE,
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
@@ -142,6 +144,8 @@ namespace Snowflake.Data.Core
         ALLOWCERTIFICATESWITHOUTCRLURL,
         [SFSessionPropertyAttr(required = false, defaultValue = "10")]
         CRLDOWNLOADTIMEOUT,
+        [SFSessionPropertyAttr(required = false, defaultValue = "209715200")]
+        CRLDOWNLOADMAXSIZE,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls12")]
         MINTLS,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls13")]
@@ -302,6 +306,7 @@ namespace Snowflake.Data.Core
             ValidateAccountDomain(properties);
             WarnIfHttpUsed(properties);
             ValidateAuthenticatorFlowsProperties(properties);
+            ValidateServicePointConnectionLimit(properties);
             ValidateCrlParameters(properties);
             ValidateTlsParameters(properties);
 
@@ -341,6 +346,7 @@ namespace Snowflake.Data.Core
             ValidateBooleanParameter(SFSessionProperty.ENABLECRLINMEMORYCACHING, properties);
             ValidateBooleanParameter(SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL, properties);
             ValidatePositiveIntegerParameter(SFSessionProperty.CRLDOWNLOADTIMEOUT, properties);
+            ValidatePositiveLongParameter(SFSessionProperty.CRLDOWNLOADMAXSIZE, properties);
         }
 
         private static void ValidateTlsParameters(SFSessionProperties properties)
@@ -398,6 +404,24 @@ namespace Snowflake.Data.Core
             if (!int.TryParse(propertyString, out var result))
             {
                 var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have an integer value.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            if (result <= 0)
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should be greater than 0.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            return result;
+        }
+
+        private static long ValidatePositiveLongParameter(SFSessionProperty property, SFSessionProperties properties)
+        {
+            var propertyString = properties[property];
+            if (!long.TryParse(propertyString, out var result))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have a long value.");
                 logger.Error(exception.Message, exception);
                 throw exception;
             }
@@ -857,6 +881,23 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(
                     new Exception($"Value for parameter {propertyName} should be greater than 0"),
                     SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
+            }
+        }
+
+        private static void ValidateServicePointConnectionLimit(SFSessionProperties properties)
+        {
+            if (properties.TryGetValue(SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT, out var servicePointConnectionLimit))
+            {
+                if (!int.TryParse(servicePointConnectionLimit, out _))
+                {
+                    var errorMessage = $"Invalid value of {SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT.ToString()} parameter";
+                    logger.Error(errorMessage);
+                    throw new SnowflakeDbException(
+                        new Exception(errorMessage),
+                        SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                        "",
+                        SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT.ToString());
+                }
             }
         }
 
