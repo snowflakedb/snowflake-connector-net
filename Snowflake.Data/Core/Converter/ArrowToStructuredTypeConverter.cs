@@ -156,7 +156,7 @@ namespace Snowflake.Data.Core.Converter
                     if (targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
                     {
                         var genericArgs = targetType.GetGenericArguments();
-                        if (genericArgs.Length == 2)
+                        if (genericArgs.Length >= 2)
                         {
                             var keyType = genericArgs[0];
                             var valueType = genericArgs[1];
