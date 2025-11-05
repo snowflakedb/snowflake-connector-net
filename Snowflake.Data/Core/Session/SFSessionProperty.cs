@@ -144,6 +144,8 @@ namespace Snowflake.Data.Core
         ALLOWCERTIFICATESWITHOUTCRLURL,
         [SFSessionPropertyAttr(required = false, defaultValue = "10")]
         CRLDOWNLOADTIMEOUT,
+        [SFSessionPropertyAttr(required = false, defaultValue = "209715200")]
+        CRLDOWNLOADMAXSIZE,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls12")]
         MINTLS,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls13")]
@@ -344,6 +346,7 @@ namespace Snowflake.Data.Core
             ValidateBooleanParameter(SFSessionProperty.ENABLECRLINMEMORYCACHING, properties);
             ValidateBooleanParameter(SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL, properties);
             ValidatePositiveIntegerParameter(SFSessionProperty.CRLDOWNLOADTIMEOUT, properties);
+            ValidatePositiveLongParameter(SFSessionProperty.CRLDOWNLOADMAXSIZE, properties);
         }
 
         private static void ValidateTlsParameters(SFSessionProperties properties)
@@ -401,6 +404,24 @@ namespace Snowflake.Data.Core
             if (!int.TryParse(propertyString, out var result))
             {
                 var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have an integer value.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            if (result <= 0)
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should be greater than 0.");
+                logger.Error(exception.Message, exception);
+                throw exception;
+            }
+            return result;
+        }
+
+        private static long ValidatePositiveLongParameter(SFSessionProperty property, SFSessionProperties properties)
+        {
+            var propertyString = properties[property];
+            if (!long.TryParse(propertyString, out var result))
+            {
+                var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have a long value.");
                 logger.Error(exception.Message, exception);
                 throw exception;
             }
