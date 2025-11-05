@@ -153,10 +153,17 @@ namespace Snowflake.Data.Core.Converter
                 case Dictionary<string, object> objDict:
                     return CallMethod(targetType, objDict, nameof(ConvertObject));
                 case Dictionary<object, object> mapDict:
-                    var genericArgs = targetType.GetGenericArguments();
-                    var keyType = genericArgs[0];
-                    var valueType = genericArgs[1];
-                    return CallMethod(keyType, mapDict, nameof(ConvertMap), valueType);
+                    if (targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                    {
+                        var genericArgs = targetType.GetGenericArguments();
+                        if (genericArgs.Length == 2)
+                        {
+                            var keyType = genericArgs[0];
+                            var valueType = genericArgs[1];
+                            return CallMethod(keyType, mapDict, nameof(ConvertMap), valueType);
+                        }
+                    }
+                    goto default;
                 case List<object> objList:
                     if (targetType.IsArray)
                     {
