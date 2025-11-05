@@ -1,6 +1,8 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- v5.2.0
+    - Added multi-targeting support to eliminate prerelease Mono.Unix dependency on Windows .NET 5+.
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
     - Renew idle sessions in the pool if keep alive is enabled.

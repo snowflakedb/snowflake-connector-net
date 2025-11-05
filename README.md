@@ -18,6 +18,24 @@ The Snowflake .NET connector supports the following .NET framework and libraries
 
 Disclaimer: While the connector targets netstandard2.0 and may work with versions in its [support matrix](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version), only the versions listed above are supported and tested by the connector
 
+## Target Frameworks and Platform-Specific Builds
+
+Starting from version **5.2.0**, the Snowflake .NET connector uses multi-targeting to provide optimized builds for different platforms:
+
+| Target Framework | Platform | Description                                                 |
+|------------------|----------|-------------------------------------------------------------|
+| `net5.0-windows` | Windows (.NET 5+) | Optimized build for Windows without Mono.Unix |
+| `net5.0` | Linux, macOS (.NET 5+) | Full Unix file system support with Mono.Unix                |
+| `netstandard2.0` | All platforms | Backward compatibility for older .NET versions              |
+
+**What this means for you:**
+
+- **Windows users** on .NET 5 or higher will automatically receive a build without the prerelease `Mono.Unix` dependency, resulting in a cleaner dependency tree.
+- **Linux and macOS users** on .NET 5 or higher will receive a build with full Unix file permissions support through `Mono.Unix`.
+- **Older .NET versions** will continue to use the `netstandard2.0` build for maximum compatibility.
+
+The appropriate build is automatically selected by NuGet based on your application's target framework and operating system.
+
 Please refer to the [Notice](#notice) section below for information about safe usage of the .NET Driver
 
 # Coding conventions for the project
