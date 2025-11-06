@@ -456,6 +456,7 @@ namespace Snowflake.Data.Core
 
                 return uriBuilder.Uri;
             }
+
             private Uri GetRedirectedUri(Uri requestUri, Uri location)
             {
                 if (requestUri.AbsolutePath != location.ToString())
@@ -747,3 +748,5 @@ namespace Snowflake.Data.Core
         }
     }
 }
+
+
