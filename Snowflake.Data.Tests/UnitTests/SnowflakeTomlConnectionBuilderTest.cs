@@ -506,6 +506,54 @@ password = ""{passwordValueWithSpecialCharacter}""
             // Assert
             Assert.AreEqual(expectedValue, properties[SFSessionProperty.PASSWORD]);
         }
+
+        [Test]
+        public void TestConnectionWithCompleteSPCSConfiguration()
+        {
+            // Arrange
+            var tokenFilePath = "/path/to/token";
+            var testToken = "oauth_token_12345";
+            var mockFileOperations = new Mock<FileOperations>();
+            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
+            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                .Returns($"{Path.DirectorySeparatorChar}home");
+            mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
+            mockFileOperations.Setup(f => f.ReadAllText(tokenFilePath, It.IsAny<Action<UnixStream>>())).Returns(testToken);
+            mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
+                .Returns(@$"
+[default]
+host = 'host.snowflake.com'
+protocol = 'http'
+port = 80
+account = 'account123'
+database = 'testdb'
+schema = 'testschema'
+warehouse = 'testwh'
+authenticator = 'oauth'
+token_file_path = '{tokenFilePath}'
+client_session_keep_alive = true
+ocsp_fail_open = true
+disable_ocsp_check = true
+");
+
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+
+            // Act
+            var connectionString = reader.GetConnectionStringFromToml();
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // Assert
+            Assert.AreEqual("host.snowflake.com", properties[SFSessionProperty.HOST]);
+            Assert.AreEqual("http", properties[SFSessionProperty.SCHEME]);
+            Assert.AreEqual("80", properties[SFSessionProperty.PORT]);
+            Assert.AreEqual("account123", properties[SFSessionProperty.ACCOUNT]);
+            Assert.AreEqual("testdb", properties[SFSessionProperty.DB]);
+            Assert.AreEqual("testschema", properties[SFSessionProperty.SCHEMA]);
+            Assert.AreEqual("testwh", properties[SFSessionProperty.WAREHOUSE]);
+            Assert.AreEqual("oauth", properties[SFSessionProperty.AUTHENTICATOR]);
+            Assert.AreEqual(testToken, properties[SFSessionProperty.TOKEN]);
+            Assert.AreEqual("true", properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
+        }
     }
 
 }
