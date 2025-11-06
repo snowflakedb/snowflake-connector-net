@@ -74,7 +74,7 @@ namespace Snowflake.Data.Core.Converter
                     break;
 
                 var attribute = property.GetCustomAttributes().OfType<SnowflakeColumn>().FirstOrDefault();
-                if (attribute != null && !attribute.IgnoreForPropertyOrder)
+                if (attribute == null || !attribute.IgnoreForPropertyOrder)
                 {
                     var converted = ConvertValue(dict.ElementAt(index).Value, property.PropertyType);
                     property.SetValue(obj, converted);
