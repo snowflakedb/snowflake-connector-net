@@ -456,7 +456,6 @@ namespace Snowflake.Data.Core
 
                 return uriBuilder.Uri;
             }
-
             private Uri GetRedirectedUri(Uri requestUri, Uri location)
             {
                 if (requestUri.AbsolutePath != location.ToString())
@@ -638,6 +637,7 @@ namespace Snowflake.Data.Core
                     // Disposing of the response if not null now that we don't need it anymore
                     response?.Dispose();
 
+
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
 
                     await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
@@ -747,5 +747,3 @@ namespace Snowflake.Data.Core
         }
     }
 }
-
-
