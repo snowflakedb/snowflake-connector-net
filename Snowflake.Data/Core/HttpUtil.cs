@@ -459,9 +459,7 @@ namespace Snowflake.Data.Core
 
             private Uri GetRedirectedUri(Uri requestUri, Uri location)
             {
-                if (location == null)
-                    return uriBuilder.Uri;
-                if (requestUri?.AbsolutePath != location.ToString())
+                if (requestUri.AbsolutePath != location.ToString())
                     return new Uri(uriBuilder.Uri, location);
                 return uriBuilder.Uri;
             }
@@ -635,10 +633,10 @@ namespace Snowflake.Data.Core
                         throw new OperationCanceledException(errorMessage);
                     }
 
+                    requestMessage.RequestUri = updater.Update(errorReason, requestMessage.RequestUri, response?.Headers?.Location);
+
                     // Disposing of the response if not null now that we don't need it anymore
                     response?.Dispose();
-
-                    requestMessage.RequestUri = updater.Update(errorReason, requestMessage.RequestUri, response?.Headers?.Location);
 
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
 
