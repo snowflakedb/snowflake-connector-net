@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
+using Snowflake.Data.Core.Converter.Builder;
 
 namespace Snowflake.Data.Core.Converter
 {
@@ -67,19 +68,15 @@ namespace Snowflake.Data.Core.Converter
 
         private static void MapPropertiesByOrder(object obj, Dictionary<string, object> dict, Type type)
         {
-            var index = 0;
-            foreach (var property in type.GetProperties())
+            var properties = ObjectBuilderByPropertyOrder.GetProperties(type);
+            var i = 0;
+            foreach (var property in properties)
             {
-                if (index >= dict.Count)
+                if (i >= dict.Count)
                     break;
-
-                var attributes = property.GetCustomAttributes().OfType<SnowflakeColumn>().ToList();
-                if (attributes.Count == 0 || attributes.All(attr => !attr.IgnoreForPropertyOrder))
-                {
-                    var converted = ConvertValue(dict.ElementAt(index).Value, property.PropertyType);
-                    property.SetValue(obj, converted);
-                    index++;
-                }
+                var converted = ConvertValue(dict.ElementAt(i).Value, property.PropertyType);
+                property.SetValue(obj, converted);
+                i++;
             }
         }
 

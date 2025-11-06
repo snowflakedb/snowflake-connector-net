@@ -17,12 +17,17 @@ namespace Snowflake.Data.Core.Converter.Builder
         public ObjectBuilderByPropertyOrder(Type type)
         {
             _type = type;
-            _properties = type.GetProperties().Where(property => !IsIgnoredForPropertiesOrder(property)).ToArray();
+            _properties = GetProperties(type);
             _index = -1;
             _result = new List<Tuple<PropertyInfo, object>>();
         }
 
-        private bool IsIgnoredForPropertiesOrder(PropertyInfo property)
+        internal static PropertyInfo[] GetProperties(Type type)
+        {
+            return type.GetProperties().Where(property => !IsIgnoredForPropertiesOrder(property)).ToArray();
+        }
+
+        private static bool IsIgnoredForPropertiesOrder(PropertyInfo property)
         {
             var sfAnnotation = property.GetCustomAttributes<SnowflakeColumn>().FirstOrDefault();
             return sfAnnotation != null && sfAnnotation.IgnoreForPropertyOrder;
