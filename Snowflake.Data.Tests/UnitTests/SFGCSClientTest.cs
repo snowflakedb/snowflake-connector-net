@@ -16,7 +16,7 @@ using Moq;
 namespace Snowflake.Data.Tests.UnitTests
 {
     [TestFixture, NonParallelizable]
-    class SFGCSClientTest : SFBaseTest
+    class SFGCSClientTest : UnitTestBase
     {
         // Mock data for file metadata
         const string LocationStage = "mock-customer-stage";

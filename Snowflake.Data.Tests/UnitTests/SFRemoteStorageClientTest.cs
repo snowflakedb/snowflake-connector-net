@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Moq;
 
     [TestFixture]
-    class SFRemoteStorageClientTest : SFBaseTest
+    class SFRemoteStorageClientTest : UnitTestBase
     {
         // Mock data for file metadata
         const string EndPoint = "mockEndPoint.com";

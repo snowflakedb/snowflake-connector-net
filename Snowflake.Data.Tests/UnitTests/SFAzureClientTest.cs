@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Azure.Storage.Blobs.Models;
 
     [TestFixture, NonParallelizable]
-    class SFAzureClientTest : SFBaseTest
+    class SFAzureClientTest : UnitTestBase
     {
         // Mock data for file metadata
         const string EndPoint = "blob.core.windows.net";
