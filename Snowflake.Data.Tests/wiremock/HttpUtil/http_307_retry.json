@@ -24,7 +24,7 @@
                 "method": "POST"
             },
             "response": {
-                "fixedDelayMilliseconds": 5000
+                "fixedDelayMilliseconds": 20000
             }
         },
         {
