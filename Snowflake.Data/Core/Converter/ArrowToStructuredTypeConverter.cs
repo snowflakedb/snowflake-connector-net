@@ -68,7 +68,7 @@ namespace Snowflake.Data.Core.Converter
         private static void MapPropertiesByOrder(object obj, Dictionary<string, object> dict, Type type)
         {
             var index = 0;
-            foreach (var property in type.GetProperties())
+            foreach (var property in type.GetProperties().OrderBy(p => p.MetadataToken))
             {
                 if (index >= dict.Count)
                     break;
