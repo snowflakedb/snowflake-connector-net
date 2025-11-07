@@ -543,16 +543,19 @@ disable_ocsp_check = true
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // Assert
-            Assert.AreEqual("host.snowflake.com", properties[SFSessionProperty.HOST]);
-            Assert.AreEqual("http", properties[SFSessionProperty.SCHEME]);
-            Assert.AreEqual("80", properties[SFSessionProperty.PORT]);
-            Assert.AreEqual("account123", properties[SFSessionProperty.ACCOUNT]);
-            Assert.AreEqual("testdb", properties[SFSessionProperty.DB]);
-            Assert.AreEqual("testschema", properties[SFSessionProperty.SCHEMA]);
-            Assert.AreEqual("testwh", properties[SFSessionProperty.WAREHOUSE]);
-            Assert.AreEqual("oauth", properties[SFSessionProperty.AUTHENTICATOR]);
-            Assert.AreEqual(testToken, properties[SFSessionProperty.TOKEN]);
-            Assert.AreEqual("true", properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
+            Assert.Multiple(() =>
+            {
+                Assert.AreEqual("host.snowflake.com", properties[SFSessionProperty.HOST]);
+                Assert.AreEqual("http", properties[SFSessionProperty.SCHEME]);
+                Assert.AreEqual("80", properties[SFSessionProperty.PORT]);
+                Assert.AreEqual("account123", properties[SFSessionProperty.ACCOUNT]);
+                Assert.AreEqual("testdb", properties[SFSessionProperty.DB]);
+                Assert.AreEqual("testschema", properties[SFSessionProperty.SCHEMA]);
+                Assert.AreEqual("testwh", properties[SFSessionProperty.WAREHOUSE]);
+                Assert.AreEqual("oauth", properties[SFSessionProperty.AUTHENTICATOR]);
+                Assert.AreEqual(testToken, properties[SFSessionProperty.TOKEN]);
+                Assert.AreEqual("true", properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
+            });
         }
     }
 
