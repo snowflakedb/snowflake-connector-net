@@ -391,7 +391,7 @@ namespace Snowflake.Data.Core
                 case DoubleArray doubles: return doubles.GetValue(index);
                 case FloatArray floats: return floats.GetValue(index);
                 case Decimal128Array decimals: return decimals.GetValue(index);
-                case Date32Array  dates: return dates.GetValue(index);
+                case Date32Array dates: return dates.GetValue(index);
                 case Int8Array bytes: return bytes.GetValue(index);
                 case Int16Array shorts: return shorts.GetValue(index);
                 case Int32Array ints: return ints.GetValue(index);
