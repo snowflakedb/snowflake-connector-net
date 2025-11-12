@@ -426,6 +426,7 @@ namespace Snowflake.Data.Core
         {
             var result = new Dictionary<string, object>();
             var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
+            Console.WriteLine("ExtractStructArray: " + (StructType)structArray.Data.DataType);
 
             for (int i = 0; i < structArray.Fields.Count; i++)
             {
