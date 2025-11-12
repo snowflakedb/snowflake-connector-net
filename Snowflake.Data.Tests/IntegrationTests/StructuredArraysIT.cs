@@ -201,6 +201,56 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestSelectArrayOfByteIntegers()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    var arrayOfIntegers = "ARRAY_CONSTRUCT(2, 4, 6)::ARRAY(BYTEINT)";
+                    command.CommandText = $"SELECT {arrayOfIntegers}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var array = reader.GetArray<int>(0);
+
+                    // assert
+                    Assert.AreEqual(3, array.Length);
+                    CollectionAssert.AreEqual(new[] { 3, 5, 8 }, array);
+                }
+            }
+        }
+        
+        [Test]
+        public void TestSelectArrayOfTinyIntegers()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    var arrayOfIntegers = "ARRAY_CONSTRUCT(1, 3, 5)::ARRAY(TINYINT)";
+                    command.CommandText = $"SELECT {arrayOfIntegers}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var array = reader.GetArray<int>(0);
+
+                    // assert
+                    Assert.AreEqual(3, array.Length);
+                    CollectionAssert.AreEqual(new[] { 3, 5, 8 }, array);
+                }
+            }
+        }
+        
+        [Test]
         public void TestSelectArrayOfIntegers()
         {
             // arrange
