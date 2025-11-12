@@ -201,7 +201,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestSelectArrayOfByteIntegers()
+        public void TestSelectArrayOfBooleans()
         {
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionString))
@@ -210,7 +210,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-                    var arrayOfIntegers = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(BYTEINT)";
+                    var arrayOfIntegers = "ARRAY_CONSTRUCT(true, false)::ARRAY(BOOLEAN)";
                     command.CommandText = $"SELECT {arrayOfIntegers}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
@@ -220,7 +220,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.AreEqual(3, array.Length);
-                    CollectionAssert.AreEqual(new[] { 3, 5, 8 }, array);
+                    CollectionAssert.AreEqual(new[] { true, false }, array);
                 }
             }
         }
