@@ -417,6 +417,9 @@ namespace Snowflake.Data.Core
                 case StringArray strArray:
                     var str = strArray.GetString(index);
                     return string.IsNullOrEmpty(str) ? null : str;
+                case BinaryArray binary:
+                    Console.WriteLine("Matched case: BinaryArray");
+                    return binary.GetBytes(index).ToArray();
                 default:
                     throw new NotSupportedException($"Unsupported array type: {array.GetType()}");
             }

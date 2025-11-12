@@ -210,8 +210,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-                    var arrayOfIntegers = "ARRAY_CONSTRUCT(true, false)::ARRAY(BOOLEAN)";
-                    command.CommandText = $"SELECT {arrayOfIntegers}";
+                    var arrayOfBooleans = "ARRAY_CONSTRUCT(true, false)::ARRAY(BOOLEAN)";
+                    command.CommandText = $"SELECT {arrayOfBooleans}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
@@ -221,6 +221,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.AreEqual(2, array.Length);
                     CollectionAssert.AreEqual(new[] { true, false }, array);
+                }
+            }
+        }
+        
+        [Test]
+        public void TestSelectArrayOfBinaries()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    var arrayOfBooleans = "ARRAY_CONSTRUCT(TO_BINARY('AB'), TO_BINARY('BC'))::ARRAY(BINARY)";
+                    command.CommandText = $"SELECT {arrayOfBooleans}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var array = reader.GetArray<string>(0);
+
+                    // assert
+                    Assert.AreEqual(2, array.Length);
+                    CollectionAssert.AreEqual(new[] { "ab", "bc" }, array);
                 }
             }
         }
