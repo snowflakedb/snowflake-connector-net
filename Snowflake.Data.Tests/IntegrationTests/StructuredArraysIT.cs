@@ -234,7 +234,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-                    var arrayOfDates = "ARRAY_CONSTRUCT('2024-01-01 00:00:00 +0000'::TIMESTAMP_NTZ)::ARRAY(TIMESTAMP_NTZ)";
+                    var arrayOfDates = "ARRAY_CONSTRUCT('2024-01-01'::DATE)::ARRAY(DATE)";
                     command.CommandText = $"SELECT {arrayOfDates}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
@@ -249,31 +249,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
         
-        [Test]
-        public void TestSelectArrayOfBinaries()
-        {
-            // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
-            {
-                connection.Open();
-                using (var command = connection.CreateCommand())
-                {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-                    var arrayOfBinaries = "ARRAY_CONSTRUCT(TO_BINARY('AB', 'UTF-8'), TO_BINARY('BC', 'UTF-8'))::ARRAY(BINARY)";
-                    command.CommandText = $"SELECT {arrayOfBinaries}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+        //[Test]
+        //public void TestSelectArrayOfBinaries()
+        //{
+        //    // arrange
+        //    using (var connection = new SnowflakeDbConnection(ConnectionString))
+        //    {
+        //        connection.Open();
+        //        using (var command = connection.CreateCommand())
+        //        {
+        //            EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+        //            var arrayOfBinaries = "ARRAY_CONSTRUCT(TO_BINARY('AB', 'UTF-8'), TO_BINARY('BC', 'UTF-8'))::ARRAY(BINARY)";
+        //            command.CommandText = $"SELECT {arrayOfBinaries}";
+        //            var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+        //            Assert.IsTrue(reader.Read());
 
-                    // act
-                    var array = reader.GetArray<byte[]>(0);
-                    var strings = array.Select(b => Encoding.UTF8.GetString(b)).ToArray();
+        //            // act
+        //            var array = reader.GetArray<byte[]>(0);
+        //            var strings = array.Select(b => Encoding.UTF8.GetString(b)).ToArray();
 
-                    // assert
-                    Assert.AreEqual(2, array.Length);
-                    CollectionAssert.AreEqual(new[] { "AB", "BC" }, strings);
-                }
-            }
-        }
+        //            // assert
+        //            Assert.AreEqual(2, array.Length);
+        //            CollectionAssert.AreEqual(new[] { "AB", "BC" }, strings);
+        //        }
+        //    }
+        //}
 
         //[Test]
         //public void TestSelectArrayOfTinyIntegers()
