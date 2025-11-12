@@ -216,10 +216,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetArray<int>(0);
+                    var array = reader.GetArray<bool>(0);
 
                     // assert
-                    Assert.AreEqual(3, array.Length);
+                    Assert.AreEqual(2, array.Length);
                     CollectionAssert.AreEqual(new[] { true, false }, array);
                 }
             }
