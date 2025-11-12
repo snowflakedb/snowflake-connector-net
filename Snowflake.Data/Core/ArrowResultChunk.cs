@@ -398,11 +398,7 @@ namespace Snowflake.Data.Core
                     return decimals.GetValue(index);
                 case Date32Array dates:
                     Console.WriteLine("Matched case: Date32Array");
-                    // Epoch reference: 1970-01-01
-                    DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                    int daysSinceEpoch = 19723;
-                    DateTime dt = epoch.AddDays(daysSinceEpoch);
-                    return dt;
+                    return dates.GetDateTimeOffset(index);
                 case Int8Array bytes:
                     Console.WriteLine("Matched case: Int8Array");
                     return bytes.GetValue(index);
