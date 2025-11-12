@@ -408,7 +408,7 @@ namespace Snowflake.Data.Core
                 case Dictionary<string, object> _:
                 case Dictionary<object, object> _:
                 case List<object> _:
-                    return string.IsNullOrEmpty(value.ToString()) ? null :System.Text.Json.JsonSerializer.Serialize(value);
+                    return string.IsNullOrEmpty(value.ToString()) ? null : Newtonsoft.Json.JsonConvert.SerializeObject(value);
                 case DateTime ret:
                     if (type == SFDataType.DATE)
                         return SFDataConverter.ToDateString(ret, sfResultSetMetaData.dateOutputFormat);
