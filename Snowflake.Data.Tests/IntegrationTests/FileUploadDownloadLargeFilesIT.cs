@@ -5,9 +5,8 @@ using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests
+namespace Snowflake.Data.Tests.IntegrationTests
 {
-
     [TestFixture]
     public class FileUploadDownloadLargeFilesIT : SFBaseTest
     {
