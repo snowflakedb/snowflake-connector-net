@@ -387,15 +387,33 @@ namespace Snowflake.Data.Core
                 case StructArray strct: return ExtractStructArray(strct, index);
                 case MapArray map: return ExtractMapArray(map, index);
                 case ListArray list: return ExtractListArray(list, index);
-                case FloatArray floats: return floats.GetValue(index);
-                case DoubleArray doubles: return doubles.GetValue(index);
-                case Decimal128Array decimals: return decimals.GetValue(index);
-                case Date32Array dates: return dates.GetValue(index);
-                case Int8Array bytes: return bytes.GetValue(index);
-                case Int16Array shorts: return shorts.GetValue(index);
-                case Int32Array ints: return ints.GetValue(index);
-                case Int64Array longs: return longs.GetValue(index);
-                case BooleanArray booleans: return booleans.GetValue(index);
+                case FloatArray floats:
+                    Console.WriteLine("Matched case: FloatArray");
+                    return floats.GetValue(index);
+                case DoubleArray doubles:
+                    Console.WriteLine("Matched case: DoubleArray");
+                    return doubles.GetValue(index);
+                case Decimal128Array decimals:
+                    Console.WriteLine("Matched case: Decimal128Array");
+                    return decimals.GetValue(index);
+                case Date32Array dates:
+                    Console.WriteLine("Matched case: Date32Array");
+                    return dates.GetValue(index);
+                case Int8Array bytes:
+                    Console.WriteLine("Matched case: Int8Array");
+                    return bytes.GetValue(index);
+                case Int16Array shorts:
+                    Console.WriteLine("Matched case: Int16Array");
+                    return shorts.GetValue(index);
+                case Int32Array ints:
+                    Console.WriteLine("Matched case: Int32Array");
+                    return ints.GetValue(index);
+                case Int64Array longs:
+                    Console.WriteLine("Matched case: Int64Array");
+                    return longs.GetValue(index);
+                case BooleanArray booleans:
+                    Console.WriteLine("Matched case: BooleanArray");
+                    return booleans.GetValue(index);
                 case StringArray strArray:
                     var str = strArray.GetString(index);
                     return string.IsNullOrEmpty(str) ? null : str;
