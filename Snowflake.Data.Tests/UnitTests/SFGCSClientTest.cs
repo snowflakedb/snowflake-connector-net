@@ -50,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests
         SFFileMetadata _fileMetadata;
 
         [SetUp]
-        public new void BeforeTest()
+        public void BeforeTest()
         {
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
 

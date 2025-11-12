@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests
         AmazonS3Config _clientConfig;
 
         [SetUp]
-        public new void BeforeTest()
+        public void BeforeTest()
         {
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
 
