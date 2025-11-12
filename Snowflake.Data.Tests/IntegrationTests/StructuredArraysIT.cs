@@ -226,6 +226,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
         
         [Test]
+        public void TestSelectArrayOfDates()
+        {
+            // arrange
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    var arrayOfDates = "ARRAY_CONSTRUCT('2024-01-01 00:00:00 +0000'::TIMESTAMP_NTZ)::ARRAY(TIMESTAMP_NTZ)";
+                    command.CommandText = $"SELECT {arrayOfDates}";
+                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    Assert.IsTrue(reader.Read());
+
+                    // act
+                    var array = reader.GetArray<DateTime>(0);
+
+                    // assert
+                    Assert.AreEqual(1, array.Length);
+                    CollectionAssert.AreEqual(new[] { DateTime.Parse("2024-01-01") }, array);
+                }
+            }
+        }
+        
+        [Test]
         public void TestSelectArrayOfBinaries()
         {
             // arrange
@@ -235,8 +260,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-                    var arrayOfBooleans = "ARRAY_CONSTRUCT(TO_BINARY('AB'), TO_BINARY('BC'))::ARRAY(BINARY)";
-                    command.CommandText = $"SELECT {arrayOfBooleans}";
+                    var arrayOfBinaries = "ARRAY_CONSTRUCT(TO_BINARY('AB'), TO_BINARY('BC'))::ARRAY(BINARY)";
+                    command.CommandText = $"SELECT {arrayOfBinaries}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
