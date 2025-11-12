@@ -266,7 +266,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsTrue(reader.Read());
 
                     // act
-                    var array = reader.GetArray<string>(0);
+                    var array = reader.GetArray<byte[]>(0);
 
                     // assert
                     Assert.AreEqual(2, array.Length);

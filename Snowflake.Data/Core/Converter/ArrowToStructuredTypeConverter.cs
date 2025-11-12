@@ -147,6 +147,8 @@ namespace Snowflake.Data.Core.Converter
 
         private static object ConvertValue(object value, Type targetType)
         {
+            Console.WriteLine($"value: {value}");
+            Console.WriteLine($"targetType: {targetType}");
             if (value == null)
                 return null;
             if (targetType.IsAssignableFrom(value.GetType()))
@@ -173,8 +175,6 @@ namespace Snowflake.Data.Core.Converter
                     return CallMethod(elementType, objList, nameof(ConvertList));
                 }
             }
-            Console.WriteLine($"value: {value}");
-            Console.WriteLine($"targetType: {targetType}");
             return Convert.ChangeType(value, targetType);
         }
     }
