@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
@@ -260,17 +261,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = connection.CreateCommand())
                 {
                     EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
-                    var arrayOfBinaries = "ARRAY_CONSTRUCT(TO_BINARY('AB'), TO_BINARY('BC'))::ARRAY(BINARY)";
+                    var arrayOfBinaries = "ARRAY_CONSTRUCT(TO_BINARY('AB', 'UTF-8'), TO_BINARY('BC', 'UTF-8'))::ARRAY(BINARY)";
                     command.CommandText = $"SELECT {arrayOfBinaries}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
 
                     // act
                     var array = reader.GetArray<byte[]>(0);
+                    var strings = array.Select(b => Encoding.UTF8.GetString(b)).ToArray();
 
                     // assert
                     Assert.AreEqual(2, array.Length);
-                    CollectionAssert.AreEqual(new[] { "ab", "bc" }, array);
+                    CollectionAssert.AreEqual(new[] { "AB", "BC" }, strings);
                 }
             }
         }
