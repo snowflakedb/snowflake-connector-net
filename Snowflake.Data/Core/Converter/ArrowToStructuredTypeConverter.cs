@@ -148,6 +148,7 @@ namespace Snowflake.Data.Core.Converter
         private static object ConvertValue(object value, Type targetType)
         {
             Console.WriteLine($"value: {value}");
+            Console.WriteLine($"valueType: {value.GetType()}");
             Console.WriteLine($"targetType: {targetType}");
             if (value == null)
                 return null;

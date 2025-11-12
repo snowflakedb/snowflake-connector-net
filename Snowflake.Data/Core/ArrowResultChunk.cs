@@ -398,7 +398,7 @@ namespace Snowflake.Data.Core
                     return decimals.GetValue(index);
                 case Date32Array dates:
                     Console.WriteLine("Matched case: Date32Array");
-                    return dates.GetDateTimeOffset(index);
+                    return dates.GetDateTime(index);
                 case Int8Array bytes:
                     Console.WriteLine("Matched case: Int8Array");
                     return bytes.GetValue(index);
