@@ -398,7 +398,11 @@ namespace Snowflake.Data.Core
                     return decimals.GetValue(index);
                 case Date32Array dates:
                     Console.WriteLine("Matched case: Date32Array");
-                    return dates.GetValue(index);
+                    // Epoch reference: 1970-01-01
+                    DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                    int daysSinceEpoch = 19723;
+                    DateTime dt = epoch.AddDays(daysSinceEpoch);
+                    return dt;
                 case Int8Array bytes:
                     Console.WriteLine("Matched case: Int8Array");
                     return bytes.GetValue(index);
@@ -429,7 +433,6 @@ namespace Snowflake.Data.Core
         {
             var result = new Dictionary<string, object>();
             var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
-            Console.WriteLine("ExtractStructArray: " + (StructType)structArray.Data.DataType);
 
             for (int i = 0; i < structArray.Fields.Count; i++)
             {
