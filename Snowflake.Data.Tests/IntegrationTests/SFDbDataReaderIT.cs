@@ -1672,59 +1672,49 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
+                CreateOrReplaceTable(conn, "test_timestamp_ltz_timezone", new[] { "val TIMESTAMP_LTZ" });
+
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "CREATE OR REPLACE TABLE test_timestamp_ltz_timezone (val TIMESTAMP_LTZ)";
+                    cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Europe/Warsaw'";
                     cmd.ExecuteNonQuery();
 
-                    try
+                    cmd.CommandText = "INSERT INTO test_timestamp_ltz_timezone VALUES('2023-08-09 10:00:00')";
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = "SELECT * FROM test_timestamp_ltz_timezone";
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Europe/Warsaw'";
-                        cmd.ExecuteNonQuery();
+                        Assert.IsTrue(reader.Read(), "Should read a record");
+                        var timestamp1 = reader.GetDateTime(0);
 
-                        cmd.CommandText = "INSERT INTO test_timestamp_ltz_timezone VALUES('2023-08-09 10:00:00')";
-                        cmd.ExecuteNonQuery();
+                        var warsawTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Europe/Warsaw");
+                        var expectedTime1 = new DateTime(2023, 8, 9, 10, 0, 0, DateTimeKind.Unspecified);
+                        var expectedUtc1 = TimeZoneInfo.ConvertTimeToUtc(expectedTime1, warsawTz);
+                        var expectedInWarsaw = TimeZoneInfo.ConvertTimeFromUtc(expectedUtc1, warsawTz);
 
-                        cmd.CommandText = "SELECT * FROM test_timestamp_ltz_timezone";
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            Assert.IsTrue(reader.Read(), "Should read a record");
-                            var timestamp1 = reader.GetDateTime(0);
-
-                            var warsawTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Europe/Warsaw");
-                            var expectedTime1 = new DateTime(2023, 8, 9, 10, 0, 0, DateTimeKind.Unspecified);
-                            var expectedUtc1 = TimeZoneInfo.ConvertTimeToUtc(expectedTime1, warsawTz);
-                            var expectedInWarsaw = TimeZoneInfo.ConvertTimeFromUtc(expectedUtc1, warsawTz);
-
-                            Assert.AreEqual(expectedInWarsaw, timestamp1,
-                                $"Timestamp should be returned in Warsaw timezone. Expected: {expectedInWarsaw}, Got: {timestamp1}");
-                        }
-
-                        cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Pacific/Honolulu'";
-                        cmd.ExecuteNonQuery();
-
-                        cmd.CommandText = "SELECT * FROM test_timestamp_ltz_timezone";
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            Assert.IsTrue(reader.Read(), "Should read a record");
-                            var timestamp2 = reader.GetDateTime(0);
-
-                            var honoluluTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Pacific/Honolulu");
-                            var warsawTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Europe/Warsaw");
-
-                            var originalTimeInWarsaw = new DateTime(2023, 8, 9, 10, 0, 0, DateTimeKind.Unspecified);
-                            var utcTime = TimeZoneInfo.ConvertTimeToUtc(originalTimeInWarsaw, warsawTz);
-                            var expectedInHonolulu = TimeZoneInfo.ConvertTimeFromUtc(utcTime, honoluluTz);
-
-                            Assert.AreEqual(expectedInHonolulu, timestamp2,
-                                $"Timestamp should be returned in Honolulu timezone. Expected: {expectedInHonolulu}, Got: {timestamp2}");
-                        }
+                        Assert.AreEqual(expectedInWarsaw, timestamp1,
+                            $"Timestamp should be returned in Warsaw timezone. Expected: {expectedInWarsaw}, Got: {timestamp1}");
                     }
-                    finally
+
+                    cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Pacific/Honolulu'";
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = "SELECT * FROM test_timestamp_ltz_timezone";
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        // Cleanup
-                        cmd.CommandText = "DROP TABLE IF EXISTS test_timestamp_ltz_timezone";
-                        cmd.ExecuteNonQuery();
+                        Assert.IsTrue(reader.Read(), "Should read a record");
+                        var timestamp2 = reader.GetDateTime(0);
+
+                        var honoluluTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Pacific/Honolulu");
+                        var warsawTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Europe/Warsaw");
+
+                        var originalTimeInWarsaw = new DateTime(2023, 8, 9, 10, 0, 0, DateTimeKind.Unspecified);
+                        var utcTime = TimeZoneInfo.ConvertTimeToUtc(originalTimeInWarsaw, warsawTz);
+                        var expectedInHonolulu = TimeZoneInfo.ConvertTimeFromUtc(utcTime, honoluluTz);
+
+                        Assert.AreEqual(expectedInHonolulu, timestamp2,
+                            $"Timestamp should be returned in Honolulu timezone. Expected: {expectedInHonolulu}, Got: {timestamp2}");
                     }
                 }
 
@@ -1737,52 +1727,43 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
+                CreateOrReplaceTable(conn, "test_ltz_multi_tz", new[] { "val TIMESTAMP_LTZ" });
+
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "CREATE OR REPLACE TABLE test_ltz_multi_tz (val TIMESTAMP_LTZ)";
+                    cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'UTC'";
                     cmd.ExecuteNonQuery();
 
-                    try
+                    cmd.CommandText = "INSERT INTO test_ltz_multi_tz VALUES('2024-01-01 00:00:00')";
+                    cmd.ExecuteNonQuery();
+
+                    var utcBase = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+                    // Test reading with different timezones
+                    var timezones = new[]
                     {
-                        cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'UTC'";
+                        "Europe/Warsaw",
+                        "Asia/Tokyo",
+                        "America/Los_Angeles"
+                    };
+
+                    foreach (var tzName in timezones)
+                    {
+                        cmd.CommandText = $"ALTER SESSION SET TIMEZONE = '{tzName}'";
                         cmd.ExecuteNonQuery();
 
-                        cmd.CommandText = "INSERT INTO test_ltz_multi_tz VALUES('2024-01-01 00:00:00')";
-                        cmd.ExecuteNonQuery();
-
-                        var utcBase = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-                        // Test reading with different timezones
-                        var timezones = new[]
+                        cmd.CommandText = "SELECT val FROM test_ltz_multi_tz";
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            "Europe/Warsaw",
-                            "Asia/Tokyo",
-                            "America/Los_Angeles"
-                        };
+                            Assert.IsTrue(reader.Read());
+                            var timestamp = reader.GetDateTime(0);
 
-                        foreach (var tzName in timezones)
-                        {
-                            cmd.CommandText = $"ALTER SESSION SET TIMEZONE = '{tzName}'";
-                            cmd.ExecuteNonQuery();
+                            var tz = TimeZoneConverter.TZConvert.GetTimeZoneInfo(tzName);
+                            var expected = TimeZoneInfo.ConvertTimeFromUtc(utcBase, tz);
 
-                            cmd.CommandText = "SELECT val FROM test_ltz_multi_tz";
-                            using (var reader = cmd.ExecuteReader())
-                            {
-                                Assert.IsTrue(reader.Read());
-                                var timestamp = reader.GetDateTime(0);
-
-                                var tz = TimeZoneConverter.TZConvert.GetTimeZoneInfo(tzName);
-                                var expected = TimeZoneInfo.ConvertTimeFromUtc(utcBase, tz);
-
-                                Assert.AreEqual(expected, timestamp,
-                                    $"TIMESTAMP_LTZ should be in {tzName} timezone");
-                            }
+                            Assert.AreEqual(expected, timestamp,
+                                $"TIMESTAMP_LTZ should be in {tzName} timezone");
                         }
-                    }
-                    finally
-                    {
-                        cmd.CommandText = "DROP TABLE IF EXISTS test_ltz_multi_tz";
-                        cmd.ExecuteNonQuery();
                     }
                 }
 
