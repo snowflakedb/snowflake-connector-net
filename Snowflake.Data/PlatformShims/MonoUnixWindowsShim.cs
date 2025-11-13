@@ -11,7 +11,7 @@ using Microsoft.Win32.SafeHandles;
 namespace Mono.Unix
 {
     [Flags]
-    internal enum FileAccessPermissions
+    public enum FileAccessPermissions
     {
         None = 0,
         OtherExecute = 1,
@@ -160,6 +160,9 @@ namespace Mono.Unix.Native
         private const string ErrorMessage = "Unix syscalls are not supported on Windows";
 
         public static int mkdir(string path, FilePermissions permissions)
+            => throw new PlatformNotSupportedException(ErrorMessage);
+
+        public static int creat(string path, FilePermissions permissions)
             => throw new PlatformNotSupportedException(ErrorMessage);
 
         public static long chown(string path, int userId, int groupId)

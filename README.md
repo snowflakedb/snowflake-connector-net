@@ -24,15 +24,17 @@ Starting from version **5.2.0**, the Snowflake .NET connector uses multi-targeti
 
 | Target Framework | Platform | Description                                                 |
 |------------------|----------|-------------------------------------------------------------|
-| `net5.0-windows` | Windows (.NET 5+) | Optimized build for Windows without Mono.Unix |
-| `net5.0` | Linux, macOS (.NET 5+) | Full Unix file system support with Mono.Unix                |
+| `net481` | Windows (.NET Framework 4.8.1) | Optimized build for Windows .NET Framework without Mono.Unix |
+| `net8.0-windows` | Windows (.NET 8+) | Optimized build for Windows .NET 8+ without Mono.Unix |
+| `net8.0` | Linux, macOS (.NET 8+) | Full Unix file system support with Mono.Unix                |
 | `netstandard2.0` | All platforms | Backward compatibility for older .NET versions              |
 
 **What this means for you:**
 
-- **Windows users** on .NET 5 or higher will automatically receive a build without the prerelease `Mono.Unix` dependency, resulting in a cleaner dependency tree.
-- **Linux and macOS users** on .NET 5 or higher will receive a build with full Unix file permissions support through `Mono.Unix`.
-- **Older .NET versions** will continue to use the `netstandard2.0` build for maximum compatibility.
+- **Windows users** on .NET Framework 4.8.1 will receive the `net481` build without the `Mono.Unix` dependency.
+- **Windows users** on .NET 8 or higher will receive the `net8.0-windows` build without the `Mono.Unix` dependency.
+- **Linux and macOS users** on .NET 8 or higher will receive the `net8.0`.
+- **Older .NET versions** (including older .NET Framework and .NET versions) will use the `netstandard2.0` build for backward compatibility.
 
 The appropriate build is automatically selected by NuGet based on your application's target framework and operating system.
 
