@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Moq;
 
     [TestFixture]
-    class SFRemoteStorageClientTest : SFBaseTest
+    class SFRemoteStorageClientTest : UnitTestBase
     {
         // Mock data for file metadata
         const string EndPoint = "mockEndPoint.com";
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.UnitTests
         const bool IsAsync = true;
 
         [SetUp]
-        public new void BeforeTest()
+        public void BeforeTest()
         {
             t_realSourceFilePath = TestNameWithWorker + "_realSrcFilePath.txt";
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [TearDown]
-        public new void AfterTest()
+        public void AfterTest()
         {
             // Delete temporary files from upload
             if (File.Exists(_fileMetadata.realSrcFilePath))

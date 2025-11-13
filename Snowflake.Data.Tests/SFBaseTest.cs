@@ -8,7 +8,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Snowflake.Data.Client;
-using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
@@ -22,9 +21,37 @@ namespace Snowflake.Data.Tests
     using Newtonsoft.Json.Serialization;
 
     /*
-     * This is the base class for all tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that
+     * Base infrastructure shared by all test classes - provides common test utilities
+     */
+    public class BaseTestInfrastructure
+    {
+        protected virtual string TestName => TestContext.CurrentContext.Test.MethodName;
+        protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
+    }
+
+    /*
+     * Base class for unit tests - it uses MockSynchronizationContext to verify that
      * there are no async deadlocks in the library
-     *
+     */
+    [TestFixture]
+    public class UnitTestBase : BaseTestInfrastructure
+    {
+        [SetUp]
+        public static void SetUpMockContext()
+        {
+            MockSynchronizationContext.SetupContext();
+        }
+
+        [TearDown]
+        public static void TearDownMockContext()
+        {
+            MockSynchronizationContext.Verify();
+        }
+    }
+
+    /*
+     * Base class for integration tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that
+     * there are no async deadlocks in the library
      */
     [TestFixture]
     public class SFBaseTest : SFBaseTestAsync
@@ -43,8 +70,7 @@ namespace Snowflake.Data.Tests
     }
 
     /*
-     * This is the base class for all tests that call async methods in the library - it does not use a special SynchronizationContext
-     *
+     * Base class for integration tests that call async methods - provides database connection infrastructure
      */
     [TestFixture]
     [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
@@ -276,7 +302,6 @@ namespace Snowflake.Data.Tests
             Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
             TestConfig = ReadTestConfig();
-            ModifySchema(TestConfig.schema, SchemaAction.CREATE);
         }
 
         private static TestConfig ReadTestConfig()
@@ -361,12 +386,6 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        [OneTimeTearDown]
-        public void Cleanup()
-        {
-            ModifySchema(TestConfig.schema, SchemaAction.DROP);
-        }
-
         [OneTimeSetUp]
         public void SetupTestPerformance()
         {
@@ -388,56 +407,6 @@ namespace Snowflake.Data.Tests
             // We have to go up 3 times as the working directory path looks as follows:
             // Snowflake.Data.Tests/bin/debug/{.net_version}/
             File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
-        }
-
-        private const string ConnectionStringFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
-                                                   "account={3};role={4};db={5};warehouse={6};user={7};password={8};";
-
-        private static string s_connectionString => string.Format(ConnectionStringFmt,
-            TestConfig.protocol,
-            TestConfig.host,
-            TestConfig.port,
-            TestConfig.account,
-            TestConfig.role,
-            TestConfig.database,
-            TestConfig.warehouse,
-            TestConfig.user,
-            TestConfig.password);
-
-        private enum SchemaAction
-        {
-            CREATE,
-            DROP
-        }
-
-        private static void ModifySchema(string schemaName, SchemaAction schemaAction)
-        {
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = s_connectionString;
-                conn.Open();
-                var dbCommand = conn.CreateCommand();
-                switch (schemaAction)
-                {
-                    case SchemaAction.CREATE:
-                        dbCommand.CommandText = $"CREATE OR REPLACE SCHEMA {schemaName}";
-                        break;
-                    case SchemaAction.DROP:
-                        dbCommand.CommandText = $"DROP SCHEMA IF EXISTS {schemaName}";
-                        break;
-                    default:
-                        Assert.Fail($"Not supported action on schema: {schemaAction}");
-                        break;
-                }
-                try
-                {
-                    dbCommand.ExecuteNonQuery();
-                }
-                catch (InvalidOperationException e)
-                {
-                    Assert.Fail($"Unable to {schemaAction.ToString().ToLower()} schema {schemaName}:\n{e.StackTrace}");
-                }
-            }
         }
 
         private static string GetOs()
