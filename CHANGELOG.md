@@ -3,6 +3,7 @@
 # Changelog
 - v5.2.0
     - Added multi-targeting support to eliminate prerelease Mono.Unix dependency on Windows .NET 5+.
+    - Fixed CRL validation to reject newly downloaded CRLs if their NextUpdate has already expired.
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
     - Renew idle sessions in the pool if keep alive is enabled.
