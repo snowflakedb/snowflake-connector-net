@@ -4,7 +4,7 @@ namespace Snowflake.Data.Core.Converter
 {
     internal class TimeConverter
     {
-        public object Convert(string value, SFDataType timestampType, Type fieldType)
+        public object Convert(string value, SFDataType timestampType, Type fieldType, TimeZoneInfo sessionTimezone)
         {
             if (fieldType == typeof(string))
             {
@@ -42,14 +42,22 @@ namespace Snowflake.Data.Core.Converter
             }
             if (timestampType == SFDataType.TIMESTAMP_LTZ)
             {
-                var dateTimeOffsetLocal = DateTimeOffset.Parse(value).ToLocalTime();
+                if (sessionTimezone == null)
+                {
+                    throw new StructuredTypesReadingException("Session timezone is required for TIMESTAMP_LTZ conversion");
+                }
+
+                var utcDateTimeOffset = DateTimeOffset.Parse(value);
+                var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTimeOffset.UtcDateTime, sessionTimezone);
+                var dateTimeOffsetInSessionTz = new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
+
                 if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
                 {
-                    return dateTimeOffsetLocal;
+                    return dateTimeOffsetInSessionTz;
                 }
                 if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
-                    return dateTimeOffsetLocal.LocalDateTime;
+                    return DateTime.SpecifyKind(localDateTime, DateTimeKind.Local);
                 }
                 throw new StructuredTypesReadingException($"Cannot read TIMESTAMP_LTZ into {fieldType} type");
             }

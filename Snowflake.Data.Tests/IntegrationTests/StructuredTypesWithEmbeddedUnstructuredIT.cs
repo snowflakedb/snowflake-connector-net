@@ -288,6 +288,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
+                    command.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
+                    command.ExecuteNonQuery();
+
                     EnableStructuredTypes(connection);
                     SetTimePrecision(connection, 9);
                     var rawValueString = $"'{dbValue}'::{dbType}";
@@ -328,10 +331,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
             yield return new object[]
             {
-                "2024-07-11 14:20:05 -7:00",
+                "2024-07-11 14:20:05",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTime.Parse("2024-07-11 21:20:05").ToLocalTime()
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11 14:20:05"), DateTimeKind.Local)
             };
             yield return new object[]
             {
@@ -356,10 +359,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
             yield return new object[]
             {
-                "2024-07-11 14:20:05.123456789 -7:00",
+                "2024-07-11 14:20:05.123456789 -2:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTime.Parse("2024-07-11 21:20:05.1234568").ToLocalTime()
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11 09:20:05.1234568"), DateTimeKind.Local)
             };
             yield return new object[]
             {
@@ -377,10 +380,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
             yield return new object[]
             {
-                "9999-12-31 23:59:59.999999 +13:00",
+                "1883-11-19 00:00:00.000000 -5:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTime.Parse("9999-12-31 10:59:59.999999").ToLocalTime()
+                DateTime.Parse("1883-11-18 21:00:00.000000").ToLocalTime()
             };
             yield return new object[]
             {
@@ -408,6 +411,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
+                    command.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
+                    command.ExecuteNonQuery();
+
                     EnableStructuredTypes(connection);
                     SetTimePrecision(connection, 9);
                     var rawValueString = $"'{dbValue}'::{dbType}";
@@ -450,7 +456,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 "2024-07-11 14:20:05 -7:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTimeOffset.Parse("2024-07-11 14:20:05 -7:00").ToLocalTime()
+                DateTimeOffset.Parse("2024-07-11 14:20:05 -7:00")
             };
             yield return new object[]
             {
@@ -475,10 +481,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
             yield return new object[]
             {
-                "2024-07-11 14:20:05.123456789 -7:00",
+                "2024-07-11 14:20:05.123456789 -2:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTimeOffset.Parse("2024-07-11 14:20:05.1234568 -7:00")
+                DateTimeOffset.Parse("2024-07-11 09:20:05.1234568 -7:00")
             };
             yield return new object[]
             {
