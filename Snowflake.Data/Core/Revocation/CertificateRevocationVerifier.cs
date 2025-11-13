@@ -198,6 +198,18 @@ namespace Snowflake.Data.Core.Revocation
                 if (needsFreshCrl)
                 {
                     var newCrl = FetchCrl(crlUrl);
+
+                    if (newCrl != null && newCrl.NextUpdate.HasValue && newCrl.NextUpdate.Value < now)
+                    {
+                        s_logger.Warn($"Downloaded CRL from '{crlUrl}' is already expired (next update: {newCrl.NextUpdate.Value})");
+                        newCrl = null;
+                        if (cachedCrl == null)
+                        {
+                            s_logger.Error($"Unable to fetch a valid CRL from '{crlUrl}' for certificate: '{certificate.Subject}'. Downloaded CRL is expired and no fallback available.");
+                            return CertRevocationCheckResult.CertError;
+                        }
+                    }
+
                     shouldUpdateCrl = newCrl != null && (cachedCrl == null || newCrl.ThisUpdate > cachedCrl.ThisUpdate);
                     if (shouldUpdateCrl)
                     {
