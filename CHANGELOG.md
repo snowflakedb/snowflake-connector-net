@@ -1,7 +1,8 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
-- v5.2.0
+- v5.1.1
+    - Fixed CRL validation to reject newly downloaded CRLs if their NextUpdate has already expired.
     - Users can now specify non-string values in Toml. For example, `port` can be specified as an integer in the Toml.
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
@@ -18,4 +19,3 @@
     - Added the `changelog.yml` GitHub workflow to ensure changelog is updated on release PRs.
     - Removed internal classes from public API.
     - Added support for explicitly setting Azure managed identity client ID via `MANAGED_IDENTITY_CLIENT_ID` environmen
-
