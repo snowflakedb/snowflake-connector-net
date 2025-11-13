@@ -553,6 +553,24 @@ namespace Snowflake.Data.Core
             return _queryContextCache.GetQueryContextRequest();
         }
 
+        internal TimeZoneInfo GetSessionTimezone()
+        {
+            if (ParameterMap.TryGetValue(SFSessionParameter.TIMEZONE, out var value))
+            {
+                var timezoneString = value.ToString();
+                try
+                {
+                    return TimeZoneConverter.TZConvert.GetTimeZoneInfo(timezoneString);
+                }
+                catch (TimeZoneNotFoundException)
+                {
+                    logger.Warn($"Session timezone '{timezoneString}' not found, falling back to local time");
+                    return TimeZoneInfo.Local;
+                }
+            }
+            return TimeZoneInfo.Local;
+        }
+
         internal void UpdateSessionProperties(QueryExecResponseData responseData)
         {
             // with HTAP session metadata removal database/schema might be not returned in query result

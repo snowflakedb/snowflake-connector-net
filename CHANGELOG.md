@@ -3,6 +3,7 @@
 # Changelog
 - v5.1.1
     - Fixed CRL validation to reject newly downloaded CRLs if their NextUpdate has already expired.
+    - Fixed TIMESTAMP_LTZ datatype to honor session TIMEZONE parameter (ALTER SESSION SET TIMEZONE) instead of using local machine timezone.
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
     - Renew idle sessions in the pool if keep alive is enabled.

@@ -549,5 +549,55 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.ExecuteNonQuery();
             }
         }
+
+        [Test]
+        public void TestStructuredTypeWithTimestampLtzHonorsSessionTimezone()
+        {
+            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            {
+                connection.Open();
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "ALTER SESSION SET TIMEZONE = 'Europe/Warsaw'";
+                    command.ExecuteNonQuery();
+                }
+
+                CreateOrReplaceTable(connection, "test_struct_ltz", new[]
+                {
+                    "id INT",
+                    "data OBJECT(timestamp_value TIMESTAMP_LTZ)"
+                });
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "INSERT INTO test_struct_ltz SELECT 1, {'timestamp_value': '2024-03-20 15:45:30'::TIMESTAMP_LTZ}";
+                    command.ExecuteNonQuery();
+
+                    command.CommandText = "SELECT data FROM test_struct_ltz";
+                    using (var reader = (SnowflakeDbDataReader)command.ExecuteReader())
+                    {
+                        Assert.IsTrue(reader.Read());
+
+                        var obj = reader.GetObject<TestObjectWithTimestampLtz>(0);
+
+                        var warsawTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Europe/Warsaw");
+                        var inputTime = new DateTime(2024, 3, 20, 15, 45, 30, DateTimeKind.Unspecified);
+                        var utcTime = TimeZoneInfo.ConvertTimeToUtc(inputTime, warsawTz);
+                        var expectedInWarsaw = TimeZoneInfo.ConvertTimeFromUtc(utcTime, warsawTz);
+
+                        Assert.AreEqual(expectedInWarsaw, obj.TimestampValue,
+                            "Structured type TIMESTAMP_LTZ should honor session timezone");
+                    }
+                }
+            }
+        }
+
+        [SnowflakeObject(ConstructionMethod = SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)]
+        private class TestObjectWithTimestampLtz
+        {
+            [SnowflakeColumn(Name = "timestamp_value")]
+            public DateTime TimestampValue { get; set; }
+        }
     }
 }

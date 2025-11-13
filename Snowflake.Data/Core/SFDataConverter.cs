@@ -41,7 +41,7 @@ namespace Snowflake.Data.Core
             [typeof(object)] = DbType.Object
         };
 
-        internal static object ConvertToCSharpVal(UTF8Buffer srcVal, SFDataType srcType, Type destType)
+        internal static object ConvertToCSharpVal(UTF8Buffer srcVal, SFDataType srcType, Type destType, TimeZoneInfo sessionTimezone = null)
         {
             if (srcVal == null)
                 return DBNull.Value;
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Core
                 }
                 else if (destType == typeof(DateTime))
                 {
-                    return ConvertToDateTime(srcVal, srcType);
+                    return ConvertToDateTime(srcVal, srcType, sessionTimezone);
                 }
                 else if (destType == typeof(TimeSpan))
                 {
@@ -75,7 +75,7 @@ namespace Snowflake.Data.Core
                 }
                 else if (destType == typeof(DateTimeOffset))
                 {
-                    return ConvertToDateTimeOffset(srcVal, srcType);
+                    return ConvertToDateTimeOffset(srcVal, srcType, sessionTimezone);
                 }
                 else if (destType == typeof(Boolean))
                 {
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private static DateTime ConvertToDateTime(UTF8Buffer srcVal, SFDataType srcType)
+        private static DateTime ConvertToDateTime(UTF8Buffer srcVal, SFDataType srcType, TimeZoneInfo sessionTimezone)
         {
             switch (srcType)
             {
@@ -155,12 +155,22 @@ namespace Snowflake.Data.Core
                     var tickDiff = GetTicksFromSecondAndNanosecond(srcVal);
                     return DateTime.SpecifyKind(UnixEpoch.AddTicks(tickDiff), DateTimeKind.Unspecified);
 
+                case SFDataType.TIMESTAMP_LTZ:
+                    if (sessionTimezone == null)
+                    {
+                        throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
+                            "Session timezone is required for TIMESTAMP_LTZ conversion");
+                    }
+                    var tickDiffLtz = GetTicksFromSecondAndNanosecond(srcVal);
+                    var utcDateTime = DateTime.SpecifyKind(UnixEpoch.AddTicks(tickDiffLtz), DateTimeKind.Utc);
+                    return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, sessionTimezone);
+
                 default:
                     throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, srcType, typeof(DateTime));
             }
         }
 
-        private static DateTimeOffset ConvertToDateTimeOffset(UTF8Buffer srcVal, SFDataType srcType)
+        private static DateTimeOffset ConvertToDateTimeOffset(UTF8Buffer srcVal, SFDataType srcType, TimeZoneInfo sessionTimezone)
         {
             switch (srcType)
             {
@@ -180,8 +190,15 @@ namespace Snowflake.Data.Core
                         return new DateTimeOffset(UnixEpoch.Ticks + GetTicksFromSecondAndNanosecond(timeVal), TimeSpan.Zero).ToOffset(offSetTimespan);
                     }
                 case SFDataType.TIMESTAMP_LTZ:
-                    return new DateTimeOffset(UnixEpoch.Ticks +
-                        GetTicksFromSecondAndNanosecond(srcVal), TimeSpan.Zero).ToLocalTime();
+                    if (sessionTimezone == null)
+                    {
+                        throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
+                            "Session timezone is required for TIMESTAMP_LTZ conversion");
+                    }
+                    var utcDateTimeOffset = new DateTimeOffset(UnixEpoch.Ticks +
+                        GetTicksFromSecondAndNanosecond(srcVal), TimeSpan.Zero);
+                    var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTimeOffset.UtcDateTime, sessionTimezone);
+                    return new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
 
                 default:
                     throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal,
