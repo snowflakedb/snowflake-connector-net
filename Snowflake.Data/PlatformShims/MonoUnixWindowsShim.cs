@@ -25,7 +25,6 @@ namespace Mono.Unix
         UserExecute = 64,
         UserWrite = 128,
         UserRead = 256,
-        UserReadWrite = 384,
         UserReadWriteExecute = 448,
         AllPermissions = 511,
         DefaultPermissions = 420
