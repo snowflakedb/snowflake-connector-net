@@ -18,6 +18,7 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     [TestFixture, NonParallelizable]
+    [Platform(Exclude = "Win")]
     public class UnixOperationsTest
     {
         private static UnixOperations s_unixOperations;
@@ -26,8 +27,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [OneTimeSetUp]
         public static void BeforeAll()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return;
             if (!Directory.Exists(s_workingDirectory))
             {
                 Directory.CreateDirectory(s_workingDirectory);
@@ -38,13 +37,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [OneTimeTearDown]
         public static void AfterAll()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return;
             Directory.Delete(s_workingDirectory, true);
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestDetectGroupOrOthersWritablePermissions(
             [ValueSource(nameof(GroupOrOthersWritablePermissions))] FileAccessPermissions groupOrOthersWritablePermissions,
             [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
@@ -65,7 +61,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestDetectGroupOrOthersNotWritablePermissions(
             [ValueSource(nameof(UserPermissions))] FileAccessPermissions userPermissions,
             [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
@@ -84,7 +79,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
             [ValueSource(nameof(UserAllowedPermissions))] FileAccessPermissions userAllowedPermissions)
         {
@@ -100,7 +94,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestSkipReadPermissionsWhenSkipIsEnabled()
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -127,7 +120,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestCheckReadPermissionsWhenSkipIsDisabled()
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -154,7 +146,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
             [ValueSource(nameof(UserAllowedWritePermissions))] FileAccessPermissions userAllowedPermissions)
         {
@@ -167,7 +158,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
             [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
@@ -190,7 +180,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
             [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
@@ -211,7 +200,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
             [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
@@ -231,7 +219,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestCreateFileWithUserRwPermissions()
         {
             // arrange
@@ -247,7 +234,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestCreateDirectoryWithUserRwxPermissions()
         {
             // arrange
@@ -263,7 +249,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestNestedDir()
         {
             // arrange
@@ -279,7 +264,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestReadBytesFromEmptyFile()
         {
             // arrange
@@ -294,7 +278,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestReadBytesFromSmallFile()
         {
             // arrange
@@ -311,7 +294,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestReadBytesFromLargeFile()
         {
             // arrange
