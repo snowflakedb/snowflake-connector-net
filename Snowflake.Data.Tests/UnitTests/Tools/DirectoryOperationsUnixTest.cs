@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
@@ -9,7 +10,8 @@ using Snowflake.Data.Tests.Mock;
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     [TestFixture, NonParallelizable]
-    public class DirectoryOperationsTest
+    [Platform(Exclude = "Win")]
+    public class DirectoryOperationsUnixTest
     {
         private static DirectoryOperations s_directoryOperations;
         private static readonly string s_relativeWorkingDirectory = $"directory_operations_test_{Path.GetRandomFileName()}";
@@ -20,6 +22,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [SetUp]
         public static void Before()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("Unix-specific tests are not run on Windows");
+            }
+            
             if (!Directory.Exists(s_workingDirectory))
             {
                 Directory.CreateDirectory(s_workingDirectory);
@@ -31,23 +38,15 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [TearDown]
         public static void After()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return;
+            }
+            
             Directory.Delete(s_workingDirectory, true);
         }
 
         [Test]
-        [Platform("Win")]
-        public void TestDirectoryIsSafeOnWindows()
-        {
-            // arrange
-            var absoluteFilePath = Path.Combine(s_workingDirectory, s_dirName);
-            Directory.CreateDirectory(absoluteFilePath);
-
-            // act and assert
-            Assert.IsTrue(s_directoryOperations.IsDirectorySafe(absoluteFilePath));
-        }
-
-        [Test]
-        [Platform(Exclude = "Win")]
         public void TestDirectoryIsNotSafeOnNotWindowsWhenPermissionsAreTooBroad(
             [ValueSource(nameof(InsecurePermissions))]
             FileAccessPermissions permissions)
@@ -60,18 +59,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        public void TestShouldCreateDirectoryWithSafePermissions()
-        {
-            // act
-            s_directoryOperations.CreateDirectory(s_dirAbsolutePath);
-
-            // assert
-            Assert.IsTrue(Directory.Exists(s_dirAbsolutePath));
-            Assert.IsTrue(s_directoryOperations.IsDirectorySafe(s_dirAbsolutePath));
-        }
-
-        [Test]
-        [Platform(Exclude = "Win")]
         public void TestOwnerIsCurrentUser()
         {
             // arrange
@@ -83,7 +70,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
@@ -95,7 +81,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestDirectoryIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange
@@ -121,3 +106,4 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
     }
 }
+

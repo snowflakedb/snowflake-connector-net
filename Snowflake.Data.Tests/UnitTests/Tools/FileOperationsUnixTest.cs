@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security;
 using Mono.Unix;
 using Mono.Unix.Native;
@@ -12,7 +13,8 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     [TestFixture, NonParallelizable]
-    public class FileOperationsTest
+    [Platform(Exclude = "Win")]
+    public class FileOperationsUnixTest
     {
         private static FileOperations s_fileOperations;
         private static readonly string s_relativeWorkingDirectory = $"file_operations_test_{Path.GetRandomFileName()}";
@@ -23,6 +25,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [SetUp]
         public static void Before()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("Unix-specific tests are not run on Windows");
+            }
+            
             if (!Directory.Exists(s_workingDirectory))
             {
                 Directory.CreateDirectory(s_workingDirectory);
@@ -34,24 +41,15 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [TearDown]
         public static void After()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return;
+            }
+            
             Directory.Delete(s_workingDirectory, true);
         }
 
         [Test]
-        [Platform("Win")]
-        public void TestReadAllTextOnWindows()
-        {
-            var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
-
-            // act
-            var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
-
-            // assert
-            Assert.AreEqual(s_content, result);
-        }
-
-        [Test]
-        [Platform(Exclude = "Win")]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
             [ValueSource(nameof(UserAllowedFilePermissions))]
             FileAccessPermissions userAllowedFilePermissions)
@@ -69,7 +67,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadConfigurationFile(
             [ValueSource(nameof(UserAllowedFilePermissions))]
             FileAccessPermissions userAllowedFilePermissions)
@@ -86,7 +83,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestFileIsSafeOnNotWindows()
         {
             // arrange
@@ -98,7 +94,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestFileIsNotSafeOnNotWindowsWhenTooBroadPermissionsAreUsed(
             [ValueSource(nameof(InsecurePermissions))]
             FileAccessPermissions permissions)
@@ -112,19 +107,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform("Win")]
-        public void TestFileIsSafeOnWindows()
-        {
-            // arrange
-            var absoluteFilePath = Path.Combine(s_workingDirectory, s_fileName);
-            File.Create(absoluteFilePath).Close();
-
-            // act and assert
-            Assert.IsTrue(s_fileOperations.IsFileSafe(absoluteFilePath));
-        }
-
-        [Test]
-        [Platform(Exclude = "Win")]
         public void TestOwnerIsCurrentUser()
         {
             // arrange
@@ -137,7 +119,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
@@ -150,7 +131,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestFileIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange
@@ -171,7 +151,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestFileCopyUsesProperPermissions()
         {
             // arrange
@@ -193,7 +172,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
-        [Platform(Exclude = "Win")]
         public void TestFileCopyShouldThrowExecptionIfTooBroadPermissionsAreUsed()
         {
             // arrange
@@ -232,3 +210,4 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
     }
 }
+
