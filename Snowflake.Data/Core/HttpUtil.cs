@@ -292,7 +292,8 @@ namespace Snowflake.Data.Core
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseCookies = false, // Disable cookies
-                    UseProxy = false
+                    UseProxy = false,
+                    AllowAutoRedirect = true
                 };
             }
         }
@@ -306,7 +307,8 @@ namespace Snowflake.Data.Core
                 SslProtocols = config.GetRequestedTlsProtocolsRange(),
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
-                UseProxy = false
+                UseProxy = false,
+                AllowAutoRedirect = true
             };
         }
 
@@ -327,7 +329,8 @@ namespace Snowflake.Data.Core
                 SslProtocols = config.GetRequestedTlsProtocolsRange(),
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
-                UseProxy = false
+                UseProxy = false,
+                AllowAutoRedirect = true
             };
         }
 
@@ -427,8 +430,11 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            internal Uri Update(int retryReason = 0)
+            internal Uri Update(int retryReason = 0, Uri requestUri = null, Uri location = null)
             {
+                if (IsRedirectHTTPCode(retryReason))
+                    return GetRedirectedUri(requestUri, location);
+
                 // Optimization to bypass parsing if there is no rules at all.
                 if (rules.Count == 0)
                 {
@@ -448,6 +454,13 @@ namespace Snowflake.Data.Core
 
                 uriBuilder.Query = queryParams.ToString();
 
+                return uriBuilder.Uri;
+            }
+
+            private Uri GetRedirectedUri(Uri requestUri, Uri location)
+            {
+                if (requestUri.AbsolutePath != location.ToString())
+                    return new Uri(uriBuilder.Uri, location);
                 return uriBuilder.Uri;
             }
         }
@@ -620,10 +633,11 @@ namespace Snowflake.Data.Core
                         throw new OperationCanceledException(errorMessage);
                     }
 
+                    requestMessage.RequestUri = updater.Update(errorReason, requestMessage.RequestUri, response?.Headers?.Location);
+
                     // Disposing of the response if not null now that we don't need it anymore
                     response?.Dispose();
 
-                    requestMessage.RequestUri = updater.Update(errorReason);
 
                     logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
 
@@ -674,7 +688,17 @@ namespace Snowflake.Data.Core
             // Request timeout
             (statusCode == 408) ||
             // Too many requests
-            (statusCode == 429);
+            (statusCode == 429) ||
+            IsRedirectHTTPCode(statusCode);
+        }
+
+        static public bool IsRedirectHTTPCode(int statusCode)
+        {
+            return
+            // Temporary redirect
+            (statusCode == 307) ||
+            // Permanent redirect
+            (statusCode == 308);
         }
 
         /// <summary>
