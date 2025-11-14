@@ -29,7 +29,8 @@ namespace Snowflake.Data.Core
 
         private readonly Dictionary<string, string> _tomlToNetPropertiesMapper = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
-            { "DATABASE", "DB" }
+            { "DATABASE", "DB" },
+            { "PROTOCOL", "SCHEME" }
         };
 
         private readonly FileOperations _fileOperations;
@@ -64,7 +65,7 @@ namespace Snowflake.Data.Core
             var isOauth = connectionToml.TryGetValue("authenticator", out var authenticator) && OAuthAuthenticator.IsOAuthAuthenticator(authenticator.ToString());
             foreach (var property in connectionToml.Keys)
             {
-                var propertyValue = (string)connectionToml[property];
+                var propertyValue = ConvertTomlValueToString(connectionToml[property]);
                 if (isOauth && property.Equals("token_file_path", StringComparison.InvariantCultureIgnoreCase))
                 {
                     tokenFilePathValue = propertyValue;
@@ -76,6 +77,15 @@ namespace Snowflake.Data.Core
 
             AppendTokenFromFileIfNotGivenExplicitly(connectionToml, isOauth, connectionStringBuilder, tokenFilePathValue);
             return connectionStringBuilder.ToString();
+        }
+
+        private string ConvertTomlValueToString(object value)
+        {
+            if (value is bool boolValue)
+            {
+                return boolValue.ToString().ToLower();
+            }
+            return value?.ToString() ?? string.Empty;
         }
 
         private void AppendTokenFromFileIfNotGivenExplicitly(TomlTable connectionToml, bool isOauth,
