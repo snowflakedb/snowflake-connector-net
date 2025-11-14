@@ -58,7 +58,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             MockByteResponseForGet(restRequester, DigiCertCrlUrl2, crlBytes);
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
-            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var timeProvider = new Mock<TimeProvider>();
+            var testTime = DateTimeOffset.Parse(DigiCertThisUpdateString).UtcDateTime.AddHours(1);
+            timeProvider.Setup(tp => tp.UtcNow()).Returns(testTime);
+            var verifier = new CertificateRevocationVerifier(config, timeProvider.Object, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
@@ -81,7 +84,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             MockErrorResponseForGet(restRequester, DigiCertCrlUrl2, NotFoundHttpExceptionProvider);
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
-            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var timeProvider = new Mock<TimeProvider>();
+            var testTime = DateTimeOffset.Parse(DigiCertThisUpdateString).UtcDateTime.AddHours(1);
+            timeProvider.Setup(tp => tp.UtcNow()).Returns(testTime);
+            var verifier = new CertificateRevocationVerifier(config, timeProvider.Object, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
@@ -105,7 +111,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             MockByteResponseForGet(restRequester, DigiCertCrlUrl1, notParsableCrlBytes);
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
-            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var timeProvider = new Mock<TimeProvider>();
+            var testTime = DateTimeOffset.Parse(DigiCertThisUpdateString).UtcDateTime.AddHours(1);
+            timeProvider.Setup(tp => tp.UtcNow()).Returns(testTime);
+            var verifier = new CertificateRevocationVerifier(config, timeProvider.Object, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
@@ -141,7 +150,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
-            var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+            var timeProvider = new Mock<TimeProvider>();
+            var testTime = DateTimeOffset.Parse(DigiCertThisUpdateString).UtcDateTime.AddHours(1);
+            timeProvider.Setup(tp => tp.UtcNow()).Returns(testTime);
+            var verifier = new CertificateRevocationVerifier(config, timeProvider.Object, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
             // act
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
@@ -339,6 +351,99 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 .Throws(exceptionProvider);
         }
 
+        [Test]
+        public void TestDownloadedCrlIsExpiredAndNoneValidExists()
+        {
+            // arrange
+            var now = DateTime.UtcNow;
+            var timeProvider = new Mock<TimeProvider>();
+            timeProvider.Setup(tp => tp.UtcNow()).Returns(now);
+            var expectedCrlUrls = new[] { "http://test.crl" };
+
+            var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+            var certSubject = "CN=Test Cert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), new[] { expectedCrlUrls }, certKeys[0]);
+            var parentCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
+            var config = GetHttpConfig();
+
+            var expiredCrl = CertificateGenerator.GenerateCrl(
+                CertificateGenerator.SHA256WithRsaAlgorithm,
+                certKeys[1].Private,
+                rootSubject,
+                now.AddHours(-2),
+                now.AddHours(-1),
+                now.AddHours(-2)
+            );
+            var crlBytes = expiredCrl.GetEncoded();
+
+            var restRequester = new Mock<IRestRequester>();
+            MockByteResponseForGet(restRequester, expectedCrlUrls[0], crlBytes);
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var verifier = new CertificateRevocationVerifier(config, timeProvider.Object, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            // act
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
+
+            // assert
+            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+        }
+
+        [Test]
+        public void TestDownloadedCrlIsExpiredButTheValidExists()
+        {
+            // arrange
+            var now = DateTime.UtcNow;
+            var timeProvider = new Mock<TimeProvider>();
+            timeProvider.Setup(tp => tp.UtcNow()).Returns(now);
+            var expectedCrlUrls = new[] { "http://test.crl" };
+
+            var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+            var certSubject = "CN=Test Cert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), new[] { expectedCrlUrls }, certKeys[0]);
+            var parentCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
+            var config = GetHttpConfig();
+
+            var validCrl = CertificateGenerator.GenerateCrl(
+                CertificateGenerator.SHA256WithRsaAlgorithm,
+                certKeys[1].Private,
+                rootSubject,
+                now.AddDays(-2),
+                now.AddHours(2),      // NextUpdate in future
+                now.AddDays(-2)
+            );
+
+            var expiredCrl = CertificateGenerator.GenerateCrl(
+                CertificateGenerator.SHA256WithRsaAlgorithm,
+                certKeys[1].Private,
+                rootSubject,
+                now.AddHours(-2),
+                now.AddHours(-1),
+                now.AddHours(-2)
+            );
+            var expiredCrlBytes = expiredCrl.GetEncoded();
+
+            var restRequester = new Mock<IRestRequester>();
+            MockByteResponseForGet(restRequester, expectedCrlUrls[0], expiredCrlBytes);
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crlParser = new CrlParser(environmentOperation.Object);
+
+            // Pre-populate cache with valid CRL
+            var cachedCrlObject = crlParser.Create(validCrl, now.AddHours(-25));
+            crlRepository.Set(expectedCrlUrls[0], cachedCrlObject);
+
+            var verifier = new CertificateRevocationVerifier(config, timeProvider.Object, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, crlParser, crlRepository);
+
+            // act
+            var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
+
+            // assert
+            Assert.AreEqual(CertRevocationCheckResult.CertUnrevoked, result);
+        }
+
         private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled, long crlDownloadMaxSize = 209715200) =>
             new HttpClientConfig(
                 null,
@@ -353,7 +458,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 true,
                 checkMode.ToString(),
                 false,
-                false,
+                true,
                 false,
                 10,
                 crlDownloadMaxSize);

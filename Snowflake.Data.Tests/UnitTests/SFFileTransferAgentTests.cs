@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
 
     [TestFixture]
-    class SFFileTransferAgentTest : SFBaseTest
+    class SFFileTransferAgentTest : UnitTestBase
     {
         // Mock data for file metadata
         [ThreadStatic] private static string t_locationStage;
