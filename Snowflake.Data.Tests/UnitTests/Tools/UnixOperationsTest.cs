@@ -27,6 +27,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [OneTimeSetUp]
         public static void BeforeAll()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.Ignore("Unix-specific tests are not run on Windows");
+            }
+            
             if (!Directory.Exists(s_workingDirectory))
             {
                 Directory.CreateDirectory(s_workingDirectory);
@@ -37,6 +42,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [OneTimeTearDown]
         public static void AfterAll()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return;
+            }
+            
             Directory.Delete(s_workingDirectory, true);
         }
 
