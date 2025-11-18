@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 using Mono.Unix;
 using Mono.Unix.Native;
 using NUnit.Framework;
@@ -22,11 +21,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [SetUp]
         public static void Before()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("Unix-specific tests are not run on Windows");
-            }
-            
             if (!Directory.Exists(s_workingDirectory))
             {
                 Directory.CreateDirectory(s_workingDirectory);
@@ -38,11 +32,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [TearDown]
         public static void After()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return;
-            }
-            
             Directory.Delete(s_workingDirectory, true);
         }
 
@@ -106,4 +95,3 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
     }
 }
-

@@ -1,4 +1,4 @@
-// This file is compiled ONLY on Windows (when WINDOWS_BUILD is defined)
+// This file is compiled ONLY when WINDOWS_BUILD is defined
 // It provides stub implementations of Mono.Unix types that throw PlatformNotSupportedException
 // since Unix-specific operations should never be called on Windows (protected by runtime guards)
 
@@ -6,28 +6,29 @@
 
 using System;
 using System.IO;
-using Microsoft.Win32.SafeHandles;
 
 namespace Mono.Unix
 {
+    // These values are NEVER used at runtime on Windows
+    // The real Mono.Unix library is only used on Linux/macOS
+    // Using -1 (stub value) to make it clear these should never be evaluated at runtime
     [Flags]
     public enum FileAccessPermissions
     {
-        None = 0,
-        OtherExecute = 1,
-        OtherWrite = 2,
-        OtherRead = 4,
-        OtherReadWriteExecute = 7,
-        GroupExecute = 8,
-        GroupWrite = 16,
-        GroupRead = 32,
-        GroupReadWriteExecute = 56,
-        UserExecute = 64,
-        UserWrite = 128,
-        UserRead = 256,
-        UserReadWriteExecute = 448,
-        AllPermissions = 511,
-        DefaultPermissions = 420
+        None = -1,
+        OtherExecute = -1,
+        OtherWrite = -1,
+        OtherRead = -1,
+        OtherReadWriteExecute = -1,
+        GroupExecute = -1,
+        GroupWrite = -1,
+        GroupRead = -1,
+        GroupReadWriteExecute = -1,
+        UserExecute = -1,
+        UserWrite = -1,
+        UserRead = -1,
+        UserReadWriteExecute = -1,
+        AllPermissions = -1,
     }
 
     internal class UnixStream : Stream
@@ -129,29 +130,32 @@ namespace Mono.Unix
 
 namespace Mono.Unix.Native
 {
+    // These values are NEVER used at runtime on Windows - they're only passed to Syscall methods that throw
+    // The real Mono.Unix.Native library is only used on Linux/macOS
+    // Using -1 (stub value) to make it clear these should never be evaluated at runtime
     [Flags]
     internal enum FilePermissions
     {
-        S_ISUID = 0x0800,
-        S_ISGID = 0x0400,
-        S_ISVTX = 0x0200,
-        S_IRUSR = 0x0100,
-        S_IWUSR = 0x0080,
-        S_IXUSR = 0x0040,
-        S_IRGRP = 0x0020,
-        S_IWGRP = 0x0010,
-        S_IXGRP = 0x0008,
-        S_IROTH = 0x0004,
-        S_IWOTH = 0x0002,
-        S_IXOTH = 0x0001,
+        S_ISUID = -1,
+        S_ISGID = -1,
+        S_ISVTX = -1,
+        S_IRUSR = -1,
+        S_IWUSR = -1,
+        S_IXUSR = -1,
+        S_IRGRP = -1,
+        S_IWGRP = -1,
+        S_IXGRP = -1,
+        S_IROTH = -1,
+        S_IWOTH = -1,
+        S_IXOTH = -1,
 
-        S_IRWXU = S_IRUSR | S_IWUSR | S_IXUSR,
-        S_IRWXG = S_IRGRP | S_IWGRP | S_IXGRP,
-        S_IRWXO = S_IROTH | S_IWOTH | S_IXOTH,
+        S_IRWXU = -1,
+        S_IRWXG = -1,
+        S_IRWXO = -1,
 
-        ACCESSPERMS = S_IRWXU | S_IRWXG | S_IRWXO,
-        ALLPERMS = S_ISUID | S_ISGID | S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO,
-        DEFFILEMODE = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
+        ACCESSPERMS = -1,
+        ALLPERMS = -1,
+        DEFFILEMODE = -1
     }
 
     internal static class Syscall
@@ -185,4 +189,3 @@ namespace Mono.Unix.Native
 }
 
 #endif
-
