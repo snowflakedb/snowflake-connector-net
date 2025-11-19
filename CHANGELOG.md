@@ -1,9 +1,10 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
-- v5.1.1
+- v5.2.0
     - Fixed CRL validation to reject newly downloaded CRLs if their NextUpdate has already expired.
     - Fixed TIMESTAMP_LTZ datatype to honor session TIMEZONE parameter (ALTER SESSION SET TIMEZONE) instead of using local machine timezone.
+    - Users can now specify non-string values in Toml. For example, `port` can be specified as an integer in the Toml.
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
     - Renew idle sessions in the pool if keep alive is enabled.
