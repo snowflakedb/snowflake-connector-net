@@ -288,6 +288,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
+                    command.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
+                    command.ExecuteNonQuery();
+
                     EnableStructuredTypes(connection);
                     SetTimePrecision(connection, 9);
                     var rawValueString = $"'{dbValue}'::{dbType}";
@@ -328,10 +331,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
             yield return new object[]
             {
-                "2024-07-11 14:20:05 -7:00",
+                "2024-07-11 14:20:05",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTime.Parse("2024-07-11 21:20:05").ToLocalTime()
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11 14:20:05"), DateTimeKind.Local)
             };
             yield return new object[]
             {
@@ -356,10 +359,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
             yield return new object[]
             {
-                "2024-07-11 14:20:05.123456789 -7:00",
+                "2024-07-11 14:20:05.123456789 -2:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTime.Parse("2024-07-11 21:20:05.1234568").ToLocalTime()
+                DateTime.SpecifyKind(DateTime.Parse("2024-07-11 09:20:05.1234568"), DateTimeKind.Local)
             };
             yield return new object[]
             {
@@ -377,10 +380,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
             yield return new object[]
             {
-                "9999-12-31 23:59:59.999999 +13:00",
+                "1883-11-19 00:00:00.000000 -5:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTime.Parse("9999-12-31 10:59:59.999999").ToLocalTime()
+                DateTime.Parse("1883-11-18 21:00:00.000000").ToLocalTime()
             };
             yield return new object[]
             {
@@ -408,6 +411,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
+                    command.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
+                    command.ExecuteNonQuery();
+
                     EnableStructuredTypes(connection);
                     SetTimePrecision(connection, 9);
                     var rawValueString = $"'{dbValue}'::{dbType}";
@@ -450,7 +456,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 "2024-07-11 14:20:05 -7:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTimeOffset.Parse("2024-07-11 14:20:05 -7:00").ToLocalTime()
+                DateTimeOffset.Parse("2024-07-11 14:20:05 -7:00")
             };
             yield return new object[]
             {
@@ -475,10 +481,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
             yield return new object[]
             {
-                "2024-07-11 14:20:05.123456789 -7:00",
+                "2024-07-11 14:20:05.123456789 -2:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTimeOffset.Parse("2024-07-11 14:20:05.1234568 -7:00")
+                DateTimeOffset.Parse("2024-07-11 09:20:05.1234568 -7:00")
             };
             yield return new object[]
             {
@@ -548,56 +554,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.CommandText = $"ALTER SESSION SET TIMESTAMP_OUTPUT_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF{precision} TZHTZM'";
                 command.ExecuteNonQuery();
             }
-        }
-
-        [Test]
-        public void TestStructuredTypeWithTimestampLtzHonorsSessionTimezone()
-        {
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
-            {
-                connection.Open();
-
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = "ALTER SESSION SET TIMEZONE = 'Europe/Warsaw'";
-                    command.ExecuteNonQuery();
-                }
-
-                CreateOrReplaceTable(connection, "test_struct_ltz", new[]
-                {
-                    "id INT",
-                    "data OBJECT(timestamp_value TIMESTAMP_LTZ)"
-                });
-
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = "INSERT INTO test_struct_ltz SELECT 1, {'timestamp_value': '2024-03-20 15:45:30'::TIMESTAMP_LTZ}";
-                    command.ExecuteNonQuery();
-
-                    command.CommandText = "SELECT data FROM test_struct_ltz";
-                    using (var reader = (SnowflakeDbDataReader)command.ExecuteReader())
-                    {
-                        Assert.IsTrue(reader.Read());
-
-                        var obj = reader.GetObject<TestObjectWithTimestampLtz>(0);
-
-                        var warsawTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Europe/Warsaw");
-                        var inputTime = new DateTime(2024, 3, 20, 15, 45, 30, DateTimeKind.Unspecified);
-                        var utcTime = TimeZoneInfo.ConvertTimeToUtc(inputTime, warsawTz);
-                        var expectedInWarsaw = TimeZoneInfo.ConvertTimeFromUtc(utcTime, warsawTz);
-
-                        Assert.AreEqual(expectedInWarsaw, obj.TimestampValue,
-                            "Structured type TIMESTAMP_LTZ should honor session timezone");
-                    }
-                }
-            }
-        }
-
-        [SnowflakeObject(ConstructionMethod = SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)]
-        private class TestObjectWithTimestampLtz
-        {
-            [SnowflakeColumn(Name = "timestamp_value")]
-            public DateTime TimestampValue { get; set; }
         }
     }
 }

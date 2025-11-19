@@ -265,7 +265,7 @@ namespace Snowflake.Data.Core
                             : (long)(decimal.Parse(sValue) / 100);
 
                     DateTime utcDateTime = DateTime.SpecifyKind(epoch.AddTicks(ticksFromEpochLtz), DateTimeKind.Utc);
-                    var sessionTimezone = session.GetSessionTimezone();
+                    var sessionTimezone = session?.GetSessionTimezone() ?? TimeZoneInfo.Local;
                     DateTime ltz = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, sessionTimezone);
                     return new DateTimeOffset(ltz, sessionTimezone.GetUtcOffset(ltz)).ToString("O"); // ISO 8601 format
                 case "TIMESTAMP_NTZ":

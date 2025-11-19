@@ -533,9 +533,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
+                IDbCommand setTimezoneCmd = conn.CreateCommand();
+                setTimezoneCmd.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
+                setTimezoneCmd.ExecuteNonQuery();
+
                 CreateOrReplaceTable(conn, TableName, new[] { "cola TIMESTAMP_LTZ" });
 
-                DateTimeOffset now = DateTimeOffset.Now;
+                DateTimeOffset insertValue = new DateTimeOffset(2024, 1, 15, 18, 30, 45, 123, TimeSpan.Zero);
 
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -544,7 +548,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 var p1 = (SnowflakeDbParameter)cmd.CreateParameter();
                 p1.ParameterName = "1";
-                p1.Value = now;
+                p1.Value = insertValue;
                 p1.DbType = DbType.DateTimeOffset;
                 p1.SFDataType = Core.SFDataType.TIMESTAMP_LTZ;
                 cmd.Parameters.Add(p1);
@@ -561,8 +565,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
                 reader.Close();
 
-                Assert.AreEqual(now, dtOffset);
-                Assert.AreEqual(now.Offset, dtOffset.Offset);
+                Assert.AreEqual(insertValue.UtcDateTime, dtOffset.UtcDateTime);
+                Assert.AreEqual(TimeSpan.FromHours(-8), dtOffset.Offset);
 
                 CloseConnection(conn);
             }
@@ -1583,15 +1587,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [TestCase("2019-01-01 12:12:12.1234567 +0500", 7)]
-        [TestCase("2019-01-01 12:12:12.1234567 +1400", 7)]
-        [TestCase("0001-01-01 00:00:00.0000000 +0000", 9)]
-        [TestCase("9999-12-31 23:59:59.9999999 +0000", 9)]
-        public void TestTimestampLtz(string testValue, int scale)
+        [TestCase("2019-01-01 12:12:12.1234567 +0200", 7, "2019-01-01 02:12:12.1234567 -08:00")]
+        [TestCase("2019-01-01 12:12:12.1234567 +1400", 7, "2018-12-31 14:12:12.1234567 -08:00")]
+        [TestCase("1883-11-19 00:00:00.0000000 +0000", 9, "1883-11-18 16:00:00.0000000 -08:00")] // date when time zones were standardized
+        [TestCase("9999-12-31 23:59:59.9999999 +0000", 9, "9999-12-31 15:59:59.9999999 -08:00")]
+        [TestCase("2019-01-01 12:12:12.1234567", 7, "2019-01-01 12:12:12.1234567 -08:00")]
+        public void TestTimestampLtz(string testValue, int scale, string expectedValue)
         {
             using (var conn = CreateAndOpenConnection())
             {
                 DbCommand cmd = conn.CreateCommand();
+
+                cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
+                cmd.ExecuteNonQuery();
 
                 cmd.CommandText = $"select '{testValue}'::TIMESTAMP_LTZ({scale})";
                 using (SnowflakeDbDataReader reader = (SnowflakeDbDataReader)cmd.ExecuteReader())
@@ -1600,9 +1608,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     reader.Read();
 
-                    var expectedValue = DateTimeOffset.Parse(testValue).ToLocalTime();
+                    var expected = DateTimeOffset.Parse(expectedValue);
 
-                    Assert.AreEqual(expectedValue, reader.GetValue(0));
+                    Assert.AreEqual(expected, reader.GetValue(0));
                 }
 
                 CloseConnection(conn);
