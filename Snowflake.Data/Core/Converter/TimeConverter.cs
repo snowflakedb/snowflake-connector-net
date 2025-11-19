@@ -57,7 +57,7 @@ namespace Snowflake.Data.Core.Converter
                 }
                 if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
-                    return dateTimeOffsetInSessionTz.DateTime;
+                    return DateTime.SpecifyKind(localDateTime, DateTimeKind.Local);
                 }
                 throw new StructuredTypesReadingException($"Cannot read TIMESTAMP_LTZ into {fieldType} type");
             }

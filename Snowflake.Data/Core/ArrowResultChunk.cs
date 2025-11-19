@@ -329,7 +329,8 @@ namespace Snowflake.Data.Core
                         var epoch = _long[columnIndex][_currentRecordIndex];
                         var fraction = _fraction[columnIndex][_currentRecordIndex];
                         var utcDateTime = s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100);
-                        return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime.UtcDateTime, sessionTimezone);
+                        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime.UtcDateTime, sessionTimezone);
+                        return new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
                     }
                     else
                     {
@@ -340,7 +341,8 @@ namespace Snowflake.Data.Core
                         var epoch = ExtractEpoch(value, scale);
                         var fraction = ExtractFraction(value, scale);
                         var utcDateTime = s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100);
-                        return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime.UtcDateTime, sessionTimezone);
+                        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime.UtcDateTime, sessionTimezone);
+                        return new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
                     }
 
                 case SFDataType.TIMESTAMP_NTZ:
