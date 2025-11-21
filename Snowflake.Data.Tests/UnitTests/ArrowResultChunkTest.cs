@@ -182,7 +182,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 var chunk = pair.Key;
                 var type = pair.Value;
                 chunk.Next();
-                Assert.AreEqual(DBNull.Value, chunk.ExtractCell(0, type, 0), $"Expected DBNull.Value for SFDataType: {type}");
+                Assert.AreEqual(DBNull.Value, chunk.ExtractCell(0, type, 0, TimeZoneInfo.Utc), $"Expected DBNull.Value for SFDataType: {type}");
             }
         }
 
@@ -192,7 +192,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = new ArrowResultChunk(_recordBatchOne);
             chunk.Next();
 
-            Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, SFDataType.None, 0));
+            Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, SFDataType.None, 0, TimeZoneInfo.Utc));
         }
 
         [Test]
@@ -417,7 +417,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 chunk.Next();
 
                 var expectedValue = (divider == 0) ? testValue : Convert.ToDecimal(testValue) / divider;
-                Assert.AreEqual(expectedValue, chunk.ExtractCell(0, sfType, scale));
+                Assert.AreEqual(expectedValue, chunk.ExtractCell(0, sfType, scale, TimeZoneInfo.Utc));
             }
         }
         public static RecordBatch PrepareRecordBatch(SFDataType sfType, long scale, object values)

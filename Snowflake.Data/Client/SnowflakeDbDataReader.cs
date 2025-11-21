@@ -264,7 +264,8 @@ namespace Snowflake.Data.Client
                 }
                 var stringValue = GetString(ordinal);
                 var json = stringValue == null ? null : JObject.Parse(stringValue);
-                return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
+                var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json, sessionTimezone);
             }
             catch (Exception e)
             {
@@ -289,7 +290,8 @@ namespace Snowflake.Data.Client
 
                 var stringValue = GetString(ordinal);
                 var json = stringValue == null ? null : JArray.Parse(stringValue);
-                return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
+                var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json, sessionTimezone);
             }
             catch (Exception e)
             {
@@ -312,7 +314,8 @@ namespace Snowflake.Data.Client
 
                 var stringValue = GetString(ordinal);
                 var json = stringValue == null ? null : JObject.Parse(stringValue);
-                return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
+                var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json, sessionTimezone);
             }
             catch (Exception e)
             {
