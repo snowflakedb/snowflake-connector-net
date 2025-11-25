@@ -270,7 +270,7 @@ namespace Snowflake.Data.Client
                 }
                 if (val is Dictionary<string, object> structArray)
                     return ArrowConverter.ConvertObject<T>(structArray);
-                return null;
+                throw new Exception($"Unsupported value type '{val?.GetType().FullName}' at ordinal {ordinal}.");
             }
             catch (Exception e)
             {
@@ -302,7 +302,7 @@ namespace Snowflake.Data.Client
                 }
                 if (val is List<object> listArray)
                     return ArrowConverter.ConvertArray<T>(listArray);
-                return null;
+                throw new Exception($"Unsupported value type '{val?.GetType().FullName}' at ordinal {ordinal}.");
             }
             catch (Exception e)
             {
@@ -332,7 +332,7 @@ namespace Snowflake.Data.Client
                 }
                 if (val is Dictionary<object, object> mapArray)
                     return ArrowConverter.ConvertMap<TKey, TValue>(mapArray);
-                return null;
+                throw new Exception($"Unsupported value type '{val?.GetType().FullName}' at ordinal {ordinal}.");
             }
             catch (Exception e)
             {
