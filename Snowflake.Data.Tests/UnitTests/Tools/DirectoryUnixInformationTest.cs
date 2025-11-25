@@ -6,6 +6,7 @@ using Snowflake.Data.Core.Tools;
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     [TestFixture]
+    [Platform(Exclude = "Win")]
     public class DirectoryUnixInformationTest
     {
         private const long UserId = 5;
