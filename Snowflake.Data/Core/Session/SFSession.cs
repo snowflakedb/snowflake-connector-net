@@ -662,7 +662,22 @@ namespace Snowflake.Data.Core
                         authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
                         RestTimeout = Timeout.InfiniteTimeSpan
                     };
-                    var response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
+
+                    NullDataResponse response = null;
+                    try
+                    {
+                        response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
+                    }
+                    catch (HttpRequestException ex)
+                    {
+                        logger.Error($"heartbeat HTTP request failed for session ID: {sessionId}.", ex);
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error($"heartbeat request failed for session ID: {sessionId}.", ex);
+                        return;
+                    }
 
                     logger.Debug("heartbeat response=" + response);
                     if (response.success)
