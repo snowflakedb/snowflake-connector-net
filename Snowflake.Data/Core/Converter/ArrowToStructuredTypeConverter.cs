@@ -172,8 +172,13 @@ namespace Snowflake.Data.Core.Converter
                 }
                 else if (targetType.IsGenericType)
                 {
-                    var elementType = targetType.GetGenericArguments()[0];
-                    return CallMethod(elementType, objList, nameof(ConvertList));
+                    var genericArgs = targetType.GetGenericArguments();
+                    Console.WriteLine($"genericArgs.Length = {genericArgs.Length}");
+                    if (genericArgs.Length == 1)
+                    {
+                        var elementType = genericArgs[0];
+                        return CallMethod(elementType, objList, nameof(ConvertList));
+                    }
                 }
             }
             return Convert.ChangeType(value, targetType);
