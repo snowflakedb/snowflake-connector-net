@@ -10,7 +10,7 @@ using System.Threading;
 namespace Snowflake.Data.Tests.UnitTests
 {
     [TestFixture, NonParallelizable]
-    public class HttpUtilWiremockRunnerTest
+    public class RedirectUnitTest
     {
         private WiremockRunner _runner;
 
