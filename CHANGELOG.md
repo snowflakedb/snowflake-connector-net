@@ -5,6 +5,7 @@
     - Added multi-targeting support. The appropriate build is selected by NuGet based on target framework and OS.
     - Fixed CRL validation to reject newly downloaded CRLs if their NextUpdate has already expired.
     - Users can now specify non-string values in Toml. For example, `port` can be specified as an integer in the Toml.
+    - Add retry for HTTP 307/308 status codes
     - Added exception handling to session heartbeat to prevent network errors from disrupting background heartbeat check.
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
