@@ -274,6 +274,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform("Win")]
         public void TestWithMocksWindowsSaveCrlWithDirectoryCreation()
         {
             // arrange

@@ -9,8 +9,7 @@ using Snowflake.Data.Tests.Mock;
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     [TestFixture, NonParallelizable]
-    [Platform(Exclude = "Win")]
-    public class DirectoryOperationsUnixTest
+    public class DirectoryOperationsTest
     {
         private static DirectoryOperations s_directoryOperations;
         private static readonly string s_relativeWorkingDirectory = $"directory_operations_test_{Path.GetRandomFileName()}";
@@ -36,6 +35,19 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
+        [Platform("Win")]
+        public void TestDirectoryIsSafeOnWindows()
+        {
+            // arrange
+            var absoluteFilePath = Path.Combine(s_workingDirectory, s_dirName);
+            Directory.CreateDirectory(absoluteFilePath);
+
+            // act and assert
+            Assert.IsTrue(s_directoryOperations.IsDirectorySafe(absoluteFilePath));
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
         public void TestDirectoryIsNotSafeOnNotWindowsWhenPermissionsAreTooBroad(
             [ValueSource(nameof(InsecurePermissions))]
             FileAccessPermissions permissions)
@@ -48,6 +60,18 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
+        public void TestShouldCreateDirectoryWithSafePermissions()
+        {
+            // act
+            s_directoryOperations.CreateDirectory(s_dirAbsolutePath);
+
+            // assert
+            Assert.IsTrue(Directory.Exists(s_dirAbsolutePath));
+            Assert.IsTrue(s_directoryOperations.IsDirectorySafe(s_dirAbsolutePath));
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
         public void TestOwnerIsCurrentUser()
         {
             // arrange
@@ -59,6 +83,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
@@ -70,6 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestDirectoryIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange
