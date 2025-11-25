@@ -1,7 +1,8 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
-- v5.1.1
+- v5.2.0
+    - Added multi-targeting support. The appropriate build is selected by NuGet based on target framework and OS.
     - Fixed CRL validation to reject newly downloaded CRLs if their NextUpdate has already expired.
     - Users can now specify non-string values in Toml. For example, `port` can be specified as an integer in the Toml.
     - Added exception handling to session heartbeat to prevent network errors from disrupting background heartbeat check.

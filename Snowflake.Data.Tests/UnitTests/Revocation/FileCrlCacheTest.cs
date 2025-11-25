@@ -274,6 +274,35 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform("Win")]
+        public void TestWithMocksWindowsSaveCrlWithDirectoryCreation()
+        {
+            // arrange
+            var crl = CreateCrl();
+            var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
+            var fileName = Path.Combine(tempDirectory, HttpUtility.UrlEncode(CrlUrl, Encoding.UTF8));
+            var cacheConfig = new FileCrlCacheConfig(tempDirectory, true, 0, 0);
+            var fileOperations = new Mock<FileOperations>();
+            var unixOperations = new Mock<UnixOperations>();
+            var directoryOperations = new Mock<DirectoryOperations>();
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
+            directoryOperations
+                .Setup(d => d.Exists(tempDirectory))
+                .Returns(false);
+
+            // act
+            cache.Set(CrlUrl, crl);
+
+            // assert
+            directoryOperations.Verify(d => d.Exists(tempDirectory), Times.Once());
+            directoryOperations.Verify(d => d.CreateDirectory(tempDirectory), Times.Once());
+            fileOperations.Verify(f => f.WriteAllBytes(fileName, crl.GetEncoded()), Times.Once());
+            fileOperations.Verify(f => f.SetLastWriteTimeUtc(fileName, s_downloadTime), Times.Once());
+            unixOperations.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
         public void TestWithMocksUnixGetCrl()
         {
             // arrange
@@ -303,6 +332,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestWithMocksUnixGetCrlFailsForReadingError()
         {
             // arrange
@@ -328,6 +358,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestWithMocksUnixSaveCrl()
         {
             // arrange
@@ -358,6 +389,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestWithMocksUnixSaveCrlWithDirectoryCreation()
         {
             // arrange
@@ -389,6 +421,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestWithMocksUnixSaveCrlShouldFixIncorrectPermissions()
         {
             // arrange
@@ -423,6 +456,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         [TestCase(1, 0, 0, 0)]
         [TestCase(0, 1, 0, 0)]
         [TestCase(0, 0, 1, 0)]
