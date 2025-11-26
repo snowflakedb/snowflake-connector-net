@@ -64,6 +64,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase((HttpStatusCode)429, false, true)] // HttpStatusCode.TooManyRequests is not available on .NET Framework
         [TestCase(HttpStatusCode.InternalServerError, false, true)]
         [TestCase(HttpStatusCode.ServiceUnavailable, false, true)]
+        [TestCase(HttpStatusCode.TemporaryRedirect, false, true)]
+        [TestCase((HttpStatusCode)308, false, true)]  // HttpStatusCode.PermanentRedirect is not available on .NET Framework
         public async Task TestIsRetryableHTTPCode(HttpStatusCode statusCode, bool forceRetryOn404, bool expectedIsRetryable)
         {
             var mockHttp = new MockHttpMessageHandler();
