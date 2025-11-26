@@ -7,10 +7,10 @@
     - Users can now specify non-string values in Toml. For example, `port` can be specified as an integer in the Toml.
     - Add retry for HTTP 307/308 status codes
     - Added exception handling to session heartbeat to prevent network errors from disrupting background heartbeat check.
+    - Added support for native arrow structured types.
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
     - Renew idle sessions in the pool if keep alive is enabled.
-    - Added support for native arrow structured types.
     - Added `CRLDOWNLOADMAXSIZE` connection parameter to limit the maximum size of CRL files downloaded during certificate revocation checks.
     - AWS WIF will now also check the application config and AWS profile credential store when determining the current AWS region
     - Allow users to configure the maximum amount of connections via `SERVICE_POINT_CONNECTION_LIMIT` property.
