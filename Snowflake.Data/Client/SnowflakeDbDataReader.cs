@@ -273,6 +273,7 @@ namespace Snowflake.Data.Client
                     case Dictionary<string, object> structArray:
                         return ArrowConverter.ConvertObject<T>(structArray);
                     default:
+                        logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
                         return null;
                 }
             }
@@ -307,6 +308,7 @@ namespace Snowflake.Data.Client
                     case List<object> listArray:
                         return ArrowConverter.ConvertArray<T>(listArray);
                     default:
+                        logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
                         return null;
                 }
             }
@@ -339,6 +341,7 @@ namespace Snowflake.Data.Client
                     case Dictionary<object, object> mapArray:
                         return ArrowConverter.ConvertMap<TKey, TValue>(mapArray);
                     default:
+                        logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
                         return null;
                 }
             }

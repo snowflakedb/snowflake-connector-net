@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Converter
 {
     internal static class ArrowConverter
     {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
+
         internal static T ConvertObject<T>(Dictionary<string, object> dict) where T : new()
         {
             T obj = new T();
@@ -24,7 +27,8 @@ namespace Snowflake.Data.Core.Converter
                         MapPropertiesByOrder(obj, dict, type);
                         break;
                     case SnowflakeObjectConstructionMethod.CONSTRUCTOR:
-                        return MapUsingConstructor<T>(dict, type);
+                        obj = MapUsingConstructor<T>(dict, type);
+                        break;
                 }
             }
             else
@@ -33,7 +37,10 @@ namespace Snowflake.Data.Core.Converter
                 {
                     var prop = type.GetProperty(kvp.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
                     if (prop == null)
+                    {
+                        s_logger.Debug($"Property {kvp.Key} was not found on type {type.Name} and will be skipped.");
                         continue;
+                    }
                     prop.SetValue(obj, ConvertValue(kvp.Value, prop.PropertyType));
                 }
             }
@@ -49,6 +56,10 @@ namespace Snowflake.Data.Core.Converter
                 {
                     var converted = ConvertValue(kvp.Value, prop.PropertyType);
                     prop.SetValue(obj, converted);
+                }
+                else
+                {
+                    s_logger.Debug($"Property {kvp.Key} was not found on type {type.FullName}.");
                 }
             }
         }
@@ -80,6 +91,10 @@ namespace Snowflake.Data.Core.Converter
                     property.SetValue(obj, converted);
                     index++;
                 }
+            }
+            if (index < dict.Count)
+            {
+                s_logger.Debug($"The dictionary does not contain enough fields for the target type {type.FullName}");
             }
         }
 
@@ -172,10 +187,14 @@ namespace Snowflake.Data.Core.Converter
                     }
                     else if (targetType.IsGenericType)
                     {
-                        var elementType = targetType.GetGenericArguments()[0];
-                        return CallMethod(elementType, objList, nameof(ConvertList));
+                        var genericArgs = targetType.GetGenericArguments();
+                        if (genericArgs.Length == 1)
+                        {
+                            var elementType = genericArgs[0];
+                            return CallMethod(elementType, objList, nameof(ConvertList));
+                        }
                     }
-                    goto default;
+                    throw new Exception($"Cannot convert List<object> to {targetType.FullName}");
                 default:
                     return Convert.ChangeType(value, targetType);
             }

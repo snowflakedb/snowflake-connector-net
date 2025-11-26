@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestDataTableLoadOnStructuredArray()
+        public void TestDataTableLoadOnStructuredArrayJsonFormat()
         {
             if (_resultFormat != ResultFormat.JSON)
                 Assert.Ignore("skip test on arrow");
