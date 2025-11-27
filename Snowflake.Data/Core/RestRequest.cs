@@ -278,7 +278,7 @@ namespace Snowflake.Data.Core
         }
     }
 
-    class LoginRequestClientEnv
+    internal class LoginRequestClientEnv
     {
         [JsonProperty(PropertyName = "APPLICATION")]
         internal String application { get; set; }
@@ -301,6 +301,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "APPLICATION_PATH")]
         internal string applicationPath { get; set; }
 
+        [JsonProperty(PropertyName = "MINICORE_VERSION", NullValueHandling = NullValueHandling.Ignore)]
+        internal string minicoreVersion { get; set; }
+
         [JsonIgnore]
         internal string processName { get; set; }
 
@@ -321,7 +324,8 @@ namespace Snowflake.Data.Core
                 netRuntime = netRuntime,
                 netVersion = netVersion,
                 processName = processName,
-                applicationPath = applicationPath
+                applicationPath = applicationPath,
+                minicoreVersion = minicoreVersion
             };
         }
     }

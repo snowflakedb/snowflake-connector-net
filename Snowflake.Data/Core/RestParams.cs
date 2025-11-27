@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Snowflake.Data.Core.MiniCore;
 
 namespace Snowflake.Data.Core
 {
@@ -70,6 +71,7 @@ namespace Snowflake.Data.Core
                 netRuntime = ExtractRuntime(),
                 netVersion = ExtractVersion(),
                 applicationPath = ExtractApplicationPath(),
+                minicoreVersion = ExtractMinicoreVersion(),
             };
 
             DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -116,6 +118,11 @@ namespace Snowflake.Data.Core
             {
                 return "UNKNOWN";
             }
+        }
+
+        private static string ExtractMinicoreVersion()
+        {
+            return SfMiniCore.TryGetVersionSafe();
         }
     }
 }

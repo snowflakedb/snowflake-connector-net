@@ -62,4 +62,15 @@
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include native MiniCore libraries in NuGet package and copy to output for testing -->
+    <Content Include="runtimes\**\*.dll" PackagePath="runtimes\" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="runtimes\**\*.so" PackagePath="runtimes\" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="runtimes\**\*.dylib" PackagePath="runtimes\" CopyToOutputDirectory="PreserveNewest" />
+    
+    <!-- Include .targets file in NuGet package for .NET Framework compatibility -->
+    <None Include="build\Snowflake.Data.targets" Pack="true" PackagePath="build" />
+    <None Include="build\Snowflake.Data.targets" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
 </Project>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    This targets file ensures native MiniCore libraries are copied to output directory
+    for .NET Framework on Windows (.NET Framework only runs on Windows).
+    
+    .NET Core/5+ on all platforms (Windows/Linux/macOS) automatically handle
+    runtimes/ structure and don't need this.
+  -->
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <!-- Windows x64 -->
+    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\runtimes\win-x64\native\*.dll" Condition="'$(Platform)' == 'x64' Or '$(PlatformTarget)' == 'x64'" />
+    <!-- Windows x86 -->
+    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\runtimes\win-x86\native\*.dll" Condition="'$(Platform)' == 'x86' Or '$(PlatformTarget)' == 'x86'" />
+  </ItemGroup>
+
+  <!-- Copy native libraries to output directory before build -->
+  <Target Name="CopyMiniCoreNativeLibraries" BeforeTargets="Build">
+    <Copy SourceFiles="@(NativeLibrary)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="'@(NativeLibrary)' != ''" />
+  </Target>
+</Project>
+
