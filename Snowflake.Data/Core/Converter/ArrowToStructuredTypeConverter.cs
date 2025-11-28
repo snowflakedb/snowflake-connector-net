@@ -178,7 +178,7 @@ namespace Snowflake.Data.Core.Converter
                             return CallMethod(keyType, mapDict, nameof(ConvertMap), valueType);
                         }
                     }
-                    goto default;
+                    throw new Exception($"Cannot convert Dictionary<object, object> to {targetType.FullName}");
                 case List<object> objList:
                     if (targetType.IsArray)
                     {
