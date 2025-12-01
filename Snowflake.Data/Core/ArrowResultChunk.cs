@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Apache.Arrow;
+using Apache.Arrow.Types;
 
 namespace Snowflake.Data.Core
 {
@@ -200,16 +201,26 @@ namespace Snowflake.Data.Core
                 case SFDataType.ARRAY:
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
-                    if (_byte[columnIndex] == null || _int[columnIndex] == null)
+                case SFDataType.MAP:
+                    switch (column)
                     {
-                        _byte[columnIndex] = ((StringArray)column).Values.ToArray();
-                        _int[columnIndex] = ((StringArray)column).ValueOffsets.ToArray();
+                        case StructArray structArray:
+                            return ExtractStructArray(structArray, _currentRecordIndex);
+                        case MapArray mapArray:
+                            return ExtractMapArray(mapArray, _currentRecordIndex);
+                        case ListArray listArray:
+                            return ExtractListArray(listArray, _currentRecordIndex);
+                        default:
+                            if (_byte[columnIndex] == null || _int[columnIndex] == null)
+                            {
+                                _byte[columnIndex] = ((StringArray)column).Values.ToArray();
+                                _int[columnIndex] = ((StringArray)column).ValueOffsets.ToArray();
+                            }
+                            return StringArray.DefaultEncoding.GetString(
+                                _byte[columnIndex],
+                                _int[columnIndex][_currentRecordIndex],
+                                _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
                     }
-                    return StringArray.DefaultEncoding.GetString(
-                        _byte[columnIndex],
-                        _int[columnIndex][_currentRecordIndex],
-                        _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
-
                 case SFDataType.VECTOR:
                     var col = (FixedSizeListArray)column;
                     var values = col.Values;
@@ -367,6 +378,94 @@ namespace Snowflake.Data.Core
         private long ExtractFraction(long value, long scale)
         {
             return ((value % s_powersOf10[scale]) * s_powersOf10[9 - scale]);
+        }
+
+        private object ConvertArrowValue(IArrowArray array, int index)
+        {
+            switch (array)
+            {
+                case StructArray strct: return ExtractStructArray(strct, index);
+                case MapArray map: return ExtractMapArray(map, index);
+                case ListArray list: return ExtractListArray(list, index);
+                case DoubleArray doubles: return doubles.GetValue(index);
+                case FloatArray floats: return floats.GetValue(index);
+                case Decimal128Array decimals: return decimals.GetValue(index);
+                case Date32Array dates: return dates.GetDateTime(index);
+                case Int8Array bytes: return bytes.GetValue(index);
+                case Int16Array shorts: return shorts.GetValue(index);
+                case Int32Array ints: return ints.GetValue(index);
+                case Int64Array longs: return longs.GetValue(index);
+                case BooleanArray booleans: return booleans.GetValue(index);
+                case StringArray strArray:
+                    var str = strArray.GetString(index);
+                    return string.IsNullOrEmpty(str) ? null : str;
+                case BinaryArray binary: return binary.GetBytes(index).ToArray();
+                default:
+                    throw new NotSupportedException($"Unsupported array type: {array.GetType()}");
+            }
+        }
+
+        private Dictionary<string, object> ExtractStructArray(StructArray structArray, int index)
+        {
+            var result = new Dictionary<string, object>();
+            var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
+
+            for (int i = 0; i < structArray.Fields.Count; i++)
+            {
+                var field = structArray.Fields[i];
+                var fieldName = structTypeFields[i].Name;
+                var value = ConvertArrowValue(field, index);
+
+                if (value == null && structArray.Fields.Count == 1)
+                    return null;
+
+                result[fieldName] = value;
+            }
+
+            return result;
+        }
+
+        private List<object> ExtractListArray(ListArray listArray, int index)
+        {
+            int start = listArray.ValueOffsets[index];
+            int end = listArray.ValueOffsets[index + 1];
+
+            if (start == end)
+                return null;
+
+            var values = listArray.Values;
+            var result = new List<object>(end - start);
+
+            for (int i = start; i < end; i++)
+            {
+                result.Add(ConvertArrowValue(values, i));
+            }
+
+            return result;
+        }
+
+        private Dictionary<object, object> ExtractMapArray(MapArray mapArray, int index)
+        {
+            int start = mapArray.ValueOffsets[index];
+            int end = mapArray.ValueOffsets[index + 1];
+
+            if (start == end)
+                return null;
+
+            var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
+            var keyArray = keyValuesArray.Fields[0];
+            var valueArray = keyValuesArray.Fields[1];
+
+            var result = new Dictionary<object, object>();
+
+            for (int i = 0; i < end - start; i++)
+            {
+                var key = ConvertArrowValue(keyArray, i);
+                var value = ConvertArrowValue(valueArray, i);
+                result[key] = value;
+            }
+
+            return result;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -205,6 +206,15 @@ namespace Snowflake.Data.Core
                     case DateTimeOffset ret:
                         obj = ret;
                         break;
+                    case Dictionary<string, object> ret:
+                        obj = ret;
+                        break;
+                    case Dictionary<object, object> ret:
+                        obj = ret;
+                        break;
+                    case List<object> ret:
+                        obj = ret;
+                        break;
                     default:
                         {
                             var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
@@ -388,13 +398,17 @@ namespace Snowflake.Data.Core
         {
             var value = GetObjectInternal(ordinal);
             if (value == DBNull.Value)
-                return (string)value;
+                return null;
 
             var type = sfResultSetMetaData.GetColumnTypeByIndex(ordinal);
             switch (value)
             {
                 case string ret:
                     return ret;
+                case Dictionary<string, object> _:
+                case Dictionary<object, object> _:
+                case List<object> _:
+                    return string.IsNullOrEmpty(value.ToString()) ? null : Newtonsoft.Json.JsonConvert.SerializeObject(value);
                 case DateTime ret:
                     if (type == SFDataType.DATE)
                         return SFDataConverter.ToDateString(ret, sfResultSetMetaData.dateOutputFormat);

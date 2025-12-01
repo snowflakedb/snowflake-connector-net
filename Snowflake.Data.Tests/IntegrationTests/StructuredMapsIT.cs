@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -9,19 +10,33 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
+    [TestFixture(ResultFormat.ARROW, false)]
+    [TestFixture(ResultFormat.ARROW, true)]
+    [TestFixture(ResultFormat.JSON, false)]
     public class StructuredMapsIT : StructuredTypesIT
     {
+        private readonly ResultFormat _resultFormat;
+        private readonly bool _nativeArrow;
+
+        public StructuredMapsIT(ResultFormat resultFormat, bool nativeArrow)
+        {
+            _resultFormat = resultFormat;
+            _nativeArrow = nativeArrow;
+        }
+
         [Test]
         public void TestDataTableLoadOnStructuredMap()
         {
+            if (_resultFormat != ResultFormat.JSON)
+                Assert.Ignore("skip test on arrow");
+
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var key = "city";
                     var value = "San Mateo";
                     var addressAsSFString = $"OBJECT_CONSTRUCT('{key}','{value}')::MAP(VARCHAR, VARCHAR)";
@@ -50,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA', 'zip', '01-234')::MAP(VARCHAR, VARCHAR)";
                     command.CommandText = $"SELECT {addressAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -65,6 +80,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual("San Mateo", map["city"]);
                     Assert.AreEqual("CA", map["state"]);
                     Assert.AreEqual("01-234", map["zip"]);
+
+                    if (_nativeArrow)
+                    {
+                        var arrowString = reader.GetString(0);
+                        EnableStructuredTypes(connection, ResultFormat.JSON);
+                        reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                        Assert.IsTrue(reader.Read());
+                        var jsonString = reader.GetString(0);
+
+                        Assert.IsTrue(JToken.DeepEquals(JObject.Parse(jsonString), JObject.Parse(arrowString)));
+                    }
                 }
             }
         }
@@ -78,7 +104,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var mapSfString = "OBJECT_CONSTRUCT('5','San Mateo', '8', 'CA', '13', '01-234')::MAP(INTEGER, VARCHAR)";
                     command.CommandText = $"SELECT {mapSfString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -106,7 +132,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var mapSfString = "OBJECT_CONSTRUCT('5','San Mateo', '8', 'CA', '13', '01-234')::MAP(INTEGER, VARCHAR)";
                     command.CommandText = $"SELECT {mapSfString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -134,7 +160,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var mapWitObjectValueSFString = @"OBJECT_CONSTRUCT(
                         'Warsaw', OBJECT_CONSTRUCT('prefix', '01', 'postfix', '234'),
                         'San Mateo', OBJECT_CONSTRUCT('prefix', '02', 'postfix', '567')
@@ -164,7 +190,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
                     command.CommandText = $"SELECT {mapWithArrayValueSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -190,7 +216,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
                     command.CommandText = $"SELECT {mapWithArrayValueSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -216,7 +242,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var mapAsSFString = "OBJECT_CONSTRUCT('a', OBJECT_CONSTRUCT('b', 'c'))::MAP(TEXT, MAP(TEXT, TEXT))";
                     command.CommandText = $"SELECT {mapAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -246,7 +272,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     command.CommandText = $"SELECT {valueSfString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.IsTrue(reader.Read());
@@ -271,7 +297,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var nullMapSFString = "NULL::MAP(TEXT,TEXT)";
                     command.CommandText = $"SELECT {nullMapSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -295,7 +321,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var invalidMapSFString = "OBJECT_CONSTRUCT('x', 'y')::OBJECT";
                     command.CommandText = $"SELECT {invalidMapSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
@@ -321,7 +347,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     var invalidMapSFString = @"OBJECT_CONSTRUCT(
                         'x', 'a76dacad-0e35-497b-bf9b-7cd49262b68b',
                         'y', 'z76dacad-0e35-497b-bf9b-7cd49262b68b'
@@ -335,7 +361,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
-                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]"));
+                    if (_resultFormat == ResultFormat.JSON || !_nativeArrow)
+                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]"));
+                    else
+                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting a map."));
                 }
             }
         }
