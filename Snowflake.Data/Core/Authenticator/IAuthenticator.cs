@@ -51,7 +51,7 @@ namespace Snowflake.Data.Core.Authenticator
         protected SFSession session;
 
         // The client environment properties
-        private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CopyUnchangingValues();
+        private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CloneForSession();
 
         /// <summary>
         /// The abstract base for all authenticators.

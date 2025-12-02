@@ -1,4 +1,5 @@
-using System;
+using System.Runtime.InteropServices;
+using System.Threading;
 using NUnit.Framework;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.MiniCore;
@@ -6,80 +7,62 @@ using Snowflake.Data.Core.MiniCore;
 namespace Snowflake.Data.Tests
 {
     [TestFixture]
+    [Category("MiniCore")]
     public class MiniCoreTest : SFBaseTest
     {
-        [Test]
-        [Category("MiniCore")]
-        public void TestMinicoreLoadsSuccessfully()
+        private void WaitForMiniCoreToLoad()
         {
-            // MiniCore library should be available in runtimes/ directory
-            // and loaded automatically via DllImport
+            SfMiniCore.StartLoading();
+            for (int i = 0; i < 100 && !SfMiniCore.IsLoaded; i++)
+                Thread.Sleep(10);
+        }
 
-            var clientEnv = SFEnvironment.ClientEnv;
+        [Test]
+        public void TestMinicoreLoadsAndTelemetryIsCorrect()
+        {
+            WaitForMiniCoreToLoad();
 
-            Assert.IsNotNull(clientEnv, "ClientEnv should not be null");
+            var clientEnv = SFEnvironment.ClientEnv.CloneForSession();
+
             Assert.IsNotNull(clientEnv.minicoreVersion, "minicoreVersion should not be null");
-
-            // Should NOT contain any error
-            Assert.That(clientEnv.minicoreVersion, Does.Not.StartWith("ERROR"),
-                $"MiniCore should load successfully, but got: {clientEnv.minicoreVersion}");
-            Assert.That(clientEnv.minicoreVersion, Does.Not.StartWith("LIBRARY NOT FOUND"),
-                $"MiniCore library should be found in runtimes/, but got: {clientEnv.minicoreVersion}");
-
-            // Should be semantic version (e.g., "0.0.1")
             Assert.That(clientEnv.minicoreVersion, Does.Match(@"^\d+\.\d+\.\d+"),
-                $"MiniCore version should follow semantic versioning pattern, but got: {clientEnv.minicoreVersion}");
+                $"Version should be semver, got: {clientEnv.minicoreVersion}");
+            Assert.IsNotNull(clientEnv.minicoreFileName, "minicoreFileName should not be null");
+            Assert.IsNull(clientEnv.minicoreLoadError, "minicoreLoadError should be null on success");
         }
 
         [Test]
-        [Category("MiniCore")]
-        public void TestMinicoreDirectCallReturnsVersion()
+        public void TestGetExpectedLibraryNameReturnsCorrectName()
         {
-            // Direct call to SfMiniCore.GetFullVersion() should return valid version
+            var name = SfMiniCore.GetExpectedLibraryName();
 
-            var version = SfMiniCore.GetFullVersion();
+            Assert.IsNotNull(name);
 
-            Assert.IsNotNull(version, "GetFullVersion() should not return null");
-            Assert.IsNotEmpty(version, "GetFullVersion() should not return empty string");
-
-            // Should be semantic version
-            Assert.That(version, Does.Match(@"^\d+\.\d+\.\d+"),
-                $"Version should follow semantic versioning pattern, but got: {version}");
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                Assert.AreEqual("sf_mini_core.dll", name);
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                Assert.AreEqual("libsf_mini_core.dylib", name);
+            else
+                Assert.AreEqual("libsf_mini_core.so", name);
         }
 
         [Test]
-        [Category("MiniCore")]
-        public void TestMinicoreVersionConsistency()
+        public void TestLibcDetectorReturnsValidResult()
         {
-            var version1 = SFEnvironment.ClientEnv.minicoreVersion;
-            var version2 = SFEnvironment.ClientEnv.minicoreVersion;
-            var version3 = SfMiniCore.TryGetVersionSafe();
-            var version4 = SfMiniCore.GetFullVersion();
+            var variant = LibcDetector.DetectLibcVariant();
+            var identifier = LibcDetector.GetLibcIdentifier();
 
-            Assert.AreEqual(version1, version2,
-                "Multiple accesses to ClientEnv.minicoreVersion should return the same value");
-            Assert.AreEqual(version1, version3,
-                "ClientEnv.minicoreVersion should match TryGetVersionSafe()");
-            Assert.AreEqual(version1, version4,
-                "ClientEnv.minicoreVersion should match direct GetFullVersion() call");
-        }
-
-        [Test]
-        [Category("MiniCore")]
-        public void TestMinicoreVersionIncludedInClientEnvironment()
-        {
-            // Verify that MiniCore version is included in the client environment
-            // sent during authentication
-
-            var clientEnv = SFEnvironment.ClientEnv;
-
-            Assert.IsNotNull(clientEnv.minicoreVersion,
-                "minicoreVersion should be populated in ClientEnv for authentication");
-
-            // Version should be valid (not an error)
-            Assert.That(clientEnv.minicoreVersion, Does.Match(@"^\d+\.\d+\.\d+"),
-                "minicoreVersion in ClientEnv should be a valid semantic version");
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Assert.That(variant, Is.EqualTo(LibcDetector.LibcVariant.Glibc)
+                    .Or.EqualTo(LibcDetector.LibcVariant.Musl));
+                Assert.That(identifier, Is.EqualTo("glibc").Or.EqualTo("musl"));
+            }
+            else
+            {
+                Assert.AreEqual(LibcDetector.LibcVariant.Unsupported, variant);
+                Assert.IsNull(identifier);
+            }
         }
     }
 }
-
