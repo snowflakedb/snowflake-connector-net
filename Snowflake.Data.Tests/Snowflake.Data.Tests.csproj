@@ -73,4 +73,6 @@
     <DebugType>full</DebugType>
     <DebugSymbols>True</DebugSymbols>
   </PropertyGroup>
+
+  <Import Project="..\Snowflake.Data\build\Snowflake.Data.targets" />
 </Project>

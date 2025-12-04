@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.PackageTests
         {
             _repoRoot = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../../"));
             _artifactsDir = Path.Combine(_repoRoot, "artifacts");
-            _tempDir = Path.Combine(Path.GetTempPath(), $"sf_mc_test_{Guid.NewGuid():N}"[..30]);
+            _tempDir = Path.Combine(Path.GetTempPath(), $"sf_mc_test_{Guid.NewGuid():N}".Substring(0, 30));
 
             Directory.CreateDirectory(_artifactsDir);
             Directory.CreateDirectory(_tempDir);
@@ -32,6 +32,7 @@ namespace Snowflake.Data.Tests.PackageTests
         }
 
         [Test]
+        [Timeout(300_000)]
         public void TestMiniCoreLoadsFromNugetPackage()
         {
             // 1. Pack NuGet

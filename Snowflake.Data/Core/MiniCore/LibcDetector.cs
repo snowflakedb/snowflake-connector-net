@@ -50,7 +50,7 @@ namespace Snowflake.Data.Core.MiniCore
                     Logger.Debug($"Detected glibc version: {version}");
                     return LibcVariant.Glibc;
                 }
-                
+
                 Logger.Debug("gnu_get_libc_version returned null, assuming glibc");
                 return LibcVariant.Glibc;
             }
