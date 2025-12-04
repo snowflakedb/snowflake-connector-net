@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net481;net8.0;net8.0-windows</TargetFrameworks>
     <Title>Snowflake.Data</Title>
     <PackageId>Snowflake.Data</PackageId>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -13,9 +13,14 @@
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Authors>Snowflake</Authors>
-    <Version>5.1.0</Version>
+    <Version>5.2.0</Version>
     <DebugType>Full</DebugType>
     <LangVersion>8</LangVersion>
+  </PropertyGroup>
+
+  <!-- Define WINDOWS_BUILD for all Windows-specific targets -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows'">
+    <DefineConstants>$(DefineConstants);WINDOWS_BUILD</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,12 +30,27 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="Azure.Storage.Common" Version="12.12.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.5" />
-    <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="Tomlyn.Signed" Version="0.17.0" />
+  </ItemGroup>
+
+  <!-- Mono.Unix dependency ONLY for Unix/Linux platforms (netstandard2.0 and net8.0) -->
+  <!-- NOT included for Windows targets: net481, net8.0-windows -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
+  </ItemGroup>
+
+  <!-- Exclude platform shims from all targets by default (SDK auto-includes all .cs files) -->
+  <ItemGroup>
+    <Compile Remove="PlatformShims\**\*.cs" />
+  </ItemGroup>
+
+  <!-- Include Mono.Unix Windows shim for all Windows targets -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows'">
+    <Compile Include="PlatformShims\MonoUnixWindowsShim.cs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' != 'Release'">
@@ -61,6 +81,10 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Reference Include="System.Web" />
   </ItemGroup>
 
   <ItemGroup>
