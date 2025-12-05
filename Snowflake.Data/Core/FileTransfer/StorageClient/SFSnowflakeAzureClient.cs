@@ -116,7 +116,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (Exception ex)
             {
                 Logger.Error("Blob client unknown get file header error: " + ex.Message);
-                fileMetadata.resultStatus = ex.Message;
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
                 return null;
             }
 
@@ -145,7 +145,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (RequestFailedException ex)
             {
-                fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
+                HandleFileHeaderErr(ex, fileMetadata);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Blob client unknown get file header error: " + ex.Message);
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
                 return null;
             }
 
@@ -172,6 +178,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     key = encryptionData.WrappedContentKey["EncryptedKey"],
                     matDesc = GetMetadataValueCaseInsensitive(response, "matdesc")
                 };
+            }
+
+            if (fileMetadata.stageInfo.isClientSideEncrypted && encryptionMetadata == null)
+            {
+                Logger.Error("File is expected to be client-side encrypted but no encryption metadata found.");
             }
 
             return new FileHeader
@@ -236,7 +247,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (Exception ex)
             {
                 Logger.Error("Blob client unknown upload error: " + ex.Message);
-                fileMetadata.resultStatus = ex.Message;
+                fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                 return;
             }
 
@@ -265,7 +276,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 {
                     Metadata = metadata
                 };
-                blobClient.UploadAsync(fileBytesStream, uploadOptions, cancellationToken).ConfigureAwait(false);
+                await blobClient.UploadAsync(fileBytesStream, uploadOptions, cancellationToken).ConfigureAwait(false);
             }
             catch (RequestFailedException ex)
             {
@@ -276,7 +287,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (Exception ex)
             {
                 Logger.Error("Blob client unknown upload error: " + ex.Message);
-                fileMetadata.resultStatus = ex.Message;
+                fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                 return;
             }
 
@@ -364,7 +375,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 File.Delete(fullDstPath);
                 Logger.Error("Blob client unknown download error: " + ex.Message);
-                fileMetadata.resultStatus = ex.Message;
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
                 return;
             }
 
@@ -404,7 +415,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 File.Delete(fullDstPath);
                 Logger.Error("Blob client unknown download error: " + ex.Message);
-                fileMetadata.resultStatus = ex.Message;
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
                 return;
             }
 
@@ -449,7 +460,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 String error = $"Unexpected HTTP status for file upload operation: {ex.Status}";
                 Logger.Error(error);
-                fileMetadata.resultStatus = error;
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
             return fileMetadata;
         }
@@ -470,7 +481,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 String error = $"Unexpected HTTP status for file download operation: {ex.Status}";
                 Logger.Error(error);
-                fileMetadata.resultStatus = error;
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
             return fileMetadata;
         }
