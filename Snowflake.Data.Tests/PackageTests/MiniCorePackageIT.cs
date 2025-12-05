@@ -4,6 +4,10 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 
+// Build NuGet, create a fresh consumer app, install the
+// packaged connector, and run it to ensure MiniCore ships and loads correctly.
+// Unit tests do not cover the nuget packaging step.
+
 namespace Snowflake.Data.Tests.PackageTests
 {
     [TestFixture]
@@ -103,12 +107,11 @@ namespace Snowflake.Data.Tests.PackageTests
             if (!process.WaitForExit(timeoutMs))
             {
                 try { process.Kill(); } catch { }
-                var partialOutput = outputBuilder.ToString() + Environment.NewLine + "ERROR (Partial):" + Environment.NewLine + errorBuilder.ToString();
+                var partialOutput = outputBuilder + Environment.NewLine + "ERROR (Partial):" + Environment.NewLine + errorBuilder;
                 TestContext.Progress.WriteLine($"Command timed out! Partial output:\n{partialOutput}");
                 throw new TimeoutException($"Command '{command} {args}' timed out after {timeoutMs}ms");
             }
 
-            // Wait for stream readers to finish (should be quick after exit)
             outputWaitHandle.WaitOne(1000);
             errorWaitHandle.WaitOne(1000);
 

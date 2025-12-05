@@ -98,18 +98,14 @@
     <None Include="build\Snowflake.Data.targets" Pack="true" PackagePath="buildTransitive" />
   </ItemGroup>
 
-  <!-- Windows: also copy DLL to output root (runtime doesn't find it in runtimes/ subfolder) -->
+  <!-- Windows: also copy DLL to output root (runtime doesn't find it in runtimes/ subfolder for .NET framework) -->
   <Target Name="CopyMiniCoreToOutput" AfterTargets="Build" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <Message Importance="High" Text="CopyMiniCoreToOutput: Checking architecture for copying native DLLs..." />
-    <!-- Use MSBuild properties for architecture detection similar to .targets file -->
     <PropertyGroup>
         <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(PlatformTarget)' == 'x64'">x64</SfLocalArch>
         <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-arm64' Or '$(PlatformTarget)' == 'ARM64'">arm64</SfLocalArch>
         <SfLocalArch Condition="'$(SfLocalArch)' == ''">x64</SfLocalArch>
     </PropertyGroup>
 
-    <Message Importance="High" Text="CopyMiniCoreToOutput: Detected Arch=$(SfLocalArch), OutputPath=$(OutputPath)" />
-    
     <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-x64\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'x64'" />
     <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-arm64\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'arm64'" />
   </Target>

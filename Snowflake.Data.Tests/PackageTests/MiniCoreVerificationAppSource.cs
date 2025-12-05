@@ -1,6 +1,7 @@
 using System;
 using Snowflake.Data.Client;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace MinicoreVerifyApp
 {
@@ -30,26 +31,42 @@ namespace MinicoreVerifyApp
 
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var probe = new ProbeLogger();
             SnowflakeDbLoggerConfig.SetCustomLogger(probe);
 
+            var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = "account=dummy;user=dummy;password=dummy;host=localhost;scheme=http;connection_timeout=5";
+
             try
             {
-                using (var conn = new SnowflakeDbConnection())
+                var openTask = conn.OpenAsync();
+                var completed = await Task.WhenAny(openTask, Task.Delay(TimeSpan.FromSeconds(6)));
+
+                if (completed == openTask)
                 {
-                    conn.ConnectionString = "account=dummy;user=dummy;password=dummy;host=localhost;scheme=http";
-                    conn.Open(); 
+                    // Re-throw any exception from the open attempt to keep the same behavior.
+                    await openTask;
+                }
+                else
+                {
+                    Console.WriteLine("[PROBE] WARNING: Connection attempt timed out; continuing.");
                 }
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                // We only need the connector to initialize MiniCore; network success is not required.
+            }
 
             if (!probe.MiniCoreLoaded)
             {
                 Console.WriteLine("[PROBE] FAILURE: MiniCore load message not detected.");
                 Environment.Exit(1);
             }
+
+            Console.WriteLine("[PROBE] SUCCESS: Exiting verification app.");
+            Environment.Exit(0);
         }
     }
 }
