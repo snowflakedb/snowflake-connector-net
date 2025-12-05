@@ -215,8 +215,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the POST/PUT request
                 fileBytesStream.Position = 0;
-                blobClient.Upload(fileBytesStream, overwrite: true);
-                blobClient.SetMetadata(metadata);
+                var uploadOptions = new BlobUploadOptions
+                {
+                    Metadata = metadata
+                };
+                blobClient.Upload(fileBytesStream, uploadOptions);
             }
             catch (RequestFailedException ex)
             {
@@ -245,8 +248,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the POST/PUT request
                 fileBytesStream.Position = 0;
-                await blobClient.UploadAsync(fileBytesStream, true, cancellationToken).ConfigureAwait(false);
-                blobClient.SetMetadata(metadata);
+                var uploadOptions = new BlobUploadOptions
+                {
+                    Metadata = metadata
+                };
+                blobClient.UploadAsync(fileBytesStream, uploadOptions, cancellationToken).ConfigureAwait(false);
             }
             catch (RequestFailedException ex)
             {
