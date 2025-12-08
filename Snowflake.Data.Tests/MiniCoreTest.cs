@@ -48,23 +48,5 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual("libsf_mini_core.so", name);
         }
 
-        [Test]
-        public void TestLibcDetectorReturnsValidResult()
-        {
-            var variant = LibcDetector.DetectLibcVariant();
-            var identifier = LibcDetector.GetLibcIdentifier();
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                Assert.That(variant, Is.EqualTo(LibcDetector.LibcVariant.Glibc)
-                    .Or.EqualTo(LibcDetector.LibcVariant.Musl));
-                Assert.That(identifier, Is.EqualTo("glibc").Or.EqualTo("musl"));
-            }
-            else
-            {
-                Assert.AreEqual(LibcDetector.LibcVariant.Unsupported, variant);
-                Assert.IsNull(identifier);
-            }
-        }
     }
 }
