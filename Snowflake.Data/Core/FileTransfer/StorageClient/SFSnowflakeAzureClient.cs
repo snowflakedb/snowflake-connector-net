@@ -434,7 +434,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             else
             {
-                Logger.Error($"Unexpected HTTP status for file header operation: {ex.Status}");
+                Logger.Error($"Unexpected HTTP status for file header operation: {ex.Status} {ex.ErrorCode}");
                 fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
             return fileMetadata;
@@ -442,23 +442,36 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
         private SFFileMetadata HandleUploadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
+            // 400
             if (ex.Status == (int)HttpStatusCode.BadRequest)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
             }
+            // 401
             else if (ex.Status == (int)HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
+            // 403, 500, 503
             else if (ex.Status == (int)HttpStatusCode.Forbidden ||
                 ex.Status == (int)HttpStatusCode.InternalServerError ||
                 ex.Status == (int)HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             }
+            // other possible Azure blob service error codes: 404, 409, 412, 416
+            else if (ex.Status == (int)HttpStatusCode.NotFound ||
+                     ex.Status == 409 || // Conflict
+                     ex.Status == (int)HttpStatusCode.PreconditionFailed ||
+                     ex.Status == (int)HttpStatusCode.RequestedRangeNotSatisfiable)
+            {
+                String error = $"Unrecoverable HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
+                Logger.Error(error);
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+            }
             else
             {
-                String error = $"Unexpected HTTP status for file upload operation: {ex.Status}";
+                String error = $"Unexpected HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
                 Logger.Error(error);
                 fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
@@ -479,7 +492,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             else
             {
-                String error = $"Unexpected HTTP status for file download operation: {ex.Status}";
+                String error = $"Unexpected HTTP status for file download operation: {ex.Status} {ex.ErrorCode}";
                 Logger.Error(error);
                 fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
