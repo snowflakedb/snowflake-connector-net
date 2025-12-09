@@ -110,7 +110,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (RequestFailedException ex)
             {
-                fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
+                HandleFileHeaderErr(ex, fileMetadata);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Blob client unknown get file header error: " + ex.Message);
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
                 return null;
             }
 
@@ -139,7 +145,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (RequestFailedException ex)
             {
-                fileMetadata = HandleFileHeaderErr(ex, fileMetadata);
+                HandleFileHeaderErr(ex, fileMetadata);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Blob client unknown get file header error: " + ex.Message);
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
                 return null;
             }
 
@@ -166,6 +178,11 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                     key = encryptionData.WrappedContentKey["EncryptedKey"],
                     matDesc = GetMetadataValueCaseInsensitive(response, "matdesc")
                 };
+            }
+
+            if (fileMetadata.stageInfo.isClientSideEncrypted && encryptionMetadata == null)
+            {
+                Logger.Error("File is expected to be client-side encrypted but no encryption metadata found.");
             }
 
             return new FileHeader
@@ -215,12 +232,22 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the POST/PUT request
                 fileBytesStream.Position = 0;
-                blobClient.Upload(fileBytesStream, overwrite: true);
-                blobClient.SetMetadata(metadata);
+                var uploadOptions = new BlobUploadOptions
+                {
+                    Metadata = metadata
+                };
+                blobClient.Upload(fileBytesStream, uploadOptions);
             }
             catch (RequestFailedException ex)
             {
-                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
+                Logger.Error("Blob client request upload error: " + ex.Message);
+                HandleUploadFileErr(ex, fileMetadata);
+                return;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Blob client unknown upload error: " + ex.Message);
+                fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                 return;
             }
 
@@ -245,12 +272,22 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 // Issue the POST/PUT request
                 fileBytesStream.Position = 0;
-                await blobClient.UploadAsync(fileBytesStream, true, cancellationToken).ConfigureAwait(false);
-                blobClient.SetMetadata(metadata);
+                var uploadOptions = new BlobUploadOptions
+                {
+                    Metadata = metadata
+                };
+                await blobClient.UploadAsync(fileBytesStream, uploadOptions, cancellationToken).ConfigureAwait(false);
             }
             catch (RequestFailedException ex)
             {
-                fileMetadata = HandleUploadFileErr(ex, fileMetadata);
+                Logger.Error("Blob client request upload error: " + ex.Message);
+                HandleUploadFileErr(ex, fileMetadata);
+                return;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Blob client unknown upload error: " + ex.Message);
+                fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
                 return;
             }
 
@@ -331,7 +368,14 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (RequestFailedException ex)
             {
                 File.Delete(fullDstPath);
-                fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
+                HandleDownloadFileErr(ex, fileMetadata);
+                return;
+            }
+            catch (Exception ex)
+            {
+                File.Delete(fullDstPath);
+                Logger.Error("Blob client unknown download error: " + ex.Message);
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
                 return;
             }
 
@@ -364,7 +408,14 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             catch (RequestFailedException ex)
             {
                 File.Delete(fullDstPath);
-                fileMetadata = HandleDownloadFileErr(ex, fileMetadata);
+                HandleDownloadFileErr(ex, fileMetadata);
+                return;
+            }
+            catch (Exception ex)
+            {
+                File.Delete(fullDstPath);
+                Logger.Error("Blob client unknown download error: " + ex.Message);
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
                 return;
             }
 
@@ -383,6 +434,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             else
             {
+                Logger.Error($"Unexpected HTTP status for file header operation: {ex.Status} {ex.ErrorCode}");
                 fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
             return fileMetadata;
@@ -390,19 +442,38 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
 
         private SFFileMetadata HandleUploadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
         {
+            // 400
             if (ex.Status == (int)HttpStatusCode.BadRequest)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
             }
+            // 401
             else if (ex.Status == (int)HttpStatusCode.Unauthorized)
             {
                 fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
             }
+            // 403, 500, 503
             else if (ex.Status == (int)HttpStatusCode.Forbidden ||
                 ex.Status == (int)HttpStatusCode.InternalServerError ||
                 ex.Status == (int)HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+            }
+            // other possible Azure blob service error codes: 404, 409, 412, 416
+            else if (ex.Status == (int)HttpStatusCode.NotFound ||
+                     ex.Status == 409 || // Conflict
+                     ex.Status == (int)HttpStatusCode.PreconditionFailed ||
+                     ex.Status == (int)HttpStatusCode.RequestedRangeNotSatisfiable)
+            {
+                String error = $"Unrecoverable HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
+                Logger.Error(error);
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+            }
+            else
+            {
+                String error = $"Unexpected HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
+                Logger.Error(error);
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
             return fileMetadata;
         }
@@ -418,6 +489,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 ex.Status == (int)HttpStatusCode.ServiceUnavailable)
             {
                 fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+            }
+            else
+            {
+                String error = $"Unexpected HTTP status for file download operation: {ex.Status} {ex.ErrorCode}";
+                Logger.Error(error);
+                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             }
             return fileMetadata;
         }

@@ -1,6 +1,8 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- v5.2.1
+    - Bug fix: Fix the extremely rare case where intermittent network issues during uploads to Azure Blob Storage prevent metadata updates
 - v5.2.0
     - Added multi-targeting support. The appropriate build is selected by NuGet based on target framework and OS.
     - Fixed CRL validation to reject newly downloaded CRLs if their NextUpdate has already expired.
