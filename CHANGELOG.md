@@ -2,7 +2,7 @@
 
 # Changelog
 - v5.2.1
-    - Bug fix: Fixed for intermittent network issues during Azure blob storage upload operations
+    - Bug fix: Fix the extremely rare case where intermittent network issues during uploads to Azure Blob Storage prevent metadata updates
 - v5.2.0
     - Added multi-targeting support. The appropriate build is selected by NuGet based on target framework and OS.
     - Fixed CRL validation to reject newly downloaded CRLs if their NextUpdate has already expired.
