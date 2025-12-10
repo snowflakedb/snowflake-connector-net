@@ -23,14 +23,14 @@ namespace Snowflake.Data.Tests
             WaitForMiniCoreToLoad();
 
             var clientEnv = SFEnvironment.ClientEnv.CloneForSession();
-            var loadError = SfMiniCore.GetLoadError();
+            var loadLogs = SfMiniCore.GetLoadLogs();
 
             Assert.IsNotNull(clientEnv.minicoreVersion,
-                $"minicoreVersion should not be null. LoadError: {loadError}, FileName: {clientEnv.minicoreFileName}");
+                $"minicoreVersion should not be null. LoadLogs: {loadLogs}, FileName: {clientEnv.minicoreFileName}");
             Assert.That(clientEnv.minicoreVersion, Does.Match(@"^\d+\.\d+\.\d+"),
                 $"Version should be semver, got: {clientEnv.minicoreVersion}");
             Assert.IsNotNull(clientEnv.minicoreFileName, "minicoreFileName should not be null");
-            Assert.IsNull(clientEnv.minicoreLoadError, $"minicoreLoadError should be null on success, got: {clientEnv.minicoreLoadError}");
+            Assert.IsNotNull(clientEnv.minicoreLogs, $"minicoreLogs should not be null, got: {clientEnv.minicoreLogs}");
         }
 
         [Test]
