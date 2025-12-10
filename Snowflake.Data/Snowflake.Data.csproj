@@ -103,10 +103,12 @@
     <PropertyGroup>
         <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(PlatformTarget)' == 'x64'">x64</SfLocalArch>
         <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-arm64' Or '$(PlatformTarget)' == 'ARM64'">arm64</SfLocalArch>
+        <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-x86' Or '$(PlatformTarget)' == 'x86'">x86</SfLocalArch>
         <SfLocalArch Condition="'$(SfLocalArch)' == ''">x64</SfLocalArch>
     </PropertyGroup>
 
     <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-x64\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'x64'" />
     <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-arm64\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'arm64'" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-x86\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'x86'" />
   </Target>
 </Project>

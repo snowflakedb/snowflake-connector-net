@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core.MiniCore
         internal class LoadResult
         {
             public string Version { get; set; }
-            public string Error { get; set; }
+            public string Logs { get; set; }
         }
 
         public static void StartLoading()
@@ -40,13 +40,13 @@ namespace Snowflake.Data.Core.MiniCore
             return s_loadTask is { IsCompleted: true } ? s_loadTask.Result.Version : null;
         }
 
-        public static string GetLoadError()
+        public static string GetLoadLogs()
         {
             if (s_loadTask == null)
                 return "NOT_STARTED";
             if (!s_loadTask.IsCompleted)
                 return "NOT_YET_LOADED";
-            return s_loadTask.Result.Error;
+            return s_loadTask.Result.Logs;
         }
 
         public static string GetExpectedLibraryName()
@@ -79,21 +79,27 @@ namespace Snowflake.Data.Core.MiniCore
 
         private static LoadResult LoadVersionInternal()
         {
+            var logs = new StringBuilder();
             try
             {
                 var version = GetFullVersion();
-                Logger.Info($"MiniCore loaded successfully. Version: {version}");
-                return new LoadResult { Version = version, Error = null };
+                logs.Append($"MiniCore loaded successfully. Version: {version}");
+                Logger.Debug(logs.ToString());
+                return new LoadResult { Version = version, Logs = logs.ToString() };
             }
             catch (DllNotFoundException ex)
             {
-                Logger.Error($"MiniCore library not found. Error: {ex.Message}");
-                return new LoadResult { Version = null, Error = $"LIBRARY NOT FOUND: {ex.Message}" };
+                logs.Append($"MiniCore library not found. Error: {ex.Message}");
+                var maskedLogs = SecretDetector.MaskSecrets(logs.ToString()).maskedText;
+                Logger.Debug(maskedLogs);
+                return new LoadResult { Version = null, Logs = maskedLogs };
             }
             catch (Exception ex)
             {
-                Logger.Error($"Failed to load MiniCore: {ex.Message}", ex);
-                return new LoadResult { Version = null, Error = $"ERROR: {ex.Message}" };
+                logs.Append($"Failed to load MiniCore: {ex.Message}");
+                var maskedLogs = SecretDetector.MaskSecrets(logs.ToString()).maskedText;
+                Logger.Debug(maskedLogs, ex);
+                return new LoadResult { Version = null, Logs = maskedLogs };
             }
         }
     }

@@ -308,8 +308,8 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "CORE_FILE_NAME", NullValueHandling = NullValueHandling.Ignore)]
         internal string minicoreFileName { get; set; }
 
-        [JsonProperty(PropertyName = "CORE_LOAD_ERROR", NullValueHandling = NullValueHandling.Ignore)]
-        internal string minicoreLoadError { get; set; }
+        [JsonProperty(PropertyName = "CORE_LOGS", NullValueHandling = NullValueHandling.Ignore)]
+        internal string minicoreLogs { get; set; }
 
         [JsonProperty(PropertyName = "ISA", NullValueHandling = NullValueHandling.Ignore)]
         internal string isa { get; set; }
@@ -338,7 +338,7 @@ namespace Snowflake.Data.Core
                 isa = isa,
                 minicoreVersion = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.TryGetVersionSafe(),
                 minicoreFileName = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.GetExpectedLibraryName(),
-                minicoreLoadError = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.GetLoadError()
+                minicoreLogs = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.GetLoadLogs()
             };
         }
     }
