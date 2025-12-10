@@ -3,6 +3,8 @@
 # Changelog
 - v5.3.0
     - Introduced shared library for extended telemetry to identify and prepare testing platform for native rust extensions.
+- v5.2.1
+    - Bug fix: Fix the extremely rare case where intermittent network issues during uploads to Azure Blob Storage prevent metadata updates
 - v5.2.0
     - Added multi-targeting support. The appropriate build is selected by NuGet based on target framework and OS.
     - Fixed CRL validation to reject newly downloaded CRLs if their NextUpdate has already expired.
