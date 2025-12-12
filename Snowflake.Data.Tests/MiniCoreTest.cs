@@ -8,8 +8,23 @@ namespace Snowflake.Data.Tests
 {
     [TestFixture]
     [Category("MiniCore")]
+    [NonParallelizable]
     public class MiniCoreTest : SFBaseTest
     {
+        private bool _originalMinicoreState;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _originalMinicoreState = SFEnvironment.MinicoreDisabled;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            SFEnvironment.MinicoreDisabled = _originalMinicoreState;
+        }
+
         private void WaitForMiniCoreToLoad()
         {
             SfMiniCore.StartLoading();
@@ -23,14 +38,26 @@ namespace Snowflake.Data.Tests
             WaitForMiniCoreToLoad();
 
             var clientEnv = SFEnvironment.ClientEnv.CloneForSession();
-            var loadLogs = SfMiniCore.GetLoadLogs();
+            var loadError = SfMiniCore.GetLoadError();
 
             Assert.IsNotNull(clientEnv.minicoreVersion,
-                $"minicoreVersion should not be null. LoadLogs: {loadLogs}, FileName: {clientEnv.minicoreFileName}");
+                $"minicoreVersion should not be null. LoadError: {loadError}, FileName: {clientEnv.minicoreFileName}");
             Assert.That(clientEnv.minicoreVersion, Does.Match(@"^\d+\.\d+\.\d+"),
                 $"Version should be semver, got: {clientEnv.minicoreVersion}");
             Assert.IsNotNull(clientEnv.minicoreFileName, "minicoreFileName should not be null");
-            Assert.IsNotNull(clientEnv.minicoreLogs, $"minicoreLogs should not be null, got: {clientEnv.minicoreLogs}");
+            Assert.IsNull(clientEnv.minicoreLoadError, $"minicoreLoadError should be null on success, got: {clientEnv.minicoreLoadError}");
+        }
+
+        [Test]
+        public void TestMinicoreIsDisabledInTelemetry()
+        {
+            SFEnvironment.MinicoreDisabled = true;
+            var clientEnv = SFEnvironment.ClientEnv.CloneForSession();
+
+            Assert.IsNull(clientEnv.minicoreVersion, "Version should be null when disabled");
+            Assert.IsNull(clientEnv.minicoreFileName, "FileName should be null when disabled");
+            Assert.AreEqual(SfMiniCore.DISABLED_MESSAGE,
+                clientEnv.minicoreLoadError, "Should report disabled message");
         }
 
         [Test]

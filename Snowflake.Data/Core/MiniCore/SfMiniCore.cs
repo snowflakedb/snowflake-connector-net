@@ -9,6 +9,10 @@ namespace Snowflake.Data.Core.MiniCore
     internal static class SfMiniCore
     {
         private const string LibraryName = "sf_mini_core";
+        internal const string DISABLED_MESSAGE = "Minicore is disabled with SNOWFLAKE_DISABLE_MINICORE env variable";
+        internal const string FAILED_TO_LOAD_MESSAGE = "Failed to load binary";
+        internal const string STILL_LOADING_MESSAGE = "Minicore is still loading";
+
         private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<object>();
         private static readonly object s_lock = new object();
         private static Task<LoadResult> s_loadTask;
@@ -20,6 +24,7 @@ namespace Snowflake.Data.Core.MiniCore
         {
             public string Version { get; set; }
             public string Logs { get; set; }
+            public string Error { get; set; }
         }
 
         public static void StartLoading()
@@ -40,13 +45,11 @@ namespace Snowflake.Data.Core.MiniCore
             return s_loadTask is { IsCompleted: true } ? s_loadTask.Result.Version : null;
         }
 
-        public static string GetLoadLogs()
+        public static string GetLoadError()
         {
-            if (s_loadTask == null)
-                return "NOT_STARTED";
-            if (!s_loadTask.IsCompleted)
-                return "NOT_YET_LOADED";
-            return s_loadTask.Result.Logs;
+            if (s_loadTask == null || !s_loadTask.IsCompleted)
+                return STILL_LOADING_MESSAGE;
+            return s_loadTask.Result.Error;
         }
 
         public static string GetExpectedLibraryName()
@@ -85,21 +88,21 @@ namespace Snowflake.Data.Core.MiniCore
                 var version = GetFullVersion();
                 logs.Append($"MiniCore loaded successfully. Version: {version}");
                 Logger.Debug(logs.ToString());
-                return new LoadResult { Version = version, Logs = logs.ToString() };
+                return new LoadResult { Version = version, Logs = logs.ToString(), Error = null };
             }
             catch (DllNotFoundException ex)
             {
                 logs.Append($"MiniCore library not found. Error: {ex.Message}");
                 var maskedLogs = SecretDetector.MaskSecrets(logs.ToString()).maskedText;
                 Logger.Debug(maskedLogs);
-                return new LoadResult { Version = null, Logs = maskedLogs };
+                return new LoadResult { Version = null, Logs = maskedLogs, Error = FAILED_TO_LOAD_MESSAGE };
             }
             catch (Exception ex)
             {
                 logs.Append($"Failed to load MiniCore: {ex.Message}");
                 var maskedLogs = SecretDetector.MaskSecrets(logs.ToString()).maskedText;
                 Logger.Debug(maskedLogs, ex);
-                return new LoadResult { Version = null, Logs = maskedLogs };
+                return new LoadResult { Version = null, Logs = maskedLogs, Error = FAILED_TO_LOAD_MESSAGE };
             }
         }
     }

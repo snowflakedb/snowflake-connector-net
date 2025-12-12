@@ -62,7 +62,7 @@ namespace Snowflake.Data.Core
 
     internal class SFEnvironment
     {
-        internal static bool MinicoreDisabled { get; }
+        internal static bool MinicoreDisabled { get; set; }
 
         static SFEnvironment()
         {
