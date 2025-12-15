@@ -100,6 +100,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
         [TestCase(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.ERROR)]  // Any error that isn't the above will return ResultStatus.ERROR
+        [TestCase(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
+        [TestCase(HttpStatusCode.RequestTimeout, ResultStatus.ERROR)]
+        [TestCase(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
+        [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.ERROR)]
         public void TestGetFileHeader(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -190,6 +194,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
+        [TestCase(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
+        [TestCase(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
         public void TestUploadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -202,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .Returns<string>((blobName) =>
                     {
                         var mockBlobClient = new Mock<BlobClient>();
-                        mockBlobClient.Setup(client => client.Upload(It.IsAny<Stream>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                        mockBlobClient.Setup(client => client.Upload(It.IsAny<Stream>(), It.IsAny<BlobUploadOptions>(), It.IsAny<CancellationToken>()))
                         .Returns(() => MockAzureClient.createMockResponseForBlobContentInfo(key));
 
                         return mockBlobClient.Object;
@@ -234,6 +240,9 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
+        [TestCase(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
+        [TestCase(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
+        [TestCase(HttpStatusCode.TemporaryRedirect, ResultStatus.ERROR)]
         public async Task TestUploadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -246,7 +255,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     .Returns<string>((blobName) =>
                     {
                         var mockBlobClient = new Mock<BlobClient>();
-                        mockBlobClient.Setup(client => client.UploadAsync(It.IsAny<Stream>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                        mockBlobClient.Setup(client => client.UploadAsync(It.IsAny<Stream>(), It.IsAny<BlobUploadOptions>(), It.IsAny<CancellationToken>()))
                         .Returns(async () => await Task.Run(() => MockAzureClient.createMockResponseForBlobContentInfo(key)).ConfigureAwait(false));
 
                         return mockBlobClient.Object;
@@ -287,6 +296,9 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
+        [TestCase(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
+        [TestCase(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
+        [TestCase(HttpStatusCode.NotFound, ResultStatus.ERROR)]
         public void TestDownloadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -334,6 +346,9 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
+        [TestCase(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
+        [TestCase(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
+        [TestCase(HttpStatusCode.RequestTimeout, ResultStatus.ERROR)]
         public async Task TestDownloadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange

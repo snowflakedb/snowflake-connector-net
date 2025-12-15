@@ -7,6 +7,8 @@ using Snowflake.Data.Tests.Mock;
 using System.Net;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
+using System.Net.Http;
+using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -374,6 +376,37 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var secondLoginRequest = restRequester.LoginRequests.Dequeue();
             Assert.AreEqual(secondLoginRequest.data.Token, testToken);
+        }
+
+        [Test]
+        public void TestHeartbeatHandlesException()
+        {
+            // arrange
+            var mockRequester = new Mock<IMockRestRequester>();
+
+            mockRequester.Setup(x => x.Post<LoginResponse>(It.IsAny<IRestRequest>()))
+                .Returns(new LoginResponse
+                {
+                    data = new LoginResponseData
+                    {
+                        token = "test_token",
+                        masterToken = "master_token",
+                        sessionId = "test_session_id",
+                        authResponseSessionInfo = new SessionInfo(),
+                        nameValueParameter = new System.Collections.Generic.List<NameValueParameter>()
+                    },
+                    success = true
+                });
+
+            mockRequester.Setup(x => x.Post<NullDataResponse>(It.IsAny<IRestRequest>()))
+                .Throws(new HttpRequestException("Network error"));
+
+            var connectionString = "account=test;user=test;password=test;";
+            var session = new SFSession(connectionString, new SessionPropertiesContext(), mockRequester.Object);
+            session.Open();
+
+            // act & assert
+            Assert.DoesNotThrow(() => session.heartbeat());
         }
     }
 }

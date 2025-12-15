@@ -89,7 +89,7 @@ namespace Snowflake.Data.Core.Converter
             return objectBuilder.Build();
         }
 
-        private static SnowflakeObjectConstructionMethod GetConstructionMethod(Type type)
+        internal static SnowflakeObjectConstructionMethod GetConstructionMethod(Type type)
         {
             return type.GetCustomAttributes(false)
                 .Where(attribute => attribute.GetType() == typeof(SnowflakeObject))

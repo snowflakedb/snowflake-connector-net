@@ -194,13 +194,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestFailIfDirectoryCreationFails()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Assert.Ignore("skip test on Windows");
-            }
-
             // arrange
             t_easyLoggingProvider
                 .Setup(provider => provider.ProvideConfig(ConfigPath))
@@ -341,6 +337,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestSettingLogPermissionValue()
         {
             // arrange

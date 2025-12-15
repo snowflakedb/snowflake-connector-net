@@ -262,10 +262,21 @@ namespace Snowflake.Data.Client
                 {
                     throw new StructuredTypesReadingException($"Method GetObject<{typeof(T)}> can be used only for structured object");
                 }
-                var stringValue = GetString(ordinal);
-                var json = stringValue == null ? null : JObject.Parse(stringValue);
-                var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
-                return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json, sessionTimezone);
+                var val = GetValue(ordinal);
+                switch (val)
+                {
+                    case string stringValue:
+                        {
+                            var json = JObject.Parse(stringValue);
+                            var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                            return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json, sessionTimezone);
+                        }
+                    case Dictionary<string, object> structArray:
+                        return ArrowConverter.ConvertObject<T>(structArray);
+                    default:
+                        logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
+                        return null;
+                }
             }
             catch (Exception e)
             {
@@ -287,11 +298,21 @@ namespace Snowflake.Data.Client
                 {
                     throw new StructuredTypesReadingException($"Method GetArray<{typeof(T)}> can be used only for structured array or vector types");
                 }
-
-                var stringValue = GetString(ordinal);
-                var json = stringValue == null ? null : JArray.Parse(stringValue);
-                var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
-                return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json, sessionTimezone);
+                var val = GetValue(ordinal);
+                switch (val)
+                {
+                    case string stringValue:
+                        {
+                            var json = stringValue == null ? null : JArray.Parse(stringValue);
+                            var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                            return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json, sessionTimezone);
+                        }
+                    case List<object> listArray:
+                        return ArrowConverter.ConvertArray<T>(listArray);
+                    default:
+                        logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
+                        return null;
+                }
             }
             catch (Exception e)
             {
@@ -311,11 +332,21 @@ namespace Snowflake.Data.Client
                 {
                     throw new StructuredTypesReadingException($"Method GetMap<{typeof(TKey)}, {typeof(TValue)}> can be used only for structured map");
                 }
-
-                var stringValue = GetString(ordinal);
-                var json = stringValue == null ? null : JObject.Parse(stringValue);
-                var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
-                return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json, sessionTimezone);
+                var val = GetValue(ordinal);
+                switch (val)
+                {
+                    case string stringValue:
+                        {
+                            var json = stringValue == null ? null : JObject.Parse(stringValue);
+                            var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                            return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json, sessionTimezone);
+                        }
+                    case Dictionary<object, object> mapArray:
+                        return ArrowConverter.ConvertMap<TKey, TValue>(mapArray);
+                    default:
+                        logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
+                        return null;
+                }
             }
             catch (Exception e)
             {

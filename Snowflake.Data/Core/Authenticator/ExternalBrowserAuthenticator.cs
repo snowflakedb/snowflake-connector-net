@@ -103,7 +103,7 @@ namespace Snowflake.Data.Core.Authenticator
                 }
                 else
                 {
-                    throw e;
+                    throw;
                 }
             }
         }
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Core.Authenticator
                 }
                 else
                 {
-                    throw e;
+                    throw;
                 }
             }
         }

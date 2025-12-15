@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Snowflake.Data.Core.MiniCore;
 
 namespace Snowflake.Data.Core
 {
@@ -61,8 +62,16 @@ namespace Snowflake.Data.Core
 
     internal class SFEnvironment
     {
+        internal static bool MinicoreDisabled { get; set; }
+
         static SFEnvironment()
         {
+            MinicoreDisabled = IsMinicoreDisabled();
+            if (!MinicoreDisabled)
+            {
+                SfMiniCore.StartLoading();
+            }
+
             ClientEnv = new LoginRequestClientEnv()
             {
                 processName = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
@@ -70,6 +79,7 @@ namespace Snowflake.Data.Core
                 netRuntime = ExtractRuntime(),
                 netVersion = ExtractVersion(),
                 applicationPath = ExtractApplicationPath(),
+                isa = RuntimeInformation.ProcessArchitecture.ToString().ToLower()
             };
 
             DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -116,6 +126,13 @@ namespace Snowflake.Data.Core
             {
                 return "UNKNOWN";
             }
+        }
+
+        private static bool IsMinicoreDisabled()
+        {
+            string val = Environment.GetEnvironmentVariable("SF_DISABLE_MINICORE");
+            if (string.IsNullOrEmpty(val)) return false;
+            return val.Equals("true", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
