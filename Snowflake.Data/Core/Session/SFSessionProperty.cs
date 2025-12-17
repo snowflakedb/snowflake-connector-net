@@ -251,12 +251,12 @@ namespace Snowflake.Data.Core
                 try
                 {
                     SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-                                typeof(SFSessionProperty), keys[i].ToUpper());
+                                typeof(SFSessionProperty), keys[i].ToUpperInvariant());
                     properties.Add(p, values[i]);
                 }
                 catch (ArgumentException)
                 {
-                    if (s_noLongerSupportedProperties.Contains(keys[i].ToUpper()))
+                    if (s_noLongerSupportedProperties.Contains(keys[i].ToUpperInvariant()))
                         logger.Warn($"Property {keys[i]} is no longer supported. Its value is ignored.");
                     else
                         logger.Debug($"Property {keys[i]} not found - ignored.");
@@ -760,7 +760,7 @@ namespace Snowflake.Data.Core
                             {
 
                                 var sessionProperty = (SFSessionProperty)Enum.Parse(
-                                    typeof(SFSessionProperty), propertyName);
+                                    typeof(SFSessionProperty), propertyName.ToUpperInvariant());
                                 if (!properties.ContainsKey(sessionProperty))
                                 {
                                     properties.Add(sessionProperty, "");
