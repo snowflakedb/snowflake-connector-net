@@ -29,24 +29,41 @@ RUN dnf -y install java-11-openjdk java-11-openjdk-devel
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 ENV PATH=${JAVA_HOME}/bin:${PATH}
 
-# Install .NET SDKs (install all common versions for now)
-RUN rpm -Uvh https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm
+# Accept build argument for target frameworks  
+ARG DOTNET_TARGET_FRAMEWORKS="net8.0"
 
-# Install .NET SDKs - for now install common versions, will make dynamic later
-RUN echo "Installing commonly needed .NET SDKs" && \
-    dnf -y install dotnet-sdk-6.0 || echo "Warning: Could not install dotnet-sdk-6.0" && \
-    dnf -y install dotnet-sdk-7.0 || echo "Warning: Could not install dotnet-sdk-7.0" && \
-    dnf -y install dotnet-sdk-8.0 || echo "Warning: Could not install dotnet-sdk-8.0" && \
-    dnf -y install dotnet-sdk-9.0 || echo "Warning: Could not install dotnet-sdk-9.0"
+# Install .NET SDKs (Microsoft repository)
+RUN rpm -Uvh https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
+    dnf clean all && \
+    dnf makecache
 
-# Verify .NET and Java installations
+# Debug: Show what's being installed
+RUN echo "=== Requested .NET frameworks: ${DOTNET_TARGET_FRAMEWORKS} ===" && \
+    echo "=== Available .NET packages ===" && \
+    dnf list available | grep dotnet-sdk | head -10
+
+# Install .NET SDKs dynamically based on requested frameworks
+RUN frameworks="${DOTNET_TARGET_FRAMEWORKS}" && \
+    echo "Installing .NET SDKs for: $frameworks" && \
+    for fw in $frameworks; do \
+        case $fw in \
+            net6.0) echo "Installing .NET 6.0 SDK" && dnf -y install dotnet-sdk-6.0 ;; \
+            net7.0) echo "Installing .NET 7.0 SDK" && dnf -y install dotnet-sdk-7.0 ;; \
+            net8.0) echo "Installing .NET 8.0 SDK" && dnf -y install dotnet-sdk-8.0 ;; \
+            net9.0) echo "Installing .NET 9.0 SDK" && dnf -y install dotnet-sdk-9.0 ;; \
+            *) echo "Unknown framework: $fw, installing .NET 8.0 as fallback" && dnf -y install dotnet-sdk-8.0 ;; \
+        esac; \
+    done
+
+# Verify .NET and Java installations - fail build if missing
 RUN echo "=== .NET Installation ===" && \
     dotnet --version && \
     dotnet --list-sdks && \
     dotnet --list-runtimes && \
     echo "=== Java Installation ===" && \
     java -version && \
-    javac -version
+    javac -version && \
+    echo "=== Installation verification complete ==="
 
 # workspace
 RUN mkdir -p /home/user && \
