@@ -36,7 +36,7 @@ ENV GOSU_PATH=${GOSU_URL}
 RUN curl -o /usr/local/bin/gosu -SL $GOSU_PATH
 RUN chmod +x /usr/local/bin/gosu
 
-COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ../../../image/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 WORKDIR /home/user
