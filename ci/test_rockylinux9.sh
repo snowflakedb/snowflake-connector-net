@@ -65,23 +65,20 @@ cd $CONNECTOR_DIR
 # Set environment flags like existing Docker tests (WIF pattern)
 export SF_ENABLE_EXPERIMENTAL_AUTHENTICATION=true
 
-echo "[Info] Building solution with SF_PUBLIC_ENVIRONMENT (container pattern)"
-dotnet restore snowflake-connector-net.sln
+# Follow the EXACT Windows platform build pattern (that works)
 cd Snowflake.Data.Tests
-dotnet restore
-
-# Single build with SF_PUBLIC_ENVIRONMENT for all frameworks (simplified approach)
-echo "[Info] Building test project with SF_PUBLIC_ENVIRONMENT for all frameworks"
-dotnet build --configuration Release '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
-
-# Single test run per framework (following existing Docker patterns exactly)
 for TARGET_FRAMEWORK in ${DOTNET_TARGET_FRAMEWORKS}; do
-    echo "[Info] Testing with .NET ${TARGET_FRAMEWORK} (single run like existing Docker tests)"
+    echo "[Info] Testing with .NET ${TARGET_FRAMEWORK} (following Windows platform pattern exactly)"
+    
+    # Follow Windows pattern: restore then build with -f flag (not --framework)
+    echo "[Info] Building test project for ${TARGET_FRAMEWORK} with SF_PUBLIC_ENVIRONMENT (Windows pattern)"
+    dotnet restore
+    dotnet build -f ${TARGET_FRAMEWORK} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
     
     # Single dotnet test run like authentication/WIF/component Docker tests
+    echo "[Info] Running tests for ${TARGET_FRAMEWORK}"
     dotnet test \
         --framework ${TARGET_FRAMEWORK} \
-        --configuration Release \
         --logger "console;verbosity=detailed" \
         --logger "trx;LogFileName=test_results_${TARGET_FRAMEWORK}.trx" \
         --collect:"XPlat Code Coverage" \

@@ -1,0 +1,59 @@
+FROM rockylinux:9
+
+USER root
+WORKDIR /
+
+# update OS and install basic tools (adapted from centos7 dockerfile)
+RUN dnf -y update && \
+    dnf -y install epel-release && \
+    dnf -y install git && \
+    dnf -y install which && \
+    dnf -y install zstd && \
+    dnf -y install jq && \
+    dnf -y install --allowerasing curl && \
+    dnf -y install gcc && \
+    dnf -y install gcc-c++ && \
+    dnf -y install make && \
+    dnf clean all
+
+# gosu (updated version for Rocky Linux 9)
+ARG GOSU_URL=https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64
+RUN curl -o /usr/local/bin/gosu -SL "$GOSU_URL"
+RUN chmod +x /usr/local/bin/gosu
+
+# Install build tools (Rocky Linux 9 has modern gcc, no devtoolset needed)
+RUN dnf -y groupinstall 'Development Tools'
+
+# Install Java 11 (required for Wiremock)
+RUN dnf -y install java-11-openjdk java-11-openjdk-devel
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+ENV PATH=${JAVA_HOME}/bin:${PATH}
+
+# Install .NET SDKs (install all common versions for now)
+RUN rpm -Uvh https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm
+
+# Install .NET SDKs - for now install common versions, will make dynamic later
+RUN echo "Installing commonly needed .NET SDKs" && \
+    dnf -y install dotnet-sdk-6.0 || echo "Warning: Could not install dotnet-sdk-6.0" && \
+    dnf -y install dotnet-sdk-7.0 || echo "Warning: Could not install dotnet-sdk-7.0" && \
+    dnf -y install dotnet-sdk-8.0 || echo "Warning: Could not install dotnet-sdk-8.0" && \
+    dnf -y install dotnet-sdk-9.0 || echo "Warning: Could not install dotnet-sdk-9.0"
+
+# Verify .NET and Java installations
+RUN echo "=== .NET Installation ===" && \
+    dotnet --version && \
+    dotnet --list-sdks && \
+    dotnet --list-runtimes && \
+    echo "=== Java Installation ===" && \
+    java -version && \
+    javac -version
+
+# workspace
+RUN mkdir -p /home/user && \
+    chmod 777 /home/user
+WORKDIR /home/user
+
+# entry point
+COPY ci/image/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
