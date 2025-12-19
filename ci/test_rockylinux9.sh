@@ -60,54 +60,33 @@ echo "[Info] Fetching wiremock"
 mkdir -p ${CONNECTOR_DIR}/.wiremock
 curl -f https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/3.11.0/wiremock-standalone-3.11.0.jar --output ${CONNECTOR_DIR}/.wiremock/wiremock-standalone.jar
 
-# Build the solution and test project with SF_PUBLIC_ENVIRONMENT
 cd $CONNECTOR_DIR
-echo "[Info] Building Snowflake .NET Connector solution"
-dotnet restore snowflake-connector-net.sln
-dotnet build snowflake-connector-net.sln --configuration Release --no-restore
 
-echo "[Info] Building test project with SF_PUBLIC_ENVIRONMENT constant"
+# Set environment flags like existing Docker tests (WIF pattern)
+export SF_ENABLE_EXPERIMENTAL_AUTHENTICATION=true
+
+echo "[Info] Building solution with SF_PUBLIC_ENVIRONMENT (container pattern)"
+dotnet restore snowflake-connector-net.sln
 cd Snowflake.Data.Tests
+dotnet restore
+
+# Single build with SF_PUBLIC_ENVIRONMENT for all frameworks (simplified approach)
+echo "[Info] Building test project with SF_PUBLIC_ENVIRONMENT for all frameworks"
 dotnet build --configuration Release '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
 
-# Run tests (we're now in Snowflake.Data.Tests directory)
-if [[ "$is_old_driver" == "true" ]]; then
-    # Old Driver Test (if applicable for .NET)
-    echo "[Info] Running old connector tests"
-    dotnet test --configuration Release --framework ${SETUP_TARGET_FRAMEWORK} --logger "console;verbosity=detailed" --filter "Category!=Integration"
-else
-    for TARGET_FRAMEWORK in ${DOTNET_TARGET_FRAMEWORKS}; do
-        echo "[Info] Testing with .NET ${TARGET_FRAMEWORK}"
-        
-        # Check if the target framework is supported by the project (rebuild for this framework with constants)
-        echo "[Info] Building test project for ${TARGET_FRAMEWORK} with SF_PUBLIC_ENVIRONMENT"
-        if ! dotnet build --framework ${TARGET_FRAMEWORK} --configuration Release --verbosity quiet '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'; then
-            echo "[Warning] Target framework ${TARGET_FRAMEWORK} compilation failed, skipping..."
-            continue
-        fi
-        
-        echo "[Info] Running unit tests for ${TARGET_FRAMEWORK}"
-        dotnet test \
-            --configuration Release \
-            --framework ${TARGET_FRAMEWORK} \
-            --logger "console;verbosity=detailed" \
-            --logger "trx;LogFileName=test_results_${TARGET_FRAMEWORK}.trx" \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ${CONNECTOR_DIR}/TestResults/${TARGET_FRAMEWORK} \
-            --filter "Category!=Integration&Category!=IPv6" \
-            --no-build
-        
-        echo "[Info] Running integration tests for ${TARGET_FRAMEWORK}"
-        dotnet test \
-            --configuration Release \
-            --framework ${TARGET_FRAMEWORK} \
-            --logger "console;verbosity=detailed" \
-            --logger "trx;LogFileName=integration_test_results_${TARGET_FRAMEWORK}.trx" \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ${CONNECTOR_DIR}/TestResults/${TARGET_FRAMEWORK}/Integration \
-            --filter "Category=Integration" \
-            --no-build
-    done
-fi
+# Single test run per framework (following existing Docker patterns exactly)
+for TARGET_FRAMEWORK in ${DOTNET_TARGET_FRAMEWORKS}; do
+    echo "[Info] Testing with .NET ${TARGET_FRAMEWORK} (single run like existing Docker tests)"
+    
+    # Single dotnet test run like authentication/WIF/component Docker tests
+    dotnet test \
+        --framework ${TARGET_FRAMEWORK} \
+        --configuration Release \
+        --logger "console;verbosity=detailed" \
+        --logger "trx;LogFileName=test_results_${TARGET_FRAMEWORK}.trx" \
+        --collect:"XPlat Code Coverage" \
+        --results-directory ${CONNECTOR_DIR}/TestResults \
+        --no-build
+done
 
 echo "[Info] All tests completed successfully"

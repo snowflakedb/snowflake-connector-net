@@ -286,11 +286,11 @@ jobs:
             8.0.x
             9.0.x
           dotnet-quality: 'ga'
-      - name: Build .NET solution for Rocky Linux
+      - name: Show .NET info
         shell: bash
         run: |
-          dotnet restore snowflake-connector-net.sln
-          dotnet build snowflake-connector-net.sln --configuration Release --no-restore -p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT
+          dotnet --version
+          dotnet --list-sdks
       - name: Setup parameters file
         shell: bash
         env:
