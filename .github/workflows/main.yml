@@ -273,7 +273,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Rocky Linux 9 supports all .NET versions (same as other platforms)
         dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
@@ -285,6 +284,7 @@ jobs:
             6.0.x
             7.0.x
             8.0.x
+            9.0.x
           dotnet-quality: 'ga'
       - name: Build .NET solution for Rocky Linux
         shell: bash

@@ -60,30 +60,34 @@ echo "[Info] Fetching wiremock"
 mkdir -p ${CONNECTOR_DIR}/.wiremock
 curl -f https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/3.11.0/wiremock-standalone-3.11.0.jar --output ${CONNECTOR_DIR}/.wiremock/wiremock-standalone.jar
 
-# Build the solution
+# Build the solution and test project with SF_PUBLIC_ENVIRONMENT
 cd $CONNECTOR_DIR
 echo "[Info] Building Snowflake .NET Connector solution"
 dotnet restore snowflake-connector-net.sln
-dotnet build snowflake-connector-net.sln --configuration Release --no-restore -p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT
+dotnet build snowflake-connector-net.sln --configuration Release --no-restore
 
-# Run tests
+echo "[Info] Building test project with SF_PUBLIC_ENVIRONMENT constant"
+cd Snowflake.Data.Tests
+dotnet build --configuration Release '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
+
+# Run tests (we're now in Snowflake.Data.Tests directory)
 if [[ "$is_old_driver" == "true" ]]; then
     # Old Driver Test (if applicable for .NET)
     echo "[Info] Running old connector tests"
-    # This would be equivalent to olddriver tests for .NET
-    dotnet test Snowflake.Data.Tests/Snowflake.Data.Tests.csproj --configuration Release --framework ${SETUP_TARGET_FRAMEWORK} --logger "console;verbosity=detailed" --filter "Category!=Integration"
+    dotnet test --configuration Release --framework ${SETUP_TARGET_FRAMEWORK} --logger "console;verbosity=detailed" --filter "Category!=Integration"
 else
     for TARGET_FRAMEWORK in ${DOTNET_TARGET_FRAMEWORKS}; do
         echo "[Info] Testing with .NET ${TARGET_FRAMEWORK}"
         
-        # Check if the target framework is supported by the project
-        if ! dotnet build Snowflake.Data.Tests/Snowflake.Data.Tests.csproj --framework ${TARGET_FRAMEWORK} --configuration Release --verbosity quiet --no-restore -p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT; then
+        # Check if the target framework is supported by the project (rebuild for this framework with constants)
+        echo "[Info] Building test project for ${TARGET_FRAMEWORK} with SF_PUBLIC_ENVIRONMENT"
+        if ! dotnet build --framework ${TARGET_FRAMEWORK} --configuration Release --verbosity quiet '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'; then
             echo "[Warning] Target framework ${TARGET_FRAMEWORK} compilation failed, skipping..."
             continue
         fi
         
         echo "[Info] Running unit tests for ${TARGET_FRAMEWORK}"
-        dotnet test Snowflake.Data.Tests/Snowflake.Data.Tests.csproj \
+        dotnet test \
             --configuration Release \
             --framework ${TARGET_FRAMEWORK} \
             --logger "console;verbosity=detailed" \
@@ -94,7 +98,7 @@ else
             --no-build
         
         echo "[Info] Running integration tests for ${TARGET_FRAMEWORK}"
-        dotnet test Snowflake.Data.Tests/Snowflake.Data.Tests.csproj \
+        dotnet test \
             --configuration Release \
             --framework ${TARGET_FRAMEWORK} \
             --logger "console;verbosity=detailed" \
