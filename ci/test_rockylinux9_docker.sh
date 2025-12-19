@@ -15,14 +15,16 @@ DOTNET_TARGET_FRAMEWORKS=${1:-"net8.0"}
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CONNECTOR_DIR="$( dirname "${THIS_DIR}")"
 WORKSPACE=${WORKSPACE:-${CONNECTOR_DIR}}
-source $THIS_DIR/scripts/set_base_image.sh
+
+# Set base image directly
+BASE_IMAGE=${BASE_IMAGE_ROCKYLINUX9:-rockylinux:9}
+echo "[Info] Using base image: $BASE_IMAGE"
 
 cd $THIS_DIR/scripts/docker/connector_test_rockylinux9
 
 CONTAINER_NAME=test_dotnetconnector_rockylinux9
 
 echo "[Info] Building docker image for Rocky Linux 9"
-BASE_IMAGE=${BASE_IMAGE_ROCKYLINUX9:-rockylinux:9}
 GOSU_URL=https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64
 
 docker build --pull -t ${CONTAINER_NAME}:1.0 --build-arg BASE_IMAGE=$BASE_IMAGE --build-arg GOSU_URL="$GOSU_URL" . -f Dockerfile
