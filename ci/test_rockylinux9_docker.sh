@@ -20,14 +20,14 @@ WORKSPACE=${WORKSPACE:-${CONNECTOR_DIR}}
 BASE_IMAGE=${BASE_IMAGE_ROCKYLINUX9:-rockylinux:9}
 echo "[Info] Using base image: $BASE_IMAGE"
 
-cd $THIS_DIR/scripts/docker/connector_test_rockylinux9
-
 CONTAINER_NAME=test_dotnetconnector_rockylinux9
 
 echo "[Info] Building docker image for Rocky Linux 9"
 GOSU_URL=https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64
 
-docker build --pull -t ${CONTAINER_NAME}:1.0 --build-arg BASE_IMAGE=$BASE_IMAGE --build-arg GOSU_URL="$GOSU_URL" . -f Dockerfile
+# Build from repo root so Docker can access ci/image/scripts/entrypoint.sh
+cd $CONNECTOR_DIR
+docker build --pull -t ${CONTAINER_NAME}:1.0 --build-arg BASE_IMAGE=$BASE_IMAGE --build-arg GOSU_URL="$GOSU_URL" . -f ci/scripts/docker/connector_test_rockylinux9/Dockerfile
 
 user_id=$(id -u ${USER})
 docker run --network=host \
