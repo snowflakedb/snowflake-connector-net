@@ -279,7 +279,7 @@ namespace Snowflake.Data.Core
         }
     }
 
-    class LoginRequestClientEnv
+    internal class LoginRequestClientEnv
     {
         [JsonProperty(PropertyName = "APPLICATION")]
         internal String application { get; set; }
@@ -302,6 +302,18 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "APPLICATION_PATH")]
         internal string applicationPath { get; set; }
 
+        [JsonProperty(PropertyName = "CORE_VERSION", NullValueHandling = NullValueHandling.Ignore)]
+        internal string minicoreVersion { get; set; }
+
+        [JsonProperty(PropertyName = "CORE_FILE_NAME", NullValueHandling = NullValueHandling.Ignore)]
+        internal string minicoreFileName { get; set; }
+
+        [JsonProperty(PropertyName = "CORE_LOAD_ERROR", NullValueHandling = NullValueHandling.Ignore)]
+        internal string minicoreLoadError { get; set; }
+
+        [JsonProperty(PropertyName = "ISA", NullValueHandling = NullValueHandling.Ignore)]
+        internal string isa { get; set; }
+
         [JsonIgnore]
         internal string processName { get; set; }
 
@@ -314,7 +326,7 @@ namespace Snowflake.Data.Core
                 application, osVersion, netRuntime, netVersion, certRevocationCheckMode, applicationPath);
         }
 
-        public LoginRequestClientEnv CopyUnchangingValues()
+        public LoginRequestClientEnv CloneForSession()
         {
             return new LoginRequestClientEnv()
             {
@@ -322,7 +334,13 @@ namespace Snowflake.Data.Core
                 netRuntime = netRuntime,
                 netVersion = netVersion,
                 processName = processName,
-                applicationPath = applicationPath
+                applicationPath = applicationPath,
+                isa = isa,
+                minicoreVersion = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.TryGetVersionSafe(),
+                minicoreFileName = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.GetExpectedLibraryName(),
+                minicoreLoadError = SFEnvironment.MinicoreDisabled
+                    ? MiniCore.SfMiniCore.DISABLED_MESSAGE
+                    : MiniCore.SfMiniCore.GetLoadError()
             };
         }
     }

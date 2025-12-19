@@ -13,7 +13,7 @@
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Authors>Snowflake</Authors>
-    <Version>5.2.0</Version>
+    <Version>5.2.1</Version>
     <DebugType>Full</DebugType>
     <LangVersion>8</LangVersion>
   </PropertyGroup>
@@ -86,4 +86,29 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Reference Include="System.Web" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include MiniCore native libraries in NuGet package and copy to output -->
+    <Content Include="runtimes\**\*.dll" Pack="true" PackagePath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="runtimes\**\*.so" Pack="true" PackagePath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="runtimes\**\*.dylib" Pack="true" PackagePath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- Include .targets for .NET Framework compatibility -->
+    <None Include="build\Snowflake.Data.targets" Pack="true" PackagePath="build" />
+    <None Include="build\Snowflake.Data.targets" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
+
+  <!-- Windows: also copy DLL to output root (runtime doesn't find it in runtimes/ subfolder for .NET framework) -->
+  <Target Name="CopyMiniCoreToOutput" AfterTargets="Build" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <PropertyGroup>
+        <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(PlatformTarget)' == 'x64'">x64</SfLocalArch>
+        <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-arm64' Or '$(PlatformTarget)' == 'ARM64'">arm64</SfLocalArch>
+        <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-x86' Or '$(PlatformTarget)' == 'x86'">x86</SfLocalArch>
+        <SfLocalArch Condition="'$(SfLocalArch)' == ''">x64</SfLocalArch>
+    </PropertyGroup>
+
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-x64\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'x64'" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-arm64\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'arm64'" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-x86\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'x86'" />
+  </Target>
 </Project>
