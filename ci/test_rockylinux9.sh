@@ -91,8 +91,7 @@ else
             --collect:"XPlat Code Coverage" \
             --results-directory ${CONNECTOR_DIR}/TestResults/${TARGET_FRAMEWORK} \
             --filter "Category!=Integration&Category!=IPv6" \
-            --no-build \
-            -- DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT
+            --no-build
         
         echo "[Info] Running integration tests for ${TARGET_FRAMEWORK}"
         dotnet test Snowflake.Data.Tests/Snowflake.Data.Tests.csproj \
@@ -103,8 +102,7 @@ else
             --collect:"XPlat Code Coverage" \
             --results-directory ${CONNECTOR_DIR}/TestResults/${TARGET_FRAMEWORK}/Integration \
             --filter "Category=Integration" \
-            --no-build \
-            -- DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT
+            --no-build
     done
 fi
 

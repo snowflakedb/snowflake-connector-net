@@ -1,5 +1,8 @@
 name: DotNet Build and Test
 
+permissions:
+  contents: read
+
 # Triggers the workflow on push or pull request events but only for the master branch
 on:
   push:
@@ -270,8 +273,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Rocky Linux 9 supports multiple .NET versions
-        dotnet: ['net8.0', 'net9.0']
+        # Rocky Linux 9 supports all .NET versions (same as other platforms)
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
     steps:
       - uses: actions/checkout@v4
