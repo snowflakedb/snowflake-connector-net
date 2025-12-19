@@ -263,3 +263,57 @@ jobs:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
           fail_ci_if_error: true
           files: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+
+  test-rockylinux9:
+    name: Test Rocky Linux 9 rockylinux9-${{ matrix.dotnet }}-${{ matrix.cloud_env }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Rocky Linux 9 supports multiple .NET versions
+        dotnet: ['net8.0', 'net9.0']
+        cloud_env: ['AZURE', 'GCP', 'AWS']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            7.0.x
+            8.0.x
+          dotnet-quality: 'ga'
+      - name: Build .NET solution for Rocky Linux
+        shell: bash
+        run: |
+          dotnet restore snowflake-connector-net.sln
+          dotnet build snowflake-connector-net.sln --configuration Release --no-restore -p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT
+      - name: Setup parameters file
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+          .github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Setup private key file
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+          .github/workflows/parameters/rsa_keys/rsa_key_dotnet_${{ matrix.cloud_env }}.p8.gpg > Snowflake.Data.Tests/rsa_key_dotnet_${{ matrix.cloud_env }}.p8
+      - name: Run tests
+        run: ./ci/test_rockylinux9_docker.sh ${DOTNET_TARGET_FRAMEWORKS}
+        env:
+          DOTNET_TARGET_FRAMEWORKS: ${{ matrix.dotnet }}
+          snowflake_cloud_env: ${{ matrix.cloud_env }}
+        shell: bash
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-rockylinux9-${{ matrix.dotnet }}-${{ matrix.cloud_env }}
+          path: |
+            test_results/**/unit_tests_*.trx
+            test_results/**/integration_tests_*.trx
+            TestResults/**/*.coverage
