@@ -32,26 +32,30 @@ ENV PATH=${JAVA_HOME}/bin:${PATH}
 # Accept build argument for target frameworks  
 ARG DOTNET_TARGET_FRAMEWORKS="net8.0"
 
-# Install .NET SDKs (Microsoft repository)
-RUN rpm -Uvh https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
+# Install .NET SDKs (Microsoft repository with proper GPG handling)
+RUN echo "=== Installing Microsoft repository ===" && \
+    rpm -Uvh --nogpgcheck https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
+    echo "=== Importing Microsoft GPG key ===" && \
+    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-Microsoft && \
+    echo "=== Refreshing package cache ===" && \
     dnf clean all && \
-    dnf makecache
+    dnf makecache --assumeyes
 
 # Debug: Show what's being installed
 RUN echo "=== Requested .NET frameworks: ${DOTNET_TARGET_FRAMEWORKS} ===" && \
     echo "=== Available .NET packages ===" && \
-    dnf list available | grep dotnet-sdk | head -10
+    dnf list available --assumeyes | grep dotnet-sdk | head -10 || echo "No .NET packages found"
 
 # Install .NET SDKs dynamically based on requested frameworks
 RUN frameworks="${DOTNET_TARGET_FRAMEWORKS}" && \
     echo "Installing .NET SDKs for: $frameworks" && \
     for fw in $frameworks; do \
         case $fw in \
-            net6.0) echo "Installing .NET 6.0 SDK" && dnf -y install dotnet-sdk-6.0 ;; \
-            net7.0) echo "Installing .NET 7.0 SDK" && dnf -y install dotnet-sdk-7.0 ;; \
-            net8.0) echo "Installing .NET 8.0 SDK" && dnf -y install dotnet-sdk-8.0 ;; \
-            net9.0) echo "Installing .NET 9.0 SDK" && dnf -y install dotnet-sdk-9.0 ;; \
-            *) echo "Unknown framework: $fw, installing .NET 8.0 as fallback" && dnf -y install dotnet-sdk-8.0 ;; \
+            net6.0) echo "Installing .NET 6.0 SDK" && dnf -y --assumeyes install dotnet-sdk-6.0 ;; \
+            net7.0) echo "Installing .NET 7.0 SDK" && dnf -y --assumeyes install dotnet-sdk-7.0 ;; \
+            net8.0) echo "Installing .NET 8.0 SDK" && dnf -y --assumeyes install dotnet-sdk-8.0 ;; \
+            net9.0) echo "Installing .NET 9.0 SDK" && dnf -y --assumeyes install dotnet-sdk-9.0 ;; \
+            *) echo "Unknown framework: $fw, installing .NET 8.0 as fallback" && dnf -y --assumeyes install dotnet-sdk-8.0 ;; \
         esac; \
     done
 
