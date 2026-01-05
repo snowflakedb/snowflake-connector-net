@@ -1,15 +1,13 @@
 using System;
-using Newtonsoft.Json;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
-using System.Text;
 using System.Web;
 using System.Linq;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Core.Authenticator.Okta;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -327,57 +325,6 @@ namespace Snowflake.Data.Core.Authenticator
 
             s_logger.Error(errorMessage);
             throw new SnowflakeDbException(lastRetryException, SFError.INTERNAL_ERROR, errorMessage);
-        }
-    }
-
-    internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
-    {
-        private static readonly MediaTypeWithQualityHeaderValue s_jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
-
-        internal IdpTokenRequest JsonBody { get; set; }
-
-        HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
-        {
-            HttpRequestMessage message = newMessage(method, Url);
-            message.Headers.Accept.Add(s_jsonHeader);
-
-            var json = JsonConvert.SerializeObject(JsonBody, JsonUtils.JsonSettings);
-            message.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            return message;
-        }
-    }
-
-    class IdpTokenRequest
-    {
-        [JsonProperty(PropertyName = "username")]
-        internal String Username { get; set; }
-
-        [JsonProperty(PropertyName = "password")]
-        internal String Password { get; set; }
-    }
-
-    class IdpTokenResponse
-    {
-        [JsonProperty(PropertyName = "cookieToken")]
-        internal String CookieToken { get; set; }
-        [JsonProperty(PropertyName = "sessionToken")]
-        internal String SessionToken { get; set; }
-    }
-
-    class SamlRestRequest : BaseRestRequest, IRestRequest
-    {
-        internal string OnetimeToken { set; get; }
-
-        HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
-        {
-            UriBuilder builder = new UriBuilder(Url);
-            builder.Query = "RelayState=%2Fsome%2Fdeep%2Flink&onetimetoken=" + OnetimeToken;
-            HttpRequestMessage message = newMessage(method, builder.Uri);
-
-            message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
-
-            return message;
         }
     }
 }
