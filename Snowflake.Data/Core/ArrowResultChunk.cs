@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Apache.Arrow;
 using Apache.Arrow.Types;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -140,7 +141,7 @@ namespace Snowflake.Data.Core
             throw new NotSupportedException();
         }
 
-        public object ExtractCell(int columnIndex, SFDataType srcType, long scale)
+        public object ExtractCell(int columnIndex, SFDataType srcType, long scale, TimeZoneInfo sessionTimezone)
         {
             var column = RecordBatch[_currentBatchIndex].Column(columnIndex);
 
@@ -324,6 +325,12 @@ namespace Snowflake.Data.Core
                     }
 
                 case SFDataType.TIMESTAMP_LTZ:
+                    if (sessionTimezone == null)
+                    {
+                        throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
+                            "Session timezone is required for TIMESTAMP_LTZ conversion");
+                    }
+
                     if (column.GetType() == typeof(StructArray))
                     {
                         if (_long[columnIndex] == null)
@@ -332,7 +339,9 @@ namespace Snowflake.Data.Core
                             _fraction[columnIndex] = ((Int32Array)((StructArray)column).Fields[1]).Values.ToArray();
                         var epoch = _long[columnIndex][_currentRecordIndex];
                         var fraction = _fraction[columnIndex][_currentRecordIndex];
-                        return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToLocalTime();
+                        var utcDateTime = s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100);
+                        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime.UtcDateTime, sessionTimezone);
+                        return new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
                     }
                     else
                     {
@@ -342,7 +351,9 @@ namespace Snowflake.Data.Core
                         var value = _long[columnIndex][_currentRecordIndex];
                         var epoch = ExtractEpoch(value, scale);
                         var fraction = ExtractFraction(value, scale);
-                        return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToLocalTime();
+                        var utcDateTime = s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100);
+                        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime.UtcDateTime, sessionTimezone);
+                        return new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
                     }
 
                 case SFDataType.TIMESTAMP_NTZ:
