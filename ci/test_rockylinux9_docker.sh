@@ -1,15 +1,14 @@
 #!/bin/bash -e
 
 # Test Snowflake .NET Connector in Rocky Linux 9 Docker
-
-# NOTES:
-#   - By default this script runs .NET 8.0 tests, as these are commonly used
-#   - To test specific .NET version(s) pass in versions like: `./test_rockylinux9_docker.sh "net8.0 net9.0"`
+#
+# Usage: ./test_rockylinux9_docker.sh <target_framework>
+# Example: ./test_rockylinux9_docker.sh "net8.0"
 
 set -o pipefail
 
-# In case this is ran from dev-vm
-DOTNET_TARGET_FRAMEWORKS=${1:-"net8.0"}
+TARGET_FRAMEWORK=${1:-"net8.0"}
+DOTNET_VERSION=${TARGET_FRAMEWORK#net}
 
 # Set constants
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -30,7 +29,7 @@ cd $CONNECTOR_DIR
 docker build --pull -t ${CONTAINER_NAME}:1.0 \
     --build-arg BASE_IMAGE=$BASE_IMAGE \
     --build-arg GOSU_URL="$GOSU_URL" \
-    --build-arg DOTNET_TARGET_FRAMEWORKS="${DOTNET_TARGET_FRAMEWORKS}" \
+    --build-arg DOTNET_VERSION="${DOTNET_VERSION}" \
     . -f ci/image/Dockerfile.dotnet-rhel9-build
 
 user_id=$(id -u ${USER})
@@ -45,8 +44,9 @@ docker run --network=host \
     -e JENKINS_HOME \
     -e is_old_driver \
     -e GITHUB_ACTIONS \
-    -e DOTNET_TARGET_FRAMEWORKS \
+    -e TARGET_FRAMEWORK \
+    -e snowflake_cloud_env \
     --mount type=bind,source="${CONNECTOR_DIR}",target=/home/user/snowflake-connector-net \
     ${CONTAINER_NAME}:1.0 \
-    /home/user/snowflake-connector-net/ci/test_rockylinux9.sh ${DOTNET_TARGET_FRAMEWORKS}
- 
+    /home/user/snowflake-connector-net/ci/test_rockylinux9.sh
+

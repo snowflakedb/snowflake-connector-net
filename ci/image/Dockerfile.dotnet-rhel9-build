@@ -29,41 +29,31 @@ RUN dnf -y install java-11-openjdk java-11-openjdk-devel
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 ENV PATH=${JAVA_HOME}/bin:${PATH}
 
-# Accept build argument for target frameworks  
-ARG DOTNET_TARGET_FRAMEWORKS="net8.0"
+# Accept build argument for .NET version (e.g., "8.0", "9.0")
+ARG DOTNET_VERSION="8.0"
 
-# Install .NET SDKs (Microsoft repository with proper GPG handling)
+# Install .NET SDK (Microsoft repository)
 RUN echo "=== Installing Microsoft repository ===" && \
-    rpm -Uvh --nogpgcheck https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
-    echo "=== Importing Microsoft GPG key ===" && \
-    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-Microsoft && \
+    dnf install -y https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
     echo "=== Refreshing package cache ===" && \
     dnf clean all && \
     dnf makecache --assumeyes
 
-# Debug: Show what's being installed
-RUN echo "=== Requested .NET frameworks: ${DOTNET_TARGET_FRAMEWORKS} ===" && \
-    echo "=== Available .NET packages ===" && \
-    dnf list available --assumeyes | grep dotnet-sdk | head -10 || echo "No .NET packages found"
+# Install .NET SDK for the specified version
+RUN echo "=== Installing .NET SDK ${DOTNET_VERSION} ===" && \
+    dnf -y install dotnet-sdk-${DOTNET_VERSION}
 
-# Install .NET SDKs dynamically based on requested frameworks
-RUN frameworks="${DOTNET_TARGET_FRAMEWORKS}" && \
-    echo "Installing .NET SDKs for: $frameworks" && \
-    for fw in $frameworks; do \
-        case $fw in \
-            net6.0) echo "Installing .NET 6.0 SDK" && dnf -y --assumeyes install dotnet-sdk-6.0 ;; \
-            net7.0) echo "Installing .NET 7.0 SDK" && dnf -y --assumeyes install dotnet-sdk-7.0 ;; \
-            net8.0) echo "Installing .NET 8.0 SDK" && dnf -y --assumeyes install dotnet-sdk-8.0 ;; \
-            net9.0) echo "Installing .NET 9.0 SDK" && dnf -y --assumeyes install dotnet-sdk-9.0 ;; \
-            *) echo "Unknown framework: $fw, installing .NET 8.0 as fallback" && dnf -y --assumeyes install dotnet-sdk-8.0 ;; \
-        esac; \
-    done
+# Install dotnet-coverage tool (same as Linux tests)
+RUN dotnet tool install --global dotnet-coverage --version 17.8.4
+ENV PATH="${PATH}:/root/.dotnet/tools"
 
 # Verify .NET and Java installations - fail build if missing
 RUN echo "=== .NET Installation ===" && \
     dotnet --version && \
     dotnet --list-sdks && \
     dotnet --list-runtimes && \
+    echo "=== dotnet-coverage ===" && \
+    dotnet-coverage --version && \
     echo "=== Java Installation ===" && \
     java -version && \
     javac -version && \
