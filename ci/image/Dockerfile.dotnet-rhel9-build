@@ -3,68 +3,40 @@ FROM rockylinux:9
 USER root
 WORKDIR /
 
-# update OS and install basic tools (adapted from centos7 dockerfile)
+# Accept build argument for .NET version (e.g., "8.0", "9.0")
+ARG DOTNET_VERSION="8.0"
+ARG GOSU_URL=https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64
+
+# Install OS packages, build tools, Java, and .NET SDK
 RUN dnf -y update && \
     dnf -y install epel-release && \
-    dnf -y install git && \
-    dnf -y install which && \
-    dnf -y install zstd && \
-    dnf -y install jq && \
+    dnf -y install git which zstd jq gcc gcc-c++ make && \
     dnf -y install --allowerasing curl && \
-    dnf -y install gcc && \
-    dnf -y install gcc-c++ && \
-    dnf -y install make && \
-    dnf clean all
+    dnf -y groupinstall 'Development Tools' && \
+    dnf -y install java-11-openjdk java-11-openjdk-devel && \
+    dnf install -y https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
+    dnf install -y dotnet-sdk-${DOTNET_VERSION} && \
+    dnf clean all && \
+    curl -o /usr/local/bin/gosu -SL "$GOSU_URL" && \
+    chmod +x /usr/local/bin/gosu
 
-# gosu (updated version for Rocky Linux 9)
-ARG GOSU_URL=https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64
-RUN curl -o /usr/local/bin/gosu -SL "$GOSU_URL"
-RUN chmod +x /usr/local/bin/gosu
-
-# Install build tools (Rocky Linux 9 has modern gcc, no devtoolset needed)
-RUN dnf -y groupinstall 'Development Tools'
-
-# Install Java 11 (required for Wiremock)
-RUN dnf -y install java-11-openjdk java-11-openjdk-devel
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 ENV PATH=${JAVA_HOME}/bin:${PATH}
 
-# Accept build argument for .NET version (e.g., "8.0", "9.0")
-ARG DOTNET_VERSION="8.0"
-
-# Install .NET SDK (Microsoft repository)
-RUN echo "=== Installing Microsoft repository ===" && \
-    dnf install -y https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
-    echo "=== Refreshing package cache ===" && \
-    dnf clean all && \
-    dnf makecache --assumeyes
-
-# Install .NET SDK for the specified version
-RUN echo "=== Installing .NET SDK ${DOTNET_VERSION} ===" && \
-    dnf -y install dotnet-sdk-${DOTNET_VERSION}
-
-# Install dotnet-coverage tool (same as Linux tests)
+# Install dotnet-coverage tool
 RUN dotnet tool install --global dotnet-coverage --version 17.8.4
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
-# Verify .NET and Java installations - fail build if missing
-RUN echo "=== .NET Installation ===" && \
-    dotnet --version && \
+# Verify installations
+RUN dotnet --version && \
     dotnet --list-sdks && \
-    dotnet --list-runtimes && \
-    echo "=== dotnet-coverage ===" && \
     dotnet-coverage --version && \
-    echo "=== Java Installation ===" && \
-    java -version && \
-    javac -version && \
-    echo "=== Installation verification complete ==="
+    java -version
 
-# workspace
-RUN mkdir -p /home/user && \
-    chmod 777 /home/user
+# Setup workspace
+RUN mkdir -p /home/user && chmod 777 /home/user
 WORKDIR /home/user
 
-# entry point
-COPY ci/image/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Entry point
+COPY --chmod=755 ci/image/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
