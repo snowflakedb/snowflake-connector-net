@@ -20,9 +20,14 @@ RUN dnf -y update && \
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 ENV PATH=${JAVA_HOME}/bin:${PATH}
 
-# Install .NET SDK from Rocky's native repos
-RUN dnf install -y dotnet-sdk-${DOTNET_VERSION} && \
-    dotnet --version && \
+# Install .NET SDKs from Rocky's native repos
+# SDK 8.0 is always needed (library targets net8.0)
+# Plus the SDK for the framework being tested
+RUN dnf install -y dotnet-sdk-8.0 && \
+    if [ "${DOTNET_VERSION}" != "8.0" ]; then \
+        dnf install -y dotnet-sdk-${DOTNET_VERSION} || echo "SDK ${DOTNET_VERSION} not available, using 8.0"; \
+    fi && \
+    dotnet --list-sdks && \
     dnf clean all
 
 # Install dotnet-coverage tool to shared location
