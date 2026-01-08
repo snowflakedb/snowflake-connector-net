@@ -22,7 +22,7 @@ ENV PATH=${JAVA_HOME}/bin:${PATH}
 
 # Install .NET SDK from Rocky's native repos
 RUN dnf install -y dotnet-sdk-${DOTNET_VERSION} && \
-    dotnet --version && \Skip
+    dotnet --version && \
     dnf clean all
 
 # Install dotnet-coverage tool
