@@ -7,21 +7,24 @@ WORKDIR /
 ARG DOTNET_VERSION="8.0"
 ARG GOSU_URL=https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64
 
-# Install OS packages, build tools, Java, and .NET SDK
+# Install OS packages, build tools, Java
 RUN dnf -y update && \
     dnf -y install epel-release && \
     dnf -y install git which zstd jq gcc gcc-c++ make && \
     dnf -y install --allowerasing curl && \
     dnf -y groupinstall 'Development Tools' && \
     dnf -y install java-11-openjdk java-11-openjdk-devel && \
-    dnf install -y https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
-    dnf install -y dotnet-sdk-${DOTNET_VERSION} && \
-    dnf clean all && \
     curl -o /usr/local/bin/gosu -SL "$GOSU_URL" && \
     chmod +x /usr/local/bin/gosu
 
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 ENV PATH=${JAVA_HOME}/bin:${PATH}
+
+# Install .NET SDK
+RUN dnf install -y https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
+    dnf install -y dotnet-sdk-${DOTNET_VERSION} && \
+    dotnet --version && \
+    dnf clean all
 
 # Install dotnet-coverage tool
 RUN dotnet tool install --global dotnet-coverage --version 17.8.4
