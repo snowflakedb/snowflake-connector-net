@@ -32,14 +32,6 @@ dotnet --list-runtimes
 echo "[Info] dotnet-coverage version:"
 dotnet-coverage --version || echo "[Warning] dotnet-coverage not found, will skip coverage collection"
 
-source ${THIS_DIR}/scripts/log_analyze_setup.sh
-
-if [[ -d ${CLIENT_LOG_DIR_PATH_DOCKER} ]]; then
-    rm -rf ${CLIENT_LOG_DIR_PATH_DOCKER}/*
-else
-    mkdir -p ${CLIENT_LOG_DIR_PATH_DOCKER}
-fi
-
 # Replace test parameters and setup authentication
 # This is only needed for Jenkins, not GitHub Actions
 if [[ "$GITHUB_ACTIONS" != "true" ]]; then

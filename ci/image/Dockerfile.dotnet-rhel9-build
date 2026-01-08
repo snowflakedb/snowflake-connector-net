@@ -25,9 +25,10 @@ RUN dnf install -y dotnet-sdk-${DOTNET_VERSION} && \
     dotnet --version && \
     dnf clean all
 
-# Install dotnet-coverage tool
-RUN dotnet tool install --global dotnet-coverage --version 17.8.4
-ENV PATH="${PATH}:/root/.dotnet/tools"
+# Install dotnet-coverage tool to shared location
+ENV DOTNET_TOOLS=/opt/dotnet-tools
+RUN dotnet tool install --tool-path ${DOTNET_TOOLS} dotnet-coverage --version 17.8.4
+ENV PATH="${PATH}:${DOTNET_TOOLS}"
 
 # Verify installations
 RUN dotnet --version && \
