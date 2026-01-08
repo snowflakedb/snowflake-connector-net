@@ -23,8 +23,16 @@ ENV PATH=${JAVA_HOME}/bin:${PATH}
 # Install .NET SDK
 RUN dnf install -y https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
     dnf install -y dotnet-sdk-${DOTNET_VERSION} && \
-    dotnet --version && \
+    echo "=== Checking dotnet location ===" && \
+    which dotnet || echo "dotnet not in PATH" && \
+    ls -la /usr/share/dotnet/ || echo "No /usr/share/dotnet" && \
+    ls -la /usr/lib64/dotnet/ || echo "No /usr/lib64/dotnet" && \
+    rpm -ql dotnet-sdk-${DOTNET_VERSION} | head -20 && \
+    /usr/lib64/dotnet/dotnet --version && \
     dnf clean all
+
+ENV DOTNET_ROOT=/usr/lib64/dotnet
+ENV PATH="${PATH}:/usr/lib64/dotnet"
 
 # Install dotnet-coverage tool
 RUN dotnet tool install --global dotnet-coverage --version 17.8.4
