@@ -61,7 +61,7 @@ cd $CONNECTOR_DIR
 # Build the driver for the specific target framework
 echo "[Info] Building driver for ${TARGET_FRAMEWORK} with SF_PUBLIC_ENVIRONMENT"
 cd Snowflake.Data.Tests
-dotnet build -f ${TARGET_FRAMEWORK} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
+dotnet build -f ${TARGET_FRAMEWORK} -p:TargetFrameworks=${TARGET_FRAMEWORK} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
 cd $CONNECTOR_DIR
 
 # Run tests (matches test-linux pattern in GHA)
