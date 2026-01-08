@@ -58,10 +58,12 @@ curl -f https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/3.11.0/w
 
 cd $CONNECTOR_DIR
 
-# Build the driver (matches test-linux pattern in GHA)
-echo "[Info] Building driver with SF_PUBLIC_ENVIRONMENT"
+# Build the driver for the specific target framework
+echo "[Info] Building driver for ${TARGET_FRAMEWORK} with SF_PUBLIC_ENVIRONMENT"
+cd Snowflake.Data.Tests
 dotnet restore
-dotnet build '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
+dotnet build -f ${TARGET_FRAMEWORK} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
+cd $CONNECTOR_DIR
 
 # Run tests (matches test-linux pattern in GHA)
 cd Snowflake.Data.Tests
