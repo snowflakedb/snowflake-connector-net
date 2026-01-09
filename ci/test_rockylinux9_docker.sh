@@ -3,11 +3,11 @@
 # Test Snowflake .NET Connector in Rocky Linux 9 Docker
 #
 # Usage: ./test_rockylinux9_docker.sh <target_framework>
-# Example: ./test_rockylinux9_docker.sh "net8.0"
+# Example: ./test_rockylinux9_docker.sh net8.0
 
 set -o pipefail
 
-TARGET_FRAMEWORK="${TARGET_FRAMEWORK:?TARGET_FRAMEWORK env var is required}"
+TARGET_FRAMEWORK="${1:?Usage: $0 <target_framework> (e.g., net8.0)}"
 DOTNET_VERSION=${TARGET_FRAMEWORK#net}
 
 # Set constants
@@ -45,7 +45,7 @@ docker run --network=host \
     -e is_old_driver \
     -e GITHUB_ACTIONS \
     -e CI \
-    -e TARGET_FRAMEWORK \
+    -e TARGET_FRAMEWORK="${TARGET_FRAMEWORK}" \
     -e snowflake_cloud_env \
     --mount type=bind,source="${CONNECTOR_DIR}",target=/home/user/snowflake-connector-net \
     ${CONTAINER_NAME}:1.0 \
