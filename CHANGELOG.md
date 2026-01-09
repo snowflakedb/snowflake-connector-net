@@ -2,7 +2,7 @@
 
 # Changelog
 - v5.3.0
-    - Introduced shared library for extended telemetry to identify and prepare testing platform for native rust extensions.
+    - Introduced shared library([source code](https://github.com/snowflakedb/universal-driver/tree/main/sf_mini_core)) for extended telemetry to identify and prepare testing platform for native rust extensions.
 - v5.2.1
     - Bug fix: Fix the extremely rare case where intermittent network issues during uploads to Azure Blob Storage prevent metadata updates
 - v5.2.0
