@@ -3,78 +3,29 @@ FROM rockylinux:9
 USER root
 WORKDIR /
 
-# update OS and install basic tools (adapted from centos7 dockerfile)
+# Download gosu for running as non-root user
+ADD --chmod=755 https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64 /usr/local/bin/gosu
+
+# Install only required OS packages: curl (for wiremock download), Java JRE (for wiremock)
 RUN dnf -y update && \
-    dnf -y install epel-release && \
-    dnf -y install git && \
-    dnf -y install which && \
-    dnf -y install zstd && \
-    dnf -y install jq && \
     dnf -y install --allowerasing curl && \
-    dnf -y install gcc && \
-    dnf -y install gcc-c++ && \
-    dnf -y install make && \
+    dnf -y install java-11-openjdk
+
+# Install .NET SDKs
+RUN dnf install -y dotnet-sdk-6.0 dotnet-sdk-7.0 dotnet-sdk-8.0 dotnet-sdk-9.0 && \
+    dotnet --list-sdks && \
     dnf clean all
 
-# gosu (updated version for Rocky Linux 9)
-ARG GOSU_URL=https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64
-RUN curl -o /usr/local/bin/gosu -SL "$GOSU_URL"
-RUN chmod +x /usr/local/bin/gosu
+# Install dotnet-coverage tool to shared location (accessible by any user)
+ENV DOTNET_TOOLS=/opt/dotnet-tools
+ENV PATH="${PATH}:${DOTNET_TOOLS}"
+RUN dotnet tool install --tool-path ${DOTNET_TOOLS} dotnet-coverage --version 17.8.4 && \
+    dotnet-coverage --version
 
-# Install build tools (Rocky Linux 9 has modern gcc, no devtoolset needed)
-RUN dnf -y groupinstall 'Development Tools'
-
-# Install Java 11 (required for Wiremock)
-RUN dnf -y install java-11-openjdk java-11-openjdk-devel
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-ENV PATH=${JAVA_HOME}/bin:${PATH}
-
-# Accept build argument for target frameworks  
-ARG DOTNET_TARGET_FRAMEWORKS="net8.0"
-
-# Install .NET SDKs (Microsoft repository with proper GPG handling)
-RUN echo "=== Installing Microsoft repository ===" && \
-    rpm -Uvh --nogpgcheck https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
-    echo "=== Importing Microsoft GPG key ===" && \
-    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-Microsoft && \
-    echo "=== Refreshing package cache ===" && \
-    dnf clean all && \
-    dnf makecache --assumeyes
-
-# Debug: Show what's being installed
-RUN echo "=== Requested .NET frameworks: ${DOTNET_TARGET_FRAMEWORKS} ===" && \
-    echo "=== Available .NET packages ===" && \
-    dnf list available --assumeyes | grep dotnet-sdk | head -10 || echo "No .NET packages found"
-
-# Install .NET SDKs dynamically based on requested frameworks
-RUN frameworks="${DOTNET_TARGET_FRAMEWORKS}" && \
-    echo "Installing .NET SDKs for: $frameworks" && \
-    for fw in $frameworks; do \
-        case $fw in \
-            net6.0) echo "Installing .NET 6.0 SDK" && dnf -y --assumeyes install dotnet-sdk-6.0 ;; \
-            net7.0) echo "Installing .NET 7.0 SDK" && dnf -y --assumeyes install dotnet-sdk-7.0 ;; \
-            net8.0) echo "Installing .NET 8.0 SDK" && dnf -y --assumeyes install dotnet-sdk-8.0 ;; \
-            net9.0) echo "Installing .NET 9.0 SDK" && dnf -y --assumeyes install dotnet-sdk-9.0 ;; \
-            *) echo "Unknown framework: $fw, installing .NET 8.0 as fallback" && dnf -y --assumeyes install dotnet-sdk-8.0 ;; \
-        esac; \
-    done
-
-# Verify .NET and Java installations - fail build if missing
-RUN echo "=== .NET Installation ===" && \
-    dotnet --version && \
-    dotnet --list-sdks && \
-    dotnet --list-runtimes && \
-    echo "=== Java Installation ===" && \
-    java -version && \
-    javac -version && \
-    echo "=== Installation verification complete ==="
-
-# workspace
-RUN mkdir -p /home/user && \
-    chmod 777 /home/user
+# Setup workspace
+RUN mkdir -p /home/user && chmod 777 /home/user
 WORKDIR /home/user
 
-# entry point
-COPY ci/image/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Entry point
+COPY --chmod=755 ci/image/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
