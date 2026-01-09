@@ -17,6 +17,10 @@
       <Content Include="crl\**\*.*">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
+      <Compile Remove="PackageTests\MiniCoreVerificationAppSource.cs" />
+      <Content Include="PackageTests\MiniCoreVerificationAppSource.cs">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="JunitXml.TestLogger" Version="3.1.12" />
@@ -69,4 +73,6 @@
     <DebugType>full</DebugType>
     <DebugSymbols>True</DebugSymbols>
   </PropertyGroup>
+
+  <Import Project="..\Snowflake.Data\build\Snowflake.Data.targets" />
 </Project>
