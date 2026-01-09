@@ -19,7 +19,8 @@ RUN dnf -y update && \
 # Plus the SDK for the framework being tested
 RUN dnf install -y dotnet-sdk-8.0 && \
     if [ "${DOTNET_VERSION}" != "8.0" ]; then \
-        dnf install -y dotnet-sdk-${DOTNET_VERSION} || echo "SDK ${DOTNET_VERSION} not available, using 8.0"; \
+        echo "Installing .NET SDK ${DOTNET_VERSION}..." && \
+        dnf install -y dotnet-sdk-${DOTNET_VERSION}; \
     fi && \
     dotnet --version && \
     dotnet --list-sdks && \

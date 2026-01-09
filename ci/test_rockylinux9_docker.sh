@@ -28,7 +28,6 @@ GOSU_URL=https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64
 cd $CONNECTOR_DIR
 docker build --pull -t ${CONTAINER_NAME}:1.0 \
     --build-arg BASE_IMAGE=$BASE_IMAGE \
-    --build-arg GOSU_URL="$GOSU_URL" \
     --build-arg DOTNET_VERSION="${DOTNET_VERSION}" \
     . -f ci/image/Dockerfile.dotnet-rhel9-build
 
