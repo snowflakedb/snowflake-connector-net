@@ -44,6 +44,7 @@ docker run --network=host \
     -e JENKINS_HOME \
     -e is_old_driver \
     -e GITHUB_ACTIONS \
+    -e CI \
     -e TARGET_FRAMEWORK \
     -e snowflake_cloud_env \
     --mount type=bind,source="${CONNECTOR_DIR}",target=/home/user/snowflake-connector-net \
