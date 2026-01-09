@@ -268,7 +268,7 @@ jobs:
           files: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-rockylinux9:
-    name: Test Rocky Linux 9 rockylinux9-${{ matrix.dotnet }}-${{ matrix.cloud_env }}
+    name: Tests on Rocky Linux 9
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -315,6 +315,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:
+          # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
           fail_ci_if_error: true
           files: Snowflake.Data.Tests/rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml

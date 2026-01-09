@@ -4,42 +4,32 @@ USER root
 WORKDIR /
 
 # Accept build argument for .NET version (e.g., "8.0", "9.0")
-ARG DOTNET_VERSION="8.0"
-ARG GOSU_URL=https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64
+ARG DOTNET_VERSION
 
-# Install OS packages, build tools, Java
+# Download gosu for running as non-root user
+ADD --chmod=755 https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64 /usr/local/bin/gosu
+
+# Install only required OS packages: curl (for wiremock download), Java JRE (for wiremock)
 RUN dnf -y update && \
-    dnf -y install epel-release && \
-    dnf -y install git which zstd jq gcc gcc-c++ make && \
     dnf -y install --allowerasing curl && \
-    dnf -y groupinstall 'Development Tools' && \
-    dnf -y install java-11-openjdk java-11-openjdk-devel && \
-    curl -o /usr/local/bin/gosu -SL "$GOSU_URL" && \
-    chmod +x /usr/local/bin/gosu
-
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-ENV PATH=${JAVA_HOME}/bin:${PATH}
+    dnf -y install java-11-openjdk
 
 # Install .NET SDKs from Rocky's native repos
-# SDK 8.0 is always needed (library targets net8.0)
+# SDK 8.0 is always needed (driver library targets net8.0)
 # Plus the SDK for the framework being tested
 RUN dnf install -y dotnet-sdk-8.0 && \
     if [ "${DOTNET_VERSION}" != "8.0" ]; then \
         dnf install -y dotnet-sdk-${DOTNET_VERSION} || echo "SDK ${DOTNET_VERSION} not available, using 8.0"; \
     fi && \
+    dotnet --version && \
     dotnet --list-sdks && \
     dnf clean all
 
 # Install dotnet-coverage tool to shared location
 ENV DOTNET_TOOLS=/opt/dotnet-tools
-RUN dotnet tool install --tool-path ${DOTNET_TOOLS} dotnet-coverage --version 17.8.4
+RUN dotnet tool install --tool-path ${DOTNET_TOOLS} dotnet-coverage --version 17.8.4 && \
+    dotnet-coverage --version
 ENV PATH="${PATH}:${DOTNET_TOOLS}"
-
-# Verify installations
-RUN dotnet --version && \
-    dotnet --list-sdks && \
-    dotnet-coverage --version && \
-    java -version
 
 # Setup workspace
 RUN mkdir -p /home/user && chmod 777 /home/user

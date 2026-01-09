@@ -7,7 +7,7 @@
 
 set -o pipefail
 
-TARGET_FRAMEWORK=${1:-"net8.0"}
+TARGET_FRAMEWORK="${TARGET_FRAMEWORK:?TARGET_FRAMEWORK env var is required}"
 DOTNET_VERSION=${TARGET_FRAMEWORK#net}
 
 # Set constants

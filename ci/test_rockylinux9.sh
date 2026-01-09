@@ -8,7 +8,7 @@
 # This script uses dotnet-coverage like the standard Linux tests in GHA.
 # It runs inside the docker container started by test_rockylinux9_docker.sh.
 
-TARGET_FRAMEWORK="${TARGET_FRAMEWORK:-net8.0}"
+TARGET_FRAMEWORK="${TARGET_FRAMEWORK:?TARGET_FRAMEWORK env var is required}"
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CONNECTOR_DIR="$( dirname "${THIS_DIR}")"
 
@@ -30,7 +30,7 @@ dotnet --version
 echo "[Info] Available .NET runtimes:"
 dotnet --list-runtimes
 echo "[Info] dotnet-coverage version:"
-dotnet-coverage --version || echo "[Warning] dotnet-coverage not found, will skip coverage collection"
+dotnet-coverage --version
 
 # Replace test parameters and setup authentication
 # This is only needed for Jenkins, not GitHub Actions
@@ -61,7 +61,7 @@ cd $CONNECTOR_DIR
 # Build the driver for the specific target framework
 echo "[Info] Building driver for ${TARGET_FRAMEWORK} with SF_PUBLIC_ENVIRONMENT"
 cd Snowflake.Data.Tests
-dotnet build -f ${TARGET_FRAMEWORK} -p:TargetFrameworks=${TARGET_FRAMEWORK} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
+dotnet build -f ${TARGET_FRAMEWORK} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
 cd $CONNECTOR_DIR
 
 # Run tests (matches test-linux pattern in GHA)
