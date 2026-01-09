@@ -27,9 +27,9 @@ RUN dnf install -y dotnet-sdk-8.0 && \
 
 # Install dotnet-coverage tool to shared location
 ENV DOTNET_TOOLS=/opt/dotnet-tools
+ENV PATH="${PATH}:${DOTNET_TOOLS}"
 RUN dotnet tool install --tool-path ${DOTNET_TOOLS} dotnet-coverage --version 17.8.4 && \
     dotnet-coverage --version
-ENV PATH="${PATH}:${DOTNET_TOOLS}"
 
 # Setup workspace
 RUN mkdir -p /home/user && chmod 777 /home/user
