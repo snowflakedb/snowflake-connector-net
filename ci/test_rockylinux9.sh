@@ -36,7 +36,7 @@ dotnet-coverage --version
 # This is only needed for Jenkins, not GitHub Actions
 if [[ "$GITHUB_ACTIONS" != "true" ]]; then
     echo "[Info] Running in Jenkins environment, setting up parameters"
-    
+
     if [[ -f ${CONNECTOR_DIR}/Snowflake.Data.Tests/parameters_jenkins.json ]]; then
         cp ${CONNECTOR_DIR}/Snowflake.Data.Tests/parameters_jenkins.json ${CONNECTOR_DIR}/Snowflake.Data.Tests/parameters.json
         echo "[Info] Copied parameters_jenkins.json to parameters.json"
@@ -61,7 +61,8 @@ cd $CONNECTOR_DIR
 # Build the driver for the specific target framework
 echo "[Info] Building driver for ${TARGET_FRAMEWORK} with SF_PUBLIC_ENVIRONMENT"
 cd Snowflake.Data.Tests
-dotnet build -f ${TARGET_FRAMEWORK} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
+dotnet restore
+dotnet build '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
 cd $CONNECTOR_DIR
 
 # Run tests (matches test-linux pattern in GHA)

@@ -3,9 +3,6 @@ FROM rockylinux:9
 USER root
 WORKDIR /
 
-# Accept build argument for .NET version (e.g., "8.0", "9.0")
-ARG DOTNET_VERSION
-
 # Download gosu for running as non-root user
 ADD --chmod=755 https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64 /usr/local/bin/gosu
 
@@ -14,19 +11,12 @@ RUN dnf -y update && \
     dnf -y install --allowerasing curl && \
     dnf -y install java-11-openjdk
 
-# Install .NET SDKs from Rocky's native repos
-# SDK 8.0 is always needed (driver library targets net8.0)
-# Plus the SDK for the framework being tested
-RUN dnf install -y dotnet-sdk-8.0 && \
-    if [ "${DOTNET_VERSION}" != "8.0" ]; then \
-        echo "Installing .NET SDK ${DOTNET_VERSION}..." && \
-        dnf install -y dotnet-sdk-${DOTNET_VERSION}; \
-    fi && \
-    dotnet --version && \
+# Install .NET SDKs
+RUN dnf install -y dotnet-sdk-6.0 dotnet-sdk-7.0 dotnet-sdk-8.0 dotnet-sdk-9.0 && \
     dotnet --list-sdks && \
     dnf clean all
 
-# Install dotnet-coverage tool to shared location
+# Install dotnet-coverage tool to shared location (accessible by any user)
 ENV DOTNET_TOOLS=/opt/dotnet-tools
 ENV PATH="${PATH}:${DOTNET_TOOLS}"
 RUN dotnet tool install --tool-path ${DOTNET_TOOLS} dotnet-coverage --version 17.8.4 && \

@@ -8,7 +8,6 @@
 set -o pipefail
 
 TARGET_FRAMEWORK="${1:?Usage: $0 <target_framework> (e.g., net8.0)}"
-DOTNET_VERSION=${TARGET_FRAMEWORK#net}
 
 # Set constants
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -27,8 +26,6 @@ GOSU_URL=https://github.com/tianon/gosu/releases/download/1.14/gosu-amd64
 # Build from repo root using the RHEL9 Dockerfile in ci/image/
 cd $CONNECTOR_DIR
 docker build --pull -t ${CONTAINER_NAME}:1.0 \
-    --build-arg BASE_IMAGE=$BASE_IMAGE \
-    --build-arg DOTNET_VERSION="${DOTNET_VERSION}" \
     . -f ci/image/Dockerfile.dotnet-rhel9-build
 
 user_id=$(id -u ${USER})
