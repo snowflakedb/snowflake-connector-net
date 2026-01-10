@@ -250,13 +250,14 @@ namespace Snowflake.Data.Core
             {
                 try
                 {
+                    // Use ignoreCase=true for culture-invariant parsing (avoids Turkish culture issues where 'i'.ToUpper() becomes 'İ')
                     SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-                                typeof(SFSessionProperty), keys[i].ToUpper());
+                                typeof(SFSessionProperty), keys[i], true);
                     properties.Add(p, values[i]);
                 }
                 catch (ArgumentException)
                 {
-                    if (s_noLongerSupportedProperties.Contains(keys[i].ToUpper()))
+                    if (s_noLongerSupportedProperties.Contains(keys[i].ToUpperInvariant()))
                         logger.Warn($"Property {keys[i]} is no longer supported. Its value is ignored.");
                     else
                         logger.Debug($"Property {keys[i]} not found - ignored.");
@@ -738,7 +739,7 @@ namespace Snowflake.Data.Core
                 if (keyVal.Length > 0)
                 {
                     var tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
-                    var propertyName = tokens[0].ToUpper();
+                    var propertyName = tokens[0].ToUpperInvariant();
                     switch (propertyName)
                     {
                         case "DB":
@@ -749,7 +750,7 @@ namespace Snowflake.Data.Core
                                 if (tokens.Length == 2)
                                 {
                                     var sessionProperty = (SFSessionProperty)Enum.Parse(
-                                        typeof(SFSessionProperty), propertyName);
+                                        typeof(SFSessionProperty), propertyName, true);
                                     properties[sessionProperty] = ProcessObjectEscapedCharacters(tokens[1]);
                                 }
 
@@ -760,7 +761,7 @@ namespace Snowflake.Data.Core
                             {
 
                                 var sessionProperty = (SFSessionProperty)Enum.Parse(
-                                    typeof(SFSessionProperty), propertyName);
+                                    typeof(SFSessionProperty), propertyName, true);
                                 if (!properties.ContainsKey(sessionProperty))
                                 {
                                     properties.Add(sessionProperty, "");
