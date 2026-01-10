@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Net.Http;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,6 +63,8 @@ namespace Snowflake.Data.Client
             _isArrayBindStageCreated = false;
             ExplicitTransaction = null;
         }
+
+        public Func<HttpMessageHandler> HttpMessageHandlerFactory { get; set; }
 
         public override string ConnectionString
         {
@@ -285,8 +288,9 @@ namespace Snowflake.Data.Client
                     Password = Password,
                     Passcode = Passcode,
                     OAuthClientSecret = OAuthClientSecret,
-                    Token = Token
+                    HttpMessageHandlerFactory = HttpMessageHandlerFactory
                 };
+                
                 SfSession = SnowflakeDbConnectionPool.GetSession(ConnectionString, sessionContext);
                 if (SfSession == null)
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Could not open session");
@@ -333,8 +337,9 @@ namespace Snowflake.Data.Client
                 Password = Password,
                 Passcode = Passcode,
                 OAuthClientSecret = OAuthClientSecret,
-                Token = Token
+                HttpMessageHandlerFactory = HttpMessageHandlerFactory
             };
+            
             return SnowflakeDbConnectionPool
                 .GetSessionAsync(ConnectionString, sessionContext, cancellationToken)
                 .ContinueWith(previousTask =>
