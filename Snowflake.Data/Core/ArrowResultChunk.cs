@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using Apache.Arrow;
 using Apache.Arrow.Types;
@@ -255,6 +256,9 @@ namespace Snowflake.Data.Core
                     sb.Append("]");
                     return sb.ToString();
 
+                case SFDataType.DECFLOAT:
+                    return ExtractDecfloat(column);
+
                 case SFDataType.BINARY:
                     return ((BinaryArray)column).GetBytes(_currentRecordIndex).ToArray();
 
@@ -466,6 +470,93 @@ namespace Snowflake.Data.Core
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Extracts a DECFLOAT value from Arrow format.
+        /// DECFLOAT is serialized as a STRUCT containing:
+        /// - INT16 for the exponent
+        /// - Variable-length BINARY for the significand (2's complement big endian, max 16 bytes)
+        /// The decimal value is: significand * 10^exponent
+        /// </summary>
+        private decimal ExtractDecfloat(IArrowArray column)
+        {
+            var structArray = (StructArray)column;
+
+            // Get exponent (INT16)
+            var exponentArray = (Int16Array)structArray.Fields[0];
+            short exponent = exponentArray.GetValue(_currentRecordIndex).Value;
+
+            // Get significand (BINARY - variable length, 2's complement big endian)
+            var significandArray = (BinaryArray)structArray.Fields[1];
+            var significandBytes = significandArray.GetBytes(_currentRecordIndex).ToArray();
+
+            if (significandBytes.Length == 0)
+            {
+                return 0m;
+            }
+
+            // Validate significand length (max 16 bytes per design doc)
+            if (significandBytes.Length > 16)
+            {
+                throw new NotSupportedException(
+                    $"DECFLOAT significand exceeds maximum supported length of 16 bytes. Got {significandBytes.Length} bytes.");
+            }
+
+            // Convert 2's complement big endian bytes to BigInteger
+            // BigInteger expects little endian, so we need to reverse
+            var littleEndianBytes = new byte[significandBytes.Length + 1]; // +1 for sign extension
+            for (int i = 0; i < significandBytes.Length; i++)
+            {
+                littleEndianBytes[significandBytes.Length - 1 - i] = significandBytes[i];
+            }
+            // If the high bit of the original big-endian bytes is set, the number is negative
+            // BigInteger needs proper sign handling
+            if ((significandBytes[0] & 0x80) != 0)
+            {
+                // Negative number - fill the extra byte with 0xFF for proper sign extension
+                littleEndianBytes[significandBytes.Length] = 0xFF;
+            }
+            // else the extra byte stays 0 (positive number)
+
+            var significand = new BigInteger(littleEndianBytes);
+
+            try
+            {
+                // Calculate the decimal value: significand * 10^exponent
+                if (exponent >= 0)
+                {
+                    // Multiply by 10^exponent
+                    var multiplier = BigInteger.Pow(10, exponent);
+                    var result = significand * multiplier;
+                    return (decimal)result;
+                }
+                else
+                {
+                    // Divide by 10^(-exponent) - need to handle as decimal for precision
+                    // First try to convert significand to decimal, then divide
+                    var decimalSignificand = (decimal)significand;
+                    var scale = -exponent;
+                    // Use decimal division for proper precision handling
+                    for (int i = 0; i < scale; i++)
+                    {
+                        decimalSignificand /= 10m;
+                    }
+                    return decimalSignificand;
+                }
+            }
+            catch (OverflowException)
+            {
+                // Value exceeds System.Decimal range (approx ±7.9×10^28)
+                // Fall back to string representation via double (lossy but usable)
+                double doubleValue = (double)significand * Math.Pow(10, exponent);
+                if (double.IsInfinity(doubleValue) || double.IsNaN(doubleValue))
+                {
+                    throw new OverflowException(
+                        $"DECFLOAT value exceeds the range of System.Decimal and cannot be represented. Use GetString() for very large values.");
+                }
+                return (decimal)doubleValue;
+            }
         }
     }
 }

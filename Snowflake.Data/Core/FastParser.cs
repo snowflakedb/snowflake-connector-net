@@ -99,6 +99,21 @@ namespace Snowflake.Data.Core
                 throw ex;
             }
 
+            // Handle scientific notation (e.g., "1.23e10", "1.23E-5")
+            int exponentPos = Array.IndexOf<byte>(s, (byte)'e', offset, len);
+            if (exponentPos < 0)
+            {
+                exponentPos = Array.IndexOf<byte>(s, (byte)'E', offset, len);
+            }
+            if (exponentPos >= 0)
+            {
+                // Use decimal.Parse with appropriate number styles to handle scientific notation
+                return decimal.Parse(
+                    UTF8Buffer.UTF8.GetString(s, offset, len),
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture);
+            }
+
             // Find any decimal point
             // Parse integer part and decimal part as 64-bit numbers
             // Calculate decimal number to return

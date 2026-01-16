@@ -137,6 +137,8 @@ namespace Snowflake.Data.Core
                     return col.scale == 0 ? typeof(long) : typeof(decimal);
                 case SFDataType.REAL:
                     return typeof(double);
+                case SFDataType.DECFLOAT:
+                    return typeof(decimal);
                 case SFDataType.TEXT:
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:

@@ -178,6 +178,21 @@ namespace Snowflake.Data.Core.Converter
                 }
                 return decimalValue;
             }
+            if (IsDecfloatMetadata(fieldMetadata))
+            {
+                var value = json.Value<string>();
+                var bytes = Encoding.UTF8.GetBytes(value);
+                var decimalValue = FastParser.FastParseDecimal(bytes, 0, bytes.Length);
+                if (fieldType == typeof(float) || fieldType == typeof(float?))
+                {
+                    return (float)decimalValue;
+                }
+                if (fieldType == typeof(double) || fieldType == typeof(double?))
+                {
+                    return (double)decimalValue;
+                }
+                return decimalValue;
+            }
             if (IsBooleanMetadata(fieldMetadata))
             {
                 return json.Value<bool>();
@@ -411,6 +426,9 @@ namespace Snowflake.Data.Core.Converter
 
         private static bool IsRealMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.REAL.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsDecfloatMetadata(FieldMetadata fieldMetadata) =>
+            SFDataType.DECFLOAT.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
 
         private static bool IsBooleanMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.BOOLEAN.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
