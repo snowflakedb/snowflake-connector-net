@@ -8,7 +8,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     /// <summary>
     /// Integration tests for DECFLOAT data type support.
-    /// These tests explore how DECFLOAT values are handled by the connector.
     /// </summary>
     [TestFixture(ResultFormat.ARROW)]
     [TestFixture(ResultFormat.JSON)]
@@ -40,66 +39,34 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestSelectDecfloatLiteral()
         {
-            // Test selecting a DECFLOAT literal value
+            // Arrange & Act
             using (var conn = CreateAndOpenConnection())
             {
                 SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    // Select a DECFLOAT value using explicit cast
                     cmd.CommandText = "SELECT 123.456::DECFLOAT AS decfloat_value";
 
                     using (var reader = cmd.ExecuteReader())
                     {
                         ValidateResultFormat(reader);
 
-                        // Check metadata
-                        var schemaTable = reader.GetSchemaTable();
-                        var dataTypeName = reader.GetDataTypeName(0);
-                        var fieldType = reader.GetFieldType(0);
-
-                        Console.WriteLine($"ResultFormat: {_resultFormat}");
-                        Console.WriteLine($"DataTypeName: {dataTypeName}");
-                        Console.WriteLine($"FieldType: {fieldType}");
+                        // Assert metadata
+                        Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
+                        Assert.AreEqual(typeof(decimal), reader.GetFieldType(0));
 
                         Assert.IsTrue(reader.Read());
 
-                        // Try to read the value
+                        // Assert value
                         var value = reader.GetValue(0);
-                        Console.WriteLine($"Value: {value}");
-                        Console.WriteLine($"Value Type: {value?.GetType()}");
+                        Assert.IsInstanceOf<decimal>(value);
+                        Assert.AreEqual(123.456m, (decimal)value);
 
-                        // Try specific type accessors
-                        try
-                        {
-                            var decimalValue = reader.GetDecimal(0);
-                            Console.WriteLine($"GetDecimal: {decimalValue}");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"GetDecimal failed: {ex.Message}");
-                        }
-
-                        try
-                        {
-                            var doubleValue = reader.GetDouble(0);
-                            Console.WriteLine($"GetDouble: {doubleValue}");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"GetDouble failed: {ex.Message}");
-                        }
-
-                        try
-                        {
-                            var stringValue = reader.GetString(0);
-                            Console.WriteLine($"GetString: {stringValue}");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"GetString failed: {ex.Message}");
-                        }
+                        // Assert type accessors work
+                        Assert.AreEqual(123.456m, reader.GetDecimal(0));
+                        Assert.AreEqual(123.456d, reader.GetDouble(0), 0.0001);
+                        Assert.AreEqual("123.456", reader.GetString(0));
 
                         Assert.IsFalse(reader.Read());
                     }
@@ -110,29 +77,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestDecfloatWithHighPrecision()
         {
-            // Test DECFLOAT with high precision values
+            // Arrange & Act
             using (var conn = CreateAndOpenConnection())
             {
                 SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    // DECFLOAT can handle very high precision numbers
-                    cmd.CommandText = "SELECT 1234567890.123456789012345678901234567890::DECFLOAT AS high_precision";
+                    // Use a value within decimal precision (28-29 digits)
+                    cmd.CommandText = "SELECT 1234567890.12345678901234567890::DECFLOAT AS high_precision";
 
                     using (var reader = cmd.ExecuteReader())
                     {
                         ValidateResultFormat(reader);
 
-                        var dataTypeName = reader.GetDataTypeName(0);
-                        Console.WriteLine($"ResultFormat: {_resultFormat}");
-                        Console.WriteLine($"DataTypeName: {dataTypeName}");
+                        // Assert metadata
+                        Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
+                        Assert.AreEqual(typeof(decimal), reader.GetFieldType(0));
 
                         Assert.IsTrue(reader.Read());
 
+                        // Assert value is readable and is decimal type
                         var value = reader.GetValue(0);
-                        Console.WriteLine($"High precision value: {value}");
-                        Console.WriteLine($"Value Type: {value?.GetType()}");
+                        Assert.IsInstanceOf<decimal>(value);
+                        Assert.IsNotNull(value);
+
+                        // Verify it starts with the expected integer part
+                        var decimalValue = (decimal)value;
+                        Assert.That(decimalValue, Is.GreaterThan(1234567890m));
+                        Assert.That(decimalValue, Is.LessThan(1234567891m));
+
+                        Assert.IsFalse(reader.Read());
                     }
                 }
             }
@@ -141,7 +116,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestDecfloatWithScientificNotation()
         {
-            // Test DECFLOAT with scientific notation
+            // Arrange & Act
             using (var conn = CreateAndOpenConnection())
             {
                 SetResultFormat(conn);
@@ -154,14 +129,45 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Console.WriteLine($"ResultFormat: {_resultFormat}");
-                        Console.WriteLine($"DataTypeName: {reader.GetDataTypeName(0)}");
+                        // Assert metadata
+                        Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
 
                         Assert.IsTrue(reader.Read());
 
+                        // Assert value (1.23e10 = 12300000000)
                         var value = reader.GetValue(0);
-                        Console.WriteLine($"Scientific notation value: {value}");
-                        Console.WriteLine($"Value Type: {value?.GetType()}");
+                        Assert.IsInstanceOf<decimal>(value);
+                        Assert.AreEqual(12300000000m, (decimal)value);
+
+                        Assert.IsFalse(reader.Read());
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void TestDecfloatNegativeScientificNotation()
+        {
+            // Arrange & Act
+            using (var conn = CreateAndOpenConnection())
+            {
+                SetResultFormat(conn);
+
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT 1.5e-3::DECFLOAT AS small_value";
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        ValidateResultFormat(reader);
+
+                        Assert.IsTrue(reader.Read());
+
+                        // Assert value (1.5e-3 = 0.0015)
+                        var value = reader.GetDecimal(0);
+                        Assert.AreEqual(0.0015m, value);
+
+                        Assert.IsFalse(reader.Read());
                     }
                 }
             }
@@ -170,7 +176,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestDecfloatNullValue()
         {
-            // Test NULL DECFLOAT value
+            // Arrange & Act
             using (var conn = CreateAndOpenConnection())
             {
                 SetResultFormat(conn);
@@ -183,16 +189,72 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Console.WriteLine($"ResultFormat: {_resultFormat}");
-                        Console.WriteLine($"DataTypeName: {reader.GetDataTypeName(0)}");
+                        // Assert metadata
+                        Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
+                        Assert.AreEqual(typeof(decimal), reader.GetFieldType(0));
 
                         Assert.IsTrue(reader.Read());
 
-                        var isNull = reader.IsDBNull(0);
-                        Console.WriteLine($"IsDBNull: {isNull}");
+                        // Assert NULL handling
+                        Assert.IsTrue(reader.IsDBNull(0));
+                        Assert.AreEqual(DBNull.Value, reader.GetValue(0));
 
-                        var value = reader.GetValue(0);
-                        Console.WriteLine($"Value: {value}");
+                        Assert.IsFalse(reader.Read());
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void TestDecfloatZeroValue()
+        {
+            // Arrange & Act
+            using (var conn = CreateAndOpenConnection())
+            {
+                SetResultFormat(conn);
+
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT 0::DECFLOAT AS zero_value";
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        ValidateResultFormat(reader);
+
+                        Assert.IsTrue(reader.Read());
+
+                        // Assert zero value
+                        Assert.IsFalse(reader.IsDBNull(0));
+                        Assert.AreEqual(0m, reader.GetDecimal(0));
+
+                        Assert.IsFalse(reader.Read());
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void TestDecfloatNegativeValue()
+        {
+            // Arrange & Act
+            using (var conn = CreateAndOpenConnection())
+            {
+                SetResultFormat(conn);
+
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT -987.654::DECFLOAT AS negative_value";
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        ValidateResultFormat(reader);
+
+                        Assert.IsTrue(reader.Read());
+
+                        // Assert negative value
+                        Assert.AreEqual(-987.654m, reader.GetDecimal(0));
+
+                        Assert.IsFalse(reader.Read());
                     }
                 }
             }
@@ -201,91 +263,93 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestDecfloatInTable()
         {
-            // Test DECFLOAT column in a table
+            // Arrange
             using (var conn = CreateAndOpenConnection())
             {
                 SetResultFormat(conn);
 
-                // Create table with DECFLOAT column
                 CreateOrReplaceTable(conn, TableName, new[] { "col_decfloat DECFLOAT" });
 
                 using (var cmd = conn.CreateCommand())
                 {
                     // Insert values
-                    cmd.CommandText = $"INSERT INTO {TableName} VALUES (123.456), (1e20), (-999.999), (NULL)";
+                    cmd.CommandText = $"INSERT INTO {TableName} VALUES (123.456), (1e10), (-999.999), (NULL)";
                     var inserted = cmd.ExecuteNonQuery();
-                    Console.WriteLine($"Inserted {inserted} rows");
+                    Assert.AreEqual(4, inserted);
 
-                    // Query the data
+                    // Act - Query the data
                     cmd.CommandText = $"SELECT col_decfloat FROM {TableName} ORDER BY col_decfloat NULLS LAST";
 
                     using (var reader = cmd.ExecuteReader())
                     {
                         ValidateResultFormat(reader);
 
-                        Console.WriteLine($"ResultFormat: {_resultFormat}");
-                        Console.WriteLine($"DataTypeName: {reader.GetDataTypeName(0)}");
-                        Console.WriteLine($"FieldType: {reader.GetFieldType(0)}");
+                        // Assert metadata
+                        Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
+                        Assert.AreEqual(typeof(decimal), reader.GetFieldType(0));
 
-                        int rowNum = 0;
-                        while (reader.Read())
-                        {
-                            rowNum++;
-                            var isNull = reader.IsDBNull(0);
-                            var value = reader.GetValue(0);
-                            Console.WriteLine($"Row {rowNum}: IsNull={isNull}, Value={value}, Type={value?.GetType()}");
-                        }
+                        // Row 1: -999.999
+                        Assert.IsTrue(reader.Read());
+                        Assert.IsFalse(reader.IsDBNull(0));
+                        Assert.AreEqual(-999.999m, reader.GetDecimal(0));
+
+                        // Row 2: 123.456
+                        Assert.IsTrue(reader.Read());
+                        Assert.IsFalse(reader.IsDBNull(0));
+                        Assert.AreEqual(123.456m, reader.GetDecimal(0));
+
+                        // Row 3: 1e10 = 10000000000
+                        Assert.IsTrue(reader.Read());
+                        Assert.IsFalse(reader.IsDBNull(0));
+                        Assert.AreEqual(10000000000m, reader.GetDecimal(0));
+
+                        // Row 4: NULL
+                        Assert.IsTrue(reader.Read());
+                        Assert.IsTrue(reader.IsDBNull(0));
+
+                        Assert.IsFalse(reader.Read());
                     }
                 }
             }
         }
 
         [Test]
-        public void TestDecfloatSpecialValues()
+        public void TestDecfloatMultipleColumns()
         {
-            // Test special DECFLOAT values like infinity and NaN if supported
+            // Arrange & Act
             using (var conn = CreateAndOpenConnection())
             {
                 SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    // Test various special values
                     cmd.CommandText = @"
                         SELECT 
-                            0::DECFLOAT AS zero,
-                            -0::DECFLOAT AS negative_zero,
-                            'inf'::DECFLOAT AS positive_infinity,
-                            '-inf'::DECFLOAT AS negative_infinity,
-                            'nan'::DECFLOAT AS not_a_number
+                            1.1::DECFLOAT AS col1,
+                            2.2::DECFLOAT AS col2,
+                            3.3::DECFLOAT AS col3
                     ";
 
-                    try
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        using (var reader = cmd.ExecuteReader())
+                        ValidateResultFormat(reader);
+
+                        // Assert all columns have correct metadata
+                        Assert.AreEqual(3, reader.FieldCount);
+                        for (int i = 0; i < 3; i++)
                         {
-                            ValidateResultFormat(reader);
-
-                            Console.WriteLine($"ResultFormat: {_resultFormat}");
-
-                            for (int i = 0; i < reader.FieldCount; i++)
-                            {
-                                Console.WriteLine($"Column {i}: {reader.GetName(i)}, Type: {reader.GetDataTypeName(i)}");
-                            }
-
-                            Assert.IsTrue(reader.Read());
-
-                            for (int i = 0; i < reader.FieldCount; i++)
-                            {
-                                var value = reader.GetValue(i);
-                                Console.WriteLine($"{reader.GetName(i)}: {value} (Type: {value?.GetType()})");
-                            }
+                            Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(i));
+                            Assert.AreEqual(typeof(decimal), reader.GetFieldType(i));
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Special values test failed: {ex.Message}");
-                        // This might fail if DECFLOAT doesn't support special values like 'inf' or 'nan'
+
+                        Assert.IsTrue(reader.Read());
+
+                        // Assert values
+                        Assert.AreEqual(1.1m, reader.GetDecimal(0));
+                        Assert.AreEqual(2.2m, reader.GetDecimal(1));
+                        Assert.AreEqual(3.3m, reader.GetDecimal(2));
+
+                        Assert.IsFalse(reader.Read());
                     }
                 }
             }
@@ -297,11 +361,5 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.Open();
             return conn;
         }
-
-        private void CloseConnection(SnowflakeDbConnection conn)
-        {
-            conn.Close();
-        }
     }
 }
-

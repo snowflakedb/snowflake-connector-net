@@ -257,10 +257,7 @@ namespace Snowflake.Data.Core
                     return sb.ToString();
 
                 case SFDataType.DECFLOAT:
-                    // DECFLOAT is serialized in Arrow as a STRUCT with:
-                    // - INT16 for exponent
-                    // - Variable-length BINARY for significand (2's complement big endian, max 16 bytes)
-                    return ExtractDecfloat(column, columnIndex);
+                    return ExtractDecfloat(column);
 
                 case SFDataType.BINARY:
                     return ((BinaryArray)column).GetBytes(_currentRecordIndex).ToArray();
@@ -482,7 +479,7 @@ namespace Snowflake.Data.Core
         /// - Variable-length BINARY for the significand (2's complement big endian, max 16 bytes)
         /// The decimal value is: significand * 10^exponent
         /// </summary>
-        private decimal ExtractDecfloat(IArrowArray column, int columnIndex)
+        private decimal ExtractDecfloat(IArrowArray column)
         {
             var structArray = (StructArray)column;
 

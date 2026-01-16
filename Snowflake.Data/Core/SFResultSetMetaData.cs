@@ -138,7 +138,6 @@ namespace Snowflake.Data.Core
                 case SFDataType.REAL:
                     return typeof(double);
                 case SFDataType.DECFLOAT:
-                    // DECFLOAT is a decimal floating-point type with precision up to 38 digits
                     return typeof(decimal);
                 case SFDataType.TEXT:
                 case SFDataType.VARIANT:

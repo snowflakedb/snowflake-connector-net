@@ -99,8 +99,7 @@ namespace Snowflake.Data.Core
                 throw ex;
             }
 
-            // Check for scientific notation (e.g., "1.23e10", "1.23E-5")
-            // DECFLOAT values are serialized as strings in scientific notation
+            // Handle scientific notation (e.g., "1.23e10", "1.23E-5")
             int exponentPos = Array.IndexOf<byte>(s, (byte)'e', offset, len);
             if (exponentPos < 0)
             {
