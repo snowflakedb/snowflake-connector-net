@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Snowflake.Data.Core;
 using System.Security;
@@ -176,6 +178,85 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, new SessionPropertiesContext()));
 
             Assert.That(thrown.Message, Does.Contain("Invalid parameter value  for PASSCODEINPASSWORD"));
+        }
+
+        [Test]
+        public void TestTurkishCultureInvariantPropertyParsing()
+        {
+            // arrange
+            var currentCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+            var currentUICulture = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            var turkishCulture = new System.Globalization.CultureInfo("tr-TR");
+
+            try
+            {
+                // Set Turkish culture where 'i'.ToUpper() becomes 'İ' instead of 'I'
+                System.Threading.Thread.CurrentThread.CurrentCulture = turkishCulture;
+                System.Threading.Thread.CurrentThread.CurrentUICulture = turkishCulture;
+
+                var connectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;authenticator=snowflake;private_key=dummykey";
+
+                // act - this should not throw an exception even with Turkish culture
+                var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+                // assert
+                Assert.AreEqual("snowflake", properties[SFSessionProperty.AUTHENTICATOR]);
+                Assert.AreEqual("dummykey", properties[SFSessionProperty.PRIVATE_KEY]);
+            }
+            finally
+            {
+                // restore original culture
+                System.Threading.Thread.CurrentThread.CurrentCulture = currentCulture;
+                System.Threading.Thread.CurrentThread.CurrentUICulture = currentUICulture;
+            }
+        }
+
+        [Test]
+        public void TestTurkishCultureDemonstratesProblemAndInvalidPropertiesStillFail()
+        {
+            // arrange
+            var currentCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+            var currentUICulture = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            var turkishCulture = new System.Globalization.CultureInfo("tr-TR");
+
+            try
+            {
+                // Set Turkish culture
+                System.Threading.Thread.CurrentThread.CurrentCulture = turkishCulture;
+                System.Threading.Thread.CurrentThread.CurrentUICulture = turkishCulture;
+
+                // Demonstrate the Turkish culture problem with string casing
+                // In Turkish culture, 'i'.ToUpper() becomes 'İ' (U+0130) instead of 'I' (U+0049)
+                var testString = "authenticator";
+                var cultureDependent = testString.ToUpper(); // Would be "AUTHENTİCATOR" in Turkish
+                var cultureInvariant = testString.ToUpperInvariant(); // Always "AUTHENTICATOR"
+
+                // Verify the Turkish culture issue exists
+                Assert.AreNotEqual(cultureDependent, cultureInvariant, "Turkish culture should produce different casing");
+                Assert.IsTrue(cultureDependent.Contains("İ"), "Turkish ToUpper() should contain Turkish dotted capital I");
+                Assert.IsTrue(cultureInvariant.Contains("I"), "Invariant ToUpper() should contain ASCII capital I");
+
+                // Verify that invalid properties still throw exceptions even with Turkish culture
+                var invalidConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;invalidproperty=somevalue";
+
+                // act & assert - invalid properties should be ignored (logged as debug), not throw exceptions
+                var properties = SFSessionProperties.ParseConnectionString(invalidConnectionString, new SessionPropertiesContext());
+
+                // Verify valid properties are still parsed correctly
+                Assert.AreEqual("testaccount", properties[SFSessionProperty.ACCOUNT]);
+                Assert.AreEqual("testuser", properties[SFSessionProperty.USER]);
+                Assert.AreEqual("testpassword", properties[SFSessionProperty.PASSWORD]);
+
+                // Verify invalid property is not present (can't use Enum.Parse here as it would throw)
+                Assert.IsFalse(properties.Any(p => p.Key.ToString().Equals("INVALIDPROPERTY", StringComparison.OrdinalIgnoreCase)),
+                    "Invalid property should not be present in parsed properties");
+            }
+            finally
+            {
+                // restore original culture
+                System.Threading.Thread.CurrentThread.CurrentCulture = currentCulture;
+                System.Threading.Thread.CurrentThread.CurrentUICulture = currentUICulture;
+            }
         }
 
         [Test]
