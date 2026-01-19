@@ -1,5 +1,6 @@
 using System.Security;
 using Snowflake.Data.Core.Tools;
+using System;
 
 namespace Snowflake.Data.Core.Session
 {
@@ -12,6 +13,8 @@ namespace Snowflake.Data.Core.Session
         public SecureString OAuthClientSecret { get; set; } = null;
 
         public SecureString Token { get; set; } = null;
+
+        public Func<System.Net.Http.HttpMessageHandler> HttpMessageHandlerFactory { get; set; } = null;
 
         public void FillSecrets(SFSessionProperties properties)
         {
