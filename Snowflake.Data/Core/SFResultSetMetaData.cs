@@ -143,6 +143,7 @@ namespace Snowflake.Data.Core
                 case SFDataType.ARRAY:
                 case SFDataType.VECTOR:
                 case SFDataType.MAP:
+                case SFDataType.DECFLOAT:
                     return typeof(string);
                 case SFDataType.DATE:
                 case SFDataType.TIME:
