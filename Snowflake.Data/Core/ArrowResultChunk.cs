@@ -276,6 +276,9 @@ namespace Snowflake.Data.Core
                     sb.Append("]");
                     return sb.ToString();
 
+                case SFDataType.DECFLOAT:
+                    return ExtractDecfloat(columnIndex, column);
+
                 case SFDataType.BINARY:
                     return ((BinaryArray)column).GetBytes(_currentRecordIndex).ToArray();
 
@@ -487,6 +490,119 @@ namespace Snowflake.Data.Core
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Extracts a DECFLOAT value from Arrow format as a string.
+        /// DECFLOAT is serialized as a STRUCT containing:
+        /// - INT16 for the exponent
+        /// - Variable-length BINARY for the significand (2's complement big endian)
+        /// Returns string to preserve full precision (up to 38 digits).
+        /// </summary>
+        private string ExtractDecfloat(int columnIndex, IArrowArray column)
+        {
+            var structArray = (StructArray)column;
+            var exponentArray = (Int16Array)structArray.Fields[0];
+            var significandArray = (BinaryArray)structArray.Fields[1];
+
+            short exponent = exponentArray.GetValue(_currentRecordIndex).Value;
+            var significandBytes = significandArray.GetBytes(_currentRecordIndex);
+
+            if (significandBytes.Length == 0)
+            {
+                return "0";
+            }
+
+            // Convert 2's complement big endian to BigInteger (little endian)
+            var littleEndianBytes = new byte[significandBytes.Length + 1];
+            for (int i = 0; i < significandBytes.Length; i++)
+            {
+                littleEndianBytes[significandBytes.Length - 1 - i] = significandBytes[i];
+            }
+
+            // Sign extension for negative numbers
+            if ((significandBytes[0] & 0x80) != 0)
+            {
+                littleEndianBytes[significandBytes.Length] = 0xFF;
+            }
+
+            var significand = new System.Numerics.BigInteger(littleEndianBytes);
+
+            return FormatDecfloatAsString(significand, exponent);
+        }
+
+        /// <summary>
+        /// Formats a DECFLOAT value as a string, matching backend behavior:
+        /// - If total digits in plain format ≤ 38: use decimal notation
+        /// - Otherwise: use scientific notation
+        /// </summary>
+        private static string FormatDecfloatAsString(System.Numerics.BigInteger significand, short exponent)
+        {
+            const int MaxPlainFormatDigits = 38; // DECFLOAT_DEFAULT_PRECISION
+
+            if (significand == 0)
+            {
+                return "0";
+            }
+
+            bool isNegative = significand < 0;
+            string digits = System.Numerics.BigInteger.Abs(significand).ToString();
+            string sign = isNegative ? "-" : "";
+
+            // Calculate total digits in plain decimal format
+            int plainFormatDigits;
+            if (exponent >= 0)
+            {
+                // Trailing zeros: 123 * 10^2 = 12300 (5 digits)
+                plainFormatDigits = digits.Length + exponent;
+            }
+            else
+            {
+                int scale = -exponent;
+                if (scale < digits.Length)
+                {
+                    // Decimal point within digits: 12345 * 10^-2 = 123.45 (5 digits)
+                    plainFormatDigits = digits.Length;
+                }
+                else
+                {
+                    // Leading zeros: 123 * 10^-5 = 0.00123 (5 digits after decimal)
+                    plainFormatDigits = scale;
+                }
+            }
+
+            // Use scientific notation if plain format exceeds threshold
+            if (plainFormatDigits > MaxPlainFormatDigits)
+            {
+                int adjustedExponent = exponent + digits.Length - 1;
+                if (digits.Length == 1)
+                {
+                    return sign + digits + "E" + adjustedExponent;
+                }
+                else
+                {
+                    return sign + digits[0] + "." + digits.Substring(1) + "E" + adjustedExponent;
+                }
+            }
+
+            // Use plain decimal format
+            if (exponent >= 0)
+            {
+                return sign + digits + new string('0', exponent);
+            }
+            else
+            {
+                int scale = -exponent;
+                if (scale >= digits.Length)
+                {
+                    return sign + "0." + new string('0', scale - digits.Length) + digits;
+                }
+                else
+                {
+                    int insertPos = digits.Length - scale;
+                    return sign + digits.Substring(0, insertPos) + "." + digits.Substring(insertPos);
+                }
+            }
         }
     }
 }
