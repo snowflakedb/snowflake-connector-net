@@ -13,8 +13,8 @@ namespace Snowflake.Data.Core.FileTransfer
     class EncryptionProvider
     {
         // The default block size for AES
-        private const int AES_BLOCK_SIZE = 128;
-        private const int blockSize = AES_BLOCK_SIZE / 8;  // in bytes
+        private const int AES_BLOCK_SIZE_BYTES = 16;
+        private const int AES_KEY_SIZE_BYTES = 16;
 
         /// <summary>
         /// The logger.
@@ -60,12 +60,14 @@ namespace Snowflake.Data.Core.FileTransfer
             Logger.Debug($"Master key size : {masterKeySize}");
 
             // Generate file key
-            byte[] ivData = new byte[blockSize];
-            byte[] keyData = new byte[blockSize];
+            byte[] ivData = new byte[AES_BLOCK_SIZE_BYTES];
+            byte[] keyData = new byte[AES_KEY_SIZE_BYTES];
 
-            var random = new Random();
-            random.NextBytes(ivData);
-            random.NextBytes(keyData);
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(ivData);
+                rng.GetBytes(keyData);
+            }
 
             var encryptedBytesStream = CreateEncryptedBytesStream(
                 inputStream,
