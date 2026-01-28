@@ -132,6 +132,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 SetupAwsWrapper
             );
 
+        // Note: AWS transitive role assumption test requires more complex infrastructure
+        // to mock the STS AssumeRole call. The implementation supports transitive impersonation
+        // via the workload_identity_target_resource connection string parameter, which passes
+        // an IAM role ARN to assume before generating the attestation.
+
         internal static void SetupAwsWrapper(Mock<AwsSdkWrapper> awsSdkWrapper)
         {
             awsSdkWrapper

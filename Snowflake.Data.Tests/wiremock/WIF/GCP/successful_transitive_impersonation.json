@@ -1,0 +1,40 @@
+{
+    "mappings": [
+        {
+            "request": {
+                "urlPattern": "/computeMetadata/v1/instance/service-accounts/default/token",
+                "method": "GET",
+                "headers": {
+                    "Metadata-Flavor": {
+                        "equalTo": "Google"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "jsonBody": {
+                    "access_token": "attached-sa-access-token",
+                    "expires_in": 3599,
+                    "token_type": "Bearer"
+                }
+            }
+        },
+        {
+            "request": {
+                "urlPattern": "/v1/projects/-/serviceAccounts/target-sa@project.iam.gserviceaccount.com:generateIdToken",
+                "method": "POST",
+                "headers": {
+                    "Authorization": {
+                        "equalTo": "Bearer attached-sa-access-token"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "jsonBody": {
+                    "token": "%ACCESS_TOKEN%"
+                }
+            }
+        }
+    ]
+}
