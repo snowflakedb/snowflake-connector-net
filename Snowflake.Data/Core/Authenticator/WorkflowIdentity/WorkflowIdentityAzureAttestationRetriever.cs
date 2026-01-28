@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Web;
 using Snowflake.Data.Core.Rest;
@@ -36,10 +37,25 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
         public override AttestationProvider GetAttestationProvider() => AttestationProvider.AZURE;
 
-        public override WorkloadIdentityAttestationData CreateAttestationData(string snowflakeEntraResource, string tokenParam)
+        public override WorkloadIdentityAttestationData CreateAttestationData(string snowflakeEntraResource, string tokenParam, string impersonationPath = null)
         {
-            var request = PrepareRequest(snowflakeEntraResource);
-            var accessToken = GetAccessToken(request);
+            string accessToken;
+            if (!string.IsNullOrEmpty(impersonationPath))
+            {
+                // Transitive impersonation: use a specific user-assigned managed identity
+                // For Azure, the impersonation path is a single client ID (chains not supported by Azure IMDS)
+                var targetClientId = impersonationPath.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Last().Trim();
+                s_logger.Debug($"Using transitive impersonation with user-assigned managed identity: {targetClientId}");
+                var request = PrepareRequest(snowflakeEntraResource, targetClientId);
+                accessToken = GetAccessToken(request);
+            }
+            else
+            {
+                // Direct authentication: use the system-assigned or default managed identity
+                var request = PrepareRequest(snowflakeEntraResource, null);
+                accessToken = GetAccessToken(request);
+            }
+
             var token = new JwtTokenExtractor().ReadJwtToken(accessToken, AttestationError);
             var issuer = token.Issuer;
             var subject = token.Subject;
@@ -85,7 +101,13 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             return response.AccessToken;
         }
 
-        private HttpRequestMessage PrepareRequest(string snowflakeEntraResource)
+        /// <summary>
+        /// Prepares the HTTP request to get an access token from the Azure Instance Metadata Service.
+        /// </summary>
+        /// <param name="snowflakeEntraResource">The Entra resource to request the token for.</param>
+        /// <param name="targetClientId">Optional client ID of a user-assigned managed identity to use for transitive impersonation.
+        /// When specified, this overrides the MANAGED_IDENTITY_CLIENT_ID environment variable.</param>
+        private HttpRequestMessage PrepareRequest(string snowflakeEntraResource, string targetClientId)
         {
             var entraResourceOrDefault = string.IsNullOrEmpty(snowflakeEntraResource) ? DefaultWorkloadIdentityEntraResource : snowflakeEntraResource;
             var headers = new Dictionary<string, string> { { "Metadata", "True" } };
@@ -107,7 +129,13 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 queryParams = $"api-version=2019-08-01&resource={HttpUtility.UrlEncode(entraResourceOrDefault)}";
             }
 
-            var clientId = _environmentOperations.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID");
+            // Determine which client_id to use:
+            // 1. If targetClientId is specified (for transitive impersonation), use it
+            // 2. Otherwise, fall back to MANAGED_IDENTITY_CLIENT_ID environment variable
+            var clientId = !string.IsNullOrEmpty(targetClientId)
+                ? targetClientId
+                : _environmentOperations.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID");
+
             if (!string.IsNullOrEmpty(clientId))
             {
                 queryParams += $"&client_id={HttpUtility.UrlEncode(clientId)}";

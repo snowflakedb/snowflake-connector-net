@@ -330,6 +330,56 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
             );
 
+        [Test]
+        public void TestSuccessfulAzureTransitiveImpersonationAttestation()
+        {
+            // arrange
+            var targetClientId = "target-user-assigned-managed-identity-client-id";
+            AddAzureWithTargetClientIdWiremockMappings(targetClientId);
+            var session = PrepareSessionForAzure($"workload_impersonation_path={targetClientId};", NoEnvironmentSetup);
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+
+            // act
+            var attestation = authenticator.CreateAttestation();
+
+            // assert
+            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
+            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            AssertExtensions.NotEmptyString(attestation.Credential);
+        }
+
+        [Test]
+        public void TestAzureTransitiveImpersonationOverridesEnvironmentClientId()
+        {
+            // arrange: Set MANAGED_IDENTITY_CLIENT_ID env var, but use a different client_id via connection string
+            var targetClientId = "target-user-assigned-managed-identity-client-id";
+            AddAzureWithTargetClientIdWiremockMappings(targetClientId);
+            // The wiremock expects the target client ID, NOT the one from env var
+            var session = PrepareSessionForAzure($"workload_impersonation_path={targetClientId};", ConfigureIdentityClientId);
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+
+            // act
+            var attestation = authenticator.CreateAttestation();
+
+            // assert - should succeed because workload_identity_target_resource overrides MANAGED_IDENTITY_CLIENT_ID
+            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
+            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            AssertExtensions.NotEmptyString(attestation.Credential);
+        }
+
+        private void AddAzureWithTargetClientIdWiremockMappings(string targetClientId) =>
+            _runner.AddMappings(s_wifAzureWithTargetClientIdSuccessfulMapping,
+                new StringTransformations()
+                    .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                    .ThenTransform(s_targetClientIdReplacement, targetClientId)
+                    .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
+            );
+
+        private static readonly string s_wifAzureWithTargetClientIdSuccessfulMapping = Path.Combine(s_wifAzureMappingPath, "successful_flow_with_target_client_id.json");
+        private static readonly string s_targetClientIdReplacement = "%TARGET_CLIENT_ID%";
+
         private SFSession PrepareSessionForAzure(string connectionStringSuffix,
             Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator) =>
             PrepareSession(
