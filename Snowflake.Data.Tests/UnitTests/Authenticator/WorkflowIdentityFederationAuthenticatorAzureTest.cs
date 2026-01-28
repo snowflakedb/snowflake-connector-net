@@ -330,6 +330,21 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
             );
 
+        [Test]
+        public void TestFailAzureAttestationWhenImpersonationIsUsed()
+        {
+            // arrange
+            var session = PrepareSessionForAzure("workload_impersonation_path=some/impersonation/path;", NoEnvironmentSetup);
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
+
+            // assert
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+            Assert.That(thrown.Message, Does.Contain("Impersonation is not supported for Azure workload identity provider"));
+        }
+
         private SFSession PrepareSessionForAzure(string connectionStringSuffix,
             Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator) =>
             PrepareSession(
