@@ -99,12 +99,26 @@ namespace Snowflake.Data.Core
             if (_currentRecordIndex < RecordBatch[_currentBatchIndex].Length)
                 return true;
 
+            // Move to the next batch and skip any empty batches
             _currentBatchIndex += 1;
             _currentRecordIndex = 0;
-
             ResetTempTables();
 
-            return _currentBatchIndex < RecordBatch.Count;
+            // Skip empty batches until we find one with rows or run out of batches
+            while (_currentBatchIndex < RecordBatch.Count && RecordBatch[_currentBatchIndex].Length == 0)
+            {
+                _currentBatchIndex += 1;
+                ResetTempTables();
+            }
+
+            // Check if we found a valid batch with rows
+            if (_currentBatchIndex < RecordBatch.Count)
+            {
+                // Verify the first row index is valid for the new batch
+                return _currentRecordIndex < RecordBatch[_currentBatchIndex].Length;
+            }
+
+            return false;
         }
 
         internal override bool Rewind()
@@ -116,14 +130,21 @@ namespace Snowflake.Data.Core
             if (_currentRecordIndex >= 0)
                 return true;
 
+            // Move to the previous batch and skip any empty batches
             _currentBatchIndex -= 1;
+            ResetTempTables();
+
+            // Skip empty batches backwards until we find one with rows or run out of batches
+            while (_currentBatchIndex >= 0 && RecordBatch[_currentBatchIndex].Length == 0)
+            {
+                _currentBatchIndex -= 1;
+                ResetTempTables();
+            }
 
             if (_currentBatchIndex >= 0)
             {
                 _currentRecordIndex = RecordBatch[_currentBatchIndex].Length - 1;
-
-                ResetTempTables();
-                return true;
+                return _currentRecordIndex >= 0; // Ensure the batch has at least one row
             }
 
             return false;
