@@ -12,6 +12,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture]
     public class StructuredTypesWithEmbeddedUnstructuredIT : StructuredTypesIT
     {
+        // Connection string with HonorSessionTimezone enabled for tests that use session timezone
+        private string ConnectionStringWithHonorSessionTimezone => ConnectionString + "HonorSessionTimezone=true;";
+
         [Test]
         public void TestSelectAllUnstructuredTypesObject()
         {
@@ -283,7 +286,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectDateTime(string dbValue, string dbType, DateTime? expectedRaw, DateTime expected)
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(ConnectionStringWithHonorSessionTimezone))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -383,7 +386,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 "1883-11-19 00:00:00.000000 -5:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTime.Parse("1883-11-18 21:00:00.000000").ToLocalTime()
+                // Expected value in America/Los_Angeles: 1883-11-19 05:00:00 UTC - 8 hours = 1883-11-18 21:00:00 PST
+                DateTime.SpecifyKind(DateTime.Parse("1883-11-18 21:00:00.000000"), DateTimeKind.Local)
             };
             yield return new object[]
             {
@@ -406,7 +410,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectDateTimeOffset(string dbValue, string dbType, DateTime? expectedRaw, DateTimeOffset expected)
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(ConnectionStringWithHonorSessionTimezone))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())

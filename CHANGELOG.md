@@ -20,7 +20,7 @@
     - Add retry for HTTP 307/308 status codes
     - Added exception handling to session heartbeat to prevent network errors from disrupting background heartbeat check.
     - Added support for native arrow structured types.
-    - Fixed TIMESTAMP_LTZ datatype to honor session TIMEZONE parameter (ALTER SESSION SET TIMEZONE) instead of using local machine timezone.
+    - Added `HonorSessionTimezone` connection parameter (default: `false`). When set to `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter (`ALTER SESSION SET TIMEZONE`) instead of using the local machine timezone. This will become the default behavior in a future major release.
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
     - Renew idle sessions in the pool if keep alive is enabled.

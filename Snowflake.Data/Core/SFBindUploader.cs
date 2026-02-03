@@ -264,9 +264,14 @@ namespace Snowflake.Data.Core
                             ? nsLtz / 100
                             : (long)(decimal.Parse(sValue) / 100);
 
-                    DateTime utcDateTime = DateTime.SpecifyKind(epoch.AddTicks(ticksFromEpochLtz), DateTimeKind.Utc);
+                    var utcDateTimeOffset = new DateTimeOffset(epoch.AddTicks(ticksFromEpochLtz), TimeSpan.Zero);
                     var sessionTimezone = session?.GetSessionTimezone() ?? TimeZoneInfo.Local;
-                    DateTime ltz = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, sessionTimezone);
+                    // Use ToLocalTime() for local timezone to maintain exact backward compatibility
+                    if (sessionTimezone.Equals(TimeZoneInfo.Local))
+                    {
+                        return utcDateTimeOffset.ToLocalTime().ToString("O"); // ISO 8601 format
+                    }
+                    DateTime ltz = TimeZoneInfo.ConvertTimeFromUtc(utcDateTimeOffset.UtcDateTime, sessionTimezone);
                     return new DateTimeOffset(ltz, sessionTimezone.GetUtcOffset(ltz)).ToString("O"); // ISO 8601 format
                 case "TIMESTAMP_NTZ":
                     long ticksFromEpochNtz =
