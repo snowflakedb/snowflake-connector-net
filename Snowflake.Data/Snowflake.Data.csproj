@@ -1,6 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net481;net8.0;net8.0-windows</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net481;net8.0;net8.0-windows;net10.0;net10.0-windows</TargetFrameworks>
     <Title>Snowflake.Data</Title>
     <PackageId>Snowflake.Data</PackageId>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <!-- Define WINDOWS_BUILD for all Windows-specific targets -->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows' OR '$(TargetFramework)' == 'net10.0-windows'">
     <DefineConstants>$(DefineConstants);WINDOWS_BUILD</DefineConstants>
   </PropertyGroup>
 
@@ -37,9 +37,9 @@
     <PackageReference Include="Tomlyn.Signed" Version="0.17.0" />
   </ItemGroup>
 
-  <!-- Mono.Unix dependency ONLY for Unix/Linux platforms (netstandard2.0 and net8.0) -->
-  <!-- NOT included for Windows targets: net481, net8.0-windows -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net8.0'">
+  <!-- Mono.Unix dependency ONLY for Unix/Linux platforms (netstandard2.0, net8.0, net10.0) -->
+  <!-- NOT included for Windows targets: net481, net8.0-windows, net10.0-windows -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net10.0'">
     <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
   </ItemGroup>
 
@@ -49,7 +49,7 @@
   </ItemGroup>
 
   <!-- Include Mono.Unix Windows shim for all Windows targets -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows' OR '$(TargetFramework)' == 'net10.0-windows'">
     <Compile Include="PlatformShims\MonoUnixWindowsShim.cs" />
   </ItemGroup>
 
