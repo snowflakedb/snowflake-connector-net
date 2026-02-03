@@ -102,16 +102,16 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Process batch 1
             Assert.IsTrue(chunk.Next());
-            Assert.AreEqual("row0", chunk.ExtractCell(0, SFDataType.TEXT, 0));
+            Assert.AreEqual("row0", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
             Assert.IsTrue(chunk.Next());
-            Assert.AreEqual("row1", chunk.ExtractCell(0, SFDataType.TEXT, 0));
+            Assert.AreEqual("row1", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
 
             // With the fix: Next() should skip the empty batch and go to batch 3
             // With the bug: Next() returns true for empty batch, ExtractCell throws IndexOutOfRangeException
             Assert.IsTrue(chunk.Next(), "Next() should skip empty batch and return true for batch3");
-            Assert.AreEqual("row2", chunk.ExtractCell(0, SFDataType.TEXT, 0), "Should read from batch3 after skipping empty batch");
+            Assert.AreEqual("row2", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc), "Should read from batch3 after skipping empty batch");
             Assert.IsTrue(chunk.Next());
-            Assert.AreEqual("row3", chunk.ExtractCell(0, SFDataType.TEXT, 0));
+            Assert.AreEqual("row3", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
 
             Assert.IsFalse(chunk.Next());
         }
