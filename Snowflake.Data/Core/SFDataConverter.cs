@@ -162,8 +162,13 @@ namespace Snowflake.Data.Core
                             "Session timezone is required for TIMESTAMP_LTZ conversion");
                     }
                     var tickDiffLtz = GetTicksFromSecondAndNanosecond(srcVal);
-                    var utcDateTime = DateTime.SpecifyKind(UnixEpoch.AddTicks(tickDiffLtz), DateTimeKind.Utc);
-                    return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, sessionTimezone);
+                    var utcDateTimeLtz = new DateTimeOffset(UnixEpoch.Ticks + tickDiffLtz, TimeSpan.Zero);
+                    // Use ToLocalTime() for local timezone to maintain exact backward compatibility
+                    if (sessionTimezone.Equals(TimeZoneInfo.Local))
+                    {
+                        return utcDateTimeLtz.ToLocalTime().DateTime;
+                    }
+                    return TimeZoneInfo.ConvertTimeFromUtc(utcDateTimeLtz.UtcDateTime, sessionTimezone);
 
                 default:
                     throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, srcType, typeof(DateTime));
@@ -197,6 +202,11 @@ namespace Snowflake.Data.Core
                     }
                     var utcDateTimeOffset = new DateTimeOffset(UnixEpoch.Ticks +
                         GetTicksFromSecondAndNanosecond(srcVal), TimeSpan.Zero);
+                    // Use ToLocalTime() for local timezone to maintain exact backward compatibility
+                    if (sessionTimezone.Equals(TimeZoneInfo.Local))
+                    {
+                        return utcDateTimeOffset.ToLocalTime();
+                    }
                     var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTimeOffset.UtcDateTime, sessionTimezone);
                     return new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
 

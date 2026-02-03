@@ -366,6 +366,11 @@ namespace Snowflake.Data.Core
                         var epoch = _long[columnIndex][_currentRecordIndex];
                         var fraction = _fraction[columnIndex][_currentRecordIndex];
                         var utcDateTime = s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100);
+                        // Use ToLocalTime() for local timezone to maintain exact backward compatibility
+                        if (sessionTimezone.Equals(TimeZoneInfo.Local))
+                        {
+                            return utcDateTime.ToLocalTime();
+                        }
                         var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime.UtcDateTime, sessionTimezone);
                         return new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
                     }
@@ -378,6 +383,11 @@ namespace Snowflake.Data.Core
                         var epoch = ExtractEpoch(value, scale);
                         var fraction = ExtractFraction(value, scale);
                         var utcDateTime = s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100);
+                        // Use ToLocalTime() for local timezone to maintain exact backward compatibility
+                        if (sessionTimezone.Equals(TimeZoneInfo.Local))
+                        {
+                            return utcDateTime.ToLocalTime();
+                        }
                         var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime.UtcDateTime, sessionTimezone);
                         return new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
                     }

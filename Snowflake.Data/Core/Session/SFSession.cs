@@ -99,6 +99,8 @@ namespace Snowflake.Data.Core
 
         internal SecureString _mfaToken;
 
+        private bool _honorSessionTimezone = false;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -196,6 +198,7 @@ namespace Snowflake.Data.Core
             properties = SFSessionProperties.ParseConnectionString(ConnectionString, sessionContext);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
+            _honorSessionTimezone = bool.Parse(properties[SFSessionProperty.HONORSESSIONTIMEZONE]);
             properties.TryGetValue(SFSessionProperty.USER, out _user);
             ValidateApplicationName(properties);
             try
@@ -555,6 +558,12 @@ namespace Snowflake.Data.Core
 
         internal TimeZoneInfo GetSessionTimezone()
         {
+            // If HonorSessionTimezone is not enabled, use local machine timezone (legacy behavior)
+            if (!_honorSessionTimezone)
+            {
+                return TimeZoneInfo.Local;
+            }
+
             if (ParameterMap.TryGetValue(SFSessionParameter.TIMEZONE, out var value))
             {
                 var timezoneString = value.ToString();

@@ -531,7 +531,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestGetTimestampLTZ()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
             {
                 IDbCommand setTimezoneCmd = conn.CreateCommand();
                 setTimezoneCmd.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
@@ -1594,7 +1594,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("2019-01-01 12:12:12.1234567", 7, "2019-01-01 12:12:12.1234567 -08:00")]
         public void TestTimestampLtz(string testValue, int scale, string expectedValue)
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
             {
                 DbCommand cmd = conn.CreateCommand();
 
@@ -1678,19 +1678,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestTimestampLtzHonorsSessionTimezone()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
             {
-                CreateOrReplaceTable(conn, "test_timestamp_ltz_timezone", new[] { "val TIMESTAMP_LTZ" });
+                CreateOrReplaceTable(conn, TableName, new[] { "val TIMESTAMP_LTZ" });
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Europe/Warsaw'";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = "INSERT INTO test_timestamp_ltz_timezone VALUES('2023-08-09 10:00:00')";
+                    cmd.CommandText = $"INSERT INTO {TableName} VALUES('2023-08-09 10:00:00')";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = "SELECT * FROM test_timestamp_ltz_timezone";
+                    cmd.CommandText = $"SELECT * FROM {TableName}";
                     using (var reader = cmd.ExecuteReader())
                     {
                         Assert.IsTrue(reader.Read(), "Should read a record");
@@ -1708,7 +1708,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Pacific/Honolulu'";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = "SELECT * FROM test_timestamp_ltz_timezone";
+                    cmd.CommandText = $"SELECT * FROM {TableName}";
                     using (var reader = cmd.ExecuteReader())
                     {
                         Assert.IsTrue(reader.Read(), "Should read a record");
@@ -1733,16 +1733,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestTimestampLtzWithMultipleSessionTimezones()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
             {
-                CreateOrReplaceTable(conn, "test_ltz_multi_tz", new[] { "val TIMESTAMP_LTZ" });
+                CreateOrReplaceTable(conn, TableName, new[] { "val TIMESTAMP_LTZ" });
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'UTC'";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = "INSERT INTO test_ltz_multi_tz VALUES('2024-01-01 00:00:00')";
+                    cmd.CommandText = $"INSERT INTO {TableName} VALUES('2024-01-01 00:00:00')";
                     cmd.ExecuteNonQuery();
 
                     var utcBase = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -1760,7 +1760,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         cmd.CommandText = $"ALTER SESSION SET TIMEZONE = '{tzName}'";
                         cmd.ExecuteNonQuery();
 
-                        cmd.CommandText = "SELECT val FROM test_ltz_multi_tz";
+                        cmd.CommandText = $"SELECT val FROM {TableName}";
                         using (var reader = cmd.ExecuteReader())
                         {
                             Assert.IsTrue(reader.Read());
@@ -1779,9 +1779,68 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+        [Test]
+        public void TestTimestampLtzUsesLocalTimezoneByDefault()
+        {
+            // This test verifies that when HonorSessionTimezone is NOT set (default behavior),
+            // TIMESTAMP_LTZ values are returned in the local machine timezone,
+            // ignoring any session timezone set via ALTER SESSION.
+            using (var conn = CreateAndOpenConnection()) // Note: using default connection WITHOUT HonorSessionTimezone
+            {
+                CreateOrReplaceTable(conn, TableName, new[] { "val TIMESTAMP_LTZ" });
+
+                using (var cmd = conn.CreateCommand())
+                {
+                    // Set session timezone to something likely different from local machine timezone
+                    cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Pacific/Auckland'"; // UTC+12/+13
+                    cmd.ExecuteNonQuery();
+
+                    // Insert a known UTC timestamp
+                    cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'UTC'";
+                    cmd.ExecuteNonQuery();
+                    cmd.CommandText = $"INSERT INTO {TableName} VALUES('2024-06-15 12:00:00')";
+                    cmd.ExecuteNonQuery();
+
+                    // Change session timezone to Auckland
+                    cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Pacific/Auckland'";
+                    cmd.ExecuteNonQuery();
+
+                    // Read the value - without HonorSessionTimezone, it should be in LOCAL time, not Auckland time
+                    cmd.CommandText = $"SELECT val FROM {TableName}";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        Assert.IsTrue(reader.Read());
+                        var timestamp = (DateTimeOffset)reader.GetValue(0);
+
+                        // The stored UTC time is 2024-06-15 12:00:00 UTC
+                        var utcTime = new DateTime(2024, 6, 15, 12, 0, 0, DateTimeKind.Utc);
+
+                        // Expected: converted to LOCAL machine timezone (not Auckland)
+                        var expectedLocal = TimeZoneInfo.ConvertTimeFromUtc(utcTime, TimeZoneInfo.Local);
+                        var expectedOffset = TimeZoneInfo.Local.GetUtcOffset(expectedLocal);
+
+                        Assert.AreEqual(expectedLocal, timestamp.DateTime,
+                            "TIMESTAMP_LTZ should be in local machine timezone when HonorSessionTimezone is not set");
+                        Assert.AreEqual(expectedOffset, timestamp.Offset,
+                            "Offset should match local machine timezone, not session timezone (Auckland)");
+                    }
+                }
+
+                CloseConnection(conn);
+            }
+        }
+
         private DbConnection CreateAndOpenConnection()
         {
             var conn = new SnowflakeDbConnection(ConnectionString);
+            conn.Open();
+            SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
+            return conn;
+        }
+
+        private DbConnection CreateAndOpenConnectionWithHonorSessionTimezone()
+        {
+            var conn = new SnowflakeDbConnection(ConnectionString + "HonorSessionTimezone=true;");
             conn.Open();
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
             return conn;
