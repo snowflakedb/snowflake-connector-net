@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core
     public enum SFDataType
     {
         None, FIXED, REAL, TEXT, DATE, VARIANT, TIMESTAMP_LTZ, TIMESTAMP_NTZ,
-        TIMESTAMP_TZ, OBJECT, BINARY, TIME, BOOLEAN, ARRAY, MAP, VECTOR
+        TIMESTAMP_TZ, OBJECT, BINARY, TIME, BOOLEAN, ARRAY, MAP, VECTOR, DECFLOAT
     }
 
     static class SFDataConverter

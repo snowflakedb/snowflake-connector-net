@@ -77,6 +77,45 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestNextSkipsEmptyBatchesBetweenDataBatches()
+        {
+            // This test reproduces the production issue with an empty batch between two data batches
+            // Simulates: batch1 (data) -> batch2 (empty) -> batch3 (data)
+            // The bug would cause IndexOutOfRangeException when trying to read from the empty batch
+
+            var batch1 = new RecordBatch.Builder()
+                .Append("Col_Text", false, col => col.String(array => array.Append("row0").Append("row1")))
+                .Build();
+
+            var emptyBatch = new RecordBatch.Builder()
+                .Append("Col_Text", false, col => col.String(array => { }))
+                .Build();
+
+            var batch3 = new RecordBatch.Builder()
+                .Append("Col_Text", false, col => col.String(array => array.Append("row2").Append("row3")))
+                .Build();
+
+            var chunk = new ArrowResultChunk(batch1);
+            chunk.AddRecordBatch(emptyBatch);
+            chunk.AddRecordBatch(batch3);
+
+            // Process batch 1
+            Assert.IsTrue(chunk.Next());
+            Assert.AreEqual("row0", chunk.ExtractCell(0, SFDataType.TEXT, 0));
+            Assert.IsTrue(chunk.Next());
+            Assert.AreEqual("row1", chunk.ExtractCell(0, SFDataType.TEXT, 0));
+
+            // With the fix: Next() should skip the empty batch and go to batch 3
+            // With the bug: Next() returns true for empty batch, ExtractCell throws IndexOutOfRangeException
+            Assert.IsTrue(chunk.Next(), "Next() should skip empty batch and return true for batch3");
+            Assert.AreEqual("row2", chunk.ExtractCell(0, SFDataType.TEXT, 0), "Should read from batch3 after skipping empty batch");
+            Assert.IsTrue(chunk.Next());
+            Assert.AreEqual("row3", chunk.ExtractCell(0, SFDataType.TEXT, 0));
+
+            Assert.IsFalse(chunk.Next());
+        }
+
+        [Test]
         public void TestRewindIteratesThroughAllRecordsOfBatchOne()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
