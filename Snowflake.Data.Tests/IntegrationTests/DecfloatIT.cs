@@ -106,11 +106,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         var value = reader.GetValue(0);
                         Assert.IsInstanceOf<string>(value);
-
-                        // Verify numeric value is approximately correct
-                        var parsed = ParseDecfloatValue((string)value);
-                        Assert.That(parsed, Is.GreaterThan(1234567890m));
-                        Assert.That(parsed, Is.LessThan(1234567891m));
+                        Assert.AreEqual(1234567890.123456789m, ParseDecfloatValue((string)value));
 
                         Assert.IsFalse(reader.Read());
                     }
