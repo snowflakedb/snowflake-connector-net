@@ -27,6 +27,8 @@ namespace Snowflake.Data.Core
 
         private const long TicksPerDay = (long)24 * 60 * 60 * 1000 * 10000;
 
+        private const int MaxPlainFormatDigits = 38; // DECFLOAT_DEFAULT_PRECISION
+
         public List<RecordBatch> RecordBatch { get; set; }
 
         private sbyte[][] _sbyte;
@@ -277,7 +279,7 @@ namespace Snowflake.Data.Core
                     return sb.ToString();
 
                 case SFDataType.DECFLOAT:
-                    return ExtractDecfloat(columnIndex, column);
+                    return ExtractDecfloat(columnIndex, column, _currentRecordIndex);
 
                 case SFDataType.BINARY:
                     return ((BinaryArray)column).GetBytes(_currentRecordIndex).ToArray();
@@ -499,14 +501,14 @@ namespace Snowflake.Data.Core
         /// - Variable-length BINARY for the significand (2's complement big endian)
         /// Returns string to preserve full precision (up to 38 digits).
         /// </summary>
-        private string ExtractDecfloat(int columnIndex, IArrowArray column)
+        private string ExtractDecfloat(int columnIndex, IArrowArray column, int index)
         {
             var structArray = (StructArray)column;
             var exponentArray = (Int16Array)structArray.Fields[0];
             var significandArray = (BinaryArray)structArray.Fields[1];
 
-            short exponent = exponentArray.GetValue(_currentRecordIndex).Value;
-            var significandBytes = significandArray.GetBytes(_currentRecordIndex);
+            short exponent = exponentArray.GetValue(index).Value;
+            var significandBytes = significandArray.GetBytes(index);
 
             if (significandBytes.Length == 0)
             {
@@ -538,8 +540,6 @@ namespace Snowflake.Data.Core
         /// </summary>
         private static string FormatDecfloatAsString(System.Numerics.BigInteger significand, short exponent)
         {
-            const int MaxPlainFormatDigits = 38; // DECFLOAT_DEFAULT_PRECISION
-
             if (significand == 0)
             {
                 return "0";
