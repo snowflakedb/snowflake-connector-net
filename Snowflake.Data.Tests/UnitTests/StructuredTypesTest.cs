@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var csharpType = expected.GetType();
 
             // act
-            var result = timeConverter.Convert(value, sfType, csharpType);
+            var result = timeConverter.Convert(value, sfType, csharpType, TimeZoneInfo.Local);
 
             // assert
             Assert.AreEqual(expected, result);

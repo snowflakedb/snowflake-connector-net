@@ -150,6 +150,8 @@ namespace Snowflake.Data.Core
         MINTLS,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls13")]
         MAXTLS,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        HONORSESSIONTIMEZONE,
     }
 
     class SFSessionPropertyAttr : Attribute
