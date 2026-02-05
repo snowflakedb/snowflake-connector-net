@@ -3,6 +3,7 @@
 # Changelog
 - v5.4.0
     - Added support for [DECFLOAT](https://docs.snowflake.com/en/sql-reference/data-types-numeric#decfloat) data type (returned as string to preserve full precision).
+    - Added `HonorSessionTimezone` connection parameter (default: `false`). When set to `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter (`ALTER SESSION SET TIMEZONE`) instead of using the local machine timezone. This will become the default behavior in a future major release.
     - Bug fix: Fixed IndexOutOfRangeException in Arrow result processing when empty batches are returned by Snowflake backend.
 - v5.3.0
     - Introduced shared library([source code](https://github.com/snowflakedb/universal-driver/tree/main/sf_mini_core)) for extended telemetry to identify and prepare testing platform for native rust extensions.
@@ -15,7 +16,6 @@
     - Add retry for HTTP 307/308 status codes
     - Added exception handling to session heartbeat to prevent network errors from disrupting background heartbeat check.
     - Added support for native arrow structured types.
-    - Added `HonorSessionTimezone` connection parameter (default: `false`). When set to `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter (`ALTER SESSION SET TIMEZONE`) instead of using the local machine timezone. This will become the default behavior in a future major release.
 - v5.1.0
     - Added `APPLICATION_PATH` to `CLIENT_ENVIRONMENT` sent during authentication to identify the application connecting to Snowflake.
     - Renew idle sessions in the pool if keep alive is enabled.
