@@ -1,0 +1,37 @@
+{
+    "mappings": [
+        {
+            "request": {
+                "urlPathPattern": "/metadata/identity/oauth2/token",
+                "method": "GET",
+                "queryParameters": {
+                    "api-version": {
+                        "equalTo": "2018-02-01"
+                    },
+                    "resource": {
+                        "equalTo": "%ENTRA_RESOURCE%"
+                    },
+                    "client_id": {
+                        "equalTo": "%TARGET_CLIENT_ID%"
+                    }
+                },
+                "headers": {
+                    "Metadata": {
+                        "equalTo": "True"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "jsonBody": {
+                    "access_token": "%ACCESS_TOKEN%",
+                    "expires_in": "86399",
+                    "expires_on": "1717517987",
+                    "not_before": "1717431287",
+                    "resource": "%ENTRA_RESOURCE%",
+                    "token_type": "Bearer"
+                }
+            }
+        }
+    ]
+}

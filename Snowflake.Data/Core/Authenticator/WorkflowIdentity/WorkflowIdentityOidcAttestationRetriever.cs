@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
         public override AttestationProvider GetAttestationProvider() => AttestationProvider.OIDC;
 
-        public override WorkloadIdentityAttestationData CreateAttestationData(string snowflakeEntraResource, string tokenParam)
+        public override WorkloadIdentityAttestationData CreateAttestationData(string snowflakeEntraResource, string tokenParam, string impersonationPath = null)
         {
             if (string.IsNullOrEmpty(tokenParam))
             {
