@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Apache.Arrow;
 using Apache.Arrow.Types;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -31,6 +32,10 @@ namespace Snowflake.Data.Core
 
         public List<RecordBatch> RecordBatch { get; set; }
 
+        // Track the effective row count for each batch (min of batch.Length and all column lengths)
+        // This protects against corrupted Arrow IPC data where batch.Length doesn't match actual column data
+        private List<int> _effectiveRowCounts;
+
         private sbyte[][] _sbyte;
         private short[][] _short;
         private int[][] _int;
@@ -57,8 +62,9 @@ namespace Snowflake.Data.Core
         public ArrowResultChunk(RecordBatch recordBatch)
         {
             RecordBatch = new List<RecordBatch> { recordBatch };
+            _effectiveRowCounts = new List<int> { CalculateEffectiveRowCount(recordBatch) };
 
-            RowCount = recordBatch.Length;
+            RowCount = _effectiveRowCounts[0];
             ColumnCount = recordBatch.ColumnCount;
             ChunkIndex = -1;
 
@@ -68,6 +74,7 @@ namespace Snowflake.Data.Core
         public ArrowResultChunk(int columnCount)
         {
             RecordBatch = new List<RecordBatch>();
+            _effectiveRowCounts = new List<int>();
 
             RowCount = 0;
             ColumnCount = columnCount;
@@ -79,6 +86,50 @@ namespace Snowflake.Data.Core
         public void AddRecordBatch(RecordBatch recordBatch)
         {
             RecordBatch.Add(recordBatch);
+
+            int effectiveRowCount = CalculateEffectiveRowCount(recordBatch);
+            _effectiveRowCounts.Add(effectiveRowCount);
+
+            // Accumulate total row count for the chunk
+            RowCount += effectiveRowCount;
+        }
+
+        /// <summary>
+        /// Calculate the effective row count for a batch by taking the minimum of:
+        /// - batch.Length (declared row count from IPC metadata)
+        /// - Actual length of each column array
+        /// This protects against corrupted Arrow IPC data where metadata doesn't match actual data.
+        /// </summary>
+        private int CalculateEffectiveRowCount(RecordBatch batch)
+        {
+            if (batch == null || batch.Length == 0)
+                return 0;
+
+            int effectiveCount = batch.Length;
+
+            // Check each column's actual length
+            for (int i = 0; i < batch.ColumnCount; i++)
+            {
+                var column = batch.Column(i);
+                if (column != null && column.Length < effectiveCount)
+                {
+                    effectiveCount = column.Length;
+                }
+            }
+
+            return effectiveCount;
+        }
+
+        /// <summary>
+        /// Get the effective row count for the current batch.
+        /// </summary>
+        private int GetEffectiveRowCount()
+        {
+            if (_currentBatchIndex >= 0 && _currentBatchIndex < _effectiveRowCounts.Count)
+            {
+                return _effectiveRowCounts[_currentBatchIndex];
+            }
+            return 0;
         }
 
         internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
@@ -88,7 +139,19 @@ namespace Snowflake.Data.Core
             _currentBatchIndex = 0;
             _currentRecordIndex = -1;
             RecordBatch.Clear();
+            _effectiveRowCounts.Clear();
 
+            ResetTempTables();
+        }
+
+        internal override void ResetForRetry()
+        {
+            // Clear all accumulated state from failed download attempt
+            RecordBatch.Clear();
+            _effectiveRowCounts.Clear();
+            RowCount = 0;
+            _currentBatchIndex = 0;
+            _currentRecordIndex = -1;
             ResetTempTables();
         }
 
@@ -98,7 +161,7 @@ namespace Snowflake.Data.Core
                 return false;
 
             _currentRecordIndex += 1;
-            if (_currentRecordIndex < RecordBatch[_currentBatchIndex].Length)
+            if (_currentRecordIndex < GetEffectiveRowCount())
                 return true;
 
             // Move to the next batch and skip any empty batches
@@ -107,7 +170,7 @@ namespace Snowflake.Data.Core
             ResetTempTables();
 
             // Skip empty batches until we find one with rows or run out of batches
-            while (_currentBatchIndex < RecordBatch.Count && RecordBatch[_currentBatchIndex].Length == 0)
+            while (_currentBatchIndex < RecordBatch.Count && GetEffectiveRowCount() == 0)
             {
                 _currentBatchIndex += 1;
                 ResetTempTables();
@@ -117,7 +180,7 @@ namespace Snowflake.Data.Core
             if (_currentBatchIndex < RecordBatch.Count)
             {
                 // Verify the first row index is valid for the new batch
-                return _currentRecordIndex < RecordBatch[_currentBatchIndex].Length;
+                return _currentRecordIndex < GetEffectiveRowCount();
             }
 
             return false;
@@ -137,7 +200,7 @@ namespace Snowflake.Data.Core
             ResetTempTables();
 
             // Skip empty batches backwards until we find one with rows or run out of batches
-            while (_currentBatchIndex >= 0 && RecordBatch[_currentBatchIndex].Length == 0)
+            while (_currentBatchIndex >= 0 && GetEffectiveRowCount() == 0)
             {
                 _currentBatchIndex -= 1;
                 ResetTempTables();
@@ -145,7 +208,7 @@ namespace Snowflake.Data.Core
 
             if (_currentBatchIndex >= 0)
             {
-                _currentRecordIndex = RecordBatch[_currentBatchIndex].Length - 1;
+                _currentRecordIndex = GetEffectiveRowCount() - 1;
                 return _currentRecordIndex >= 0; // Ensure the batch has at least one row
             }
 
@@ -165,7 +228,53 @@ namespace Snowflake.Data.Core
 
         public object ExtractCell(int columnIndex, SFDataType srcType, long scale)
         {
-            var column = RecordBatch[_currentBatchIndex].Column(columnIndex);
+            // Defensive bounds checking with detailed diagnostic information
+
+            // Check batch index
+            if (_currentBatchIndex < 0 || _currentBatchIndex >= RecordBatch.Count)
+            {
+                throw new SnowflakeDbException(
+                    SFError.INTERNAL_ERROR,
+                    $"Invalid batch index {_currentBatchIndex}. Total batches: {RecordBatch.Count}");
+            }
+
+            var currentBatch = RecordBatch[_currentBatchIndex];
+
+            // Check column index
+            if (columnIndex < 0 || columnIndex >= currentBatch.ColumnCount)
+            {
+                throw new SnowflakeDbException(
+                    SFError.COLUMN_INDEX_OUT_OF_BOUND,
+                    $"Column index {columnIndex} is out of bounds. " +
+                    $"Batch {_currentBatchIndex} has {currentBatch.ColumnCount} columns. " +
+                    $"Expected column count: {ColumnCount}, Record index: {_currentRecordIndex}");
+            }
+
+            var column = currentBatch.Column(columnIndex);
+
+            // Check record index against effective row count
+            int effectiveRowCount = GetEffectiveRowCount();
+            if (_currentRecordIndex < 0 || _currentRecordIndex >= effectiveRowCount)
+            {
+                throw new SnowflakeDbException(
+                    SFError.INTERNAL_ERROR,
+                    $"Record index {_currentRecordIndex} is out of bounds. " +
+                    $"Batch {_currentBatchIndex} effective row count: {effectiveRowCount}, " +
+                    $"Batch declared length: {currentBatch.Length}, " +
+                    $"Column {columnIndex} actual length: {column?.Length ?? 0}");
+            }
+
+            // Additional safety check: verify column has enough data
+            if (column != null && _currentRecordIndex >= column.Length)
+            {
+                throw new SnowflakeDbException(
+                    SFError.INTERNAL_ERROR,
+                    $"Record index {_currentRecordIndex} exceeds column data length. " +
+                    $"Column {columnIndex} length: {column.Length}, " +
+                    $"Batch {_currentBatchIndex} declared length: {currentBatch.Length}, " +
+                    $"Effective row count: {effectiveRowCount}. " +
+                    $"This indicates corrupted Arrow IPC data.");
+            }
 
             if (column.IsNull(_currentRecordIndex))
                 return DBNull.Value;
