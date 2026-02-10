@@ -12,8 +12,7 @@ WORKSPACE=${WORKSPACE:-${DRIVER_DIR}}
 echo "[Info] Starting revocation validation tests"
 echo "[Info] .NET driver path: $DRIVER_DIR"
 
-# The framework's .NET client defaults to ~/repos/snowflake-connector-net for per-scenario clients.
-# Create a symlink so it finds the workspace checkout.
+# The framework's .NET client defaults to ~/repos/snowflake-connector-net for per-scenario clients
 mkdir -p "$HOME/repos"
 ln -sfn "$DRIVER_DIR" "$HOME/repos/snowflake-connector-net"
 
@@ -31,6 +30,21 @@ else
 fi
 
 cd "$REVOCATION_DIR"
+
+# Fix the hardcoded connector path in the test app's .csproj
+CSPROJ="$REVOCATION_DIR/validation/clients/snowflake-dotnet/SnowflakeTest.csproj"
+sed -i "s|/Users/snoonan/repos/snowflake-connector-net|${DRIVER_DIR}|g" "$CSPROJ"
+echo "[Info] Updated .csproj to reference: $DRIVER_DIR"
+
+# Build the .NET test app using Docker (dotnet SDK not on bare node)
+echo "[Info] Building .NET test app..."
+docker run --rm \
+    -v "$REVOCATION_DIR/validation/clients/snowflake-dotnet:/src" \
+    -v "$DRIVER_DIR:/connector" \
+    -w /src \
+    mcr.microsoft.com/dotnet/sdk:9.0 \
+    bash -c "sed -i 's|${DRIVER_DIR}|/connector|g' SnowflakeTest.csproj && dotnet publish -c Release -o /src/bin/Release/net9.0"
+echo "[Info] Build complete: $(ls $REVOCATION_DIR/validation/clients/snowflake-dotnet/bin/Release/net9.0/SnowflakeTest.dll)"
 
 echo "[Info] Running tests with Go $(go version | grep -oE 'go[0-9]+\.[0-9]+')..."
 
