@@ -144,14 +144,9 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = new ArrowResultChunk(batch1);
             chunk.AddRecordBatch(batch2);
 
-            // Simulate failed download - ResetForRetry() should clear all stale state
             chunk.ResetForRetry();
-
-            // Retry adds new batch - should be the only batch after ResetForRetry()
             chunk.AddRecordBatch(batch3);
 
-            // Expected behavior: Only batch3 should exist after retry (2 rows)
-            // Without fix: All 3 batches exist (6 rows)
             var rowsRead = 0;
             var values = new List<string>();
             while (chunk.Next())
@@ -160,7 +155,6 @@ namespace Snowflake.Data.Tests.UnitTests
                 values.Add((string)chunk.ExtractCell(0, SFDataType.TEXT, 0));
             }
 
-            // TEST WILL FAIL WITHOUT FIX: Currently reads 6 rows, should be 2
             Assert.AreEqual(2, rowsRead, "ResetForRetry() should clear stale batches, leaving only 2 rows from fresh batch");
             Assert.That(values, Does.Not.Contain("stale1"), "Stale data should be cleared after ResetForRetry()");
             Assert.That(values, Does.Not.Contain("stale3"), "Stale data should be cleared after ResetForRetry()");
@@ -171,12 +165,6 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestExtractCellThrowsDescriptiveErrorForInvalidColumnIndex()
         {
-            // This test verifies that ExtractCell() provides defensive bounds checking
-            // with clear error messages when accessing invalid column indices.
-            //
-            // Without the fix: IndexOutOfRangeException with no context
-            // With the fix: SnowflakeDbException with detailed diagnostic info
-
             var batch = new RecordBatch.Builder()
                 .Append("Col1", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, 10))))
                 .Append("Col2", false, col => col.String(array =>
@@ -188,20 +176,16 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = new ArrowResultChunk(batch);
             Assert.IsTrue(chunk.Next(), "Should move to first row");
 
-            // Valid column access should work
             var val1 = chunk.ExtractCell(0, SFDataType.FIXED, 0);
             var val2 = chunk.ExtractCell(1, SFDataType.TEXT, 0);
             Assert.AreEqual(1, val1);
             Assert.AreEqual("val0", val2);
 
-            // TEST WILL FAIL WITHOUT FIX: Accessing invalid column index should throw
-            // SnowflakeDbException with diagnostic details, not generic IndexOutOfRangeException
             var ex = Assert.Throws<SnowflakeDbException>(() =>
             {
                 chunk.ExtractCell(99, SFDataType.FIXED, 0);
             });
 
-            // Verify the error message contains diagnostic information
             Assert.That(ex.Message, Does.Contain("99"), "Error should mention the invalid column index");
             Assert.That(ex.Message, Does.Contain("batch").IgnoreCase, "Error should mention batch info");
         }
@@ -209,29 +193,20 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestExtractCellThrowsDescriptiveErrorForInvalidRecordIndex()
         {
-            // This test verifies that accessing beyond the effective row count
-            // throws a clear error with diagnostic context.
-
             var batch = new RecordBatch.Builder()
                 .Append("Col1", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, 5))))
                 .Build();
 
             var chunk = new ArrowResultChunk(batch);
 
-            // Read all 5 valid rows
             for (int i = 0; i < 5; i++)
             {
-                Assert.IsTrue(chunk.Next());
+                Assert.IsTrue(chunk.Next(), $"Should be able to read row {i}");
                 var val = chunk.ExtractCell(0, SFDataType.FIXED, 0);
                 Assert.AreEqual(i + 1, val);
             }
 
-            // Next() should return false (no more rows)
             Assert.IsFalse(chunk.Next(), "Should be no more rows after reading all 5");
-
-            // Attempting to extract from beyond the valid range should be prevented
-            // by Next() returning false, so ExtractCell() shouldn't be called.
-            // This test documents that Next() properly bounds iteration.
         }
 
         [Test]
