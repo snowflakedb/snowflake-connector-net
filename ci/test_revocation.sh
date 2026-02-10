@@ -12,6 +12,11 @@ WORKSPACE=${WORKSPACE:-${DRIVER_DIR}}
 echo "[Info] Starting revocation validation tests"
 echo "[Info] .NET driver path: $DRIVER_DIR"
 
+# The framework's .NET client defaults to ~/repos/snowflake-connector-net for per-scenario clients.
+# Create a symlink so it finds the workspace checkout.
+mkdir -p "$HOME/repos"
+ln -sfn "$DRIVER_DIR" "$HOME/repos/snowflake-connector-net"
+
 set -e
 
 # Clone revocation-validation framework
