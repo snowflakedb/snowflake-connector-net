@@ -5,6 +5,7 @@ using System.Linq;
 using Apache.Arrow;
 using Apache.Arrow.Types;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
 
@@ -113,6 +114,99 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual("row3", chunk.ExtractCell(0, SFDataType.TEXT, 0));
 
             Assert.IsFalse(chunk.Next());
+        }
+
+        [Test]
+        public void TestResetForRetryDoesNotClearBatchesExposingRetryBug()
+        {
+            // This test reproduces the retry bug where stale batches from a failed download
+            // are not cleared before retrying, leading to iteration over corrupt data.
+            //
+            // Scenario:
+            // 1. First download attempt adds batch1 and batch2
+            // 2. Download fails (network error, etc.)
+            // 3. ResetForRetry() is called but ArrowResultChunk doesn't override it
+            // 4. Retry adds batch3 on top of the stale batch1 and batch2
+            // 5. Iteration continues through corrupt state
+
+            var batch1 = new RecordBatch.Builder()
+                .Append("Col_Text", false, col => col.String(array => array.Append("stale1").Append("stale2")))
+                .Build();
+
+            var batch2 = new RecordBatch.Builder()
+                .Append("Col_Text", false, col => col.String(array => array.Append("stale3").Append("stale4")))
+                .Build();
+
+            var batch3 = new RecordBatch.Builder()
+                .Append("Col_Text", false, col => col.String(array => array.Append("fresh1").Append("fresh2")))
+                .Build();
+
+            var chunk = new ArrowResultChunk(batch1);
+            chunk.AddRecordBatch(batch2);
+
+            chunk.ResetForRetry();
+            chunk.AddRecordBatch(batch3);
+
+            var rowsRead = 0;
+            var values = new List<string>();
+            while (chunk.Next())
+            {
+                rowsRead++;
+                values.Add((string)chunk.ExtractCell(0, SFDataType.TEXT, 0));
+            }
+
+            Assert.AreEqual(2, rowsRead, "ResetForRetry() should clear stale batches, leaving only 2 rows from fresh batch");
+            Assert.That(values, Does.Not.Contain("stale1"), "Stale data should be cleared after ResetForRetry()");
+            Assert.That(values, Does.Not.Contain("stale3"), "Stale data should be cleared after ResetForRetry()");
+            Assert.That(values, Does.Contain("fresh1"), "Fresh data should be present");
+            Assert.That(values, Does.Contain("fresh2"), "Fresh data should be present");
+        }
+
+        [Test]
+        public void TestExtractCellThrowsDescriptiveErrorForInvalidColumnIndex()
+        {
+            var batch = new RecordBatch.Builder()
+                .Append("Col1", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, 10))))
+                .Append("Col2", false, col => col.String(array =>
+                {
+                    for (int i = 0; i < 10; i++) array.Append($"val{i}");
+                }))
+                .Build();
+
+            var chunk = new ArrowResultChunk(batch);
+            Assert.IsTrue(chunk.Next(), "Should move to first row");
+
+            var val1 = chunk.ExtractCell(0, SFDataType.FIXED, 0);
+            var val2 = chunk.ExtractCell(1, SFDataType.TEXT, 0);
+            Assert.AreEqual(1, val1);
+            Assert.AreEqual("val0", val2);
+
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
+            {
+                chunk.ExtractCell(99, SFDataType.FIXED, 0);
+            });
+
+            Assert.That(ex.Message, Does.Contain("99"), "Error should mention the invalid column index");
+            Assert.That(ex.Message, Does.Contain("batch").IgnoreCase, "Error should mention batch info");
+        }
+
+        [Test]
+        public void TestExtractCellThrowsDescriptiveErrorForInvalidRecordIndex()
+        {
+            var batch = new RecordBatch.Builder()
+                .Append("Col1", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, 5))))
+                .Build();
+
+            var chunk = new ArrowResultChunk(batch);
+
+            for (int i = 0; i < 5; i++)
+            {
+                Assert.IsTrue(chunk.Next(), $"Should be able to read row {i}");
+                var val = chunk.ExtractCell(0, SFDataType.FIXED, 0);
+                Assert.AreEqual(i + 1, val);
+            }
+
+            Assert.IsFalse(chunk.Next(), "Should be no more rows after reading all 5");
         }
 
         [Test]
