@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Snowflake.Data.Core.MiniCore;
 
 namespace Snowflake.Data.Core
@@ -79,7 +82,8 @@ namespace Snowflake.Data.Core
                 netRuntime = ExtractRuntime(),
                 netVersion = ExtractVersion(),
                 applicationPath = ExtractApplicationPath(),
-                isa = RuntimeInformation.ProcessArchitecture.ToString().ToLower()
+                isa = RuntimeInformation.ProcessArchitecture.ToString().ToLower(),
+                osDetails = ExtractOsDetails()
             };
 
             DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -133,6 +137,50 @@ namespace Snowflake.Data.Core
             string val = Environment.GetEnvironmentVariable("SF_DISABLE_MINICORE");
             if (string.IsNullOrEmpty(val)) return false;
             return val.Equals("true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal static Dictionary<string, string> ExtractOsDetails()
+        {
+            const string OsReleasePath = "/etc/os-release";
+
+            try
+            {
+                if (!File.Exists(OsReleasePath))
+                {
+                    return null;
+                }
+
+                var osDetails = new Dictionary<string, string>();
+                var allowedKeys = new HashSet<string>
+                {
+                    "NAME", "PRETTY_NAME", "ID", "BUILD_ID", "IMAGE_ID", "IMAGE_VERSION", "VERSION", "VERSION_ID"
+                };
+
+                var lines = File.ReadAllLines(OsReleasePath);
+                var keyValueRegex = new Regex(@"^([A-Z0-9_]+)=(?:""([^""]*)""|(.*))$", RegexOptions.Compiled);
+
+                foreach (var line in lines)
+                {
+                    var match = keyValueRegex.Match(line);
+                    if (match.Success)
+                    {
+                        var key = match.Groups[1].Value;
+                        var value = match.Groups[2].Success ? match.Groups[2].Value : match.Groups[3].Value;
+
+                        if (allowedKeys.Contains(key))
+                        {
+                            osDetails[key] = value;
+                        }
+                    }
+                }
+
+                return osDetails.Count > 0 ? osDetails : null;
+            }
+            catch
+            {
+                // Silently ignore any errors as per requirements
+                return null;
+            }
         }
     }
 }

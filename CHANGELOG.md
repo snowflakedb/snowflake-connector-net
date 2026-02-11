@@ -2,6 +2,7 @@
 
 # Changelog
 - v5.4.1
+    - Extended login-request telemetry with Linux distribution details parsed from `/etc/os-release`
     - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result chunk processing by adding retry state cleanup, batch integrity validation, and defensive bounds checking in `ExtractCell()`.
 - v5.4.0
     - Added support for [DECFLOAT](https://docs.snowflake.com/en/sql-reference/data-types-numeric#decfloat) data type (returned as string to preserve full precision).
