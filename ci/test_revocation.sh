@@ -20,7 +20,7 @@ set -e
 
 # Clone revocation-validation framework
 REVOCATION_DIR="/tmp/revocation-validation"
-REVOCATION_BRANCH="${REVOCATION_BRANCH:-main}"
+REVOCATION_BRANCH="${REVOCATION_BRANCH:-dotnet-fix}"
 
 rm -rf "$REVOCATION_DIR"
 if [ -n "$GITHUB_USER" ] && [ -n "$GITHUB_TOKEN" ]; then
