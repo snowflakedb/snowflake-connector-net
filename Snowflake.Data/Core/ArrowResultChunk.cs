@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Apache.Arrow;
 using Apache.Arrow.Types;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -56,6 +57,7 @@ namespace Snowflake.Data.Core
 
         public ArrowResultChunk(RecordBatch recordBatch)
         {
+            ValidateBatch(recordBatch);
             RecordBatch = new List<RecordBatch> { recordBatch };
 
             RowCount = recordBatch.Length;
@@ -78,7 +80,39 @@ namespace Snowflake.Data.Core
 
         public void AddRecordBatch(RecordBatch recordBatch)
         {
+            ValidateBatch(recordBatch);
             RecordBatch.Add(recordBatch);
+            RowCount += recordBatch.Length;
+        }
+
+        /// <summary>
+        /// Validate that a batch's declared length matches actual column data.
+        /// Throws exception on corrupted data to trigger download retry.
+        /// </summary>
+        private void ValidateBatch(RecordBatch batch)
+        {
+            if (batch == null)
+            {
+                throw new SnowflakeDbException(
+                    SFError.INTERNAL_ERROR,
+                    "Cannot add null RecordBatch");
+            }
+
+            if (batch.Length == 0)
+                return;
+
+            for (int i = 0; i < batch.ColumnCount; i++)
+            {
+                var column = batch.Column(i);
+                if (column != null && column.Length != batch.Length)
+                {
+                    throw new SnowflakeDbException(
+                        SFError.INTERNAL_ERROR,
+                        $"Corrupted Arrow IPC data detected. " +
+                        $"Batch declares {batch.Length} rows but column {i} has {column.Length} elements. " +
+                        $"This will trigger download retry.");
+                }
+            }
         }
 
         internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
@@ -92,6 +126,15 @@ namespace Snowflake.Data.Core
             ResetTempTables();
         }
 
+        internal override void ResetForRetry()
+        {
+            RecordBatch.Clear();
+            RowCount = 0;
+            _currentBatchIndex = 0;
+            _currentRecordIndex = -1;
+            ResetTempTables();
+        }
+
         internal override bool Next()
         {
             if (_currentBatchIndex >= RecordBatch.Count)
@@ -101,22 +144,18 @@ namespace Snowflake.Data.Core
             if (_currentRecordIndex < RecordBatch[_currentBatchIndex].Length)
                 return true;
 
-            // Move to the next batch and skip any empty batches
             _currentBatchIndex += 1;
             _currentRecordIndex = 0;
             ResetTempTables();
 
-            // Skip empty batches until we find one with rows or run out of batches
             while (_currentBatchIndex < RecordBatch.Count && RecordBatch[_currentBatchIndex].Length == 0)
             {
                 _currentBatchIndex += 1;
                 ResetTempTables();
             }
 
-            // Check if we found a valid batch with rows
             if (_currentBatchIndex < RecordBatch.Count)
             {
-                // Verify the first row index is valid for the new batch
                 return _currentRecordIndex < RecordBatch[_currentBatchIndex].Length;
             }
 
@@ -132,11 +171,9 @@ namespace Snowflake.Data.Core
             if (_currentRecordIndex >= 0)
                 return true;
 
-            // Move to the previous batch and skip any empty batches
             _currentBatchIndex -= 1;
             ResetTempTables();
 
-            // Skip empty batches backwards until we find one with rows or run out of batches
             while (_currentBatchIndex >= 0 && RecordBatch[_currentBatchIndex].Length == 0)
             {
                 _currentBatchIndex -= 1;
@@ -146,7 +183,7 @@ namespace Snowflake.Data.Core
             if (_currentBatchIndex >= 0)
             {
                 _currentRecordIndex = RecordBatch[_currentBatchIndex].Length - 1;
-                return _currentRecordIndex >= 0; // Ensure the batch has at least one row
+                return _currentRecordIndex >= 0;
             }
 
             return false;
@@ -165,7 +202,33 @@ namespace Snowflake.Data.Core
 
         public object ExtractCell(int columnIndex, SFDataType srcType, long scale)
         {
-            var column = RecordBatch[_currentBatchIndex].Column(columnIndex);
+            if (_currentBatchIndex < 0 || _currentBatchIndex >= RecordBatch.Count)
+            {
+                throw new SnowflakeDbException(
+                    SFError.INTERNAL_ERROR,
+                    $"Invalid batch index {_currentBatchIndex}. Total batches: {RecordBatch.Count}");
+            }
+
+            var currentBatch = RecordBatch[_currentBatchIndex];
+
+            if (columnIndex < 0 || columnIndex >= currentBatch.ColumnCount)
+            {
+                throw new SnowflakeDbException(
+                    SFError.COLUMN_INDEX_OUT_OF_BOUND,
+                    $"Column index {columnIndex} is out of bounds. " +
+                    $"Batch {_currentBatchIndex} has {currentBatch.ColumnCount} columns. " +
+                    $"Expected column count: {ColumnCount}, Record index: {_currentRecordIndex}");
+            }
+
+            if (_currentRecordIndex < 0 || _currentRecordIndex >= currentBatch.Length)
+            {
+                throw new SnowflakeDbException(
+                    SFError.INTERNAL_ERROR,
+                    $"Record index {_currentRecordIndex} is out of bounds. " +
+                    $"Batch {_currentBatchIndex} has {currentBatch.Length} rows");
+            }
+
+            var column = currentBatch.Column(columnIndex);
 
             if (column.IsNull(_currentRecordIndex))
                 return DBNull.Value;
