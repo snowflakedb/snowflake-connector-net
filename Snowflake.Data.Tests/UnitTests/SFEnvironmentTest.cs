@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Snowflake.Data.Core;
