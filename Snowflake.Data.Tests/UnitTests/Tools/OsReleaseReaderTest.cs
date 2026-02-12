@@ -228,6 +228,47 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
+        public void TestParseIgnoresPartiallyMatchingKeys()
+        {
+            // arrange
+            var contents =
+                "NAME=\"Valid\"\n" +
+                "NAMES=\"Invalid\"\n" +
+                "USERNAME=\"root\"\n" +
+                "USER_ID=\"1000\"\n" +
+                "ID=valid\n" +
+                "ID_LIKE=debian\n" +
+                "VERSION_ID=\"1.0\"\n" +
+                "VERSION_IDENTIFIER=\"nope\"\n" +
+                "BUILD_ID=valid\n" +
+                "BUILD_IDS=invalid\n" +
+                "IMAGE_ID=valid\n" +
+                "IMAGE_IDENTIFIER=invalid\n" +
+                "PRETTY_NAME=\"Valid\"\n" +
+                "PRETTY_NAMES=\"Invalid\"\n";
+
+            // act
+            var result = OsReleaseReader.ParseOsReleaseContents(contents);
+
+            // assert
+            Assert.AreEqual(6, result.Count);
+            Assert.AreEqual("Valid", result["NAME"]);
+            Assert.AreEqual("valid", result["ID"]);
+            Assert.AreEqual("1.0", result["VERSION_ID"]);
+            Assert.AreEqual("valid", result["BUILD_ID"]);
+            Assert.AreEqual("valid", result["IMAGE_ID"]);
+            Assert.AreEqual("Valid", result["PRETTY_NAME"]);
+            Assert.IsFalse(result.ContainsKey("NAMES"));
+            Assert.IsFalse(result.ContainsKey("USERNAME"));
+            Assert.IsFalse(result.ContainsKey("USER_ID"));
+            Assert.IsFalse(result.ContainsKey("ID_LIKE"));
+            Assert.IsFalse(result.ContainsKey("VERSION_IDENTIFIER"));
+            Assert.IsFalse(result.ContainsKey("BUILD_IDS"));
+            Assert.IsFalse(result.ContainsKey("IMAGE_IDENTIFIER"));
+            Assert.IsFalse(result.ContainsKey("PRETTY_NAMES"));
+        }
+
+        [Test]
         public void TestParseHandlesCarriageReturnLineFeed()
         {
             // arrange
