@@ -330,8 +330,8 @@ namespace Snowflake.Data.Core.Revocation
         private Crl FetchCrl(string crlUrl)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, crlUrl);
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, _httpTimeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, _httpTimeout);
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, _httpTimeout);
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, _httpTimeout);
             byte[] crlBytes = null;
             DateTime now;
             try

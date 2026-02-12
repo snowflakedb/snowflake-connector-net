@@ -19,12 +19,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestNonRetryableHttpExceptionThrowsError()
         {
             var request = new HttpRequestMessage(HttpMethod.Post, new Uri("https://authenticationexceptiontest.com/"));
-            // Disable warning as this is the way to be compliant with netstandard2.0
-            // API reference: https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestmessage?view=netstandard-2.0
-#pragma warning disable CS0618 // Type or member is obsolete
-            request.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY] = Timeout.InfiniteTimeSpan;
-            request.Properties[BaseRestRequest.REST_REQUEST_TIMEOUT_KEY] = Timeout.InfiniteTimeSpan;
-#pragma warning restore CS0618 // Type or member is obsolete
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, Timeout.InfiniteTimeSpan);
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, Timeout.InfiniteTimeSpan);
 
             var handler = new Mock<DelegatingHandler>();
             handler.Protected()

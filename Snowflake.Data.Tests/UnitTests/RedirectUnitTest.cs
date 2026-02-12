@@ -79,10 +79,8 @@ namespace Snowflake.Data.Tests.UnitTests
         private HttpRequestMessage CreateQueryRequest()
         {
             var request = new HttpRequestMessage(HttpMethod.Post, _runner.WiremockBaseHttpsUrl + "/queries/v1/query-request?requestId=abc");
-#pragma warning disable CS0618 // Type or member is obsolete
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultHttpSecondsTimeout));
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultRestRetrySecondsTimeout));
-#pragma warning restore CS0618 // Type or member is obsolete
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultHttpSecondsTimeout));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultRestRetrySecondsTimeout));
             return request;
         }
 
