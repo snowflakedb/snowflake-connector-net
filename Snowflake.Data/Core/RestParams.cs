@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Snowflake.Data.Core.MiniCore;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
 {
@@ -79,7 +81,8 @@ namespace Snowflake.Data.Core
                 netRuntime = ExtractRuntime(),
                 netVersion = ExtractVersion(),
                 applicationPath = ExtractApplicationPath(),
-                isa = RuntimeInformation.ProcessArchitecture.ToString().ToLower()
+                isa = RuntimeInformation.ProcessArchitecture.ToString().ToLower(),
+                osDetails = ExtractOsDetails()
             };
 
             DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -133,6 +136,11 @@ namespace Snowflake.Data.Core
             string val = Environment.GetEnvironmentVariable("SF_DISABLE_MINICORE");
             if (string.IsNullOrEmpty(val)) return false;
             return val.Equals("true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal static Dictionary<string, string> ExtractOsDetails()
+        {
+            return OsReleaseReader.GetOsDetails();
         }
     }
 }

@@ -1,9 +1,12 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- v5.4.1
+    - Extended login-request telemetry with Linux distribution details parsed from `/etc/os-release`
+    - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result chunk processing by adding retry state cleanup, batch integrity validation, and defensive bounds checking in `ExtractCell()`.
 - v5.4.0
     - Added support for [DECFLOAT](https://docs.snowflake.com/en/sql-reference/data-types-numeric#decfloat) data type (returned as string to preserve full precision).
-    - Bug fix: Fixed IndexOutOfRangeException in Arrow result processing when empty batches are returned by Snowflake backend.
+    - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result processing when empty batches are returned by Snowflake backend.
 - v5.3.0
     - Introduced shared library([source code](https://github.com/snowflakedb/universal-driver/tree/main/sf_mini_core)) for extended telemetry to identify and prepare testing platform for native rust extensions.
 - v5.2.1
