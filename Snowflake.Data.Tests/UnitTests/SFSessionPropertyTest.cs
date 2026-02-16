@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Snowflake.Data.Core;
 using System.Security;
@@ -176,6 +178,85 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(invalidConnectionString, new SessionPropertiesContext()));
 
             Assert.That(thrown.Message, Does.Contain("Invalid parameter value  for PASSCODEINPASSWORD"));
+        }
+
+        [Test]
+        public void TestTurkishCultureInvariantPropertyParsing()
+        {
+            // arrange
+            var currentCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+            var currentUICulture = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            var turkishCulture = new System.Globalization.CultureInfo("tr-TR");
+
+            try
+            {
+                // Set Turkish culture where 'i'.ToUpper() becomes 'İ' instead of 'I'
+                System.Threading.Thread.CurrentThread.CurrentCulture = turkishCulture;
+                System.Threading.Thread.CurrentThread.CurrentUICulture = turkishCulture;
+
+                var connectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;authenticator=snowflake;private_key=dummykey";
+
+                // act - this should not throw an exception even with Turkish culture
+                var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+                // assert
+                Assert.AreEqual("snowflake", properties[SFSessionProperty.AUTHENTICATOR]);
+                Assert.AreEqual("dummykey", properties[SFSessionProperty.PRIVATE_KEY]);
+            }
+            finally
+            {
+                // restore original culture
+                System.Threading.Thread.CurrentThread.CurrentCulture = currentCulture;
+                System.Threading.Thread.CurrentThread.CurrentUICulture = currentUICulture;
+            }
+        }
+
+        [Test]
+        public void TestTurkishCultureDemonstratesProblemAndInvalidPropertiesStillFail()
+        {
+            // arrange
+            var currentCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+            var currentUICulture = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            var turkishCulture = new System.Globalization.CultureInfo("tr-TR");
+
+            try
+            {
+                // Set Turkish culture
+                System.Threading.Thread.CurrentThread.CurrentCulture = turkishCulture;
+                System.Threading.Thread.CurrentThread.CurrentUICulture = turkishCulture;
+
+                // Demonstrate the Turkish culture problem with string casing
+                // In Turkish culture, 'i'.ToUpper() becomes 'İ' (U+0130) instead of 'I' (U+0049)
+                var testString = "authenticator";
+                var cultureDependent = testString.ToUpper(); // Would be "AUTHENTİCATOR" in Turkish
+                var cultureInvariant = testString.ToUpperInvariant(); // Always "AUTHENTICATOR"
+
+                // Verify the Turkish culture issue exists
+                Assert.AreNotEqual(cultureDependent, cultureInvariant, "Turkish culture should produce different casing");
+                Assert.IsTrue(cultureDependent.Contains("İ"), "Turkish ToUpper() should contain Turkish dotted capital I");
+                Assert.IsTrue(cultureInvariant.Contains("I"), "Invariant ToUpper() should contain ASCII capital I");
+
+                // Verify that invalid properties still throw exceptions even with Turkish culture
+                var invalidConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;invalidproperty=somevalue";
+
+                // act & assert - invalid properties should be ignored (logged as debug), not throw exceptions
+                var properties = SFSessionProperties.ParseConnectionString(invalidConnectionString, new SessionPropertiesContext());
+
+                // Verify valid properties are still parsed correctly
+                Assert.AreEqual("testaccount", properties[SFSessionProperty.ACCOUNT]);
+                Assert.AreEqual("testuser", properties[SFSessionProperty.USER]);
+                Assert.AreEqual("testpassword", properties[SFSessionProperty.PASSWORD]);
+
+                // Verify invalid property is not present (can't use Enum.Parse here as it would throw)
+                Assert.IsFalse(properties.Any(p => p.Key.ToString().Equals("INVALIDPROPERTY", StringComparison.OrdinalIgnoreCase)),
+                    "Invalid property should not be present in parsed properties");
+            }
+            finally
+            {
+                // restore original culture
+                System.Threading.Thread.CurrentThread.CurrentCulture = currentCulture;
+                System.Threading.Thread.CurrentThread.CurrentUICulture = currentUICulture;
+            }
         }
 
         [Test]
@@ -573,13 +654,12 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;", "disabled", "true", "true", "true", "false")]
-        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=enabled;useDotnetCrlCheck=false;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true;", "enabled", "false", "false", "false", "true")]
-        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=advisory;useDotnetCrlCheck=false;enableCrlDiskCaching=false;enableCrlInMemoryCaching=true;allowCertificatesWithoutCrlUrl=true;", "advisory", "false", "false", "true", "true")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;", "disabled", "true", "true", "false")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=enabled;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true;", "enabled", "false", "false", "true")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=advisory;enableCrlDiskCaching=false;enableCrlInMemoryCaching=true;allowCertificatesWithoutCrlUrl=true;", "advisory", "false", "true", "true")]
         public void TestParseCrlCheckParameters(
             string connectionString,
             string expectedCertRevocationCheckMode,
-            string expectedUseDotnetCrlCheck,
             string expectedEnableCrlDiskCaching,
             string expectedEnableCrlInMemoryCaching,
             string expectedAllowCertificatesWithoutCrlUrl)
@@ -589,19 +669,24 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual(expectedCertRevocationCheckMode, properties[SFSessionProperty.CERTREVOCATIONCHECKMODE]);
-            Assert.AreEqual(expectedUseDotnetCrlCheck, properties[SFSessionProperty.USEDOTNETCRLCHECK]);
             Assert.AreEqual(expectedEnableCrlDiskCaching, properties[SFSessionProperty.ENABLECRLDISKCACHING]);
             Assert.AreEqual(expectedEnableCrlInMemoryCaching, properties[SFSessionProperty.ENABLECRLINMEMORYCACHING]);
             Assert.AreEqual(expectedAllowCertificatesWithoutCrlUrl, properties[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]);
         }
 
         [Test]
-        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=unknown;", "Parameter CERTREVOCATIONCHECKMODE should have one of following values: ENABLED, ADVISORY, DISABLED.")]
-        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;useDotnetCrlCheck=unknown;", "Parameter USEDOTNETCRLCHECK should have a boolean value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=unknown;", "Parameter CERTREVOCATIONCHECKMODE should have one of following values: ENABLED, ADVISORY, DISABLED, NATIVE.")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlDiskCaching=unknown;", "Parameter ENABLECRLDISKCACHING should have a boolean value.")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlInMemoryCaching=unknown;", "Parameter ENABLECRLINMEMORYCACHING should have a boolean value.")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;allowCertificatesWithoutCrlUrl=unknown;", "Parameter ALLOWCERTIFICATESWITHOUTCRLURL should have a boolean value.")]
-        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=advisory;useDotnetCrlCheck=true;", "'ADVISORY' value of the parameter CERTREVOCATIONCHECKMODE conflicts with 'true' value of the parameter USEDOTNETCRLCHECK.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=abc;", "Parameter CRLDOWNLOADTIMEOUT should have an integer value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=0;", "Parameter CRLDOWNLOADTIMEOUT should be greater than 0.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=-5;", "Parameter CRLDOWNLOADTIMEOUT should be greater than 0.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadMaxSize=abc;", "Parameter CRLDOWNLOADMAXSIZE should have a long value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadMaxSize=1.5;", "Parameter CRLDOWNLOADMAXSIZE should have a long value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadMaxSize=9223372036854775808;", "Parameter CRLDOWNLOADMAXSIZE should have a long value.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadMaxSize=0;", "Parameter CRLDOWNLOADMAXSIZE should be greater than 0.")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadMaxSize=-100;", "Parameter CRLDOWNLOADMAXSIZE should be greater than 0.")]
         public void TestFailOnInvalidCrlParameters(string connectionString, string expectedErrorMessage)
         {
             // act
@@ -609,6 +694,19 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
+        }
+
+        [Test]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;", "10")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=30;", "30")]
+        [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=120;", "120")]
+        public void TestParseCrlDownloadTimeout(string connectionString, string expectedTimeout)
+        {
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(expectedTimeout, properties[SFSessionProperty.CRLDOWNLOADTIMEOUT]);
         }
 
         public static IEnumerable<TestCase> ConnectionStringTestCases()

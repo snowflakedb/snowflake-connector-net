@@ -24,6 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         private static readonly DateTime s_revocationTime = s_thisUpdate;
         private static readonly DateTime s_downloadTime = new(2025, 8, 15, 8, 21, 33, DateTimeKind.Utc);
         private static readonly CrlParser s_crlParser = new(TimeSpan.FromDays(10));
+        private static readonly TimeSpan s_removalDelay = TimeSpan.FromDays(7);
 
         [Test]
         public void TestGetAndSetCacheOperations()
@@ -32,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crl = CreateCrl();
             var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
             var cacheConfig = CreateFileCrlCacheConfig(tempDirectory);
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, s_removalDelay);
             try
             {
                 // act
@@ -62,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
             var fileName = Path.Combine(tempDirectory, HttpUtility.UrlEncode(CrlUrl, Encoding.UTF8));
             var cacheConfig = CreateFileCrlCacheConfig(tempDirectory);
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, s_removalDelay);
             try
             {
                 DirectoryOperations.Instance.CreateDirectory(tempDirectory);
@@ -89,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crl = CreateCrl();
             var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
             var cacheConfig = CreateFileCrlCacheConfig(tempDirectory);
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, s_removalDelay);
             try
             {
                 cache.Set(CrlUrl, crl);
@@ -117,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crl = CreateCrl();
             var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
             var cacheConfig = CreateFileCrlCacheConfig(tempDirectory);
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, s_removalDelay);
             try
             {
                 cache.Set(CrlUrl, crl);
@@ -155,7 +156,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
             fileOperations
                 .Setup(f => f.Exists(fileName))
                 .Returns(true);
@@ -184,7 +185,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
             fileOperations
                 .Setup(f => f.Exists(fileName))
                 .Returns(false);
@@ -207,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
             fileOperations
                 .Setup(f => f.Exists(fileName))
                 .Returns(true);
@@ -234,7 +235,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
 
             // act
             cache.Set(CrlUrl, crl);
@@ -257,7 +258,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
             fileOperations
                 .Setup(f => f.WriteAllBytes(fileName, crl.GetEncoded()))
                 .Throws(new Exception("Failed to write crl file"));
@@ -273,6 +274,35 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform("Win")]
+        public void TestWithMocksWindowsSaveCrlWithDirectoryCreation()
+        {
+            // arrange
+            var crl = CreateCrl();
+            var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
+            var fileName = Path.Combine(tempDirectory, HttpUtility.UrlEncode(CrlUrl, Encoding.UTF8));
+            var cacheConfig = new FileCrlCacheConfig(tempDirectory, true, 0, 0);
+            var fileOperations = new Mock<FileOperations>();
+            var unixOperations = new Mock<UnixOperations>();
+            var directoryOperations = new Mock<DirectoryOperations>();
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
+            directoryOperations
+                .Setup(d => d.Exists(tempDirectory))
+                .Returns(false);
+
+            // act
+            cache.Set(CrlUrl, crl);
+
+            // assert
+            directoryOperations.Verify(d => d.Exists(tempDirectory), Times.Once());
+            directoryOperations.Verify(d => d.CreateDirectory(tempDirectory), Times.Once());
+            fileOperations.Verify(f => f.WriteAllBytes(fileName, crl.GetEncoded()), Times.Once());
+            fileOperations.Verify(f => f.SetLastWriteTimeUtc(fileName, s_downloadTime), Times.Once());
+            unixOperations.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        [Platform(Exclude = "Win")]
         public void TestWithMocksUnixGetCrl()
         {
             // arrange
@@ -283,7 +313,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
             fileOperations
                 .Setup(f => f.Exists(fileName))
                 .Returns(true);
@@ -302,6 +332,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestWithMocksUnixGetCrlFailsForReadingError()
         {
             // arrange
@@ -311,7 +342,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
             fileOperations
                 .Setup(f => f.Exists(fileName))
                 .Returns(true);
@@ -327,6 +358,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestWithMocksUnixSaveCrl()
         {
             // arrange
@@ -337,7 +369,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
             unixOperations
                 .Setup(u => u.GetDirectoryInfo(tempDirectory))
                 .Returns(new DirectoryUnixInformation(tempDirectory, true, FileAccessPermissions.UserReadWriteExecute, UnixUserId));
@@ -357,6 +389,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestWithMocksUnixSaveCrlWithDirectoryCreation()
         {
             // arrange
@@ -367,7 +400,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
             unixOperations
                 .Setup(u => u.GetDirectoryInfo(tempDirectory))
                 .Returns(new DirectoryUnixInformation(tempDirectory, false, FileAccessPermissions.AllPermissions, 0));
@@ -388,6 +421,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestWithMocksUnixSaveCrlShouldFixIncorrectPermissions()
         {
             // arrange
@@ -398,7 +432,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
             unixOperations
                 .Setup(u => u.GetDirectoryInfo(tempDirectory))
                 .Returns(new DirectoryUnixInformation(tempDirectory, true, FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherWrite, UnixUserId + 100));
@@ -422,6 +456,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         [TestCase(1, 0, 0, 0)]
         [TestCase(0, 1, 0, 0)]
         [TestCase(0, 0, 1, 0)]
@@ -436,7 +471,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var fileOperations = new Mock<FileOperations>();
             var unixOperations = new Mock<UnixOperations>();
             var directoryOperations = new Mock<DirectoryOperations>();
-            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object);
+            var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object, s_removalDelay);
             unixOperations
                 .Setup(u => u.GetDirectoryInfo(tempDirectory))
                 .Returns(new DirectoryUnixInformation(tempDirectory, true, FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherWrite, UnixUserId + 100));
@@ -499,7 +534,6 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.AreEqual(expected.IssuerName, actual.IssuerName);
             CollectionAssert.AreEqual(expected.IssuerDistributionPoints, actual.IssuerDistributionPoints);
             CollectionAssert.AreEqual(expected.RevokedCertificates, actual.RevokedCertificates);
-            Assert.AreEqual(expected.CrlCacheValidityTime, actual.CrlCacheValidityTime);
         }
     }
 }

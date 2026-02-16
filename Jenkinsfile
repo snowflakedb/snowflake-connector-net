@@ -1,3 +1,5 @@
+@Library('pipeline-utils')
+import com.snowflake.DevEnvUtils
 import groovy.json.JsonOutput
 
 timestamps {
@@ -9,10 +11,17 @@ timestamps {
       env.GIT_COMMIT = scmInfo.GIT_COMMIT
     }
 
+    stage('Authenticate Artifactory') {
+      script {
+        new DevEnvUtils().withSfCli {
+          sh "sf artifact oci auth"
+        }
+      }
+    }
+
     stage('Build') {
       withCredentials([
         usernamePassword(credentialsId: '063fc85b-62a6-4181-9d72-873b43488411', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
-        string(credentialsId: 'a791118f-a1ea-46cd-b876-56da1b9bc71c', variable: 'NEXUS_PASSWORD')
       ]) {
         sh '''\
         |#!/bin/bash -e
@@ -43,7 +52,6 @@ timestamps {
         'Test Authentication': {
           stage('Test Authentication') {
             withCredentials([
-              string(credentialsId: 'a791118f-a1ea-46cd-b876-56da1b9bc71c', variable: 'NEXUS_PASSWORD'),
               string(credentialsId: 'sfctest0-parameters-secret', variable: 'PARAMETERS_SECRET')
             ]) {
               sh '''\
@@ -62,6 +70,33 @@ timestamps {
               |#!/bin/bash -e
               |$WORKSPACE/ci/test_wif.sh
               '''.stripMargin()
+            }
+          }
+        },
+        'Test Revocation Validation': {
+          stage('Test Revocation Validation') {
+            withCredentials([
+              usernamePassword(credentialsId: 'jenkins-snowflakedb-github-app',
+                usernameVariable: 'GITHUB_USER',
+                passwordVariable: 'GITHUB_TOKEN')
+            ]) {
+              try {
+                sh '''\
+                |#!/bin/bash -e
+                |chmod +x $WORKSPACE/ci/test_revocation.sh
+                |$WORKSPACE/ci/test_revocation.sh
+                '''.stripMargin()
+              } finally {
+                archiveArtifacts artifacts: 'revocation-results.json,revocation-report.html', allowEmptyArchive: true
+                publishHTML(target: [
+                  allowMissing: true,
+                  alwaysLinkToLastBuild: true,
+                  keepAll: true,
+                  reportDir: '.',
+                  reportFiles: 'revocation-report.html',
+                  reportName: 'Revocation Validation Report'
+                ])
+              }
             }
           }
         }

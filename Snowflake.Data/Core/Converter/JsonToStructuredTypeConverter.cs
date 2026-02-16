@@ -90,7 +90,7 @@ namespace Snowflake.Data.Core.Converter
             return objectBuilder.Build();
         }
 
-        private static SnowflakeObjectConstructionMethod GetConstructionMethod(Type type)
+        internal static SnowflakeObjectConstructionMethod GetConstructionMethod(Type type)
         {
             return type.GetCustomAttributes(false)
                 .Where(attribute => attribute.GetType() == typeof(SnowflakeObject))
@@ -181,6 +181,11 @@ namespace Snowflake.Data.Core.Converter
             if (IsBooleanMetadata(fieldMetadata))
             {
                 return json.Value<bool>();
+            }
+            if (IsDecfloatMetadata(fieldMetadata))
+            {
+                // DECFLOAT is returned as string to preserve full precision
+                return json.Value<string>();
             }
             if (IsTimestampNtzMetadata(fieldMetadata))
             {
@@ -411,6 +416,9 @@ namespace Snowflake.Data.Core.Converter
 
         private static bool IsRealMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.REAL.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsDecfloatMetadata(FieldMetadata fieldMetadata) =>
+            SFDataType.DECFLOAT.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);
 
         private static bool IsBooleanMetadata(FieldMetadata fieldMetadata) =>
             SFDataType.BOOLEAN.ToString().Equals(fieldMetadata.type, StringComparison.OrdinalIgnoreCase);

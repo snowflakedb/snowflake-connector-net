@@ -16,7 +16,7 @@ using Amazon.S3.Model;
 namespace Snowflake.Data.Tests.UnitTests
 {
     [TestFixture, NonParallelizable]
-    class SFS3ClientTest : SFBaseTest
+    class SFS3ClientTest : UnitTestBase
     {
         // Mock data for file metadata
         const string Endpoint = "[www.mockEndPoint.com]";
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests
         AmazonS3Config _clientConfig;
 
         [SetUp]
-        public new void BeforeTest()
+        public void BeforeTest()
         {
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
 

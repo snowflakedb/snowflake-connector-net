@@ -24,10 +24,11 @@ namespace Snowflake.Data.Core.Revocation
         private readonly CertificateCrlDistributionPointsExtractor _crlExtractor;
         private readonly CrlParser _crlParser;
         private readonly CrlRepository _crlRepository;
+        private readonly TimeSpan _httpTimeout;
+        private readonly long _crlDownloadMaxSize;
 
         private static readonly ConcurrentDictionary<string, object> s_locksForCrlUrls = new ConcurrentDictionary<string, object>();
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<CertificateRevocationVerifier>();
-        private static readonly TimeSpan s_httpTimeout = TimeSpan.FromSeconds(60);
 
         public CertificateRevocationVerifier(
             HttpClientConfig config,
@@ -39,6 +40,8 @@ namespace Snowflake.Data.Core.Revocation
         {
             _certRevocationCheckMode = config.CertRevocationCheckMode;
             _allowCertificatesWithoutCrlUrl = config.AllowCertificatesWithoutCrlUrl;
+            _httpTimeout = TimeSpan.FromSeconds(config.CrlDownloadTimeout);
+            _crlDownloadMaxSize = config.CrlDownloadMaxSize;
             _timeProvider = timeProvider;
             _restRequester = restRequester;
             _crlExtractor = crlExtractor;
@@ -189,11 +192,24 @@ namespace Snowflake.Data.Core.Revocation
             {
                 var cachedCrl = _crlRepository.Get(crlUrl);
                 var now = _timeProvider.UtcNow();
-                var needsFreshCrl = cachedCrl == null || cachedCrl.NeedsFreshCrl(now);
+                var needsFreshCrl = cachedCrl == null
+                    || cachedCrl.NeedsReplacement(now, _crlParser.GetCacheValidityTime());
                 var shouldUpdateCrl = false;
                 if (needsFreshCrl)
                 {
                     var newCrl = FetchCrl(crlUrl);
+
+                    if (newCrl != null && newCrl.NextUpdate.HasValue && newCrl.NextUpdate.Value < now)
+                    {
+                        s_logger.Warn($"Downloaded CRL from '{crlUrl}' is already expired (next update: {newCrl.NextUpdate.Value})");
+                        newCrl = null;
+                        if (cachedCrl == null)
+                        {
+                            s_logger.Error($"Unable to fetch a valid CRL from '{crlUrl}' for certificate: '{certificate.Subject}'. Downloaded CRL is expired and no fallback available.");
+                            return CertRevocationCheckResult.CertError;
+                        }
+                    }
+
                     shouldUpdateCrl = newCrl != null && (cachedCrl == null || newCrl.ThisUpdate > cachedCrl.ThisUpdate);
                     if (shouldUpdateCrl)
                     {
@@ -314,26 +330,51 @@ namespace Snowflake.Data.Core.Revocation
         private Crl FetchCrl(string crlUrl)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, crlUrl);
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, s_httpTimeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, s_httpTimeout);
+            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, _httpTimeout);
+            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, _httpTimeout);
             byte[] crlBytes = null;
             DateTime now;
             try
             {
                 var response = _restRequester.Get(new RestRequestWrapper(request));
                 now = _timeProvider.UtcNow();
-                crlBytes = response.Content?.ReadAsByteArrayAsync().Result;
+
+                if (response?.Content == null)
+                {
+                    s_logger.Error($"Downloading crl from {crlUrl} failed: response or content is null");
+                    return null;
+                }
+
+                if (response.Content.Headers?.ContentLength.HasValue == true)
+                {
+                    var contentLength = response.Content.Headers.ContentLength.Value;
+                    if (contentLength > _crlDownloadMaxSize)
+                    {
+                        s_logger.Error($"CRL from {crlUrl} exceeds maximum allowed size. Content-Length: {contentLength} bytes, Max allowed: {_crlDownloadMaxSize} bytes");
+                        return null;
+                    }
+                }
+
+                response.Content.LoadIntoBufferAsync(_crlDownloadMaxSize).GetAwaiter().GetResult();
+                crlBytes = response.Content.ReadAsByteArrayAsync().Result;
+            }
+            catch (HttpRequestException ex)
+            {
+                s_logger.Error($"Error reading response from {crlUrl}: Content was too large or a network error occurred. Max allowed: {_crlDownloadMaxSize} bytes. Error: {ex.Message}");
+                return null;
             }
             catch (Exception exception)
             {
                 s_logger.Error($"Downloading crl from {crlUrl} failed", exception);
                 return null;
             }
+
             if (crlBytes == null || crlBytes.Length == 0)
             {
                 s_logger.Error($"Downloading crl from {crlUrl} failed");
                 return null;
             }
+
             try
             {
                 var crl = _crlParser.Parse(crlBytes, now);

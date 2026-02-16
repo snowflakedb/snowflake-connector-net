@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Session;
@@ -53,6 +54,103 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        [TestCase(1)]
+        [TestCase(10)]
+        [TestCase(100)]
+        public void TestSettingConnectionLimitProperty(int expectedConnectionLimit)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT={expectedConnectionLimit}";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+
+            // assert
+            Assert.AreEqual(expectedConnectionLimit, extractedProperties._servicePointConnectionLimit);
+        }
+
+        [Test]
+        public void TestSettingConnectionLimitPropertyToLessThan1()
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT={0}";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+
+            // assert
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+        }
+
+        [Test]
+        public void TestSettingConnectionLimitPropertyToGreaterThanMaxConnectionLimit()
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT={SFSessionHttpClientProperties.MaxConnectionLimit + 1}";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+
+            // assert
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+        }
+
+        [Test]
+        public void TestSettingConnectionLimitPropertyToNoValue()
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;SERVICE_POINT_CONNECTION_LIMIT=";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+
+            // assert
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+        }
+
+        [Test]
+        [TestCase("abc")]
+        [TestCase("1.5")]
+        [TestCase("true")]
+        [TestCase("-2.3")]
+        [TestCase("null")]
+        public void TestThrowsExceptionWhenSettingConnectionLimitPropertyToNonIntegerValue(string nonIntegerValue)
+        {
+            // arrange
+            var parameterName = "SERVICE_POINT_CONNECTION_LIMIT";
+            var expectedErrorMessage = $"Error: Invalid parameter value  for {parameterName}";
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;{parameterName}={nonIntegerValue}";
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
+
+            // assert
+            Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.IsTrue(thrown.Message.Contains(expectedErrorMessage));
+        }
+
+        [Test]
+        [TestCase(100)]
+        [TestCase(209715200)]
+        public void TestValidCrlDownloadMaxSize(long validMaxSize)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=account;USER=test;PASSWORD=test;CRLDOWNLOADMAXSIZE={validMaxSize}";
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+            var config = extractedProperties.BuildHttpClientConfig();
+
+            // assert
+            Assert.AreEqual(validMaxSize, config.CrlDownloadMaxSize);
+        }
+
+        [Test]
         public void TestBuildHttpClientConfig()
         {
             // arrange
@@ -62,7 +160,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var config = properties.BuildHttpClientConfig();
 
             // assert
-            Assert.AreEqual(properties._useDotnetCrlCheck, config.UseDotnetCrlCheckMechanism);
             Assert.AreEqual(properties._certRevocationCheckMode, config.CertRevocationCheckMode);
             Assert.AreEqual(properties._enableCrlDiskCaching, config.EnableCRLDiskCaching);
             Assert.AreEqual(properties._enableCrlInMemoryCaching, config.EnableCRLInMemoryCaching);
@@ -78,17 +175,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        [TestCase("enabled", true, false, true)]
-        [TestCase("enabled", false, true, false)]
-        [TestCase("disabled", true, false, false)]
-        [TestCase("disabled", false, false, false)]
-        [TestCase("advisory", false, true, false)]
-        public void TestIsCustomCrlCheckConfigured(string checkMode, bool useDotnetCrlCheck, bool expectedCustomCrlCheck, bool expectedDotnetCrlCheck)
+        [TestCase("enabled", true, false)]
+        [TestCase("disabled", false, false)]
+        [TestCase("advisory", true, false)]
+        [TestCase("native", false, true)]
+        public void TestIsCustomCrlCheckConfigured(string certCheckMode, bool expectedCustomCrlCheck, bool expectedDotnetCrlCheck)
         {
             // arrange
             var properties = RandomSFSessionHttpClientProperties();
-            properties._certRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), checkMode, true);
-            properties._useDotnetCrlCheck = useDotnetCrlCheck;
+            properties._certRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), certCheckMode, true);
             var config = properties.BuildHttpClientConfig();
 
             // act
@@ -111,7 +206,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 proxyUser = TestDataGenarator.NextAlphaNumeric()
             };
             var randomCertRevocationCheckMode = TestDataGenarator.GetRandomEnumValue<CertRevocationCheckMode>();
-            var randomUseDotnetCrlCheck = randomCertRevocationCheckMode != CertRevocationCheckMode.Advisory && TestDataGenarator.NextBool();
             return new SFSessionHttpClientProperties()
             {
                 validateDefaultParameters = TestDataGenarator.NextBool(),
@@ -122,12 +216,43 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 retryTimeout = TimeSpan.FromSeconds(TestDataGenarator.NextInt(300, 600)),
                 maxHttpRetries = TestDataGenarator.NextInt(0, 15),
                 proxyProperties = proxyProperties,
-                _useDotnetCrlCheck = randomUseDotnetCrlCheck,
                 _certRevocationCheckMode = randomCertRevocationCheckMode,
                 _enableCrlDiskCaching = TestDataGenarator.NextBool(),
                 _enableCrlInMemoryCaching = TestDataGenarator.NextBool(),
                 _allowCertificatesWithoutCrlUrl = TestDataGenarator.NextBool()
             };
+        }
+
+        [Test]
+        [TestCase("account=test;user=test;password=test;minTls=tls13;maxTls=tls13", "tls13", "tls13")]
+        [TestCase("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", "tls12", "tls13")]
+        [TestCase("account=test;user=test;password=test;minTls=tls12;maxTls=tls12", "tls12", "tls12")]
+        [TestCase("account=test;user=test;password=test", "tls12", "tls13")]
+        public void TestSslProperties(string connectionString, string expectedMinTls, string expectedMaxTls)
+        {
+            // arrange
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+            // act
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+            // assert
+            Assert.AreEqual(extractedProperties._minTlsProtocol, expectedMinTls);
+            Assert.AreEqual(extractedProperties._maxTlsProtocol, expectedMaxTls);
+        }
+
+        [Test]
+        public void TestSslPropertiesFailure()
+        {
+            // act & assert
+            var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;minTls=tls13;maxTls=tls12", new SessionPropertiesContext()));
+            Assert.That(exception.Message.Contains("Connection string is invalid: Parameter MINTLS value cannot be higher than MAXTLS value."));
+        }
+
+        [Test]
+        public void TestSslInvalidPropertyFailure()
+        {
+            // act & assert
+            var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;minTls=tls11;maxTls=tls11", new SessionPropertiesContext()));
+            Assert.That(exception.Message.Contains("Connection string is invalid: Parameter MINTLS should have one of the following values: TLS12, TLS13."));
         }
 
         [Test, TestCaseSource(nameof(PropertiesProvider))]
@@ -146,7 +271,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(testCase.expectedProperties.connectionTimeout, extractedProperties.connectionTimeout);
             Assert.AreEqual(testCase.expectedProperties._clientStoreTemporaryCredential, extractedProperties._clientStoreTemporaryCredential);
             Assert.AreEqual(testCase.expectedProperties._certRevocationCheckMode, extractedProperties._certRevocationCheckMode);
-            Assert.AreEqual(testCase.expectedProperties._useDotnetCrlCheck, extractedProperties._useDotnetCrlCheck);
             Assert.AreEqual(testCase.expectedProperties._enableCrlDiskCaching, extractedProperties._enableCrlDiskCaching);
             Assert.AreEqual(testCase.expectedProperties._enableCrlInMemoryCaching, extractedProperties._enableCrlInMemoryCaching);
             Assert.AreEqual(testCase.expectedProperties._allowCertificatesWithoutCrlUrl, extractedProperties._allowCertificatesWithoutCrlUrl);
@@ -173,7 +297,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -193,7 +316,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -213,7 +335,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -233,16 +354,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
                     _allowCertificatesWithoutCrlUrl = false
                 }
             };
-            var propertiesWithCertRevocationConfigChanged = new PropertiesTestCase()
+            var propertiesWithCertRevocationConfigEnabled = new PropertiesTestCase()
             {
-                connectionString = "account=test;user=test;password=test;useDotnetCrlCheck=false;certRevocationCheckMode=advisory;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true",
+                connectionString = "account=test;user=test;password=test;certRevocationCheckMode=enabled;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true",
                 expectedProperties = new SFSessionHttpClientProperties()
                 {
                     validateDefaultParameters = true,
@@ -253,11 +373,50 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = false,
-                    _certRevocationCheckMode = CertRevocationCheckMode.Advisory,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Enabled,
                     _enableCrlDiskCaching = false,
                     _enableCrlInMemoryCaching = false,
                     _allowCertificatesWithoutCrlUrl = true
+
+                }
+            };
+            var propertiesWithCertRevocationConfigAdvisory = new PropertiesTestCase()
+            {
+                connectionString = "account=test;user=test;password=test;certRevocationCheckMode=advisory;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=false",
+                expectedProperties = new SFSessionHttpClientProperties()
+                {
+                    validateDefaultParameters = true,
+                    clientSessionKeepAlive = false,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    disableRetry = false,
+                    forceRetryOn404 = false,
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Advisory,
+                    _enableCrlDiskCaching = false,
+                    _enableCrlInMemoryCaching = false,
+                    _allowCertificatesWithoutCrlUrl = false
+
+                }
+            };
+            var propertiesWithCertRevocationConfigViaDotNet = new PropertiesTestCase()
+            {
+                connectionString = "account=test;user=test;password=test;certRevocationCheckMode=native",
+                expectedProperties = new SFSessionHttpClientProperties()
+                {
+                    validateDefaultParameters = true,
+                    clientSessionKeepAlive = false,
+                    connectionTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    disableRetry = false,
+                    forceRetryOn404 = false,
+                    retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
+                    maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
+                    _clientStoreTemporaryCredential = isWindows,
+                    _certRevocationCheckMode = CertRevocationCheckMode.Native,
+                    _enableCrlDiskCaching = true,
+                    _enableCrlInMemoryCaching = true,
+                    _allowCertificatesWithoutCrlUrl = false
 
                 }
             };
@@ -274,7 +433,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -294,7 +452,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -314,7 +471,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = TimeSpan.FromSeconds(600),
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -334,7 +490,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -354,7 +509,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = TimeoutHelper.Infinity(),
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -374,7 +528,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = 10,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -394,7 +547,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = SFSessionHttpClientProperties.DefaultMaxHttpRetries,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -414,7 +566,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     retryTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout,
                     maxHttpRetries = 0,
                     _clientStoreTemporaryCredential = isWindows,
-                    _useDotnetCrlCheck = true,
                     _certRevocationCheckMode = CertRevocationCheckMode.Disabled,
                     _enableCrlDiskCaching = true,
                     _enableCrlInMemoryCaching = true,
@@ -427,7 +578,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 propertiesWithValidateDefaultParametersChanged,
                 propertiesWithClientSessionKeepAliveChanged,
                 propertiesWithTimeoutChanged,
-                propertiesWithCertRevocationConfigChanged,
+                propertiesWithCertRevocationConfigEnabled,
+                propertiesWithCertRevocationConfigAdvisory,
+                propertiesWithCertRevocationConfigViaDotNet,
                 propertiesWithDisableRetryChanged,
                 propertiesWithForceRetryOn404Changed,
                 propertiesWithRetryTimeoutChangedToAValueAbove300,

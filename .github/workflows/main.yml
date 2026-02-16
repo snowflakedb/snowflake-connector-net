@@ -1,5 +1,8 @@
 name: DotNet Build and Test
 
+permissions:
+  contents: read
+
 # Triggers the workflow on push or pull request events but only for the master branch
 on:
   push:
@@ -64,6 +67,13 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Decrypt RSA Key
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/rsa_keys/rsa_key_dotnet_${{ matrix.cloud_env }}.p8.gpg > Snowflake.Data.Tests/rsa_key_dotnet_${{ matrix.cloud_env }}.p8
       - name: Build Driver
         run: |
           cd Snowflake.Data.Tests
@@ -137,6 +147,13 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Decrypt RSA Key
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/rsa_keys/rsa_key_dotnet_${{ matrix.cloud_env }}.p8.gpg > Snowflake.Data.Tests/rsa_key_dotnet_${{ matrix.cloud_env }}.p8
       - name: Build Driver
         run: |
           dotnet restore
@@ -209,6 +226,13 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Decrypt RSA Key
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/rsa_keys/rsa_key_dotnet_${{ matrix.cloud_env }}.p8.gpg > Snowflake.Data.Tests/rsa_key_dotnet_${{ matrix.cloud_env }}.p8
       - name: Build Driver
         run: |
           dotnet restore
@@ -216,7 +240,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml --verbosity normal" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml --verbosity normal" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -231,7 +255,7 @@ jobs:
           name: tests-performance_macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
       - name: Upload test results to Codecov
-        if: ${{!cancelled()}}
+        if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
@@ -242,3 +266,44 @@ jobs:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
           fail_ci_if_error: true
           files: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+
+  test-rockylinux9:
+    name: Tests on Rocky Linux 9
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
+        cloud_env: ['AZURE', 'GCP', 'AWS']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and Run Tests in Docker
+        run: ./ci/test_rockylinux9_docker.sh
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+          snowflake_cloud_env: ${{ matrix.cloud_env }}
+          net_version: ${{ matrix.dotnet }}
+          DOTNET_COVERAGE_VERSION: "17.8.4"
+        shell: bash
+      - name: Upload Code Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report_rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
+          path: Snowflake.Data.Tests/rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+      - name: Upload Test Performance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-performance_rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
+          path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+          fail_ci_if_error: true
+          files: Snowflake.Data.Tests/rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml

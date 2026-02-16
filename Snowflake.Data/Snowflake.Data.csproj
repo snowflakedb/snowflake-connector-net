@@ -1,36 +1,56 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net481;net8.0;net8.0-windows</TargetFrameworks>
     <Title>Snowflake.Data</Title>
     <PackageId>Snowflake.Data</PackageId>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageIconUrl>https://raw.githubusercontent.com/snowflakedb/snowflake-connector-net/master/Snowflake.Data/snowflake.ico</PackageIconUrl>
-    <RepositoryUrl>https://github.com/snowflakedb/snowflake-connector-net</RepositoryUrl> 
+    <RepositoryUrl>https://github.com/snowflakedb/snowflake-connector-net</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Authors>Snowflake</Authors>
-    <Version>4.8.0</Version>
+    <Version>5.4.0</Version>
     <DebugType>Full</DebugType>
     <LangVersion>8</LangVersion>
   </PropertyGroup>
 
+  <!-- Define WINDOWS_BUILD for all Windows-specific targets -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows'">
+    <DefineConstants>$(DefineConstants);WINDOWS_BUILD</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Apache.Arrow" Version="14.0.2" />
-    <PackageReference Include="AWSSDK.S3" Version="4.0.4" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.18.2" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="Azure.Storage.Common" Version="12.12.0" />
-    <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="log4net" Version="2.0.12" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="Tomlyn.Signed" Version="0.17.0" />
+  </ItemGroup>
+
+  <!-- Mono.Unix dependency ONLY for Unix/Linux platforms (netstandard2.0 and net8.0) -->
+  <!-- NOT included for Windows targets: net481, net8.0-windows -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
+  </ItemGroup>
+
+  <!-- Exclude platform shims from all targets by default (SDK auto-includes all .cs files) -->
+  <ItemGroup>
+    <Compile Remove="PlatformShims\**\*.cs" />
+  </ItemGroup>
+
+  <!-- Include Mono.Unix Windows shim for all Windows targets -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows'">
+    <Compile Include="PlatformShims\MonoUnixWindowsShim.cs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' != 'Release'">
@@ -62,4 +82,33 @@
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Reference Include="System.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include MiniCore native libraries in NuGet package and copy to output -->
+    <Content Include="runtimes\**\*.dll" Pack="true" PackagePath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="runtimes\**\*.so" Pack="true" PackagePath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="runtimes\**\*.dylib" Pack="true" PackagePath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- Include .targets for .NET Framework compatibility -->
+    <None Include="build\Snowflake.Data.targets" Pack="true" PackagePath="build" />
+    <None Include="build\Snowflake.Data.targets" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
+
+  <!-- Windows: also copy DLL to output root (runtime doesn't find it in runtimes/ subfolder for .NET framework) -->
+  <Target Name="CopyMiniCoreToOutput" AfterTargets="Build" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <PropertyGroup>
+        <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(PlatformTarget)' == 'x64'">x64</SfLocalArch>
+        <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-arm64' Or '$(PlatformTarget)' == 'ARM64'">arm64</SfLocalArch>
+        <SfLocalArch Condition="'$(RuntimeIdentifier)' == 'win-x86' Or '$(PlatformTarget)' == 'x86'">x86</SfLocalArch>
+        <SfLocalArch Condition="'$(SfLocalArch)' == ''">x64</SfLocalArch>
+    </PropertyGroup>
+
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-x64\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'x64'" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-arm64\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'arm64'" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\runtimes\win-x86\native\sf_mini_core.dll" DestinationFolder="$(OutputPath)" Condition="'$(SfLocalArch)' == 'x86'" />
+  </Target>
 </Project>

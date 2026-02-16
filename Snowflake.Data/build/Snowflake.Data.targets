@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Determine the target architecture -->
+  <PropertyGroup>
+    <SfMiniCoreArch Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(PlatformTarget)' == 'x64'">x64</SfMiniCoreArch>
+    <SfMiniCoreArch Condition="'$(RuntimeIdentifier)' == 'win-arm64' Or '$(PlatformTarget)' == 'ARM64'">arm64</SfMiniCoreArch>
+    <SfMiniCoreArch Condition="'$(RuntimeIdentifier)' == 'win-x86' Or '$(PlatformTarget)' == 'x86'">x86</SfMiniCoreArch>
+    <SfMiniCoreArch Condition="'$(SfMiniCoreArch)' == ''">x64</SfMiniCoreArch>
+  </PropertyGroup>
+
+  <!-- Copy native library for ALL Windows targets -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\runtimes\win-x64\native\sf_mini_core.dll" Condition="'$(SfMiniCoreArch)' == 'x64'" />
+    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\runtimes\win-arm64\native\sf_mini_core.dll" Condition="'$(SfMiniCoreArch)' == 'arm64'" />
+    <NativeLibrary Include="$(MSBuildThisFileDirectory)..\runtimes\win-x86\native\sf_mini_core.dll" Condition="'$(SfMiniCoreArch)' == 'x86'" />
+  </ItemGroup>
+
+  <Target Name="CopyMiniCoreNativeLibraries" AfterTargets="Build">
+    <Copy SourceFiles="@(NativeLibrary)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="'@(NativeLibrary)' != ''" />
+  </Target>
+</Project>

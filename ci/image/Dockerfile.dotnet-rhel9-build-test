@@ -1,0 +1,47 @@
+FROM rockylinux:9
+
+USER root
+WORKDIR /
+
+# Install Java 11 for wiremock
+RUN dnf -y update && \
+    dnf install -y java-11-openjdk && \
+    dnf clean all
+
+# Set Java 11 as the default
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+# Install .NET from Microsoft repo (latest GA versions not available in Rocky's AppStream).
+# Exclude AppStream's .NET packages to avoid version conflicts and path mismatches.
+# See: https://learn.microsoft.com/en-us/dotnet/core/install/linux-package-mixup?pivots=os-linux-redhat
+RUN dnf install -y 'dnf-command(config-manager)' && \
+    dnf config-manager --save --setopt="appstream.excludepkgs=dotnet*,aspnet*,netstandard*" && \
+    dnf install -y https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
+    dnf install -y \
+        dotnet-sdk-6.0 \
+        dotnet-sdk-7.0 \
+        dotnet-sdk-8.0 \
+        dotnet-sdk-9.0 && \
+    dotnet --list-sdks && \
+    dnf clean all
+
+# Install dotnet-coverage tool to shared location (accessible by any user)
+ARG DOTNET_COVERAGE_VERSION
+ENV DOTNET_TOOLS=/opt/dotnet-tools
+ENV PATH="${PATH}:${DOTNET_TOOLS}"
+RUN dotnet tool install --tool-path ${DOTNET_TOOLS} dotnet-coverage --version ${DOTNET_COVERAGE_VERSION} && \
+    dotnet-coverage --version
+
+# Accept user ID as build argument to match host permissions
+ARG USER_ID=1001
+ARG GROUP_ID=1001
+
+# Create user for proper permission testing
+RUN groupadd -g ${GROUP_ID} user && \
+    useradd -u ${USER_ID} -g ${GROUP_ID} -m -s /bin/bash user && \
+    mkdir -p /home/user/go && \
+    chown -R user:user /home/user
+
+USER user
+WORKDIR /home/user

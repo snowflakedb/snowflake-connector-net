@@ -18,6 +18,26 @@ The Snowflake .NET connector supports the following .NET framework and libraries
 
 Disclaimer: While the connector targets netstandard2.0 and may work with versions in its [support matrix](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version), only the versions listed above are supported and tested by the connector
 
+## Target Frameworks and Platform-Specific Builds
+
+Starting from version **5.2.0**, the Snowflake .NET connector uses multi-targeting to provide optimized builds for different platforms:
+
+| Target Framework | Platform | Description                                                 |
+|------------------|----------|-------------------------------------------------------------|
+| `net481` | Windows (.NET Framework 4.8.1) | Optimized build for Windows .NET Framework without Mono.Unix |
+| `net8.0-windows` | Windows (.NET 8+) | Optimized build for Windows .NET 8+ without Mono.Unix |
+| `net8.0` | Linux, macOS (.NET 8+) | Full Unix file system support with Mono.Unix                |
+| `netstandard2.0` | All platforms | Backward compatibility for older .NET versions              |
+
+**What this means for you:**
+
+- **Windows users** on .NET Framework 4.8.1 will receive the `net481` build without the `Mono.Unix` dependency.
+- **Windows users** on .NET 8 or higher will receive the `net8.0-windows` build without the `Mono.Unix` dependency.
+- **Linux and macOS users** on .NET 8 or higher will receive the `net8.0`.
+- **Older .NET versions** (including older .NET Framework and .NET versions) will use the `netstandard2.0` build for backward compatibility.
+
+The appropriate build is automatically selected by NuGet based on your application's target framework and operating system.
+
 Please refer to the [Notice](#notice) section below for information about safe usage of the .NET Driver
 
 # Coding conventions for the project
@@ -186,6 +206,8 @@ Read more in [cache](doc/Cache.md) docs.
     From version v2.1.5 CRL is working back as intended.
 
 5.  This driver currently does not support GCP regional endpoints. Please ensure that any workloads using through this driver do not require support for regional endpoints on GCP. If you have questions about this, please contact Snowflake Support.
+
+6. The driver uses Rust library called sf_mini_core, you can find its source code [here](https://github.com/snowflakedb/universal-driver/tree/main/sf_mini_core) 
 
 Note that the driver is now targeting .NET Standard 2.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
 

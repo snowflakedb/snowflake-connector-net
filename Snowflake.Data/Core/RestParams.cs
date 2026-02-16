@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Snowflake.Data.Core.MiniCore;
+using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
 {
@@ -61,14 +64,25 @@ namespace Snowflake.Data.Core
 
     internal class SFEnvironment
     {
+        internal static bool MinicoreDisabled { get; set; }
+
         static SFEnvironment()
         {
+            MinicoreDisabled = IsMinicoreDisabled();
+            if (!MinicoreDisabled)
+            {
+                SfMiniCore.StartLoading();
+            }
+
             ClientEnv = new LoginRequestClientEnv()
             {
                 processName = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
                 osVersion = Environment.OSVersion.VersionString,
                 netRuntime = ExtractRuntime(),
                 netVersion = ExtractVersion(),
+                applicationPath = ExtractApplicationPath(),
+                isa = RuntimeInformation.ProcessArchitecture.ToString().ToLower(),
+                osDetails = ExtractOsDetails()
             };
 
             DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -90,6 +104,43 @@ namespace Snowflake.Data.Core
             var version = RuntimeInformation.FrameworkDescription.Substring(RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
             int secondPeriodIndex = version.IndexOf('.', version.IndexOf('.') + 1);
             return version.Substring(0, secondPeriodIndex);
+        }
+
+        internal static string ExtractApplicationPath()
+        {
+            try
+            {
+                var assembly = Assembly.GetEntryAssembly();
+                if (assembly != null && !string.IsNullOrEmpty(assembly.Location))
+                {
+                    return assembly.Location;
+                }
+
+                var process = System.Diagnostics.Process.GetCurrentProcess();
+                var mainModule = process.MainModule;
+                if (mainModule != null && !string.IsNullOrEmpty(mainModule.FileName))
+                {
+                    return mainModule.FileName;
+                }
+
+                return "UNKNOWN";
+            }
+            catch (Exception)
+            {
+                return "UNKNOWN";
+            }
+        }
+
+        private static bool IsMinicoreDisabled()
+        {
+            string val = Environment.GetEnvironmentVariable("SF_DISABLE_MINICORE");
+            if (string.IsNullOrEmpty(val)) return false;
+            return val.Equals("true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal static Dictionary<string, string> ExtractOsDetails()
+        {
+            return OsReleaseReader.GetOsDetails();
         }
     }
 }

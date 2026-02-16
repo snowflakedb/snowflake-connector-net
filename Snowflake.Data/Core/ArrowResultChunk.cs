@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Apache.Arrow;
+using Apache.Arrow.Types;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -25,6 +27,8 @@ namespace Snowflake.Data.Core
         };
 
         private const long TicksPerDay = (long)24 * 60 * 60 * 1000 * 10000;
+
+        private const int MaxPlainFormatDigits = 38; // DECFLOAT_DEFAULT_PRECISION
 
         public List<RecordBatch> RecordBatch { get; set; }
 
@@ -53,6 +57,7 @@ namespace Snowflake.Data.Core
 
         public ArrowResultChunk(RecordBatch recordBatch)
         {
+            ValidateBatch(recordBatch);
             RecordBatch = new List<RecordBatch> { recordBatch };
 
             RowCount = recordBatch.Length;
@@ -75,7 +80,39 @@ namespace Snowflake.Data.Core
 
         public void AddRecordBatch(RecordBatch recordBatch)
         {
+            ValidateBatch(recordBatch);
             RecordBatch.Add(recordBatch);
+            RowCount += recordBatch.Length;
+        }
+
+        /// <summary>
+        /// Validate that a batch's declared length matches actual column data.
+        /// Throws exception on corrupted data to trigger download retry.
+        /// </summary>
+        private void ValidateBatch(RecordBatch batch)
+        {
+            if (batch == null)
+            {
+                throw new SnowflakeDbException(
+                    SFError.INTERNAL_ERROR,
+                    "Cannot add null RecordBatch");
+            }
+
+            if (batch.Length == 0)
+                return;
+
+            for (int i = 0; i < batch.ColumnCount; i++)
+            {
+                var column = batch.Column(i);
+                if (column != null && column.Length != batch.Length)
+                {
+                    throw new SnowflakeDbException(
+                        SFError.INTERNAL_ERROR,
+                        $"Corrupted Arrow IPC data detected. " +
+                        $"Batch declares {batch.Length} rows but column {i} has {column.Length} elements. " +
+                        $"This will trigger download retry.");
+                }
+            }
         }
 
         internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
@@ -86,6 +123,15 @@ namespace Snowflake.Data.Core
             _currentRecordIndex = -1;
             RecordBatch.Clear();
 
+            ResetTempTables();
+        }
+
+        internal override void ResetForRetry()
+        {
+            RecordBatch.Clear();
+            RowCount = 0;
+            _currentBatchIndex = 0;
+            _currentRecordIndex = -1;
             ResetTempTables();
         }
 
@@ -100,10 +146,20 @@ namespace Snowflake.Data.Core
 
             _currentBatchIndex += 1;
             _currentRecordIndex = 0;
-
             ResetTempTables();
 
-            return _currentBatchIndex < RecordBatch.Count;
+            while (_currentBatchIndex < RecordBatch.Count && RecordBatch[_currentBatchIndex].Length == 0)
+            {
+                _currentBatchIndex += 1;
+                ResetTempTables();
+            }
+
+            if (_currentBatchIndex < RecordBatch.Count)
+            {
+                return _currentRecordIndex < RecordBatch[_currentBatchIndex].Length;
+            }
+
+            return false;
         }
 
         internal override bool Rewind()
@@ -116,13 +172,18 @@ namespace Snowflake.Data.Core
                 return true;
 
             _currentBatchIndex -= 1;
+            ResetTempTables();
+
+            while (_currentBatchIndex >= 0 && RecordBatch[_currentBatchIndex].Length == 0)
+            {
+                _currentBatchIndex -= 1;
+                ResetTempTables();
+            }
 
             if (_currentBatchIndex >= 0)
             {
                 _currentRecordIndex = RecordBatch[_currentBatchIndex].Length - 1;
-
-                ResetTempTables();
-                return true;
+                return _currentRecordIndex >= 0;
             }
 
             return false;
@@ -141,7 +202,33 @@ namespace Snowflake.Data.Core
 
         public object ExtractCell(int columnIndex, SFDataType srcType, long scale)
         {
-            var column = RecordBatch[_currentBatchIndex].Column(columnIndex);
+            if (_currentBatchIndex < 0 || _currentBatchIndex >= RecordBatch.Count)
+            {
+                throw new SnowflakeDbException(
+                    SFError.INTERNAL_ERROR,
+                    $"Invalid batch index {_currentBatchIndex}. Total batches: {RecordBatch.Count}");
+            }
+
+            var currentBatch = RecordBatch[_currentBatchIndex];
+
+            if (columnIndex < 0 || columnIndex >= currentBatch.ColumnCount)
+            {
+                throw new SnowflakeDbException(
+                    SFError.COLUMN_INDEX_OUT_OF_BOUND,
+                    $"Column index {columnIndex} is out of bounds. " +
+                    $"Batch {_currentBatchIndex} has {currentBatch.ColumnCount} columns. " +
+                    $"Expected column count: {ColumnCount}, Record index: {_currentRecordIndex}");
+            }
+
+            if (_currentRecordIndex < 0 || _currentRecordIndex >= currentBatch.Length)
+            {
+                throw new SnowflakeDbException(
+                    SFError.INTERNAL_ERROR,
+                    $"Record index {_currentRecordIndex} is out of bounds. " +
+                    $"Batch {_currentBatchIndex} has {currentBatch.Length} rows");
+            }
+
+            var column = currentBatch.Column(columnIndex);
 
             if (column.IsNull(_currentRecordIndex))
                 return DBNull.Value;
@@ -200,16 +287,26 @@ namespace Snowflake.Data.Core
                 case SFDataType.ARRAY:
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
-                    if (_byte[columnIndex] == null || _int[columnIndex] == null)
+                case SFDataType.MAP:
+                    switch (column)
                     {
-                        _byte[columnIndex] = ((StringArray)column).Values.ToArray();
-                        _int[columnIndex] = ((StringArray)column).ValueOffsets.ToArray();
+                        case StructArray structArray:
+                            return ExtractStructArray(structArray, _currentRecordIndex);
+                        case MapArray mapArray:
+                            return ExtractMapArray(mapArray, _currentRecordIndex);
+                        case ListArray listArray:
+                            return ExtractListArray(listArray, _currentRecordIndex);
+                        default:
+                            if (_byte[columnIndex] == null || _int[columnIndex] == null)
+                            {
+                                _byte[columnIndex] = ((StringArray)column).Values.ToArray();
+                                _int[columnIndex] = ((StringArray)column).ValueOffsets.ToArray();
+                            }
+                            return StringArray.DefaultEncoding.GetString(
+                                _byte[columnIndex],
+                                _int[columnIndex][_currentRecordIndex],
+                                _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
                     }
-                    return StringArray.DefaultEncoding.GetString(
-                        _byte[columnIndex],
-                        _int[columnIndex][_currentRecordIndex],
-                        _int[columnIndex][_currentRecordIndex + 1] - _int[columnIndex][_currentRecordIndex]);
-
                 case SFDataType.VECTOR:
                     var col = (FixedSizeListArray)column;
                     var values = col.Values;
@@ -243,6 +340,9 @@ namespace Snowflake.Data.Core
                     sb.Length--;
                     sb.Append("]");
                     return sb.ToString();
+
+                case SFDataType.DECFLOAT:
+                    return ExtractDecfloat(columnIndex, column, _currentRecordIndex);
 
                 case SFDataType.BINARY:
                     return ((BinaryArray)column).GetBytes(_currentRecordIndex).ToArray();
@@ -367,6 +467,205 @@ namespace Snowflake.Data.Core
         private long ExtractFraction(long value, long scale)
         {
             return ((value % s_powersOf10[scale]) * s_powersOf10[9 - scale]);
+        }
+
+        private object ConvertArrowValue(IArrowArray array, int index)
+        {
+            switch (array)
+            {
+                case StructArray strct: return ExtractStructArray(strct, index);
+                case MapArray map: return ExtractMapArray(map, index);
+                case ListArray list: return ExtractListArray(list, index);
+                case DoubleArray doubles: return doubles.GetValue(index);
+                case FloatArray floats: return floats.GetValue(index);
+                case Decimal128Array decimals: return decimals.GetValue(index);
+                case Date32Array dates: return dates.GetDateTime(index);
+                case Int8Array bytes: return bytes.GetValue(index);
+                case Int16Array shorts: return shorts.GetValue(index);
+                case Int32Array ints: return ints.GetValue(index);
+                case Int64Array longs: return longs.GetValue(index);
+                case BooleanArray booleans: return booleans.GetValue(index);
+                case StringArray strArray:
+                    var str = strArray.GetString(index);
+                    return string.IsNullOrEmpty(str) ? null : str;
+                case BinaryArray binary: return binary.GetBytes(index).ToArray();
+                default:
+                    throw new NotSupportedException($"Unsupported array type: {array.GetType()}");
+            }
+        }
+
+        private Dictionary<string, object> ExtractStructArray(StructArray structArray, int index)
+        {
+            var result = new Dictionary<string, object>();
+            var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
+
+            for (int i = 0; i < structArray.Fields.Count; i++)
+            {
+                var field = structArray.Fields[i];
+                var fieldName = structTypeFields[i].Name;
+                var value = ConvertArrowValue(field, index);
+
+                if (value == null && structArray.Fields.Count == 1)
+                    return null;
+
+                result[fieldName] = value;
+            }
+
+            return result;
+        }
+
+        private List<object> ExtractListArray(ListArray listArray, int index)
+        {
+            int start = listArray.ValueOffsets[index];
+            int end = listArray.ValueOffsets[index + 1];
+
+            if (start == end)
+                return null;
+
+            var values = listArray.Values;
+            var result = new List<object>(end - start);
+
+            for (int i = start; i < end; i++)
+            {
+                result.Add(ConvertArrowValue(values, i));
+            }
+
+            return result;
+        }
+
+        private Dictionary<object, object> ExtractMapArray(MapArray mapArray, int index)
+        {
+            int start = mapArray.ValueOffsets[index];
+            int end = mapArray.ValueOffsets[index + 1];
+
+            if (start == end)
+                return null;
+
+            var keyValuesArray = mapArray.KeyValues.Slice(start, end - start) as StructArray;
+            var keyArray = keyValuesArray.Fields[0];
+            var valueArray = keyValuesArray.Fields[1];
+
+            var result = new Dictionary<object, object>();
+
+            for (int i = 0; i < end - start; i++)
+            {
+                var key = ConvertArrowValue(keyArray, i);
+                var value = ConvertArrowValue(valueArray, i);
+                result[key] = value;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Extracts a DECFLOAT value from Arrow format as a string.
+        /// DECFLOAT is serialized as a STRUCT containing:
+        /// - INT16 for the exponent
+        /// - Variable-length BINARY for the significand (2's complement big endian)
+        /// Returns string to preserve full precision (up to 38 digits).
+        /// </summary>
+        private string ExtractDecfloat(int columnIndex, IArrowArray column, int index)
+        {
+            var structArray = (StructArray)column;
+            var exponentArray = (Int16Array)structArray.Fields[0];
+            var significandArray = (BinaryArray)structArray.Fields[1];
+
+            short exponent = exponentArray.GetValue(index).Value;
+            var significandBytes = significandArray.GetBytes(index);
+
+            if (significandBytes.Length == 0)
+            {
+                return "0";
+            }
+
+            // Convert 2's complement big endian to BigInteger (little endian)
+            var littleEndianBytes = new byte[significandBytes.Length + 1];
+            for (int i = 0; i < significandBytes.Length; i++)
+            {
+                littleEndianBytes[significandBytes.Length - 1 - i] = significandBytes[i];
+            }
+
+            // Sign extension for negative numbers
+            if ((significandBytes[0] & 0x80) != 0)
+            {
+                littleEndianBytes[significandBytes.Length] = 0xFF;
+            }
+
+            var significand = new System.Numerics.BigInteger(littleEndianBytes);
+
+            return FormatDecfloatAsString(significand, exponent);
+        }
+
+        /// <summary>
+        /// Formats a DECFLOAT value as a string, matching backend behavior:
+        /// - If total digits in plain format ≤ 38: use decimal notation
+        /// - Otherwise: use scientific notation
+        /// </summary>
+        private static string FormatDecfloatAsString(System.Numerics.BigInteger significand, short exponent)
+        {
+            if (significand == 0)
+            {
+                return "0";
+            }
+
+            bool isNegative = significand < 0;
+            string digits = System.Numerics.BigInteger.Abs(significand).ToString();
+            string sign = isNegative ? "-" : "";
+
+            // Calculate total digits in plain decimal format
+            int plainFormatDigits;
+            if (exponent >= 0)
+            {
+                // Trailing zeros: 123 * 10^2 = 12300 (5 digits)
+                plainFormatDigits = digits.Length + exponent;
+            }
+            else
+            {
+                int scale = -exponent;
+                if (scale < digits.Length)
+                {
+                    // Decimal point within digits: 12345 * 10^-2 = 123.45 (5 digits)
+                    plainFormatDigits = digits.Length;
+                }
+                else
+                {
+                    // Leading zeros: 123 * 10^-5 = 0.00123 (5 digits after decimal)
+                    plainFormatDigits = scale;
+                }
+            }
+
+            // Use scientific notation if plain format exceeds threshold
+            if (plainFormatDigits > MaxPlainFormatDigits)
+            {
+                int adjustedExponent = exponent + digits.Length - 1;
+                if (digits.Length == 1)
+                {
+                    return sign + digits + "E" + adjustedExponent;
+                }
+                else
+                {
+                    return sign + digits[0] + "." + digits.Substring(1) + "E" + adjustedExponent;
+                }
+            }
+
+            // Use plain decimal format
+            if (exponent >= 0)
+            {
+                return sign + digits + new string('0', exponent);
+            }
+            else
+            {
+                int scale = -exponent;
+                if (scale >= digits.Length)
+                {
+                    return sign + "0." + new string('0', scale - digits.Length) + digits;
+                }
+                else
+                {
+                    int insertPos = digits.Length - scale;
+                    return sign + digits.Substring(0, insertPos) + "." + digits.Substring(insertPos);
+                }
+            }
         }
     }
 }
