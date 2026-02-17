@@ -66,14 +66,17 @@ namespace Snowflake.Data.Core
     {
         internal static bool MinicoreDisabled { get; set; }
 
-        static SFEnvironment()
+        internal static void StartMinicoreLoading()
         {
-            MinicoreDisabled = IsMinicoreDisabled();
             if (!MinicoreDisabled)
             {
                 SfMiniCore.StartLoading();
             }
+        }
 
+        static SFEnvironment()
+        {
+            MinicoreDisabled = IsMinicoreDisabled();
             ClientEnv = new LoginRequestClientEnv()
             {
                 processName = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
