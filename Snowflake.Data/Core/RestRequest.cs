@@ -314,6 +314,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "ISA", NullValueHandling = NullValueHandling.Ignore)]
         internal string isa { get; set; }
 
+        [JsonProperty(PropertyName = "OS_DETAILS", NullValueHandling = NullValueHandling.Ignore)]
+        internal Dictionary<string, string> osDetails { get; set; }
+
         [JsonIgnore]
         internal string processName { get; set; }
 
@@ -336,6 +339,7 @@ namespace Snowflake.Data.Core
                 processName = processName,
                 applicationPath = applicationPath,
                 isa = isa,
+                osDetails = osDetails,
                 minicoreVersion = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.TryGetVersionSafe(),
                 minicoreFileName = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.GetExpectedLibraryName(),
                 minicoreLoadError = SFEnvironment.MinicoreDisabled

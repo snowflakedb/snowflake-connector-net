@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Snowflake.Data.Core;
@@ -115,6 +116,56 @@ namespace Snowflake.Data.Tests.UnitTests
             var firstClientCredentialEnvJson = JsonConvert.SerializeObject(clientCredentialLoginClientEnv);
             var secondClientCredentialEnvJson = JsonConvert.SerializeObject(clientCredentialLoginClientEnv2);
             Assert.AreEqual(firstClientCredentialEnvJson, secondClientCredentialEnvJson);
+        }
+
+        [Test]
+        [Platform("Linux")]
+        public void TestOsDetailsExtractionOnLinux()
+        {
+            var osDetails = SFEnvironment.ExtractOsDetails();
+
+            if (osDetails == null)
+            {
+                Assert.IsFalse(File.Exists("/etc/os-release"),
+                    "ExtractOsDetails returned null but /etc/os-release exists");
+                return;
+            }
+
+            Assert.IsNotEmpty(osDetails);
+            var expectedKeys = new[] { "NAME", "PRETTY_NAME", "ID", "BUILD_ID", "IMAGE_ID", "IMAGE_VERSION", "VERSION", "VERSION_ID" };
+            foreach (var key in osDetails.Keys)
+            {
+                Assert.Contains(key, expectedKeys, $"Unexpected key '{key}' found in OS details");
+            }
+        }
+
+        [Test]
+        [Platform(Exclude = "Linux")]
+        public void TestOsDetailsExtractionOnNonLinux()
+        {
+            var osDetails = SFEnvironment.ExtractOsDetails();
+            Assert.IsNull(osDetails, "OS details should be null on non-Linux platforms");
+        }
+
+        [Test]
+        [Platform("Linux")]
+        public void TestOsDetailsFiltersUnwantedKeys()
+        {
+            var osDetails = SFEnvironment.ExtractOsDetails();
+
+            if (osDetails == null)
+            {
+                Assert.IsFalse(File.Exists("/etc/os-release"),
+                    "ExtractOsDetails returned null but /etc/os-release exists");
+                return;
+            }
+
+            var unwantedKeys = new[] { "ANSI_COLOR", "HOME_URL", "DOCUMENTATION_URL", "SUPPORT_URL", "BUG_REPORT_URL", "PRIVACY_POLICY_URL", "LOGO" };
+            foreach (var unwantedKey in unwantedKeys)
+            {
+                Assert.IsFalse(osDetails.ContainsKey(unwantedKey),
+                    $"OS details should not contain unwanted key '{unwantedKey}'");
+            }
         }
 
         private BaseAuthenticator CreateAuthenticator(string connectionString)
