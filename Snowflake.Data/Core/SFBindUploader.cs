@@ -265,7 +265,12 @@ namespace Snowflake.Data.Core
                             : (long)(decimal.Parse(sValue) / 100);
 
                     var utcDateTimeOffset = new DateTimeOffset(epoch.AddTicks(ticksFromEpochLtz), TimeSpan.Zero);
-                    var sessionTimezone = session?.GetSessionTimezone() ?? TimeZoneInfo.Local;
+                    var sessionTimezone = session?.GetSessionTimezone();
+                    if (sessionTimezone == null)
+                    {
+                        logger.Warn("Session is null when converting TIMESTAMP_LTZ in bind upload, falling back to local timezone");
+                        sessionTimezone = TimeZoneInfo.Local;
+                    }
                     // Use ToLocalTime() for local timezone to maintain exact backward compatibility
                     if (sessionTimezone.Equals(TimeZoneInfo.Local))
                     {

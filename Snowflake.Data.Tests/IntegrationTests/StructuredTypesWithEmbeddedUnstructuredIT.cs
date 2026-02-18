@@ -391,6 +391,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
             yield return new object[]
             {
+                "0001-01-02 00:00:00.000000 +0:00",
+                SFDataType.TIMESTAMP_LTZ.ToString(),
+                null,
+                DateTime.SpecifyKind(DateTime.Parse("0001-01-01 16:00:00.000000"), DateTimeKind.Local)
+            };
+            yield return new object[]
+            {
                 "0001-01-01 00:00:00",
                 SFDataType.TIMESTAMP_NTZ.ToString(),
                 DateTime.Parse("0001-01-01 00:00:00"),
@@ -509,7 +516,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 "9999-12-31 23:59:59.999999 +13:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTimeOffset.Parse("9999-12-31 23:59:59.999999 +13:00")
+                DateTimeOffset.Parse("9999-12-31 02:59:59.999999 -08:00")
+            };
+            yield return new object[]
+            {
+                "0001-01-02 00:00:00.000000 +0:00",
+                SFDataType.TIMESTAMP_LTZ.ToString(),
+                null,
+                DateTimeOffset.Parse("0001-01-01 16:00:00.000000 -08:00")
             };
             yield return new object[]
             {

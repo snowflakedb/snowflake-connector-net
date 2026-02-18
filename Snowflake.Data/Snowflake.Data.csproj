@@ -54,7 +54,6 @@
     <Compile Include="PlatformShims\MonoUnixWindowsShim.cs" />
   </ItemGroup>
 
-
   <ItemGroup Condition="'$(Configuration)' != 'Release'">
     <InternalsVisibleTo Include="Snowflake.Data.Tests" />
     <!--needed by Moq to be able to mock internal interfaces-->
