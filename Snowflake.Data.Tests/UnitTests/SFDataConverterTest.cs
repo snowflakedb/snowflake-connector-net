@@ -324,6 +324,94 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
         }
 
+        private string DateTimeToLtzWireFormat(DateTime utcDateTime)
+        {
+            var tickDiff = utcDateTime.Ticks - SFDataConverter.UnixEpoch.Ticks;
+            return (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
+        }
+
+        [Test]
+        public void TestConvertTimestampLtzToDateTimeOffsetWithLocalTimezone()
+        {
+            var utcDateTime = new DateTime(2024, 7, 15, 10, 30, 0, DateTimeKind.Utc);
+            var wireValue = DateTimeToLtzWireFormat(utcDateTime);
+
+            var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
+                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Local);
+
+            var expected = new DateTimeOffset(utcDateTime).ToLocalTime();
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void TestConvertTimestampLtzToDateTimeOffsetWithNamedTimezone()
+        {
+            var tokyoTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Asia/Tokyo");
+            var utcDateTime = new DateTime(2024, 7, 15, 10, 30, 0, DateTimeKind.Utc);
+            var wireValue = DateTimeToLtzWireFormat(utcDateTime);
+
+            var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
+                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), tokyoTz);
+
+            Assert.AreEqual(TimeSpan.FromHours(9), result.Offset);
+            Assert.AreEqual(utcDateTime, result.UtcDateTime);
+        }
+
+        [Test]
+        public void TestConvertTimestampLtzToDateTimeWithLocalTimezone()
+        {
+            var utcDateTime = new DateTime(2024, 1, 15, 18, 0, 0, DateTimeKind.Utc);
+            var wireValue = DateTimeToLtzWireFormat(utcDateTime);
+
+            var result = (DateTime)SFDataConverter.ConvertToCSharpVal(
+                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTime), TimeZoneInfo.Local);
+
+            var expected = new DateTimeOffset(utcDateTime).ToLocalTime().DateTime;
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void TestConvertTimestampLtzToDateTimeWithNamedTimezone()
+        {
+            var warsawTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Europe/Warsaw");
+            var utcDateTime = new DateTime(2024, 7, 15, 10, 30, 0, DateTimeKind.Utc);
+            var wireValue = DateTimeToLtzWireFormat(utcDateTime);
+
+            var result = (DateTime)SFDataConverter.ConvertToCSharpVal(
+                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTime), warsawTz);
+
+            var expected = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, warsawTz);
+            Assert.AreEqual(expected, result);
+            Assert.AreEqual(DateTimeKind.Local, result.Kind);
+        }
+
+        [Test]
+        public void TestConvertTimestampLtzToDateTimeOffsetWithUtcTimezone()
+        {
+            var utcDateTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var wireValue = DateTimeToLtzWireFormat(utcDateTime);
+
+            var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
+                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Utc);
+
+            Assert.AreEqual(TimeSpan.Zero, result.Offset);
+            Assert.AreEqual(utcDateTime, result.UtcDateTime);
+        }
+
+        [Test]
+        public void TestConvertTimestampLtzThrowsWhenSessionTimezoneIsNull()
+        {
+            var wireValue = DateTimeToLtzWireFormat(new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+            Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.ConvertToCSharpVal(
+                    ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), null));
+
+            Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.ConvertToCSharpVal(
+                    ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTime), null));
+        }
+
         [Test]
         [TestCase(SFDataType.TIMESTAMP_LTZ, typeof(DateTime))]
         [TestCase(SFDataType.TIMESTAMP_TZ, typeof(DateTime))]

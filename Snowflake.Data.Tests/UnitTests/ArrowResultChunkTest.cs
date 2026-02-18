@@ -152,7 +152,7 @@ namespace Snowflake.Data.Tests.UnitTests
             while (chunk.Next())
             {
                 rowsRead++;
-                values.Add((string)chunk.ExtractCell(0, SFDataType.TEXT, 0));
+                values.Add((string)chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
             }
 
             Assert.AreEqual(2, rowsRead, "ResetForRetry() should clear stale batches, leaving only 2 rows from fresh batch");
@@ -176,14 +176,14 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = new ArrowResultChunk(batch);
             Assert.IsTrue(chunk.Next(), "Should move to first row");
 
-            var val1 = chunk.ExtractCell(0, SFDataType.FIXED, 0);
-            var val2 = chunk.ExtractCell(1, SFDataType.TEXT, 0);
+            var val1 = chunk.ExtractCell(0, SFDataType.FIXED, 0, TimeZoneInfo.Utc);
+            var val2 = chunk.ExtractCell(1, SFDataType.TEXT, 0, TimeZoneInfo.Utc);
             Assert.AreEqual(1, val1);
             Assert.AreEqual("val0", val2);
 
             var ex = Assert.Throws<SnowflakeDbException>(() =>
             {
-                chunk.ExtractCell(99, SFDataType.FIXED, 0);
+                chunk.ExtractCell(99, SFDataType.FIXED, 0, TimeZoneInfo.Utc);
             });
 
             Assert.That(ex.Message, Does.Contain("99"), "Error should mention the invalid column index");
@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests
             for (int i = 0; i < 5; i++)
             {
                 Assert.IsTrue(chunk.Next(), $"Should be able to read row {i}");
-                var val = chunk.ExtractCell(0, SFDataType.FIXED, 0);
+                var val = chunk.ExtractCell(0, SFDataType.FIXED, 0, TimeZoneInfo.Utc);
                 Assert.AreEqual(i + 1, val);
             }
 
