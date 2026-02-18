@@ -1589,7 +1589,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         [TestCase("2019-01-01 12:12:12.1234567 +0200", 7, "2019-01-01 02:12:12.1234567 -08:00")]
         [TestCase("2019-01-01 12:12:12.1234567 +1400", 7, "2018-12-31 14:12:12.1234567 -08:00")]
-        [TestCase("1883-11-19 00:00:00.0000000 +0000", 9, "1883-11-18 16:00:00.0000000 -08:00")] // date when time zones were standardized
+        [TestCase("0001-01-02 00:00:00.0000000 +0000", 9, "0001-01-01 16:00:00.0000000 -08:00")]
+        [TestCase("1883-11-19 00:00:00.0000000 +0000", 9, "1883-11-18 16:00:00.0000000 -08:00")]
         [TestCase("9999-12-31 23:59:59.9999999 +0000", 9, "9999-12-31 15:59:59.9999999 -08:00")]
         [TestCase("2019-01-01 12:12:12.1234567", 7, "2019-01-01 12:12:12.1234567 -08:00")]
         public void TestTimestampLtz(string testValue, int scale, string expectedValue)
@@ -1782,40 +1783,29 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestTimestampLtzUsesLocalTimezoneByDefault()
         {
-            // This test verifies that when HonorSessionTimezone is NOT set (default behavior),
-            // TIMESTAMP_LTZ values are returned in the local machine timezone,
-            // ignoring any session timezone set via ALTER SESSION.
-            using (var conn = CreateAndOpenConnection()) // Note: using default connection WITHOUT HonorSessionTimezone
+            // Verifies that without HonorSessionTimezone, TIMESTAMP_LTZ uses the local machine
+            // timezone regardless of what the session timezone is set to.
+            using (var conn = CreateAndOpenConnection())
             {
                 CreateOrReplaceTable(conn, TableName, new[] { "val TIMESTAMP_LTZ" });
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    // Set session timezone to something likely different from local machine timezone
-                    cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Pacific/Auckland'"; // UTC+12/+13
-                    cmd.ExecuteNonQuery();
-
-                    // Insert a known UTC timestamp
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'UTC'";
                     cmd.ExecuteNonQuery();
                     cmd.CommandText = $"INSERT INTO {TableName} VALUES('2024-06-15 12:00:00')";
                     cmd.ExecuteNonQuery();
 
-                    // Change session timezone to Auckland
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Pacific/Auckland'";
                     cmd.ExecuteNonQuery();
 
-                    // Read the value - without HonorSessionTimezone, it should be in LOCAL time, not Auckland time
                     cmd.CommandText = $"SELECT val FROM {TableName}";
                     using (var reader = cmd.ExecuteReader())
                     {
                         Assert.IsTrue(reader.Read());
                         var timestamp = (DateTimeOffset)reader.GetValue(0);
 
-                        // The stored UTC time is 2024-06-15 12:00:00 UTC
                         var utcTime = new DateTime(2024, 6, 15, 12, 0, 0, DateTimeKind.Utc);
-
-                        // Expected: converted to LOCAL machine timezone (not Auckland)
                         var expectedLocal = TimeZoneInfo.ConvertTimeFromUtc(utcTime, TimeZoneInfo.Local);
                         var expectedOffset = TimeZoneInfo.Local.GetUtcOffset(expectedLocal);
 
@@ -1823,6 +1813,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             "TIMESTAMP_LTZ should be in local machine timezone when HonorSessionTimezone is not set");
                         Assert.AreEqual(expectedOffset, timestamp.Offset,
                             "Offset should match local machine timezone, not session timezone (Auckland)");
+
+                        var aucklandTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Pacific/Auckland");
+                        var aucklandOffset = aucklandTz.GetUtcOffset(utcTime);
+                        if (aucklandOffset != expectedOffset)
+                        {
+                            Assert.AreNotEqual(aucklandOffset, timestamp.Offset,
+                                "Offset must NOT match Auckland timezone when HonorSessionTimezone is not set");
+                        }
                     }
                 }
 

@@ -101,6 +101,8 @@ namespace Snowflake.Data.Core
 
         private bool _honorSessionTimezone = false;
 
+        private volatile TimeZoneInfo _cachedSessionTimezone;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -503,6 +505,10 @@ namespace Snowflake.Data.Core
                 if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
                 {
                     ParameterMap[parameterName] = parameter.value;
+                    if (parameterName == SFSessionParameter.TIMEZONE)
+                    {
+                        _cachedSessionTimezone = null;
+                    }
                 }
             }
             if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
@@ -558,12 +564,24 @@ namespace Snowflake.Data.Core
 
         internal TimeZoneInfo GetSessionTimezone()
         {
-            // If HonorSessionTimezone is not enabled, use local machine timezone (legacy behavior)
             if (!_honorSessionTimezone)
             {
                 return TimeZoneInfo.Local;
             }
 
+            var cached = _cachedSessionTimezone;
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            var resolved = ResolveSessionTimezone();
+            _cachedSessionTimezone = resolved;
+            return resolved;
+        }
+
+        private TimeZoneInfo ResolveSessionTimezone()
+        {
             if (ParameterMap.TryGetValue(SFSessionParameter.TIMEZONE, out var value))
             {
                 var timezoneString = value.ToString();

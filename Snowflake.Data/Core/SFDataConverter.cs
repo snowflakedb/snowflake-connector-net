@@ -168,7 +168,9 @@ namespace Snowflake.Data.Core
                     {
                         return utcDateTimeLtz.ToLocalTime().DateTime;
                     }
-                    return TimeZoneInfo.ConvertTimeFromUtc(utcDateTimeLtz.UtcDateTime, sessionTimezone);
+                    return DateTime.SpecifyKind(
+                        TimeZoneInfo.ConvertTimeFromUtc(utcDateTimeLtz.UtcDateTime, sessionTimezone),
+                        DateTimeKind.Local);
 
                 default:
                     throw new SnowflakeDbException(SFError.INVALID_DATA_CONVERSION, srcVal, srcType, typeof(DateTime));
