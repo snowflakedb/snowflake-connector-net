@@ -28,8 +28,8 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             var dateString = utcNow.ToString("yyyyMMdd");
             var canonicalHeaders = CanonicalizeHeaders(headers);
             var signedHeaders = CanonicalizeHeaderNames(headers);
-            var queryParameters = uri.Query.StartsWith("?") ? uri.Query.Substring(1) : uri.Query;
-            var canonicalRequest = $"{httpMethod}\n{uri.AbsolutePath}\n{queryParameters}\n{canonicalHeaders}\n{signedHeaders}\n{CalculateHash("")}";
+            var canonicalQueryString = CanonicalizeQueryString(uri.Query);
+            var canonicalRequest = $"{httpMethod}\n{uri.AbsolutePath}\n{canonicalQueryString}\n{canonicalHeaders}\n{signedHeaders}\n{CalculateHash("")}";
             var credentialScope = $"{dateString}/{awsConfiguration.Region}/{awsConfiguration.Service}/aws4_request";
             var stringToSign = $"{V4SignatureAlgorithm}\n{awsDate}\n{credentialScope}\n{CalculateHash(canonicalRequest)}";
             var signatureKey = GetSignatureKey(dateString, awsConfiguration);
@@ -66,6 +66,47 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             {
                 return hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
             }
+        }
+
+        /// <summary>
+        /// Canonicalizes the query string per AWS SigV4 spec:
+        /// sort parameters alphabetically by name and normalize percent encoding to uppercase.
+        /// </summary>
+        static string CanonicalizeQueryString(string query)
+        {
+            if (string.IsNullOrEmpty(query))
+                return string.Empty;
+            if (query.StartsWith("?"))
+                query = query.Substring(1);
+            if (string.IsNullOrEmpty(query))
+                return string.Empty;
+            var parts = query.Split('&');
+            Array.Sort(parts, StringComparer.Ordinal);
+            return NormalizePercentEncoding(string.Join("&", parts));
+        }
+
+        /// <summary>
+        /// Normalizes percent-encoded characters to uppercase hex as required by AWS SigV4.
+        /// For example, %3a becomes %3A.
+        /// </summary>
+        static string NormalizePercentEncoding(string value)
+        {
+            var sb = new StringBuilder(value.Length);
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (value[i] == '%' && i + 2 < value.Length)
+                {
+                    sb.Append('%');
+                    sb.Append(char.ToUpperInvariant(value[i + 1]));
+                    sb.Append(char.ToUpperInvariant(value[i + 2]));
+                    i += 2;
+                }
+                else
+                {
+                    sb.Append(value[i]);
+                }
+            }
+            return sb.ToString();
         }
 
         static string CanonicalizeHeaderNames(IDictionary<string, string> headers)
