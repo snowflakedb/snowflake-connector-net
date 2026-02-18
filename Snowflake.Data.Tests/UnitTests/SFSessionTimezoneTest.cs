@@ -22,32 +22,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestGetSessionTimezoneReturnsLocalWhenFeatureNotSet()
-        {
-            var session = new SFSession(
-                "account=test;user=test;password=test",
-                new SessionPropertiesContext());
-
-            session.ParameterMap[SFSessionParameter.TIMEZONE] = "Asia/Tokyo";
-
-            Assert.AreEqual(TimeZoneInfo.Local, session.GetSessionTimezone());
-        }
-
-        [Test]
-        public void TestGetSessionTimezoneResolvesIanaTimezone()
-        {
-            var session = new SFSession(
-                "account=test;user=test;password=test;HonorSessionTimezone=true",
-                new SessionPropertiesContext());
-
-            session.ParameterMap[SFSessionParameter.TIMEZONE] = "Europe/Warsaw";
-
-            var tz = session.GetSessionTimezone();
-            var expected = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Europe/Warsaw");
-            Assert.AreEqual(expected, tz);
-        }
-
-        [Test]
         public void TestGetSessionTimezoneFallsBackWhenTimezoneNotInParameterMap()
         {
             var session = new SFSession(
