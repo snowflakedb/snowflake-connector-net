@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     public class SFHttpClientProxyPropertiesTest
     {
         [Test, TestCaseSource(nameof(ProxyPropertiesProvider))]
-        public void ShouldExtractProxyProperties(ProxyPropertiesTestCase testCase)
+        public void TestExtractProxyProperties(ProxyPropertiesTestCase testCase)
         {
             // given
             var extractor = new SFSessionHttpClientProxyProperties.Extractor();
@@ -20,6 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var proxyProperties = extractor.ExtractProperties(properties);
 
             // then
+            Assert.AreEqual(testCase.expectedProperties.useProxy, proxyProperties.useProxy);
             Assert.AreEqual(testCase.expectedProperties.proxyHost, proxyProperties.proxyHost);
             Assert.AreEqual(testCase.expectedProperties.proxyPort, proxyProperties.proxyPort);
             Assert.AreEqual(testCase.expectedProperties.nonProxyHosts, proxyProperties.nonProxyHosts);
@@ -34,6 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 conectionString = "account=test;user=test;password=test",
                 expectedProperties = new SFSessionHttpClientProxyProperties()
                 {
+                    useProxy = false,
                     proxyHost = null,
                     proxyPort = null,
                     nonProxyHosts = null,
@@ -46,6 +48,20 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 conectionString = "account=test;user=test;password=test;useProxy=false;proxyHost=snowflake.com;proxyPort=123;nonProxyHosts=localhost;proxyPassword=proxyPassword;proxyUser=Chris",
                 expectedProperties = new SFSessionHttpClientProxyProperties()
                 {
+                    useProxy = false,
+                    proxyHost = null,
+                    proxyPort = null,
+                    nonProxyHosts = null,
+                    proxyPassword = null,
+                    proxyUser = null
+                }
+            };
+            var proxyPropertiesConfiguredButNoUseProxyFlag = new ProxyPropertiesTestCase()
+            {
+                conectionString = "account=test;user=test;password=test;proxyHost=snowflake.com;proxyPort=123;nonProxyHosts=localhost;proxyPassword=proxyPassword;proxyUser=Chris",
+                expectedProperties = new SFSessionHttpClientProxyProperties()
+                {
+                    useProxy = false,
                     proxyHost = null,
                     proxyPort = null,
                     nonProxyHosts = null,
@@ -55,11 +71,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
             var proxyPropertiesConfiguredAndEnabledCase = new ProxyPropertiesTestCase()
             {
-                conectionString = "account=test;user=test;password=test;useProxy=true;proxyHost=snowflake.com",
+                conectionString = "account=test;user=test;password=test;useProxy=true;proxyHost=snowflake.com;proxyPort=1234",
                 expectedProperties = new SFSessionHttpClientProxyProperties()
                 {
+                    useProxy = true,
                     proxyHost = "snowflake.com",
-                    proxyPort = null,
+                    proxyPort = "1234",
                     nonProxyHosts = null,
                     proxyPassword = null,
                     proxyUser = null
@@ -71,6 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     "account=test;user=test;password=test;useProxy=true;proxyHost=snowflake.com;proxyPort=123;nonProxyHosts=localhost;proxyPassword=proxyPassword;proxyUser=Chris",
                 expectedProperties = new SFSessionHttpClientProxyProperties()
                 {
+                    useProxy = true,
                     proxyHost = "snowflake.com",
                     proxyPort = "123",
                     nonProxyHosts = "localhost",
@@ -78,12 +96,27 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     proxyUser = "Chris"
                 }
             };
+            var defaultProxyEnabled = new ProxyPropertiesTestCase()
+            {
+                conectionString = "account=test;user=test;password=test;useProxy=true;",
+                expectedProperties = new SFSessionHttpClientProxyProperties()
+                {
+                    useProxy = true,
+                    proxyHost = null,
+                    proxyPort = null,
+                    nonProxyHosts = null,
+                    proxyPassword = null,
+                    proxyUser = null
+                }
+            };
             return new[]
             {
                 noProxyPropertiesCase,
                 proxyPropertiesConfiguredButDisabledCase,
+                proxyPropertiesConfiguredButNoUseProxyFlag,
                 proxyPropertiesConfiguredAndEnabledCase,
-                proxyPropertiesAllConfiguredAndEnabled
+                proxyPropertiesAllConfiguredAndEnabled,
+                defaultProxyEnabled
             };
         }
 

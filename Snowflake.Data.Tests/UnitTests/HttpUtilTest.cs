@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests
             .ThrowsAsync(new HttpRequestException("", new AuthenticationException()));
 
             var httpClient = HttpUtil.Instance.GetHttpClient(
-                new HttpClientConfig("fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7, 20, certRevocationCheckMode: "ENABLED"),
+                new HttpClientConfig(true, "fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7, 20, certRevocationCheckMode: "ENABLED"),
                 handler.Object);
 
             try
@@ -141,10 +141,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
-        public void TestCreateHttpClientHandlerWithProxy()
+        public void TestCreateHttpClientHandlerWithExplicitProxy()
         {
             // arrange
             var config = new HttpClientConfig(
+                true,
                 "snowflake.com",
                 "123",
                 "testUser",
@@ -165,10 +166,36 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestCreateHttpClientHandlerWithDefaultProxy()
+        {
+            // arrange
+            var config = new HttpClientConfig(
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                7,
+                0
+            );
+
+            // act
+            var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
+
+            // assert
+            Assert.IsTrue(handler.UseProxy);
+            Assert.IsNull(handler.Proxy);
+        }
+
+        [Test]
         public void TestCreateHttpClientHandlerWithoutProxy()
         {
             // arrange
             var config = new HttpClientConfig(
+                false,
                 null,
                 null,
                 null,
@@ -178,6 +205,31 @@ namespace Snowflake.Data.Tests.UnitTests
                 false,
                 20,
                 0
+            );
+
+            // act
+            var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
+
+            // assert
+            Assert.IsFalse(handler.UseProxy);
+            Assert.IsNull(handler.Proxy);
+        }
+
+        [Test]
+        public void TestIgnoreProxyDetailsIfProxyDisabled()
+        {
+            // arrange
+            var config = new HttpClientConfig(
+                false,
+                "snowflake.com",
+                "123",
+                "testUser",
+                "proxyPassword",
+                "localhost",
+                false,
+                false,
+                7,
+                20
             );
 
             // act

@@ -205,6 +205,7 @@ namespace Snowflake.Data.Core
         public HttpClientConfig BuildHttpClientConfig()
         {
             return new HttpClientConfig(
+                proxyProperties.useProxy,
                 proxyProperties.proxyHost,
                 proxyProperties.proxyPort,
                 proxyProperties.proxyUser,

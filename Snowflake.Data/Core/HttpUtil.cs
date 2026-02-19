@@ -19,6 +19,7 @@ namespace Snowflake.Data.Core
     internal class HttpClientConfig
     {
         public HttpClientConfig(
+            bool useProxy,
             string proxyHost,
             string proxyPort,
             string proxyUser,
@@ -39,6 +40,7 @@ namespace Snowflake.Data.Core
             string maxTlsProtocol = "TLS13"
             )
         {
+            UseProxy = useProxy;
             ProxyHost = proxyHost;
             ProxyPort = proxyPort;
             ProxyUser = proxyUser;
@@ -60,6 +62,7 @@ namespace Snowflake.Data.Core
 
             ConfKey = string.Join(";",
                 new string[] {
+                    useProxy.ToString(),
                     proxyHost,
                     proxyPort,
                     proxyUser,
@@ -81,6 +84,7 @@ namespace Snowflake.Data.Core
                 });
         }
 
+        public readonly bool UseProxy;
         public readonly string ProxyHost;
         public readonly string ProxyPort;
         public readonly string ProxyUser;
@@ -217,55 +221,56 @@ namespace Snowflake.Data.Core
                 return customHandler;
             }
 
-            HttpMessageHandler httpHandler = CreateHttpClientHandler(config);
+            HttpClientHandler httpHandler = CreateHttpClientHandler(config);
 
-            // Add a proxy if necessary
-            if (null != config.ProxyHost)
+            httpHandler.UseProxy = config.UseProxy;
+
+            if (config.UseProxy && !string.IsNullOrEmpty(config.ProxyHost))
             {
-                // Proxy needed
-                WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
-
-                // Add credential if provided
-                if (!String.IsNullOrEmpty(config.ProxyUser))
-                {
-                    ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
-                    proxy.Credentials = credentials;
-                }
-
-                // Add bypasslist if provided
-                if (!String.IsNullOrEmpty(config.NoProxyList))
-                {
-                    string[] bypassList = config.NoProxyList.Split(
-                        new char[] { '|' },
-                        StringSplitOptions.RemoveEmptyEntries);
-                    // Convert simplified syntax to standard regular expression syntax
-                    string entry = null;
-                    for (int i = 0; i < bypassList.Length; i++)
-                    {
-                        // Get the original entry
-                        entry = bypassList[i].Trim();
-                        // . -> [.] because . means any char
-                        entry = entry.Replace(".", "[.]");
-                        // * -> .*  because * is a quantifier and need a char or group to apply to
-                        entry = entry.Replace("*", ".*");
-
-                        entry = entry.StartsWith("^") ? entry : $"^{entry}";
-
-                        entry = entry.EndsWith("$") ? entry : $"{entry}$";
-
-                        // Replace with the valid entry syntax
-                        bypassList[i] = entry;
-
-                    }
-                    proxy.BypassList = bypassList;
-                }
-
-                HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
-                httpHandlerWithProxy.UseProxy = true;
-                httpHandlerWithProxy.Proxy = proxy;
-                return httpHandlerWithProxy;
+                logger.Info("Configuring proxy based on connection properties");
+                httpHandler.Proxy = ConfigureWebProxy(config);
             }
+            else if (config.UseProxy)
+            {
+                logger.Info("Using a default proxy");
+            }
+
             return httpHandler;
+        }
+
+        private WebProxy ConfigureWebProxy(HttpClientConfig config)
+        {
+            WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
+
+            if (!String.IsNullOrEmpty(config.ProxyUser))
+            {
+                ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
+                proxy.Credentials = credentials;
+            }
+
+            if (!String.IsNullOrEmpty(config.NoProxyList))
+            {
+                string[] bypassList = config.NoProxyList.Split(
+                    new char[] { '|' },
+                    StringSplitOptions.RemoveEmptyEntries);
+                string entry = null;
+                for (int i = 0; i < bypassList.Length; i++)
+                {
+                    entry = bypassList[i].Trim();
+                    entry = entry.Replace(".", "[.]");
+                    entry = entry.Replace("*", ".*");
+
+                    entry = entry.StartsWith("^") ? entry : $"^{entry}";
+
+                    entry = entry.EndsWith("$") ? entry : $"{entry}$";
+
+                    bypassList[i] = entry;
+
+                }
+                proxy.BypassList = bypassList;
+            }
+
+            return proxy;
         }
 
         private HttpClientHandler CreateHttpClientHandler(HttpClientConfig config)
@@ -291,8 +296,7 @@ namespace Snowflake.Data.Core
                 return new HttpClientHandler
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false, // Disable cookies
-                    UseProxy = false,
+                    UseCookies = false,
                     AllowAutoRedirect = true
                 };
             }
@@ -306,8 +310,7 @@ namespace Snowflake.Data.Core
                 CheckCertificateRevocationList = config.IsDotnetCrlCheckEnabled(),
                 SslProtocols = config.GetRequestedTlsProtocolsRange(),
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                UseCookies = false, // Disable cookies
-                UseProxy = false,
+                UseCookies = false,
                 AllowAutoRedirect = true
             };
         }
@@ -328,8 +331,7 @@ namespace Snowflake.Data.Core
                 ServerCertificateCustomValidationCallback = revocationVerifier.CertificateValidationCallback,
                 SslProtocols = config.GetRequestedTlsProtocolsRange(),
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                UseCookies = false, // Disable cookies
-                UseProxy = false,
+                UseCookies = false,
                 AllowAutoRedirect = true
             };
         }

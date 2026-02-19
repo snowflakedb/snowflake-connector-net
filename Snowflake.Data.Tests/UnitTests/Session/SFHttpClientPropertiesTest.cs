@@ -164,6 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(properties._enableCrlDiskCaching, config.EnableCRLDiskCaching);
             Assert.AreEqual(properties._enableCrlInMemoryCaching, config.EnableCRLInMemoryCaching);
             Assert.AreEqual(properties._allowCertificatesWithoutCrlUrl, config.AllowCertificatesWithoutCrlUrl);
+            Assert.AreEqual(properties.proxyProperties.useProxy, config.UseProxy);
             Assert.AreEqual(properties.proxyProperties.proxyHost, config.ProxyHost);
             Assert.AreEqual(properties.proxyProperties.proxyPort, config.ProxyPort);
             Assert.AreEqual(properties.proxyProperties.proxyUser, config.ProxyUser);

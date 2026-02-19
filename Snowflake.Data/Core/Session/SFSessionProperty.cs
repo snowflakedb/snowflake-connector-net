@@ -267,37 +267,7 @@ namespace Snowflake.Data.Core
             }
 
             UpdatePropertiesForSpecialCases(properties, connectionString);
-
-            var useProxy = false;
-            if (properties.ContainsKey(SFSessionProperty.USEPROXY))
-            {
-                try
-                {
-                    useProxy = Boolean.Parse(properties[SFSessionProperty.USEPROXY]);
-                }
-                catch (Exception e)
-                {
-                    // The useProxy setting is not a valid boolean value
-                    logger.Error("Unable to connect", e);
-                    throw new SnowflakeDbException(e,
-                                SFError.INVALID_CONNECTION_STRING,
-                                e.Message);
-                }
-            }
-
-            // Based on which proxy settings have been provided, update the required settings list
-            if (useProxy)
-            {
-                // If useProxy is true, then proxyhost and proxy port are mandatory
-                SFSessionProperty.PROXYHOST.GetAttribute<SFSessionPropertyAttr>().required = true;
-                SFSessionProperty.PROXYPORT.GetAttribute<SFSessionPropertyAttr>().required = true;
-
-                // If a username is provided, then a password is required
-                if (properties.ContainsKey(SFSessionProperty.PROXYUSER))
-                {
-                    SFSessionProperty.PROXYPASSWORD.GetAttribute<SFSessionPropertyAttr>().required = true;
-                }
-            }
+            ValidateProxy(properties);
 
             propertiesContext.FillSecrets(properties);
             ValidateAuthenticator(properties);
@@ -662,6 +632,58 @@ namespace Snowflake.Data.Core
             host.EndsWith(".cn", StringComparison.InvariantCultureIgnoreCase)
                 ? "Connecting to CHINA Snowflake domain"
                 : "Connecting to GLOBAL Snowflake domain";
+
+        private static void ValidateProxy(SFSessionProperties properties)
+        {
+            var useProxy = false;
+            if (properties.ContainsKey(SFSessionProperty.USEPROXY))
+            {
+                try
+                {
+                    useProxy = Boolean.Parse(properties[SFSessionProperty.USEPROXY]);
+                }
+                catch (Exception e)
+                {
+                    logger.Error("Unable to connect", e);
+                    throw new SnowflakeDbException(e,
+                        SFError.INVALID_CONNECTION_STRING,
+                        e.Message);
+                }
+            }
+
+            var isProxyHostProvided = properties.IsNonEmptyValueProvided(SFSessionProperty.PROXYHOST);
+            if (useProxy && isProxyHostProvided)
+            {
+                if (!properties.IsNonEmptyValueProvided(SFSessionProperty.PROXYPORT))
+                {
+                    throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, SFSessionProperty.PROXYPORT.ToString());
+                }
+                if (properties.IsNonEmptyValueProvided(SFSessionProperty.PROXYUSER) &&
+                    !properties.IsNonEmptyValueProvided(SFSessionProperty.PROXYPASSWORD))
+                {
+                    throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, SFSessionProperty.PROXYPASSWORD.ToString());
+                }
+            }
+
+            if (useProxy && !isProxyHostProvided)
+            {
+                var property = FindProxyDetailOtherThanHost(properties);
+                if (property != null)
+                {
+                    var exception = new Exception($"Proxy property {property.ToString()} provided while {SFSessionProperty.PROXYHOST.ToString()} is missing");
+                    logger.Error("Unable to connect", exception);
+                    throw new SnowflakeDbException(exception, SFError.INVALID_CONNECTION_STRING, exception.Message);
+                }
+            }
+        }
+
+        private static SFSessionProperty? FindProxyDetailOtherThanHost(SFSessionProperties properties)
+        {
+            var proxyProperties = new[] { SFSessionProperty.PROXYPORT, SFSessionProperty.PROXYUSER, SFSessionProperty.PROXYPASSWORD, SFSessionProperty.NONPROXYHOSTS }
+                .Where(properties.IsNonEmptyValueProvided)
+                .ToArray();
+            return proxyProperties.Length == 0 ? (SFSessionProperty?) null : proxyProperties[0];
+        }
 
         private static void ValidateAuthenticator(SFSessionProperties properties)
         {

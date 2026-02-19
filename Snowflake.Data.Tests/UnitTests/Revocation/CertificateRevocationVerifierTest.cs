@@ -446,6 +446,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
         private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled, long crlDownloadMaxSize = 209715200) =>
             new HttpClientConfig(
+                false,
                 null,
                 null,
                 null,

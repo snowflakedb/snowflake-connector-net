@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private HttpClient CreateHttpClientForRetry()
         {
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 7, 20);
+            var config = new HttpClientConfig(false, null, null, null, null, null, false, false, 7, 20);
             var handler = new CustomDelegatingHandler(new HttpClientHandler
             {
                 ClientCertificateOptions = ClientCertificateOption.Manual,
