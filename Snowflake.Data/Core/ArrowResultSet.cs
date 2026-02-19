@@ -159,8 +159,9 @@ namespace Snowflake.Data.Core
 
             var type = sfResultSetMetaData.GetTypesByIndex(ordinal).Item1;
             var scale = sfResultSetMetaData.GetScaleByIndex(ordinal);
+            var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
 
-            var value = ((ArrowResultChunk)_currentChunk).ExtractCell(ordinal, type, (int)scale);
+            var value = ((ArrowResultChunk)_currentChunk).ExtractCell(ordinal, type, (int)scale, sessionTimezone);
 
             return value ?? DBNull.Value;
 

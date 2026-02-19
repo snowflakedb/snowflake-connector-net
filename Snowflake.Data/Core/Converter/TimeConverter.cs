@@ -1,10 +1,11 @@
 using System;
+using System.Globalization;
 
 namespace Snowflake.Data.Core.Converter
 {
     internal class TimeConverter
     {
-        public object Convert(string value, SFDataType timestampType, Type fieldType)
+        public object Convert(string value, SFDataType timestampType, Type fieldType, TimeZoneInfo sessionTimezone)
         {
             if (fieldType == typeof(string))
             {
@@ -12,7 +13,12 @@ namespace Snowflake.Data.Core.Converter
             }
             if (timestampType == SFDataType.TIMESTAMP_NTZ)
             {
-                var dateTimeNoTz = DateTime.Parse(value);
+                // Parse without timezone conversion - NTZ should be returned as-is
+                // Use RoundtripKind to avoid automatic conversion to local time
+                var dateTimeNoTz = DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                // NTZ should always be Unspecified kind (no timezone info)
+                dateTimeNoTz = DateTime.SpecifyKind(dateTimeNoTz, DateTimeKind.Unspecified);
+
                 if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
                 {
                     return dateTimeNoTz;
@@ -42,14 +48,39 @@ namespace Snowflake.Data.Core.Converter
             }
             if (timestampType == SFDataType.TIMESTAMP_LTZ)
             {
-                var dateTimeOffsetLocal = DateTimeOffset.Parse(value).ToLocalTime();
-                if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
+                if (sessionTimezone == null)
                 {
-                    return dateTimeOffsetLocal;
+                    throw new StructuredTypesReadingException("Session timezone is required for TIMESTAMP_LTZ conversion");
                 }
-                if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
+
+                var parsedDateTimeOffset = DateTimeOffset.Parse(value);
+
+                // Use ToLocalTime() for local timezone to maintain exact backward compatibility
+                // (TimeZoneInfo.ConvertTimeFromUtc behaves differently for historical dates)
+                if (sessionTimezone.Equals(TimeZoneInfo.Local))
                 {
-                    return dateTimeOffsetLocal.LocalDateTime;
+                    var localDateTimeOffset = parsedDateTimeOffset.ToLocalTime();
+                    if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
+                    {
+                        return localDateTimeOffset;
+                    }
+                    if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
+                    {
+                        return localDateTimeOffset.LocalDateTime;
+                    }
+                }
+                else
+                {
+                    var dateTimeInSessionTz = TimeZoneInfo.ConvertTimeFromUtc(parsedDateTimeOffset.UtcDateTime, sessionTimezone);
+                    if (fieldType == typeof(DateTimeOffset) || fieldType == typeof(DateTimeOffset?))
+                    {
+                        return new DateTimeOffset(dateTimeInSessionTz, sessionTimezone.GetUtcOffset(dateTimeInSessionTz));
+                    }
+                    if (fieldType == typeof(DateTime) || fieldType == typeof(DateTime?))
+                    {
+                        // Return the DateTime in session timezone (marked as Local for API compatibility)
+                        return DateTime.SpecifyKind(dateTimeInSessionTz, DateTimeKind.Local);
+                    }
                 }
                 throw new StructuredTypesReadingException($"Cannot read TIMESTAMP_LTZ into {fieldType} type");
             }

@@ -102,16 +102,16 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Process batch 1
             Assert.IsTrue(chunk.Next());
-            Assert.AreEqual("row0", chunk.ExtractCell(0, SFDataType.TEXT, 0));
+            Assert.AreEqual("row0", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
             Assert.IsTrue(chunk.Next());
-            Assert.AreEqual("row1", chunk.ExtractCell(0, SFDataType.TEXT, 0));
+            Assert.AreEqual("row1", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
 
             // With the fix: Next() should skip the empty batch and go to batch 3
             // With the bug: Next() returns true for empty batch, ExtractCell throws IndexOutOfRangeException
             Assert.IsTrue(chunk.Next(), "Next() should skip empty batch and return true for batch3");
-            Assert.AreEqual("row2", chunk.ExtractCell(0, SFDataType.TEXT, 0), "Should read from batch3 after skipping empty batch");
+            Assert.AreEqual("row2", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc), "Should read from batch3 after skipping empty batch");
             Assert.IsTrue(chunk.Next());
-            Assert.AreEqual("row3", chunk.ExtractCell(0, SFDataType.TEXT, 0));
+            Assert.AreEqual("row3", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
 
             Assert.IsFalse(chunk.Next());
         }
@@ -152,7 +152,7 @@ namespace Snowflake.Data.Tests.UnitTests
             while (chunk.Next())
             {
                 rowsRead++;
-                values.Add((string)chunk.ExtractCell(0, SFDataType.TEXT, 0));
+                values.Add((string)chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
             }
 
             Assert.AreEqual(2, rowsRead, "ResetForRetry() should clear stale batches, leaving only 2 rows from fresh batch");
@@ -176,14 +176,14 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = new ArrowResultChunk(batch);
             Assert.IsTrue(chunk.Next(), "Should move to first row");
 
-            var val1 = chunk.ExtractCell(0, SFDataType.FIXED, 0);
-            var val2 = chunk.ExtractCell(1, SFDataType.TEXT, 0);
+            var val1 = chunk.ExtractCell(0, SFDataType.FIXED, 0, TimeZoneInfo.Utc);
+            var val2 = chunk.ExtractCell(1, SFDataType.TEXT, 0, TimeZoneInfo.Utc);
             Assert.AreEqual(1, val1);
             Assert.AreEqual("val0", val2);
 
             var ex = Assert.Throws<SnowflakeDbException>(() =>
             {
-                chunk.ExtractCell(99, SFDataType.FIXED, 0);
+                chunk.ExtractCell(99, SFDataType.FIXED, 0, TimeZoneInfo.Utc);
             });
 
             Assert.That(ex.Message, Does.Contain("99"), "Error should mention the invalid column index");
@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests
             for (int i = 0; i < 5; i++)
             {
                 Assert.IsTrue(chunk.Next(), $"Should be able to read row {i}");
-                var val = chunk.ExtractCell(0, SFDataType.FIXED, 0);
+                var val = chunk.ExtractCell(0, SFDataType.FIXED, 0, TimeZoneInfo.Utc);
                 Assert.AreEqual(i + 1, val);
             }
 
@@ -315,7 +315,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 var chunk = pair.Key;
                 var type = pair.Value;
                 chunk.Next();
-                Assert.AreEqual(DBNull.Value, chunk.ExtractCell(0, type, 0), $"Expected DBNull.Value for SFDataType: {type}");
+                Assert.AreEqual(DBNull.Value, chunk.ExtractCell(0, type, 0, TimeZoneInfo.Utc), $"Expected DBNull.Value for SFDataType: {type}");
             }
         }
 
@@ -325,7 +325,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = new ArrowResultChunk(_recordBatchOne);
             chunk.Next();
 
-            Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, SFDataType.None, 0));
+            Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, SFDataType.None, 0, TimeZoneInfo.Utc));
         }
 
         [Test]
@@ -550,7 +550,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 chunk.Next();
 
                 var expectedValue = (divider == 0) ? testValue : Convert.ToDecimal(testValue) / divider;
-                Assert.AreEqual(expectedValue, chunk.ExtractCell(0, sfType, scale));
+                Assert.AreEqual(expectedValue, chunk.ExtractCell(0, sfType, scale, TimeZoneInfo.Utc));
             }
         }
         public static RecordBatch PrepareRecordBatch(SFDataType sfType, long scale, object values)
