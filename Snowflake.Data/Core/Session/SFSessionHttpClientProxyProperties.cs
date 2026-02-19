@@ -11,6 +11,7 @@ namespace Snowflake.Data.Core
         internal string nonProxyHosts = null;
         internal string proxyPassword = null;
         internal string proxyUser = null;
+        internal bool useSystemDefaultProxy = false;
 
         internal interface IExtractor
         {
@@ -24,7 +25,6 @@ namespace Snowflake.Data.Core
                 var properties = new SFSessionHttpClientProxyProperties();
                 if (Boolean.Parse(propertiesDictionary[SFSessionProperty.USEPROXY]))
                 {
-                    // Let's try to get the associated RestRequester
                     propertiesDictionary.TryGetValue(SFSessionProperty.PROXYHOST, out properties.proxyHost);
                     propertiesDictionary.TryGetValue(SFSessionProperty.PROXYPORT, out properties.proxyPort);
                     propertiesDictionary.TryGetValue(SFSessionProperty.NONPROXYHOSTS, out properties.nonProxyHosts);
@@ -33,9 +33,12 @@ namespace Snowflake.Data.Core
 
                     if (!String.IsNullOrEmpty(properties.nonProxyHosts))
                     {
-                        // The list is url-encoded
-                        // Host names are separated with a URL-escaped pipe symbol (%7C). 
                         properties.nonProxyHosts = HttpUtility.UrlDecode(properties.nonProxyHosts);
+                    }
+
+                    if (String.IsNullOrEmpty(properties.proxyHost))
+                    {
+                        properties.useSystemDefaultProxy = true;
                     }
                 }
 

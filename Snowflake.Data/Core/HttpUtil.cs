@@ -36,7 +36,8 @@ namespace Snowflake.Data.Core
             int crlDownloadTimeout = 10,
             long crlDownloadMaxSize = 209715200,
             string minTlsProtocol = "TLS12",
-            string maxTlsProtocol = "TLS13"
+            string maxTlsProtocol = "TLS13",
+            bool useSystemDefaultProxy = false
             )
         {
             ProxyHost = proxyHost;
@@ -57,6 +58,7 @@ namespace Snowflake.Data.Core
             CrlDownloadMaxSize = crlDownloadMaxSize;
             MinTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(minTlsProtocol) : SslProtocols.None;
             MaxTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(maxTlsProtocol) : SslProtocols.None;
+            UseSystemDefaultProxy = useSystemDefaultProxy;
 
             ConfKey = string.Join(";",
                 new string[] {
@@ -77,7 +79,8 @@ namespace Snowflake.Data.Core
                     crlDownloadTimeout.ToString(),
                     crlDownloadMaxSize.ToString(),
                     minTlsProtocol,
-                    maxTlsProtocol
+                    maxTlsProtocol,
+                    useSystemDefaultProxy.ToString()
                 });
         }
 
@@ -86,6 +89,7 @@ namespace Snowflake.Data.Core
         public readonly string ProxyUser;
         public readonly string ProxyPassword;
         public readonly string NoProxyList;
+        public readonly bool UseSystemDefaultProxy;
         public readonly bool DisableRetry;
         public readonly bool ForceRetryOn404;
         public readonly int MaxHttpRetries;
@@ -219,41 +223,32 @@ namespace Snowflake.Data.Core
 
             HttpMessageHandler httpHandler = CreateHttpClientHandler(config);
 
-            // Add a proxy if necessary
             if (null != config.ProxyHost)
             {
-                // Proxy needed
                 WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
 
-                // Add credential if provided
                 if (!String.IsNullOrEmpty(config.ProxyUser))
                 {
                     ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
                     proxy.Credentials = credentials;
                 }
 
-                // Add bypasslist if provided
                 if (!String.IsNullOrEmpty(config.NoProxyList))
                 {
                     string[] bypassList = config.NoProxyList.Split(
                         new char[] { '|' },
                         StringSplitOptions.RemoveEmptyEntries);
-                    // Convert simplified syntax to standard regular expression syntax
                     string entry = null;
                     for (int i = 0; i < bypassList.Length; i++)
                     {
-                        // Get the original entry
                         entry = bypassList[i].Trim();
-                        // . -> [.] because . means any char
                         entry = entry.Replace(".", "[.]");
-                        // * -> .*  because * is a quantifier and need a char or group to apply to
                         entry = entry.Replace("*", ".*");
 
                         entry = entry.StartsWith("^") ? entry : $"^{entry}";
 
                         entry = entry.EndsWith("$") ? entry : $"{entry}$";
 
-                        // Replace with the valid entry syntax
                         bypassList[i] = entry;
 
                     }
@@ -265,6 +260,15 @@ namespace Snowflake.Data.Core
                 httpHandlerWithProxy.Proxy = proxy;
                 return httpHandlerWithProxy;
             }
+
+            if (config.UseSystemDefaultProxy)
+            {
+                logger.Debug("Using system default proxy configuration");
+                HttpClientHandler httpHandlerWithSystemProxy = (HttpClientHandler)httpHandler;
+                httpHandlerWithSystemProxy.UseProxy = true;
+                return httpHandlerWithSystemProxy;
+            }
+
             return httpHandler;
         }
 

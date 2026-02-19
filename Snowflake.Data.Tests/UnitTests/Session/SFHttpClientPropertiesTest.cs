@@ -169,6 +169,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(properties.proxyProperties.proxyUser, config.ProxyUser);
             Assert.AreEqual(properties.proxyProperties.proxyPassword, config.ProxyPassword);
             Assert.AreEqual(properties.proxyProperties.nonProxyHosts, config.NoProxyList);
+            Assert.AreEqual(properties.proxyProperties.useSystemDefaultProxy, config.UseSystemDefaultProxy);
             Assert.AreEqual(properties.disableRetry, config.DisableRetry);
             Assert.AreEqual(properties.forceRetryOn404, config.ForceRetryOn404);
             Assert.AreEqual(properties.maxHttpRetries, config.MaxHttpRetries);

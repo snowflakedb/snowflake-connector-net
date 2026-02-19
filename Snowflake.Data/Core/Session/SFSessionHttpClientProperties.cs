@@ -222,7 +222,8 @@ namespace Snowflake.Data.Core
                 _crlDownloadTimeout,
                 _crlDownloadMaxSize,
                 _minTlsProtocol,
-                _maxTlsProtocol
+                _maxTlsProtocol,
+                proxyProperties.useSystemDefaultProxy
                 );
         }
 

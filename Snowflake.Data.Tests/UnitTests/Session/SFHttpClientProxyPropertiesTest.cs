@@ -25,6 +25,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(testCase.expectedProperties.nonProxyHosts, proxyProperties.nonProxyHosts);
             Assert.AreEqual(testCase.expectedProperties.proxyPassword, proxyProperties.proxyPassword);
             Assert.AreEqual(testCase.expectedProperties.proxyUser, proxyProperties.proxyUser);
+            Assert.AreEqual(testCase.expectedProperties.useSystemDefaultProxy, proxyProperties.useSystemDefaultProxy);
         }
 
         public static IEnumerable<ProxyPropertiesTestCase> ProxyPropertiesProvider()
@@ -78,12 +79,26 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     proxyUser = "Chris"
                 }
             };
+            var useProxyWithoutHostUsesSystemDefault = new ProxyPropertiesTestCase()
+            {
+                conectionString = "account=test;user=test;password=test;useProxy=true",
+                expectedProperties = new SFSessionHttpClientProxyProperties()
+                {
+                    proxyHost = null,
+                    proxyPort = null,
+                    nonProxyHosts = null,
+                    proxyPassword = null,
+                    proxyUser = null,
+                    useSystemDefaultProxy = true
+                }
+            };
             return new[]
             {
                 noProxyPropertiesCase,
                 proxyPropertiesConfiguredButDisabledCase,
                 proxyPropertiesConfiguredAndEnabledCase,
-                proxyPropertiesAllConfiguredAndEnabled
+                proxyPropertiesAllConfiguredAndEnabled,
+                useProxyWithoutHostUsesSystemDefault
             };
         }
 

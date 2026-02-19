@@ -188,6 +188,31 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.IsNull(handler.Proxy);
         }
 
+        [Test]
+        public void TestCreateHttpClientHandlerWithSystemDefaultProxy()
+        {
+            // arrange
+            var config = new HttpClientConfig(
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                20,
+                0,
+                useSystemDefaultProxy: true
+            );
+
+            // act
+            var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
+
+            // assert
+            Assert.IsTrue(handler.UseProxy);
+            Assert.IsNull(handler.Proxy);
+        }
+
         [NonParallelizable]
         [Test]
         public void TestDefaultConnectionLimitIsNotChangedWhenOver50()
