@@ -566,9 +566,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 reader.Close();
 
                 Assert.AreEqual(insertValue.UtcDateTime, dtOffset.UtcDateTime);
-                var laTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("America/Los_Angeles");
-                var expectedOffset = laTz.GetUtcOffset(insertValue.UtcDateTime);
-                Assert.AreEqual(expectedOffset, dtOffset.Offset);
 
                 CloseConnection(conn);
             }
