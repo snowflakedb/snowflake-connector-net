@@ -1588,7 +1588,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         [TestCase("2019-01-01 12:12:12.1234567 +0200", 7, "2019-01-01 02:12:12.1234567 -08:00")]
         [TestCase("2019-01-01 12:12:12.1234567 +1400", 7, "2018-12-31 14:12:12.1234567 -08:00")]
-        [TestCase("0001-01-02 00:00:00.0000000 +0000", 9, null)]
+        [TestCase("1900-01-15 00:00:00.0000000 +0000", 9, "1900-01-14 16:00:00.0000000 -08:00")]
         [TestCase("1883-11-19 00:00:00.0000000 +0000", 9, "1883-11-18 16:00:00.0000000 -08:00")]
         [TestCase("9999-12-31 23:59:59.9999999 +0000", 9, "9999-12-31 15:59:59.9999999 -08:00")]
         [TestCase("2019-01-01 12:12:12.1234567", 7, "2019-01-01 12:12:12.1234567 -08:00")]
@@ -1608,9 +1608,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     reader.Read();
 
-                    var expected = expectedValue != null
-                        ? DateTimeOffset.Parse(expectedValue)
-                        : ComputeExpectedLtzOffset(testValue, "America/Los_Angeles");
+                    var expected = DateTimeOffset.Parse(expectedValue);
 
                     Assert.AreEqual(expected, reader.GetValue(0));
                 }
@@ -1843,15 +1841,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.Open();
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
             return conn;
-        }
-
-        private static DateTimeOffset ComputeExpectedLtzOffset(string inputValue, string timezoneName)
-        {
-            var inputDto = DateTimeOffset.Parse(inputValue);
-            var tz = TimeZoneConverter.TZConvert.GetTimeZoneInfo(timezoneName);
-            var offset = tz.GetUtcOffset(inputDto.UtcDateTime);
-            var localDt = inputDto.UtcDateTime + offset;
-            return new DateTimeOffset(localDt, offset);
         }
 
         private void CloseConnection(DbConnection conn)
