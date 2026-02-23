@@ -394,7 +394,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 "0001-01-02 00:00:00.000000 +0:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTime.SpecifyKind(DateTime.Parse("0001-01-01 16:00:00.000000"), DateTimeKind.Local)
+                ComputeExpectedLtzDateTime(
+                    DateTimeOffset.Parse("0001-01-02 00:00:00.000000 +0:00"),
+                    "America/Los_Angeles")
             };
             yield return new object[]
             {
@@ -523,7 +525,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 "0001-01-02 00:00:00.000000 +0:00",
                 SFDataType.TIMESTAMP_LTZ.ToString(),
                 null,
-                DateTimeOffset.Parse("0001-01-01 16:00:00.000000 -08:00")
+                ComputeExpectedLtzDateTimeOffset(
+                    DateTimeOffset.Parse("0001-01-02 00:00:00.000000 +0:00"),
+                    "America/Los_Angeles")
             };
             yield return new object[]
             {
@@ -561,6 +565,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return offsetWithoutSeconds.StartsWith("+") || offsetWithoutSeconds.StartsWith("-")
                 ? offsetWithoutSeconds
                 : "+" + offsetWithoutSeconds;
+        }
+
+        private static DateTime ComputeExpectedLtzDateTime(DateTimeOffset input, string timezoneName)
+        {
+            var tz = TimeZoneConverter.TZConvert.GetTimeZoneInfo(timezoneName);
+            var offset = tz.GetUtcOffset(input.UtcDateTime);
+            var localDt = input.UtcDateTime + offset;
+            return DateTime.SpecifyKind(localDt, DateTimeKind.Local);
+        }
+
+        private static DateTimeOffset ComputeExpectedLtzDateTimeOffset(DateTimeOffset input, string timezoneName)
+        {
+            var tz = TimeZoneConverter.TZConvert.GetTimeZoneInfo(timezoneName);
+            var offset = tz.GetUtcOffset(input.UtcDateTime);
+            var localDt = input.UtcDateTime + offset;
+            return new DateTimeOffset(localDt, offset);
         }
 
         private void SetTimePrecision(SnowflakeDbConnection connection, int precision)

@@ -268,7 +268,7 @@ namespace Snowflake.Data.Core
                     var sessionTimezone = session?.GetSessionTimezone();
                     if (sessionTimezone == null)
                     {
-                        logger.Warn("Session is null when converting TIMESTAMP_LTZ in bind upload, falling back to local timezone");
+                        logger.Warn("Session or session timezone is null when converting TIMESTAMP_LTZ in bind upload, falling back to local timezone");
                         sessionTimezone = TimeZoneInfo.Local;
                     }
                     // Use ToLocalTime() for local timezone to maintain exact backward compatibility
