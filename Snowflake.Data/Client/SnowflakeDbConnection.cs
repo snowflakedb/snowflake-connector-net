@@ -13,6 +13,11 @@ namespace Snowflake.Data.Client
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbConnection : DbConnection
     {
+        static SnowflakeDbConnection()
+        {
+            SFEnvironment.StartMinicoreLoading();
+        }
+
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
         internal SFSession SfSession { get; set; }

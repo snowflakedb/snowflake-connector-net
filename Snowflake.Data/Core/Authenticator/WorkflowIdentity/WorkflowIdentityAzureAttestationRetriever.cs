@@ -36,10 +36,16 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
         public override AttestationProvider GetAttestationProvider() => AttestationProvider.AZURE;
 
-        public override WorkloadIdentityAttestationData CreateAttestationData(string snowflakeEntraResource, string tokenParam)
+        public override WorkloadIdentityAttestationData CreateAttestationData(string snowflakeEntraResource, string tokenParam, string impersonationPath = null)
         {
+            if (!string.IsNullOrEmpty(impersonationPath))
+            {
+                throw AttestationError("Impersonation is not supported for Azure workload identity provider");
+            }
+
             var request = PrepareRequest(snowflakeEntraResource);
             var accessToken = GetAccessToken(request);
+
             var token = new JwtTokenExtractor().ReadJwtToken(accessToken, AttestationError);
             var issuer = token.Issuer;
             var subject = token.Subject;
@@ -85,6 +91,10 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             return response.AccessToken;
         }
 
+        /// <summary>
+        /// Prepares the HTTP request to get an access token from the Azure Instance Metadata Service.
+        /// </summary>
+        /// <param name="snowflakeEntraResource">The Entra resource to request the token for.</param>
         private HttpRequestMessage PrepareRequest(string snowflakeEntraResource)
         {
             var entraResourceOrDefault = string.IsNullOrEmpty(snowflakeEntraResource) ? DefaultWorkloadIdentityEntraResource : snowflakeEntraResource;
@@ -108,6 +118,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             }
 
             var clientId = _environmentOperations.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID");
+
             if (!string.IsNullOrEmpty(clientId))
             {
                 queryParams += $"&client_id={HttpUtility.UrlEncode(clientId)}";

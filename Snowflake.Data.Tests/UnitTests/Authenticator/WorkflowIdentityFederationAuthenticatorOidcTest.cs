@@ -97,6 +97,28 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.That(thrown.Message, Does.Contain("Retrieving attestation for OIDC failed. Failed to parse a token for OIDC workload identity federation."));
         }
 
+        [Test]
+        public void TestFailOidcAttestationWhenImpersonationIsUsed()
+        {
+            // arrange
+            var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
+            var session = PrepareSession(
+                AttestationProvider.OIDC,
+                $"token={token};workload_impersonation_path=some/impersonation/path;",
+                NoEnvironmentSetup,
+                SetupSystemTime,
+                SetupAwsSdkDisabled
+            );
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
+
+            // assert
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+            Assert.That(thrown.Message, Does.Contain("Impersonation is not supported for OIDC workload identity provider"));
+        }
+
         private SFSession CreateSessionForOidc(string token) =>
             PrepareSession(
                 AttestationProvider.OIDC,

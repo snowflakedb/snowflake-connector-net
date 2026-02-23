@@ -130,6 +130,8 @@ namespace Snowflake.Data.Core
         WORKLOAD_IDENTITY_PROVIDER,
         [SFSessionPropertyAttr(required = false)]
         WORKLOAD_IDENTITY_ENTRA_RESOURCE,
+        [SFSessionPropertyAttr(required = false)]
+        WORKLOAD_IMPERSONATION_PATH,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         OAUTHENABLESINGLEUSEREFRESHTOKENS,
         [SFSessionPropertyAttr(required = false, defaultValue = "20")]
