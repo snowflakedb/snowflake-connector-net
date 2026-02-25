@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Net;
 using Newtonsoft.Json;
 using System.Net.Http;
 using System.Threading;
@@ -37,6 +38,8 @@ namespace Snowflake.Data.Core
     internal class RestRequester : IRestRequester
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
+
+        internal const string HttpStatusCodeDataKey = "HttpStatusCode";
 
         protected HttpClient _HttpClient;
 
@@ -114,6 +117,7 @@ namespace Snowflake.Data.Core
                     logger.Debug($"Executing: {sid} {message.Method} {message.RequestUri} HTTP/{message.Version}");
 #endif
                     var watch = new Stopwatch();
+                    int? failedHttpStatusCode = null;
                     try
                     {
                         watch.Start();
@@ -123,6 +127,7 @@ namespace Snowflake.Data.Core
                         watch.Stop();
                         if (!response.IsSuccessStatusCode)
                         {
+                            failedHttpStatusCode = (int)response.StatusCode;
 #if SF_PUBLIC_ENVIRONMENT
                             logger.Error($"Failed response after {watch.ElapsedMilliseconds} ms: {sid} {message.Method} {message.RequestUri.AbsolutePath} StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
 #else
@@ -152,6 +157,10 @@ namespace Snowflake.Data.Core
                             logger.Error($"Response receiving interrupted by exception after {watch.ElapsedMilliseconds} ms. {sid} {message.Method} {message.RequestUri}");
 #endif
                         }
+                        if (failedHttpStatusCode.HasValue)
+                        {
+                            e.Data[HttpStatusCodeDataKey] = failedHttpStatusCode.Value;
+                        }
                         // Disposing of the response if not null now that we don't need it anymore
                         response?.Dispose();
                         if (restRequestTimeout.IsCancellationRequested)
@@ -162,6 +171,30 @@ namespace Snowflake.Data.Core
                     }
                 }
             }
+        }
+
+        internal static bool HasUnauthorizedStatusCode(Exception ex)
+        {
+            var code = FindHttpStatusCode(ex);
+            return code == (int)HttpStatusCode.Unauthorized;
+        }
+
+        private static int? FindHttpStatusCode(Exception ex)
+        {
+            if (ex == null)
+                return null;
+            if (ex.Data.Contains(HttpStatusCodeDataKey) && ex.Data[HttpStatusCodeDataKey] is int statusCode)
+                return statusCode;
+            if (ex is AggregateException aggEx)
+            {
+                foreach (var inner in aggEx.InnerExceptions)
+                {
+                    var code = FindHttpStatusCode(inner);
+                    if (code.HasValue)
+                        return code;
+                }
+            }
+            return FindHttpStatusCode(ex.InnerException);
         }
     }
 }
