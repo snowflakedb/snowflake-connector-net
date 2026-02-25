@@ -88,6 +88,8 @@ namespace Snowflake.Data.Core
 
         internal bool _disableSamlUrlCheck;
 
+        private volatile bool _invalidatedForPooling;
+
         public bool GetPooling() => _poolConfig.PoolingEnabled;
 
         public void SetPooling(bool isEnabled)
@@ -784,5 +786,15 @@ namespace Snowflake.Data.Core
         }
 
         internal IAuthenticator GetAuthenticator() => authenticator;
+
+        internal void InvalidateForPooling()
+        {
+            if (_invalidatedForPooling)
+                return;
+            logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure.");
+            _invalidatedForPooling = true;
+        }
+
+        internal virtual bool IsInvalidatedForPooling() => _invalidatedForPooling;
     }
 }

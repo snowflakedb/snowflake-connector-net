@@ -383,6 +383,126 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.IsNull(session.sessionToken);
         }
 
+        [Test]
+        public void TestClearIdleSessionsShouldEvictAllSessionsEvenWhenCloseThrows()
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+            var throwingRequester = new MockCloseSessionException();
+            var session1 = CreateSessionWithCurrentStartTime(connectionString, throwingRequester);
+            session1.sessionToken = "token1";
+            var session2 = CreateSessionWithCurrentStartTime(connectionString, throwingRequester);
+            session2.sessionToken = "token2";
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            pool._idleSessions.Add(session1);
+            pool._idleSessions.Add(session2);
+            Assert.AreEqual(2, pool._idleSessions.Count);
+
+            // act
+            pool.ClearIdleSessions();
+
+            // assert - pool must be empty even though close() threw for each session
+            Assert.AreEqual(0, pool._idleSessions.Count);
+        }
+
+        [Test]
+        public void TestClearIdleSessionsShouldCloseRemainingSessionsAfterOneCloseThrows()
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+            var throwingRequester = new MockCloseSessionException();
+            var normalRequester = new MockRestSessionExpired();
+            var throwingSession = CreateSessionWithCurrentStartTime(connectionString, throwingRequester);
+            throwingSession.sessionToken = "token_will_throw";
+            var normalSession = CreateSessionWithCurrentStartTime(connectionString, normalRequester);
+            normalSession.sessionToken = "token_normal";
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            pool._idleSessions.Add(throwingSession);
+            pool._idleSessions.Add(normalSession);
+
+            // act
+            pool.ClearIdleSessions();
+
+            // assert - pool must be empty and second session's close should have been attempted
+            Assert.AreEqual(0, pool._idleSessions.Count);
+            Assert.IsNull(normalSession.sessionToken);
+        }
+
+        [Test]
+        public void TestReturnSessionToPoolShouldRejectSessionAfter401QueryFailure()
+        {
+            // arrange — session with a mock that throws 401-tagged exception on query
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+            var mock401Requester = new MockRestRequesterUnauthorizedOnQuery();
+            var session = CreateSessionWithCurrentStartTime(connectionString, mock401Requester);
+            session.sessionToken = "valid_token";
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+
+            // act — execute a query through SFStatement (the real production code path)
+            var statement = new SFStatement(session);
+            Assert.Catch<Exception>(() =>
+                statement.Execute(0, "SELECT 1", null, false, false));
+
+            // the session should now be invalidated by SFStatement's catch block
+            Assert.IsTrue(session.IsInvalidatedForPooling());
+
+            // act — try to return the session to the pool
+            var wasAdded = pool.AddSession(session, false);
+
+            // assert — invalidated session must be rejected
+            Assert.IsFalse(wasAdded);
+            Assert.AreEqual(0, pool._idleSessions.Count);
+        }
+
+        [Test]
+        public void TestReturnSessionToPoolShouldAcceptValidSession()
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+            var session = CreateSessionWithCurrentStartTime(connectionString);
+            session.sessionToken = "valid_token";
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+
+            // act
+            var wasAdded = pool.AddSession(session, false);
+
+            // assert - valid session should be returned to pool
+            Assert.IsTrue(wasAdded);
+            Assert.AreEqual(1, pool._idleSessions.Count);
+        }
+
+        [Test]
+        public void TestDestroyPoolShouldSucceedEvenWhenSessionCloseThrows()
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+            var throwingRequester = new MockCloseSessionException();
+            var session = CreateSessionWithCurrentStartTime(connectionString, throwingRequester);
+            session.sessionToken = "token_will_throw";
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            pool._idleSessions.Add(session);
+
+            // act & assert - DestroyPool should not throw even if session.close() fails
+            Assert.DoesNotThrow(() => pool.DestroyPool());
+            Assert.AreEqual(0, pool._idleSessions.Count);
+        }
+
+        [Test]
+        public void TestClearSessionsShouldSucceedEvenWhenSessionCloseThrows()
+        {
+            // arrange
+            var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+            var throwingRequester = new MockCloseSessionException();
+            var session = CreateSessionWithCurrentStartTime(connectionString, throwingRequester);
+            session.sessionToken = "token_will_throw";
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            pool._idleSessions.Add(session);
+
+            // act & assert - ClearSessions should not throw even if session.close() fails
+            Assert.DoesNotThrow(() => pool.ClearSessions());
+            Assert.AreEqual(0, pool._idleSessions.Count);
+        }
+
         private SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)
         {
             var session = restRequester == null ? new SFSession(connectionString, new SessionPropertiesContext()) :
