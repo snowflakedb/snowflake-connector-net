@@ -439,9 +439,10 @@ namespace Snowflake.Data.Core
                 logger.Warn("Query execution canceled.");
                 throw;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 logger.Error("Query execution failed.");
+                HandleExceptionForSession(ex);
                 throw;
             }
             finally
@@ -505,11 +506,13 @@ namespace Snowflake.Data.Core
             {
                 logger.Error($"Query execution failed, QueryId: {ex.QueryId ?? "unavailable"}", ex);
                 _lastQueryId = ex.QueryId ?? _lastQueryId;
+                HandleExceptionForSession(ex);
                 throw;
             }
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
+                HandleExceptionForSession(ex);
                 throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR);
             }
         }
@@ -566,6 +569,7 @@ namespace Snowflake.Data.Core
                 {
                     _lastQueryId = snowflakeDbException.QueryId ?? _lastQueryId;
                 }
+                HandleExceptionForSession(ex);
                 throw;
             }
         }
@@ -725,6 +729,7 @@ namespace Snowflake.Data.Core
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
+                HandleExceptionForSession(ex);
                 throw;
             }
             finally
@@ -812,6 +817,7 @@ namespace Snowflake.Data.Core
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
+                HandleExceptionForSession(ex);
                 throw;
             }
             finally
@@ -1106,6 +1112,14 @@ namespace Snowflake.Data.Core
         internal string GetQueryId()
         {
             return _lastQueryId;
+        }
+
+        private void HandleExceptionForSession(Exception ex)
+        {
+            if (RestRequester.HasUnauthorizedStatusCode(ex))
+            {
+                SfSession.InvalidateForPooling();
+            }
         }
     }
 }
