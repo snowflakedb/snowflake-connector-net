@@ -42,6 +42,18 @@ timestamps {
       string(name: 'parent_build_number', value: env.BUILD_NUMBER)
     ]
 
+    stage('AWS Identity Check') {
+      withCredentials([
+        usernamePassword(credentialsId: '063fc85b-62a6-4181-9d72-873b43488411', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')
+      ]) {
+        sh '''\
+        |#!/bin/bash -e
+        |echo "Checking AWS caller identity before running tests..."
+        |aws sts get-caller-identity
+        '''.stripMargin()
+      }
+    }
+
     stage('Test') {
       parallel(
         'Test': {
