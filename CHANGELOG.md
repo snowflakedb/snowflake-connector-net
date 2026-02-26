@@ -3,6 +3,7 @@
 # Changelog
 - v5.5.0
     - Added `workloadIdentityImpersonationPath` config option for `authenticator=WORKLOAD_IDENTITY` allowing workloads to authenticate as a different identity through transitive service account impersonation.
+    - Added `HonorSessionTimezone` connection parameter (default: `false`). When set to `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter (`ALTER SESSION SET TIMEZONE`) instead of using the local machine timezone. This will become the default behavior in a future major release.
 - v5.4.1
     - Extended login-request telemetry with Linux distribution details parsed from `/etc/os-release`
     - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result chunk processing by adding retry state cleanup, batch integrity validation, and defensive bounds checking in `ExtractCell()`.

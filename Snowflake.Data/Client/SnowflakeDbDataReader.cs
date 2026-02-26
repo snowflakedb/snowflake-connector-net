@@ -267,8 +267,9 @@ namespace Snowflake.Data.Client
                 {
                     case string stringValue:
                         {
-                            var json = JObject.Parse(stringValue);
-                            return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json);
+                            var json = stringValue == null ? null : JObject.Parse(stringValue);
+                            var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                            return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json, sessionTimezone);
                         }
                     case Dictionary<string, object> structArray:
                         return ArrowConverter.ConvertObject<T>(structArray);
@@ -303,7 +304,8 @@ namespace Snowflake.Data.Client
                     case string stringValue:
                         {
                             var json = stringValue == null ? null : JArray.Parse(stringValue);
-                            return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json);
+                            var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                            return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json, sessionTimezone);
                         }
                     case List<object> listArray:
                         return ArrowConverter.ConvertArray<T>(listArray);
@@ -336,7 +338,8 @@ namespace Snowflake.Data.Client
                     case string stringValue:
                         {
                             var json = stringValue == null ? null : JObject.Parse(stringValue);
-                            return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json);
+                            var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                            return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json, sessionTimezone);
                         }
                     case Dictionary<object, object> mapArray:
                         return ArrowConverter.ConvertMap<TKey, TValue>(mapArray);

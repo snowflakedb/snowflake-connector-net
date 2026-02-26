@@ -99,6 +99,10 @@ namespace Snowflake.Data.Core
 
         internal SecureString _mfaToken;
 
+        private bool _honorSessionTimezone = false;
+
+        private volatile TimeZoneInfo _cachedSessionTimezone;
+
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
             if (authnResponse.success)
@@ -196,6 +200,7 @@ namespace Snowflake.Data.Core
             properties = SFSessionProperties.ParseConnectionString(ConnectionString, sessionContext);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
+            _honorSessionTimezone = bool.Parse(properties[SFSessionProperty.HONORSESSIONTIMEZONE]);
             properties.TryGetValue(SFSessionProperty.USER, out _user);
             ValidateApplicationName(properties);
             try
@@ -500,6 +505,10 @@ namespace Snowflake.Data.Core
                 if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
                 {
                     ParameterMap[parameterName] = parameter.value;
+                    if (parameterName == SFSessionParameter.TIMEZONE)
+                    {
+                        _cachedSessionTimezone = null;
+                    }
                 }
             }
             if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
@@ -551,6 +560,42 @@ namespace Snowflake.Data.Core
                 return null;
             }
             return _queryContextCache.GetQueryContextRequest();
+        }
+
+        internal TimeZoneInfo GetSessionTimezone()
+        {
+            if (!_honorSessionTimezone)
+            {
+                return TimeZoneInfo.Local;
+            }
+
+            var cached = _cachedSessionTimezone;
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            var resolved = ResolveSessionTimezone();
+            _cachedSessionTimezone = resolved;
+            return resolved;
+        }
+
+        private TimeZoneInfo ResolveSessionTimezone()
+        {
+            if (ParameterMap.TryGetValue(SFSessionParameter.TIMEZONE, out var value))
+            {
+                var timezoneString = value.ToString();
+                try
+                {
+                    return TimeZoneConverter.TZConvert.GetTimeZoneInfo(timezoneString);
+                }
+                catch (TimeZoneNotFoundException)
+                {
+                    logger.Warn($"Session timezone '{timezoneString}' not found, falling back to local time");
+                    return TimeZoneInfo.Local;
+                }
+            }
+            return TimeZoneInfo.Local;
         }
 
         internal void UpdateSessionProperties(QueryExecResponseData responseData)
