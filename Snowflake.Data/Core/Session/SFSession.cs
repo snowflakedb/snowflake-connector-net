@@ -208,7 +208,7 @@ namespace Snowflake.Data.Core
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
-                _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
+                _HttpClient = CreateHttpClient(httpClientConfig, sessionContext);
                 restRequester = new RestRequester(_HttpClient);
                 _poolConfig = extractedProperties.BuildConnectionPoolConfig();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
@@ -250,6 +250,24 @@ namespace Snowflake.Data.Core
             restRequester.setHttpClient(_HttpClient);
             // Override the Rest requester with the mock for testing
             this.restRequester = restRequester;
+        }
+
+        private HttpClient CreateHttpClient(HttpClientConfig httpClientConfig, SessionPropertiesContext sessionContext)
+        {
+            System.Net.Http.HttpMessageHandler customHandler = null;
+            if (sessionContext != null && sessionContext.HttpMessageHandlerFactory != null)
+            {
+                try
+                {
+                    customHandler = sessionContext.HttpMessageHandlerFactory();
+                }
+                catch (Exception ex)
+                {
+                    logger.Error("Failed to create custom HttpMessageHandler from factory", ex);
+                    throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR);
+                }
+            }
+            return HttpUtil.Instance.GetHttpClient(httpClientConfig, customHandler);
         }
 
         internal bool IsPoolingEnabledForConnectionCache()

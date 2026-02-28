@@ -408,5 +408,22 @@ namespace Snowflake.Data.Tests.UnitTests
             // act & assert
             Assert.DoesNotThrow(() => session.heartbeat());
         }
+        
+        [Test]
+        public void TestCustomHttpClientHandler()
+        {
+            var restRequester = new MockCloseSessionGone();
+            var handlerCalled = false;
+            var sessionPropertiesContext = new SessionPropertiesContext()
+            {
+                HttpMessageHandlerFactory = () =>
+                {
+                    handlerCalled = true;
+                    return new HttpClientHandler();
+                }
+            };
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", sessionPropertiesContext, restRequester);
+            Assert.IsTrue(handlerCalled);
+        }
     }
 }
