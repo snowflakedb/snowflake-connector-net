@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
+using Snowflake.Data.Telemetry;
 
 namespace Snowflake.Data.Client
 {
@@ -275,6 +276,7 @@ namespace Snowflake.Data.Client
 
         public override void Open()
         {
+            using var activity = this.StartActivity(ActivitySourceHelper.OperationConnect);
             logger.Debug("Open Connection.");
             if (_connectionState != ConnectionState.Closed)
             {
@@ -296,10 +298,14 @@ namespace Snowflake.Data.Client
                 if (SfSession == null)
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Could not open session");
                 logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
+                activity?.SetTag(ActivitySourceHelper.Tags.DbSystem, "snowflake");
+                activity?.SetTag(ActivitySourceHelper.Tags.SessionId, SfSession.sessionId);
                 OnSessionEstablished();
+                activity?.SetSuccess();
             }
             catch (Exception e)
             {
+                activity?.SetException(e);
                 // Otherwise when Dispose() is called, the close request would timeout.
                 _connectionState = ConnectionState.Closed;
                 logger.Error("Unable to connect: ", e);
@@ -325,6 +331,7 @@ namespace Snowflake.Data.Client
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
+            var activity = this.StartActivity(ActivitySourceHelper.OperationConnect);
             logger.Debug("Open Connection Async.");
             if (_connectionState != ConnectionState.Closed)
             {
@@ -350,6 +357,7 @@ namespace Snowflake.Data.Client
                         Exception sfSessionEx = previousTask.Exception;
                         _connectionState = ConnectionState.Closed;
                         logger.Error("Unable to connect", sfSessionEx);
+                        activity?.SetException(sfSessionEx);
                         throw new SnowflakeDbException(
                            sfSessionEx,
                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
@@ -358,6 +366,7 @@ namespace Snowflake.Data.Client
                     }
                     else if (previousTask.IsCanceled)
                     {
+                        activity?.Stop();
                         _connectionState = ConnectionState.Closed;
                         logger.Debug("Connection canceled");
                         throw new TaskCanceledException("Connecting was cancelled");
@@ -368,6 +377,7 @@ namespace Snowflake.Data.Client
                         SfSession = previousTask.Result;
                         logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
                         OnSessionEstablished();
+                        activity.SetSuccess();
                     }
                 }, TaskContinuationOptions.None); // this continuation should be executed always (even if the whole operation was canceled) because it sets the proper state of the connection
         }
