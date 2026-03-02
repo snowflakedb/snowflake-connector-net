@@ -93,50 +93,99 @@ namespace Snowflake.Data.Core
             int noDataCounter = 0;
 
             QueryStatus status;
-            while (true)
+            try
             {
-                if (cancellationToken.IsCancellationRequested)
+                while (true)
                 {
-                    s_logger.Debug("Cancellation requested for getting results from query id");
-                    cancellationToken.ThrowIfCancellationRequested();
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        s_logger.Debug("Cancellation requested for getting results from query id");
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+
+                    status = isAsync
+                        ? await GetQueryStatusAsync(connection, queryId, cancellationToken)
+                        : GetQueryStatus(connection, queryId);
+
+                    if (!QueryStatusExtensions.IsStillRunning(status))
+                    {
+                        return;
+                    }
+
+                    // Timeout based on query status retry rules
+                    if (isAsync)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(_queryResultsRetryConfig._asyncRetryPattern[retryPatternPos]), cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        Thread.Sleep(TimeSpan.FromSeconds(_queryResultsRetryConfig._asyncRetryPattern[retryPatternPos]));
+                    }
+
+                    // If no data, increment the no data counter
+                    if (status == QueryStatus.NoData)
+                    {
+                        noDataCounter++;
+
+                        // Check if retry for no data is exceeded
+                        if (noDataCounter > _queryResultsRetryConfig._asyncNoDataMaxRetry)
+                        {
+                            var errorMessage = "Max retry for no data is reached";
+                            s_logger.Error(errorMessage);
+                            throw new Exception(errorMessage);
+                        }
+                    }
+
+                    if (retryPatternPos < _queryResultsRetryConfig._asyncRetryPattern.Length - 1)
+                    {
+                        retryPatternPos++;
+                    }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                s_logger.Debug($"Cancellation requested: sending abort request for query id {queryId}");
+                AbortQuery(connection, queryId, isAsync);
+                throw;
+            }
+        }
 
-                status = isAsync ? await GetQueryStatusAsync(connection, queryId, cancellationToken) : GetQueryStatus(connection, queryId);
-
-                if (!QueryStatusExtensions.IsStillRunning(status))
-                {
-                    return;
-                }
-
-                // Timeout based on query status retry rules
+        private void AbortQuery(SnowflakeDbConnection connection, string queryId, bool isAsync)
+        {
+            try
+            {
                 if (isAsync)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(_queryResultsRetryConfig._asyncRetryPattern[retryPatternPos]), cancellationToken).ConfigureAwait(false);
+                    CancelQueryByIdAsync(connection, queryId)
+                        .ConfigureAwait(false)
+                        .GetAwaiter()
+                        .GetResult();
                 }
                 else
                 {
-                    Thread.Sleep(TimeSpan.FromSeconds(_queryResultsRetryConfig._asyncRetryPattern[retryPatternPos]));
-                }
-
-                // If no data, increment the no data counter
-                if (status == QueryStatus.NoData)
-                {
-                    noDataCounter++;
-
-                    // Check if retry for no data is exceeded
-                    if (noDataCounter > _queryResultsRetryConfig._asyncNoDataMaxRetry)
-                    {
-                        var errorMessage = "Max retry for no data is reached";
-                        s_logger.Error(errorMessage);
-                        throw new Exception(errorMessage);
-                    }
-                }
-
-                if (retryPatternPos < _queryResultsRetryConfig._asyncRetryPattern.Length - 1)
-                {
-                    retryPatternPos++;
+                    CancelQueryById(connection, queryId);
                 }
             }
+            catch (Exception ex)
+            {
+                s_logger.Warn($"Failed to abort query {queryId} after cancellation.", ex);
+            }
+        }
+
+        private async Task CancelQueryByIdAsync(SnowflakeDbConnection connection, string queryId)
+        {
+            using var cmd = (SnowflakeDbCommand)connection.CreateCommand();
+            cmd.CommandText = $"SELECT SYSTEM$CANCEL_QUERY('{queryId}')";
+            await cmd.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
+            s_logger.Debug($"Cancel query request sent for query id {queryId}");
+        }
+
+        private void CancelQueryById(SnowflakeDbConnection connection, string queryId)
+        {
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = $"SELECT SYSTEM$CANCEL_QUERY('{queryId}')";
+            cmd.ExecuteNonQuery();
+            s_logger.Debug($"Cancel query request sent for query id {queryId}");
         }
     }
 }

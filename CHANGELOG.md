@@ -6,6 +6,7 @@
     - Added `HonorSessionTimezone` connection parameter (default: `false`). When set to `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter (`ALTER SESSION SET TIMEZONE`) instead of using the local machine timezone. This will become the default behavior in a future major release.
     - Bug fix: Idle sessions are now evicted from the pool even when closing them fails.
     - Bug fix: Sessions that receive HTTP 401 during query execution are no longer returned to the pool.
+    - Bug fix: Fixed `GetResultsFromQueryIdAsync` not aborting queries on the server when `CancellationToken` is cancelled. Previously only client-side polling stopped while queries continued running on Snowflake.
 - v5.4.1
     - Extended login-request telemetry with Linux distribution details parsed from `/etc/os-release`
     - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result chunk processing by adding retry state cleanup, batch integrity validation, and defensive bounds checking in `ExtractCell()`.

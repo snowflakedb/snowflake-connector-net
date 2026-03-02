@@ -652,6 +652,71 @@ namespace Snowflake.Data.Core
             CleanUpCancellationTokenSources();
         }
 
+        internal void CancelQuery(string queryId)
+        {
+            var request = BuildCancelQueryByIdRequest(queryId);
+            try
+            {
+                var response = _restRequester.Post<NullDataResponse>(request);
+                if (response.success)
+                {
+                    logger.Info($"Query cancellation for query id {queryId} succeeded");
+                }
+                else
+                {
+                    logger.Warn($"Query cancellation for query id {queryId} failed.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Unable to cancel query {queryId}.", ex);
+            }
+        }
+
+        internal async Task CancelQueryAsync(string queryId, CancellationToken cancellationToken)
+        {
+            var request = BuildCancelQueryByIdRequest(queryId);
+            try
+            {
+                var response = await _restRequester.PostAsync<NullDataResponse>(request, cancellationToken).ConfigureAwait(false);
+                if (response.success)
+                {
+                    logger.Info($"Query cancellation for query id {queryId} succeeded");
+                }
+                else
+                {
+                    logger.Warn($"Query cancellation for query id {queryId} failed.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Unable to cancel query {queryId}.", ex);
+            }
+        }
+
+        private SFRestRequest BuildCancelQueryByIdRequest(string queryId)
+        {
+            var parameters = new Dictionary<string, string>()
+            {
+                { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+            };
+            var uri = SfSession.BuildUri(SF_QUERY_CANCEL_PATH, parameters);
+
+            var postBody = new QueryCancelRequest()
+            {
+                requestId = queryId
+            };
+
+            return new SFRestRequest()
+            {
+                Url = uri,
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+                jsonBody = postBody,
+                sid = SfSession.sessionId
+            };
+        }
+
         /// <summary>
         /// Execute a sql query and return the response.
         /// </summary>
