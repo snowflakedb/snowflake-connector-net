@@ -187,7 +187,7 @@ namespace Snowflake.Data.Core
                 return statusCode;
             if (ex is AggregateException aggEx)
             {
-                foreach (var inner in aggEx.InnerExceptions)
+                foreach (var inner in aggEx.Flatten().InnerExceptions)
                 {
                     var code = FindHttpStatusCode(inner);
                     if (code.HasValue)
