@@ -174,18 +174,20 @@ namespace Snowflake.Data.Core
 
         private async Task CancelQueryByIdAsync(SnowflakeDbConnection connection, string queryId)
         {
+            s_logger.Debug($"Sending cancel query request for query id {queryId}");
             using var cmd = (SnowflakeDbCommand)connection.CreateCommand();
             cmd.CommandText = $"SELECT SYSTEM$CANCEL_QUERY('{queryId}')";
             await cmd.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
-            s_logger.Debug($"Cancel query request sent for query id {queryId}");
+            s_logger.Debug($"Cancel query request sent successfully for query id {queryId}");
         }
 
         private void CancelQueryById(SnowflakeDbConnection connection, string queryId)
         {
+            s_logger.Debug($"Sending cancel query request for query id {queryId}");
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"SELECT SYSTEM$CANCEL_QUERY('{queryId}')";
             cmd.ExecuteNonQuery();
-            s_logger.Debug($"Cancel query request sent for query id {queryId}");
+            s_logger.Debug($"Cancel query request sent successfully for query id {queryId}");
         }
     }
 }
