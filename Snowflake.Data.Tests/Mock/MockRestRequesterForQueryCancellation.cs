@@ -16,6 +16,8 @@ namespace Snowflake.Data.Tests.Mock
 
         internal Action OnGetQueryStatusResponse { get; set; }
 
+        internal bool ThrowOnCancel { get; set; }
+
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)request;
@@ -37,6 +39,11 @@ namespace Snowflake.Data.Tests.Mock
                      queryRequest.sqlText != null &&
                      queryRequest.sqlText.Contains("SYSTEM$CANCEL_QUERY"))
             {
+                if (ThrowOnCancel)
+                {
+                    throw new Exception("Simulated cancel failure");
+                }
+
                 CancelRequestSent = true;
                 var startIdx = queryRequest.sqlText.IndexOf("SYSTEM$CANCEL_QUERY('", StringComparison.Ordinal);
                 if (startIdx >= 0)
