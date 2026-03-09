@@ -162,6 +162,41 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public async Task TestPollingCompletesWhenQueryFinishes()
+        {
+            var mockRequester = new MockRestRequesterForQueryCancellation();
+            mockRequester.EnqueueStatus("RUNNING", "RUNNING", "SUCCESS");
+            var conn = new MockSnowflakeDbConnection(mockRequester);
+            conn.ConnectionString = ConnectionString;
+            await conn.OpenAsync(CancellationToken.None);
+
+            var awaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(1, new[] { 0, 0, 0 }));
+
+            await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, CancellationToken.None, true);
+
+            Assert.IsFalse(mockRequester.CancelRequestSent,
+                "No cancel request should be sent when query completes normally");
+        }
+
+        [Test]
+        public void TestPollingCompletesWhenQueryFinishesSync()
+        {
+            var mockRequester = new MockRestRequesterForQueryCancellation();
+            mockRequester.EnqueueStatus("RUNNING", "RUNNING", "SUCCESS");
+            var conn = new MockSnowflakeDbConnection(mockRequester);
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+
+            var awaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(1, new[] { 0, 0, 0 }));
+
+            var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, CancellationToken.None, false);
+            Assert.DoesNotThrowAsync(async () => await task);
+
+            Assert.IsFalse(mockRequester.CancelRequestSent,
+                "No cancel request should be sent when query completes normally");
+        }
+
+        [Test]
         public void TestNoCancelRequestWhenNotCancelled()
         {
             var mockRequester = new MockRestRequesterForQueryCancellation();

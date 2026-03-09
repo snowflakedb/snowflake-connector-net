@@ -18,6 +18,13 @@ namespace Snowflake.Data.Tests.Mock
 
         internal bool ThrowOnCancel { get; set; }
 
+        private readonly Queue<string> _statusQueue = new Queue<string>();
+
+        internal void EnqueueStatus(params string[] statuses)
+        {
+            foreach (var s in statuses) _statusQueue.Enqueue(s);
+        }
+
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)request;
@@ -106,7 +113,7 @@ namespace Snowflake.Data.Tests.Mock
                         {
                             new QueryStatusDataQueries
                             {
-                                status = "RUNNING"
+                                status = _statusQueue.Count > 0 ? _statusQueue.Dequeue() : "RUNNING"
                             }
                         }
                     }
