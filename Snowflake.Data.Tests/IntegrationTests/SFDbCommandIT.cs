@@ -304,6 +304,60 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public async Task TestAsyncExecCancelAbortsQueryOnServer()
+        {
+            string queryId;
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange: submit a 60-second query via async mode
+                    CancellationTokenSource cancelToken = new CancellationTokenSource();
+                    cmd.CommandText = $"CALL SYSTEM$WAIT(60, \'SECONDS\');";
+
+                    queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+                    var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
+
+                    // Act: cancel while polling for results
+                    cancelToken.CancelAfter(TimeSpan.FromSeconds(3));
+                    try
+                    {
+                        await cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token).ConfigureAwait(false);
+                        Assert.Fail("Expected OperationCanceledException");
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // TaskCanceledException is a subclass of OperationCanceledException
+                    }
+                }
+
+                // Assert: poll query status via REST API until the cancel completes
+                using (SnowflakeDbCommand checkCmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    QueryStatus queryStatus;
+                    var maxRetries = 30;
+                    var retryCount = 0;
+                    do
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+                        queryStatus = await checkCmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
+                        retryCount++;
+                    } while (retryCount < maxRetries && (conn.IsStillRunning(queryStatus) || queryStatus == QueryStatus.Aborting));
+
+                    Assert.That(queryStatus, Is.EqualTo(QueryStatus.FailedWithError).Or.EqualTo(QueryStatus.Aborted),
+                        "Cancelled query should reach a terminal error state on the server");
+                }
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+
+        [Test]
         public async Task TestFailedAsyncExecQueryThrowsErrorAsync()
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
