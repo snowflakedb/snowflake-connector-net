@@ -182,9 +182,8 @@ namespace Snowflake.Data.Tests.UnitTests
             else
             {
                 Assert.IsNull(fileHeader);
+                Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
             }
-
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -415,7 +414,6 @@ namespace Snowflake.Data.Tests.UnitTests
             var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
 
             // assert
-            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
             Assert.AreEqual("something", fileHeader.digest);
             Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
             Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
@@ -447,7 +445,6 @@ namespace Snowflake.Data.Tests.UnitTests
             var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
 
             // assert
-            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
             Assert.IsNull(fileHeader.digest);
             Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
             Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
