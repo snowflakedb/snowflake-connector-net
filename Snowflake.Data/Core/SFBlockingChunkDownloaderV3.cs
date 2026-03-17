@@ -95,17 +95,24 @@ namespace Snowflake.Data.Core
 
         public async Task<BaseResultChunk> GetNextChunkAsync()
         {
-            logger.Debug($"NextChunkToConsume: {nextChunkToConsumeIndex}, NextChunkToDownload: {nextChunkToDownloadIndex}");
+            logger.Info($"[ArrowBatchTrace] GetNextChunkAsync: consume={nextChunkToConsumeIndex}, " +
+                        $"download={nextChunkToDownloadIndex}, total={chunkInfos.Count}, " +
+                        $"prefetchSlots={prefetchSlot}");
             if (nextChunkToConsumeIndex < chunkInfos.Count)
             {
-                Task<BaseResultChunk> chunk = taskQueues[nextChunkToConsumeIndex % prefetchSlot];
+                int slot = nextChunkToConsumeIndex % prefetchSlot;
+                Task<BaseResultChunk> chunk = taskQueues[slot];
 
                 if (nextChunkToDownloadIndex < chunkInfos.Count && nextChunkToConsumeIndex > 0)
                 {
-                    BaseResultChunk reusableChunk = chunkDatas[nextChunkToDownloadIndex % prefetchSlot];
+                    int reusableSlot = nextChunkToDownloadIndex % prefetchSlot;
+                    BaseResultChunk reusableChunk = chunkDatas[reusableSlot];
+                    logger.Info($"[ArrowBatchTrace] GetNextChunkAsync: reusing slot {reusableSlot} " +
+                                $"(was chunk {reusableChunk.ChunkIndex}) for chunk {nextChunkToDownloadIndex}, " +
+                                $"serverRows={chunkInfos[nextChunkToDownloadIndex].rowCount}");
                     reusableChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
 
-                    taskQueues[nextChunkToDownloadIndex % prefetchSlot] = DownloadChunkAsync(new DownloadContextV3()
+                    taskQueues[reusableSlot] = DownloadChunkAsync(new DownloadContextV3()
                     {
                         chunk = reusableChunk,
                         qrmk = this.qrmk,
@@ -114,17 +121,23 @@ namespace Snowflake.Data.Core
                     });
                     nextChunkToDownloadIndex++;
 
-                    // in case of one slot we need to return the chunk already downloaded
                     if (prefetchSlot == 1)
                     {
                         chunk = taskQueues[0];
                     }
                 }
                 nextChunkToConsumeIndex++;
-                return await chunk;
+                var result = await chunk;
+                if (result != null)
+                {
+                    logger.Info($"[ArrowBatchTrace] GetNextChunkAsync: returning chunk {result.ChunkIndex} " +
+                                $"from slot {slot}, rows={result.RowCount}, cols={result.ColumnCount}");
+                }
+                return result;
             }
             else
             {
+                logger.Info("[ArrowBatchTrace] GetNextChunkAsync: all chunks consumed");
                 return await Task.FromResult<BaseResultChunk>(null);
             }
         }
@@ -188,10 +201,10 @@ namespace Snowflake.Data.Core
                     {
                         if ((maxRetry <= 0) || (retryCount < maxRetry))
                         {
-                            logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
+                            logger.Info($"[ArrowBatchTrace] DownloadChunk: chunk={chunk.ChunkIndex} " +
+                                        $"parse error (retry {retryCount}/{maxRetry}): " +
+                                        $"{e.GetType().Name}: {e.Message}");
                             retry = true;
-                            // reset the chunk before retry in case there could be garbage
-                            // data left from last attempt
                             chunk.ResetForRetry();
                             await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.cancellationToken).ConfigureAwait(false);
                             ++retryCount;
@@ -211,7 +224,17 @@ namespace Snowflake.Data.Core
                     }
                 }
             } while (retry);
-            logger.Debug($"Succeed downloading chunk #{chunk.ChunkIndex}");
+            var arrowChunk = chunk as ArrowResultChunk;
+            if (arrowChunk != null)
+            {
+                logger.Info($"[ArrowBatchTrace] DownloadChunk: chunk={chunk.ChunkIndex} complete, " +
+                             $"batches={arrowChunk.RecordBatch.Count}, rows={chunk.RowCount}, " +
+                             $"cols={arrowChunk.ColumnCount}, retries={retryCount}");
+            }
+            else
+            {
+                logger.Debug($"Succeed downloading chunk #{chunk.ChunkIndex}");
+            }
             return chunk;
         }
 

@@ -20,6 +20,8 @@ namespace Snowflake.Data.Core
         private BaseResultChunk _currentChunk;
         private readonly IChunkDownloader _chunkDownloader;
 
+        private long _totalRowsRead;
+
         public ArrowResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken)
         {
             columnCount = responseData.rowType.Count;
@@ -28,10 +30,20 @@ namespace Snowflake.Data.Core
                 this.sfStatement = sfStatement;
                 UpdateSessionStatus(responseData);
 
+                s_logger.Info($"[ArrowBatchTrace] ArrowResultSet created: queryId={responseData.queryId}, " +
+                               $"columnCount={columnCount}, totalChunks={responseData.chunks?.Count ?? 0}, " +
+                               $"rowsetBase64Len={responseData.rowsetBase64?.Length ?? 0}");
+
                 if (responseData.chunks != null)
                 {
                     _totalChunkCount = responseData.chunks.Count;
                     _chunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
+                    for (int i = 0; i < responseData.chunks.Count; i++)
+                    {
+                        var c = responseData.chunks[i];
+                        s_logger.Info($"[ArrowBatchTrace]   server chunk[{i}]: rowCount={c.rowCount}, " +
+                                       $"compressedSize={c.compressedSize}, uncompressedSize={c.uncompressedSize}");
+                    }
                 }
 
                 responseData.rowSet = null;
@@ -55,21 +67,31 @@ namespace Snowflake.Data.Core
         {
             if (responseData.rowsetBase64?.Length > 0)
             {
+                s_logger.Info($"[ArrowBatchTrace] ReadChunk: parsing inline rowset, base64 length={responseData.rowsetBase64.Length}");
                 using (var stream = new MemoryStream(Convert.FromBase64String(responseData.rowsetBase64)))
                 {
                     using (var reader = new ArrowStreamReader(stream))
                     {
                         var recordBatch = reader.ReadNextRecordBatch();
+                        s_logger.Info($"[ArrowBatchTrace] ReadChunk: initial batch[0]: " +
+                                       $"rows={recordBatch.Length}, columns={recordBatch.ColumnCount}");
                         _currentChunk = new ArrowResultChunk(recordBatch);
+                        int batchIdx = 1;
                         while ((recordBatch = reader.ReadNextRecordBatch()) != null)
                         {
+                            s_logger.Info($"[ArrowBatchTrace] ReadChunk: inline batch[{batchIdx}]: " +
+                                           $"rows={recordBatch.Length}, columns={recordBatch.ColumnCount}");
                             ((ArrowResultChunk)_currentChunk).AddRecordBatch(recordBatch);
+                            batchIdx++;
                         }
+                        s_logger.Info($"[ArrowBatchTrace] ReadChunk: inline complete: " +
+                                       $"{batchIdx} batches, totalRows={_currentChunk.RowCount}");
                     }
                 }
             }
             else
             {
+                s_logger.Debug("[ArrowBatchTrace] ReadChunk: no inline rowset, creating empty chunk");
                 _currentChunk = new ArrowResultChunk(columnCount);
             }
         }
@@ -79,15 +101,44 @@ namespace Snowflake.Data.Core
             ThrowIfClosed();
 
             if (_currentChunk.Next())
+            {
+                _totalRowsRead++;
                 return true;
+            }
 
             if (_totalChunkCount > 0)
             {
-                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
-                               $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
-                               $" size uncompressed: {_currentChunk.UncompressedSize}");
+                var prevChunkIndex = _currentChunk.ChunkIndex;
+                s_logger.Info($"[ArrowBatchTrace] NextAsync: chunk {prevChunkIndex} exhausted after {_currentChunk.RowCount} rows, " +
+                               $"fetching chunk {prevChunkIndex + 1}/{_totalChunkCount}, " +
+                               $"totalRowsReadSoFar={_totalRowsRead}");
                 _currentChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
-                return _currentChunk?.Next() ?? false;
+                if (_currentChunk != null)
+                {
+                    var arrowChunk = (ArrowResultChunk)_currentChunk;
+                    s_logger.Info($"[ArrowBatchTrace] NextAsync: got chunk {_currentChunk.ChunkIndex}: " +
+                                   $"batches={arrowChunk.RecordBatch.Count}, rows={_currentChunk.RowCount}, " +
+                                   $"cols={arrowChunk.ColumnCount}, expectedCols={columnCount}");
+                    for (int i = 0; i < arrowChunk.RecordBatch.Count; i++)
+                    {
+                        var b = arrowChunk.RecordBatch[i];
+                        s_logger.Info($"[ArrowBatchTrace] NextAsync:   chunk[{_currentChunk.ChunkIndex}].batch[{i}]: " +
+                                       $"rows={b.Length}, cols={b.ColumnCount}");
+                    }
+                    if (arrowChunk.ColumnCount != columnCount)
+                    {
+                        s_logger.Error($"[ArrowBatchTrace] NextAsync: COLUMN MISMATCH! " +
+                                       $"chunk {_currentChunk.ChunkIndex} has {arrowChunk.ColumnCount} cols, " +
+                                       $"expected {columnCount}");
+                    }
+                }
+                else
+                {
+                    s_logger.Warn($"[ArrowBatchTrace] NextAsync: chunk downloader returned null");
+                }
+                var hasNext = _currentChunk?.Next() ?? false;
+                if (hasNext) _totalRowsRead++;
+                return hasNext;
             }
 
             return false;
@@ -98,16 +149,34 @@ namespace Snowflake.Data.Core
             ThrowIfClosed();
 
             if (_currentChunk.Next())
+            {
+                _totalRowsRead++;
                 return true;
+            }
 
             if (_totalChunkCount > 0)
             {
-                s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
-                               $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
-                               $" size uncompressed: {_currentChunk.UncompressedSize}");
+                var prevChunkIndex = _currentChunk.ChunkIndex;
+                s_logger.Info($"[ArrowBatchTrace] Next: chunk {prevChunkIndex} exhausted after {_currentChunk.RowCount} rows, " +
+                               $"fetching chunk {prevChunkIndex + 1}/{_totalChunkCount}, " +
+                               $"totalRowsReadSoFar={_totalRowsRead}");
                 _currentChunk = Task.Run(async () => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
-
-                return _currentChunk?.Next() ?? false;
+                if (_currentChunk != null)
+                {
+                    var arrowChunk = (ArrowResultChunk)_currentChunk;
+                    s_logger.Info($"[ArrowBatchTrace] Next: got chunk {_currentChunk.ChunkIndex}: " +
+                                   $"batches={arrowChunk.RecordBatch.Count}, rows={_currentChunk.RowCount}, " +
+                                   $"cols={arrowChunk.ColumnCount}, expectedCols={columnCount}");
+                    for (int i = 0; i < arrowChunk.RecordBatch.Count; i++)
+                    {
+                        var b = arrowChunk.RecordBatch[i];
+                        s_logger.Info($"[ArrowBatchTrace] Next:   chunk[{_currentChunk.ChunkIndex}].batch[{i}]: " +
+                                       $"rows={b.Length}, cols={b.ColumnCount}");
+                    }
+                }
+                var hasNext = _currentChunk?.Next() ?? false;
+                if (hasNext) _totalRowsRead++;
+                return hasNext;
             }
 
             return false;
@@ -161,10 +230,30 @@ namespace Snowflake.Data.Core
             var scale = sfResultSetMetaData.GetScaleByIndex(ordinal);
             var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
 
-            var value = ((ArrowResultChunk)_currentChunk).ExtractCell(ordinal, type, (int)scale, sessionTimezone);
-
-            return value ?? DBNull.Value;
-
+            try
+            {
+                var value = ((ArrowResultChunk)_currentChunk).ExtractCell(ordinal, type, (int)scale, sessionTimezone);
+                return value ?? DBNull.Value;
+            }
+            catch (Exception ex)
+            {
+                var arrowChunk = (ArrowResultChunk)_currentChunk;
+                s_logger.Error($"[ArrowBatchTrace] GetObjectInternal EXCEPTION: " +
+                               $"ordinal={ordinal}, type={type}, scale={scale}, " +
+                               $"chunk={_currentChunk.ChunkIndex}, chunkRows={_currentChunk.RowCount}, " +
+                               $"chunkCols={arrowChunk.ColumnCount}, " +
+                               $"batches={arrowChunk.RecordBatch.Count}, " +
+                               $"totalRowsRead={_totalRowsRead}, " +
+                               $"columnCount={columnCount}, " +
+                               $"exception={ex.GetType().Name}: {ex.Message}");
+                for (int i = 0; i < arrowChunk.RecordBatch.Count; i++)
+                {
+                    var b = arrowChunk.RecordBatch[i];
+                    s_logger.Error($"[ArrowBatchTrace]   chunk[{_currentChunk.ChunkIndex}].batch[{i}]: " +
+                                   $"rows={b.Length}, cols={b.ColumnCount}");
+                }
+                throw;
+            }
         }
 
         internal override object GetValue(int ordinal)

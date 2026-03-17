@@ -4,12 +4,15 @@ using System.Text;
 using Apache.Arrow;
 using Apache.Arrow.Types;
 using Snowflake.Data.Client;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
     internal class ArrowResultChunk : BaseResultChunk
     {
         internal override ResultFormat ResultFormat => ResultFormat.ARROW;
+
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ArrowResultChunk>();
 
         private static readonly DateTimeOffset s_epochDate = SFDataConverter.UnixEpoch;
 
@@ -64,6 +67,9 @@ namespace Snowflake.Data.Core
             ColumnCount = recordBatch.ColumnCount;
             ChunkIndex = -1;
 
+            s_logger.Info($"[ArrowBatchTrace] ArrowResultChunk created from batch: " +
+                           $"rows={recordBatch.Length}, columns={recordBatch.ColumnCount}");
+            LogBatchColumnDetails(recordBatch, 0);
             ResetTempTables();
         }
 
@@ -75,14 +81,47 @@ namespace Snowflake.Data.Core
             ColumnCount = columnCount;
             ChunkIndex = -1;
 
+            s_logger.Info($"[ArrowBatchTrace] ArrowResultChunk created empty: columnCount={columnCount}");
             ResetTempTables();
         }
 
         public void AddRecordBatch(RecordBatch recordBatch)
         {
             ValidateBatch(recordBatch);
+            var batchIdx = RecordBatch.Count;
             RecordBatch.Add(recordBatch);
             RowCount += recordBatch.Length;
+            s_logger.Info($"[ArrowBatchTrace] AddRecordBatch chunk={ChunkIndex} batch[{batchIdx}]: " +
+                           $"rows={recordBatch.Length}, columns={recordBatch.ColumnCount}, " +
+                           $"totalRowsSoFar={RowCount}, expectedColumns={ColumnCount}");
+            if (recordBatch.ColumnCount != ColumnCount)
+            {
+                s_logger.Warn($"[ArrowBatchTrace] COLUMN COUNT MISMATCH in chunk={ChunkIndex} batch[{batchIdx}]: " +
+                              $"batch has {recordBatch.ColumnCount} columns but chunk expects {ColumnCount}");
+            }
+            LogBatchColumnDetails(recordBatch, batchIdx);
+        }
+
+        private void LogBatchColumnDetails(RecordBatch batch, int batchIdx)
+        {
+            if (!s_logger.IsInfoEnabled())
+                return;
+            var sb = new StringBuilder();
+            sb.Append($"[ArrowBatchTrace]   batch[{batchIdx}] column details ({batch.ColumnCount} cols): ");
+            for (int i = 0; i < batch.ColumnCount; i++)
+            {
+                var col = batch.Column(i);
+                sb.Append($"[{i}]{col.Data.DataType.TypeId}(len={col.Length},nulls={col.NullCount})");
+                if (i < batch.ColumnCount - 1) sb.Append(", ");
+                if (i > 0 && i % 20 == 0)
+                {
+                    s_logger.Debug(sb.ToString());
+                    sb.Clear();
+                    sb.Append($"[ArrowBatchTrace]   batch[{batchIdx}] cols continued: ");
+                }
+            }
+            if (sb.Length > 0)
+                s_logger.Debug(sb.ToString());
         }
 
         /// <summary>
@@ -93,23 +132,39 @@ namespace Snowflake.Data.Core
         {
             if (batch == null)
             {
+                s_logger.Error("[ArrowBatchTrace] ValidateBatch: received null RecordBatch");
                 throw new SnowflakeDbException(
                     SFError.INTERNAL_ERROR,
                     "Cannot add null RecordBatch");
             }
 
+            s_logger.Info($"[ArrowBatchTrace] ValidateBatch: rows={batch.Length}, columns={batch.ColumnCount}, " +
+                           $"schema fields={batch.Schema?.FieldsList?.Count ?? -1}");
+
             if (batch.Length == 0)
+            {
+                s_logger.Info($"[ArrowBatchTrace] ValidateBatch: empty batch (0 rows), columns={batch.ColumnCount}");
                 return;
+            }
 
             for (int i = 0; i < batch.ColumnCount; i++)
             {
                 var column = batch.Column(i);
-                if (column != null && column.Length != batch.Length)
+                if (column == null)
                 {
+                    s_logger.Warn($"[ArrowBatchTrace] ValidateBatch: column[{i}] is null in batch with {batch.Length} rows");
+                    continue;
+                }
+                if (column.Length != batch.Length)
+                {
+                    s_logger.Error($"[ArrowBatchTrace] ValidateBatch: CORRUPTED column[{i}] " +
+                                   $"type={column.Data.DataType.TypeId}, " +
+                                   $"column.Length={column.Length}, batch.Length={batch.Length}, " +
+                                   $"bufferCount={column.Data.Buffers.Length}");
                     throw new SnowflakeDbException(
                         SFError.INTERNAL_ERROR,
                         $"Corrupted Arrow IPC data detected. " +
-                        $"Batch declares {batch.Length} rows but column {i} has {column.Length} elements. " +
+                        $"Batch declares {batch.Length} rows but column {i} ({column.Data.DataType.TypeId}) has {column.Length} elements. " +
                         $"This will trigger download retry.");
                 }
             }
@@ -117,6 +172,8 @@ namespace Snowflake.Data.Core
 
         internal override void Reset(ExecResponseChunk chunkInfo, int chunkIndex)
         {
+            s_logger.Info($"[ArrowBatchTrace] Reset: chunk {ChunkIndex}->{chunkIndex}, " +
+                           $"hadBatches={RecordBatch.Count}, hadRows={RowCount}");
             base.Reset(chunkInfo, chunkIndex);
 
             _currentBatchIndex = 0;
@@ -128,6 +185,8 @@ namespace Snowflake.Data.Core
 
         internal override void ResetForRetry()
         {
+            s_logger.Warn($"[ArrowBatchTrace] ResetForRetry: chunk={ChunkIndex}, " +
+                          $"hadBatches={RecordBatch.Count}, hadRows={RowCount}");
             RecordBatch.Clear();
             RowCount = 0;
             _currentBatchIndex = 0;
@@ -144,21 +203,41 @@ namespace Snowflake.Data.Core
             if (_currentRecordIndex < RecordBatch[_currentBatchIndex].Length)
                 return true;
 
+            var prevBatchIndex = _currentBatchIndex;
+            var prevBatchLength = RecordBatch[_currentBatchIndex].Length;
             _currentBatchIndex += 1;
             _currentRecordIndex = 0;
             ResetTempTables();
 
+            int skippedEmpty = 0;
             while (_currentBatchIndex < RecordBatch.Count && RecordBatch[_currentBatchIndex].Length == 0)
             {
+                s_logger.Info($"[ArrowBatchTrace] Next(): skipping empty batch[{_currentBatchIndex}] " +
+                               $"in chunk={ChunkIndex}, columns={RecordBatch[_currentBatchIndex].ColumnCount}");
+                skippedEmpty++;
                 _currentBatchIndex += 1;
                 ResetTempTables();
             }
 
             if (_currentBatchIndex < RecordBatch.Count)
             {
-                return _currentRecordIndex < RecordBatch[_currentBatchIndex].Length;
+                var newBatch = RecordBatch[_currentBatchIndex];
+                s_logger.Info($"[ArrowBatchTrace] Next(): BATCH TRANSITION in chunk={ChunkIndex}: " +
+                               $"batch {prevBatchIndex}(rows={prevBatchLength})->" +
+                               $"{_currentBatchIndex}(rows={newBatch.Length}, cols={newBatch.ColumnCount}), " +
+                               $"skippedEmpty={skippedEmpty}, expectedCols={ColumnCount}, " +
+                               $"totalBatches={RecordBatch.Count}");
+                if (newBatch.ColumnCount != ColumnCount)
+                {
+                    s_logger.Error($"[ArrowBatchTrace] Next(): COLUMN MISMATCH after transition! " +
+                                   $"chunk={ChunkIndex}, batch[{_currentBatchIndex}] has {newBatch.ColumnCount} cols " +
+                                   $"but chunk expects {ColumnCount}");
+                }
+                return _currentRecordIndex < newBatch.Length;
             }
 
+            s_logger.Info($"[ArrowBatchTrace] Next(): chunk={ChunkIndex} exhausted after batch {prevBatchIndex}, " +
+                           $"totalBatches={RecordBatch.Count}, totalRows={RowCount}");
             return false;
         }
 
@@ -204,6 +283,8 @@ namespace Snowflake.Data.Core
         {
             if (_currentBatchIndex < 0 || _currentBatchIndex >= RecordBatch.Count)
             {
+                s_logger.Error($"[ArrowBatchTrace] ExtractCell: INVALID batch index {_currentBatchIndex}, " +
+                               $"totalBatches={RecordBatch.Count}, col={columnIndex}, type={srcType}");
                 throw new SnowflakeDbException(
                     SFError.INTERNAL_ERROR,
                     $"Invalid batch index {_currentBatchIndex}. Total batches: {RecordBatch.Count}");
@@ -213,6 +294,11 @@ namespace Snowflake.Data.Core
 
             if (columnIndex < 0 || columnIndex >= currentBatch.ColumnCount)
             {
+                s_logger.Error($"[ArrowBatchTrace] ExtractCell: COLUMN OUT OF BOUNDS " +
+                               $"col={columnIndex}, type={srcType}, " +
+                               $"batchIdx={_currentBatchIndex}, batchCols={currentBatch.ColumnCount}, " +
+                               $"batchRows={currentBatch.Length}, expectedCols={ColumnCount}, " +
+                               $"recordIdx={_currentRecordIndex}, chunk={ChunkIndex}");
                 throw new SnowflakeDbException(
                     SFError.COLUMN_INDEX_OUT_OF_BOUND,
                     $"Column index {columnIndex} is out of bounds. " +
@@ -222,6 +308,10 @@ namespace Snowflake.Data.Core
 
             if (_currentRecordIndex < 0 || _currentRecordIndex >= currentBatch.Length)
             {
+                s_logger.Error($"[ArrowBatchTrace] ExtractCell: RECORD OUT OF BOUNDS " +
+                               $"recordIdx={_currentRecordIndex}, " +
+                               $"batchIdx={_currentBatchIndex}, batchRows={currentBatch.Length}, " +
+                               $"col={columnIndex}, type={srcType}, chunk={ChunkIndex}");
                 throw new SnowflakeDbException(
                     SFError.INTERNAL_ERROR,
                     $"Record index {_currentRecordIndex} is out of bounds. " +
@@ -280,7 +370,24 @@ namespace Snowflake.Data.Core
                     // Snowflake data types that are floating-point numbers will fall in this category
                     // e.g. FLOAT/REAL/DOUBLE
                     if (_double[columnIndex] == null)
-                        _double[columnIndex] = ((DoubleArray)column).Values.ToArray();
+                    {
+                        var doubleArray = (DoubleArray)column;
+                        _double[columnIndex] = doubleArray.Values.ToArray();
+                        s_logger.Info($"[ArrowBatchTrace] ExtractCell REAL: cached col={columnIndex}, " +
+                                       $"arrayLen={doubleArray.Length}, valuesLen={_double[columnIndex].Length}, " +
+                                       $"nullCount={doubleArray.NullCount}, " +
+                                       $"batchIdx={_currentBatchIndex}, batchRows={currentBatch.Length}, " +
+                                       $"chunk={ChunkIndex}");
+                    }
+                    if (_currentRecordIndex >= _double[columnIndex].Length)
+                    {
+                        s_logger.Error($"[ArrowBatchTrace] ExtractCell REAL: CACHE OVERFLOW " +
+                                       $"col={columnIndex}, recordIdx={_currentRecordIndex}, " +
+                                       $"cacheLen={_double[columnIndex].Length}, " +
+                                       $"batchIdx={_currentBatchIndex}, batchRows={currentBatch.Length}, " +
+                                       $"batchCols={currentBatch.ColumnCount}, " +
+                                       $"expectedCols={ColumnCount}, chunk={ChunkIndex}");
+                    }
                     return _double[columnIndex][_currentRecordIndex];
 
                 case SFDataType.TEXT:
