@@ -10,6 +10,7 @@
 - v5.4.1
     - Extended login-request telemetry with Linux distribution details parsed from `/etc/os-release`
     - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result chunk processing by adding retry state cleanup, batch integrity validation, and defensive bounds checking in `ExtractCell()`.
+    - Bug fix: Fixed `IndexOutOfRangeException` when reading `NUMBER`/`DECIMAL` columns with scale > 9 in Arrow result format. The internal powers-of-10 lookup table was too small, causing crashes for high-precision fixed-point types.
 - v5.4.0
     - Added support for [DECFLOAT](https://docs.snowflake.com/en/sql-reference/data-types-numeric#decfloat) data type (returned as string to preserve full precision).
     - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result processing when empty batches are returned by Snowflake backend.
