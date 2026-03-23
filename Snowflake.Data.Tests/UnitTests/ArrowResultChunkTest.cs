@@ -353,6 +353,28 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase(10)]
+        [TestCase(12)]
+        [TestCase(18)]
+        public void TestExtractCellReturnsNumber64WithScaleAbove9(int scale)
+        {
+            var testValues = new long[] { 0, 123456789012345L, -123456789012345L };
+            var column = new Int64Array.Builder().AppendRange(testValues).Build();
+            var recordBatch = new RecordBatch.Builder()
+                .Append("Col_Int64", false, col => col.Int64(array => array.AppendRange(testValues)))
+                .Build();
+            var chunk = new ArrowResultChunk(recordBatch);
+
+            var divisor = (decimal)Math.Pow(10, scale);
+            foreach (var testValue in testValues)
+            {
+                chunk.Next();
+                var expected = testValue / divisor;
+                Assert.AreEqual(expected, chunk.ExtractCell(0, SFDataType.FIXED, scale, TimeZoneInfo.Utc));
+            }
+        }
+
+        [Test]
         public void TestExtractCellReturnsNumber32()
         {
             var testValues = new int[] { 0, 100, -100, Int32.MaxValue, Int32.MinValue };

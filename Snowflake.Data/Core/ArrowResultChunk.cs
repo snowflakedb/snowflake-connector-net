@@ -17,17 +17,25 @@ namespace Snowflake.Data.Core
         private static readonly DateTimeOffset s_epochDate = SFDataConverter.UnixEpoch;
 
         private static readonly long[] s_powersOf10 =  {
-            1,
-            10,
-            100,
-            1000,
-            10000,
-            100000,
-            1000000,
-            10000000,
-            100000000,
-            1000000000
+            1L,
+            10L,
+            100L,
+            1_000L,
+            10_000L,
+            100_000L,
+            1_000_000L,
+            10_000_000L,
+            100_000_000L,
+            1_000_000_000L,
         };
+
+        private static decimal DecimalPowerOf10(long scale)
+        {
+            decimal result = 1;
+            for (long i = 0; i < scale; i++)
+                result *= 10;
+            return result;
+        }
 
         private const long TicksPerDay = (long)24 * 60 * 60 * 1000 * 10000;
 
@@ -335,28 +343,28 @@ namespace Snowflake.Data.Core
                                 _sbyte[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _sbyte[columnIndex][_currentRecordIndex];
-                            return _sbyte[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _sbyte[columnIndex][_currentRecordIndex] / DecimalPowerOf10(scale);
 
                         case Int16Array array:
                             if (_short[columnIndex] == null)
                                 _short[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _short[columnIndex][_currentRecordIndex];
-                            return _short[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _short[columnIndex][_currentRecordIndex] / DecimalPowerOf10(scale);
 
                         case Int32Array array:
                             if (_int[columnIndex] == null)
                                 _int[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _int[columnIndex][_currentRecordIndex];
-                            return _int[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _int[columnIndex][_currentRecordIndex] / DecimalPowerOf10(scale);
 
                         case Int64Array array:
                             if (_long[columnIndex] == null)
                                 _long[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _long[columnIndex][_currentRecordIndex];
-                            return _long[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _long[columnIndex][_currentRecordIndex] / DecimalPowerOf10(scale);
 
                         case Decimal128Array array:
                             return array.GetValue(_currentRecordIndex);
