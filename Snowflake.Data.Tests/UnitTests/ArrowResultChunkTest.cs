@@ -353,6 +353,30 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [TestCase(20)]
+        [TestCase(28)]
+        public void TestExtractCellReturnsDecimal128WithHighScale(int scale)
+        {
+            var testValues = new decimal[] { 0m, 1.23m, -1.23m };
+            var decimalType = new Decimal128Type(38, scale);
+            var builder = new Decimal128Array.Builder(decimalType);
+            foreach (var v in testValues)
+                builder.Append(v);
+            var column = builder.Build();
+            var recordBatch = new RecordBatch(
+                new Schema(new[] { new Field("Col_Decimal128", decimalType, nullable: false) }, null),
+                new IArrowArray[] { column },
+                testValues.Length);
+            var chunk = new ArrowResultChunk(recordBatch);
+
+            foreach (var testValue in testValues)
+            {
+                chunk.Next();
+                Assert.AreEqual(testValue, chunk.ExtractCell(0, SFDataType.FIXED, scale, TimeZoneInfo.Utc));
+            }
+        }
+
+        [Test]
         [TestCase(10)]
         [TestCase(12)]
         [TestCase(18)]

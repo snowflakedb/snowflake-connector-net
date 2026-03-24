@@ -39,6 +39,9 @@ namespace Snowflake.Data.Core
         {
             if (scale < s_powersOf10.Length)
                 return s_powersOf10[scale];
+            if (scale > 28)
+                throw new OverflowException(
+                    $"Scale {scale} exceeds the maximum precision of System.Decimal (28)");
             decimal result = s_powersOf10[s_powersOf10.Length - 1];
             for (long i = s_powersOf10.Length; i <= scale; i++)
                 result *= 10;
