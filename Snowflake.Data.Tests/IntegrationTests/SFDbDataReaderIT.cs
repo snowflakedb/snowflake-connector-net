@@ -117,11 +117,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [TestCase(10, "NUMBER(18,10)")]
-        [TestCase(12, "NUMBER(18,12)")]
-        [TestCase(20, "NUMBER(38,20)")]
-        [TestCase(28, "NUMBER(38,28)")]
-        public void TestGetNumberWithHighScale(int scale, string columnType)
+        [TestCase("NUMBER(18,10)")]
+        [TestCase("NUMBER(18,12)")]
+        [TestCase("NUMBER(38,20)")]
+        [TestCase("NUMBER(38,28)")]
+        public void TestGetNumberWithHighScale(string columnType)
         {
             using (var conn = CreateAndOpenConnection())
             {
