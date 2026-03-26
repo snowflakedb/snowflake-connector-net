@@ -117,6 +117,63 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TestCase("NUMBER(18,10)")]
+        [TestCase("NUMBER(18,12)")]
+        [TestCase("NUMBER(38,20)")]
+        [TestCase("NUMBER(38,28)")]
+        public void TestGetNumberWithHighScale(string columnType)
+        {
+            using (var conn = CreateAndOpenConnection())
+            {
+                CreateOrReplaceTable(conn, TableName, new[] { $"cola {columnType}" });
+
+                var cmd = conn.CreateCommand();
+                cmd.CommandText = $"INSERT INTO {TableName} SELECT 1.23";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = $"SELECT cola FROM {TableName}";
+                using (var reader = cmd.ExecuteReader())
+                {
+                    ValidateResultFormat(reader);
+                    Assert.AreEqual("FIXED", reader.GetDataTypeName(0));
+                    Assert.AreEqual(typeof(decimal), reader.GetFieldType(0));
+                    Assert.IsTrue(reader.Read());
+                    var rawValue = reader.GetValue(0);
+                    Assert.IsInstanceOf<decimal>(rawValue);
+                    Assert.AreEqual(1.23m, (decimal)rawValue);
+                    Assert.AreEqual(1.23m, reader.GetDecimal(0));
+                    Assert.IsFalse(reader.Read());
+                }
+
+                CloseConnection(conn);
+            }
+        }
+
+        [Test]
+        public void TestGetDecfloatWithHighPrecision()
+        {
+            using (var conn = CreateAndOpenConnection())
+            {
+                var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT 12345678901234567890.123456789::DECFLOAT";
+                using (var reader = cmd.ExecuteReader())
+                {
+                    ValidateResultFormat(reader);
+                    Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
+                    Assert.AreEqual(typeof(string), reader.GetFieldType(0));
+                    Assert.IsTrue(reader.Read());
+                    var value = reader.GetValue(0);
+                    Assert.IsInstanceOf<string>(value);
+                    Assert.That((string)value, Does.Contain("1234567890123456789"));
+                    Assert.AreEqual((string)value, reader.GetString(0));
+                    Assert.IsFalse(reader.Read());
+                }
+
+                CloseConnection(conn);
+            }
+        }
+
+        [Test]
         public void TestGetDouble()
         {
             using (var conn = CreateAndOpenConnection())
