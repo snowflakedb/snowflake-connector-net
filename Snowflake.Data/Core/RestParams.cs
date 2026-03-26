@@ -77,6 +77,7 @@ namespace Snowflake.Data.Core
         static SFEnvironment()
         {
             MinicoreDisabled = IsMinicoreDisabled();
+            Tools.PlatformDetection.EnsureStarted();
             ClientEnv = new LoginRequestClientEnv()
             {
                 processName = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
