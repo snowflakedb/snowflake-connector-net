@@ -161,7 +161,7 @@ namespace Snowflake.Data.Core
 
         private IRestRequester _restRequesterForCrlCheck;
 
-        internal HttpClient GetHttpClient(HttpClientConfig config, DelegatingHandler customHandler = null)
+        internal HttpClient GetHttpClient(HttpClientConfig config, HttpMessageHandler customHandler = null)
         {
             lock (_httpClientProviderLock)
             {
@@ -169,9 +169,10 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config, DelegatingHandler customHandler = null)
+        private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config, HttpMessageHandler customHandler = null)
         {
             string name = config.ConfKey;
+
             if (!_HttpClients.ContainsKey(name))
             {
                 logger.Debug("Http client not registered. Adding.");
@@ -184,7 +185,7 @@ namespace Snowflake.Data.Core
             return _HttpClients[name];
         }
 
-        internal HttpClient CreateNewHttpClient(HttpClientConfig config, DelegatingHandler customHandler = null) =>
+        internal HttpClient CreateNewHttpClient(HttpClientConfig config, HttpMessageHandler customHandler = null) =>
             new HttpClient(
                 new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason, config.ConnectionLimit))
             {
@@ -210,7 +211,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal HttpMessageHandler SetupCustomHttpHandler(HttpClientConfig config, DelegatingHandler customHandler = null)
+        internal HttpMessageHandler SetupCustomHttpHandler(HttpClientConfig config, HttpMessageHandler customHandler = null)
         {
             if (customHandler != null)
             {

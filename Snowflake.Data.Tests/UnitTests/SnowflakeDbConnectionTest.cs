@@ -90,6 +90,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     connection.Passcode = SecureStringHelper.Encode(passcode);
                     connection.OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret);
                     connection.Token = SecureStringHelper.Encode(token);
+                    Func<System.Net.Http.HttpMessageHandler> factory = () => new System.Net.Http.HttpClientHandler();
+                    connection.HttpMessageHandlerFactory = factory;
 
                     // act
                     connection.Open();
@@ -100,7 +102,8 @@ namespace Snowflake.Data.Tests.UnitTests
                             SecureStringHelper.Decode(context.Password) == password &&
                             SecureStringHelper.Decode(context.Passcode) == passcode &&
                             SecureStringHelper.Decode(context.OAuthClientSecret) == oauthClientSecret &&
-                            SecureStringHelper.Decode(context.Token) == token)));
+                            SecureStringHelper.Decode(context.Token) == token &&
+                            context.HttpMessageHandlerFactory == factory)));
                 }
             }
             finally
@@ -139,6 +142,8 @@ namespace Snowflake.Data.Tests.UnitTests
                     connection.Passcode = SecureStringHelper.Encode(passcode);
                     connection.OAuthClientSecret = SecureStringHelper.Encode(oauthClientSecret);
                     connection.Token = SecureStringHelper.Encode(token);
+                    Func<System.Net.Http.HttpMessageHandler> factory = () => new System.Net.Http.HttpClientHandler();
+                    connection.HttpMessageHandlerFactory = factory;
 
                     // act
                     connection.OpenAsync(CancellationToken.None).Wait();
@@ -149,7 +154,8 @@ namespace Snowflake.Data.Tests.UnitTests
                             SecureStringHelper.Decode(context.Password) == password &&
                             SecureStringHelper.Decode(context.Passcode) == passcode &&
                             SecureStringHelper.Decode(context.OAuthClientSecret) == oauthClientSecret &&
-                            SecureStringHelper.Decode(context.Token) == token),
+                            SecureStringHelper.Decode(context.Token) == token &&
+                            context.HttpMessageHandlerFactory == factory),
                         It.IsAny<CancellationToken>()));
                 }
             }
