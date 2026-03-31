@@ -113,8 +113,10 @@ namespace Snowflake.Data.Core.Tools
 
         internal static string[] AggregateResults(string[] names, bool?[] results)
         {
+            if (names.Length != results.Length)
+                s_logger.Info($"Platform detection names/results size mismatch ({names.Length} vs {results.Length}); reporting partial results.");
             var detected = new List<string>();
-            for (int i = 0; i < names.Length; i++)
+            for (int i = 0; i < Math.Min(names.Length, results.Length); i++)
             {
                 if (results[i] == true)
                     detected.Add(names[i]);
