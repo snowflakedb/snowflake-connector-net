@@ -266,6 +266,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "PROVIDER", NullValueHandling = NullValueHandling.Ignore)]
         internal string Provider { get; set; }
 
+        [JsonProperty(PropertyName = "SPCS_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string SpcsToken { get; set; }
+
         [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
         internal Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
 

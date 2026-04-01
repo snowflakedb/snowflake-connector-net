@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Authenticator
@@ -52,6 +53,9 @@ namespace Snowflake.Data.Core.Authenticator
 
         // The client environment properties
         private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CloneForSession();
+
+        // Provider for the SPCS container identity token
+        internal SpcsTokenProvider SpcsTokenProvider = SpcsTokenProvider.Instance;
 
         /// <summary>
         /// The abstract base for all authenticators.
@@ -146,6 +150,7 @@ namespace Snowflake.Data.Core.Authenticator
                 SessionParameters = session.ParameterMap,
                 Authenticator = authName,
             };
+            data.SpcsToken = SpcsTokenProvider.GetSpcsToken();
             SetSpecializedAuthenticatorData(ref data);
             return data;
         }
