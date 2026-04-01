@@ -2,6 +2,7 @@
 
 # Changelog
 - v5.5.0
+    - Extended login-request telemetry with cloud platform and environment detection (AWS Lambda, EC2, Azure VM/Functions, GCE/Cloud Run, GitHub Actions). Detection runs once at startup in the background within a 200ms timeout. Can be disabled via the `SNOWFLAKE_DISABLE_PLATFORM_DETECTION` environment variable.
     - Added `workloadIdentityImpersonationPath` config option for `authenticator=WORKLOAD_IDENTITY` allowing workloads to authenticate as a different identity through transitive service account impersonation.
     - Added `HonorSessionTimezone` connection parameter (default: `false`). When set to `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter (`ALTER SESSION SET TIMEZONE`) instead of using the local machine timezone. This will become the default behavior in a future major release.
     - Bug fix: Idle sessions are now evicted from the pool even when closing them fails.
