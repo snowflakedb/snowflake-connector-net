@@ -2,14 +2,17 @@
 
 # Changelog
 - v5.5.0
+    - Extended login-request telemetry with cloud platform and environment detection (AWS Lambda, EC2, Azure VM/Functions, GCE/Cloud Run, GitHub Actions). Detection runs once at startup in the background within a 200ms timeout. Can be disabled via the `SNOWFLAKE_DISABLE_PLATFORM_DETECTION` environment variable.
     - Added `workloadIdentityImpersonationPath` config option for `authenticator=WORKLOAD_IDENTITY` allowing workloads to authenticate as a different identity through transitive service account impersonation.
     - Added `HonorSessionTimezone` connection parameter (default: `false`). When set to `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter (`ALTER SESSION SET TIMEZONE`) instead of using the local machine timezone. This will become the default behavior in a future major release.
     - Bug fix: Idle sessions are now evicted from the pool even when closing them fails.
     - Bug fix: Sessions that receive HTTP 401 during query execution are no longer returned to the pool.
     - Bug fix: Fixed `GetResultsFromQueryIdAsync` not aborting queries on the server when `CancellationToken` is cancelled. Previously only client-side polling stopped while queries continued running on Snowflake.
+    - Bug fix: Fixed Azure GET (download) operations incorrectly reporting `UPLOADED` result status instead of `DOWNLOADED` when the server returns presigned URLs for an encrypted stage.
 - v5.4.1
     - Extended login-request telemetry with Linux distribution details parsed from `/etc/os-release`
     - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result chunk processing by adding retry state cleanup, batch integrity validation, and defensive bounds checking in `ExtractCell()`.
+    - Bug fix: Fixed `IndexOutOfRangeException` when reading `NUMBER`/`DECIMAL` columns with scale > 9 in Arrow result format. The internal powers-of-10 lookup table was too small, causing crashes for high-precision fixed-point types.
 - v5.4.0
     - Added support for [DECFLOAT](https://docs.snowflake.com/en/sql-reference/data-types-numeric#decfloat) data type (returned as string to preserve full precision).
     - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result processing when empty batches are returned by Snowflake backend.
