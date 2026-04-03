@@ -252,7 +252,10 @@ namespace Snowflake.Data.Core.Revocation
         }
 
         private bool IsCrlSignatureAndIssuerValid(Crl crl, X509Certificate2 certificate, string crlUrl, X509Certificate2 parentCertificate) =>
-            IsCrlSignatureValid(crl, parentCertificate) && IsIssuerEquivalent(crl, certificate) && IsIssuerDistributionPointValid(crl, crlUrl);
+            IsCrlSignatureValid(crl, parentCertificate)
+            && IsIssuerEquivalent(crl, certificate)
+            && IsAuthorityKeyIdentifierConsistent(crl, parentCertificate)
+            && IsIssuerDistributionPointValid(crl, crlUrl);
 
         internal bool IsCrlSignatureValid(Crl crl, X509Certificate2 parentCertificate)
         {
@@ -314,21 +317,53 @@ namespace Snowflake.Data.Core.Revocation
 
         internal bool IsIssuerEquivalent(Crl crl, X509Certificate2 certificate)
         {
-            var issuerNameFromCert = new X509Name(NormalizeStateAttributeToST(certificate.IssuerName.Name));
-            var issuerFromCrl = new X509Name(crl.IssuerName);
-            return issuerNameFromCert.Equivalent(issuerFromCrl);
+            // Compare DER-encoded issuer names directly (same approach as JDBC X500Principal.equals()).
+            var certIssuerBytes = certificate.IssuerName?.RawData;
+            var crlIssuerBytes = crl.IssuerNameRawData;
+            if (certIssuerBytes == null || crlIssuerBytes == null
+                || certIssuerBytes.Length == 0 || crlIssuerBytes.Length == 0)
+                return false;
+            return certIssuerBytes.SequenceEqual(crlIssuerBytes);
         }
 
-        private string NormalizeStateAttributeToST(string issuerName)
+        internal bool IsAuthorityKeyIdentifierConsistent(Crl crl, X509Certificate2 parentCertificate)
         {
-            // .NET's X509Certificate2.IssuerName.Name serializes the State/Province attribute as "S="
-            // (a shorthand used by some older OpenSSL versions and CSR tools), whereas CRLs and most
-            // X.509 tooling use the RFC 5280 standard token "ST=". We normalize to "ST=" before
-            // constructing the BouncyCastle X509Name for comparison, rather than rewriting the certificate,
-            // to avoid any compatibility issues for customers.
-            if (issuerName.StartsWith("S="))
-                return "ST=" + issuerName.Substring(2);
-            return issuerName.Replace(", S=", ", ST=");
+            if (crl?.BouncyCastleCrl == null || parentCertificate == null)
+                return false;
+
+            try
+            {
+                var extValue = crl.BouncyCastleCrl.GetExtensionValue(X509Extensions.AuthorityKeyIdentifier);
+                if (extValue == null)
+                    return true;
+
+                var aki = AuthorityKeyIdentifier.GetInstance(Asn1Object.FromByteArray(extValue.GetOctets()));
+                var akiKeyIdOctets = aki.GetKeyIdentifier();
+                if (akiKeyIdOctets == null)
+                    return true;
+                var skiOctets = GetSubjectKeyIdentifierOctets(parentCertificate);
+                if (skiOctets == null)
+                    return true;
+
+                return akiKeyIdOctets.SequenceEqual(skiOctets);
+            }
+            catch (Exception exception)
+            {
+                s_logger.Error(
+                    $"Authority Key Identifier check for CRL issued by '{crl.IssuerName}' failed: {exception.Message}",
+                    exception);
+                return false;
+            }
+        }
+
+        private static byte[] GetSubjectKeyIdentifierOctets(X509Certificate2 certificate)
+        {
+            const string skiOid = "2.5.29.14";
+            var skiExt = certificate.Extensions[skiOid];
+            if (skiExt == null)
+                return null;
+            var ski = SubjectKeyIdentifier.GetInstance(Asn1Object.FromByteArray(skiExt.RawData));
+            return ski.GetKeyIdentifier();
         }
 
         private Crl FetchCrl(string crlUrl)

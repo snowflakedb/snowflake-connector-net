@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Moq;
 using NUnit.Framework;
 using Org.BouncyCastle.Math;
@@ -31,6 +32,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.AreEqual(DateTimeKind.Utc, crl.NextUpdate?.Kind);
             Assert.AreEqual(DigiCertNextUpdateString, crl.NextUpdate?.ToUniversalTime().ToString("o"));
             Assert.AreEqual(DigiCertIssuer, crl.IssuerName);
+            Assert.IsNotNull(crl.IssuerNameRawData);
+            CollectionAssert.AreEqual(crl.BouncyCastleCrl.IssuerDN.GetEncoded(), crl.IssuerNameRawData);
             Assert.That(crl.IssuerDistributionPoints, Is.EquivalentTo(expectedCrlDistributionPoints));
             Assert.That(crl.RevokedCertificates, Does.Contain(DigiCertRevokedCertSerialNumber));
             Assert.IsTrue(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
