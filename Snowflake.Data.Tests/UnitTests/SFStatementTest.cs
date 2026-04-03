@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -260,6 +261,111 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual("Error: internal error SqlState: , VendorCode: 500, QueryId: ", thrown.Message);
+        }
+
+        [Test]
+        public void TestBuildResultSetMergesQccOnFailedResponse()
+        {
+            var queryContext = new ResponseQueryContext
+            {
+                Entries = new List<ResponseQueryContextElement>
+                {
+                    new ResponseQueryContextElement(new QueryContextElement(42, 1000L, 1, "error_context"))
+                }
+            };
+            var response = new QueryExecResponse
+            {
+                success = false,
+                code = 500,
+                message = "query failed",
+                data = new QueryExecResponseData
+                {
+                    sqlState = "42000",
+                    queryId = "test-query-id",
+                    QueryContext = queryContext,
+                    parameters = new List<NameValueParameter>()
+                }
+            };
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
+            Assert.IsEmpty(session.GetQueryContextRequest().Entries);
+            var statement = new SFStatement(session);
+
+            Assert.Throws<SnowflakeDbException>(() => statement.BuildResultSet(response, CancellationToken.None));
+
+            var cachedContext = session.GetQueryContextRequest();
+            Assert.IsNotNull(cachedContext);
+            Assert.AreEqual(1, cachedContext.Entries.Count);
+            Assert.AreEqual(42, cachedContext.Entries[0].Id);
+        }
+
+        [Test]
+        public void TestBuildResultSetDoesNotClearQccOnFailedResponseWithoutQueryContext()
+        {
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
+            var preExistingContext = new ResponseQueryContext
+            {
+                Entries = new List<ResponseQueryContextElement>
+                {
+                    new ResponseQueryContextElement(new QueryContextElement(99, 2000L, 1, "existing"))
+                }
+            };
+            session.UpdateQueryContextCache(preExistingContext);
+            Assert.AreEqual(1, session.GetQueryContextRequest().Entries.Count);
+
+            var response = new QueryExecResponse
+            {
+                success = false,
+                code = 500,
+                message = "query failed",
+                data = new QueryExecResponseData
+                {
+                    sqlState = "42000",
+                    queryId = "test-query-id",
+                    QueryContext = null,
+                    parameters = new List<NameValueParameter>()
+                }
+            };
+            var statement = new SFStatement(session);
+
+            Assert.Throws<SnowflakeDbException>(() => statement.BuildResultSet(response, CancellationToken.None));
+
+            var cachedContext = session.GetQueryContextRequest();
+            Assert.IsNotNull(cachedContext);
+            Assert.AreEqual(1, cachedContext.Entries.Count);
+            Assert.AreEqual(99, cachedContext.Entries[0].Id);
+        }
+
+        [Test]
+        public void TestExecuteMergesQccOnFailedResponse()
+        {
+            var restRequester = new Mock.MockRestRequesterWithQccOnError();
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            session.Open();
+            var statement = new SFStatement(session);
+
+            Assert.Throws<SnowflakeDbException>(() => statement.Execute(0, "select 1", null, false, false));
+
+            var cachedContext = session.GetQueryContextRequest();
+            Assert.IsNotNull(cachedContext);
+            Assert.AreEqual(1, cachedContext.Entries.Count);
+            Assert.AreEqual(42, cachedContext.Entries[0].Id);
+        }
+
+        [Test]
+        public async Task TestExecuteAsyncMergesQccOnFailedResponse()
+        {
+            var restRequester = new Mock.MockRestRequesterWithQccOnError();
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            await session.OpenAsync(CancellationToken.None);
+            var statement = new SFStatement(session);
+
+            Assert.ThrowsAsync<SnowflakeDbException>(async () =>
+                await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None));
+
+            var cachedContext = session.GetQueryContextRequest();
+            Assert.IsNotNull(cachedContext);
+            Assert.AreEqual(1, cachedContext.Entries.Count);
+            Assert.AreEqual(42, cachedContext.Entries[0].Id);
         }
     }
 }

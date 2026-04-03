@@ -9,6 +9,7 @@
     - Bug fix: Sessions that receive HTTP 401 during query execution are no longer returned to the pool.
     - Bug fix: Fixed `GetResultsFromQueryIdAsync` not aborting queries on the server when `CancellationToken` is cancelled. Previously only client-side polling stopped while queries continued running on Snowflake.
     - Bug fix: Fixed Azure GET (download) operations incorrectly reporting `UPLOADED` result status instead of `DOWNLOADED` when the server returns presigned URLs for an encrypted stage.
+    - Bug fix: Fixed query context cache not being updated when the server returns `queryContext` in a failed query response.
 - v5.4.1
     - Extended login-request telemetry with Linux distribution details parsed from `/etc/os-release`
     - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result chunk processing by adding retry state cleanup, batch integrity validation, and defensive bounds checking in `ExtractCell()`.
