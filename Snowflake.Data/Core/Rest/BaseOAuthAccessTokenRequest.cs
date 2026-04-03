@@ -31,8 +31,8 @@ namespace Snowflake.Data.Core.Rest
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", authorizationHeader);
             requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             requestMessage.Content = GetContent();
-            requestMessage.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
-            requestMessage.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
+            requestMessage.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
+            requestMessage.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
             return requestMessage;
         }
 

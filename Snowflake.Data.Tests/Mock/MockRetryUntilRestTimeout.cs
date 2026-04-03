@@ -32,11 +32,7 @@ namespace Snowflake.Data.Tests.Mock
                 _forceTimeoutForNonLoginRequestsOnly && !message.RequestUri.AbsolutePath.Equals(RestPath.SF_LOGIN_PATH))
             {
                 // Override the http timeout and set to 1ms to force all http request to timeout and retry
-                // Disable warning as this is the way to be compliant with netstandard2.0
-                // API reference: https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestmessage?view=netstandard-2.0
-#pragma warning disable CS0618 // Type or member is obsolete
-                message.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY] = TimeSpan.FromTicks(0);
-#pragma warning restore CS0618 // Type or member is obsolete
+                message.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromTicks(0));
             }
 
             return await (base.SendAsync(message, restTimeout, externalCancellationToken).ConfigureAwait(false));

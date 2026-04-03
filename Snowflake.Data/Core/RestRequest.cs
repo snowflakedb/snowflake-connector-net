@@ -51,8 +51,8 @@ namespace Snowflake.Data.Core
         protected HttpRequestMessage newMessage(HttpMethod method, Uri url)
         {
             HttpRequestMessage message = new HttpRequestMessage(method, url);
-            message.Properties[HTTP_REQUEST_TIMEOUT_KEY] = HttpTimeout;
-            message.Properties[REST_REQUEST_TIMEOUT_KEY] = RestTimeout;
+            message.SetOption(HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
+            message.SetOption(REST_REQUEST_TIMEOUT_KEY, RestTimeout);
             return message;
         }
 

@@ -130,8 +130,8 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             {
                 request.Headers.Add(keyValuePair.Key, keyValuePair.Value);
             }
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
             return request;
         }
     }

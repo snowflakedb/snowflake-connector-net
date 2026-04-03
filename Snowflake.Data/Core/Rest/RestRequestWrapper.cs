@@ -18,6 +18,6 @@ namespace Snowflake.Data.Core.Rest
         }
 
         public TimeSpan GetRestTimeout() =>
-            (TimeSpan)_httpRequestMessage.Properties[REST_REQUEST_TIMEOUT_KEY];
+            (TimeSpan)_httpRequestMessage.GetOption(REST_REQUEST_TIMEOUT_KEY);
     }
 }
