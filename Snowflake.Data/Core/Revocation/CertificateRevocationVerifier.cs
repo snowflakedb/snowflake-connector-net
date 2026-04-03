@@ -314,14 +314,18 @@ namespace Snowflake.Data.Core.Revocation
 
         internal bool IsIssuerEquivalent(Crl crl, X509Certificate2 certificate)
         {
-            var issuerNameFromCert = new X509Name(FixSInIssuerName(certificate.IssuerName.Name));
+            var issuerNameFromCert = new X509Name(NormalizeStateAttributeToST(certificate.IssuerName.Name));
             var issuerFromCrl = new X509Name(crl.IssuerName);
             return issuerNameFromCert.Equivalent(issuerFromCrl);
         }
 
-        private string FixSInIssuerName(string issuerName)
+        private string NormalizeStateAttributeToST(string issuerName)
         {
-            // TODO: figure out how to do it better
+            // .NET's X509Certificate2.IssuerName.Name serializes the State/Province attribute as "S="
+            // (a shorthand used by some older OpenSSL versions and CSR tools), whereas CRLs and most
+            // X.509 tooling use the RFC 5280 standard token "ST=". We normalize to "ST=" before
+            // constructing the BouncyCastle X509Name for comparison, rather than rewriting the certificate,
+            // to avoid any compatibility issues for customers.
             if (issuerName.StartsWith("S="))
                 return "ST=" + issuerName.Substring(2);
             return issuerName.Replace(", S=", ", ST=");
