@@ -306,6 +306,10 @@ namespace Snowflake.Data.Core
                 }
             }
 
+            if (response.data?.QueryContext != null)
+            {
+                SfSession.UpdateQueryContextCache(response.data.QueryContext);
+            }
             throw new SnowflakeDbException(response.data?.sqlState,
                 response.code, response.message, response.data?.queryId);
         }
@@ -717,6 +721,10 @@ namespace Snowflake.Data.Core
 
                 if (!response.success)
                 {
+                    if (response.data is QueryExecResponseData queryData && queryData.QueryContext != null)
+                    {
+                        SfSession.UpdateQueryContextCache(queryData.QueryContext);
+                    }
                     throw new SnowflakeDbException(
                         response.data.sqlState,
                         response.code,
@@ -805,6 +813,10 @@ namespace Snowflake.Data.Core
 
                 if (!response.success)
                 {
+                    if (response.data is QueryExecResponseData queryData && queryData.QueryContext != null)
+                    {
+                        SfSession.UpdateQueryContextCache(queryData.QueryContext);
+                    }
                     throw new SnowflakeDbException(
                         response.data.sqlState,
                         response.code,
