@@ -287,6 +287,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
             var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
+            Assert.IsEmpty(session.GetQueryContextRequest().Entries);
             var statement = new SFStatement(session);
 
             Assert.Throws<SnowflakeDbException>(() => statement.BuildResultSet(response, CancellationToken.None));
