@@ -10,7 +10,10 @@ namespace Snowflake.Data.Core.Tools
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SpcsTokenProvider>();
 
-        public static readonly SpcsTokenProvider Instance = new SpcsTokenProvider();
+        internal static SpcsTokenProvider CreateIfRunningInSpcs() =>
+            string.IsNullOrEmpty(EnvironmentOperations.Instance.GetEnvironmentVariable(RunningInsideSpcsEnvVar))
+                ? null
+                : new SpcsTokenProvider();
 
         private readonly FileOperations _fileOperations;
         private readonly EnvironmentOperations _environmentOperations;
