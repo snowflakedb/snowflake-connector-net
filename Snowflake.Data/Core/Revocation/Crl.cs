@@ -15,6 +15,8 @@ namespace Snowflake.Data.Core.Revocation
 
         public string IssuerName { get; set; }
 
+        public byte[] IssuerNameRawData { get; set; }
+
         public string[] IssuerDistributionPoints { get; set; }
 
         public List<string> RevokedCertificates { get; set; }

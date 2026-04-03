@@ -52,7 +52,8 @@ namespace Snowflake.Data.Tests.Util
             string[][] crlUrls,
             AsymmetricCipherKeyPair keyPair,
             bool isCA = true,
-            string signatureAlgorithm = SHA256WithRsaAlgorithm)
+            string signatureAlgorithm = SHA256WithRsaAlgorithm,
+            bool includeSubjectKeyIdentifier = true)
         {
             var certGenerator = new X509V3CertificateGenerator();
             var subjectDistinguishedName = new X509Name(subjectName);
@@ -66,6 +67,11 @@ namespace Snowflake.Data.Tests.Util
             certGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(isCA)); // mark as CA
             var keyUsage = isCA ? X509KeyUsageFlags.KeyCertSign : X509KeyUsageFlags.DigitalSignature;
             certGenerator.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage((int)keyUsage));
+            if (isCA && includeSubjectKeyIdentifier)
+            {
+                var spki = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(keyPair.Public);
+                certGenerator.AddExtension(X509Extensions.SubjectKeyIdentifier, false, new SubjectKeyIdentifier(spki));
+            }
             if (crlUrls?.Length > 0)
             {
                 var distributionPoints = crlUrls
@@ -133,6 +139,27 @@ namespace Snowflake.Data.Tests.Util
             crlGenerator.SetThisUpdate(thisUpdateUtc);
             crlGenerator.SetNextUpdate(nextUpdateUtc);
             crlGenerator.AddCrlEntry(new BigInteger("12345"), revocationTimeUtc, CrlReason.KeyCompromise);
+            var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm, caPrivateKey);
+            return crlGenerator.Generate(signatureFactory);
+        }
+
+        public static X509Crl GenerateCrlWithAuthorityKeyIdentifier(
+            string signatureAlgorithm,
+            AsymmetricKeyParameter caPrivateKey,
+            AsymmetricKeyParameter authorityKeyIdentifierPublicKey,
+            string caName,
+            DateTime thisUpdateUtc,
+            DateTime nextUpdateUtc,
+            DateTime revocationTimeUtc)
+        {
+            var crlGenerator = new X509V2CrlGenerator();
+            var issuerDN = new X509Name(caName);
+            crlGenerator.SetIssuerDN(issuerDN);
+            crlGenerator.SetThisUpdate(thisUpdateUtc);
+            crlGenerator.SetNextUpdate(nextUpdateUtc);
+            crlGenerator.AddCrlEntry(new BigInteger("12345"), revocationTimeUtc, CrlReason.KeyCompromise);
+            var akiSpki = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(authorityKeyIdentifierPublicKey);
+            crlGenerator.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifier(akiSpki));
             var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm, caPrivateKey);
             return crlGenerator.Generate(signatureFactory);
         }

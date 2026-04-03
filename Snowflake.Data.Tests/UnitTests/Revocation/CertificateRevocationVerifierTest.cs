@@ -302,25 +302,129 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
-        [TestCase("CN=other CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland", true)]
-        [TestCase("C=Poland, CN=other CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian", true)]
-        [TestCase("CN=different CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland", false)]
-        public void TestVerifyIfIssuerMatchesTheCertificateIssuer(string issuerName, bool expectedIsEquivalent)
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TestVerifyIfIssuerMatchesTheCertificateIssuer(bool expectEquivalent)
         {
             // arrange
             var certificate = CertificateGenerator.GenerateSelfSignedCertificateWithDefaultSubject("other CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), new string[][] { });
+            var otherIssuerCertificate = CertificateGenerator.GenerateSelfSignedCertificateWithDefaultSubject("different CA", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), new string[][] { });
             var config = GetHttpConfig();
             var restRequester = new Mock<IRestRequester>();
             var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
             var environmentOperation = new Mock<EnvironmentOperations>();
             var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
-            var crl = new Crl { IssuerName = issuerName };
+            var crlIssuerRaw = expectEquivalent ? certificate.IssuerName.RawData : otherIssuerCertificate.IssuerName.RawData;
+            var crl = new Crl { IssuerName = certificate.IssuerName.Name, IssuerNameRawData = crlIssuerRaw };
 
             // act
             var isEquivalent = verifier.IsIssuerEquivalent(crl, certificate);
 
             // assert
-            Assert.AreEqual(expectedIsEquivalent, isEquivalent);
+            Assert.AreEqual(expectEquivalent, isEquivalent);
+        }
+
+        [Test]
+        public void AuthorityKeyIdentifierConsistentWhenCrlHasNoAkiExtension()
+        {
+            var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var parentCertificate = CertificateGenerator.GenerateCertificate(
+                rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
+            var now = DateTime.UtcNow;
+            var bcCrl = CertificateGenerator.GenerateCrl(
+                CertificateGenerator.SHA256WithRsaAlgorithm, certKeys[1].Private, rootSubject,
+                now.AddHours(-1), now.AddHours(24), now.AddHours(-1));
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crl = new CrlParser(environmentOperation.Object).Parse(bcCrl.GetEncoded(), now);
+            var config = GetHttpConfig();
+            var restRequester = new Mock<IRestRequester>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var verifier = new CertificateRevocationVerifier(
+                config, TimeProvider.Instance, restRequester.Object,
+                CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            Assert.IsTrue(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+        }
+
+        [Test]
+        public void AuthorityKeyIdentifierConsistentWhenAkiMatchesParentSki()
+        {
+            var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var parentCertificate = CertificateGenerator.GenerateCertificate(
+                rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
+            var now = DateTime.UtcNow;
+            var bcCrl = CertificateGenerator.GenerateCrlWithAuthorityKeyIdentifier(
+                CertificateGenerator.SHA256WithRsaAlgorithm,
+                certKeys[1].Private,
+                certKeys[1].Public,
+                rootSubject,
+                now.AddHours(-1), now.AddHours(24), now.AddHours(-1));
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crl = new CrlParser(environmentOperation.Object).Parse(bcCrl.GetEncoded(), now);
+            var config = GetHttpConfig();
+            var restRequester = new Mock<IRestRequester>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var verifier = new CertificateRevocationVerifier(
+                config, TimeProvider.Instance, restRequester.Object,
+                CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            Assert.IsTrue(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+        }
+
+        [Test]
+        public void AuthorityKeyIdentifierInconsistentWhenAkiDoesNotMatchParentSki()
+        {
+            var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+            var otherKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var parentCertificate = CertificateGenerator.GenerateCertificate(
+                rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
+            var now = DateTime.UtcNow;
+            var bcCrl = CertificateGenerator.GenerateCrlWithAuthorityKeyIdentifier(
+                CertificateGenerator.SHA256WithRsaAlgorithm,
+                certKeys[1].Private,
+                otherKeys[1].Public,
+                rootSubject,
+                now.AddHours(-1), now.AddHours(24), now.AddHours(-1));
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crl = new CrlParser(environmentOperation.Object).Parse(bcCrl.GetEncoded(), now);
+            var config = GetHttpConfig();
+            var restRequester = new Mock<IRestRequester>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var verifier = new CertificateRevocationVerifier(
+                config, TimeProvider.Instance, restRequester.Object,
+                CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            Assert.IsFalse(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+        }
+
+        [Test]
+        public void AuthorityKeyIdentifierConsistentWhenCrlHasAkiButParentHasNoSki()
+        {
+            var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var parentCertificate = CertificateGenerator.GenerateCertificate(
+                rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300),
+                null, certKeys[1], includeSubjectKeyIdentifier: false);
+            var now = DateTime.UtcNow;
+            var bcCrl = CertificateGenerator.GenerateCrlWithAuthorityKeyIdentifier(
+                CertificateGenerator.SHA256WithRsaAlgorithm,
+                certKeys[1].Private,
+                certKeys[1].Public,
+                rootSubject,
+                now.AddHours(-1), now.AddHours(24), now.AddHours(-1));
+            var environmentOperation = new Mock<EnvironmentOperations>();
+            var crl = new CrlParser(environmentOperation.Object).Parse(bcCrl.GetEncoded(), now);
+            var config = GetHttpConfig();
+            var restRequester = new Mock<IRestRequester>();
+            var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
+            var verifier = new CertificateRevocationVerifier(
+                config, TimeProvider.Instance, restRequester.Object,
+                CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+
+            Assert.IsTrue(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
         }
 
         private static HttpRequestException NotFoundHttpExceptionProvider() =>
