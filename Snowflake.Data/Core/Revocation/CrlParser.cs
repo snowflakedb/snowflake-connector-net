@@ -52,6 +52,7 @@ namespace Snowflake.Data.Core.Revocation
                 ThisUpdate = crl.ThisUpdate,
                 NextUpdate = crl.NextUpdate,
                 IssuerName = crl.IssuerDN.ToString(),
+                IssuerNameRawData = crl.IssuerDN.GetEncoded(),
                 IssuerDistributionPoints = ReadIdpFromCrl(crl),
                 RevokedCertificates = crl.GetRevokedCertificates().Select(cert => ConvertToHexadecimalString(cert.SerialNumber)).ToList(),
                 BouncyCastleCrl = crl

@@ -10,6 +10,7 @@
     - Bug fix: Fixed `GetResultsFromQueryIdAsync` not aborting queries on the server when `CancellationToken` is cancelled. Previously only client-side polling stopped while queries continued running on Snowflake.
     - Bug fix: Fixed Azure GET (download) operations incorrectly reporting `UPLOADED` result status instead of `DOWNLOADED` when the server returns presigned URLs for an encrypted stage.
     - Bug fix: Fixed query context cache not being updated when the server returns `queryContext` in a failed query response.
+    - Bug fix: Improved CRL issuer validation: issuer names are now compared using DER encoding (avoiding string-form mismatches such as `S=` vs `ST=`), and the CRL's Authority Key Identifier is verified against the issuing CA's Subject Key Identifier when both extensions are present.
 - v5.4.1
     - Extended login-request telemetry with Linux distribution details parsed from `/etc/os-release`
     - Bug fix: Fixed `IndexOutOfRangeException` in Arrow result chunk processing by adding retry state cleanup, batch integrity validation, and defensive bounds checking in `ExtractCell()`.
