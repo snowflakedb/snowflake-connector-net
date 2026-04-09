@@ -144,6 +144,38 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
         }
 
+        [TestCase("true", false)]
+        [TestCase("false", true)]
+        public void TestTomlPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
+        {
+            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
+            Syscall.chmod(filePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupWrite));
+            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, skipValue);
+
+            if (shouldThrow)
+                Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
+            else
+                Assert.DoesNotThrow(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
+
+            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
+        }
+
+        [TestCase("true", false)]
+        [TestCase("false", true)]
+        public void TestCredentialManagerPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
+        {
+            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
+            Syscall.chmod(filePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupWrite));
+            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, skipValue);
+
+            if (shouldThrow)
+                Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+            else
+                Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+
+            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
+        }
+
         [Test]
         public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
             [ValueSource(nameof(UserAllowedWritePermissions))] FileAccessPermissions userAllowedPermissions)

@@ -37,6 +37,12 @@ namespace Snowflake.Data.Core.Tools
                 ThrowSecurityException("Attempting to read or write a file not owned by the effective group of the current process");
         }
 
+        internal void ValidateUserPermissions(UnixStream stream)
+        {
+            if (stream.OwnerUser.UserId != _unixUserId)
+                ThrowSecurityException("Attempting to read or write a file not owned by the effective user of the current process");
+        }
+
         internal void ThrowSecurityException(string errorMessage)
         {
             s_logger.Error(errorMessage);
