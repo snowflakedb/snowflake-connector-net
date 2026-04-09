@@ -274,7 +274,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
                 return;
             }
 
-            ValidatorOperations.Instance.ValidateUserAndGroupPermissions(stream);
+            ValidatorOperations.Instance.ValidateUserPermissions(stream);
             var allowedPermissions = new[]
             {
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
