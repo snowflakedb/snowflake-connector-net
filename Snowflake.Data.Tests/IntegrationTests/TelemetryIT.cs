@@ -196,5 +196,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.IsTrue(conn.SfSession._telemetry.IsTelemetryEnabled());
             }
         }
+
+        [Test]
+        public void TestFailedQueryGeneratesTelemetryEvent()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.Open();
+
+                var telemetry = conn.SfSession._telemetry;
+                var bufferBefore = telemetry.BufferSize;
+
+                try
+                {
+                    var cmd = conn.CreateCommand();
+                    cmd.CommandText = "SELECT * FROM nonexistent_table_for_telemetry_test_xyz";
+                    cmd.ExecuteReader();
+                    Assert.Fail("Expected exception was not thrown");
+                }
+                catch (SnowflakeDbException)
+                {
+                    // Expected - the query should fail
+                }
+
+                // The failed query should have generated a telemetry event
+                Assert.Greater(telemetry.BufferSize, bufferBefore);
+            }
+        }
     }
 }

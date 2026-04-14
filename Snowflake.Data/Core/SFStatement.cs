@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Telemetry;
 using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
@@ -310,8 +311,10 @@ namespace Snowflake.Data.Core
             {
                 SfSession.UpdateQueryContextCache(response.data.QueryContext);
             }
-            throw new SnowflakeDbException(response.data?.sqlState,
-                response.code, response.message, response.data?.queryId);
+            throw TelemetryHelper.SendAndThrow(
+                new SnowflakeDbException(response.data?.sqlState,
+                response.code, response.message, response.data?.queryId),
+                SfSession);
         }
 
         private void SetTimeout(int timeout)
@@ -725,11 +728,13 @@ namespace Snowflake.Data.Core
                     {
                         SfSession.UpdateQueryContextCache(queryData.QueryContext);
                     }
-                    throw new SnowflakeDbException(
+                    throw TelemetryHelper.SendAndThrow(
+                        new SnowflakeDbException(
                         response.data.sqlState,
                         response.code,
                         response.message,
-                        response.data.queryId);
+                        response.data.queryId),
+                        SfSession);
                 }
 
                 return response;
@@ -817,11 +822,13 @@ namespace Snowflake.Data.Core
                     {
                         SfSession.UpdateQueryContextCache(queryData.QueryContext);
                     }
-                    throw new SnowflakeDbException(
+                    throw TelemetryHelper.SendAndThrow(
+                        new SnowflakeDbException(
                         response.data.sqlState,
                         response.code,
                         response.message,
-                        response.data.queryId);
+                        response.data.queryId),
+                        SfSession);
                 }
 
                 return response;
@@ -889,11 +896,13 @@ namespace Snowflake.Data.Core
 
                 if (!response.success)
                 {
-                    throw new SnowflakeDbException(
+                    throw TelemetryHelper.SendAndThrow(
+                        new SnowflakeDbException(
                         response.data.queries[0].state,
                         response.code,
                         response.message,
-                        queryId);
+                        queryId),
+                        SfSession);
                 }
 
                 QueryStatus queryStatus = QueryStatus.NoData;
@@ -944,11 +953,13 @@ namespace Snowflake.Data.Core
 
                 if (!response.success)
                 {
-                    throw new SnowflakeDbException(
+                    throw TelemetryHelper.SendAndThrow(
+                        new SnowflakeDbException(
                         response.data.queries[0].state,
                         response.code,
                         response.message,
-                        queryId);
+                        queryId),
+                        SfSession);
                 }
 
                 QueryStatus queryStatus = QueryStatus.NoData;

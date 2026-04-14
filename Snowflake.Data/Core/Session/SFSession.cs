@@ -421,6 +421,7 @@ namespace Snowflake.Data.Core
                 SnowflakeDbException e = new SnowflakeDbException("",
                     response.code, response.message, sessionId);
                 logger.Error($"Renew session (ID: {sessionId}) failed", e);
+                TelemetryHelper.SendExceptionTelemetry(e, this);
                 throw e;
             }
             else
@@ -444,6 +445,7 @@ namespace Snowflake.Data.Core
                 SnowflakeDbException e = new SnowflakeDbException("",
                     response.code, response.message, sessionId);
                 logger.Error($"Renew session (ID: {sessionId}) failed", e);
+                TelemetryHelper.SendExceptionTelemetry(e, this);
                 throw e;
             }
             else
