@@ -46,6 +46,8 @@ namespace Snowflake.Data.Core
 
         internal const string SF_SESSION_HEARTBEAT_PATH = SF_SESSION_PATH + "/heartbeat";
 
+        internal const string SF_TELEMETRY_PATH = "/telemetry/send";
+
         internal const string SF_CONSOLE_LOGIN = "/console/login";
     }
 

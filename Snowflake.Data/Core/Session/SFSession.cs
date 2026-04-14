@@ -12,6 +12,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Telemetry;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
@@ -49,6 +50,8 @@ namespace Snowflake.Data.Core
         internal bool sessionPropertiesChanged = false;
 
         internal string serverVersion;
+
+        internal TelemetryClient _telemetry;
 
         private readonly ConnectionPoolConfig _poolConfig;
 
@@ -139,6 +142,7 @@ namespace Snowflake.Data.Core
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 _timeSinceLastRenew = _startTime;
+                _telemetry = new TelemetryClient(this, restRequester);
             }
             else
             {
@@ -329,6 +333,7 @@ namespace Snowflake.Data.Core
             if (!IsEstablished()) return;
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
+            _telemetry?.Close();
             var closeSessionRequest = PrepareCloseSessionRequest();
             PostCloseSession(closeSessionRequest, restRequester);
             sessionToken = null;
@@ -340,6 +345,7 @@ namespace Snowflake.Data.Core
             if (!IsEstablished()) return;
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
+            _telemetry?.Close();
             var closeSessionRequest = PrepareCloseSessionRequest();
             Task.Run(() => PostCloseSession(closeSessionRequest, restRequester));
             sessionToken = null;
@@ -351,6 +357,10 @@ namespace Snowflake.Data.Core
             if (!IsEstablished()) return;
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
+            if (_telemetry != null)
+            {
+                await _telemetry.CloseAsync(cancellationToken).ConfigureAwait(false);
+            }
 
             var closeSessionRequest = PrepareCloseSessionRequest();
 
