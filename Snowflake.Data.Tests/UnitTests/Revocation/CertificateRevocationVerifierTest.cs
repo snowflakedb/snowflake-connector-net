@@ -548,7 +548,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.AreEqual(CertRevocationCheckResult.CertUnrevoked, result);
         }
 
-        private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled, long crlDownloadMaxSize = 209715200) =>
+        private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled, long crlDownloadMaxSize = 20971520) =>
             new HttpClientConfig(
                 null,
                 null,

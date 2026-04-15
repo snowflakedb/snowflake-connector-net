@@ -146,7 +146,7 @@ namespace Snowflake.Data.Core
         ALLOWCERTIFICATESWITHOUTCRLURL,
         [SFSessionPropertyAttr(required = false, defaultValue = "10")]
         CRLDOWNLOADTIMEOUT,
-        [SFSessionPropertyAttr(required = false, defaultValue = "209715200")]
+        [SFSessionPropertyAttr(required = false, defaultValue = "20971520")]
         CRLDOWNLOADMAXSIZE,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls12")]
         MINTLS,
