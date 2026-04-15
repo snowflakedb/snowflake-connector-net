@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     stageCredentials = null
                 },
                 statementTypeId = 0,
-                threshold = 209715200 // Server default threshold
+                threshold = 20971520 // Server default threshold
             };
 
             _cancellationToken = new CancellationToken();

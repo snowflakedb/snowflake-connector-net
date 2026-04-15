@@ -135,7 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         [Test]
         [TestCase(100)]
-        [TestCase(209715200)]
+        [TestCase(20971520)]
         public void TestValidCrlDownloadMaxSize(long validMaxSize)
         {
             // arrange
