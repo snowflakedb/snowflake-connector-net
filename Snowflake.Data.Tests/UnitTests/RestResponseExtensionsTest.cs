@@ -54,5 +54,26 @@ namespace Snowflake.Data.Tests.UnitTests
             var response = new NullDataResponse { code = code };
             Assert.IsFalse(response.IsSessionExpired());
         }
+
+        [Test]
+        public void TestSessionNoLongerExistsReturnsTrueForNoLongerExistsCode()
+        {
+            var response = new NullDataResponse { code = 390111 };
+            Assert.IsTrue(response.IsSessionInNoLongerExistsState());
+        }
+
+        [Test]
+        [TestCase(0)]
+        [TestCase(200000)]
+        [TestCase(333333)]
+        [TestCase(333334)]
+        [TestCase(390110)]
+        [TestCase(390112)]
+        [TestCase(-1)]
+        public void TestSessionNoLongerExistsReturnsFalseForOtherCodes(int code)
+        {
+            var response = new NullDataResponse { code = code };
+            Assert.IsFalse(response.IsSessionInNoLongerExistsState());
+        }
     }
 }
