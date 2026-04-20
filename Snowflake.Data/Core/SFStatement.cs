@@ -7,6 +7,7 @@ using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Core
 {
@@ -108,10 +109,6 @@ namespace Snowflake.Data.Core
         private const string SF_PARAM_MULTI_STATEMENT_COUNT = "MULTI_STATEMENT_COUNT";
 
         private const string SF_PARAM_QUERY_TAG = "QUERY_TAG";
-
-        private const int SF_QUERY_IN_PROGRESS = 333333;
-
-        private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
 
         private const int GetResultWithIdMaxRetriesCount = 3;
 
@@ -348,10 +345,6 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private bool RequestInProgress(BaseRestResponse r) =>
-            r.code == SF_QUERY_IN_PROGRESS || r.code == SF_QUERY_IN_PROGRESS_ASYNC;
-
-        private bool SessionExpired(BaseRestResponse r) => r.code == SFSession.SF_SESSION_EXPIRED_CODE;
 
         internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec,
                                                           CancellationToken cancellationToken)
@@ -404,7 +397,7 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
-                    if (SessionExpired(response))
+                    if (response.IsSessionExpired())
                     {
                         await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
@@ -419,12 +412,12 @@ namespace Snowflake.Data.Core
 
                 if (!asyncExec)
                 {
-                    while (RequestInProgress(response) || SessionExpired(response))
+                    while (response.IsQueryInProgress() || response.IsSessionExpired())
                     {
                         var req = BuildResultRequest(lastResultUrl);
                         response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
 
-                        if (SessionExpired(response))
+                        if (response.IsSessionExpired())
                         {
                             logger.Info("Ping pong request failed with session expired, trying to renew the session.");
                             await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
@@ -583,7 +576,7 @@ namespace Snowflake.Data.Core
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
             response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
-            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount && SessionExpired(response); retryCount++)
+            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount && response.IsSessionExpired(); retryCount++)
             {
                 await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
                 req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
@@ -597,7 +590,7 @@ namespace Snowflake.Data.Core
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
             response = _restRequester.Get<QueryExecResponse>(req);
-            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount && SessionExpired(response); retryCount++)
+            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount && response.IsSessionExpired(); retryCount++)
             {
                 SfSession.renewSession();
                 req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
@@ -683,7 +676,7 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = _restRequester.Post<T>(queryRequest);
-                    if (SessionExpired(response))
+                    if (response.IsSessionExpired())
                     {
                         SfSession.renewSession();
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
@@ -701,12 +694,12 @@ namespace Snowflake.Data.Core
                     {
                         var lastResultUrl = queryResponse.data?.getResultUrl;
 
-                        while (RequestInProgress(response) || SessionExpired(response))
+                        while (response.IsQueryInProgress() || response.IsSessionExpired())
                         {
                             var req = BuildResultRequest(lastResultUrl);
                             response = _restRequester.Get<T>(req);
 
-                            if (SessionExpired(response))
+                            if (response.IsSessionExpired())
                             {
                                 logger.Info("Ping pong request failed with session expired, trying to renew the session.");
                                 SfSession.renewSession();
@@ -775,7 +768,7 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = await _restRequester.PostAsync<T>(queryRequest, cancellationToken).ConfigureAwait(false);
-                    if (SessionExpired(response))
+                    if (response.IsSessionExpired())
                     {
                         await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
@@ -793,12 +786,12 @@ namespace Snowflake.Data.Core
                     {
                         var lastResultUrl = queryResponse.data?.getResultUrl;
 
-                        while (RequestInProgress(response) || SessionExpired(response))
+                        while (response.IsQueryInProgress() || response.IsSessionExpired())
                         {
                             var req = BuildResultRequest(lastResultUrl);
                             response = await _restRequester.GetAsync<T>(req, cancellationToken).ConfigureAwait(false);
 
-                            if (SessionExpired(response))
+                            if (response.IsSessionExpired())
                             {
                                 logger.Info("Ping pong request failed with session expired, trying to renew the session.");
                                 await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
@@ -876,7 +869,7 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = _restRequester.Get<QueryStatusResponse>(queryRequest);
-                    if (SessionExpired(response))
+                    if (response.IsSessionExpired())
                     {
                         SfSession.renewSession();
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
@@ -931,7 +924,7 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = await _restRequester.GetAsync<QueryStatusResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
-                    if (SessionExpired(response))
+                    if (response.IsSessionExpired())
                     {
                         SfSession.renewSession();
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);

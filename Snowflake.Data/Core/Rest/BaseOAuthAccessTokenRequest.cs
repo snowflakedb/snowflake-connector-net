@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Core.Rest
 {

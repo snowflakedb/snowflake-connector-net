@@ -4,6 +4,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Core
 {

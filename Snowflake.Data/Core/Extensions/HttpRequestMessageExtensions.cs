@@ -1,6 +1,6 @@
 using System.Net.Http;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.Extensions
 {
     /// <summary>
     /// Extension methods for <see cref="HttpRequestMessage"/> that abstract away the

@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Core.Rest
 {

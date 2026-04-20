@@ -10,6 +10,7 @@ using System.Web;
 using System.Security.Authentication;
 using System.Linq;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
