@@ -104,6 +104,9 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270066)]
         WIF_ATTESTATION_ERROR,
 
+        [SFErrorAttr(errorCode = 270067)]
+        SESSION_NO_LONGER_EXISTS,
+
         [SFErrorAttr(errorCode = 390195)]
         ID_TOKEN_INVALID,
 
