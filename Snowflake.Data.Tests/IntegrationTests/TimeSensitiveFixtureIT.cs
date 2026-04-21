@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static TestCaseData[] GetTestCaseData(Type assignableTo, Type notAssignableTo = null) => Assembly
             .GetExecutingAssembly()
             .GetTypes()
-            .Where(x => x.IsAssignableTo(assignableTo) && (notAssignableTo == null || !x.IsAssignableTo(notAssignableTo)))
+            .Where(x => assignableTo.IsAssignableFrom(x) && (notAssignableTo == null || !notAssignableTo.IsAssignableFrom(x)))
             .SelectMany(x => x.GetMethods(BindingFlags.Public | BindingFlags.Instance).Select(y => (x, y)))
             .Where(x => x.Item2.GetCustomAttributes(typeof(TimeSensitiveAttribute), false).Any())
             .Select(x => new TestCaseData(x).SetName(x.y.Name))
