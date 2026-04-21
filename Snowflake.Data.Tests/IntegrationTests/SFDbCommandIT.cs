@@ -190,8 +190,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
-                    Assert.IsFalse(conn.IsAnError(queryStatus));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
+                    Assert.IsFalse(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
 
                     // Act
                     DbDataReader reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
@@ -231,7 +231,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                 // Assert
-                Assert.IsTrue(connections[0].IsStillRunning(queryStatus));
+                Assert.IsTrue(connections[0].IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
             }
 
             // Execute a normal query
@@ -285,7 +285,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
 
                     // Act
                     cancelToken.Cancel();
@@ -318,7 +318,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
-                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
 
                     // Act: cancel while polling for results
                     cancelToken.CancelAfter(TimeSpan.FromSeconds(3));
@@ -1395,8 +1395,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = cmd.GetQueryStatus(queryId);
 
                     // Assert
-                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
-                    Assert.IsFalse(conn.IsAnError(queryStatus));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
+                    Assert.IsFalse(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
 
                     // Act
                     DbDataReader reader = cmd.GetResultsFromQueryId(queryId);

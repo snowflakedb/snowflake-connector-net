@@ -35,16 +35,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [ThreadStatic] private static List<string> t_filesToDelete;
         [ThreadStatic] private static string[] t_colData;
 
-        public MaxLobSizeIT()
-        {
-            _resultFormat = ResultFormat.JSON; // Default value
-        }
-
-        public MaxLobSizeIT(ResultFormat resultFormat)
-        {
-            _resultFormat = resultFormat;
-        }
-
         [OneTimeSetUp]
         public static void OneTimeSetUp()
         {
@@ -112,9 +102,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test, TestCaseSource(nameof(CombinedTestCases))]
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
-            _resultFormat = resultFormat;
-
             // arrange
+            _resultFormat = resultFormat;
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
@@ -134,6 +123,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
+            _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
@@ -166,6 +156,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestPositionalInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
+            _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
@@ -218,6 +209,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestNamedInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
+            _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
@@ -269,6 +261,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange
+            _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
