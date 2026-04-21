@@ -135,10 +135,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestExecuteAsyncWithMaxRetryReached()
         {
-            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
-            {
-                _forceTimeoutForNonLoginRequestsOnly = true
-            };
+            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
 
             using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
@@ -967,10 +964,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestExecuteWithMaxRetryReached()
         {
-            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
-            {
-                _forceTimeoutForNonLoginRequestsOnly = true
-            };
+            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
 
             using (IDbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {

@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using System;
 using System.Net.Http;
@@ -9,14 +7,13 @@ using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Tests.Mock
 {
-
-    class MockRetryUntilRestTimeoutRestRequester : RestRequester, IMockRestRequester
+    internal sealed class MockRetryUntilRestTimeoutRestRequester : RestRequester, IMockRestRequester
     {
-        internal bool _forceTimeoutForNonLoginRequestsOnly = false;
+        private readonly bool _forceTimeoutAlsoForLoginRequests;
 
-        public MockRetryUntilRestTimeoutRestRequester() : base(null)
+        public MockRetryUntilRestTimeoutRestRequester(bool forceTimeoutAlsoForLoginRequests = true) : base(null)
         {
-            // Does nothing
+            _forceTimeoutAlsoForLoginRequests = forceTimeoutAlsoForLoginRequests;
         }
 
         public void setHttpClient(HttpClient httpClient)
@@ -29,8 +26,7 @@ namespace Snowflake.Data.Tests.Mock
                                                               CancellationToken externalCancellationToken,
                                                               string sid = "")
         {
-            if (!_forceTimeoutForNonLoginRequestsOnly ||
-                _forceTimeoutForNonLoginRequestsOnly && !message.RequestUri.AbsolutePath.Equals(RestPath.SF_LOGIN_PATH))
+            if (_forceTimeoutAlsoForLoginRequests || !message.RequestUri.AbsolutePath.Equals(RestPath.SF_LOGIN_PATH))
             {
                 // Override the http timeout and set to 1ms to force all http request to timeout and retry
                 message.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromTicks(0));
