@@ -36,6 +36,25 @@ jobs:
       matrix:
         dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net462', 'net471', 'net472', 'net48', 'net481']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            sdk: '6.0.x'
+          - dotnet: net7.0
+            sdk: '7.0.x'
+          - dotnet: net8.0
+            sdk: '8.0.x'
+          - dotnet: net9.0
+            sdk: '9.0.x'
+          - dotnet: net462
+            sdk: '6.0.x'
+          - dotnet: net471
+            sdk: '6.0.x'
+          - dotnet: net472
+            sdk: '6.0.x'
+          - dotnet: net48
+            sdk: '6.0.x'
+          - dotnet: net481
+            sdk: '6.0.x'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,11 +67,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
-            8.0.x
-            9.0.x
+          dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -117,6 +132,15 @@ jobs:
       matrix:
         dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            sdk: '6.0.x'
+          - dotnet: net7.0
+            sdk: '7.0.x'
+          - dotnet: net8.0
+            sdk: '8.0.x'
+          - dotnet: net9.0
+            sdk: '9.0.x'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -128,11 +152,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
-            8.0.x
-            9.0.x
+          dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -196,6 +216,15 @@ jobs:
       matrix:
         dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            sdk: '6.0.x'
+          - dotnet: net7.0
+            sdk: '7.0.x'
+          - dotnet: net8.0
+            sdk: '8.0.x'
+          - dotnet: net9.0
+            sdk: '9.0.x'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -207,11 +236,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
-            8.0.x
-            9.0.x
+          dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
