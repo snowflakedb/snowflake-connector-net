@@ -358,6 +358,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Retry(2)]
+        [TimeSensitive]
         public void TestLoginTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -395,6 +396,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive]
         public void TestLoginWithMaxRetryReached()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -429,6 +431,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Retry(2)]
+        [TimeSensitive]
         public void TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -468,6 +471,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Ignore("Disable unstable test cases for now")]
+        [TimeSensitive]
         public void TestDefaultLoginTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -997,6 +1001,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [TimeSensitive]
         public void TestSSOConnectionTimeoutAfter10s()
         {
             // Do not log in by external browser - timeout after 10s should happen
@@ -1957,6 +1962,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive]
         public void TestAsyncLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1993,6 +1999,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Retry(2)]
+        [TimeSensitive]
         public void TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -2029,6 +2036,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive]
         public void TestAsyncDefaultLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -2458,6 +2466,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive]
         public void TestHangingCloseIsNotBlocking()
         {
             // arrange

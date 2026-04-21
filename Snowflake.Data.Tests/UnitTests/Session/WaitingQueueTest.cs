@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
@@ -10,6 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     public class WaitingQueueTest
     {
         [Test]
+        [TimeSensitive]
         public void TestWaitForTheResourceUntilTimeout()
         {
             // arrange
@@ -27,6 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
+        [TimeSensitive]
         public void TestWaitForTheResourceUntilCancellation()
         {
             // arrange
@@ -46,6 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         [Test]
         [Retry(2)]
+        [TimeSensitive]
         public void TestWaitUntilResourceAvailable()
         {
             // arrange
@@ -116,6 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         [Test]
         [Retry(2)]
+        [TimeSensitive]
         public void TestReturnUnsuccessfulOnResetWhileWaiting()
         {
             // arrange

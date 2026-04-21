@@ -11,6 +11,8 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
+// LoP of 100 might be obnoxious to work with locally. If needed, replace commented and uncommented line for local.
+// [assembly: LevelOfParallelism(3)]
 [assembly: LevelOfParallelism(100)]
 
 namespace Snowflake.Data.Tests

@@ -12,6 +12,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using NUnit.Framework;
     using Snowflake.Data.Client;
     using Snowflake.Data.Configuration;
+    using Snowflake.Data.Tests.Util;
     using System.Diagnostics;
     using System.Collections.Generic;
     using System.Globalization;
@@ -1375,6 +1376,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive(Rationale = "It needs to take max 5 seconds.")]
         public void TestAsyncExecQuery()
         {
             string queryId;
