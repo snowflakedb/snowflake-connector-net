@@ -6,7 +6,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    internal sealed class MockRestSessionNoLongerExists : IMockRestRequester
+    internal sealed class MockSessionGone : IMockRestRequester
     {
         private const int SESSION_NO_LONGER_EXISTS_CODE = 390111;
 

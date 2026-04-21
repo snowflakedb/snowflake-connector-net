@@ -213,7 +213,7 @@
   <data name="WIF_ATTESTATION_ERROR" xml:space="preserve">
     <value>Retrieving attestation for {0} failed. {1}</value>
   </data>
-  <data name="SESSION_NO_LONGER_EXISTS" xml:space="preserve">
+  <data name="SESSION_GONE" xml:space="preserve">
     <value>Session no longer exists.</value>
   </data>
 </root>

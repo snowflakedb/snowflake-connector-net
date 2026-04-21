@@ -104,11 +104,8 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270066)]
         WIF_ATTESTATION_ERROR,
 
-        [SFErrorAttr(errorCode = 270067)]
-        SESSION_NO_LONGER_EXISTS,
-
-        [SFErrorAttr(errorCode = 390195)]
-        ID_TOKEN_INVALID,
+        [SFErrorAttr(errorCode = 390112)]
+        SESSION_GONE,
 
         [SFErrorAttr(errorCode = 390120)]
         EXT_AUTHN_DENIED,
@@ -129,7 +126,10 @@ namespace Snowflake.Data.Core
         EXT_OAUTH_ACCESS_TOKEN_EXPIRED,
 
         [SFErrorAttr(errorCode = 390303)]
-        EXT_OAUTH_ACCESS_TOKEN_INVALID
+        EXT_OAUTH_ACCESS_TOKEN_INVALID,
+
+        [SFErrorAttr(errorCode = 390195)]
+        ID_TOKEN_INVALID,
     }
 
     class OAuthTokenErrors
@@ -139,6 +139,12 @@ namespace Snowflake.Data.Core
 
         public static bool IsAccessTokenInvalid(int error) =>
             SFError.EXT_OAUTH_ACCESS_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode == error;
+    }
+
+    internal class SessionFatalErrors
+    {
+        public static bool IsSessionGone(int error) =>
+            SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode == error;
     }
 
     class SFMFATokenErrors

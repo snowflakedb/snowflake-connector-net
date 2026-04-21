@@ -371,51 +371,28 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestSessionNoLongerExistsThrowsOnExecute()
         {
-            var restRequester = new Mock.MockRestSessionNoLongerExists();
+            var restRequester = new Mock.MockSessionGone();
             var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             var statement = new SFStatement(sfSession);
 
             var thrown = Assert.Throws<SnowflakeDbException>(() => statement.Execute(0, "select 1", null, false, false));
-            Assert.AreEqual(SFError.SESSION_NO_LONGER_EXISTS.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.IsTrue(sfSession.IsInvalidatedForPooling());
         }
 
         [Test]
         public async Task TestSessionNoLongerExistsThrowsOnExecuteAsync()
         {
-            var restRequester = new Mock.MockRestSessionNoLongerExists();
+            var restRequester = new Mock.MockSessionGone();
             var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             await sfSession.OpenAsync(CancellationToken.None);
             var statement = new SFStatement(sfSession);
 
             var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
                 await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None));
-            Assert.AreEqual(SFError.SESSION_NO_LONGER_EXISTS.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
-        }
-
-        [Test]
-        public void TestSessionNoLongerExistsThrowsOnGetResultWithId()
-        {
-            var restRequester = new Mock.MockRestSessionNoLongerExists();
-            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
-            sfSession.Open();
-            var statement = new SFStatement(sfSession);
-
-            var thrown = Assert.Throws<SnowflakeDbException>(() => statement.GetResultWithId("mockId"));
-            Assert.AreEqual(SFError.SESSION_NO_LONGER_EXISTS.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
-        }
-
-        [Test]
-        public async Task TestSessionNoLongerExistsThrowsOnGetResultWithIdAsync()
-        {
-            var restRequester = new Mock.MockRestSessionNoLongerExists();
-            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
-            await sfSession.OpenAsync(CancellationToken.None);
-            var statement = new SFStatement(sfSession);
-
-            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
-                await statement.GetResultWithIdAsync("mockId", CancellationToken.None));
-            Assert.AreEqual(SFError.SESSION_NO_LONGER_EXISTS.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.IsTrue(sfSession.IsInvalidatedForPooling());
         }
     }
 }

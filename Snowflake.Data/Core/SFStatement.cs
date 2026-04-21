@@ -1088,7 +1088,8 @@ namespace Snowflake.Data.Core
 
         private void HandleExceptionForSession(Exception ex)
         {
-            if (RestRequester.HasUnauthorizedStatusCode(ex))
+            if (RestRequester.HasUnauthorizedStatusCode(ex) ||
+                (ex is SnowflakeDbException sfException && SessionFatalErrors.IsSessionGone(sfException.ErrorCode)))
             {
                 SfSession.InvalidateForPooling();
             }
@@ -1097,8 +1098,8 @@ namespace Snowflake.Data.Core
         /// <summary>Renews the session if expired. Throws if the session no longer exists. Returns true if renewed.</summary>
         private async Task<bool> RenewSessionIfNeededAsync(BaseRestResponse response, CancellationToken cancellationToken)
         {
-            if (response.IsSessionInNoLongerExistsState())
-                throw new SnowflakeDbException(SFError.SESSION_NO_LONGER_EXISTS);
+            if (response.IsSessionGone())
+                throw new SnowflakeDbException(SFError.SESSION_GONE);
 
             if (!response.IsSessionExpired()) return false;
             logger.Info("Request failed with session expired, trying to renew the session.");
@@ -1110,8 +1111,8 @@ namespace Snowflake.Data.Core
         /// <summary>Renews the session if expired. Throws if the session no longer exists. Returns true if renewed.</summary>
         private bool RenewSessionIfNeeded(BaseRestResponse response)
         {
-            if (response.IsSessionInNoLongerExistsState())
-                throw new SnowflakeDbException(SFError.SESSION_NO_LONGER_EXISTS);
+            if (response.IsSessionGone())
+                throw new SnowflakeDbException(SFError.SESSION_GONE);
 
             if (!response.IsSessionExpired()) return false;
             logger.Info("Request failed with session expired, trying to renew the session.");

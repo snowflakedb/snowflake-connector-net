@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionNoLongerExistsReturnsTrueForNoLongerExistsCode()
         {
             var response = new NullDataResponse { code = 390111 };
-            Assert.IsTrue(response.IsSessionInNoLongerExistsState());
+            Assert.IsTrue(response.IsSessionGone());
         }
 
         [Test]
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionNoLongerExistsReturnsFalseForOtherCodes(int code)
         {
             var response = new NullDataResponse { code = code };
-            Assert.IsFalse(response.IsSessionInNoLongerExistsState());
+            Assert.IsFalse(response.IsSessionGone());
         }
     }
 }
