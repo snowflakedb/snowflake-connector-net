@@ -8,10 +8,10 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
     public class WaitingQueueTest
     {
         [Test]
-        [TimeSensitive]
         public void TestWaitForTheResourceUntilTimeout()
         {
             // arrange
@@ -29,7 +29,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Test]
-        [TimeSensitive]
         public void TestWaitForTheResourceUntilCancellation()
         {
             // arrange
@@ -49,7 +48,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         [Test]
         [Retry(2)]
-        [TimeSensitive]
         public void TestWaitUntilResourceAvailable()
         {
             // arrange
@@ -120,7 +118,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         [Test]
         [Retry(2)]
-        [TimeSensitive]
         public void TestReturnUnsuccessfulOnResetWhileWaiting()
         {
             // arrange

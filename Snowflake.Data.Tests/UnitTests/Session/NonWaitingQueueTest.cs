@@ -2,15 +2,14 @@ using System.Diagnostics;
 using System.Threading;
 using NUnit.Framework;
 using Snowflake.Data.Core.Session;
-using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
     public class NonWaitingQueueTest
     {
         [Test]
-        [TimeSensitive]
         public void TestWaitDoesNotHangAndReturnsFalse()
         {
             // arrange

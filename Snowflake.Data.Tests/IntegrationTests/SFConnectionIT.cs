@@ -470,7 +470,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("Disable unstable test cases for now")]
         [TimeSensitive]
         public void TestDefaultLoginTimeout()
         {
@@ -479,7 +478,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
 
                 // Default timeout is 300 sec
-                Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout, conn.ConnectionTimeout);
+                Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
@@ -1001,7 +1000,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
-        [TimeSensitive]
         public void TestSSOConnectionTimeoutAfter10s()
         {
             // Do not log in by external browser - timeout after 10s should happen

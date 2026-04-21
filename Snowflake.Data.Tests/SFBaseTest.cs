@@ -11,9 +11,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
-// LoP of 100 might be obnoxious to work with locally. If needed, replace commented and uncommented line for local.
-// [assembly: LevelOfParallelism(3)]
-[assembly: LevelOfParallelism(100)]
+[assembly: LevelOfParallelism(20)]
 
 namespace Snowflake.Data.Tests
 {
@@ -92,7 +90,6 @@ namespace Snowflake.Data.Tests
         protected virtual string TestName => TestContext.CurrentContext.Test.MethodName;
         protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
         protected string TableName => TestNameWithWorker;
-
 
         private Stopwatch _stopwatch;
 

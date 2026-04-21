@@ -1376,7 +1376,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [TimeSensitive(Rationale = "It needs to take max 5 seconds.")]
+        [TimeSensitive("It needs to take max 5 seconds.")]
         public void TestAsyncExecQuery()
         {
             string queryId;
