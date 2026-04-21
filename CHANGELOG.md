@@ -3,6 +3,7 @@
 # Changelog
 - v5.6.0
     - Limited default maximal CRL size for download to 20MB.
+    - Bug fix: Connections with sessions that no longer exist on the server are now detected and removed from the pool instead of being reused, which previously caused repeated failures until the connection expired on its own.
 - v5.5.0
     - Include `SPCS_TOKEN` in login requests when running inside an SPCS container (`SNOWFLAKE_RUNNING_INSIDE_SPCS` env var set).
     - Extended login-request telemetry with cloud platform and environment detection (AWS Lambda, EC2, Azure VM/Functions, GCE/Cloud Run, GitHub Actions). Detection runs once at startup in the background within a 200ms timeout. Can be disabled via the `SNOWFLAKE_DISABLE_PLATFORM_DETECTION` environment variable.
