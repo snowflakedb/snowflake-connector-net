@@ -41,6 +41,15 @@ namespace Snowflake.Data.Tests.Mock
                 return (T)queryExecResponse;
             }
 
+            if (sfRequest.Url.AbsolutePath == "/session")
+            {
+                object closeReponse = new CloseResponse()
+                {
+                    success = false,
+                };
+                return (T)closeReponse;
+            }
+
             return default(T);
         }
 
