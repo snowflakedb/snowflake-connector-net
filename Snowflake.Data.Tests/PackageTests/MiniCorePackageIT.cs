@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.PackageTests
 
             // 2. Create consumer app
             RunCommand("dotnet", "new console --force --verbosity quiet", _tempDir, timeoutMs: 30000);
-            RunCommand("dotnet", "add package Microsoft.Extensions.Logging.Abstractions --version 9.0.5", _tempDir, timeoutMs: 60000);
+            RunCommand("dotnet", "add package Microsoft.Extensions.Logging.Abstractions --version 9.0.5 --verbosity quiet", _tempDir, timeoutMs: 60000);
             RunCommand("dotnet", $"add package Snowflake.Data --version {version} --source \"{_artifactsDir}\"", _tempDir, timeoutMs: 60000);
 
             var sourceFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "PackageTests", "MiniCoreVerificationAppSource.cs");

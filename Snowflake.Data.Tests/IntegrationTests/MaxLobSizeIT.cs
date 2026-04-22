@@ -380,9 +380,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // assert
                 Assert.IsTrue(reader.Read());
-                Assert.AreEqual(t_colData[0], reader.GetString(0));
-                Assert.AreEqual(t_colData[1], reader.GetString(1));
-                Assert.AreEqual(t_colData[2], reader.GetString(2));
+                var first = reader.GetString(0);
+                Assert.AreEqual(t_colData[0], first, $"Expected strings to be equal. Expected: '{t_colData[0].Substring(0, 20)}' [...], got '{first}' instead.");
+                var second = reader.GetString(1);
+                Assert.AreEqual(t_colData[1], second, $"Expected strings to be equal. Expected: '{t_colData[1].Substring(0 , 20)}' [...], got '{second}' instead.");
+                var third = reader.GetString(2);
+                Assert.AreEqual(t_colData[2], third, $"Expected strings to be equal. Expected: '{t_colData[2].Substring(0, 20)}' [...], got '{third}' instead.");
                 CheckColumnMetadata(reader);
             }
         }
