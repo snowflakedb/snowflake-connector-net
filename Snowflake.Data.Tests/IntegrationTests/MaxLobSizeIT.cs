@@ -55,6 +55,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void SetUp()
         {
             // Base object's names on worker thread id
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] Running SetUp {TestContext.CurrentContext?.Test?.Name}");
             var threadSuffix = TestContext.CurrentContext.WorkerId?.Replace('#', '_');
 
             t_tableName = $"LOB_TABLE_{threadSuffix}";
@@ -76,6 +77,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.ExecuteNonQuery();
                 }
             }
+
+
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] Ended SetUp {TestContext.CurrentContext?.Test?.Name}");
         }
 
         [TearDown]
@@ -105,6 +109,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             _resultFormat = resultFormat;
+
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] Running TestSelectOnSpecifiedSize {TestContext.CurrentContext?.Test?.Name}");
             using (var conn = new SnowflakeDbConnection($"{ConnectionString.Trim(';')};connection_timeout={ConnectionTimeoutInSeconds}"))
             {
                 conn.Open();
@@ -118,6 +124,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(size, row.Length);
                 }
             }
+
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] Ended TestSelectOnSpecifiedSize {TestContext.CurrentContext?.Test?.Name}");
         }
 
         [Test, TestCaseSource(nameof(LiteralInsertTestCases))]
@@ -262,6 +270,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] Running TestPutGetCommand {TestContext.CurrentContext?.Test?.Name}");
             _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
@@ -279,6 +288,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 CopyIntoTable(conn);
                 GetFile(conn);
             }
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] CONCLUDED TestPutGetCommand {TestContext.CurrentContext?.Test?.Name}");
         }
 
         static IEnumerable<int> LobSizeTestCases = new[]
