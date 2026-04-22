@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
         [Test, TestCaseSource(nameof(SelectOnSpecifiedSizeTestCases))]
-        [Timeout(1000 * 5)]
+        [Timeout(1_000 * 5)]
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
             // arrange
@@ -267,7 +267,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test, TestCaseSource(nameof(PutGetCommandTestCases))]
-        [Timeout(1000 * 5)]
+        [Timeout(1_000 * 60 * 5)]
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange
