@@ -99,9 +99,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        [Test, TestCaseSource(nameof(SelectOnSpecifiedSizeTestCases))]
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] TestSelectOnSpecifiedSize starting: resultFormat={resultFormat}, size={size}");
             // arrange
             _resultFormat = resultFormat;
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -117,11 +118,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(size, row.Length);
                 }
             }
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] TestSelectOnSpecifiedSize completed: resultFormat={resultFormat}, size={size}");
         }
 
-        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        [Test, TestCaseSource(nameof(LiteralInsertTestCases))]
         public void TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] TestLiteralInsert starting: resultFormat={resultFormat}, lobSize={lobSize}");
             // arrange
             _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
@@ -150,11 +153,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     CheckColumnMetadata(reader);
                 }
             }
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] TestLiteralInsert completed: resultFormat={resultFormat}, lobSize={lobSize}");
         }
 
-        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        [Test, TestCaseSource(nameof(PositionalInsertTestCases))]
         public void TestPositionalInsert(ResultFormat resultFormat, int lobSize)
         {
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] TestPositionalInsert starting: resultFormat={resultFormat}, lobSize={lobSize}");
             // arrange
             _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
@@ -202,12 +207,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     CheckColumnMetadata(reader);
                 }
             }
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] TestPositionalInsert completed: resultFormat={resultFormat}, lobSize={lobSize}");
         }
 
 
-        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        [Test, TestCaseSource(nameof(NamedInsertTestCases))]
         public void TestNamedInsert(ResultFormat resultFormat, int lobSize)
         {
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] TestNamedInsert starting: resultFormat={resultFormat}, lobSize={lobSize}");
             // arrange
             _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
@@ -255,11 +262,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     CheckColumnMetadata(reader);
                 }
             }
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] TestNamedInsert completed: resultFormat={resultFormat}, lobSize={lobSize}");
         }
 
-        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        [Test, TestCaseSource(nameof(PutGetCommandTestCases))]
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] TestPutGetCommand starting: resultFormat={resultFormat}, lobSize={lobSize}");
             // arrange
             _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
@@ -278,6 +287,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 CopyIntoTable(conn);
                 GetFile(conn);
             }
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] TestPutGetCommand completed: resultFormat={resultFormat}, lobSize={lobSize}");
         }
 
         static IEnumerable<int> LobSizeTestCases = new[]
@@ -290,17 +300,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
         static IEnumerable<ResultFormat> ResultFormats => new[]
             { ResultFormat.ARROW, ResultFormat.JSON };
 
-        static IEnumerable<TestCaseData> CombinedTestCases()
+        static IEnumerable<TestCaseData> CombinedTestCases(string baseTestName)
         {
             foreach (var resultFormat in ResultFormats)
             {
                 foreach (var lobSize in LobSizeTestCases)
                 {
                     yield return new TestCaseData(resultFormat, lobSize)
-                        .SetName($"TestSelectOnSpecifiedSize_{resultFormat}_{lobSize}");
+                        .SetName($"{baseTestName}_{resultFormat}_{lobSize}");
                 }
             }
         }
+
+        static IEnumerable<TestCaseData> SelectOnSpecifiedSizeTestCases() =>
+            CombinedTestCases(nameof(TestSelectOnSpecifiedSize));
+
+        static IEnumerable<TestCaseData> LiteralInsertTestCases() =>
+            CombinedTestCases(nameof(TestLiteralInsert));
+
+        static IEnumerable<TestCaseData> PositionalInsertTestCases() =>
+            CombinedTestCases(nameof(TestPositionalInsert));
+
+        static IEnumerable<TestCaseData> NamedInsertTestCases() =>
+            CombinedTestCases(nameof(TestNamedInsert));
+
+        static IEnumerable<TestCaseData> PutGetCommandTestCases() =>
+            CombinedTestCases(nameof(TestPutGetCommand));
 
         void PrepareTest()
         {
