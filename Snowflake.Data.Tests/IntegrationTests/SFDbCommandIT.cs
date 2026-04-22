@@ -760,7 +760,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestCancelQuery()
+        [TimeSensitive]
+        public async Task TestCancelQuery()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -787,7 +788,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                 });
 
-                Thread.Sleep(8000);
+                await Task.Delay(8000);
                 cmd.Cancel();
 
                 try
