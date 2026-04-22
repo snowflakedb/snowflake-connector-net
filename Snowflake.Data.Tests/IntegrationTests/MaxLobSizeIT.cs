@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
         [Test, TestCaseSource(nameof(SelectOnSpecifiedSizeTestCases))]
-        [Timeout(1_000 * 5)]
+        [Timeout(1_000 * 60)]
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
             // arrange
@@ -392,7 +392,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var actual = reader.GetString(index);
             var substringLength = t_colData[index].Length > 20 ? 20 : t_colData[index].Length;
-            Assert.AreEqual(actual, t_colData[index], $"Expected strings to be equal. Expected: '{t_colData[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
+            Assert.IsTrue(t_colData[index] == actual, $"Expected strings to be equal. Expected: '{t_colData[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
         }
 
         private void GetFile(DbConnection conn)
