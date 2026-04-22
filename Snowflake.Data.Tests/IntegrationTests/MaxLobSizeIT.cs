@@ -21,7 +21,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private const int MediumSize = (MaxLobSize / 4);
         private const int OriginSize = (MediumSize / 2);
         private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
-        private const int ConnectionTimeoutInSeconds = 1000;
 
         private static string s_outputDirectory;
         private static readonly string[] s_colName = { "C1", "C2", "C3" };
@@ -66,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t_selectQuery = $"SELECT * FROM {t_tableName}";
             t_filesToDelete = new List<string>();
 
-            using (var conn = new SnowflakeDbConnection($"{ConnectionString.Trim(';')};connection_timeout={ConnectionTimeoutInSeconds}"))
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 using (var command = conn.CreateCommand())
@@ -105,13 +104,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
         [Test, TestCaseSource(nameof(SelectOnSpecifiedSizeTestCases))]
+        [Timeout(1000 * 5)]
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
             // arrange
             _resultFormat = resultFormat;
 
             TestContext.Progress.WriteLine($"[{DateTime.UtcNow:O}] Running TestSelectOnSpecifiedSize {TestContext.CurrentContext?.Test?.Name}");
-            using (var conn = new SnowflakeDbConnection($"{ConnectionString.Trim(';')};connection_timeout={ConnectionTimeoutInSeconds}"))
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 using (var command = conn.CreateCommand())
@@ -267,6 +267,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test, TestCaseSource(nameof(PutGetCommandTestCases))]
+        [Timeout(1000 * 5)]
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -279,7 +280,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             PrepareTest();
 
-            using (var conn = new SnowflakeDbConnection($"{ConnectionString.Trim(';')};connection_timeout={ConnectionTimeoutInSeconds}"))
+            using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
                 AlterSessionSettings(conn);
@@ -380,14 +381,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // assert
                 Assert.IsTrue(reader.Read());
-                var first = reader.GetString(0);
-                Assert.AreEqual(t_colData[0], first, $"Expected strings to be equal. Expected: '{t_colData[0].Substring(0, 20)}' [...], got '{first}' instead.");
-                var second = reader.GetString(1);
-                Assert.AreEqual(t_colData[1], second, $"Expected strings to be equal. Expected: '{t_colData[1].Substring(0 , 20)}' [...], got '{second}' instead.");
-                var third = reader.GetString(2);
-                Assert.AreEqual(t_colData[2], third, $"Expected strings to be equal. Expected: '{t_colData[2].Substring(0, 20)}' [...], got '{third}' instead.");
+                AssertOnColData(reader, 0);
+                AssertOnColData(reader, 1);
+                AssertOnColData(reader, 2);
                 CheckColumnMetadata(reader);
             }
+        }
+
+        private static void AssertOnColData(DbDataReader reader, int index)
+        {
+            var actual = reader.GetString(index);
+            var substringLength = t_colData[index].Length > 20 ? 20 : t_colData[index].Length;
+            Assert.AreEqual(actual, t_colData[index], $"Expected strings to be equal. Expected: '{t_colData[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
         }
 
         private void GetFile(DbConnection conn)
