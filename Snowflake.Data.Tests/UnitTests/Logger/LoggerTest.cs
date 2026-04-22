@@ -8,7 +8,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    abstract class ILoggerTest
+    abstract class LoggerTest
     {
         private const string InfoMessage = "Info message";
         private const string DebugMessage = "Debug message";

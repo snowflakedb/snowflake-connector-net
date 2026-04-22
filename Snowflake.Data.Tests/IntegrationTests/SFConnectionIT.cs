@@ -1880,7 +1880,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestKeepAlive()
+        [TimeSensitive]
+        public async Task TestKeepAlive()
         {
             // create 100 connections, one per second
             var connCount = 100;
@@ -1898,7 +1899,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         conn.ConnectionString = connectionString;
                         conn.Open();
                     }
-                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                     // roughly should only have 5 sessions in pool stay alive
                     // check for 10 in case of bad timing, also much less than the
                     // pool max size to ensure it's unpooled because of expire

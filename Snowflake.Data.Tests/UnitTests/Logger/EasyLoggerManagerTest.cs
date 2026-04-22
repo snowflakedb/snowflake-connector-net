@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
@@ -118,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         }
 
         [Test]
-        public void TestThatRollsLogIfSizeIsTooBig()
+        public async Task TestThatRollsLogIfSizeIsTooBig()
         {
             // arrange
             const int ExpectedBackupLogCount = 2;
@@ -143,7 +144,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             for (int i = 0; i < 5; i++)
             {
                 logger.Debug(DebugMessage);
-                Thread.Sleep(1000);
+                await Task.Delay(1000);
             }
             var backupLogs = Directory.GetFiles(t_directoryLogPath, $"{logFileName}.*.bak");
 

@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestCancelExecuteAsync()
+        public async Task TestCancelExecuteAsync()
         {
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
 
@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert that cancel is not triggered by timeout, but external cancellation
                     Assert.IsTrue(externalCancel.IsCancellationRequested);
                 }
-                Thread.Sleep(2000);
+                await Task.Delay(2000);
                 conn.Close();
             }
         }
@@ -375,7 +375,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
                     while (statusRetryCount < statusMaxRetryCount && conn.IsStillRunning(queryStatus))
                     {
-                        Thread.Sleep(1000);
+                        await Task.Delay(1000);
                         queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
                         statusRetryCount++;
                     }
@@ -1472,7 +1472,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestFailedAsyncExecQueryThrowsError()
+        public async Task TestFailedAsyncExecQueryThrowsError()
         {
             string queryId;
 
@@ -1492,7 +1492,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     queryId = cmd.ExecuteInAsyncMode();
                     while (statusRetryCount < statusMaxRetryCount && conn.IsStillRunning(cmd.GetQueryStatus(queryId)))
                     {
-                        Thread.Sleep(1000);
+                        await Task.Delay(1000);
                         statusRetryCount++;
                     }
 

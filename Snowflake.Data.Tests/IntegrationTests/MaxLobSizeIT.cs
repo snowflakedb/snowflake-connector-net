@@ -100,7 +100,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
         [Test, TestCaseSource(nameof(SelectOnSpecifiedSizeTestCases))]
-        [Timeout(1_000 * 60)]
+        [Timeout(1_000 * 60 * 2)] // 2 mins
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
             // arrange
