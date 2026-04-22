@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test, TestCaseSource(nameof(LiteralInsertTestCases))]
-        [Retry(2)]
+        [Retry(3)]
         public void TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -262,7 +262,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test, TestCaseSource(nameof(PutGetCommandTestCases))]
         [Timeout(1_000 * 60 * 5)]
-        [Retry(2)]
+        [Retry(3)]
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange

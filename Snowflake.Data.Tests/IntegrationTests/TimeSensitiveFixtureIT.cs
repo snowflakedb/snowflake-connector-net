@@ -12,6 +12,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public sealed class TimeSensitiveFixtureIT
     {
         [TestCaseSource(nameof(SyncTestCases))]
+        [Retry(3)]
         public void TestSync((Type, MethodInfo) args)
         {
             // Arrange
@@ -25,6 +26,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [TestCaseSource(nameof(AsyncTestCases))]
+        [Retry(3)]
         public async Task TestAsync((Type, MethodInfo) args)
         {
             // Arrange

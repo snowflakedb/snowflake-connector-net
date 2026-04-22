@@ -357,7 +357,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Retry(2)]
         [TimeSensitive]
         public void TestLoginTimeout()
         {
