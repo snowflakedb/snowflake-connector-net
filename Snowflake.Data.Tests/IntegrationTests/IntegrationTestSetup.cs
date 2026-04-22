@@ -2,15 +2,30 @@ using System;
 using System.Data;
 using NUnit.Framework;
 using Snowflake.Data.Client;
+using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [SetUpFixture]
     public class IntegrationTestSetup
     {
+        internal static TestContextAppender TestContextAppender { get; private set; }
+
         [OneTimeSetUp]
         public void SetupIntegrationTests()
         {
+            TestContextAppender = new TestContextAppender
+            {
+                PatternLayout = new PatternLayout
+                {
+                    ConversionPattern = "[%date] [%t] [%-5level] [%logger] %message%newline"
+                }
+            };
+            TestContextAppender.ActivateOptions();
+            SFLoggerImpl.s_appenders.Add(TestContextAppender);
+            SFLoggerImpl.SetLevel(LoggingEvent.DEBUG);
+
             var testConfig = TestEnvironment.TestConfig;
             ModifySchema(testConfig.schema, SchemaAction.Create);
         }
@@ -18,6 +33,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [OneTimeTearDown]
         public void CleanupIntegrationTests()
         {
+            if (TestContextAppender != null)
+            {
+                SFLoggerImpl.s_appenders.Remove(TestContextAppender);
+                TestContextAppender = null;
+            }
+
             var testConfig = TestEnvironment.TestConfig;
 
             if (testConfig == null)

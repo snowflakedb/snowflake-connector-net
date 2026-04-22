@@ -107,10 +107,29 @@ namespace Snowflake.Data.Tests
         public void AfterTest()
         {
             _stopwatch.Stop();
-            var testName = $"{TestContext.CurrentContext.Test.FullName}";
+            var testName = TestContext.CurrentContext.Test.FullName;
 
+            FlushLogsOnFailure(testName);
             TestEnvironment.RecordTestPerformance(testName, _stopwatch.Elapsed);
             RemoveTables();
+        }
+
+        private static void FlushLogsOnFailure(string testName)
+        {
+            var appender = IntegrationTests.IntegrationTestSetup.TestContextAppender;
+            if (appender == null)
+                return;
+
+            var logs = appender.FlushLogs(testName);
+            if (string.IsNullOrEmpty(logs))
+                return;
+
+            if (TestContext.CurrentContext.Result.Outcome.Status != TestStatus.Failed)
+                return;
+
+            TestContext.Progress.WriteLine($"--- Driver logs for {testName} ---");
+            TestContext.Progress.Write(logs);
+            TestContext.Progress.WriteLine("--- End driver logs ---");
         }
 
         private void RemoveTables()
