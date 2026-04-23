@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture, NonParallelizable]
+    [TestFixture, NonParallelizable, Order(1)]
     class SFLoggerPairTest
     {
         SFLogger _loggerPair;
