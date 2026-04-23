@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.PackageTests
         public async Task TestMiniCoreLoadsFromNugetPackage()
         {
             // 1. Pack NuGet
-            await RunCommandAsync("dotnet", $"pack \"{Path.Combine(_repoRoot, "Snowflake.Data", "Snowflake.Data.csproj")}\" -c Release -o \"{_artifactsDir}\" --verbosity quiet --tl:off", timeoutMs: 1_000 * 60 * 5).ConfigureAwait(false);
+            await RunCommandAsync("dotnet", $"pack \"{Path.Combine(_repoRoot, "Snowflake.Data", "Snowflake.Data.csproj")}\" -c Release -o \"{_artifactsDir}\"", timeoutMs: 1_000 * 60 * 5).ConfigureAwait(false);
 
             var packagePath = Directory.GetFiles(_artifactsDir, "Snowflake.Data.*.nupkg")
                 .Where(f => !f.EndsWith(".symbols.nupkg"))

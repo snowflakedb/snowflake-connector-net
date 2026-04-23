@@ -6,6 +6,7 @@ using System.Reflection;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
@@ -54,6 +55,7 @@ namespace Snowflake.Data.Tests
      * there are no async deadlocks in the library
      */
     [TestFixture]
+    [Timeout(1_000 * 60 * 10)] // 10 mins
     public class SFBaseTest : SFBaseTestAsync
     {
         [SetUp]
@@ -301,6 +303,9 @@ namespace Snowflake.Data.Tests
             Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
             TestConfig = ReadTestConfig();
+
+            // A lot of blocking code + async mixup does not play along well with standard thread pool allocation algo
+            ThreadPool.SetMinThreads(100, 100);
         }
 
         private static TestConfig ReadTestConfig()
