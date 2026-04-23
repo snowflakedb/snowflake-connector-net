@@ -111,7 +111,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
-                conn.Open();
+                await conn.OpenAsync(externalCancel.Token).ConfigureAwait(false);
 
                 DbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
@@ -119,8 +119,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandTimeout = 10;
                 try
                 {
-                    Task<object> t = cmd.ExecuteScalarAsync(externalCancel.Token);
-                    t.Wait();
+                    await cmd.ExecuteScalarAsync(externalCancel.Token).ConfigureAwait(false);
                     Assert.Fail();
                 }
                 catch
@@ -128,13 +127,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert that cancel is not triggered by timeout, but external cancellation
                     Assert.IsTrue(externalCancel.IsCancellationRequested);
                 }
-                await Task.Delay(2000);
-                conn.Close();
+                await Task.Delay(2000, externalCancel.Token).ConfigureAwait(false);
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
 
         [Test]
-        public void TestExecuteAsyncWithMaxRetryReached()
+        public async Task TestExecuteAsyncWithMaxRetryReached()
         {
             var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
 
@@ -143,7 +142,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 string maxRetryConnStr = ConnectionString + "maxHttpRetries=8;poolingEnabled=false";
 
                 conn.ConnectionString = maxRetryConnStr;
-                conn.Open();
+                await conn.OpenAsync();
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
@@ -151,8 +150,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     using (DbCommand command = conn.CreateCommand())
                     {
                         command.CommandText = "select 1;";
-                        Task<object> t = command.ExecuteScalarAsync();
-                        t.Wait();
+                        await command.ExecuteScalarAsync().ConfigureAwait(false);
                     }
                     Assert.Fail();
                 }
@@ -196,6 +194,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.IsFalse(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
 
                     // Act
+                    DbDataReader reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
                     DbDataReader reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
                     queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 

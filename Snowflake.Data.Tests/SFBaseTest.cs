@@ -7,10 +7,13 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
+using OSPlatform = System.Runtime.InteropServices.OSPlatform;
 
 [assembly: LevelOfParallelism(20)]
 
@@ -40,6 +43,8 @@ namespace Snowflake.Data.Tests
         [SetUp]
         public static void SetUpMockContext()
         {
+            Trace.Listeners.Add(new ConsoleTraceListener());
+
             MockSynchronizationContext.SetupContext();
         }
 
@@ -47,6 +52,7 @@ namespace Snowflake.Data.Tests
         public static void TearDownMockContext()
         {
             MockSynchronizationContext.Verify();
+            Trace.Flush();
         }
     }
 
@@ -103,12 +109,14 @@ namespace Snowflake.Data.Tests
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
             _tablesToRemove = new List<string>();
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow}, Worker: {Thread.CurrentThread.ManagedThreadId}] Running {TestNameWithWorker}.. ({TestContext.CurrentContext.Test.Name})");
         }
 
         [TearDown]
         public void AfterTest()
         {
             _stopwatch.Stop();
+            TestContext.Progress.WriteLine($"[{DateTime.UtcNow}, Worker: {Thread.CurrentThread.ManagedThreadId}] Concluded {TestNameWithWorker}. Elapsed: {_stopwatch.ElapsedMilliseconds} ms. ({TestContext.CurrentContext.Test.Name})");
             var testName = TestContext.CurrentContext.Test.FullName;
 
             TestEnvironment.RecordTestPerformance(testName, _stopwatch.Elapsed);
