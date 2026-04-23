@@ -444,7 +444,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Retry(3)]
-        public void TestReturningCancelledSessionsToThePool([Values] bool cancelAsync)
+        public async Task TestReturningCancelledSessionsToThePool([Values] bool cancelAsync)
         {
             var connectionString = ConnectionString + "minPoolSize=0;maxPoolSize=2;application=TestReturningCancelledSessionsToThePool;poolingEnabled=true";
 
@@ -489,8 +489,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cts.Cancel();
 
             // operation cancelled properly
-            var thrown = Assert.Throws<AggregateException>(() => task.Wait());
-            Assert.IsInstanceOf<OperationCanceledException>(thrown.InnerException);
+            try
+            {
+                await task.ConfigureAwait(false);
+                Assert.Fail("Expected exception thrown!");
+            }
+            catch (Exception ex)
+            {
+                Assert.IsInstanceOf<OperationCanceledException>(ex);
+            }
 
             // one idle session
             Assert.AreEqual(1, pool.GetCurrentState().IdleSessionsCount);

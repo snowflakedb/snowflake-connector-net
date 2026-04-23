@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Amazon.S3.Model;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -1923,7 +1924,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
         [Test]
-        public void TestCancelLoginBeforeTimeout()
+        public async Task TestCancelLoginBeforeTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
@@ -1937,7 +1938,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
-                Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
+                var connectTask = conn.OpenAsync(connectionCancelToken.Token);
 
                 Assert.AreEqual(ConnectionState.Connecting, conn.State);
 
@@ -1946,7 +1947,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 try
                 {
-                    connectTask.Wait();
+                    await connectTask.ConfigureAwait(false);
                 }
                 catch (AggregateException e)
                 {
@@ -1963,7 +1964,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [TimeSensitive]
-        public void TestAsyncLoginTimeout()
+        public async Task TestAsyncLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
@@ -1977,8 +1978,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
-                    Task connectTask = conn.OpenAsync(CancellationToken.None);
-                    connectTask.Wait();
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (AggregateException e)
                 {
@@ -1999,7 +1999,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [TimeSensitive]
-        public void TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
+        public async Task TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
@@ -2014,8 +2014,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
-                    Task connectTask = conn.OpenAsync(CancellationToken.None);
-                    connectTask.Wait();
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (AggregateException e)
                 {
@@ -2036,7 +2035,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [TimeSensitive]
-        public void TestAsyncDefaultLoginTimeout()
+        public async Task TestAsyncDefaultLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
             {
@@ -2048,8 +2047,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
-                    Task connectTask = conn.OpenAsync(CancellationToken.None);
-                    connectTask.Wait();
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (AggregateException e)
                 {
@@ -2069,7 +2067,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestAsyncConnectionFailFastForNonRetried404OnLogin()
+        public async Task TestAsyncConnectionFailFastForNonRetried404OnLogin()
         {
             using (var conn = new SnowflakeDbConnection())
             {
@@ -2084,17 +2082,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 try
                 {
                     connectTask = conn.OpenAsync(CancellationToken.None);
-                    connectTask.Wait();
+                    await connectTask.ConfigureAwait(false);
                     Assert.Fail();
                 }
-                catch (AggregateException e)
+                catch (Exception e)
                 {
+                    Assert.IsInstanceOf<SnowflakeDbException>(e);
                     SnowflakeDbExceptionAssert.HasHttpErrorCodeInExceptionChain(e, HttpStatusCode.NotFound);
                     SnowflakeDbExceptionAssert.HasMessageInExceptionChain(e, "404 (Not Found)");
-                }
-                catch (Exception unexpected)
-                {
-                    Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
                 }
 
                 Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -2103,7 +2098,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestCloseAsyncWithCancellation()
+        public async Task TestCloseAsyncWithCancellation()
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
@@ -2117,29 +2112,29 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Close the connection. It's not opened yet, but it should not have any issue
                 task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await task.ConfigureAwait(false);
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Open the connection
                 task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await task.ConfigureAwait(false);
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
                 task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await task.ConfigureAwait(false);
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Close the connection again.
                 task = conn.CloseAsync(CancellationToken.None);
-                task.Wait();
+                await task.ConfigureAwait(false);
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
             }
         }
 
 #if NETCOREAPP3_0_OR_GREATER
         [Test]
-        public void TestCloseAsync()
+        public async Task TestCloseAsync()
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
@@ -2153,29 +2148,29 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Close the connection. It's not opened yet, but it should not have any issue
                 task = conn.CloseAsync();
-                task.Wait();
+                await task.ConfigureAwait(false);
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Open the connection
                 task = conn.OpenAsync();
-                task.Wait();
+                await task.ConfigureAwait(false);
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
                 task = conn.CloseAsync();
-                task.Wait();
+                await task.ConfigureAwait(false);
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
 
                 // Close the connection again.
                 task = conn.CloseAsync();
-                task.Wait();
+                await task.ConfigureAwait(false);
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
             }
         }
 #endif
 
         [Test]
-        public void TestCloseAsyncFailure()
+        public async Task TestCloseAsyncFailure()
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
@@ -2185,20 +2180,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Open the connection
                 task = conn.OpenAsync(CancellationToken.None);
-                task.Wait();
+                await task.ConfigureAwait(false);
                 Assert.AreEqual(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
                 task = conn.CloseAsync(CancellationToken.None);
                 try
                 {
-                    task.Wait();
+                    await task.ConfigureAwait(false);
                     Assert.Fail();
                 }
-                catch (AggregateException e)
+                catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(MockCloseSessionException.SESSION_CLOSE_ERROR,
-                        ((SnowflakeDbException)(e.InnerException).InnerException).ErrorCode);
+                        ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
                 Assert.AreEqual(conn.State, ConnectionState.Open);
             }
@@ -2227,7 +2222,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
         [Test]
-        public void TestAsyncOktaConnectionUntilMaxTimeout()
+        public async Task TestAsyncOktaConnectionUntilMaxTimeout()
         {
             var expectedMaxRetryCount = 15;
             var expectedMaxConnectionTimeout = 450;
@@ -2252,7 +2247,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             expectedMaxRetryCount,
                             expectedMaxConnectionTimeout);
                     Task connectTask = conn.OpenAsync(CancellationToken.None);
-                    connectTask.Wait();
+                    await connectTask.ConfigureAwait(false);
                     Assert.Fail();
                 }
                 catch (Exception e)
@@ -2366,7 +2361,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         [TestCase("connection_timeout=5;")]
         [TestCase("")]
-        public void TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost(string extraParameters)
+        public async Task TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost(string extraParameters)
         {
             // arrange
             var connectionString = "account=testAccount;user=testUser;password=testPassword;useProxy=true;proxyHost=no.such.pro.xy;proxyPort=8080;certRevocationCheckMode=enabled;" +
@@ -2374,18 +2369,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var connection = new SnowflakeDbConnection(connectionString))
             {
                 // act
-                var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync().Wait());
+                try
+                {
+                    await connection.OpenAsync().ConfigureAwait(false);
+                    Assert.Fail("Expected exception!");
+                }
+                catch (Exception e)
+                {
+                    Assert.That(e, Is.InstanceOf<TaskCanceledException>().Or.InstanceOf<SnowflakeDbException>());
+                    if (e.InnerException is SnowflakeDbException)
+                        SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
+                }
 
-                // assert
-                Assert.IsTrue(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
-                if (thrown.InnerException is SnowflakeDbException)
-                    SnowflakeDbExceptionAssert.HasErrorCode(thrown.InnerException, SFError.INTERNAL_ERROR);
-                Assert.AreEqual(ConnectionState.Closed, connection.State);
+                 // assert
+                 Assert.AreEqual(ConnectionState.Closed, connection.State);
             }
         }
 
         [Test]
-        public void TestOpenAsyncThrowExceptionWhenOperationIsCancelled()
+        public async Task TestOpenAsyncThrowExceptionWhenOperationIsCancelled()
         {
             // arrange
             var connectionString = "account=testAccount;user=testUser;password=testPassword;useProxy=true;proxyHost=no.such.pro.xy;proxyPort=8080;certRevocationCheckMode=enabled;";
@@ -2394,10 +2396,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var shortCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
                 // act
-                var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync(shortCancellation.Token).Wait());
+                try
+                {
+                    await connection.OpenAsync(shortCancellation.Token).ConfigureAwait(false);
+                    Assert.Fail("Expected exception!");
+                }
+                catch (Exception e)
+                {
+                    Assert.IsInstanceOf<TaskCanceledException>(e);
+                }
 
                 // assert
-                Assert.IsInstanceOf<TaskCanceledException>(thrown.InnerException);
                 Assert.AreEqual(ConnectionState.Closed, connection.State);
             }
         }

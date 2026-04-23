@@ -22,14 +22,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFDbCommandITAsync : SFBaseTestAsync
     {
         [Test]
-        public void TestExecAsyncAPI()
+        public async Task TestExecAsyncAPI()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -49,30 +48,29 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // query is not finished yet, result is still 0;
                     Assert.AreEqual(0, queryResult);
                     // block till query finished
-                    readCallback.Wait();
+                    await readCallback.ConfigureAwait(false);
                     // queryResult should be updated by callback
                     Assert.AreNotEqual(0, queryResult);
                 }
 
-                conn.Close();
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
 
         [Test]
-        public void TestExecAsyncAPIParallel()
+        public async Task TestExecAsyncAPIParallel()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + "poolingEnabled=false";
 
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.AreEqual(ConnectionState.Open, conn.State);
 
                 Task[] taskArray = new Task[5];
                 for (int i = 0; i < taskArray.Length; i++)
                 {
-                    taskArray[i] = Task.Factory.StartNew(() =>
+                    taskArray[i] = Task.Factory.StartNew(async () =>
                     {
                         using (DbCommand cmd = conn.CreateCommand())
                         {
@@ -91,13 +89,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             // query is not finished yet, result is still 0;
                             Assert.AreEqual(0, queryResult);
                             // block till query finished
-                            readCallback.Wait();
+                            await readCallback.ConfigureAwait(false);
                             // queryResult should be updated by callback
                             Assert.AreNotEqual(0, queryResult);
                         }
                     });
                 }
-                Task.WaitAll(taskArray);
+                await Task.WhenAll(taskArray).ConfigureAwait(false);
                 conn.Close();
             }
         }
@@ -1231,13 +1229,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void testExecuteScalarAsyncSelect()
+        public async Task testExecuteScalarAsyncSelect()
         {
             CancellationTokenSource externalCancel = new CancellationTokenSource();
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + "poolingEnabled=false";
-                conn.Open();
+                await conn.OpenAsync().ConfigureAwait(false);
 
                 CreateOrReplaceTable(conn, TableName, new[] { "cola INTEGER" });
 
@@ -1257,15 +1255,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p1.DbType = DbType.Int16;
                     p1.Value = arrint.ToArray();
                     cmd.Parameters.Add(p1);
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     cmd.CommandText = $"SELECT COUNT(*) FROM {TableName}";
                     Task<object> task = cmd.ExecuteScalarAsync(externalCancel.Token);
 
-                    task.Wait();
+                    await task.ConfigureAwait(false);
                     Assert.AreEqual(total, task.Result);
                 }
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
