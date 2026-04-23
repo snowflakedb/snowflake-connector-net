@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.PackageTests
                 var partialOutput = outputBuilder + Environment.NewLine + "ERROR (Partial):" + Environment.NewLine + errorBuilder;
                 TestContext.Progress.WriteLine($"Command timed out! Partial output:\n{partialOutput}");
 
-                if (string.IsNullOrEmpty(expectedSuccessMessage) || partialOutput.Contains(expectedSuccessMessage)) // sometimes Process component has issues with exiting even though command was successful.
+                if (string.IsNullOrEmpty(expectedSuccessMessage) || !partialOutput.Contains(expectedSuccessMessage)) // sometimes Process component has issues with exiting even though command was successful.
                     throw new TimeoutException($"Command '{command} {args}' timed out after {timeoutMs}ms");
             }
 
