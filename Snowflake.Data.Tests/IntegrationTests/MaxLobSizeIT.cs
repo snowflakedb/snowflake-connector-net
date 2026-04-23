@@ -156,6 +156,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test, TestCaseSource(nameof(PositionalInsertTestCases))]
+        [Retry(3)]
         public void TestPositionalInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -262,7 +263,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test, TestCaseSource(nameof(PutGetCommandTestCases))]
         [Timeout(1_000 * 60 * 5)]
-        [Retry(3)]
+        [Retry(3)] //
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange

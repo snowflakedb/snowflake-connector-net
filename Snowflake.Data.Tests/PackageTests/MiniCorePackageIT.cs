@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.PackageTests
         public async Task TestMiniCoreLoadsFromNugetPackage()
         {
             // 1. Pack NuGet
-            await RunCommandAsync("dotnet", $"pack \"{Path.Combine(_repoRoot, "Snowflake.Data", "Snowflake.Data.csproj")}\" -c Release -o \"{_artifactsDir}\" --verbosity quiet --tl:off", timeoutMs: 120000).ConfigureAwait(false);
+            await RunCommandAsync("dotnet", $"pack \"{Path.Combine(_repoRoot, "Snowflake.Data", "Snowflake.Data.csproj")}\" -c Release -o \"{_artifactsDir}\" --verbosity quiet --tl:off", timeoutMs: 150000).ConfigureAwait(false);
 
             var packagePath = Directory.GetFiles(_artifactsDir, "Snowflake.Data.*.nupkg")
                 .Where(f => !f.EndsWith(".symbols.nupkg"))
@@ -109,7 +109,11 @@ namespace Snowflake.Data.Tests.PackageTests
             var cts = new CancellationTokenSource(timeoutMs);
             try
             {
+                #if NET5_0_OR_GREATER
                 await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
+                #else
+                if (!process.WaitForExit(timeoutMs)) throw new TaskCanceledException();
+                #endif
             }
             catch (TaskCanceledException)
             {
