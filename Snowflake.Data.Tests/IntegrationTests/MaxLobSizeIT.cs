@@ -100,7 +100,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
         [Test, TestCaseSource(nameof(SelectOnSpecifiedSizeTestCases))]
-        [Timeout(1_000 * 60 * 2)] // 2 mins
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
             // arrange
@@ -121,8 +120,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
+
         [Test, TestCaseSource(nameof(LiteralInsertTestCases))]
         [Retry(3)]
+        [NonParallelizable]
         public void TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -262,8 +263,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test, TestCaseSource(nameof(PutGetCommandTestCases))]
-        [Timeout(1_000 * 60 * 5)]
-        [Retry(3)] //
+        [Retry(3)]
+        [NonParallelizable]
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange

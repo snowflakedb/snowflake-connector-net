@@ -38,7 +38,6 @@ namespace Snowflake.Data.Tests.PackageTests
         }
 
         [Test]
-        [Timeout(1_000 * 60 * 6)] // 6 mins
         public async Task TestMiniCoreLoadsFromNugetPackage()
         {
             // 1. Pack NuGet

@@ -439,7 +439,6 @@ namespace Snowflake.Data.Core
             }
         }
 
-
         internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
         {
             // Trim the sql query and check if this is a PUT/GET command
