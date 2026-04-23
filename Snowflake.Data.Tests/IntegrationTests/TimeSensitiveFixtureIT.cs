@@ -9,6 +9,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture]
     [Parallelizable(ParallelScope.Children)]
+    [Order(3)]
     public sealed class TimeSensitiveFixtureIT
     {
         [TestCaseSource(nameof(SyncTestCases))]

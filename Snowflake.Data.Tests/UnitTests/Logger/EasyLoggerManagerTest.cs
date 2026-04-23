@@ -11,7 +11,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    [TestFixture, NonParallelizable]
+    [TestFixture, NonParallelizable, Order(2)]
     public class EasyLoggerManagerTest
     {
 
