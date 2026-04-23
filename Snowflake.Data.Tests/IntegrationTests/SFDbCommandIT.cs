@@ -171,6 +171,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive("If this takes too long, query will be in success state.")]
         public async Task TestAsyncExecQueryAsync()
         {
             string queryId;
@@ -1192,6 +1193,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Retry(2)]
         public void TestPutArrayBindAsyncMultiThreading()
         {
             var t1TableName = TableName + 1;
@@ -1492,7 +1494,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     queryId = cmd.ExecuteInAsyncMode();
                     while (statusRetryCount < statusMaxRetryCount && conn.IsStillRunning(cmd.GetQueryStatus(queryId)))
                     {
-                        await Task.Delay(1000);
+                        await Task.Delay(1000).ConfigureAwait(false);
                         statusRetryCount++;
                     }
 

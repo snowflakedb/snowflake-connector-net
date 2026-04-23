@@ -2,6 +2,8 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 
 // Build NuGet, create a fresh consumer app, install the
@@ -37,10 +39,10 @@ namespace Snowflake.Data.Tests.PackageTests
 
         [Test]
         [Timeout(300_000)]
-        public void TestMiniCoreLoadsFromNugetPackage()
+        public async Task TestMiniCoreLoadsFromNugetPackage()
         {
             // 1. Pack NuGet
-            RunCommand("dotnet", $"pack \"{Path.Combine(_repoRoot, "Snowflake.Data", "Snowflake.Data.csproj")}\" -c Release -o \"{_artifactsDir}\" --verbosity quiet --tl:off", timeoutMs: 120000);
+            await RunCommandAsync("dotnet", $"pack \"{Path.Combine(_repoRoot, "Snowflake.Data", "Snowflake.Data.csproj")}\" -c Release -o \"{_artifactsDir}\" --verbosity quiet --tl:off", timeoutMs: 120000).ConfigureAwait(false);
 
             var packagePath = Directory.GetFiles(_artifactsDir, "Snowflake.Data.*.nupkg")
                 .Where(f => !f.EndsWith(".symbols.nupkg"))
@@ -51,21 +53,21 @@ namespace Snowflake.Data.Tests.PackageTests
             var version = Path.GetFileNameWithoutExtension(packagePath).Replace("Snowflake.Data.", "");
 
             // 2. Create consumer app
-            RunCommand("dotnet", "new console --force --verbosity quiet", _tempDir, timeoutMs: 30000);
-            RunCommand("dotnet", "add package Microsoft.Extensions.Logging.Abstractions --version 9.0.5 --verbosity quiet", _tempDir, timeoutMs: 60000);
-            RunCommand("dotnet", $"add package Snowflake.Data --version {version} --source \"{_artifactsDir}\"", _tempDir, timeoutMs: 60000);
+            await RunCommandAsync("dotnet", "new console --force --verbosity quiet", _tempDir, timeoutMs: 30000).ConfigureAwait(false);
+            await RunCommandAsync("dotnet", "add package Microsoft.Extensions.Logging.Abstractions --version 9.0.5 --verbosity quiet", _tempDir, timeoutMs: 60000).ConfigureAwait(false);
+            await RunCommandAsync("dotnet", $"add package Snowflake.Data --version {version} --source \"{_artifactsDir}\"", _tempDir, timeoutMs: 60000).ConfigureAwait(false);
 
             var sourceFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "PackageTests", "MiniCoreVerificationAppSource.cs");
             File.Copy(sourceFile, Path.Combine(_tempDir, "Program.cs"), overwrite: true);
 
             // 3. Run & Assert
-            var (exitCode, output) = RunCommand("dotnet", "run --verbosity quiet", _tempDir, timeoutMs: 60000);
+            var (exitCode, output) = await RunCommandAsync("dotnet", "run --verbosity quiet", _tempDir, timeoutMs: 60000).ConfigureAwait(false);
 
             Assert.AreEqual(0, exitCode, $"Verification app failed: {output}");
             Assert.That(output, Contains.Substring("[PROBE] MiniCore loaded successfully"));
         }
 
-        private (int exitCode, string output) RunCommand(string command, string args, string workingDir = null, int timeoutMs = 60000)
+        private async Task<(int exitCode, string output)> RunCommandAsync(string command, string args, string workingDir = null, int timeoutMs = 60000)
         {
             TestContext.Progress.WriteLine($"Running: {command} {args} (in {workingDir ?? _repoRoot})");
             using var process = new Process
@@ -85,17 +87,17 @@ namespace Snowflake.Data.Tests.PackageTests
             var outputBuilder = new System.Text.StringBuilder();
             var errorBuilder = new System.Text.StringBuilder();
 
-            using var outputWaitHandle = new System.Threading.AutoResetEvent(false);
-            using var errorWaitHandle = new System.Threading.AutoResetEvent(false);
+            using var outputWaitHandle = new SemaphoreSlim(0, 1);
+            using var errorWaitHandle = new SemaphoreSlim(0, 1);
 
             process.OutputDataReceived += (sender, e) =>
             {
-                if (e.Data == null) outputWaitHandle.Set();
+                if (e.Data == null) outputWaitHandle.Release();
                 else outputBuilder.AppendLine(e.Data);
             };
             process.ErrorDataReceived += (sender, e) =>
             {
-                if (e.Data == null) errorWaitHandle.Set();
+                if (e.Data == null) errorWaitHandle.Release();
                 else errorBuilder.AppendLine(e.Data);
             };
 
@@ -104,7 +106,12 @@ namespace Snowflake.Data.Tests.PackageTests
             process.BeginErrorReadLine();
 
             // Wait for process to exit with timeout
-            if (!process.WaitForExit(timeoutMs))
+            var cts = new CancellationTokenSource(timeoutMs);
+            try
+            {
+                await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
+            }
+            catch (TaskCanceledException)
             {
                 try { process.Kill(); } catch { }
                 var partialOutput = outputBuilder + Environment.NewLine + "ERROR (Partial):" + Environment.NewLine + errorBuilder;
@@ -112,8 +119,8 @@ namespace Snowflake.Data.Tests.PackageTests
                 throw new TimeoutException($"Command '{command} {args}' timed out after {timeoutMs}ms");
             }
 
-            outputWaitHandle.WaitOne(1000);
-            errorWaitHandle.WaitOne(1000);
+            await outputWaitHandle.WaitAsync(1000).ConfigureAwait(false);
+            await errorWaitHandle.WaitAsync(1000).ConfigureAwait(false);
 
             var stdout = outputBuilder.ToString();
             var stderr = errorBuilder.ToString();
