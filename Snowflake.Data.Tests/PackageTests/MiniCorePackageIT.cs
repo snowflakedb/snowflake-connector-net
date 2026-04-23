@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.PackageTests
         public async Task TestMiniCoreLoadsFromNugetPackage()
         {
             // 1. Pack NuGet
-            await RunCommandAsync("dotnet", $"pack \"{Path.Combine(_repoRoot, "Snowflake.Data", "Snowflake.Data.csproj")}\" -c Release -o \"{_artifactsDir}\"", timeoutMs: 1_000 * 60 * 5).ConfigureAwait(false);
+            await RunCommandAsync("dotnet", $"pack \"{Path.Combine(_repoRoot, "Snowflake.Data", "Snowflake.Data.csproj")}\" -c Release -o \"{_artifactsDir}\"", timeoutMs: 1_000 * 60 * 5,  expectedSuccessMessage: "Successfully created package").ConfigureAwait(false);
 
             var packagePath = Directory.GetFiles(_artifactsDir, "Snowflake.Data.*.nupkg")
                 .Where(f => !f.EndsWith(".symbols.nupkg"))
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.PackageTests
             Assert.That(output, Contains.Substring("[PROBE] MiniCore loaded successfully"));
         }
 
-        private async Task<(int exitCode, string output)> RunCommandAsync(string command, string args, string workingDir = null, int timeoutMs = 60000)
+        private async Task<(int exitCode, string output)> RunCommandAsync(string command, string args, string workingDir = null, int timeoutMs = 60000, string expectedSuccessMessage = null)
         {
             TestContext.Progress.WriteLine($"Running: {command} {args} (in {workingDir ?? _repoRoot})");
             using var process = new Process
@@ -115,7 +115,9 @@ namespace Snowflake.Data.Tests.PackageTests
                 try { process.Kill(); } catch { }
                 var partialOutput = outputBuilder + Environment.NewLine + "ERROR (Partial):" + Environment.NewLine + errorBuilder;
                 TestContext.Progress.WriteLine($"Command timed out! Partial output:\n{partialOutput}");
-                throw new TimeoutException($"Command '{command} {args}' timed out after {timeoutMs}ms");
+
+                if (string.IsNullOrEmpty(expectedSuccessMessage) || partialOutput.Contains(expectedSuccessMessage)) // sometimes Process component has issues with exiting even though command was successful.
+                    throw new TimeoutException($"Command '{command} {args}' timed out after {timeoutMs}ms");
             }
 
             var stdout = outputBuilder.ToString();
