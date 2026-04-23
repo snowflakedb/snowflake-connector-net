@@ -121,7 +121,7 @@ jobs:
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-linux:
@@ -205,7 +205,7 @@ jobs:
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-mac:
@@ -289,7 +289,7 @@ jobs:
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-rockylinux9:
@@ -330,5 +330,5 @@ jobs:
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests/rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml

@@ -87,18 +87,13 @@ namespace Snowflake.Data.Tests.PackageTests
             var outputBuilder = new System.Text.StringBuilder();
             var errorBuilder = new System.Text.StringBuilder();
 
-            using var outputWaitHandle = new SemaphoreSlim(0, 1);
-            using var errorWaitHandle = new SemaphoreSlim(0, 1);
-
-            process.OutputDataReceived += (sender, e) =>
+            process.OutputDataReceived += (_, e) =>
             {
-                if (e.Data == null) outputWaitHandle.Release();
-                else outputBuilder.AppendLine(e.Data);
+                if (e.Data != null) outputBuilder.AppendLine($"[{DateTime.UtcNow:T}] {e.Data}");
             };
-            process.ErrorDataReceived += (sender, e) =>
+            process.ErrorDataReceived += (_, e) =>
             {
-                if (e.Data == null) errorWaitHandle.Release();
-                else errorBuilder.AppendLine(e.Data);
+                if (e.Data != null) errorBuilder.AppendLine($"[{DateTime.UtcNow:T}] {e.Data}");
             };
 
             process.Start();
@@ -123,15 +118,9 @@ namespace Snowflake.Data.Tests.PackageTests
                 throw new TimeoutException($"Command '{command} {args}' timed out after {timeoutMs}ms");
             }
 
-            await outputWaitHandle.WaitAsync(1000).ConfigureAwait(false);
-            await errorWaitHandle.WaitAsync(1000).ConfigureAwait(false);
-
             var stdout = outputBuilder.ToString();
             var stderr = errorBuilder.ToString();
-            var output = stdout + Environment.NewLine + "ERROR:" + Environment.NewLine + stderr;
-
-            TestContext.Progress.WriteLine($"Exit Code: {process.ExitCode}");
-            TestContext.Progress.WriteLine($"Output:\n{output}");
+            var output = $"{stdout}{Environment.NewLine} ERROR:{Environment.NewLine}{stderr}";
 
             return (process.ExitCode, output);
         }
