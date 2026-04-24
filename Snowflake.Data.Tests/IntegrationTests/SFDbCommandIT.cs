@@ -17,6 +17,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Collections.Generic;
     using System.Globalization;
     using Snowflake.Data.Tests.Mock;
+    using Snowflake.Data.Telemetry;
 
     [TestFixture]
     class SFDbCommandITAsync : SFBaseTestAsync
@@ -1612,6 +1613,217 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.Close();
             }
+        }
+
+        [TestCase("ExecuteNonQuery", TestName = "ExecuteNonQuery emits telemetry")]
+        [TestCase("ExecuteScalar", TestName = "ExecuteScalar emits telemetry")]
+        [TestCase("ExecuteReader", TestName = "ExecuteDbDataReader emits telemetry")]
+        public void TestSyncCommandExecutionEmitsTelemetry(string method)
+        {
+            using var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = $"{ConnectionString.Replace($"CLIENT_TELEMETRY_ENABLED={false}", $"CLIENT_TELEMETRY_ENABLED={true}")}poolingEnabled=false";
+            conn.Open();
+
+            var capturedActivities = new List<Activity>();
+            using var listener = new ActivityListener();
+            listener.ShouldListenTo = source => source.Name == ActivityStarter.ActivitySourceName;
+            listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+            listener.ActivityStopped = activity =>
+            {
+                if (activity.GetTagItem(TelemetryTags.SessionId)?.Equals(conn.SfSession.sessionId) == true)
+                    capturedActivities.Add(activity);
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
+            cmd.CommandText = "SELECT 1";
+
+            // Act
+            switch (method)
+            {
+                case "ExecuteNonQuery": cmd.ExecuteNonQuery(); break;
+                case "ExecuteScalar": cmd.ExecuteScalar(); break;
+                case "ExecuteReader": cmd.ExecuteReader().Dispose(); break;
+            }
+
+            // Assert
+            var expectedOp = method switch
+            {
+                "ExecuteNonQuery" => TelemetryActivities.ExecuteNonQuery,
+                "ExecuteScalar" => TelemetryActivities.ExecuteScalar,
+                "ExecuteReader" => TelemetryActivities.ExecuteDbDataReader,
+                _ => throw new ArgumentException(method)
+            };
+            SpinWait.SpinUntil(capturedActivities.Any, TimeSpan.FromSeconds(30));
+            AssertSingleTelemetryActivity(capturedActivities, expectedOp);
+        }
+
+        [TestCase("ExecuteNonQueryAsync", TestName = "ExecuteNonQueryAsync emits telemetry")]
+        [TestCase("ExecuteScalarAsync", TestName = "ExecuteScalarAsync emits telemetry")]
+        [TestCase("ExecuteReaderAsync", TestName = "ExecuteDbDataReaderAsync emits telemetry")]
+        public async Task TestAsyncCommandExecutionEmitsTelemetry(string method)
+        {
+            using var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = $"{ConnectionString.Replace($"CLIENT_TELEMETRY_ENABLED={false}", $"CLIENT_TELEMETRY_ENABLED={true}")}poolingEnabled=false";
+            await conn.OpenAsync();
+
+            var capturedActivities = new List<Activity>();
+            using var listener = new ActivityListener();
+            listener.ShouldListenTo = source => source.Name == ActivityStarter.ActivitySourceName;
+            listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+            listener.ActivityStopped = activity =>
+            {
+                if (activity.GetTagItem(TelemetryTags.SessionId)?.Equals(conn.SfSession.sessionId) == true)
+                    capturedActivities.Add(activity);
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
+            cmd.CommandText = "SELECT 1";
+
+            // Act
+            switch (method)
+            {
+                case "ExecuteNonQueryAsync": await cmd.ExecuteNonQueryAsync(); break;
+                case "ExecuteScalarAsync": await cmd.ExecuteScalarAsync(); break;
+                case "ExecuteReaderAsync": (await cmd.ExecuteReaderAsync()).Dispose(); break;
+            }
+
+            // Assert
+            var expectedOp = method switch
+            {
+                "ExecuteNonQueryAsync" => TelemetryActivities.ExecuteNonQueryAsync,
+                "ExecuteScalarAsync" => TelemetryActivities.ExecuteScalarAsync,
+                "ExecuteReaderAsync" => TelemetryActivities.ExecuteDbDataReaderAsync,
+                _ => throw new ArgumentException(method)
+            };
+            SpinWait.SpinUntil(capturedActivities.Any, TimeSpan.FromSeconds(30));
+            AssertSingleTelemetryActivity(capturedActivities, expectedOp);
+        }
+
+        [TestCase("ExecuteInAsyncMode", TestName = "ExecuteInAsyncMode emits telemetry")]
+        [TestCase("ExecuteAsyncInAsyncMode", TestName = "ExecuteAsyncInAsyncMode emits telemetry")]
+        public async Task TestAsyncModeExecutionEmitsTelemetry(string method)
+        {
+            using var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = $"{ConnectionString.Replace($"CLIENT_TELEMETRY_ENABLED={false}", $"CLIENT_TELEMETRY_ENABLED={true}")}poolingEnabled=false";
+            conn.Open();
+
+            var capturedActivities = new List<Activity>();
+            using var listener = new ActivityListener();
+            listener.ShouldListenTo = source => source.Name == ActivityStarter.ActivitySourceName;
+            listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+            listener.ActivityStopped = activity =>
+            {
+                if (activity.GetTagItem(TelemetryTags.SessionId)?.Equals(conn.SfSession.sessionId) == true)
+                    capturedActivities.Add(activity);
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
+            cmd.CommandText = "SELECT 1";
+
+            // Act
+            switch (method)
+            {
+                case "ExecuteInAsyncMode": cmd.ExecuteInAsyncMode(); break;
+                case "ExecuteAsyncInAsyncMode": await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None); break;
+                default: throw new ArgumentException(method);
+            }
+
+            // Assert
+            var expectedOp = method switch
+            {
+                "ExecuteInAsyncMode" => TelemetryActivities.ExecuteInAsyncMode,
+                "ExecuteAsyncInAsyncMode" => TelemetryActivities.ExecuteAsyncInAsyncMode,
+                _ => throw new ArgumentException(method)
+            };
+            SpinWait.SpinUntil(capturedActivities.Any, TimeSpan.FromSeconds(30));
+            AssertSingleTelemetryActivity(capturedActivities, expectedOp);
+        }
+
+        [Test]
+        public async Task TestQueryIdOperationsEmitTelemetryWIthCustomEventsFromClient()
+        {
+            using var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = $"{ConnectionString.Replace($"client_telemetry_enabled=false", $"client_telemetry_enabled=true")}poolingEnabled=false";
+            conn.Open();
+
+            var capturedActivities = new List<Activity>();
+            using var listener = new ActivityListener();
+            listener.ShouldListenTo = source => source.Name == ActivityStarter.ActivitySourceName || source.Name == ActivityStarter.ClientDefinedTelemetrySourceName;
+            listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+            listener.ActivityStopped = activity =>
+            {
+                if (activity.GetTagItem(TelemetryTags.SessionId)?.Equals(conn.SfSession.sessionId) == true)
+                    capturedActivities.Add(activity);
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
+            cmd.CommandText = "SELECT 1";
+            using (var activity1 = cmd.StartActivity("Custom activity!"))
+            {
+                activity1.AddTelemetryEvent("event1");
+                using (var activity1Nested = cmd.StartActivity("Custom activity 2!"))
+                {
+                    activity1.AddTelemetryEvent("event2");
+                    using (var activity1NestedNested = cmd.StartActivity("Custom activity 3!"))
+                    {
+                        activity1NestedNested.AddTelemetryEvent("event2");
+                        activity1NestedNested.SetTag("custom tag?", "value!");
+                        activity1Nested.SetTag("custom tag?2", "value!2");
+                        activity1Nested.SetException(new AbandonedMutexException("AAAMutex Yellow Pages"));
+                    }
+                    activity1.SetSuccess();
+                };
+            };
+
+            // Act
+            await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
+
+            // Assert
+            SpinWait.SpinUntil(() => capturedActivities.Count > 3, TimeSpan.FromSeconds(30));
+            Assert.AreEqual(capturedActivities.Count, 4);
+            var capturedActivity1 = capturedActivities.Single(x => x.DisplayName == "Custom activity!");
+            var capturedActivity2 = capturedActivities.Single(x => x.DisplayName == "Custom activity 2!");
+            var capturedActivity3 = capturedActivities.Single(x => x.DisplayName == "Custom activity 3!");
+
+            Assert.AreEqual(ActivityKind.Client, capturedActivity1.Kind);
+            Assert.AreEqual(ActivityKind.Client, capturedActivity2.Kind);
+            Assert.AreEqual(ActivityKind.Client, capturedActivity3.Kind);
+
+            Assert.AreEqual(2, capturedActivity1.Events.Count());
+            Assert.AreEqual(1, capturedActivity2.Events.Count());
+            Assert.AreEqual(1, capturedActivity3.Events.Count());
+
+            Assert.AreEqual(conn.SfSession.sessionId, capturedActivity1.GetTagItem(TelemetryTags.SessionId));
+            Assert.AreEqual(conn.SfSession.sessionId, capturedActivity2.GetTagItem(TelemetryTags.SessionId));
+            Assert.AreEqual(conn.SfSession.sessionId, capturedActivity3.GetTagItem(TelemetryTags.SessionId));
+
+            Assert.AreEqual("OK", capturedActivity1.GetTagItem(TelemetryTags.StatusCode));
+            Assert.AreEqual("ERROR", capturedActivity2.GetTagItem(TelemetryTags.StatusCode));
+            Assert.Null(capturedActivity3.GetTagItem(TelemetryTags.StatusCode));
+        }
+
+        private static void AssertSingleTelemetryActivity(List<Activity> capturedActivities, string expectedOperationName)
+        {
+            var matching = capturedActivities
+                .Where(a => a.OperationName == expectedOperationName)
+                .ToList();
+
+            Assert.AreEqual(1, matching.Count,
+                $"Expected exactly 1 {expectedOperationName} activity but found {matching.Count}. " +
+                $"All captured: [{string.Join(", ", capturedActivities.Select(a => a.OperationName))}]");
+
+            var activity = matching.Single();
+            Assert.AreEqual(ActivityKind.Client, activity.Kind);
+            Assert.AreEqual("OK", activity.GetTagItem(TelemetryTags.StatusCode));
+            Assert.AreEqual("snowflake", activity.GetTagItem(TelemetryTags.DbSystem));
+            Assert.IsNotNull(activity.GetTagItem(TelemetryTags.SessionId));
+            Assert.IsNotNull(activity.GetTagItem(TelemetryTags.DbWarehouse));
+            Assert.IsNotNull(activity.GetTagItem(TelemetryTags.DbRole));
+            Assert.IsNotNull(activity.GetTagItem(TelemetryTags.DbName));
         }
 
         [Test]

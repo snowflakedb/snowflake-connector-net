@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
+using Snowflake.Data.Telemetry;
 
 namespace Snowflake.Data.Client
 {
@@ -161,78 +162,135 @@ namespace Snowflake.Data.Client
 
         public override int ExecuteNonQuery()
         {
-            logger.Debug($"ExecuteNonQuery");
-            SFBaseResultSet resultSet = ExecuteInternal();
-            long total = 0;
-            do
+            logger.Debug("ExecuteNonQuery");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteNonQuery);
+            try
             {
-                if (resultSet.IsDQL()) continue;
-                int count = resultSet.CalculateUpdateCount();
-                if (count < 0)
+                SFBaseResultSet resultSet = ExecuteInternal();
+                long total = 0;
+                do
                 {
-                    // exceeded max int, return -1
-                    return -1;
+                    if (resultSet.IsDQL())
+                    {
+                        activity?.AddTelemetryEvent(TelemetryEvents.DqlResultSetSkipped);
+                        continue;
+                    }
+                    int count = resultSet.CalculateUpdateCount();
+                    if (count < 0)
+                    {
+                        // exceeded max int, return -1
+                        activity?.AddTelemetryEvent(TelemetryEvents.RowCountNegative);
+                        return -1;
+                    }
+                    total += count;
+                    if (total > int.MaxValue)
+                    {
+                        activity?.AddTelemetryEvent(TelemetryEvents.RowCountOverflow);
+                        return -1;
+                    }
                 }
-                total += count;
-                if (total > int.MaxValue)
-                {
-                    return -1;
-                }
-            }
-            while (resultSet.NextResult());
+                while (resultSet.NextResult());
 
-            return (int)total;
+                activity?.SetSuccess();
+                return (int)total;
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteNonQueryAsync");
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
-            long total = 0;
-            do
+            logger.Debug("ExecuteNonQueryAsync");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteNonQueryAsync);
+            try
             {
-                if (resultSet.IsDQL()) continue;
-                int count = resultSet.CalculateUpdateCount();
-                if (count < 0)
-                {
-                    // exceeded max int, return -1
-                    return -1;
-                }
-                total += count;
-                if (total > int.MaxValue)
-                {
-                    return -1;
-                }
-            }
-            while (await resultSet.NextResultAsync(cancellationToken).ConfigureAwait(false));
+                cancellationToken.ThrowIfCancellationRequested();
 
-            return (int)total;
+                var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
+                long total = 0;
+                do
+                {
+                    if (resultSet.IsDQL())
+                    {
+                        activity?.AddTelemetryEvent(TelemetryEvents.DqlResultSetSkipped);
+                        continue;
+                    }
+                    int count = resultSet.CalculateUpdateCount();
+                    if (count < 0)
+                    {
+                        activity?.AddTelemetryEvent(TelemetryEvents.RowCountNegative);
+                        return -1;
+                    }
+                    total += count;
+                    if (total > int.MaxValue)
+                    {
+                        activity?.AddTelemetryEvent(TelemetryEvents.RowCountOverflow);
+                        return -1;
+                    }
+                }
+                while (await resultSet.NextResultAsync(cancellationToken).ConfigureAwait(false));
+
+                activity?.SetSuccess();
+                return (int)total;
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         public override object ExecuteScalar()
         {
-            logger.Debug($"ExecuteScalar");
-            SFBaseResultSet resultSet = ExecuteInternal();
+            logger.Debug("ExecuteScalar");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteScalar);
+            try
+            {
+                var resultSet = ExecuteInternal();
 
-            if (resultSet.Next())
-                return resultSet.GetValue(0);
-            else
-                return DBNull.Value;
+                object result;
+                if (resultSet.Next())
+                    result = resultSet.GetValue(0);
+                else
+                    result = DBNull.Value;
+
+                activity?.SetSuccess();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteScalarAsync");
-            cancellationToken.ThrowIfCancellationRequested();
+            logger.Debug("ExecuteScalarAsync");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteScalarAsync);
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
 
-            var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
+                var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
 
-            if (await result.NextAsync().ConfigureAwait(false))
-                return result.GetValue(0);
-            else
-                return DBNull.Value;
+                object result;
+                if (await resultSet.NextAsync().ConfigureAwait(false))
+                    result = resultSet.GetValue(0);
+                else
+                    result = DBNull.Value;
+
+                activity?.SetSuccess();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -259,21 +317,34 @@ namespace Snowflake.Data.Client
 
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            logger.Debug($"ExecuteDbDataReader");
-            SFBaseResultSet resultSet = ExecuteInternal();
-            return new SnowflakeDbDataReader(this, resultSet);
+            logger.Debug("ExecuteDbDataReader");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteDbDataReader);
+            try
+            {
+                SFBaseResultSet resultSet = ExecuteInternal();
+                activity?.SetSuccess();
+                return new SnowflakeDbDataReader(this, resultSet);
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteDbDataReaderAsync");
+            logger.Debug("ExecuteDbDataReaderAsync");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteDbDataReaderAsync);
             try
             {
                 var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
+                activity?.SetSuccess();
                 return new SnowflakeDbDataReader(this, result);
             }
             catch (Exception ex)
             {
+                activity?.SetException(ex);
                 logger.Error("The command failed to execute.", ex);
                 throw;
             }
@@ -286,9 +357,19 @@ namespace Snowflake.Data.Client
         /// <returns>The query id.</returns>
         public string ExecuteInAsyncMode()
         {
-            logger.Debug($"ExecuteInAsyncMode");
-            SFBaseResultSet resultSet = ExecuteInternal(asyncExec: true);
-            return resultSet.queryId;
+            logger.Debug("ExecuteInAsyncMode");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteInAsyncMode);
+            try
+            {
+                SFBaseResultSet resultSet = ExecuteInternal(asyncExec: true);
+                activity?.SetSuccess();
+                return resultSet.queryId;
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -299,9 +380,19 @@ namespace Snowflake.Data.Client
         /// <returns>The query id.</returns>
         public async Task<string> ExecuteAsyncInAsyncMode(CancellationToken cancellationToken)
         {
-            logger.Debug($"ExecuteAsyncInAsyncMode");
-            var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
-            return resultSet.queryId;
+            logger.Debug("ExecuteAsyncInAsyncMode");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteAsyncInAsyncMode);
+            try
+            {
+                var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
+                activity?.SetSuccess();
+                return resultSet.queryId;
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -311,8 +402,19 @@ namespace Snowflake.Data.Client
         /// <returns>The query status.</returns>
         public QueryStatus GetQueryStatus(string queryId)
         {
-            logger.Debug($"GetQueryStatus");
-            return _queryResultsAwaiter.GetQueryStatus(connection, queryId);
+            logger.Debug("GetQueryStatus");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetQueryStatus);
+            try
+            {
+                var status = _queryResultsAwaiter.GetQueryStatus(connection, queryId);
+                activity?.SetSuccess();
+                return status;
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -323,8 +425,19 @@ namespace Snowflake.Data.Client
         /// <returns>The query status.</returns>
         public async Task<QueryStatus> GetQueryStatusAsync(string queryId, CancellationToken cancellationToken)
         {
-            logger.Debug($"GetQueryStatusAsync");
-            return await _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken);
+            logger.Debug("GetQueryStatusAsync");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetQueryStatusAsync);
+            try
+            {
+                var status = await _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken);
+                activity?.SetSuccess();
+                return status;
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -334,14 +447,24 @@ namespace Snowflake.Data.Client
         /// <returns>The query results.</returns>
         public DbDataReader GetResultsFromQueryId(string queryId)
         {
-            logger.Debug($"GetResultsFromQueryId");
+            logger.Debug("GetResultsFromQueryId");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetResultsFromQueryId);
 
-            Task task = _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
-            task.Wait();
+            try
+            {
+                Task task = _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
+                task.Wait();
 
-            SFBaseResultSet resultSet = sfStatement.GetResultWithId(queryId);
+                SFBaseResultSet resultSet = sfStatement.GetResultWithId(queryId);
 
-            return new SnowflakeDbDataReader(this, resultSet);
+                activity?.SetSuccess();
+                return new SnowflakeDbDataReader(this, resultSet);
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -352,13 +475,23 @@ namespace Snowflake.Data.Client
         /// <returns>The query results.</returns>
         public async Task<DbDataReader> GetResultsFromQueryIdAsync(string queryId, CancellationToken cancellationToken)
         {
-            logger.Debug($"GetResultsFromQueryIdAsync");
+            logger.Debug("GetResultsFromQueryIdAsync");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetResultsFromQueryIdAsync);
 
-            await _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true);
+            try
+            {
+                await _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true);
 
-            SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
+                SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
 
-            return new SnowflakeDbDataReader(this, resultSet);
+                activity?.SetSuccess();
+                return new SnowflakeDbDataReader(this, resultSet);
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
+                throw;
+            }
         }
 
         private static Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)

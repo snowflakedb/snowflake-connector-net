@@ -2,6 +2,11 @@
 
 # Changelog
 - v5.6.0
+    - Added client-side telemetry instrumentation using `System.Diagnostics.Activity` (OpenTelemetry-compatible). When `CLIENT_TELEMETRY_ENABLED=true` (the default), the driver automatically instruments all command executions
+      and their async variants and sends telemetry data to Snowflake's `/telemetry/send` endpoint. Activities are enriched with session context (warehouse, role, database, session id) and report success/error
+      status with exception details.
+    - Added public `StartActivity` extension method on `SnowflakeDbCommand` for creating custom client-defined
+      telemetry activities. Custom activities use a separate activity source (`Client_custom_activity`).
     - Added .NET 10 support. Changed LangVersion to C#13.
     - Added `DbType.AnsiStringFixedLength` to the set of types mapped to Snowflake `TEXT`, matching existing support for `AnsiString`, `String`, and `StringFixedLength`.
     - Extended login-request telemetry with libc detection (`LIBC_FAMILY`, `LIBC_VERSION`). On Linux, the driver now reports whether the runtime uses glibc and includes the library version.

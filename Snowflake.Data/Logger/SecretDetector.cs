@@ -78,17 +78,17 @@ namespace Snowflake.Data.Log
          * The characters are special character group element.
          * To match them in a character group, they must be escaped.
          */
-        private const string AwsKeyPattern = @"(aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:=]\s*)'([^']+)'";
-        private const string AwsTokenPattern = @"(accessToken|tempToken|keySecret)\""\s*:\s*\""([a-z0-9/+]{32,}={0,2})\""";
-        private const string AwsServerSidePattern = @"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9/_\-+:=])+";
-        private const string SasTokenPattern = @"(sig|signature|AWSAccessKeyId|password|passcode)=([a-z0-9%/+]{16,})";
-        private const string PrivateKeyPattern = @"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----"; // pragma: allowlist secret
-        private const string PrivateKeyDataPattern = @"""privateKeyData"": ""([a-z0-9/+=\n]{10,})""";
-        private const string PrivateKeyPropertyPrefixPattern = @"(private_key\s*=)";
-        private const string ConnectionTokenPattern = @"(token|assertion content)(['""\s:=]+)([a-z0-9=/_\-+:]{8,})";
-        private const string TokenPropertyPattern = @"(token)(\s*=)(.*)";
-        private const string PasswordPattern = @"(password|passcode|client_?secret|pwd|proxypassword|private_key_pwd)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})";
-        private const string PasswordPropertyPattern = @"(password|passcode|oauthclientsecret|proxypassword|private_key_pwd)(\s*=)(.*)";
+        private static readonly Regex s_awsKeyPattern = new (@"(aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:=]\s*)'([^']+)'", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_awsTokenPattern = new (@"(accessToken|tempToken|keySecret)\""\s*:\s*\""([a-z0-9/+]{32,}={0,2})\""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_awsServerSidePattern = new (@"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9/_\-+:=])+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_sasTokenPattern = new (@"(sig|signature|AWSAccessKeyId|password|passcode)=([a-z0-9%/+]{16,})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_privateKeyPattern = new (@"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----", RegexOptions.IgnoreCase | RegexOptions.Multiline); // pragma: allowlist secret
+        private static readonly Regex s_privateKeyDataPattern = new (@"""privateKeyData"": ""([a-z0-9/+=\n]{10,})""", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
+        private static readonly Regex s_privateKeyPropertyPrefixPattern = new (@"(private_key\s*=)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_connectionTokenPattern = new (@"(token|assertion content)(['""\s:=]+)([a-z0-9=/_\-+:]{8,})", RegexOptions.IgnoreCase  | RegexOptions.Compiled);
+        private static readonly Regex s_tokenPropertyPattern = new (@"(token)(\s*=)(.*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_passwordPattern = new (@"(password|passcode|client_?secret|pwd|proxypassword|private_key_pwd)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_passwordPropertyPattern = new (@"(password|passcode|oauthclientsecret|proxypassword|private_key_pwd)(\s*=)(.*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static readonly Func<string, string>[] s_maskFunctions = {
             MaskAWSServerSide,
@@ -104,39 +104,19 @@ namespace Snowflake.Data.Log
             MaskTokenProperty
         };
 
-        private static string MaskAWSKeys(string text)
-        {
-            return Regex.Replace(text, AwsKeyPattern, @"$1$2$3'****'",
-                                         RegexOptions.IgnoreCase);
-        }
+        private static string MaskAWSKeys(string text) => s_awsKeyPattern.Replace(text, @"$1$2$3'****'");
 
-        private static string MaskAWSTokens(string text)
-        {
-            return Regex.Replace(text, AwsTokenPattern, @"$1"":""XXXX""",
-                                         RegexOptions.IgnoreCase);
-        }
+        private static string MaskAWSTokens(string text) => s_awsTokenPattern.Replace(text, @"$1"":""XXXX""");
 
-        private static string MaskAWSServerSide(string text)
-        {
-            return Regex.Replace(text, AwsServerSidePattern, @"$1:....",
-                                         RegexOptions.IgnoreCase);
-        }
+        private static string MaskAWSServerSide(string text) => s_awsServerSidePattern.Replace(text, @"$1:....");
 
-        private static string MaskSASTokens(string text)
-        {
-            return Regex.Replace(text, SasTokenPattern, @"$1=****",
-                                         RegexOptions.IgnoreCase);
-        }
+        private static string MaskSASTokens(string text) => s_sasTokenPattern.Replace(text, @"$1=****");
 
-        private static string MaskPrivateKey(string text)
-        {
-            return Regex.Replace(text, PrivateKeyPattern, "-----BEGIN PRIVATE KEY-----\\\\nXXXX\\\\n-----END PRIVATE KEY-----", // pragma: allowlist secret
-                                         RegexOptions.IgnoreCase | RegexOptions.Multiline);
-        }
+        private static string MaskPrivateKey(string text) => s_privateKeyPattern.Replace(text, "-----BEGIN PRIVATE KEY-----\\\\nXXXX\\\\n-----END PRIVATE KEY-----");
 
         private static string MaskPrivateKeyProperty(string text)
         {
-            var match = Regex.Match(text, PrivateKeyPropertyPrefixPattern, RegexOptions.IgnoreCase);
+            var match = s_privateKeyPropertyPrefixPattern.Match(text);
             if (match.Success)
             {
                 int length = match.Index + match.Value.Length;
@@ -145,33 +125,15 @@ namespace Snowflake.Data.Log
             return text;
         }
 
-        private static string MaskPrivateKeyData(string text)
-        {
-            return Regex.Replace(text, PrivateKeyDataPattern, @"""privateKeyData"": ""XXXX""",
-                                         RegexOptions.IgnoreCase | RegexOptions.Multiline);
-        }
+        private static string MaskPrivateKeyData(string text) => s_privateKeyDataPattern.Replace(text, @"""privateKeyData"": ""XXXX""");
 
-        private static string MaskConnectionTokens(string text)
-        {
-            return Regex.Replace(text, ConnectionTokenPattern, @"$1$2****",
-                                         RegexOptions.IgnoreCase);
-        }
+        private static string MaskConnectionTokens(string text) => s_connectionTokenPattern.Replace(text, @"$1$2****");
 
-        private static string MaskPassword(string text)
-        {
-            return Regex.Replace(text, PasswordPattern, @"$1$2****",
-                                         RegexOptions.IgnoreCase);
-        }
+        private static string MaskPassword(string text) => s_passwordPattern.Replace(text, @"$1$2****");
 
-        private static string MaskPasswordProperty(string text)
-        {
-            return Regex.Replace(text, PasswordPropertyPattern, @"$1$2****", RegexOptions.IgnoreCase);
-        }
+        private static string MaskPasswordProperty(string text) => s_passwordPropertyPattern.Replace(text, @"$1$2****");
 
-        private static string MaskTokenProperty(string text)
-        {
-            return Regex.Replace(text, TokenPropertyPattern, @"$1$2****", RegexOptions.IgnoreCase);
-        }
+        private static string MaskTokenProperty(string text) => s_tokenPropertyPattern.Replace(text, @"$1$2****");
 
         public static Mask MaskSecrets(string text)
         {
