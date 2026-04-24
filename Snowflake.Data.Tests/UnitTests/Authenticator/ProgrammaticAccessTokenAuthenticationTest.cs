@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -42,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         [OneTimeTearDown]
         public void AfterAll()
         {
-            _runner.Stop();
+            _runner.Dispose();
         }
 
         [Test]
@@ -114,13 +115,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var db = "testDb";
             var role = "ANALYST";
             var warehouse = "testWarehouse";
-            var host = WiremockRunner.Host;
-            var port = WiremockRunner.DefaultHttpPort;
-            var scheme = "http";
+            var uri = new Uri(_runner.Url);
 
             return new StringBuilder()
                 .Append($"authenticator={authenticator};account={Account};user={User};")
-                .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};")
+                .Append($"db={db};role={role};warehouse={warehouse};host={uri.Host};port={uri.Port};scheme={uri.Scheme};")
                 .Append($"token={Token}")
                 .ToString();
         }

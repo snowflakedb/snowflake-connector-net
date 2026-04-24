@@ -23,25 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string JWTGCPTokenWithoutSubject = "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImU2M2I5NzA1OTRiY2NmZTAxMDlkOTg4OWM2MDk3OWEwIn0.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJpYXQiOjE3NDM3NjEyMTMsImV4cCI6MTc0Mzc2NDgxMywiYXVkIjoid3d3LmV4YW1wbGUuY29tIn0.w0njdpfWFETVK8Ktq9GdvuKRQJjvhOplcSyvQ_zHHwBUSMapqO1bjEWBx5VhGkdECZIGS1VY7db_IOqT45yOMA"; // pragma: allowlist secret
         private const string JWTGCPUnparsableToken = "unparsable.token";
 
-        private WiremockRunner _runner;
-
-        [OneTimeSetUp]
-        public void BeforeAll()
-        {
-            _runner = WiremockRunner.NewWiremock();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
-        }
+        private static readonly string s_wifGcpTransitiveImpersonationMappingPath = Path.Combine(s_wifGcpMappingPath, "successful_transitive_impersonation.json");
 
         [Test]
         public void TestSuccessfulGCPAuthorization()
@@ -172,7 +154,5 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 SetupSystemTime,
                 SetupAwsSdkDisabled
             );
-
-        private static readonly string s_wifGcpTransitiveImpersonationMappingPath = Path.Combine(s_wifGcpMappingPath, "successful_transitive_impersonation.json");
     }
 }

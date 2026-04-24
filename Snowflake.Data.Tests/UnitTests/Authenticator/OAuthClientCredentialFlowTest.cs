@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -20,32 +21,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_tokenRequestErrorMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "token_request_error.json");
         private static readonly string s_tokenRequestNoRefreshTokenMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "successful_without_refresh_token.json");
 
-        private WiremockRunner _runner;
-
-        [OneTimeSetUp]
-        public void BeforeAll()
-        {
-            _runner = WiremockRunner.NewWiremock();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
-        }
-
         [Test]
         public void TestSuccessfulClientCredentialsFlow()
         {
             // arrange
-            _runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
-            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
+            Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
 
             // act
@@ -60,8 +41,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestSuccessfulClientCredentialsFlowAsync()
         {
             // arrange
-            _runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
-            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
+            Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
 
             // act
@@ -76,8 +57,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestSuccessfulFlowWithoutRefreshToken()
         {
             // arrange
-            _runner.AddMappings(s_tokenRequestNoRefreshTokenMappingPath);
-            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            Runner.AddMappings(s_tokenRequestNoRefreshTokenMappingPath);
+            Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
 
             // act
@@ -92,8 +73,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestSuccessfulFlowWithoutRefreshTokenAsync()
         {
             // arrange
-            _runner.AddMappings(s_tokenRequestNoRefreshTokenMappingPath);
-            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            Runner.AddMappings(s_tokenRequestNoRefreshTokenMappingPath);
+            Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
 
             // act
@@ -108,8 +89,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestSuccessfulAuthorizationCodeFlowWithClientSecretProvidedExternally()
         {
             // arrange
-            _runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
-            _runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
+            Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession(clientSecretInConnectionString: false);
 
             // act
@@ -124,7 +105,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestTokenRequestError()
         {
             // arrange
-            _runner.AddMappings(s_tokenRequestErrorMappingPath);
+            Runner.AddMappings(s_tokenRequestErrorMappingPath);
             var session = PrepareSession();
 
             // act
@@ -139,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestTokenRequestErrorAsync()
         {
             // arrange
-            _runner.AddMappings(s_tokenRequestErrorMappingPath);
+            Runner.AddMappings(s_tokenRequestErrorMappingPath);
             var session = PrepareSession();
 
             // act
@@ -174,15 +155,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var db = "testDb";
             var role = "ANALYST";
             var warehouse = "testWarehouse";
-            var host = WiremockRunner.Host;
-            var port = WiremockRunner.DefaultHttpPort;
-            var scheme = "http";
-            var clientId = "123";
+            var uri = new Uri(Runner.Url);
             var connectionStringBuilder = new StringBuilder()
                 .Append($"authenticator={authenticator};account={account};")
-                .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};")
-                .Append($"oauthClientId={clientId};oauthScope={AuthorizationScope};")
-                .Append($"oauthTokenRequestUrl={s_externalTokenRequestUrl};");
+                .Append($"db={db};role={role};warehouse={warehouse};host={uri.Host};port={uri.Port};scheme={uri.Scheme};")
+                .Append($"oauthClientId=123;oauthScope={AuthorizationScope};")
+                .Append($"oauthTokenRequestUrl={ExternalTokenRequestUrl};");
             if (addOAuthClientSecret)
                 connectionStringBuilder.Append($"oauthClientSecret={ClientSecret};");
             if (addUser)

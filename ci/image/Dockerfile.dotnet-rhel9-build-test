@@ -3,15 +3,6 @@ FROM rockylinux:9
 USER root
 WORKDIR /
 
-# Install Java 11 for wiremock
-RUN dnf -y update && \
-    dnf install -y java-11-openjdk && \
-    dnf clean all
-
-# Set Java 11 as the default
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-ENV PATH="${JAVA_HOME}/bin:${PATH}"
-
 # Install .NET from Microsoft repo (latest GA versions not available in Rocky's AppStream).
 # Exclude AppStream's .NET packages to avoid version conflicts and path mismatches.
 # See: https://learn.microsoft.com/en-us/dotnet/core/install/linux-package-mixup?pivots=os-linux-redhat

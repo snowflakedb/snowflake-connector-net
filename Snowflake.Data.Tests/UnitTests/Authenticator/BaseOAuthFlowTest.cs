@@ -15,7 +15,10 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         protected static readonly string s_oauthSnowflakeLoginInvalidTokenMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_invalid_token_login.json");
         protected static readonly string s_oauthAuthorizationCodeMappingPath = Path.Combine(s_oauthMappingPath, "AuthorizationCode");
         protected static readonly string s_refreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "refresh_token.json");
-        protected static readonly string s_externalTokenRequestUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/token-request";
+
+        protected WiremockRunner Runner;
+
+        protected string ExternalTokenRequestUrl => $"{Runner.Url}/oauth/token-request";
 
         protected const string MasterToken = "masterToken123";
         protected const string SessionToken = "sessionToken123";
@@ -29,6 +32,24 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         protected const string AuthorizationScope = "session:role:ANALYST";
         protected const string TokenHost = "localhost";
         protected const string ClientSecret = "123";
+
+        [OneTimeSetUp]
+        public void BaseBeforeAll()
+        {
+            Runner = WiremockRunner.NewWiremock();
+        }
+
+        [SetUp]
+        public void BaseBeforeEach()
+        {
+            Runner.ResetMapping();
+        }
+
+        [OneTimeTearDown]
+        public void BaseAfterAll()
+        {
+            Runner.Stop();
+        }
 
         internal void AssertSessionSuccessfullyCreated(SFSession session)
         {

@@ -15,7 +15,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
     public class WorkloadIdentityFederationAuthenticatorTest
     {
-        protected static readonly string s_wiremockUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}";
         protected static readonly string s_wifMappingPath = Path.Combine("wiremock", "WIF");
         protected static readonly string s_accessTokenReplacement = "%ACCESS_TOKEN%";
         protected static readonly string s_WifProviderReplacement = "%WIF_PROVIDER%";
@@ -23,6 +22,28 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string SessionToken = "sessionToken123";
         private const string SessionId = "1234567890";
         private static readonly string s_SuccessfulMappingPath = Path.Combine(s_wifMappingPath, "snowflake_successful_login.json");
+
+        internal WiremockRunner _runner;
+
+        protected string WiremockUrl => _runner.Url;
+
+        [OneTimeSetUp]
+        public void BaseBeforeAll()
+        {
+            _runner = WiremockRunner.NewWiremock();
+        }
+
+        [SetUp]
+        public void BaseBeforeEach()
+        {
+            _runner.ResetMapping();
+        }
+
+        [OneTimeTearDown]
+        public void BaseAfterAll()
+        {
+            _runner.Stop();
+        }
 
         internal SFSession PrepareSession(
             AttestationProvider? attestationProvider,
@@ -32,7 +53,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Action<Mock<AwsSdkWrapper>> awsSdkConfigurator)
         {
             var wifProviderPart = attestationProvider == null ? string.Empty : $"workload_identity_provider={attestationProvider.ToString()};";
-            var connectionString = $"authenticator=workload_identity;account=testaccount;{wifProviderPart}{connectionStringSuffix ?? string.Empty};host=localhost;port={WiremockRunner.DefaultHttpPort};scheme=http;";
+            var uri = new Uri(_runner.Url);
+            var connectionString = $"authenticator=workload_identity;account=testaccount;{wifProviderPart}{connectionStringSuffix ?? string.Empty};host={uri.Host};port={uri.Port};scheme={uri.Scheme};";
             var sessionContext = new SessionPropertiesContext();
             var session = new SFSession(connectionString, sessionContext);
             var environmentOperations = new Mock<EnvironmentOperations>();
@@ -41,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             timeProviderConfigurator(timeProvider);
             var awsSdkWrapper = new Mock<AwsSdkWrapper>();
             awsSdkConfigurator(awsSdkWrapper);
-            var authenticator = new WorkloadIdentityFederationAuthenticator(session, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, s_wiremockUrl);
+            var authenticator = new WorkloadIdentityFederationAuthenticator(session, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, WiremockUrl);
             session.ReplaceAuthenticator(authenticator);
             return session;
         }

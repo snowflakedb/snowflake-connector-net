@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private HttpRequestMessage CreateQueryRequest()
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, _runner.WiremockBaseHttpsUrl + "/queries/v1/query-request?requestId=abc");
+            var request = new HttpRequestMessage(HttpMethod.Post, _runner.SslUrl + "/queries/v1/query-request?requestId=abc");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultHttpSecondsTimeout));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultRestRetrySecondsTimeout));
             return request;

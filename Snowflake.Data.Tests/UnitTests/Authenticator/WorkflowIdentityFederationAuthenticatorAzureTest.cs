@@ -21,7 +21,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_wifAzureBasicWithClientIdSuccessfulMapping = Path.Combine(s_wifAzureMappingPath, "successful_flow_basic_with_client_id.json");
         private static readonly string s_wifAzureFunctionsSuccessfulMappingPath = Path.Combine(s_wifAzureMappingPath, "successful_flow_azure_functions.json");
         private static readonly string s_wifAzureFunctionsNoClientIdSuccessfulMappingPath = Path.Combine(s_wifAzureMappingPath, "successful_flow_azure_functions_no_client_id.json");
-        private static readonly string s_azureIdentityEndpoint = $"{s_wiremockUrl}/metadata/identity/endpoint/from/env";
         private static readonly string s_azureIdentityHeader = "some-identity-header-from-env";
         private static readonly string s_azureManagedClientId = "managed-client-id-from-env";
         private static readonly string s_customEntraResource = "api://1111111-2222-3333-44444-55555555";
@@ -34,25 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_entraResourceReplacement = "%ENTRA_RESOURCE%";
         private static readonly string s_identityHeaderReplacement = "%IDENTITY_HEADER%";
 
-        private WiremockRunner _runner;
-
-        [OneTimeSetUp]
-        public void BeforeAll()
-        {
-            _runner = WiremockRunner.NewWiremock();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
-        }
+        private string AzureIdentityEndpoint => $"{WiremockUrl}/metadata/identity/endpoint/from/env";
 
         [Test]
         public void TestSuccessfulAzureAuthorization()
@@ -358,7 +339,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             environmentOperations
                 .Setup(e => e.GetEnvironmentVariable("IDENTITY_ENDPOINT"))
-                .Returns(s_azureIdentityEndpoint);
+                .Returns(AzureIdentityEndpoint);
         }
 
         private void ConfigureIdentityHeader(Mock<EnvironmentOperations> environmentOperations)
