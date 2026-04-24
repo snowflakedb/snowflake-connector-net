@@ -583,7 +583,7 @@ namespace Snowflake.Data.Core
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
             var stopRetrying = false;
-            for (var retryCount = -1; retryCount < GetResultWithIdMaxRetriesCount && !stopRetrying; retryCount++)
+            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount + 1 && !stopRetrying; retryCount++)
             {
                 response = _restRequester.Get<QueryExecResponse>(req);
 
