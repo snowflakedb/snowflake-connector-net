@@ -42,9 +42,9 @@ docker run --rm \
     -v "$REVOCATION_DIR/validation/clients/snowflake-dotnet:/src" \
     -v "$DRIVER_DIR:/connector" \
     -w /src \
-    mcr.microsoft.com/dotnet/sdk:9.0 \
-    bash -c "sed -i 's|${DRIVER_DIR}|/connector|g' SnowflakeTest.csproj && dotnet publish -c Release -o /src/bin/Release/net9.0"
-echo "[Info] Build complete: $(ls $REVOCATION_DIR/validation/clients/snowflake-dotnet/bin/Release/net9.0/SnowflakeTest.dll)"
+    mcr.microsoft.com/dotnet/sdk:10.0 \
+    bash -c "sed -i 's|${DRIVER_DIR}|/connector|g' SnowflakeTest.csproj && dotnet publish -c Release -o /src/bin/Release/net10.0"
+echo "[Info] Build complete: $(ls $REVOCATION_DIR/validation/clients/snowflake-dotnet/bin/Release/net10.0/SnowflakeTest.dll)"
 
 echo "[Info] Running tests with Go $(go version | grep -oE 'go[0-9]+\.[0-9]+')..."
 

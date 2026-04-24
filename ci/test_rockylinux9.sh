@@ -6,7 +6,7 @@
 # It builds the .NET connector and runs tests for a specific target framework.
 #
 # Required environment variables:
-#   - net_version: Target framework (e.g., "net8.0")
+#   - net_version: Target framework (e.g., "net10.0")
 #   - snowflake_cloud_env: Cloud environment (e.g., "AWS", "AZURE", "GCP")
 #   - PARAMETER_SECRET: GPG passphrase for decrypting test parameters
 #
