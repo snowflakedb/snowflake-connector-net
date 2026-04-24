@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.Tools
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OsReleaseReader>();
 
-        internal const string OsReleasePath = "/etc/os-release";
+        private const string OsReleasePath = "/etc/os-release";
 
         // Parses KEY=VALUE pairs where VALUE may be quoted or unquoted:
         // BUILD_ID=rolling -> ["BUILD_ID", "rolling"]
