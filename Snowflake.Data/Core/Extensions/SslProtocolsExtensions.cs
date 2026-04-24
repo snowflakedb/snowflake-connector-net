@@ -1,7 +1,7 @@
 using System;
 using System.Security.Authentication;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core.Extensions
 {
     public static class SslProtocolsExtensions
     {

@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Revocation;
 
