@@ -9,35 +9,15 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
+    [TestFixture]
     public class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadIdentityFederationAuthenticatorTest
     {
-        private WiremockRunner _runner;
-
-        [OneTimeSetUp]
-        public void BeforeAll()
-        {
-            _runner = WiremockRunner.NewWiremock();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
-        }
-
         [Test]
         public void TestSuccessfulOidcAuthentication()
         {
             // arrange
             var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.OIDC, token);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.OIDC, token);
             var session = CreateSessionForOidc(token);
 
             // act
@@ -52,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.OIDC, token);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.OIDC, token);
             var session = CreateSessionForOidc(token);
 
             // act

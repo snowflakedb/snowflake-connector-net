@@ -11,11 +11,10 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 using Snowflake.Data.Core.Tools;
-using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
+    [TestFixture]
     public class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private const string AwsRegion = "eu-west-1";
@@ -37,31 +36,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_awsRequestBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(s_awsRequest));
         internal static readonly DateTime s_utcNow = new(2025, 5, 27, 14, 20, 33, 11, new GregorianCalendar(), DateTimeKind.Utc);
 
-        private WiremockRunner _runner;
-
-        [OneTimeSetUp]
-        public void BeforeAll()
-        {
-            _runner = WiremockRunner.NewWiremock();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
-        }
-
         [Test]
         public void TestSuccessfulAwsAuthorization()
         {
             // arrange
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, s_awsRequestBase64);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.AWS, s_awsRequestBase64);
             var session = PrepareSessionForAws(NoEnvironmentSetup);
 
             // act
@@ -75,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestSuccessfulAwsAuthorizationAsync()
         {
             // arrange
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, s_awsRequestBase64);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.AWS, s_awsRequestBase64);
             var session = PrepareSessionForAws(NoEnvironmentSetup);
 
             // act

@@ -6,7 +6,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
+    [TestFixture]
     public class WiremockRunnerTest
     {
         private WiremockRunner _runner;
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [OneTimeTearDown]
         public void AfterAll()
         {
-            _runner.Stop();
+            _runner.Dispose();
         }
 
         [Test]
@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             _runner.AddMappings("wiremock/test_mapping.json");
 
             //act
-            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.WiremockBaseHttpsUrl + "/test")).Result;
+            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.SslUrl + "/test")).Result;
 
             // assert
             Assert.True(response.IsSuccessStatusCode);
@@ -54,17 +54,18 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             // arrange
             _runner.AddMappings("wiremock/test_mapping.json");
-            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.WiremockBaseHttpsUrl + "/test")).Result;
+            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.SslUrl + "/test")).Result;
             Assert.True(response.IsSuccessStatusCode);
 
             // act
             _runner.ResetMapping();
-            response = Task.Run(async () => await _httpClient.GetAsync(_runner.WiremockBaseHttpUrl + "/__admin/mappings")).Result;
+            response = Task.Run(async () => await _httpClient.GetAsync(_runner.Url + "/__admin/mappings")).Result;
 
             // assert
             Assert.True(response.IsSuccessStatusCode);
-            dynamic jsonObject = JsonConvert.DeserializeObject(Task.Run(async () => await response.Content.ReadAsStringAsync()).Result);
-            Assert.AreEqual("0", jsonObject?.meta.total.ToString());
+            var json = Task.Run(async () => await response.Content.ReadAsStringAsync()).Result;
+            var mappings = JsonConvert.DeserializeObject<dynamic[]>(json);
+            Assert.AreEqual(0, mappings.Length);
         }
     }
 }

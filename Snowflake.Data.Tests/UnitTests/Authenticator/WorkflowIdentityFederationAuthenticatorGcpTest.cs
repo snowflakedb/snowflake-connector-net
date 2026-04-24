@@ -12,7 +12,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
+    [TestFixture]
     public class WorkflowIdentityFederationAuthenticatorGcpTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private static readonly string s_wifGcpMappingPath = Path.Combine(s_wifMappingPath, "GCP");
@@ -23,32 +23,14 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string JWTGCPTokenWithoutSubject = "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImU2M2I5NzA1OTRiY2NmZTAxMDlkOTg4OWM2MDk3OWEwIn0.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJpYXQiOjE3NDM3NjEyMTMsImV4cCI6MTc0Mzc2NDgxMywiYXVkIjoid3d3LmV4YW1wbGUuY29tIn0.w0njdpfWFETVK8Ktq9GdvuKRQJjvhOplcSyvQ_zHHwBUSMapqO1bjEWBx5VhGkdECZIGS1VY7db_IOqT45yOMA"; // pragma: allowlist secret
         private const string JWTGCPUnparsableToken = "unparsable.token";
 
-        private WiremockRunner _runner;
-
-        [OneTimeSetUp]
-        public void BeforeAll()
-        {
-            _runner = WiremockRunner.NewWiremock();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
-        }
+        private static readonly string s_wifGcpTransitiveImpersonationMappingPath = Path.Combine(s_wifGcpMappingPath, "successful_transitive_impersonation.json");
 
         [Test]
         public void TestSuccessfulGCPAuthorization()
         {
             // arrange
             AddGcpWiremockMapping(JWTGCPToken);
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.GCP, JWTGCPToken);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.GCP, JWTGCPToken);
             var session = PrepareSessionForGcp("", NoEnvironmentSetup);
 
             // act
@@ -63,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             AddGcpWiremockMapping(JWTGCPToken);
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.GCP, JWTGCPToken);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.GCP, JWTGCPToken);
             var session = PrepareSessionForGcp("", NoEnvironmentSetup);
 
             // act
@@ -113,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestFailAttestationWhenHttpError()
         {
             // arrange
-            _runner.AddMappings(s_wifGcpHttpErrorMappingPath);
+            Runner.AddMappings(s_wifGcpHttpErrorMappingPath);
             var session = PrepareSessionForGcp("", NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
@@ -129,8 +111,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestSuccessfulGCPTransitiveImpersonation()
         {
             // arrange
-            _runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.GCP, JWTGCPToken);
+            Runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.GCP, JWTGCPToken);
             var session = PrepareSessionForGcp($"workload_impersonation_path=target-sa@project.iam.gserviceaccount.com", NoEnvironmentSetup);
 
             // act
@@ -144,7 +126,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestSuccessfulGCPTransitiveImpersonationAttestation()
         {
             // arrange
-            _runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
+            Runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
             var session = PrepareSessionForGcp($"workload_impersonation_path=target-sa@project.iam.gserviceaccount.com", NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
@@ -158,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         private void AddGcpWiremockMapping(string token) =>
-            AddGcpWiremockMapping(_runner, token);
+            AddGcpWiremockMapping(Runner, token);
 
         internal static void AddGcpWiremockMapping(WiremockRunner runner, string token) =>
             runner.AddMappings(s_wifGcpSuccessfulMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, token));
@@ -172,7 +154,5 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 SetupSystemTime,
                 SetupAwsSdkDisabled
             );
-
-        private static readonly string s_wifGcpTransitiveImpersonationMappingPath = Path.Combine(s_wifGcpMappingPath, "successful_transitive_impersonation.json");
     }
 }
