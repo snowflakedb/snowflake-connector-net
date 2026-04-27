@@ -17,10 +17,10 @@ namespace Snowflake.Data.Tests.Mock
 
         public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
         {
-            SFRestRequest sfRequest = (SFRestRequest)postRequest;
+            var sfRequest = (SFRestRequest)postRequest;
             if (sfRequest.jsonBody is LoginRequest)
             {
-                LoginResponse authnResponse = new LoginResponse
+                var authnResponse = new LoginResponse
                 {
                     data = new LoginResponseData()
                     {
@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.Mock
                     },
                     success = true
                 };
-                return Task.FromResult<T>((T)(object)authnResponse);
+                return Task.FromResult((T)(object)authnResponse);
             }
 
             if (sfRequest.jsonBody is QueryRequest)
@@ -43,10 +43,10 @@ namespace Snowflake.Data.Tests.Mock
 
             if (sfRequest.jsonBody == null && typeof(T) == typeof(CloseResponse))
             {
-                return Task.FromResult<T>((T)(object)new CloseResponse { success = true });
+                return Task.FromResult((T)(object)new CloseResponse { success = true });
             }
 
-            return Task.FromResult<T>((T)(object)null);
+            return Task.FromResult((T)(object)null);
         }
 
         public T Get<T>(IRestRequest request)
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            return Task.FromResult<T>((T)(object)null);
+            return Task.FromResult((T)(object)null);
         }
 
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)

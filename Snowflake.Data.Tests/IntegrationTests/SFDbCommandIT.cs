@@ -137,7 +137,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
             {
-                _forceTimeoutForNonLoginRequestsOnly = true
+                ForceTimeoutForNonLoginRequestsOnly = true
             };
 
             using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
@@ -969,7 +969,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
             {
-                _forceTimeoutForNonLoginRequestsOnly = true
+                ForceTimeoutForNonLoginRequestsOnly = true
             };
 
             using (IDbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
