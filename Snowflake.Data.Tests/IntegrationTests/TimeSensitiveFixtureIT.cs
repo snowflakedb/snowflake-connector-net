@@ -12,9 +12,30 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [Order(3)]
     public sealed class TimeSensitiveFixtureIT
     {
-        [TestCaseSource(nameof(SyncTestCases))]
+        [TestCaseSource(nameof(SFBaseTestCases))]
         [Retry(3)]
-        public void TestSync((Type, MethodInfo) args)
+        public async Task SFBaseTest((Type, MethodInfo) args)
+        {
+            // Arrange
+            var testClass = Activator.CreateInstance(args.Item1);
+            var startupMethod = args.Item1.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(x => x.GetCustomAttribute<SetUpAttribute>() != null);
+            var tearDownMethod = args.Item1.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(x => x.GetCustomAttribute<TearDownAttribute>() != null);
+
+            try
+            {
+                startupMethod?.Invoke(testClass, null);
+                var result = args.Item2.Invoke(testClass, null);
+                await (result as Task ?? Task.CompletedTask);
+            }
+            finally
+            {
+                tearDownMethod?.Invoke(testClass, null);
+            }
+        }
+
+        [TestCaseSource(nameof(SFBaseAsyncTestCases))]
+        [Retry(3)]
+        public async Task SFBaseAsyncTest((Type, MethodInfo) args)
         {
             // Arrange
             var testClass = Activator.CreateInstance(args.Item1);
@@ -22,29 +43,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tearDownMethod = args.Item1.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(x => x.GetCustomAttribute<TearDownAttribute>() != null);
 
             startupMethod?.Invoke(testClass, null);
-            args.Item2.Invoke(testClass, null);
-            tearDownMethod?.Invoke(testClass, null);
+
+            try
+            {
+                var result = args.Item2.Invoke(testClass, null);
+                await (result as Task ?? Task.CompletedTask);
+            }
+            finally
+            {
+                tearDownMethod?.Invoke(testClass, null);
+            }
         }
 
-        [TestCaseSource(nameof(AsyncTestCases))]
-        [Retry(3)]
-        public async Task TestAsync((Type, MethodInfo) args)
-        {
-            // Arrange
-            var testClass = Activator.CreateInstance(args.Item1);
-            var startupMethod = args.Item1.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(x => x.GetCustomAttribute<SetUpAttribute>() != null);
-            var tearDownMethod = args.Item1.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(x => x.GetCustomAttribute<TearDownAttribute>() != null);
-
-            startupMethod?.Invoke(testClass, null);
-
-            var result = args.Item2.Invoke(testClass, null);
-            await (result as Task ?? Task.CompletedTask);
-
-            tearDownMethod?.Invoke(testClass, null);
-        }
-
-        public static TestCaseData[] AsyncTestCases = GetTestCaseData(typeof(SFBaseTestAsync), typeof(SFBaseTest));
-        public static TestCaseData[] SyncTestCases = GetTestCaseData(typeof(SFBaseTest));
+        public static TestCaseData[] SFBaseAsyncTestCases = GetTestCaseData(typeof(SFBaseTestAsync), typeof(SFBaseTest));
+        public static TestCaseData[] SFBaseTestCases = GetTestCaseData(typeof(SFBaseTest));
 
         private static TestCaseData[] GetTestCaseData(Type assignableTo, Type notAssignableTo = null) => Assembly
             .GetExecutingAssembly()
