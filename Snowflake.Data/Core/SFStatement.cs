@@ -146,14 +146,14 @@ namespace Snowflake.Data.Core
         internal SFStatement(SFSession session)
         {
             SfSession = session;
-            _restRequester = session.restRequester;
+            _restRequester = session.RestRequester;
             _queryTag = session._queryTag;
         }
 
         internal SFStatement(SFSession session, string queryTag)
         {
             SfSession = session;
-            _restRequester = session.restRequester;
+            _restRequester = session.RestRequester;
             _queryTag = queryTag ?? session._queryTag;
         }
 

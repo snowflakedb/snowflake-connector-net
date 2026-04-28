@@ -8,7 +8,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    class MockRestRequesterUnauthorizedOnQuery : IMockRestRequester
+    class MockRestRequesterUnauthorizedOnQuery : IRestRequester
     {
         public T Post<T>(IRestRequest postRequest)
         {
@@ -67,10 +67,6 @@ namespace Snowflake.Data.Tests.Mock
         public HttpResponseMessage Get(IRestRequest request)
         {
             return null;
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
         }
     }
 }

@@ -36,7 +36,7 @@ namespace Snowflake.Data.Core
 
         internal string masterToken;
 
-        internal IRestRequester restRequester { get; private set; }
+        internal IRestRequester RestRequester { get; private set; }
 
         internal IAuthenticator authenticator;
 
@@ -55,8 +55,6 @@ namespace Snowflake.Data.Core
         internal TimeSpan connectionTimeout => _poolConfig.ConnectionTimeout;
 
         internal bool isHeartBeatEnabled;
-
-        private HttpClient _HttpClient;
 
         private string arrayBindStage = null;
         private int arrayBindStageThreshold = 0;
@@ -185,16 +183,22 @@ namespace Snowflake.Data.Core
         ///     Constructor
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-        internal SFSession(
-            String connectionString,
-            SessionPropertiesContext sessionContext) : this(connectionString, sessionContext, EasyLoggingStarter.Instance)
+        internal SFSession(string connectionString, SessionPropertiesContext sessionContext) : this(connectionString, sessionContext, EasyLoggingStarter.Instance)
         {
         }
 
         internal SFSession(
-            String connectionString,
+            string connectionString,
             SessionPropertiesContext sessionContext,
-            EasyLoggingStarter easyLoggingStarter)
+            EasyLoggingStarter easyLoggingStarter) : this(connectionString, sessionContext, easyLoggingStarter, BuildRestRequester)
+        {
+        }
+
+        internal SFSession(
+            string connectionString,
+            SessionPropertiesContext sessionContext,
+            EasyLoggingStarter easyLoggingStarter,
+            Func<SFSessionHttpClientProperties, IRestRequester> requesterFactory)
         {
             _easyLoggingStarter = easyLoggingStarter;
             ConnectionString = connectionString;
@@ -208,10 +212,8 @@ namespace Snowflake.Data.Core
             try
             {
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
-                var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
-                _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
-                restRequester = new RestRequester(_HttpClient);
+                RestRequester = requesterFactory.Invoke(extractedProperties);
                 _poolConfig = extractedProperties.BuildConnectionPoolConfig();
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
@@ -240,18 +242,6 @@ namespace Snowflake.Data.Core
                             SFError.INVALID_CONNECTION_STRING,
                             "Unable to initialize session ");
             }
-        }
-
-        internal SFSession(String connectionString, SessionPropertiesContext sessionContext, IMockRestRequester restRequester) : this(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester)
-        {
-        }
-
-        internal SFSession(String connectionString, SessionPropertiesContext sessionContext, EasyLoggingStarter easyLoggingStarter, IMockRestRequester restRequester) : this(connectionString, sessionContext, easyLoggingStarter)
-        {
-            // Inject the HttpClient to use with the Mock requester
-            restRequester.setHttpClient(_HttpClient);
-            // Override the Rest requester with the mock for testing
-            this.restRequester = restRequester;
         }
 
         internal bool IsPoolingEnabledForConnectionCache()
@@ -330,7 +320,7 @@ namespace Snowflake.Data.Core
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
             var closeSessionRequest = PrepareCloseSessionRequest();
-            PostCloseSession(closeSessionRequest, restRequester);
+            PostCloseSession(closeSessionRequest, RestRequester);
             sessionToken = null;
         }
 
@@ -341,7 +331,7 @@ namespace Snowflake.Data.Core
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
             var closeSessionRequest = PrepareCloseSessionRequest();
-            Task.Run(() => PostCloseSession(closeSessionRequest, restRequester));
+            Task.Run(() => PostCloseSession(closeSessionRequest, RestRequester));
             sessionToken = null;
         }
 
@@ -355,7 +345,7 @@ namespace Snowflake.Data.Core
             var closeSessionRequest = PrepareCloseSessionRequest();
 
             logger.Debug($"Closing session async");
-            var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
+            var response = await RestRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
             if (!response.success)
             {
                 logger.Error($"Failed to close session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
@@ -405,7 +395,7 @@ namespace Snowflake.Data.Core
         internal void renewSession()
         {
             logger.Info("Renew the session.");
-            var response = restRequester.Post<RenewSessionResponse>(getRenewSessionRequest());
+            var response = RestRequester.Post<RenewSessionResponse>(getRenewSessionRequest());
             if (!response.success)
             {
                 SnowflakeDbException e = new SnowflakeDbException("",
@@ -425,7 +415,7 @@ namespace Snowflake.Data.Core
         {
             logger.Info("Renew the session.");
             var response =
-                    await restRequester.PostAsync<RenewSessionResponse>(
+                    await RestRequester.PostAsync<RenewSessionResponse>(
                         getRenewSessionRequest(),
                         cancellationToken
                     ).ConfigureAwait(false);
@@ -713,7 +703,7 @@ namespace Snowflake.Data.Core
                     NullDataResponse response = null;
                     try
                     {
-                        response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
+                        response = RestRequester.Post<NullDataResponse>(heartBeatSessionRequest);
                     }
                     catch (HttpRequestException ex)
                     {
@@ -796,5 +786,22 @@ namespace Snowflake.Data.Core
         }
 
         internal virtual bool IsInvalidatedForPooling() => _invalidatedForPooling;
+
+
+        private static IRestRequester BuildRestRequester(SFSessionHttpClientProperties properties)
+        {
+            try
+            {
+                var httpClientConfig = properties.BuildHttpClientConfig();
+                var httpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
+                var restRequester = new RestRequester(httpClient);
+                return restRequester;
+            }
+            catch (SnowflakeDbException e)
+            {
+                logger.Error("Unable to initialize session ", e);
+                throw;
+            }
+        }
     }
 }

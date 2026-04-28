@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Microsoft.IdentityModel.Tokens;
 
-    class MockLoginMFATokenCacheRestRequester : IMockRestRequester
+    class MockLoginMFATokenCacheRestRequester : IRestRequester
     {
         internal Queue<LoginRequest> LoginRequests { get; } = new();
 
@@ -73,11 +73,6 @@ namespace Snowflake.Data.Tests.Mock
                 return Task.FromResult<T>((T)(object)authnResponse);
             }
             throw new NotImplementedException();
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
 
         public void Reset()

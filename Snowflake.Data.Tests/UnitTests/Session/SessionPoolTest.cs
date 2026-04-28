@@ -503,10 +503,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.AreEqual(0, pool._idleSessions.Count);
         }
 
-        private SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)
+        private SFSession CreateSessionWithCurrentStartTime(string connectionString, IRestRequester restRequester = null)
         {
             var session = restRequester == null ? new SFSession(connectionString, new SessionPropertiesContext()) :
-                new SFSession(connectionString, new SessionPropertiesContext(), restRequester);
+                new SFSession(connectionString, new SessionPropertiesContext(), EasyLoggingStarter.Instance,_ => restRequester);
             var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             session.SetStartTime(now);
             return session;

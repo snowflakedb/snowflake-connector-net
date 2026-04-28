@@ -7,9 +7,9 @@ namespace Snowflake.Data.Tests.Mock
     using System.Threading.Tasks;
     using Snowflake.Data.Core;
 
-    class MockCloseSessionGone : IMockRestRequester
+    class MockCloseSessionGone : IRestRequester
     {
-        static private readonly int SESSION_GONE = 390111;
+        private static readonly int SESSION_GONE = 390111;
 
         public T Get<T>(IRestRequest request)
         {

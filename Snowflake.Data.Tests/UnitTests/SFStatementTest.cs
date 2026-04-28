@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionRenew()
         {
             Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
             SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionRenewGetResultWithId()
         {
             Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
             SFBaseResultSet resultSet = statement.GetResultWithId("mockId");
@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionRenewGetResultWithIdOnlyRetries3Times()
         {
             Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
             var thrown = Assert.Throws<SnowflakeDbException>(() => statement.GetResultWithId("retryId"));
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestSessionRenewGetResultWithIdAsync()
         {
             Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             await sfSession.OpenAsync(CancellationToken.None);
             SFStatement statement = new SFStatement(sfSession);
             SFBaseResultSet resultSet = await statement.GetResultWithIdAsync("mockId", CancellationToken.None);
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestSessionRenewGetResultWithIdOnlyRetries3TimesAsync()
         {
             Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             await sfSession.OpenAsync(CancellationToken.None);
             SFStatement statement = new SFStatement(sfSession);
             var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () => await statement.GetResultWithIdAsync("retryId", CancellationToken.None));
@@ -86,7 +86,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionRenewDuringQueryExec()
         {
             Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             sfSession.Open();
             SFStatement statement = new SFStatement(sfSession);
             SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
@@ -102,7 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestServiceName()
         {
             var restRequester = new Mock.MockServiceName();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             sfSession.Open();
             string expectServiceName = Mock.MockServiceName.INIT_SERVICE_NAME;
             Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
@@ -339,7 +339,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestExecuteMergesQccOnFailedResponse()
         {
             var restRequester = new Mock.MockRestRequesterWithQccOnError();
-            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             session.Open();
             var statement = new SFStatement(session);
 
@@ -355,7 +355,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestExecuteAsyncMergesQccOnFailedResponse()
         {
             var restRequester = new Mock.MockRestRequesterWithQccOnError();
-            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             await session.OpenAsync(CancellationToken.None);
             var statement = new SFStatement(session);
 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Snowflake.Data.Tests.Mock
 {
 
-    class MockOktaRestRequester : IMockRestRequester
+    class MockOktaRestRequester : IRestRequester
     {
         public string TokenUrl { get; set; }
         public string SSOUrl { get; set; }
@@ -97,11 +97,6 @@ namespace Snowflake.Data.Tests.Mock
         public HttpResponseMessage Get(IRestRequest request)
         {
             return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
     }
 }

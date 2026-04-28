@@ -7,7 +7,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    class MockRestRequesterForQueryCancellation : IMockRestRequester
+    class MockRestRequesterForQueryCancellation : IRestRequester
     {
         private static readonly string SessionToken = "mock_session_token";
 
@@ -135,10 +135,6 @@ namespace Snowflake.Data.Tests.Mock
         public HttpResponseMessage Get(IRestRequest request)
         {
             return null;
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
         }
     }
 }

@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using System;
 using System.Net.Http;
@@ -9,18 +7,13 @@ using System.Threading.Tasks;
 namespace Snowflake.Data.Tests.Mock
 {
 
-    class MockRetryUntilRestTimeoutRestRequester : RestRequester, IMockRestRequester
+    class MockRetryUntilRestTimeoutRestRequester : RestRequester
     {
         internal bool ForceTimeoutForNonLoginRequestsOnly = false;
 
         public MockRetryUntilRestTimeoutRestRequester() : base(null)
         {
             // Does nothing
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            HttpClient = httpClient;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,

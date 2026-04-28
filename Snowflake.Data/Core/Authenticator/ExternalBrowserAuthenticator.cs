@@ -162,7 +162,7 @@ namespace Snowflake.Data.Core.Authenticator
             if (session._disableConsoleLogin)
             {
                 var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
-                var authenticatorRestResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+                var authenticatorRestResponse = session.RestRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
                 authenticatorRestResponse.FilterFailedResponse();
 
                 _proofKey = authenticatorRestResponse.data.proofKey;
@@ -181,7 +181,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
                 var authenticatorRestResponse =
-                    await session.restRequester.PostAsync<AuthenticatorResponse>(
+                    await session.RestRequester.PostAsync<AuthenticatorResponse>(
                         authenticatorRestRequest,
                         cancellationToken
                     ).ConfigureAwait(false);

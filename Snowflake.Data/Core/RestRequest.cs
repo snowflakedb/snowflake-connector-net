@@ -135,6 +135,7 @@ namespace Snowflake.Data.Core
                 jsonBody.ToString());
         }
 
+
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
             var message = newMessage(method, Url);

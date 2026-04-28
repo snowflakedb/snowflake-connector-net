@@ -52,7 +52,7 @@ namespace Snowflake.Data.Core.Authenticator
 
             s_logger.Debug("step 1: Get SSO and token URL");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
-            var authenticatorResponse = await session.restRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
+            var authenticatorResponse = await session.RestRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
             authenticatorResponse.FilterFailedResponse();
             Uri ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
             Uri tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
@@ -75,12 +75,12 @@ namespace Snowflake.Data.Core.Authenticator
                 {
                     s_logger.Debug("step 3: Get IdP one-time token");
                     IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
-                    var idpResponse = await session.restRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
+                    var idpResponse = await session.RestRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
                     string onetimeToken = idpResponse.SessionToken ?? idpResponse.CookieToken;
 
                     s_logger.Debug("step 4: Get SAML response from SSO");
                     var samlRestRequest = BuildSamlRestRequest(ssoUrl, onetimeToken);
-                    samlRawResponse = await session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
+                    samlRawResponse = await session.RestRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false);
                     _rawSamlTokenHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
                     s_logger.Debug("step 5: Verify postback URL in SAML response");
                     if (!session._disableSamlUrlCheck)
@@ -118,7 +118,7 @@ namespace Snowflake.Data.Core.Authenticator
 
             s_logger.Debug("step 1: Get SSO and token URL");
             var authenticatorRestRequest = BuildAuthenticatorRestRequest();
-            var authenticatorResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+            var authenticatorResponse = session.RestRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
             authenticatorResponse.FilterFailedResponse();
             Uri ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
             Uri tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
@@ -141,12 +141,12 @@ namespace Snowflake.Data.Core.Authenticator
                 {
                     s_logger.Debug("step 3: Get IdP one-time token");
                     IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
-                    var idpResponse = session.restRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
+                    var idpResponse = session.RestRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
                     string onetimeToken = idpResponse.SessionToken ?? idpResponse.CookieToken;
 
                     s_logger.Debug("step 4: Get SAML response from SSO");
                     var samlRestRequest = BuildSamlRestRequest(ssoUrl, onetimeToken);
-                    samlRawResponse = session.restRequester.Get(samlRestRequest);
+                    samlRawResponse = session.RestRequester.Get(samlRestRequest);
                     _rawSamlTokenHtmlString = Task.Run(async () => await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false)).Result;
 
                     s_logger.Debug("step 5: Verify postback URL in SAML response");

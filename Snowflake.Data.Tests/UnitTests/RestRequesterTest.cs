@@ -12,7 +12,7 @@ using Snowflake.Data.Core;
 namespace Snowflake.Data.Tests.UnitTests
 {
     [TestFixture]
-    public class RestRequesterTest
+    public sealed class RestRequesterTest
     {
         [Test]
         public void TestSendAsyncTags401OnException()
@@ -119,6 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var validJson = "{\"message\":\"Some message!\",\"code\":0,\"success\":true}";
             var httpClient = CreateHttpClientWithSequentialResponses(
+                out var mockHandler,
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(validJson) });
             var restRequester = new RestRequester(httpClient);
             var request = CreateMockRestRequest(HttpMethod.Post);
@@ -128,6 +129,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.IsTrue(result.success);
+            mockHandler.Protected().Verify("SendAsync", Times.Once(), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
             Assert.AreEqual("Some message!", result.message);
         }
 
@@ -138,6 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var truncatedJson = "{\"success\":tr";
             var validJson = "{\"message\":\"Some message!\",\"code\":0,\"success\":true}";
             var httpClient = CreateHttpClientWithSequentialResponses(
+                out var mockHandler,
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) },
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(validJson) });
             var restRequester = new RestRequester(httpClient);
@@ -148,6 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.IsTrue(result.success);
+            mockHandler.Protected().Verify("SendAsync", Times.Exactly(2), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
             Assert.AreEqual("Some message!", result.message);
         }
 
@@ -157,6 +161,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var truncatedJson = "{\"success\":tr";
             var httpClient = CreateHttpClientWithSequentialResponses(
+                out _,
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) },
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) });
             var restRequester = new RestRequester(httpClient);
@@ -174,6 +179,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var truncatedJson = "{\"success\":tr";
             var validJson = "{\"message\":\"Some message!\",\"code\":0,\"success\":true}";
             var httpClient = CreateHttpClientWithSequentialResponses(
+                out _,
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) },
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(validJson) });
             var restRequester = new RestRequester(httpClient);
@@ -193,6 +199,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var truncatedJson = "{\"success\":tr";
             var httpClient = CreateHttpClientWithSequentialResponses(
+                out _,
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) },
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) });
             var restRequester = new RestRequester(httpClient);
@@ -203,16 +210,16 @@ namespace Snowflake.Data.Tests.UnitTests
                 () => restRequester.GetAsync<NullDataResponse>(request, CancellationToken.None));
         }
 
-        private static HttpClient CreateHttpClientWithSequentialResponses(params HttpResponseMessage[] responses)
+        private static HttpClient CreateHttpClientWithSequentialResponses(out Mock<HttpMessageHandler> mockHandler, params HttpResponseMessage[] responses)
         {
             var callCount = 0;
-            var mockHandler = new Mock<HttpMessageHandler>();
+            mockHandler = new Mock<HttpMessageHandler>();
             mockHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync( () => responses[callCount++]);
+                .ReturnsAsync(() => responses[callCount++]);
             return new HttpClient(mockHandler.Object);
         }
 

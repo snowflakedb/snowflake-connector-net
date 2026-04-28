@@ -81,7 +81,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var loginRequest = BuildLoginRequest();
 
-            var response = await session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
+            var response = await session.RestRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
 
             session.ProcessLoginResponse(response);
         }
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var loginRequest = BuildLoginRequest();
 
-            var response = session.restRequester.Post<LoginResponse>(loginRequest);
+            var response = session.RestRequester.Post<LoginResponse>(loginRequest);
 
             session.ProcessLoginResponse(response);
         }

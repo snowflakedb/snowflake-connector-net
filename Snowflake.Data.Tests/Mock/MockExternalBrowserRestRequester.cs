@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace Snowflake.Data.Tests.Mock
 {
 
-    class MockExternalBrowserRestRequester : IMockRestRequester
+    class MockExternalBrowserRestRequester : IRestRequester
     {
         public string ProofKey { get; set; }
 
@@ -117,11 +117,6 @@ namespace Snowflake.Data.Tests.Mock
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
             throw new System.NotImplementedException();
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
     }
 }

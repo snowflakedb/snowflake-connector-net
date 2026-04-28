@@ -7,7 +7,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    internal class MockCloseHangingRestRequester : IMockRestRequester
+    internal class MockCloseHangingRestRequester : IRestRequester
     {
         internal List<SFRestRequest> CloseRequests { get; } = new();
 
@@ -72,11 +72,6 @@ namespace Snowflake.Data.Tests.Mock
             }
 
             throw new NotImplementedException();
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
     }
 }

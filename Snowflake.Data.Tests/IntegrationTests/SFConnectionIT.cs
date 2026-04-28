@@ -2462,7 +2462,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var restRequester = new MockCloseHangingRestRequester();
-            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             session.Open();
             var watchClose = new Stopwatch();
             var watchClosedFinished = new Stopwatch();

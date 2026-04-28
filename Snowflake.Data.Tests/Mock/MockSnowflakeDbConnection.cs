@@ -13,9 +13,9 @@ namespace Snowflake.Data.Tests.Mock
     {
         private SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
 
-        private IMockRestRequester _restRequester;
+        private IRestRequester _restRequester;
 
-        public MockSnowflakeDbConnection(IMockRestRequester requester)
+        public MockSnowflakeDbConnection(IRestRequester requester)
         {
             _restRequester = requester;
         }
@@ -83,7 +83,7 @@ namespace Snowflake.Data.Tests.Mock
                 Password = Password,
                 Passcode = Passcode
             };
-            SfSession = new SFSession(ConnectionString, sessionContext, EasyLoggingStarter.Instance, _restRequester);
+            SfSession = new SFSession(ConnectionString, sessionContext, EasyLoggingStarter.Instance, _ => _restRequester);
 
             _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 

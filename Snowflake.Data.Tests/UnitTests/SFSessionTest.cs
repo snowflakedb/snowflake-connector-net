@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionGoneWhenClose()
         {
             var restRequester = new MockCloseSessionGone();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             sfSession.Open();
             Assert.DoesNotThrow(() => sfSession.close());
         }
@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionGoneWhenCloseNonBlocking()
         {
             var restRequester = new MockCloseSessionGone();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             sfSession.Open();
             Assert.DoesNotThrow(() => sfSession.CloseNonBlocking());
         }
@@ -199,7 +199,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
 
             // act
             sfSession.Open();
@@ -223,7 +223,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var passcode = "123456";
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcode={passcode}", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcode={passcode}", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
 
             // act
             sfSession.Open();
@@ -242,7 +242,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var passcode = "123456";
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
             var sessionContext = new SessionPropertiesContext { Passcode = SecureStringHelper.Encode(passcode) };
-            SFSession sfSession = new SFSession($"account=test;user=test;password=test;", sessionContext, EasyLoggingStarter.Instance, restRequester);
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;", sessionContext, EasyLoggingStarter.Instance, _ => restRequester);
 
             // act
             sfSession.Open();
@@ -260,7 +260,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var passcode = "123456";
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession($"account=test;user=test;password=test{passcode};passcodeInPassword=true;", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test{passcode};passcodeInPassword=true;", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
 
             // act
             sfSession.Open();
@@ -277,7 +277,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcodeInPassword=false;", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcodeInPassword=false;", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
 
             // act
             sfSession.Open();
@@ -294,7 +294,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-            SFSession sfSession = new SFSession($"account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            SFSession sfSession = new SFSession($"account=test;user=test;password=test", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
 
             // act
             sfSession.Open();
@@ -311,7 +311,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var restRequester = new MockLoginMFATokenCacheRestRequester();
-            var sfSession = new SFSession($"account=test;user=test;password=test;authenticator=username_password_mfa", new SessionPropertiesContext(), restRequester);
+            var sfSession = new SFSession($"account=test;user=test;password=test;authenticator=username_password_mfa", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
 
             // act
             sfSession.Open();
@@ -330,7 +330,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var testToken = "testToken1234";
             var restRequester = new MockLoginMFATokenCacheRestRequester();
-            var sfSession = new SFSession($"account=test;user=test;password=test;authenticator=username_password_mfa", new SessionPropertiesContext(), restRequester);
+            var sfSession = new SFSession($"account=test;user=test;password=test;authenticator=username_password_mfa", new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             restRequester.LoginResponses.Enqueue(new LoginResponseData()
             {
                 mfaToken = testToken,
@@ -355,14 +355,14 @@ namespace Snowflake.Data.Tests.UnitTests
             var testToken = "testToken1234";
             var restRequester = new MockLoginMFATokenCacheRestRequester();
             var connectionString = $"account=test;user=test;password=test;authenticator=username_password_mfa";
-            var sfSession = new SFSession(connectionString, new SessionPropertiesContext(), restRequester);
+            var sfSession = new SFSession(connectionString, new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             restRequester.LoginResponses.Enqueue(new LoginResponseData()
             {
                 mfaToken = testToken,
                 authResponseSessionInfo = new SessionInfo()
             });
             sfSession.Open();
-            var sfSessionWithCachedToken = new SFSession(connectionString, new SessionPropertiesContext(), restRequester);
+            var sfSessionWithCachedToken = new SFSession(connectionString, new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => restRequester);
             // act
             sfSessionWithCachedToken.Open();
 
@@ -382,7 +382,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestHeartbeatHandlesException()
         {
             // arrange
-            var mockRequester = new Mock<IMockRestRequester>();
+            var mockRequester = new Mock<IRestRequester>();
 
             mockRequester.Setup(x => x.Post<LoginResponse>(It.IsAny<IRestRequest>()))
                 .Returns(new LoginResponse
@@ -402,7 +402,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Throws(new HttpRequestException("Network error"));
 
             var connectionString = "account=test;user=test;password=test;";
-            var session = new SFSession(connectionString, new SessionPropertiesContext(), mockRequester.Object);
+            var session = new SFSession(connectionString, new SessionPropertiesContext(), EasyLoggingStarter.Instance, _ => mockRequester.Object);
             session.Open();
 
             // act & assert

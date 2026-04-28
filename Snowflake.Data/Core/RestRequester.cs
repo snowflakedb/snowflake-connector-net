@@ -32,22 +32,17 @@ namespace Snowflake.Data.Core
 
     }
 
-    internal interface IMockRestRequester : IRestRequester
-    {
-        void setHttpClient(HttpClient httpClient);
-    }
-
     internal class RestRequester : IRestRequester
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<RestRequester>();
 
         internal const string HttpStatusCodeDataKey = "HttpStatusCode";
 
-        protected HttpClient HttpClient;
+        private readonly HttpClient _httpClient;
 
         public RestRequester(HttpClient httpClient)
         {
-            HttpClient = httpClient;
+            _httpClient = httpClient;
         }
 
         public T Post<T>(IRestRequest request)
@@ -84,22 +79,22 @@ namespace Snowflake.Data.Core
             {
                 return await DeserializeResponseAsync<T>(response, cancellationToken).ConfigureAwait(false);
             }
-            catch (JsonReaderException ex)
+            catch (JsonException ex)
             {
                 s_logger.Warn($"JSON deserialization failed for {method}, retrying request. Error: {ex.Message}.", ex);
             }
 
-            // in rare instances server may return invalid response body (e.g. truncated one), whilst returning 2XX response. Those are mostly transient.
+            // in rare instances server may return invalid response body (e.g. truncated one), whilst returning 2XX response. Those are mostly transient. See SNOW-3422038 for further details.
             using var retryResponse = await SendAsync(method, request, cancellationToken).ConfigureAwait(false);
             return await DeserializeResponseAsync<T>(retryResponse, cancellationToken).ConfigureAwait(false);
         }
 
-        private Task<HttpResponseMessage> SendAsync(HttpMethod method,
+        private async Task<HttpResponseMessage> SendAsync(HttpMethod method,
                                                           IRestRequest request,
                                                           CancellationToken externalCancellationToken)
         {
-            var message = request.ToRequestMessage(method);
-            return SendAsync(message, request.GetRestTimeout(), externalCancellationToken, request.getSid());
+            using var message = request.ToRequestMessage(method);
+            return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken, request.getSid());
         }
 
         protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
@@ -118,7 +113,7 @@ namespace Snowflake.Data.Core
             try
             {
                 watch.Start();
-                response = await HttpClient
+                response = await _httpClient
                     .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
                     .ConfigureAwait(false);
                 watch.Stop();
@@ -165,16 +160,16 @@ namespace Snowflake.Data.Core
 
         private static string FormatUri(Uri uri)
         {
-#if SF_PUBLIC_ENVIRONMENT
+            #if SF_PUBLIC_ENVIRONMENT
             return uri.AbsolutePath;
-#else
+            #else
             return uri.ToString();
-#endif
+            #endif
         }
 
         private static async Task<T> DeserializeResponseAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken)
         {
-            #if NET5_0_OR_GREATER
+            #if NET6_0_OR_GREATER
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             using var streamReader = new StreamReader(stream);
             await using var jsonReader = new JsonTextReader(streamReader);

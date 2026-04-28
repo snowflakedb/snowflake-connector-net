@@ -86,11 +86,11 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return _provider switch
                 {
-                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentOperations, _timeProvider, _awsSdkWrapper, session.restRequester)
+                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentOperations, _timeProvider, _awsSdkWrapper, session.RestRequester)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
-                    AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentOperations, session.restRequester, _metadataHost)
+                    AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentOperations, session.RestRequester, _metadataHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
-                    AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(session.restRequester, _metadataHost)
+                    AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(session.RestRequester, _metadataHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
                     AttestationProvider.OIDC => new WorkflowIdentityOidcAttestationRetriever()
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),

@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Snowflake.Data.Core;
 
-    class MockServiceName : IMockRestRequester
+    class MockServiceName : IRestRequester
     {
         public const string INIT_SERVICE_NAME = "init";
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
@@ -98,11 +98,6 @@ namespace Snowflake.Data.Tests.Mock
         public HttpResponseMessage Get(IRestRequest request)
         {
             return null;
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
     }
 }

@@ -56,7 +56,7 @@ namespace Snowflake.Data.Core
             this.chunkHeaders = chunkHeaders;
             this.nextChunkToDownloadIndex = 0;
             this.ResultSet = ResultSet;
-            this._RestRequester = ResultSet.sfStatement.SfSession.restRequester;
+            this._RestRequester = ResultSet.sfStatement.SfSession.RestRequester;
             this.sessionProperies = ResultSet.sfStatement.SfSession.properties;
             this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
             this.chunkInfos = chunkInfos;

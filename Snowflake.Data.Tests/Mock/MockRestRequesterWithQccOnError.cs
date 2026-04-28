@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Snowflake.Data.Core;
 
-    class MockRestRequesterWithQccOnError : IMockRestRequester
+    class MockRestRequesterWithQccOnError : IRestRequester
     {
         internal const int FAILED_QUERY_CODE = 999;
         internal const string FAILED_QUERY_MESSAGE = "mock query failure";
@@ -84,10 +84,6 @@ namespace Snowflake.Data.Tests.Mock
         public HttpResponseMessage Get(IRestRequest request)
         {
             return null;
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
         }
     }
 }

@@ -7,7 +7,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    class MockLoginStoringRestRequester : IMockRestRequester
+    class MockLoginStoringRestRequester : IRestRequester
     {
         internal List<LoginRequest> LoginRequests { get; } = new();
 
@@ -58,11 +58,6 @@ namespace Snowflake.Data.Tests.Mock
                 return Task.FromResult<T>((T)(object)authnResponse);
             }
             throw new NotImplementedException();
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
     }
 }

@@ -115,16 +115,16 @@ namespace Snowflake.Data.Tests.UnitTests
 
     class MockSessionFactoryMFA : ISessionFactory
     {
-        private readonly IMockRestRequester restRequester;
+        private readonly IRestRequester restRequester;
 
-        public MockSessionFactoryMFA(IMockRestRequester restRequester)
+        public MockSessionFactoryMFA(IRestRequester restRequester)
         {
             this.restRequester = restRequester;
         }
 
         public SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext)
         {
-            return new SFSession(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester);
+            return new SFSession(connectionString, sessionContext, EasyLoggingStarter.Instance, _ => restRequester);
         }
     }
 }
