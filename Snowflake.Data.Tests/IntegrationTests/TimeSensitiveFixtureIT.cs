@@ -62,9 +62,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             .GetExecutingAssembly()
             .GetTypes()
             .Where(x => assignableTo.IsAssignableFrom(x) && (notAssignableTo == null || !notAssignableTo.IsAssignableFrom(x)))
-            .SelectMany(x => x.GetMethods(BindingFlags.Public | BindingFlags.Instance).Select(y => (x, y)))
-            .Where(x => x.Item2.GetCustomAttributes(typeof(TimeSensitiveAttribute), false).Any())
-            .Select(x => new TestCaseData(x).SetName(x.y.Name))
+            .SelectMany(x => x.GetMethods(BindingFlags.Public | BindingFlags.Instance).Select(y => (Type: x, Method: y)))
+            .Where(x => x.Method.GetCustomAttributes(typeof(TimeSensitiveAttribute), false).Any())
+            .GroupBy(x => x.Method.Name)
+            .SelectMany(x => x.Select(y => (Data: y, HasDuplicateName: x.Count() > 1)))
+            .Select(x => new TestCaseData(x.Data).SetName(x.HasDuplicateName ? x.Data.Type.FullName + x.Data.Method.Name : x.Data.Method.Name))
             .ToArray();
     }
 }
