@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
@@ -141,10 +142,10 @@ namespace Snowflake.Data.Core
             SFError.EXT_OAUTH_ACCESS_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode == error;
     }
 
-    internal class SessionFatalErrors
+    internal static class SessionFatalErrors
     {
-        public static bool IsSessionGone(int error) =>
-            SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode == error;
+        public static bool IsSessionGone(this Exception exception) =>
+            exception is SnowflakeDbException sfException && SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode == sfException.ErrorCode;
     }
 
     class SFMFATokenErrors

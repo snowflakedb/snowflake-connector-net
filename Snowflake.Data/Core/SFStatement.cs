@@ -1087,8 +1087,7 @@ namespace Snowflake.Data.Core
 
         private void HandleExceptionForSession(Exception ex)
         {
-            if (RestRequester.HasUnauthorizedStatusCode(ex) ||
-                (ex is SnowflakeDbException sfException && SessionFatalErrors.IsSessionGone(sfException.ErrorCode)))
+            if (RestRequester.HasUnauthorizedStatusCode(ex) || ex.IsSessionGone())
             {
                 SfSession.InvalidateForPooling();
             }
