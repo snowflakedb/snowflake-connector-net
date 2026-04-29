@@ -2,6 +2,7 @@
 
 # Changelog
 - v5.6.0
+    - Extended login-request telemetry with libc detection (`LIBC_FAMILY`, `LIBC_VERSION`). On Linux, the driver now reports whether the runtime uses glibc and includes the library version.
     - Limited default maximal CRL size for download to 20MB.
 - v5.5.0
     - Include `SPCS_TOKEN` in login requests when running inside an SPCS container (`SNOWFLAKE_RUNNING_INSIDE_SPCS` env var set).

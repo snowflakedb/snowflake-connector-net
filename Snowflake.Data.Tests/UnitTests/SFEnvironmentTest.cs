@@ -162,9 +162,9 @@ namespace Snowflake.Data.Tests.UnitTests
             var clientEnv = SFEnvironment.ClientEnv;
 
             Assert.IsNotNull(clientEnv.libcFamily, "libcFamily should not be null on Linux");
-            Assert.That(clientEnv.libcFamily, Is.AnyOf("glibc", "musl"));
+            Assert.That(clientEnv.libcFamily, Is.AnyOf("glibc", "could not determine"));
 
-            Assert.IsNotNull(clientEnv.libcVersion, $"libcVersion should not be null when family is {clientEnv.libcFamily}");
+            Assert.IsNotNull(clientEnv.libcVersion, "libcVersion should not be null when family is glibc");
             Assert.That(clientEnv.libcVersion, Does.Match(@"^\d+\.\d+"),
                 $"libcVersion should be a version string, got: {clientEnv.libcVersion}");
         }
