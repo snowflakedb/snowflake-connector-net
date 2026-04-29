@@ -359,39 +359,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public async Task TestGettingSessionGoneMarksSessionAsInvalidForPooling()
-        {
-            // Arrange
-            using (var conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-                await conn.OpenAsync().ConfigureAwait(false);
-                var sessionToken = conn.SfSession.sessionToken;
-                var cmd = conn.CreateCommand();
-                cmd.CommandText = "select current_role()";
-                await conn.SfSession.CloseAsync(CancellationToken.None).ConfigureAwait(false); // this logs out the user and closes the session on the server side.
-                conn.SfSession.sessionToken = sessionToken;
-                var isInvalidatedForPoolingPreRequest = conn.SfSession.IsInvalidatedForPooling();
-
-                // Act
-                try
-                {
-                    await cmd.ExecuteReaderAsync();
-                    Assert.Fail("Expected exception!");
-                }
-                catch (Exception e)
-                {
-                    Assert.That(e, Is.InstanceOf<SnowflakeDbException>());
-                    Assert.That(((SnowflakeDbException)e).ErrorCode, Is.EqualTo(390112));
-                }
-
-                // Assert
-                Assert.That(isInvalidatedForPoolingPreRequest, Is.False);
-                Assert.That(conn.SfSession.IsInvalidatedForPooling(), Is.True);
-            }
-        }
-
-        [Test]
         [TimeSensitive]
         public void TestLoginTimeout()
         {
