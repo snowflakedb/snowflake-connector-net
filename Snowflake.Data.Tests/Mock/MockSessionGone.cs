@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.Mock
 {
     internal sealed class MockSessionGone : IMockRestRequester
     {
-        private const int SESSION_NO_LONGER_EXISTS_CODE = 390111;
+        private const int SESSION_GONE_CODE = 390111;
 
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken) => Task.FromResult(Post<T>(request));
 
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.Mock
                 object queryExecResponse = new QueryExecResponse
                 {
                     success = false,
-                    code = SESSION_NO_LONGER_EXISTS_CODE
+                    code = SESSION_GONE_CODE
                 };
                 return (T)queryExecResponse;
             }
@@ -55,10 +55,20 @@ namespace Snowflake.Data.Tests.Mock
 
         public T Get<T>(IRestRequest request)
         {
+            if (typeof(T) == typeof(QueryStatusResponse))
+            {
+                object queryStatusResponse = new QueryStatusResponse
+                {
+                    success = false,
+                    code = SESSION_GONE_CODE
+                };
+                return (T)queryStatusResponse;
+            }
+
             object queryExecResponse = new QueryExecResponse
             {
                 success = false,
-                code = SESSION_NO_LONGER_EXISTS_CODE
+                code = SESSION_GONE_CODE
             };
             return (T)queryExecResponse;
         }

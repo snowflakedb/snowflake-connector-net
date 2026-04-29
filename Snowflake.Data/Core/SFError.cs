@@ -105,7 +105,7 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270066)]
         WIF_ATTESTATION_ERROR,
 
-        [SFErrorAttr(errorCode = 390112)]
+        [SFErrorAttr(errorCode = 390111)]
         SESSION_GONE,
 
         [SFErrorAttr(errorCode = 390120)]
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Core
             SFError.EXT_OAUTH_ACCESS_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode == error;
     }
 
-    internal static class SessionFatalErrors
+    internal static class SessionFatalErrorExtensions
     {
         public static bool IsSessionGone(this Exception exception) =>
             exception is SnowflakeDbException sfException && SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode == sfException.ErrorCode;

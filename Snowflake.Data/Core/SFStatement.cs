@@ -345,7 +345,6 @@ namespace Snowflake.Data.Core
             }
         }
 
-
         internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec,
                                                           CancellationToken cancellationToken)
         {
@@ -415,7 +414,6 @@ namespace Snowflake.Data.Core
 
                         if (!await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
                             lastResultUrl = response.data?.getResultUrl;
-
                     }
                 }
 
@@ -754,7 +752,7 @@ namespace Snowflake.Data.Core
                 {
                     response = await _restRequester.PostAsync<T>(queryRequest, cancellationToken).ConfigureAwait(false);
 
-                    if (await RenewSessionIfNeededAsync(response, cancellationToken))
+                    if (await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
                     else
                         receivedFirstQueryResponse = true;
@@ -771,7 +769,6 @@ namespace Snowflake.Data.Core
                         {
                             var req = BuildResultRequest(lastResultUrl);
                             response = await _restRequester.GetAsync<T>(req, cancellationToken).ConfigureAwait(false);
-
 
                             if (!await RenewSessionIfNeededAsync(response, cancellationToken))
                                 lastResultUrl = queryResponse.data?.getResultUrl;

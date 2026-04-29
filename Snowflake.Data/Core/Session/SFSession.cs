@@ -790,7 +790,7 @@ namespace Snowflake.Data.Core
         {
             if (_invalidatedForPooling)
                 return;
-            logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure.");
+            logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure or session being gone.");
             _invalidatedForPooling = true;
         }
 
