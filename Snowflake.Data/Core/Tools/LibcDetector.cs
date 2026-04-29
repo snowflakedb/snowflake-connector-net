@@ -31,10 +31,6 @@ namespace Snowflake.Data.Core.Tools
 
         private LibcDetector() {}
 
-        /// <summary>
-        /// Returns (family, version) on Linux. Family is NotApplicable and version is null on non-Linux.
-        /// Family is CouldNotDetermine and version is null if detection fails on Linux.
-        /// </summary>
         public (LibcFamily Family, string Version) Detect()
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -49,7 +45,7 @@ namespace Snowflake.Data.Core.Tools
             return (LibcFamily.CouldNotDetermine, null);
         }
 
-        internal bool TryGetGlibcVersion(out string version)
+        internal static bool TryGetGlibcVersion(out string version)
         {
             try
             {
@@ -70,7 +66,7 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
-        internal bool TryGetMuslVersionFromLdd(out string version)
+        internal static bool TryGetMuslVersionFromLdd(out string version)
         {
             try
             {
@@ -103,7 +99,7 @@ namespace Snowflake.Data.Core.Tools
         }
 
 
-        internal string ParseMuslVersionFromLddOutput(string output)
+        internal static string ParseMuslVersionFromLddOutput(string output)
         {
             if (string.IsNullOrEmpty(output))
                 return null;
