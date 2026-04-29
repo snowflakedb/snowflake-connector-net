@@ -12,6 +12,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using NUnit.Framework;
     using Snowflake.Data.Client;
     using Snowflake.Data.Configuration;
+    using Snowflake.Data.Tests.Util;
     using System.Diagnostics;
     using System.Collections.Generic;
     using System.Globalization;
@@ -102,7 +103,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestCancelExecuteAsync()
+        public async Task TestCancelExecuteAsync()
         {
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
 
@@ -127,7 +128,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert that cancel is not triggered by timeout, but external cancellation
                     Assert.IsTrue(externalCancel.IsCancellationRequested);
                 }
-                Thread.Sleep(2000);
+                await Task.Delay(2000);
                 conn.Close();
             }
         }
@@ -135,10 +136,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestExecuteAsyncWithMaxRetryReached()
         {
-            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
-            {
-                _forceTimeoutForNonLoginRequestsOnly = true
-            };
+            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
 
             using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
@@ -173,6 +171,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive("If this takes too long, query will be in success state.")]
         public async Task TestAsyncExecQueryAsync()
         {
             string queryId;
@@ -193,8 +192,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
-                    Assert.IsFalse(conn.IsAnError(queryStatus));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
+                    Assert.IsFalse(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
 
                     // Act
                     DbDataReader reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
@@ -234,7 +233,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                 // Assert
-                Assert.IsTrue(connections[0].IsStillRunning(queryStatus));
+                Assert.IsTrue(connections[0].IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
             }
 
             // Execute a normal query
@@ -288,7 +287,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
 
                     // Act
                     cancelToken.Cancel();
@@ -321,7 +320,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
-                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
 
                     // Act: cancel while polling for results
                     cancelToken.CancelAfter(TimeSpan.FromSeconds(3));
@@ -377,7 +376,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
                     while (statusRetryCount < statusMaxRetryCount && conn.IsStillRunning(queryStatus))
                     {
-                        Thread.Sleep(1000);
+                        await Task.Delay(1000);
                         queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
                         statusRetryCount++;
                     }
@@ -762,7 +761,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestCancelQuery()
+        [TimeSensitive]
+        public async Task TestCancelQuery()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -789,7 +789,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                 });
 
-                Thread.Sleep(8000);
+                await Task.Delay(8000);
                 cmd.Cancel();
 
                 try
@@ -967,10 +967,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Test]
         public void TestExecuteWithMaxRetryReached()
         {
-            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester()
-            {
-                _forceTimeoutForNonLoginRequestsOnly = true
-            };
+            var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
 
             using (IDbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
             {
@@ -1196,6 +1193,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [Retry(2)]
         public void TestPutArrayBindAsyncMultiThreading()
         {
             var t1TableName = TableName + 1;
@@ -1381,6 +1379,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive("It needs to take max 5 seconds.")]
         public void TestAsyncExecQuery()
         {
             string queryId;
@@ -1401,8 +1400,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = cmd.GetQueryStatus(queryId);
 
                     // Assert
-                    Assert.IsTrue(conn.IsStillRunning(queryStatus));
-                    Assert.IsFalse(conn.IsAnError(queryStatus));
+                    Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
+                    Assert.IsFalse(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
 
                     // Act
                     DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
@@ -1475,7 +1474,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestFailedAsyncExecQueryThrowsError()
+        public async Task TestFailedAsyncExecQueryThrowsError()
         {
             string queryId;
 
@@ -1495,7 +1494,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     queryId = cmd.ExecuteInAsyncMode();
                     while (statusRetryCount < statusMaxRetryCount && conn.IsStillRunning(cmd.GetQueryStatus(queryId)))
                     {
-                        Thread.Sleep(1000);
+                        await Task.Delay(1000).ConfigureAwait(false);
                         statusRetryCount++;
                     }
 

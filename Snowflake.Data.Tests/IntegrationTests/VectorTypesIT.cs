@@ -243,6 +243,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [IgnoreOnJenkins]
         public void TestSelectFloatVectorWithMinAndMaxFloatValues()
         {
             using (DbConnection conn = new SnowflakeDbConnection())

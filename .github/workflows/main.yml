@@ -36,6 +36,25 @@ jobs:
       matrix:
         dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net10.0', 'net462', 'net471', 'net472', 'net48', 'net481']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            sdk: '6.0.x'
+          - dotnet: net7.0
+            sdk: '7.0.x'
+          - dotnet: net8.0
+            sdk: '8.0.x'
+          - dotnet: net9.0
+            sdk: '9.0.x'
+          - dotnet: net462
+            sdk: '6.0.x'
+          - dotnet: net471
+            sdk: '6.0.x'
+          - dotnet: net472
+            sdk: '6.0.x'
+          - dotnet: net48
+            sdk: '6.0.x'
+          - dotnet: net481
+            sdk: '6.0.x'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,11 +67,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
-            8.0.x
-            9.0.x
+          dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -102,11 +117,11 @@ jobs:
         with:
             token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-linux:
@@ -117,6 +132,15 @@ jobs:
       matrix:
         dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net10.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            sdk: '6.0.x'
+          - dotnet: net7.0
+            sdk: '7.0.x'
+          - dotnet: net8.0
+            sdk: '8.0.x'
+          - dotnet: net9.0
+            sdk: '9.0.x'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -128,11 +152,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
-            8.0.x
-            9.0.x
+          dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -181,11 +201,11 @@ jobs:
         with:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-mac:
@@ -196,6 +216,15 @@ jobs:
       matrix:
         dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net10.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            sdk: '6.0.x'
+          - dotnet: net7.0
+            sdk: '7.0.x'
+          - dotnet: net8.0
+            sdk: '8.0.x'
+          - dotnet: net9.0
+            sdk: '9.0.x'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -207,11 +236,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
-            8.0.x
-            9.0.x
+          dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -260,11 +285,11 @@ jobs:
         with:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-rockylinux9:
@@ -301,9 +326,9 @@ jobs:
         with:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests/rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
