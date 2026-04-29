@@ -45,7 +45,7 @@ namespace Snowflake.Data.Core.Tools
             return (LibcFamily.CouldNotDetermine, null);
         }
 
-        internal static bool TryGetGlibcVersion(out string version)
+        internal bool TryGetGlibcVersion(out string version)
         {
             try
             {
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Core.Tools
                     return false;
                 }
                 version = Marshal.PtrToStringAnsi(ptr);
-                return true;
+                return !string.IsNullOrEmpty(version);
             }
             catch (Exception e)
             {
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Core.Tools
             }
         }
 
-        internal static bool TryGetMuslVersionFromLdd(out string version)
+        internal bool TryGetMuslVersionFromLdd(out string version)
         {
             try
             {
@@ -81,13 +81,19 @@ namespace Snowflake.Data.Core.Tools
                     CreateNoWindow = true
                 };
 
-                var output = new StringBuilder();
-                process.OutputDataReceived += (s, e) => output.Append(e.Data);
-                process.ErrorDataReceived += (s, e) => output.Append($"err: {e.Data}");
+                var outputBuilder = new StringBuilder();
+                process.OutputDataReceived += (s, e) => outputBuilder.Append(e.Data);
                 process.Start();
-                process.WaitForExit(LddTimeoutInMs);
+                process.BeginOutputReadLine();
 
-                version = ParseMuslVersionFromLddOutput(output.ToString());
+                if (!process.WaitForExit(LddTimeoutInMs))
+                {
+                    process.Kill();
+                    version = null;
+                    return false;
+                }
+
+                version = ParseMuslVersionFromLddOutput(outputBuilder.ToString());
                 return version != null;
             }
             catch (Exception e)
@@ -99,7 +105,7 @@ namespace Snowflake.Data.Core.Tools
         }
 
 
-        internal static string ParseMuslVersionFromLddOutput(string output)
+        internal string ParseMuslVersionFromLddOutput(string output)
         {
             if (string.IsNullOrEmpty(output))
                 return null;

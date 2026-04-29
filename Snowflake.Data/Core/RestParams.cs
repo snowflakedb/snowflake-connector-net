@@ -62,7 +62,7 @@ namespace Snowflake.Data.Core
         internal const string SSO_SAML_PATH = "/sso/saml";
     }
 
-    internal class SFEnvironment
+    internal sealed class SFEnvironment
     {
         internal static bool MinicoreDisabled { get; set; }
 
