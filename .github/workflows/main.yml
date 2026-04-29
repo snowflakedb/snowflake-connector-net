@@ -45,6 +45,8 @@ jobs:
             sdk: '8.0.x'
           - dotnet: net9.0
             sdk: '9.0.x'
+          - dotnet: net10.0
+            sdk: '10.0.x'            
           - dotnet: net462
             sdk: '6.0.x'
           - dotnet: net471
@@ -141,6 +143,8 @@ jobs:
             sdk: '8.0.x'
           - dotnet: net9.0
             sdk: '9.0.x'
+          - dotnet: net10.0
+            sdk: '10.0.x'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -225,6 +229,8 @@ jobs:
             sdk: '8.0.x'
           - dotnet: net9.0
             sdk: '9.0.x'
+          - dotnet: net10.0
+            sdk: '10.0.x'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
