@@ -7,7 +7,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Tools
 {
-    internal class OsReleaseReader
+    internal sealed class OsReleaseReader
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OsReleaseReader>();
 

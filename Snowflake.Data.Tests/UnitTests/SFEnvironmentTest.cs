@@ -11,7 +11,7 @@ using Snowflake.Data.Core.Tools;
 namespace Snowflake.Data.Tests.UnitTests
 {
     [TestFixture]
-    class SFEnvironmentTest
+    public sealed class SFEnvironmentTest
     {
         [Test]
         public void TestRuntimeExtraction()

@@ -76,19 +76,27 @@ namespace Snowflake.Data.Core.Tools
                     FileName = "ldd",
                     Arguments = "--version",
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true,
+                    RedirectStandardError = false,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
 
                 var outputBuilder = new StringBuilder();
-                process.OutputDataReceived += (s, e) => outputBuilder.Append(e.Data);
+                process.OutputDataReceived += (s, e) => outputBuilder.AppendLine(e.Data);
                 process.Start();
                 process.BeginOutputReadLine();
 
                 if (!process.WaitForExit(LddTimeoutInMs))
                 {
-                    process.Kill();
+                    try
+                    {
+                        process.Kill();
+                    }
+                    catch
+                    {
+                        // ignored, kill command can be out-raced, which is fine.
+                    }
+
                     version = null;
                     return false;
                 }
