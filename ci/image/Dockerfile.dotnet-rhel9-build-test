@@ -22,7 +22,8 @@ RUN dnf install -y 'dnf-command(config-manager)' && \
         dotnet-sdk-6.0 \
         dotnet-sdk-7.0 \
         dotnet-sdk-8.0 \
-        dotnet-sdk-9.0 && \
+        dotnet-sdk-9.0 \
+        dotnet-sdk-10.0 && \
     dotnet --list-sdks && \
     dnf clean all
 
