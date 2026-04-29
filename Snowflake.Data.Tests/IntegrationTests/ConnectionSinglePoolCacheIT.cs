@@ -346,7 +346,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestCloseSessionAfterTimeout()
+        public async Task TestCloseSessionAfterTimeout()
         {
             // arrange
             const int SessionTimeoutSeconds = 1;
@@ -357,7 +357,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var session = conn1.SfSession;
             conn1.Close();
             Assert.IsTrue(session.IsEstablished());
-            Thread.Sleep(SessionTimeoutSeconds * 1000); // wait until the session is expired
+            await Task.Delay(SessionTimeoutSeconds * 1000).ConfigureAwait(false); // wait until the session is expired
             var conn2 = new SnowflakeDbConnection(ConnectionString);
 
             // act

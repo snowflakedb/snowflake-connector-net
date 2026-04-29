@@ -6,6 +6,7 @@ using Snowflake.Data.Core.Session;
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     [TestFixture]
+    [Parallelizable(ParallelScope.Self)]
     public class NonWaitingQueueTest
     {
         [Test]
