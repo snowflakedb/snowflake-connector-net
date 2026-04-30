@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core
         internal const string SnowflakeDefaultConnectionName = "SNOWFLAKE_DEFAULT_CONNECTION_NAME";
         internal const string SnowflakeHome = "SNOWFLAKE_HOME";
         internal const string SkipWarningForReadPermissions = "SF_SKIP_WARNING_FOR_READ_PERMISSIONS_ON_CONFIG_FILE";
-        internal const string SkipTokenFilePermissionsVerification = "SF_SKIP_TOKEN_FILE_PERMISSIONS_VERIFICATION";
+        internal const string SkipTokenFilePermissionsVerification = "SKIP_TOKEN_FILE_PERMISSIONS_VERIFICATION";
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
