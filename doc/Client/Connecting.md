@@ -280,64 +280,64 @@ Special characters in TOML values:
 
 | Connection Property               | Required | Comment |
 |-----------------------------------|----------|---------|
-| ACCOUNT                           | Yes      | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted |
-| APPLICATION                       | No       | **_Snowflake partner use only_**: Specifies the name of a partner application to connect through .NET. The name must match the following pattern: ^\[A-Za-z](\[A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or, \_ characters). |
-| DB                                | No       | |
-| HOST                              | No       | Specifies the hostname for your account in the following format: \<ACCOUNT\>.snowflakecomputing.com. <br /> If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. |
-| PASSWORD                          | Depends  | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types. |
-| ROLE                              | No       | |
-| SCHEMA                            | No       | |
-| USER                              | Depends  | If AUTHENTICATOR is set to `externalbrowser` this is optional. For native SSO through Okta, set this to the login name for your identity provider (IdP). |
-| WAREHOUSE                         | No       | |
-| CONNECTION_TIMEOUT                | No       | Total timeout in seconds when connecting to Snowflake. The default is 300 seconds |
-| RETRY_TIMEOUT                     | No       | Total timeout in seconds for supported endpoints of retry policy. The default is 300 seconds. The value can only be increased from the default value or set to 0 for infinite timeout |
-| MAXHTTPRETRIES                    | No       | Maximum number of times to retry failed HTTP requests (default: 7). Set to `0` to remove the retry limit (risks infinite retries). |
-| CLIENT_SESSION_KEEP_ALIVE         | No       | Whether to keep the current session active after a period of inactivity, or to force the user to login again. If the value is `true`, Snowflake keeps the session active indefinitely, even if there is no activity from the user. If the value is `false`, the user must log in again after four hours of inactivity. The default is `false`. Setting this value overrides the server session property for the current session. |
-| BROWSER_RESPONSE_TIMEOUT          | No       | Number to seconds to wait for authentication in an external browser (default: 120). |
-| DISABLERETRY                      | No       | Set to `true` to prevent the driver from reconnecting automatically when the connection fails or drops. Default: `false`. |
-| AUTHENTICATOR                     | No       | The method of authentication. Currently supports the following values: <br/> - snowflake (default): You must also set USER and PASSWORD. <br/> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br/> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You can also set USER. <br/> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br/> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN. <br/> - [oauth_authorization_code](https://docs.snowflake.com/en/user-guide/oauth-snowflake-overview): when authorizing with Snowflake all the OAUTH prefixed parameters are optional, for external provider required are: OAUTHCLIENTID, OAUTHCLIENTSECRET, OAUTHSCOPE, OAUTHAUTHORIZATIONURL, OAUTHTOKENREQUESTURL, OAUTHREDIRECTURI <br/> - [oauth_client_credentials](https://docs.snowflake.com/en/user-guide/oauth-snowflake-overview): You must provide OAUTHCLIENTID, OAUTHCLIENTSECRET, OAUTHSCOPE, OAUTHTOKENREQUESTURL, OAUTHREDIRECTURI <br/> - [programmatic_access_token](https://docs.snowflake.com/en/user-guide/programmatic-access-tokens): You must provide TOKEN parameter<br/> - [workload_identity](https://docs.snowflake.com/en/user-guide/workload-identity-federation): you must provide WORKLOAD_IDENTITY_PROVIDER, mandatory is WORKLOAD_IDENTITY_ENTRA_RESOURCE for Azure and TOKEN for OIDC provider |
-| VALIDATE_DEFAULT_PARAMETERS       | No       | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default: `true`. |
-| PRIVATE_KEY_FILE                  | Depends  | The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt |
-| PRIVATE_KEY_PWD                   | No       | The passphrase to use for decrypting the private key, if the key is encrypted. |
-| PRIVATE_KEY                       | Depends  | The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly. |
-| TOKEN                             | Depends  | The OAuth token to use for OAuth authentication or Programmatic Access Token authentication or Workload Identity Federation for `OIDC`. Must be used in combination with `AUTHENTICATOR=oauth` or `AUTHENTICATOR=programmatic_access_token` or `AUTHENTICATOR=workload_identity`. |
-| USEPROXY                          | No       | Set to `true` to use a proxy server. Default: `false`. |
-| PROXYHOST                         | Depends  | The hostname of the proxy server. Required if USEPROXY is `true`. |
-| PROXYPORT                         | Depends  | The port number of the proxy server. Required if USEPROXY is `true`. |
-| PROXYUSER                         | No       | The username for authenticating to the proxy server. |
-| PROXYPASSWORD                     | Depends  | The password for authenticating to the proxy server. Required if USEPROXY is `true` and PROXYUSER is set. |
-| NONPROXYHOSTS                     | No       | Pipe-separated (`\|`) list of hosts to bypass the proxy. Supports asterisk (`*`) wildcards. The value must match the full URL including scheme. |
-| FILE_TRANSFER_MEMORY_THRESHOLD    | No       | Maximum bytes to hold in memory for file encryption/decryption. If the file exceeds this size, a temporary file is used. Default: 1048576 (1 MB). |
-| CLIENT_CONFIG_FILE                | No       | Path to the client configuration JSON file for easy logging. |
-| ALLOWUNDERSCORESINHOST            | No       | Allow underscores in account names. Required for PrivateLink customers whose account names contain underscores. Default: `false`. |
-| QUERY_TAG                         | No       | Tag applied to queries and SQL statements within the connection. Visible in QUERY_HISTORY output. Can also be set per-statement via `SnowflakeDbCommand.QueryTag`. |
-| MAXPOOLSIZE                       | No       | Maximum number of connections in a pool. Default: 10. Cannot be lower than `MINPOOLSIZE`. |
-| MINPOOLSIZE                       | No       | Minimum number of connections in a pool. Additional connections are created in the background. Default: 2. Cannot exceed `MAXPOOLSIZE`. |
-| CHANGEDSESSION                    | No       | Behavior when a connection's session variables (schema, database, warehouse, role) are altered. Default: `OriginalPool`. |
-| WAITINGFORIDLESESSIONTIMEOUT      | No       | Timeout when waiting for an idle session in a full pool. Supports units: `1000ms`, `15s`, `2m` (default unit: seconds). Default: 30s. Set to `0` for immediate failure. |
-| EXPIRATIONTIMEOUT                 | No       | Maximum lifetime of a pooled connection. Supports units: `360000ms`, `3600s`, `60m` (default unit: seconds). Default: 1 hour. Set to `0` for immediate expiration. |
-| POOLINGENABLED                    | No       | Enable or disable connection pooling. Default: `true`. |
-| DISABLE_SAML_URL_CHECK            | No       | Skip SAML postback URL validation against the connection string host. Default: `false`. |
-| CLIENT_STORE_TEMPORARY_CREDENTIAL | No       | Cache tokens for external browser or OAuth authorization code flow. Default: `true` on Windows, `false` elsewhere. |
-| PASSCODE                          | No       | Passcode from a 2FA application for Multi-Factor Authentication. |
-| PASSCODEINPASSWORD                | No       | Whether the MFA passcode is appended to the password. |
-| OAUTHCLIENTID                     | Depends  | Client ID for OAuth flows. Required for OAuth Authorization Code Flow and OAuth Client Credentials Flow. Auto-filled with `LOCAL_APPLICATION` for Snowflake-provided OAuth when neither OAUTHCLIENTID nor OAUTHCLIENTSECRET are set. |
-| OAUTHCLIENTSECRET                 | Depends  | Client secret for OAuth flows. Required for OAuth Authorization Code Flow and OAuth Client Credentials Flow. Auto-filled with `LOCAL_APPLICATION` for Snowflake-provided OAuth when neither OAUTHCLIENTID nor OAUTHCLIENTSECRET are set. |
-| OAUTHSCOPE                        | Depends  | Requested scope for OAuth flows. If not provided, built from `ROLE`. |
-| OAUTHAUTHORIZATIONURL             | Depends  | Authorization endpoint URL for OAuth Authorization Code Flow. Required for non-Snowflake Identity Providers. |
-| OAUTHTOKENREQUESTURL              | Depends  | Token endpoint URL for OAuth flows. Required for OAuth Client Credentials Flow and non-Snowflake Identity Providers in Authorization Code Flow. |
-| OAUTHREDIRECTURI                  | Depends  | Local endpoint the driver listens on for OAuth Authorization Code Flow. Required for non-Snowflake Identity Providers. |
-| WORKLOAD_IDENTITY_PROVIDER        | Depends  | Attestation provider for Workload Identity Federation: `OIDC`, `AZURE`, `AWS`, or `GCP`. Required when AUTHENTICATOR is `workload_identity`. |
-| WORKLOAD_IDENTITY_ENTRA_RESOURCE  | No       | Entra resource for Azure Workload Identity Federation. Default: `api://fd3f753b-eed3-462c-b6a7-a4b5bb650aad`. |
-| WORKLOAD_IMPERSONATION_PATH       | No       | Comma-separated identities for transitive service account impersonation. **AWS and GCP only.** For GCP: service account emails. For AWS: IAM role ARNs. Each identity needs permissions to impersonate the next. |
-| OAUTHENABLESINGLEUSEREFRESHTOKENS | No       | Request single-use refresh tokens in OAuth Authorization Code Flow. Default: `false`. |
-| CERTREVOCATIONCHECKMODE           | No       | Certificate revocation check mode. Values: `disabled` (default), `enabled`, `advisory`, `native`. `Advisory` allows connections when CRL check encounters errors but blocks revoked certificates. `Native` uses `System.Net.Http.HttpClientHandler`. |
-| ENABLECRLDISKCACHING              | No       | Enable file-based CRL cache when driver CRL checks are active. Default: `true`. |
-| ENABLECRLINMEMORYCACHING          | No       | Enable in-memory CRL cache when driver CRL checks are active. Default: `true`. |
-| ALLOWCERTIFICATESWITHOUTCRLURL    | No       | Accept certificates without a CRL URL when driver CRL checks are active. Default: `false`. |
-| CRLDOWNLOADTIMEOUT                | No       | Timeout in seconds for downloading CRL files. Default: `10`. |
-| CRLDOWNLOADMAXSIZE                | No       | Maximum size in bytes for CRL file downloads. Default: `209715200` (200 MB). |
-| MINTLS                            | No       | Minimum TLS version. Values: `TLS12` (default), `TLS13`. |
-| MAXTLS                            | No       | Maximum TLS version. Values: `TLS12`, `TLS13` (default). |
-| SERVICE_POINT_CONNECTION_LIMIT    | No       | Maximum connections for the ServicePoint object. Default: 20. Only the limit from the first connection string takes effect. |
-| HONORSESSIONTIMEZONE              | No       | When `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter instead of the local machine timezone. Default: `false`. |
+| ACCOUNT                           | 🔴 Required | Your full account name might include additional segments that identify the region and cloud platform where your account is hosted |
+| APPLICATION                       | 🟢 Optional | **_Snowflake partner use only_**: Specifies the name of a partner application to connect through .NET. The name must match the following pattern: ^\[A-Za-z](\[A-Za-z0-9.-]){1,50}$ (one letter followed by 1 to 50 letter, digit, .,- or, \_ characters). |
+| DB                                | 🟢 Optional | |
+| HOST                              | 🟢 Optional | Specifies the hostname for your account in the following format: \<ACCOUNT\>.snowflakecomputing.com. <br /> If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. |
+| PASSWORD                          | 🔶 Depends | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types. |
+| ROLE                              | 🟢 Optional | |
+| SCHEMA                            | 🟢 Optional | |
+| USER                              | 🔶 Depends | If AUTHENTICATOR is set to `externalbrowser` this is optional. For native SSO through Okta, set this to the login name for your identity provider (IdP). |
+| WAREHOUSE                         | 🟢 Optional | |
+| CONNECTION_TIMEOUT                | 🟢 Optional | Total timeout in seconds when connecting to Snowflake. The default is 300 seconds |
+| RETRY_TIMEOUT                     | 🟢 Optional | Total timeout in seconds for supported endpoints of retry policy. The default is 300 seconds. The value can only be increased from the default value or set to 0 for infinite timeout |
+| MAXHTTPRETRIES                    | 🟢 Optional | Maximum number of times to retry failed HTTP requests (default: 7). Set to `0` to remove the retry limit (risks infinite retries). |
+| CLIENT_SESSION_KEEP_ALIVE         | 🟢 Optional | Whether to keep the current session active after a period of inactivity, or to force the user to login again. If the value is `true`, Snowflake keeps the session active indefinitely, even if there is no activity from the user. If the value is `false`, the user must log in again after four hours of inactivity. The default is `false`. Setting this value overrides the server session property for the current session. |
+| BROWSER_RESPONSE_TIMEOUT          | 🟢 Optional | Number to seconds to wait for authentication in an external browser (default: 120). |
+| DISABLERETRY                      | 🟢 Optional | Set to `true` to prevent the driver from reconnecting automatically when the connection fails or drops. Default: `false`. |
+| AUTHENTICATOR                     | 🟢 Optional | The method of authentication. Currently supports the following values: <br/> - snowflake (default): You must also set USER and PASSWORD. <br/> - [the URL for native SSO through Okta](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#native-sso-okta-only): You must also set USER and PASSWORD. <br/> - [externalbrowser](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#browser-based-sso): You can also set USER. <br/> - [snowflake_jwt](https://docs.snowflake.com/en/user-guide/key-pair-auth.html): You must also set PRIVATE_KEY_FILE or PRIVATE_KEY. <br/> - [oauth](https://docs.snowflake.com/en/user-guide/oauth.html): You must also set TOKEN. <br/> - [oauth_authorization_code](https://docs.snowflake.com/en/user-guide/oauth-snowflake-overview): when authorizing with Snowflake all the OAUTH prefixed parameters are optional, for external provider required are: OAUTHCLIENTID, OAUTHCLIENTSECRET, OAUTHSCOPE, OAUTHAUTHORIZATIONURL, OAUTHTOKENREQUESTURL, OAUTHREDIRECTURI <br/> - [oauth_client_credentials](https://docs.snowflake.com/en/user-guide/oauth-snowflake-overview): You must provide OAUTHCLIENTID, OAUTHCLIENTSECRET, OAUTHSCOPE, OAUTHTOKENREQUESTURL, OAUTHREDIRECTURI <br/> - [programmatic_access_token](https://docs.snowflake.com/en/user-guide/programmatic-access-tokens): You must provide TOKEN parameter<br/> - [workload_identity](https://docs.snowflake.com/en/user-guide/workload-identity-federation): you must provide WORKLOAD_IDENTITY_PROVIDER, mandatory is WORKLOAD_IDENTITY_ENTRA_RESOURCE for Azure and TOKEN for OIDC provider |
+| VALIDATE_DEFAULT_PARAMETERS       | 🟢 Optional | Whether DB, SCHEMA and WAREHOUSE should be verified when making connection. Default: `true`. |
+| PRIVATE_KEY_FILE                  | 🔶 Depends | The path to the private key file to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt |
+| PRIVATE_KEY_PWD                   | 🟢 Optional | The passphrase to use for decrypting the private key, if the key is encrypted. |
+| PRIVATE_KEY                       | 🔶 Depends | The private key to use for key-pair authentication. Must be used in combination with AUTHENTICATOR=snowflake_jwt. <br /> If the private key value includes any equal signs (=), make sure to replace each equal sign with two signs (==) to ensure that the connection string is parsed correctly. |
+| TOKEN                             | 🔶 Depends | The OAuth token to use for OAuth authentication or Programmatic Access Token authentication or Workload Identity Federation for `OIDC`. Must be used in combination with `AUTHENTICATOR=oauth` or `AUTHENTICATOR=programmatic_access_token` or `AUTHENTICATOR=workload_identity`. |
+| USEPROXY                          | 🟢 Optional | Set to `true` to use a proxy server. Default: `false`. |
+| PROXYHOST                         | 🔶 Depends | The hostname of the proxy server. Required if USEPROXY is `true`. |
+| PROXYPORT                         | 🔶 Depends | The port number of the proxy server. Required if USEPROXY is `true`. |
+| PROXYUSER                         | 🟢 Optional | The username for authenticating to the proxy server. |
+| PROXYPASSWORD                     | 🔶 Depends | The password for authenticating to the proxy server. Required if USEPROXY is `true` and PROXYUSER is set. |
+| NONPROXYHOSTS                     | 🟢 Optional | Pipe-separated (`\|`) list of hosts to bypass the proxy. Supports asterisk (`*`) wildcards. The value must match the full URL including scheme. |
+| FILE_TRANSFER_MEMORY_THRESHOLD    | 🟢 Optional | Maximum bytes to hold in memory for file encryption/decryption. If the file exceeds this size, a temporary file is used. Default: 1048576 (1 MB). |
+| CLIENT_CONFIG_FILE                | 🟢 Optional | Path to the client configuration JSON file for easy logging. |
+| ALLOWUNDERSCORESINHOST            | 🟢 Optional | Allow underscores in account names. Required for PrivateLink customers whose account names contain underscores. Default: `false`. |
+| QUERY_TAG                         | 🟢 Optional | Tag applied to queries and SQL statements within the connection. Visible in QUERY_HISTORY output. Can also be set per-statement via `SnowflakeDbCommand.QueryTag`. |
+| MAXPOOLSIZE                       | 🟢 Optional | Maximum number of connections in a pool. Default: 10. Cannot be lower than `MINPOOLSIZE`. |
+| MINPOOLSIZE                       | 🟢 Optional | Minimum number of connections in a pool. Additional connections are created in the background. Default: 2. Cannot exceed `MAXPOOLSIZE`. |
+| CHANGEDSESSION                    | 🟢 Optional | Behavior when a connection's session variables (schema, database, warehouse, role) are altered. Default: `OriginalPool`. |
+| WAITINGFORIDLESESSIONTIMEOUT      | 🟢 Optional | Timeout when waiting for an idle session in a full pool. Supports units: `1000ms`, `15s`, `2m` (default unit: seconds). Default: 30s. Set to `0` for immediate failure. |
+| EXPIRATIONTIMEOUT                 | 🟢 Optional | Maximum lifetime of a pooled connection. Supports units: `360000ms`, `3600s`, `60m` (default unit: seconds). Default: 1 hour. Set to `0` for immediate expiration. |
+| POOLINGENABLED                    | 🟢 Optional | Enable or disable connection pooling. Default: `true`. |
+| DISABLE_SAML_URL_CHECK            | 🟢 Optional | Skip SAML postback URL validation against the connection string host. Default: `false`. |
+| CLIENT_STORE_TEMPORARY_CREDENTIAL | 🟢 Optional | Cache tokens for external browser or OAuth authorization code flow. Default: `true` on Windows, `false` elsewhere. |
+| PASSCODE                          | 🟢 Optional | Passcode from a 2FA application for Multi-Factor Authentication. |
+| PASSCODEINPASSWORD                | 🟢 Optional | Whether the MFA passcode is appended to the password. |
+| OAUTHCLIENTID                     | 🔶 Depends | Client ID for OAuth flows. Required for OAuth Authorization Code Flow and OAuth Client Credentials Flow. Auto-filled with `LOCAL_APPLICATION` for Snowflake-provided OAuth when neither OAUTHCLIENTID nor OAUTHCLIENTSECRET are set. |
+| OAUTHCLIENTSECRET                 | 🔶 Depends | Client secret for OAuth flows. Required for OAuth Authorization Code Flow and OAuth Client Credentials Flow. Auto-filled with `LOCAL_APPLICATION` for Snowflake-provided OAuth when neither OAUTHCLIENTID nor OAUTHCLIENTSECRET are set. |
+| OAUTHSCOPE                        | 🔶 Depends | Requested scope for OAuth flows. If not provided, built from `ROLE`. |
+| OAUTHAUTHORIZATIONURL             | 🔶 Depends | Authorization endpoint URL for OAuth Authorization Code Flow. Required for non-Snowflake Identity Providers. |
+| OAUTHTOKENREQUESTURL              | 🔶 Depends | Token endpoint URL for OAuth flows. Required for OAuth Client Credentials Flow and non-Snowflake Identity Providers in Authorization Code Flow. |
+| OAUTHREDIRECTURI                  | 🔶 Depends | Local endpoint the driver listens on for OAuth Authorization Code Flow. Required for non-Snowflake Identity Providers. |
+| WORKLOAD_IDENTITY_PROVIDER        | 🔶 Depends | Attestation provider for Workload Identity Federation: `OIDC`, `AZURE`, `AWS`, or `GCP`. Required when AUTHENTICATOR is `workload_identity`. |
+| WORKLOAD_IDENTITY_ENTRA_RESOURCE  | 🟢 Optional | Entra resource for Azure Workload Identity Federation. Default: `api://fd3f753b-eed3-462c-b6a7-a4b5bb650aad`. |
+| WORKLOAD_IMPERSONATION_PATH       | 🟢 Optional | Comma-separated identities for transitive service account impersonation. **AWS and GCP only.** For GCP: service account emails. For AWS: IAM role ARNs. Each identity needs permissions to impersonate the next. |
+| OAUTHENABLESINGLEUSEREFRESHTOKENS | 🟢 Optional | Request single-use refresh tokens in OAuth Authorization Code Flow. Default: `false`. |
+| CERTREVOCATIONCHECKMODE           | 🟢 Optional | Certificate revocation check mode. Values: `disabled` (default), `enabled`, `advisory`, `native`. `Advisory` allows connections when CRL check encounters errors but blocks revoked certificates. `Native` uses `System.Net.Http.HttpClientHandler`. |
+| ENABLECRLDISKCACHING              | 🟢 Optional | Enable file-based CRL cache when driver CRL checks are active. Default: `true`. |
+| ENABLECRLINMEMORYCACHING          | 🟢 Optional | Enable in-memory CRL cache when driver CRL checks are active. Default: `true`. |
+| ALLOWCERTIFICATESWITHOUTCRLURL    | 🟢 Optional | Accept certificates without a CRL URL when driver CRL checks are active. Default: `false`. |
+| CRLDOWNLOADTIMEOUT                | 🟢 Optional | Timeout in seconds for downloading CRL files. Default: `10`. |
+| CRLDOWNLOADMAXSIZE                | 🟢 Optional | Maximum size in bytes for CRL file downloads. Default: `209715200` (200 MB). |
+| MINTLS                            | 🟢 Optional | Minimum TLS version. Values: `TLS12` (default), `TLS13`. |
+| MAXTLS                            | 🟢 Optional | Maximum TLS version. Values: `TLS12`, `TLS13` (default). |
+| SERVICE_POINT_CONNECTION_LIMIT    | 🟢 Optional | Maximum connections for the ServicePoint object. Default: 20. Only the limit from the first connection string takes effect. |
+| HONORSESSIONTIMEZONE              | 🟢 Optional | When `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter instead of the local machine timezone. Default: `false`. |
