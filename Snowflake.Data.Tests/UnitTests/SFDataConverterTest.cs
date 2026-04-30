@@ -449,45 +449,49 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestCSharpTypeValToSfTypeValGuidMapsToText()
         {
-            var guid = Guid.NewGuid();
+            var guid = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
             var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Guid, guid);
             Assert.AreEqual("TEXT", result.Item1);
-            Assert.AreEqual(guid.ToString(), result.Item2);
+            Assert.AreEqual("a1b2c3d4-e5f6-7890-abcd-ef1234567890", result.Item2);
         }
 
         [Test]
-        [TestCase(DbType.Decimal, "42.5")]
-        [TestCase(DbType.SByte, "-1")]
-        [TestCase(DbType.Int16, "123")]
-        [TestCase(DbType.Int32, "42")]
-        [TestCase(DbType.Int64, "9999999999")]
-        [TestCase(DbType.Byte, "255")]
-        [TestCase(DbType.UInt16, "65535")]
-        [TestCase(DbType.UInt32, "4294967295")]
-        [TestCase(DbType.UInt64, "18446744073709551615")]
-        [TestCase(DbType.VarNumeric, "123")]
-        public void TestCSharpTypeValToSfTypeValNumericTypes(DbType dbType, string srcVal)
+        [TestCase(DbType.Decimal, 42.4f, "42.4")]
+        [TestCase(DbType.Decimal, 42.3d, "42.3")]
+        [TestCase(DbType.SByte, -1, "-1")]
+        [TestCase(DbType.Int16, 123, "123")]
+        [TestCase(DbType.Int32, 42, "42")]
+        [TestCase(DbType.Int64, 9999999999L, "9999999999")]
+        [TestCase(DbType.Byte, 255, "255")]
+        [TestCase(DbType.UInt16, 65535u, "65535")]
+        [TestCase(DbType.UInt32, 4294967295u,  "4294967295")]
+        [TestCase(DbType.UInt64, 18446744073709551615ul, "18446744073709551615")]
+        [TestCase(DbType.VarNumeric, 123, "123")]
+        public void TestCSharpTypeValToSfTypeValNumericTypes(DbType dbType, object srcVal, string expectedVal)
         {
             var result = SFDataConverter.CSharpTypeValToSfTypeVal(dbType, srcVal);
             Assert.AreEqual("FIXED", result.Item1);
-            Assert.AreEqual(srcVal, result.Item2);
+            Assert.AreEqual(expectedVal, result.Item2);
         }
 
         [Test]
-        public void TestCSharpTypeValToSfTypeValBoolean()
+        [TestCase(true, "True")]
+        [TestCase(false, "False")]
+        public void TestCSharpTypeValToSfTypeValBoolean(bool srcVal, string expectedVal)
         {
-            var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Boolean, true);
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Boolean, srcVal);
             Assert.AreEqual("BOOLEAN", result.Item1);
-            Assert.AreEqual("True", result.Item2);
+            Assert.AreEqual(expectedVal, result.Item2);
         }
 
         [Test]
-        [TestCase(DbType.Double, 1.5d, "REAL")]
-        [TestCase(DbType.Single, 1.5f, "REAL")]
-        public void TestCSharpTypeValToSfTypeValRealTypes(DbType dbType, object srcVal, string expectedType)
+        [TestCase(DbType.Double, 1.5d, "REAL", "1.5")]
+        [TestCase(DbType.Single, 1.5f, "REAL", "1.5")]
+        public void TestCSharpTypeValToSfTypeValRealTypes(DbType dbType, object srcVal, string expectedType, string expectedValue)
         {
             var result = SFDataConverter.CSharpTypeValToSfTypeVal(dbType, srcVal);
             Assert.AreEqual(expectedType, result.Item1);
+            Assert.AreEqual(expectedValue, result.Item2);
         }
 
         [Test]
@@ -553,8 +557,8 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestConvertToCSharpValGuid()
         {
-            var expected = Guid.NewGuid();
-            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(expected.ToString()), SFDataType.TEXT, typeof(Guid));
+            var expected = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("a1b2c3d4-e5f6-7890-abcd-ef1234567890"), SFDataType.TEXT, typeof(Guid));
             Assert.AreEqual(expected, result);
         }
 
@@ -605,36 +609,41 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestConvertToCSharpValInvalidDestTypeThrows()
         {
-            Assert.Throws<SnowflakeDbException>(() =>
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
                 SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("1"), SFDataType.FIXED, typeof(uint)));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INTERNAL_ERROR);
         }
 
         [Test]
         public void TestConvertToCSharpValTimeSpanWithNonTimeTypeThrows()
         {
-            Assert.Throws<SnowflakeDbException>(() =>
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
                 SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.FIXED, typeof(TimeSpan)));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
         [Test]
         public void TestConvertToCSharpValDateTimeWithUnsupportedSrcTypeThrows()
         {
-            Assert.Throws<SnowflakeDbException>(() =>
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
                 SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.FIXED, typeof(DateTime)));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
         [Test]
         public void TestConvertToCSharpValDateTimeOffsetWithUnsupportedSrcTypeThrows()
         {
-            Assert.Throws<SnowflakeDbException>(() =>
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
                 SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.FIXED, typeof(DateTimeOffset)));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
         [Test]
         public void TestConvertToCSharpValTimestampTzMissingSpaceThrows()
         {
-            Assert.Throws<SnowflakeDbException>(() =>
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
                 SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.TIMESTAMP_TZ, typeof(DateTimeOffset)));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INTERNAL_ERROR);
         }
 
         [Test]
@@ -656,10 +665,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var dt = new DateTime(2024, 1, 1, 13, 45, 30, 500);
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIME, dt);
-            // 13:45:30.500 -> ticks from midnight, then formatted as nanoseconds string
-            var tickDiff = dt.Ticks - dt.Date.Ticks;
-            var expected = $"{tickDiff}00";
-            Assert.AreEqual(expected, result);
+            Assert.AreEqual("49530500000000", result);
         }
 
         [Test]
@@ -667,9 +673,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var dt = new DateTime(2024, 7, 15, 10, 30, 0, DateTimeKind.Utc);
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_NTZ, dt);
-            var tickDiff = dt.Subtract(SFDataConverter.UnixEpoch).Ticks;
-            var expected = $"{tickDiff}00";
-            Assert.AreEqual(expected, result);
+            Assert.AreEqual("1721039400000000000", result);
         }
 
         [Test]
@@ -677,9 +681,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var dto = new DateTimeOffset(2024, 7, 15, 10, 30, 0, TimeSpan.Zero);
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_LTZ, dto);
-            var tickDiff = dto.UtcTicks - SFDataConverter.UnixEpoch.Ticks;
-            var expected = $"{tickDiff}00";
-            Assert.AreEqual(expected, result);
+            Assert.AreEqual("1721039400000000000", result);
         }
 
         [Test]
@@ -687,9 +689,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var dto = new DateTimeOffset(2024, 7, 15, 15, 30, 0, TimeSpan.FromHours(5));
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_TZ, dto);
-            var tickDiff = dto.UtcTicks - SFDataConverter.UnixEpoch.Ticks;
-            var expectedOffset = 5 * 60 + 1440; // offset in minutes + 1440
-            Assert.AreEqual($"{tickDiff}00 {expectedOffset}", result);
+            Assert.AreEqual($"1721039400000000000 1740", result);
         }
 
         [Test]
