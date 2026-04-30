@@ -496,7 +496,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var dt = new DateTime(2024, 1, 1, 13, 45, 30, 500);
             var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Time, dt);
             Assert.AreEqual("TIME", result.Item1);
-            Assert.IsNotNull(result.Item2);
+            Assert.AreEqual("49530500000000", result.Item2);
         }
 
         [Test]
@@ -507,7 +507,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var dt = new DateTime(2024, 7, 15, 10, 30, 0);
             var result = SFDataConverter.CSharpTypeValToSfTypeVal(dbType, dt);
             Assert.AreEqual("TIMESTAMP_NTZ", result.Item1);
-            Assert.IsNotNull(result.Item2);
+            Assert.AreEqual("1721039400000000000", result.Item2);
         }
 
         [Test]
@@ -516,7 +516,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var dto = new DateTimeOffset(2024, 7, 15, 10, 30, 0, TimeSpan.FromHours(5));
             var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.DateTimeOffset, dto);
             Assert.AreEqual("TIMESTAMP_TZ", result.Item1);
-            Assert.IsNotNull(result.Item2);
+            Assert.AreEqual("1721021400000000000 1740", result.Item2);
         }
 
         [Test]
@@ -535,8 +535,6 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Currency, 1.0m));
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.UNSUPPORTED_DOTNET_TYPE);
         }
-
-        // --- ConvertToCSharpVal: missing paths ---
 
         [Test]
         public void TestConvertToCSharpValNullReturnsDbNull()
@@ -638,8 +636,6 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<SnowflakeDbException>(() =>
                 SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.TIMESTAMP_TZ, typeof(DateTimeOffset)));
         }
-
-        // --- CSharpValToSfVal: missing paths ---
 
         [Test]
         public void TestCSharpValToSfValNullReturnsNull()
