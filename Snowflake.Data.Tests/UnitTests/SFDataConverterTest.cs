@@ -660,36 +660,40 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.IsNull(result);
         }
 
-        [Test]
-        public void TestCSharpValToSfValTime()
+        [TestCase(13, 45, 30, 500, "49530500000000")]
+        [TestCase(23, 59, 59, 999, "86399999000000")]
+        public void TestCSharpValToSfValTime(int hour, int minute, int second, int millisecond, string expected)
         {
-            var dt = new DateTime(2024, 1, 1, 13, 45, 30, 500);
+            var dt = new DateTime(2024, 1, 1, hour, minute, second, millisecond);
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIME, dt);
-            Assert.AreEqual("49530500000000", result);
+            Assert.AreEqual(expected, result);
         }
 
-        [Test]
-        public void TestCSharpValToSfValTimestampNtz()
+        [TestCase(13, 45, 30, 500, "1704116730500000000")]
+        [TestCase(23, 59, 59, 999, "1704153599999000000")]
+        public void TestCSharpValToSfValTimestampNtz(int hour, int minute, int second, int millisecond, string expected)
         {
-            var dt = new DateTime(2024, 7, 15, 10, 30, 0, DateTimeKind.Utc);
+            var dt = new DateTime(2024, 1, 1, hour, minute, second, millisecond);
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_NTZ, dt);
-            Assert.AreEqual("1721039400000000000", result);
+            Assert.AreEqual(expected, result);
         }
 
-        [Test]
-        public void TestCSharpValToSfValTimestampLtz()
+        [TestCase(13, 45, 30, 500, "1721051130500000000")]
+        [TestCase(23, 59, 59, 999, "1721087999999000000")]
+        public void TestCSharpValToSfValTimestampLtz(int hour, int minute, int second, int millisecond, string expected)
         {
-            var dto = new DateTimeOffset(2024, 7, 15, 10, 30, 0, TimeSpan.Zero);
+            var dto = new DateTimeOffset(2024, 7, 15, hour, minute, second, millisecond, TimeSpan.Zero);
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_LTZ, dto);
-            Assert.AreEqual("1721039400000000000", result);
+            Assert.AreEqual(expected, result);
         }
 
-        [Test]
-        public void TestCSharpValToSfValTimestampTz()
+        [TestCase(13, 45, 30, 500, "1721033130500000000 1740")]
+        [TestCase(23, 59, 59, 999, "1721069999999000000 1740")]
+        public void TestCSharpValToSfValTimestampTz(int hour, int minute, int second, int millisecond, string expected)
         {
-            var dto = new DateTimeOffset(2024, 7, 15, 15, 30, 0, TimeSpan.FromHours(5));
+            var dto = new DateTimeOffset(2024, 7, 15, hour, minute, second, millisecond, TimeSpan.FromHours(5));
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_TZ, dto);
-            Assert.AreEqual($"1721039400000000000 1740", result);
+            Assert.AreEqual(expected, result);
         }
 
         [Test]
