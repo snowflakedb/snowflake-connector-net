@@ -4,6 +4,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Core
 {
@@ -323,6 +324,12 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "PLATFORM", NullValueHandling = NullValueHandling.Ignore)]
         internal string[] platform { get; set; }
 
+        [JsonProperty(PropertyName = "LIBC_FAMILY", NullValueHandling = NullValueHandling.Ignore)]
+        internal string libcFamily { get; set; }
+
+        [JsonProperty(PropertyName = "LIBC_VERSION", NullValueHandling = NullValueHandling.Ignore)]
+        internal string libcVersion { get; set; }
+
         [JsonIgnore]
         internal string processName { get; set; }
 
@@ -347,6 +354,8 @@ namespace Snowflake.Data.Core
                 isa = isa,
                 osDetails = osDetails,
                 platform = Tools.PlatformDetection.GetDetectedPlatforms(),
+                libcFamily = libcFamily,
+                libcVersion = libcVersion,
                 minicoreVersion = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.TryGetVersionSafe(),
                 minicoreFileName = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.GetExpectedLibraryName(),
                 minicoreLoadError = SFEnvironment.MinicoreDisabled

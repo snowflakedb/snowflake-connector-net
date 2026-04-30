@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Core.CredentialManager;
+using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 
@@ -18,8 +19,6 @@ namespace Snowflake.Data.Core
 {
     internal class SFSession
     {
-        public const int SF_SESSION_EXPIRED_CODE = 390112;
-
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
 
         private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
@@ -733,7 +732,7 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        if (response.code == SF_SESSION_EXPIRED_CODE)
+                        if (response.IsSessionExpired())
                         {
                             logger.Debug($"SFSession ::heartbeat Session ID: {sessionId} session token expired and retry heartbeat");
                             try
@@ -791,7 +790,7 @@ namespace Snowflake.Data.Core
         {
             if (_invalidatedForPooling)
                 return;
-            logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure.");
+            logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure or session being destroyed server-side.");
             _invalidatedForPooling = true;
         }
 

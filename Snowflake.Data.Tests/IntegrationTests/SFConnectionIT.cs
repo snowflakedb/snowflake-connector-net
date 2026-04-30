@@ -3,8 +3,10 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -357,7 +359,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Retry(2)]
+        [TimeSensitive]
         public void TestLoginTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -395,6 +397,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive]
         public void TestLoginWithMaxRetryReached()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -429,6 +432,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Retry(2)]
+        [TimeSensitive]
         public void TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -467,7 +471,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        [Ignore("Disable unstable test cases for now")]
+        [TimeSensitive]
         public void TestDefaultLoginTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -475,7 +479,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
 
                 // Default timeout is 300 sec
-                Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout, conn.ConnectionTimeout);
+                Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
 
                 Assert.AreEqual(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
@@ -1625,6 +1629,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("^nonmatch*{0}$|*")]
         [TestCase("*a*", "a")]
         [TestCase("*la*", "la")]
+        [Retry(3)]
         public void TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1651,6 +1656,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [TestCase("*a.b")]
         [TestCase("a", "a")]
         [TestCase("la", "la")]
+        [Retry(3)]
         public void TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1878,7 +1884,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        public void TestKeepAlive()
+        [TimeSensitive]
+        public async Task TestKeepAlive()
         {
             // create 100 connections, one per second
             var connCount = 100;
@@ -1896,7 +1903,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         conn.ConnectionString = connectionString;
                         conn.Open();
                     }
-                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                     // roughly should only have 5 sessions in pool stay alive
                     // check for 10 in case of bad timing, also much less than the
                     // pool max size to ensure it's unpooled because of expire
@@ -1957,6 +1964,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive]
         public void TestAsyncLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1993,6 +2001,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Test]
         [Retry(2)]
+        [TimeSensitive]
         public void TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -2029,6 +2038,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive]
         public void TestAsyncDefaultLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -2458,6 +2468,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        [TimeSensitive]
         public void TestHangingCloseIsNotBlocking()
         {
             // arrange

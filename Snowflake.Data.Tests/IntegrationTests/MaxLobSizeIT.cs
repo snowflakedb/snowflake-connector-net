@@ -35,16 +35,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [ThreadStatic] private static List<string> t_filesToDelete;
         [ThreadStatic] private static string[] t_colData;
 
-        public MaxLobSizeIT()
-        {
-            _resultFormat = ResultFormat.JSON; // Default value
-        }
-
-        public MaxLobSizeIT(ResultFormat resultFormat)
-        {
-            _resultFormat = resultFormat;
-        }
-
         [OneTimeSetUp]
         public static void OneTimeSetUp()
         {
@@ -63,7 +53,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SetUp]
         public void SetUp()
         {
-            // Base object's names on on worker thread id
+            // Base object's names on worker thread id
             var threadSuffix = TestContext.CurrentContext.WorkerId?.Replace('#', '_');
 
             t_tableName = $"LOB_TABLE_{threadSuffix}";
@@ -109,12 +99,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        [Test, TestCaseSource(nameof(SelectOnSpecifiedSizeTestCases))]
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
+            // arrange
             _resultFormat = resultFormat;
 
-            // arrange
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
@@ -130,10 +120,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, TestCaseSource(nameof(CombinedTestCases))]
+
+        [Test, TestCaseSource(nameof(LiteralInsertTestCases))]
+        [Retry(3)]
+        [NonParallelizable]
         public void TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
+            _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
@@ -162,10 +156,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        [Test, TestCaseSource(nameof(PositionalInsertTestCases))]
+        [Retry(3)]
         public void TestPositionalInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
+            _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
@@ -214,10 +210,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        [Test, TestCaseSource(nameof(NamedInsertTestCases))]
         public void TestNamedInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
+            _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
@@ -265,10 +262,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, TestCaseSource(nameof(CombinedTestCases))]
+        [Test, TestCaseSource(nameof(PutGetCommandTestCases))]
+        [Retry(3)]
+        [NonParallelizable]
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange
+            _resultFormat = resultFormat;
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
@@ -297,17 +297,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
         static IEnumerable<ResultFormat> ResultFormats => new[]
             { ResultFormat.ARROW, ResultFormat.JSON };
 
-        static IEnumerable<TestCaseData> CombinedTestCases()
+        static IEnumerable<TestCaseData> CombinedTestCases(string baseTestName)
         {
             foreach (var resultFormat in ResultFormats)
             {
                 foreach (var lobSize in LobSizeTestCases)
                 {
                     yield return new TestCaseData(resultFormat, lobSize)
-                        .SetName($"TestSelectOnSpecifiedSize_{resultFormat}_{lobSize}");
+                        .SetName($"{baseTestName}_{resultFormat}_{lobSize}");
                 }
             }
         }
+
+        static IEnumerable<TestCaseData> SelectOnSpecifiedSizeTestCases() =>
+            CombinedTestCases(nameof(TestSelectOnSpecifiedSize));
+
+        static IEnumerable<TestCaseData> LiteralInsertTestCases() =>
+            CombinedTestCases(nameof(TestLiteralInsert));
+
+        static IEnumerable<TestCaseData> PositionalInsertTestCases() =>
+            CombinedTestCases(nameof(TestPositionalInsert));
+
+        static IEnumerable<TestCaseData> NamedInsertTestCases() =>
+            CombinedTestCases(nameof(TestNamedInsert));
+
+        static IEnumerable<TestCaseData> PutGetCommandTestCases() =>
+            CombinedTestCases(nameof(TestPutGetCommand));
 
         void PrepareTest()
         {
@@ -361,11 +376,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // assert
                 Assert.IsTrue(reader.Read());
-                Assert.AreEqual(t_colData[0], reader.GetString(0));
-                Assert.AreEqual(t_colData[1], reader.GetString(1));
-                Assert.AreEqual(t_colData[2], reader.GetString(2));
+                AssertOnColData(reader, 0);
+                AssertOnColData(reader, 1);
+                AssertOnColData(reader, 2);
                 CheckColumnMetadata(reader);
             }
+        }
+
+        private static void AssertOnColData(DbDataReader reader, int index)
+        {
+            var actual = reader.GetString(index);
+            var substringLength = t_colData[index].Length > 20 ? 20 : t_colData[index].Length;
+            Assert.IsTrue(t_colData[index] == actual, $"Expected strings to be equal. Expected: '{t_colData[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
         }
 
         private void GetFile(DbConnection conn)

@@ -6,6 +6,7 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
 using System;
 using System.Threading;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
