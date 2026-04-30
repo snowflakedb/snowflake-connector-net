@@ -4,7 +4,7 @@ PUT command can be used to upload files of a local directory or a single local f
 Such staging files can be used to load data into a table.
 More on this topic: [File staging with PUT](https://docs.snowflake.com/en/sql-reference/sql/put).
 
-In the driver the command can be executed in a bellow way:
+In the driver the command can be executed in the following way:
 
 ```cs
 using var conn = new SnowflakeDbConnection()
@@ -34,11 +34,11 @@ it will be for example: FileNotFoundException, DirectoryNotFoundException.
 
 ## GET stage files
 
-GET command allows to download stage directories or files to a local directory.
+GET command allows downloading stage directories or files to a local directory.
 It can be used in connection with named stage, table internal stage or user stage.
 Detailed information on the command: [Downloading files with GET](https://docs.snowflake.com/en/sql-reference/sql/get).
 
-To use the command in a driver similar code can be executed in a client app:
+To use the command in the driver, similar code can be executed in a client app:
 
 ```cs
     try

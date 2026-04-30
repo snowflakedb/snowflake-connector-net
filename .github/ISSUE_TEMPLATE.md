@@ -10,7 +10,7 @@ If possible, please enter some example code here to reproduce the issue.
 ```
 If you have an error log, please paste it here.
 ```
-There is an example in READMD.md file showing you how to enable logging.
+There is an example in README.md file showing you how to enable logging.
 
 ### Configuration
 *Driver version:*

@@ -1,7 +1,7 @@
 ## Run a Query and Read Data
 
 ```cs
-using var conn = new SnowflakeDbConnection()
+using var conn = new SnowflakeDbConnection();
 
 conn.ConnectionString = connectionString;
 await conn.OpenAsync(cancellationToken);
@@ -107,10 +107,10 @@ var cmd = conn.CreateCommand();
 cmd.CommandText = "ALTER SESSION SET MULTI_STATEMENT_COUNT = 1";
 await cmd.ExecuteNonQueryAsync(cancellationToken);
 
-using var cmd2 = conn.CreateCommand()
+using var cmd2 = conn.CreateCommand();
 
 // Set statement count
-var stmtCountParam = cmd.CreateParameter();
+var stmtCountParam = cmd2.CreateParameter();
 stmtCountParam.ParameterName = "MULTI_STATEMENT_COUNT";
 stmtCountParam.DbType = DbType.Int16;
 stmtCountParam.Value = 3;
@@ -193,8 +193,8 @@ using var conn = new SnowflakeDbConnection()
 conn.ConnectionString = ConnectionString;
 await conn.OpenAsync(cancellationToken);
 
-using var cmd = conn.CreateCommand()
-cmd.CommandText = "create or replace table putArrayBin(colAinteger)";
+using var cmd = conn.CreateCommand();
+cmd.CommandText = "create or replace table putArrayBind(colAinteger)";
 await cmd.ExecuteNonQueryAsync(cancellationToken);
 
 string insertCommand = "insert into putArrayBind values (?)";
@@ -213,7 +213,7 @@ p1.DbType = DbType.Int16;
 p1.Value = arrint.ToArray();
 cmd.Parameters.Add(p1);
 
-count = await cmd.ExecuteNonQuery(cancellationToken); // count = 70000
+count = await cmd.ExecuteNonQueryAsync(cancellationToken); // count = 70000
 
 await conn.CloseAsync(cancellationToken);
 ```
@@ -231,7 +231,7 @@ using Newtonsoft.Json;
 
                     using var cmd = conn.CreateCommand()
                     var vals = new int[] { 1, 2, 3 };
-                    var array = JsonConvert.SerializeObjec(vals); // alternatively you can do `vals.ToArra()` when passing it to `p1.Value`
+                    var array = JsonConvert.SerializeObject(vals); // alternatively you can do `vals.ToArray()` when passing it to `p1.Value`
                     var sql = "CALL test_db.public.test(parse_json(?))"; // test SP, returns a single value
                     // execute this sql with bind variable 'array'
                     cmd.CommandText = sql;
