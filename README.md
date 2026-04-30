@@ -31,6 +31,8 @@ Starting from version **5.2.0**, the connector uses multi-targeting to provide o
 
 NuGet automatically selects the appropriate build based on the application's target framework and operating system.
 
+**Note:** On Linux, only **glibc-based** distributions are supported (e.g. Ubuntu, Debian, RHEL, CentOS). Musl-based distributions (e.g. Alpine), Android-based runtimes (Bionic), and other non-glibc environments are not supported.
+
 Please refer to the [Notice](#notice) section for information about safe usage of the .NET Driver.
 
 
