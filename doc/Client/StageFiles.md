@@ -7,24 +7,23 @@ More on this topic: [File staging with PUT](https://docs.snowflake.com/en/sql-re
 In the driver the command can be executed in a bellow way:
 
 ```cs
-using (IDbConnection conn = new SnowflakeDbConnection())
+using var conn = new SnowflakeDbConnection()
+try
 {
-    try
-    {
-	    conn.ConnectionString = "<connection parameters>";
-	    conn.Open();
-	    var cmd = (SnowflakeDbCommand)conn.CreateCommand(); // cast allows get QueryId from the command
-
-	    cmd.CommandText = "PUT file://some_data.csv @my_schema.my_stage AUTO_COMPRESS=TRUE";
-	    var reader = cmd.ExecuteReader();
-	    Assert.IsTrue(reader.Read());
-        Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
-    }
-    catch (SnowflakeDbException e)
-    {
-        Assert.DoesNotThrow(() => Guid.Parse(e.QueryId)); // when failed
-        Assert.That(e.InnerException.GetType(), Is.EqualTo(typeof(FileNotFoundException)));
-    }
+    conn.ConnectionString = "<connection parameters>";
+    await conn.OpenAsync(cancellationToken);
+    var cmd = (SnowflakeDbCommand)conn.CreateCommand(); // cast allows get QueryId from the command
+	    
+    cmd.CommandText = "PUT file://some_data.csv @my_schema.my_stage AUTO_COMPRESS=TRUE";
+	await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+	Assert.IsTrue(await reader.ReadAsync(cancellationToken));
+    Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
+}
+catch (SnowflakeDbException e)
+{
+    Assert.DoesNotThrow(() => Guid.Parse(e.QueryId)); // when failed
+    Assert.That(e.InnerException.GetType(), Is.EqualTo(typeof(FileNotFoundException)));
+}
 ```
 
 In case of a failure a SnowflakeDbException exception will be thrown with affected QueryId if possible.
@@ -45,12 +44,12 @@ To use the command in a driver similar code can be executed in a client app:
     try
     {
 	    conn.ConnectionString = "<connection parameters>";
-	    conn.Open();
+	    await conn.OpenAsync(cancellationToken);
 	    var cmd = (SnowflakeDbCommand)conn.CreateCommand(); // cast allows get QueryId from the command
 
 	    cmd.CommandText = "GET @my_schema.my_stage/stage_file.csv file://local_file.csv AUTO_COMPRESS=TRUE";
-	    var reader = cmd.ExecuteReader();
-	    Assert.IsTrue(reader.Read()); // True on success, False if failure
+	    await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+	    Assert.IsTrue(await reader.ReadAsync(cancellationToken)); // True on success, False if failure
         Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
     }
     catch (SnowflakeDbException e)
