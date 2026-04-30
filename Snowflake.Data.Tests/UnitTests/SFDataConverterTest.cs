@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Text;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
@@ -12,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
     [TestFixture]
     [SetCulture("en-US")]
-    class SFDataConverterTest
+    public sealed class SFDataConverterTest
     {
         // Method with the same signature as before the performance work
         // Used by unit tests only
@@ -431,6 +432,340 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.NotNull(unsupportedObject);
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => SFDataConverter.CSharpValToSfVal(dataType, unsupportedObject));
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
+        }
+
+        [Test]
+        [TestCase(DbType.AnsiStringFixedLength, "hello", "hello")]
+        [TestCase(DbType.AnsiString, "hello", "hello")]
+        [TestCase(DbType.String, "hello", "hello")]
+        [TestCase(DbType.StringFixedLength, "hello", "hello")]
+        public void TestCSharpTypeValToSfTypeValTextTypes(DbType dbType, string srcVal, string expectedVal)
+        {
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(dbType, srcVal);
+            Assert.AreEqual("TEXT", result.Item1);
+            Assert.AreEqual(expectedVal, result.Item2);
+        }
+
+        [Test]
+        public void TestCSharpTypeValToSfTypeValGuidMapsToText()
+        {
+            var guid = Guid.NewGuid();
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Guid, guid);
+            Assert.AreEqual("TEXT", result.Item1);
+            Assert.AreEqual(guid.ToString(), result.Item2);
+        }
+
+        [Test]
+        [TestCase(DbType.Decimal, "42.5")]
+        [TestCase(DbType.SByte, "-1")]
+        [TestCase(DbType.Int16, "123")]
+        [TestCase(DbType.Int32, "42")]
+        [TestCase(DbType.Int64, "9999999999")]
+        [TestCase(DbType.Byte, "255")]
+        [TestCase(DbType.UInt16, "65535")]
+        [TestCase(DbType.UInt32, "4294967295")]
+        [TestCase(DbType.UInt64, "18446744073709551615")]
+        [TestCase(DbType.VarNumeric, "123")]
+        public void TestCSharpTypeValToSfTypeValNumericTypes(DbType dbType, string srcVal)
+        {
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(dbType, srcVal);
+            Assert.AreEqual("FIXED", result.Item1);
+            Assert.AreEqual(srcVal, result.Item2);
+        }
+
+        [Test]
+        public void TestCSharpTypeValToSfTypeValBoolean()
+        {
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Boolean, true);
+            Assert.AreEqual("BOOLEAN", result.Item1);
+            Assert.AreEqual("True", result.Item2);
+        }
+
+        [Test]
+        [TestCase(DbType.Double, 1.5d, "REAL")]
+        [TestCase(DbType.Single, 1.5f, "REAL")]
+        public void TestCSharpTypeValToSfTypeValRealTypes(DbType dbType, object srcVal, string expectedType)
+        {
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(dbType, srcVal);
+            Assert.AreEqual(expectedType, result.Item1);
+        }
+
+        [Test]
+        public void TestCSharpTypeValToSfTypeValTime()
+        {
+            var dt = new DateTime(2024, 1, 1, 13, 45, 30, 500);
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Time, dt);
+            Assert.AreEqual("TIME", result.Item1);
+            Assert.IsNotNull(result.Item2);
+        }
+
+        [Test]
+        [TestCase(DbType.DateTime)]
+        [TestCase(DbType.DateTime2)]
+        public void TestCSharpTypeValToSfTypeValTimestampNtz(DbType dbType)
+        {
+            var dt = new DateTime(2024, 7, 15, 10, 30, 0);
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(dbType, dt);
+            Assert.AreEqual("TIMESTAMP_NTZ", result.Item1);
+            Assert.IsNotNull(result.Item2);
+        }
+
+        [Test]
+        public void TestCSharpTypeValToSfTypeValTimestampTz()
+        {
+            var dto = new DateTimeOffset(2024, 7, 15, 10, 30, 0, TimeSpan.FromHours(5));
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.DateTimeOffset, dto);
+            Assert.AreEqual("TIMESTAMP_TZ", result.Item1);
+            Assert.IsNotNull(result.Item2);
+        }
+
+        [Test]
+        public void TestCSharpTypeValToSfTypeValBinary()
+        {
+            var bytes = new byte[] { 0xCA, 0xFE };
+            var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Binary, bytes);
+            Assert.AreEqual("BINARY", result.Item1);
+            Assert.AreEqual("cafe", result.Item2);
+        }
+
+        [Test]
+        public void TestCSharpTypeValToSfTypeValUnsupportedTypeThrows()
+        {
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Currency, 1.0m));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.UNSUPPORTED_DOTNET_TYPE);
+        }
+
+        // --- ConvertToCSharpVal: missing paths ---
+
+        [Test]
+        public void TestConvertToCSharpValNullReturnsDbNull()
+        {
+            var result = SFDataConverter.ConvertToCSharpVal(null, SFDataType.TEXT, typeof(string));
+            Assert.AreEqual(DBNull.Value, result);
+        }
+
+        [Test]
+        public void TestConvertToCSharpValString()
+        {
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("hello world"), SFDataType.TEXT, typeof(string));
+            Assert.AreEqual("hello world", result);
+        }
+
+        [Test]
+        public void TestConvertToCSharpValGuid()
+        {
+            var expected = Guid.NewGuid();
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(expected.ToString()), SFDataType.TEXT, typeof(Guid));
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void TestConvertToCSharpValByteArrayFromBinary()
+        {
+            var expected = new byte[] { 0xCA, 0xFE, 0xBA, 0xBE };
+            var hex = "cafebabe";
+            var result = (byte[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(hex), SFDataType.BINARY, typeof(byte[]));
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void TestConvertToCSharpValByteArrayFromNonBinary()
+        {
+            var input = "hello";
+            var expected = Encoding.UTF8.GetBytes(input);
+            var result = (byte[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(input), SFDataType.TEXT, typeof(byte[]));
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void TestConvertToCSharpValCharArrayFromBinary()
+        {
+            var hex = "68656c6c6f"; // "hello" in hex
+            var result = (char[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(hex), SFDataType.BINARY, typeof(char[]));
+            Assert.AreEqual("hello".ToCharArray(), result);
+        }
+
+        [Test]
+        public void TestConvertToCSharpValCharArrayFromNonBinary()
+        {
+            var input = "hello";
+            var result = (char[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(input), SFDataType.TEXT, typeof(char[]));
+            Assert.AreEqual("hello".ToCharArray(), result);
+        }
+
+        [Test]
+        public void TestConvertToCSharpValDateTimeFromDate()
+        {
+            // DATE type: value is days since Unix epoch
+            var daysStr = "19723"; // 2024-01-01 = 19723 days since 1970-01-01
+            var result = (DateTime)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(daysStr), SFDataType.DATE, typeof(DateTime));
+            Assert.AreEqual(new DateTime(2024, 1, 1), result);
+            Assert.AreEqual(DateTimeKind.Unspecified, result.Kind);
+        }
+
+        [Test]
+        public void TestConvertToCSharpValInvalidDestTypeThrows()
+        {
+            Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("1"), SFDataType.FIXED, typeof(uint)));
+        }
+
+        [Test]
+        public void TestConvertToCSharpValTimeSpanWithNonTimeTypeThrows()
+        {
+            Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.FIXED, typeof(TimeSpan)));
+        }
+
+        [Test]
+        public void TestConvertToCSharpValDateTimeWithUnsupportedSrcTypeThrows()
+        {
+            Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.FIXED, typeof(DateTime)));
+        }
+
+        [Test]
+        public void TestConvertToCSharpValDateTimeOffsetWithUnsupportedSrcTypeThrows()
+        {
+            Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.FIXED, typeof(DateTimeOffset)));
+        }
+
+        [Test]
+        public void TestConvertToCSharpValTimestampTzMissingSpaceThrows()
+        {
+            Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.TIMESTAMP_TZ, typeof(DateTimeOffset)));
+        }
+
+        // --- CSharpValToSfVal: missing paths ---
+
+        [Test]
+        public void TestCSharpValToSfValNullReturnsNull()
+        {
+            var result = SFDataConverter.CSharpValToSfVal(SFDataType.TEXT, null);
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValDbNullReturnsNull()
+        {
+            var result = SFDataConverter.CSharpValToSfVal(SFDataType.TEXT, DBNull.Value);
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValTime()
+        {
+            var dt = new DateTime(2024, 1, 1, 13, 45, 30, 500);
+            var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIME, dt);
+            // 13:45:30.500 -> ticks from midnight, then formatted as nanoseconds string
+            var tickDiff = dt.Ticks - dt.Date.Ticks;
+            var expected = $"{tickDiff}00";
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValTimestampNtz()
+        {
+            var dt = new DateTime(2024, 7, 15, 10, 30, 0, DateTimeKind.Utc);
+            var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_NTZ, dt);
+            var tickDiff = dt.Subtract(SFDataConverter.UnixEpoch).Ticks;
+            var expected = $"{tickDiff}00";
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValTimestampLtz()
+        {
+            var dto = new DateTimeOffset(2024, 7, 15, 10, 30, 0, TimeSpan.Zero);
+            var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_LTZ, dto);
+            var tickDiff = dto.UtcTicks - SFDataConverter.UnixEpoch.Ticks;
+            var expected = $"{tickDiff}00";
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValTimestampTz()
+        {
+            var dto = new DateTimeOffset(2024, 7, 15, 15, 30, 0, TimeSpan.FromHours(5));
+            var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_TZ, dto);
+            var tickDiff = dto.UtcTicks - SFDataConverter.UnixEpoch.Ticks;
+            var expectedOffset = 5 * 60 + 1440; // offset in minutes + 1440
+            Assert.AreEqual($"{tickDiff}00 {expectedOffset}", result);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValBinary()
+        {
+            var bytes = new byte[] { 0xCA, 0xFE };
+            var result = SFDataConverter.CSharpValToSfVal(SFDataType.BINARY, bytes);
+            Assert.AreEqual("cafe", result);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValBinaryWrongTypeThrows()
+        {
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.CSharpValToSfVal(SFDataType.BINARY, "not bytes"));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValUnsupportedSfTypeThrows()
+        {
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.CSharpValToSfVal(SFDataType.VARIANT, "data"));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.UNSUPPORTED_SNOWFLAKE_TYPE_FOR_PARAM);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValTimeWrongTypeThrows()
+        {
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.CSharpValToSfVal(SFDataType.TIME, "not a datetime"));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValDateWrongTypeThrows()
+        {
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.CSharpValToSfVal(SFDataType.DATE, "not a datetime"));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValTimestampNtzWrongTypeThrows()
+        {
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_NTZ, "not a datetime"));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValTimestampLtzWrongTypeThrows()
+        {
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_LTZ, "not a datetimeoffset"));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValTimestampTzWrongTypeThrows()
+        {
+            var ex = Assert.Throws<SnowflakeDbException>(() =>
+                SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_TZ, "not a datetimeoffset"));
+            SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
+        }
+
+        [Test]
+        public void TestCSharpValToSfValTimeMidnight()
+        {
+            var dt = new DateTime(2024, 1, 1, 0, 0, 0);
+            var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIME, dt);
+            Assert.AreEqual("0", result);
         }
     }
 }
