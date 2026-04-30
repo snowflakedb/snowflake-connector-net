@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <!-- Define WINDOWS_BUILD for all Windows-specific targets -->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows' OR '$(TargetFramework)' == 'net10.0-windows'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows' OR '$(TargetFramework)' == 'net9.0-windows' OR '$(TargetFramework)' == 'net10.0-windows'">
     <DefineConstants>$(DefineConstants);WINDOWS_BUILD</DefineConstants>
     <WindowsBuild>True</WindowsBuild>
   </PropertyGroup>

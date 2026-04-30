@@ -25,10 +25,9 @@ Starting from version **5.2.0**, the Snowflake .NET connector uses multi-targeti
 
 | Target Framework | Platform | Description                                                 |
 |------------------|----------|-------------------------------------------------------------|
-| `net481` | Windows (.NET Framework 4.8.1) | Optimized build for Windows .NET Framework without Mono.Unix |
-| `net8.0-windows` | Windows (.NET 8+) | Optimized build for Windows .NET 8+ without Mono.Unix |
-| `net8.0` | Linux, macOS (.NET 8+) | Full Unix file system support with Mono.Unix                |
-| `net10.0` | Linux, macOS (.NET 10+) | Full Unix file system support with Mono.Unix                |
+| `net481`         | Windows (.NET Framework 4.8.1) | Optimized build for Windows .NET Framework without Mono.Unix |
+| `net1.0-windows` | Windows (.NET 8+) | Optimized build for Windows .NET 8+ without Mono.Unix |
+| `net10.0`        | Linux, macOS (.NET 10+) | Full Unix file system support with Mono.Unix                |
 | `netstandard2.0` | All platforms | Backward compatibility for older .NET versions              |
 
 **What this means for you:**
@@ -209,7 +208,7 @@ Read more in [cache](doc/Cache.md) docs.
 
 5.  This driver currently does not support GCP regional endpoints. Please ensure that any workloads using through this driver do not require support for regional endpoints on GCP. If you have questions about this, please contact Snowflake Support.
 
-6. The driver uses Rust library called sf_mini_core, you can find its source code [here](https://github.com/snowflakedb/universal-driver/tree/main/sf_mini_core) 
+6. The driver uses Rust library called sf_mini_core, you can find its source code [here](https://github.com/snowflakedb/universal-driver/tree/main/sf_mini_core)
 
 Note that the driver is now targeting .NET Standard 2.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
 
