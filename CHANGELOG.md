@@ -2,6 +2,7 @@
 
 # Changelog
 - v5.6.0
+    - Added .NET 10 support. Changed LangVersion to C#14. 
     - Extended login-request telemetry with libc detection (`LIBC_FAMILY`, `LIBC_VERSION`). On Linux, the driver now reports whether the runtime uses glibc and includes the library version.
     - Limited default maximal CRL size for download to 20MB.
     - Bug fix: Connections with sessions that no longer exist on the server are now detected and removed from the pool instead of being reused, which previously caused repeated failures until the connection expired on its own.
