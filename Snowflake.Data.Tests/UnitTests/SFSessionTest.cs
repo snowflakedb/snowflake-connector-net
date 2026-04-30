@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestSessionGoneWhenClose()
         {
-            var restRequester = new MockCloseSessionGone();
+            var restRequester = new MockSessionGone();
             SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             Assert.DoesNotThrow(() => sfSession.close());
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestSessionGoneWhenCloseNonBlocking()
         {
-            var restRequester = new MockCloseSessionGone();
+            var restRequester = new MockSessionGone();
             SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             Assert.DoesNotThrow(() => sfSession.CloseNonBlocking());

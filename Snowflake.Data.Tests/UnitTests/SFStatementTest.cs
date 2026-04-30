@@ -19,11 +19,11 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestSessionRenew()
         {
-            Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            var restRequester = new Mock.MockRestSessionExpired();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
-            SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
+            var statement = new SFStatement(sfSession);
+            var resultSet = statement.Execute(0, "select 1", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
             Assert.AreEqual("new_session_token", sfSession.sessionToken);
@@ -34,11 +34,11 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestSessionRenewGetResultWithId()
         {
-            Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            var restRequester = new Mock.MockRestSessionExpired();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
-            SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.GetResultWithId("mockId");
+            var statement = new SFStatement(sfSession);
+            var resultSet = statement.GetResultWithId("mockId");
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("abc", resultSet.GetString(0));
             Assert.AreEqual("new_session_token", sfSession.sessionToken);
@@ -48,10 +48,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestSessionRenewGetResultWithIdOnlyRetries3Times()
         {
-            Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            var restRequester = new Mock.MockRestSessionExpired();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
-            SFStatement statement = new SFStatement(sfSession);
+            var statement = new SFStatement(sfSession);
             var thrown = Assert.Throws<SnowflakeDbException>(() => statement.GetResultWithId("retryId"));
             Assert.AreEqual(thrown.ErrorCode, Mock.MockRestSessionExpired.SESSION_EXPIRED_CODE);
         }
@@ -59,11 +59,11 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public async Task TestSessionRenewGetResultWithIdAsync()
         {
-            Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            var restRequester = new Mock.MockRestSessionExpired();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             await sfSession.OpenAsync(CancellationToken.None);
-            SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = await statement.GetResultWithIdAsync("mockId", CancellationToken.None);
+            var statement = new SFStatement(sfSession);
+            var resultSet = await statement.GetResultWithIdAsync("mockId", CancellationToken.None);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("abc", resultSet.GetString(0));
             Assert.AreEqual("new_session_token", sfSession.sessionToken);
@@ -73,10 +73,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public async Task TestSessionRenewGetResultWithIdOnlyRetries3TimesAsync()
         {
-            Mock.MockRestSessionExpired restRequester = new Mock.MockRestSessionExpired();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            var restRequester = new Mock.MockRestSessionExpired();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             await sfSession.OpenAsync(CancellationToken.None);
-            SFStatement statement = new SFStatement(sfSession);
+            var statement = new SFStatement(sfSession);
             var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () => await statement.GetResultWithIdAsync("retryId", CancellationToken.None));
             Assert.AreEqual(thrown.ErrorCode, Mock.MockRestSessionExpired.SESSION_EXPIRED_CODE);
         }
@@ -85,11 +85,11 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestSessionRenewDuringQueryExec()
         {
-            Mock.MockRestSessionExpiredInQueryExec restRequester = new Mock.MockRestSessionExpiredInQueryExec();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            var restRequester = new Mock.MockRestSessionExpiredInQueryExec();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
-            SFStatement statement = new SFStatement(sfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
+            var statement = new SFStatement(sfSession);
+            var resultSet = statement.Execute(0, "select 1", null, false, false);
             Assert.AreEqual(true, resultSet.Next());
             Assert.AreEqual("1", resultSet.GetString(0));
         }
@@ -102,14 +102,14 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestServiceName()
         {
             var restRequester = new Mock.MockServiceName();
-            SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
-            string expectServiceName = Mock.MockServiceName.INIT_SERVICE_NAME;
+            var expectServiceName = Mock.MockServiceName.INIT_SERVICE_NAME;
             Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
-            for (int i = 0; i < 5; i++)
+            for (var i = 0; i < 5; i++)
             {
-                SFStatement statement = new SFStatement(sfSession);
-                SFBaseResultSet resultSet = statement.Execute(0, "SELECT 1", null, false, false);
+                var statement = new SFStatement(sfSession);
+                var resultSet = statement.Execute(0, "SELECT 1", null, false, false);
                 expectServiceName += "a";
                 Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
             }
@@ -366,6 +366,83 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.IsNotNull(cachedContext);
             Assert.AreEqual(1, cachedContext.Entries.Count);
             Assert.AreEqual(42, cachedContext.Entries[0].Id);
+        }
+
+        [Test]
+        public void TestSessionGoneThrowsOnExecute()
+        {
+            var restRequester = new Mock.MockSessionGone();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            sfSession.Open();
+            var statement = new SFStatement(sfSession);
+
+            var thrown = Assert.Throws<SnowflakeDbException>(() => statement.Execute(0, "select 1", null, false, false));
+            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.IsTrue(sfSession.IsInvalidatedForPooling());
+        }
+
+        [Test]
+        public async Task TestSessionGoneThrowsOnExecuteAsync()
+        {
+            var restRequester = new Mock.MockSessionGone();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            await sfSession.OpenAsync(CancellationToken.None);
+            var statement = new SFStatement(sfSession);
+
+            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
+                await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None));
+            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.IsTrue(sfSession.IsInvalidatedForPooling());
+        }
+
+        [Test]
+        public void TestSessionGoneThrowsOnGetResultWithId()
+        {
+            var restRequester = new Mock.MockSessionGone();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            sfSession.Open();
+            var statement = new SFStatement(sfSession);
+
+            var thrown = Assert.Throws<SnowflakeDbException>(() => statement.GetResultWithId("mockId"));
+            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+        }
+
+        [Test]
+        public async Task TestSessionGoneThrowsOnGetResultWithIdAsync()
+        {
+            var restRequester = new Mock.MockSessionGone();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            await sfSession.OpenAsync(CancellationToken.None);
+            var statement = new SFStatement(sfSession);
+
+            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
+                await statement.GetResultWithIdAsync("mockId", CancellationToken.None));
+            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+        }
+
+        [Test]
+        public void TestSessionGoneThrowsOnGetQueryStatus()
+        {
+            var restRequester = new Mock.MockSessionGone();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            sfSession.Open();
+            var statement = new SFStatement(sfSession);
+
+            var thrown = Assert.Throws<SnowflakeDbException>(() => statement.GetQueryStatus("mockQueryId"));
+            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+        }
+
+        [Test]
+        public async Task TestSessionGoneThrowsOnGetQueryStatusAsync()
+        {
+            var restRequester = new Mock.MockSessionGone();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            await sfSession.OpenAsync(CancellationToken.None);
+            var statement = new SFStatement(sfSession);
+
+            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
+                await statement.GetQueryStatusAsync("mockQueryId", CancellationToken.None));
+            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
     }
 }

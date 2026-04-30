@@ -9,6 +9,7 @@ using System;
 using System.Security.Authentication;
 using Moq;
 using Moq.Protected;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Tests.UnitTests
 {

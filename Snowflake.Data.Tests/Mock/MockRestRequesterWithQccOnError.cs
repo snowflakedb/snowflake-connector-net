@@ -7,12 +7,12 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Snowflake.Data.Core;
 
-    class MockRestRequesterWithQccOnError : IMockRestRequester
+    internal sealed class MockRestRequesterWithQccOnError : IMockRestRequester
     {
-        internal const int FAILED_QUERY_CODE = 999;
-        internal const string FAILED_QUERY_MESSAGE = "mock query failure";
+        private const int FAILED_QUERY_CODE = 999;
+        private const string FAILED_QUERY_MESSAGE = "mock query failure";
 
-        internal static readonly ResponseQueryContext MockQueryContext = new ResponseQueryContext
+        private static readonly ResponseQueryContext MockQueryContext = new ResponseQueryContext
         {
             Entries = new List<ResponseQueryContextElement>
             {
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
-            SFRestRequest sfRequest = (SFRestRequest)request;
+            var sfRequest = (SFRestRequest)request;
             if (sfRequest.jsonBody is LoginRequest)
             {
                 var authnResponse = new LoginResponse
