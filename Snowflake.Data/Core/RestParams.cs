@@ -62,18 +62,23 @@ namespace Snowflake.Data.Core
         internal const string SSO_SAML_PATH = "/sso/saml";
     }
 
-    internal class SFEnvironment
+    internal sealed class SFEnvironment
     {
         internal static bool MinicoreDisabled { get; set; }
 
-        static SFEnvironment()
+        internal static void StartMinicoreLoading()
         {
-            MinicoreDisabled = IsMinicoreDisabled();
             if (!MinicoreDisabled)
             {
                 SfMiniCore.StartLoading();
             }
+        }
 
+        static SFEnvironment()
+        {
+            MinicoreDisabled = IsMinicoreDisabled();
+            Tools.PlatformDetection.EnsureStarted();
+            var libcInfo = LibcDetector.Instance.Detect();
             ClientEnv = new LoginRequestClientEnv()
             {
                 processName = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
@@ -82,7 +87,9 @@ namespace Snowflake.Data.Core
                 netVersion = ExtractVersion(),
                 applicationPath = ExtractApplicationPath(),
                 isa = RuntimeInformation.ProcessArchitecture.ToString().ToLower(),
-                osDetails = ExtractOsDetails()
+                osDetails = ExtractOsDetails(),
+                libcFamily = libcInfo.Family.ToPrettyString(),
+                libcVersion = libcInfo.Version,
             };
 
             DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();

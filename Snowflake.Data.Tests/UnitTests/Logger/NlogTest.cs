@@ -7,7 +7,7 @@ using Snowflake.Data.Client;
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
     [TestFixture, NonParallelizable]
-    class NlogTest : ILoggerTest
+    class NlogTest : LoggerTest
     {
         private const string NlogFileName = "test_nlog.log";
 

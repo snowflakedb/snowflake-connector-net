@@ -14,17 +14,39 @@ namespace Snowflake.Data.Core
         private static readonly DateTimeOffset s_epochDate = SFDataConverter.UnixEpoch;
 
         private static readonly long[] s_powersOf10 =  {
-            1,
-            10,
-            100,
-            1000,
-            10000,
-            100000,
-            1000000,
-            10000000,
-            100000000,
-            1000000000
+            1L,
+            10L,
+            100L,
+            1_000L,
+            10_000L,
+            100_000L,
+            1_000_000L,
+            10_000_000L,
+            100_000_000L,
+            1_000_000_000L,
+            10_000_000_000L,
+            100_000_000_000L,
+            1_000_000_000_000L,
+            10_000_000_000_000L,
+            100_000_000_000_000L,
+            1_000_000_000_000_000L,
+            10_000_000_000_000_000L,
+            100_000_000_000_000_000L,
+            1_000_000_000_000_000_000L,
         };
+
+        private static decimal DecimalPowerOf10(long scale)
+        {
+            if (scale < s_powersOf10.Length)
+                return s_powersOf10[scale];
+            if (scale > 28)
+                throw new OverflowException(
+                    $"Scale {scale} exceeds the maximum precision of System.Decimal (28)");
+            decimal result = s_powersOf10[s_powersOf10.Length - 1];
+            for (long i = s_powersOf10.Length; i <= scale; i++)
+                result *= 10;
+            return result;
+        }
 
         private const long TicksPerDay = (long)24 * 60 * 60 * 1000 * 10000;
 
@@ -200,7 +222,7 @@ namespace Snowflake.Data.Core
             throw new NotSupportedException();
         }
 
-        public object ExtractCell(int columnIndex, SFDataType srcType, long scale)
+        public object ExtractCell(int columnIndex, SFDataType srcType, long scale, TimeZoneInfo sessionTimezone)
         {
             if (_currentBatchIndex < 0 || _currentBatchIndex >= RecordBatch.Count)
             {
@@ -245,28 +267,28 @@ namespace Snowflake.Data.Core
                                 _sbyte[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _sbyte[columnIndex][_currentRecordIndex];
-                            return _sbyte[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _sbyte[columnIndex][_currentRecordIndex] / DecimalPowerOf10(scale);
 
                         case Int16Array array:
                             if (_short[columnIndex] == null)
                                 _short[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _short[columnIndex][_currentRecordIndex];
-                            return _short[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _short[columnIndex][_currentRecordIndex] / DecimalPowerOf10(scale);
 
                         case Int32Array array:
                             if (_int[columnIndex] == null)
                                 _int[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _int[columnIndex][_currentRecordIndex];
-                            return _int[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _int[columnIndex][_currentRecordIndex] / DecimalPowerOf10(scale);
 
                         case Int64Array array:
                             if (_long[columnIndex] == null)
                                 _long[columnIndex] = array.Values.ToArray();
                             if (scale == 0)
                                 return _long[columnIndex][_currentRecordIndex];
-                            return _long[columnIndex][_currentRecordIndex] / (decimal)s_powersOf10[scale];
+                            return _long[columnIndex][_currentRecordIndex] / DecimalPowerOf10(scale);
 
                         case Decimal128Array array:
                             return array.GetValue(_currentRecordIndex);
@@ -413,6 +435,12 @@ namespace Snowflake.Data.Core
                     }
 
                 case SFDataType.TIMESTAMP_LTZ:
+                    if (sessionTimezone == null)
+                    {
+                        throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
+                            "Session timezone is required for TIMESTAMP_LTZ conversion");
+                    }
+
                     if (column.GetType() == typeof(StructArray))
                     {
                         if (_long[columnIndex] == null)
@@ -421,7 +449,14 @@ namespace Snowflake.Data.Core
                             _fraction[columnIndex] = ((Int32Array)((StructArray)column).Fields[1]).Values.ToArray();
                         var epoch = _long[columnIndex][_currentRecordIndex];
                         var fraction = _fraction[columnIndex][_currentRecordIndex];
-                        return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToLocalTime();
+                        var utcDateTime = s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100);
+                        // Use ToLocalTime() for local timezone to maintain exact backward compatibility
+                        if (sessionTimezone.Equals(TimeZoneInfo.Local))
+                        {
+                            return utcDateTime.ToLocalTime();
+                        }
+                        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime.UtcDateTime, sessionTimezone);
+                        return new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
                     }
                     else
                     {
@@ -431,7 +466,14 @@ namespace Snowflake.Data.Core
                         var value = _long[columnIndex][_currentRecordIndex];
                         var epoch = ExtractEpoch(value, scale);
                         var fraction = ExtractFraction(value, scale);
-                        return s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100).ToLocalTime();
+                        var utcDateTime = s_epochDate.AddSeconds(epoch).AddTicks(fraction / 100);
+                        // Use ToLocalTime() for local timezone to maintain exact backward compatibility
+                        if (sessionTimezone.Equals(TimeZoneInfo.Local))
+                        {
+                            return utcDateTime.ToLocalTime();
+                        }
+                        var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime.UtcDateTime, sessionTimezone);
+                        return new DateTimeOffset(localDateTime, sessionTimezone.GetUtcOffset(localDateTime));
                     }
 
                 case SFDataType.TIMESTAMP_NTZ:

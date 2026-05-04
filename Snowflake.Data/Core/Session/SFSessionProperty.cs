@@ -130,6 +130,8 @@ namespace Snowflake.Data.Core
         WORKLOAD_IDENTITY_PROVIDER,
         [SFSessionPropertyAttr(required = false)]
         WORKLOAD_IDENTITY_ENTRA_RESOURCE,
+        [SFSessionPropertyAttr(required = false)]
+        WORKLOAD_IMPERSONATION_PATH,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         OAUTHENABLESINGLEUSEREFRESHTOKENS,
         [SFSessionPropertyAttr(required = false, defaultValue = "20")]
@@ -144,12 +146,14 @@ namespace Snowflake.Data.Core
         ALLOWCERTIFICATESWITHOUTCRLURL,
         [SFSessionPropertyAttr(required = false, defaultValue = "10")]
         CRLDOWNLOADTIMEOUT,
-        [SFSessionPropertyAttr(required = false, defaultValue = "209715200")]
+        [SFSessionPropertyAttr(required = false, defaultValue = "20971520")]
         CRLDOWNLOADMAXSIZE,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls12")]
         MINTLS,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls13")]
         MAXTLS,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        HONORSESSIONTIMEZONE,
     }
 
     class SFSessionPropertyAttr : Attribute

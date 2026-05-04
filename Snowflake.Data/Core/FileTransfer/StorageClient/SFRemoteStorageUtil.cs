@@ -100,8 +100,7 @@ namespace Snowflake.Data.Core.FileTransfer
                     {
                         // Get the file metadata
                         FileHeader fileHeader = client.GetFileHeader(fileMetadata);
-                        if (fileHeader != null &&
-                            fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
+                        if (fileHeader != null)
                         {
                             // File already exists
                             fileMetadata.destFileSize = 0;
@@ -163,8 +162,7 @@ namespace Snowflake.Data.Core.FileTransfer
                         // Get the file metadata
                         FileHeader fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken)
                             .ConfigureAwait(false);
-                        if (fileHeader != null &&
-                            fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
+                        if (fileHeader != null)
                         {
                             // File already exists
                             fileMetadata.destFileSize = 0;

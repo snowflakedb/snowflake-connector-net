@@ -268,7 +268,13 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal void ValidateFilePermissions(UnixStream stream)
         {
-            ValidatorOperations.Instance.ValidateUserAndGroupPermissions(stream);
+            if (bool.TryParse(_environmentOperations.GetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification), out var skipAll) && skipAll)
+            {
+                s_logger.Info("Skipping file permissions verification due to environment variable: " + TomlConnectionBuilder.SkipTokenFilePermissionsVerification);
+                return;
+            }
+
+            ValidatorOperations.Instance.ValidateUserPermissions(stream);
             var allowedPermissions = new[]
             {
                 FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite

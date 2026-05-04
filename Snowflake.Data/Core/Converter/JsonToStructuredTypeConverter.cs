@@ -13,29 +13,28 @@ namespace Snowflake.Data.Core.Converter
     {
         private static readonly TimeConverter s_timeConverter = new TimeConverter();
 
-        public static T ConvertObject<T>(List<FieldMetadata> fields, JObject value)
+        public static T ConvertObject<T>(List<FieldMetadata> fields, JObject value, TimeZoneInfo sessionTimezone)
         {
             var type = typeof(T);
-            return (T)ConvertToObject(type, fields, new StructurePath(), value);
+            return (T)ConvertToObject(type, fields, new StructurePath(), value, sessionTimezone);
         }
 
-        public static T[] ConvertArray<T>(List<FieldMetadata> fields, JArray value)
+        public static T[] ConvertArray<T>(List<FieldMetadata> fields, JArray value, TimeZoneInfo sessionTimezone)
         {
             var type = typeof(T[]);
             var elementType = typeof(T);
-            return (T[])ConvertToArray(type, elementType, fields, new StructurePath(), value);
+            return (T[])ConvertToArray(type, elementType, fields, new StructurePath(), value, sessionTimezone);
         }
 
-        public static Dictionary<TKey, TValue> ConvertMap<TKey, TValue>(List<FieldMetadata> fields, JObject value)
+        public static Dictionary<TKey, TValue> ConvertMap<TKey, TValue>(List<FieldMetadata> fields, JObject value, TimeZoneInfo sessionTimezone)
         {
             var type = typeof(Dictionary<TKey, TValue>);
             var keyType = typeof(TKey);
             var valueType = typeof(TValue);
-            return (Dictionary<TKey, TValue>)ConvertToMap(type, keyType, valueType, fields, new StructurePath(), value);
+            return (Dictionary<TKey, TValue>)ConvertToMap(type, keyType, valueType, fields, new StructurePath(), value, sessionTimezone);
         }
 
-
-        private static object ConvertToObject(Type type, List<FieldMetadata> fields, StructurePath structurePath, JToken json)
+        private static object ConvertToObject(Type type, List<FieldMetadata> fields, StructurePath structurePath, JToken json, TimeZoneInfo sessionTimezone)
         {
             if (json == null || json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
             {
@@ -75,7 +74,7 @@ namespace Snowflake.Data.Core.Converter
                         try
                         {
                             var fieldType = objectBuilder.MoveNext(key);
-                            var value = ConvertToStructuredOrUnstructuredValue(fieldType, fieldMetadata, propertyPath, fieldValue);
+                            var value = ConvertToStructuredOrUnstructuredValue(fieldType, fieldMetadata, propertyPath, fieldValue, sessionTimezone);
                             objectBuilder.BuildPart(value);
                         }
                         catch (Exception e)
@@ -98,7 +97,7 @@ namespace Snowflake.Data.Core.Converter
                 .FirstOrDefault();
         }
 
-        private static object ConvertToUnstructuredType(FieldMetadata fieldMetadata, Type fieldType, JToken json)
+        private static object ConvertToUnstructuredType(FieldMetadata fieldMetadata, Type fieldType, JToken json, TimeZoneInfo sessionTimezone)
         {
             if (json == null || json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
             {
@@ -190,27 +189,27 @@ namespace Snowflake.Data.Core.Converter
             if (IsTimestampNtzMetadata(fieldMetadata))
             {
                 var value = json.Value<string>();
-                return s_timeConverter.Convert(value, SFDataType.TIMESTAMP_NTZ, fieldType);
+                return s_timeConverter.Convert(value, SFDataType.TIMESTAMP_NTZ, fieldType, sessionTimezone);
             }
             if (IsTimestampLtzMetadata(fieldMetadata))
             {
                 var value = json.Value<string>();
-                return s_timeConverter.Convert(value, SFDataType.TIMESTAMP_LTZ, fieldType);
+                return s_timeConverter.Convert(value, SFDataType.TIMESTAMP_LTZ, fieldType, sessionTimezone);
             }
             if (IsTimestampTzMetadata(fieldMetadata))
             {
                 var value = json.Value<string>();
-                return s_timeConverter.Convert(value, SFDataType.TIMESTAMP_TZ, fieldType);
+                return s_timeConverter.Convert(value, SFDataType.TIMESTAMP_TZ, fieldType, sessionTimezone);
             }
             if (IsTimeMetadata(fieldMetadata))
             {
                 var value = json.Value<string>();
-                return s_timeConverter.Convert(value, SFDataType.TIME, fieldType);
+                return s_timeConverter.Convert(value, SFDataType.TIME, fieldType, sessionTimezone);
             }
             if (IsDateMetadata(fieldMetadata))
             {
                 var value = json.Value<string>();
-                return s_timeConverter.Convert(value, SFDataType.DATE, fieldType);
+                return s_timeConverter.Convert(value, SFDataType.DATE, fieldType, sessionTimezone);
             }
             if (IsBinaryMetadata(fieldMetadata))
             {
@@ -236,7 +235,7 @@ namespace Snowflake.Data.Core.Converter
             throw new StructuredTypesReadingException($"Could not read {fieldMetadata.type} type into {fieldType}");
         }
 
-        private static object ConvertToArray(Type type, Type elementType, List<FieldMetadata> fields, StructurePath structurePath, JToken json)
+        private static object ConvertToArray(Type type, Type elementType, List<FieldMetadata> fields, StructurePath structurePath, JToken json, TimeZoneInfo sessionTimezone)
         {
             if (json == null || json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
             {
@@ -253,7 +252,7 @@ namespace Snowflake.Data.Core.Converter
             for (var i = 0; i < jsonArray.Count; i++)
             {
                 var arrayElementPath = structurePath.WithArrayIndex(i);
-                result[i] = ConvertToStructuredOrUnstructuredValue(elementType, elementMetadata, arrayElementPath, jsonArray[i]);
+                result[i] = ConvertToStructuredOrUnstructuredValue(elementType, elementMetadata, arrayElementPath, jsonArray[i], sessionTimezone);
             }
             if (type != arrayType)
             {
@@ -269,7 +268,7 @@ namespace Snowflake.Data.Core.Converter
             return result;
         }
 
-        private static object ConvertToMap(Type type, Type keyType, Type valueType, List<FieldMetadata> fields, StructurePath structurePath, JToken json)
+        private static object ConvertToMap(Type type, Type keyType, Type valueType, List<FieldMetadata> fields, StructurePath structurePath, JToken json, TimeZoneInfo sessionTimezone)
         {
             if (keyType != typeof(string)
                 && keyType != typeof(int) && keyType != typeof(int?)
@@ -304,37 +303,37 @@ namespace Snowflake.Data.Core.Converter
                     var jsonPropertyWithValue = jsonEnumerator.Current;
                     var fieldValue = jsonPropertyWithValue.Value;
                     var key = IsTextMetadata(keyMetadata) || IsFixedMetadata(keyMetadata)
-                        ? ConvertToUnstructuredType(keyMetadata, keyType, jsonPropertyWithValue.Key)
+                        ? ConvertToUnstructuredType(keyMetadata, keyType, jsonPropertyWithValue.Key, sessionTimezone)
                         : throw new StructuredTypesReadingException($"Unsupported key type for map {keyMetadata.type}. Occured for path {mapElementPath}");
-                    var value = ConvertToStructuredOrUnstructuredValue(valueType, fieldMetadata, mapElementPath, fieldValue);
+                    var value = ConvertToStructuredOrUnstructuredValue(valueType, fieldMetadata, mapElementPath, fieldValue, sessionTimezone);
                     result.Add(key, value);
                 }
             }
             return result;
         }
 
-        private static object ConvertToStructuredOrUnstructuredValue(Type valueType, FieldMetadata fieldMetadata, StructurePath structurePath, JToken fieldValue)
+        private static object ConvertToStructuredOrUnstructuredValue(Type valueType, FieldMetadata fieldMetadata, StructurePath structurePath, JToken fieldValue, TimeZoneInfo sessionTimezone)
         {
             try
             {
                 if (IsObjectMetadata(fieldMetadata) && IsStructuredMetadata(fieldMetadata))
                 {
-                    return ConvertToObject(valueType, fieldMetadata.fields, structurePath, fieldValue);
+                    return ConvertToObject(valueType, fieldMetadata.fields, structurePath, fieldValue, sessionTimezone);
                 }
 
                 if (IsArrayMetadata(fieldMetadata) && IsStructuredMetadata(fieldMetadata))
                 {
                     var nestedType = GetNestedType(valueType);
-                    return ConvertToArray(valueType, nestedType, fieldMetadata.fields, structurePath, fieldValue);
+                    return ConvertToArray(valueType, nestedType, fieldMetadata.fields, structurePath, fieldValue, sessionTimezone);
                 }
 
                 if (IsMapMetadata(fieldMetadata) && IsStructuredMetadata(fieldMetadata))
                 {
                     var keyValueTypes = GetMapKeyValueTypes(valueType);
-                    return ConvertToMap(valueType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, structurePath, fieldValue);
+                    return ConvertToMap(valueType, keyValueTypes[0], keyValueTypes[1], fieldMetadata.fields, structurePath, fieldValue, sessionTimezone);
                 }
 
-                return ConvertToUnstructuredType(fieldMetadata, valueType, fieldValue);
+                return ConvertToUnstructuredType(fieldMetadata, valueType, fieldValue, sessionTimezone);
             }
             catch (Exception e)
             {

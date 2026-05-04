@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using NUnit.Framework;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Revocation;
 
@@ -58,8 +59,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var host = string.IsNullOrEmpty(testConfig.host) ? $"{testConfig.account}.snowflakecomputing.com" : testConfig.host;
             var request = new HttpRequestMessage(HttpMethod.Post, $"https://{host}/queries/v1/abort-request");
             var timeout = TimeSpan.FromSeconds(30);
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, timeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, timeout);
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, timeout);
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, timeout);
             return request;
         }
     }

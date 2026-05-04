@@ -8,6 +8,7 @@ using System.Net;
 using Snowflake.Data.Core;
 using System.Net.Http;
 using System.Security.Authentication;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.AuthenticationTests
 

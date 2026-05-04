@@ -9,6 +9,7 @@ using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Security;
+using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Log;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
@@ -252,7 +253,10 @@ namespace Snowflake.Data.Core.Revocation
         }
 
         private bool IsCrlSignatureAndIssuerValid(Crl crl, X509Certificate2 certificate, string crlUrl, X509Certificate2 parentCertificate) =>
-            IsCrlSignatureValid(crl, parentCertificate) && IsIssuerEquivalent(crl, certificate) && IsIssuerDistributionPointValid(crl, crlUrl);
+            IsCrlSignatureValid(crl, parentCertificate)
+            && IsIssuerEquivalent(crl, certificate)
+            && IsAuthorityKeyIdentifierConsistent(crl, parentCertificate)
+            && IsIssuerDistributionPointValid(crl, crlUrl);
 
         internal bool IsCrlSignatureValid(Crl crl, X509Certificate2 parentCertificate)
         {
@@ -314,24 +318,60 @@ namespace Snowflake.Data.Core.Revocation
 
         internal bool IsIssuerEquivalent(Crl crl, X509Certificate2 certificate)
         {
-            var issuerNameFromCert = new X509Name(FixSInIssuerName(certificate.IssuerName.Name));
-            var issuerFromCrl = new X509Name(crl.IssuerName);
-            return issuerNameFromCert.Equivalent(issuerFromCrl);
+            // Compare DER-encoded issuer names directly (same approach as JDBC X500Principal.equals()).
+            var certIssuerBytes = certificate.IssuerName?.RawData;
+            var crlIssuerBytes = crl.IssuerNameRawData;
+            if (certIssuerBytes == null || crlIssuerBytes == null
+                || certIssuerBytes.Length == 0 || crlIssuerBytes.Length == 0)
+                return false;
+            return certIssuerBytes.SequenceEqual(crlIssuerBytes);
         }
 
-        private string FixSInIssuerName(string issuerName)
+        internal bool IsAuthorityKeyIdentifierConsistent(Crl crl, X509Certificate2 parentCertificate)
         {
-            // TODO: figure out how to do it better
-            if (issuerName.StartsWith("S="))
-                return "ST=" + issuerName.Substring(2);
-            return issuerName.Replace(", S=", ", ST=");
+            if (crl?.BouncyCastleCrl == null || parentCertificate == null)
+                return false;
+
+            try
+            {
+                var extValue = crl.BouncyCastleCrl.GetExtensionValue(X509Extensions.AuthorityKeyIdentifier);
+                if (extValue == null)
+                    return true;
+
+                var aki = AuthorityKeyIdentifier.GetInstance(Asn1Object.FromByteArray(extValue.GetOctets()));
+                var akiKeyIdOctets = aki.GetKeyIdentifier();
+                if (akiKeyIdOctets == null)
+                    return true;
+                var skiOctets = GetSubjectKeyIdentifierOctets(parentCertificate);
+                if (skiOctets == null)
+                    return true;
+
+                return akiKeyIdOctets.SequenceEqual(skiOctets);
+            }
+            catch (Exception exception)
+            {
+                s_logger.Error(
+                    $"Authority Key Identifier check for CRL issued by '{crl.IssuerName}' failed: {exception.Message}",
+                    exception);
+                return false;
+            }
+        }
+
+        private static byte[] GetSubjectKeyIdentifierOctets(X509Certificate2 certificate)
+        {
+            const string skiOid = "2.5.29.14";
+            var skiExt = certificate.Extensions[skiOid];
+            if (skiExt == null)
+                return null;
+            var ski = SubjectKeyIdentifier.GetInstance(Asn1Object.FromByteArray(skiExt.RawData));
+            return ski.GetKeyIdentifier();
         }
 
         private Crl FetchCrl(string crlUrl)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, crlUrl);
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, _httpTimeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, _httpTimeout);
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, _httpTimeout);
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, _httpTimeout);
             byte[] crlBytes = null;
             DateTime now;
             try

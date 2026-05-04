@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Snowflake.Data.Core;
@@ -10,7 +11,7 @@ using Snowflake.Data.Core.Tools;
 namespace Snowflake.Data.Tests.UnitTests
 {
     [TestFixture]
-    class SFEnvironmentTest
+    public sealed class SFEnvironmentTest
     {
         [Test]
         public void TestRuntimeExtraction()
@@ -137,6 +138,70 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 Assert.Contains(key, expectedKeys, $"Unexpected key '{key}' found in OS details");
             }
+        }
+
+        [Test]
+        public void TestStaticConstructorSetsClientEnvCorrectly()
+        {
+            var clientEnv = SFEnvironment.ClientEnv;
+
+            // Fields set by static constructor
+            Assert.AreEqual(RuntimeInformation.ProcessArchitecture.ToString().ToLower(), clientEnv.isa);
+
+            // Fields NOT set by static constructor (populated in CloneForSession)
+            Assert.IsNull(clientEnv.minicoreVersion, "minicoreVersion should be null on the static ClientEnv");
+            Assert.IsNull(clientEnv.minicoreFileName, "minicoreFileName should be null on the static ClientEnv");
+            Assert.IsNull(clientEnv.minicoreLoadError, "minicoreLoadError should be null on the static ClientEnv");
+            Assert.IsNull(clientEnv.platform, "platform should be null on the static ClientEnv");
+        }
+
+        [Test]
+        [Platform("Linux")]
+        public void TestStaticConstructorSetsLibcFieldsOnLinux()
+        {
+            var clientEnv = SFEnvironment.ClientEnv;
+
+            Assert.IsNotNull(clientEnv.libcFamily, "libcFamily should not be null on Linux");
+            Assert.That(clientEnv.libcFamily, Is.AnyOf("glibc", "could not determine"));
+
+            Assert.IsNotNull(clientEnv.libcVersion, "libcVersion should not be null when family is glibc");
+            Assert.That(clientEnv.libcVersion, Does.Match(@"^\d+\.\d+"),
+                $"libcVersion should be a version string, got: {clientEnv.libcVersion}");
+        }
+
+        [Test]
+        [Platform(Exclude = "Linux")]
+        public void TestStaticConstructorSetsLibcFieldsOnNonLinux()
+        {
+            var clientEnv = SFEnvironment.ClientEnv;
+
+            Assert.IsNull(clientEnv.libcFamily, "libcFamily should be null on non-Linux");
+            Assert.IsNull(clientEnv.libcVersion, "libcVersion should be null on non-Linux");
+        }
+
+        [Test]
+        [Platform("Linux")]
+        public void TestStaticConstructorSetsOsDetailsOnLinux()
+        {
+            var clientEnv = SFEnvironment.ClientEnv;
+
+            if (clientEnv.osDetails == null)
+            {
+                Assert.IsFalse(File.Exists("/etc/os-release"),
+                    "osDetails should not be null when /etc/os-release exists");
+                return;
+            }
+
+            Assert.IsNotEmpty(clientEnv.osDetails);
+        }
+
+        [Test]
+        [Platform(Exclude = "Linux")]
+        public void TestStaticConstructorSetsOsDetailsOnNonLinux()
+        {
+            var clientEnv = SFEnvironment.ClientEnv;
+
+            Assert.IsNull(clientEnv.osDetails, "osDetails should be null on non-Linux");
         }
 
         [Test]

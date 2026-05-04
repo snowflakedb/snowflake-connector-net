@@ -33,7 +33,7 @@ timestamps {
     }
 
     def params = [
-      string(name: 'svn_revision', value: 'bptp-stable'),
+      string(name: 'svn_revision', value: 'temptest-deployed'),
       string(name: 'branch', value: 'main'),
       string(name: 'client_git_commit', value: scmInfo.GIT_COMMIT),
       string(name: 'client_git_branch', value: scmInfo.GIT_BRANCH),

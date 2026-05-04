@@ -10,6 +10,7 @@ using System.Web;
 using System.Security.Authentication;
 using System.Linq;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
@@ -499,8 +500,8 @@ namespace Snowflake.Data.Core
                 p.UseNagleAlgorithm = false; // Saves about 200 ms per request
                 p.ConnectionLimit = connectionLimit;    // Default value is 2, we need more connections for performing multiple parallel queries
 
-                TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
-                TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[BaseRestRequest.REST_REQUEST_TIMEOUT_KEY];
+                TimeSpan httpTimeout = (TimeSpan)requestMessage.GetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY);
+                TimeSpan restTimeout = (TimeSpan)requestMessage.GetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY);
 
                 if (logger.IsDebugEnabled())
                 {

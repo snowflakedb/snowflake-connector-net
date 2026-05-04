@@ -100,8 +100,15 @@ namespace Snowflake.Data.Core.Session
                 {
                     if (item.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
                     {
-                        Task.Run(() => item.close());
                         _idleSessions.Remove(item);
+                        try
+                        {
+                            Task.Run(() => item.close());
+                        }
+                        catch (Exception ex)
+                        {
+                            s_logger.Error($"SessionPool::CleanExpiredSessions failed to close a session, error ignored." + PoolIdentification(), ex);
+                        }
                     }
                 }
             }
@@ -559,7 +566,7 @@ namespace Snowflake.Data.Core.Session
         private Tuple<bool, List<SessionCreationToken>> ReturnSessionToPool(SFSession session, bool ensureMinPoolSize)
         {
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            if (session.IsNotOpen() || session.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
+            if (session.IsNotOpen() || session.IsExpired(_poolConfig.ExpirationTimeout, timeNow) || session.IsInvalidatedForPooling())
             {
                 lock (_sessionPoolLock)
                 {
@@ -643,28 +650,44 @@ namespace Snowflake.Data.Core.Session
         internal void ClearIdleSessions()
         {
             s_logger.Debug("SessionPool::ClearIdleSessions" + PoolIdentification());
+            SFSession[] sessionsCopy;
             lock (_sessionPoolLock)
             {
-                foreach (SFSession session in _idleSessions)
-                {
-                    session.close(); // it is left synchronously here because too much async tasks slows down testing
-                }
+                sessionsCopy = _idleSessions.ToArray();
                 _idleSessions.Clear();
+            }
+            foreach (SFSession session in sessionsCopy)
+            {
+                try
+                {
+                    session.close();
+                }
+                catch (Exception ex)
+                {
+                    s_logger.Error($"SessionPool::ClearIdleSessions failed to close a session, error ignored." + PoolIdentification(), ex);
+                }
             }
         }
 
         internal async void ClearIdleSessionsAsync()
         {
             s_logger.Debug("SessionPool::ClearIdleSessionsAsync" + PoolIdentification());
-            IEnumerable<SFSession> idleSessionsCopy;
+            SFSession[] sessionsCopy;
             lock (_sessionPoolLock)
             {
-                idleSessionsCopy = _idleSessions.Select(session => session);
+                sessionsCopy = _idleSessions.ToArray();
                 _idleSessions.Clear();
             }
-            foreach (SFSession session in idleSessionsCopy)
+            foreach (SFSession session in sessionsCopy)
             {
-                await session.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+                try
+                {
+                    await session.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    s_logger.Error($"SessionPool::ClearIdleSessionsAsync failed to close a session, error ignored." + PoolIdentification(), ex);
+                }
             }
         }
 

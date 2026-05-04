@@ -125,6 +125,38 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.That(thrown.Message, Does.Contain("Retrieving attestation for GCP failed. Failed to get token: Response status code does not indicate success: 400 (Bad Request)."));
         }
 
+        [Test]
+        public void TestSuccessfulGCPTransitiveImpersonation()
+        {
+            // arrange
+            _runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
+            SetupSnowflakeAuthentication(_runner, AttestationProvider.GCP, JWTGCPToken);
+            var session = PrepareSessionForGcp($"workload_impersonation_path=target-sa@project.iam.gserviceaccount.com", NoEnvironmentSetup);
+
+            // act
+            session.Open();
+
+            // assert
+            AssertSessionSuccessfullyCreated(session);
+        }
+
+        [Test]
+        public void TestSuccessfulGCPTransitiveImpersonationAttestation()
+        {
+            // arrange
+            _runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
+            var session = PrepareSessionForGcp($"workload_impersonation_path=target-sa@project.iam.gserviceaccount.com", NoEnvironmentSetup);
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+
+            // act
+            var attestation = authenticator.CreateAttestation();
+
+            // assert
+            Assert.AreEqual(AttestationProvider.GCP, attestation.Provider);
+            Assert.AreEqual("some-subject", attestation.UserIdentifierComponents["sub"]);
+            Assert.AreEqual(JWTGCPToken, attestation.Credential);
+        }
+
         private void AddGcpWiremockMapping(string token) =>
             AddGcpWiremockMapping(_runner, token);
 
@@ -140,5 +172,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 SetupSystemTime,
                 SetupAwsSdkDisabled
             );
+
+        private static readonly string s_wifGcpTransitiveImpersonationMappingPath = Path.Combine(s_wifGcpMappingPath, "successful_transitive_impersonation.json");
     }
 }

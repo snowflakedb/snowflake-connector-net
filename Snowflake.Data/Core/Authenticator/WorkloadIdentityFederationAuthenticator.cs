@@ -22,6 +22,7 @@ namespace Snowflake.Data.Core.Authenticator
         private AttestationProvider? _provider;
         private string _entraResource;
         private string _token;
+        private string _impersonationPath;
         private WorkloadIdentityAttestationData _attestationData;
 
         public WorkloadIdentityFederationAuthenticator(SFSession session) : this(session, EnvironmentOperations.Instance, TimeProvider.Instance, AwsSdkWrapper.Instance, null)
@@ -50,6 +51,10 @@ namespace Snowflake.Data.Core.Authenticator
             if (!session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_ENTRA_RESOURCE, out _entraResource))
             {
                 _entraResource = null;
+            }
+            if (!session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IMPERSONATION_PATH, out _impersonationPath))
+            {
+                _impersonationPath = null;
             }
             session.properties.TryGetValue(SFSessionProperty.TOKEN, out _token);
         }
@@ -81,18 +86,18 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return _provider switch
                 {
-                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentOperations, _timeProvider, _awsSdkWrapper)
-                        .CreateAttestationData(_entraResource, _token),
+                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentOperations, _timeProvider, _awsSdkWrapper, session.restRequester)
+                        .CreateAttestationData(_entraResource, _token, _impersonationPath),
                     AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentOperations, session.restRequester, _metadataHost)
-                        .CreateAttestationData(_entraResource, _token),
+                        .CreateAttestationData(_entraResource, _token, _impersonationPath),
                     AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(session.restRequester, _metadataHost)
-                        .CreateAttestationData(_entraResource, _token),
+                        .CreateAttestationData(_entraResource, _token, _impersonationPath),
                     AttestationProvider.OIDC => new WorkflowIdentityOidcAttestationRetriever()
-                        .CreateAttestationData(_entraResource, _token),
+                        .CreateAttestationData(_entraResource, _token, _impersonationPath),
                     _ => throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, $"Unsupported attestation provider: {_provider}"),
                 };
             }
-            catch (Exception e)
+            catch (Exception e) when (!(e is SnowflakeDbException))
             {
                 var errorMessage = $"Failed to create attestation data for provider {_provider}: {e.Message}";
                 s_logger.Error(errorMessage);

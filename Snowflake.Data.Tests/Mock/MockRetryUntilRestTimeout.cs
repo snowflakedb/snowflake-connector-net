@@ -1,21 +1,19 @@
-using Newtonsoft.Json;
-using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Tests.Mock
 {
-
-    class MockRetryUntilRestTimeoutRestRequester : RestRequester, IMockRestRequester
+    internal sealed class MockRetryUntilRestTimeoutRestRequester : RestRequester, IMockRestRequester
     {
-        internal bool _forceTimeoutForNonLoginRequestsOnly = false;
+        private readonly bool _forceTimeoutAlsoForLoginRequests;
 
-        public MockRetryUntilRestTimeoutRestRequester() : base(null)
+        public MockRetryUntilRestTimeoutRestRequester(bool forceTimeoutAlsoForLoginRequests = true) : base(null)
         {
-            // Does nothing
+            _forceTimeoutAlsoForLoginRequests = forceTimeoutAlsoForLoginRequests;
         }
 
         public void setHttpClient(HttpClient httpClient)
@@ -28,15 +26,10 @@ namespace Snowflake.Data.Tests.Mock
                                                               CancellationToken externalCancellationToken,
                                                               string sid = "")
         {
-            if (!_forceTimeoutForNonLoginRequestsOnly ||
-                _forceTimeoutForNonLoginRequestsOnly && !message.RequestUri.AbsolutePath.Equals(RestPath.SF_LOGIN_PATH))
+            if (_forceTimeoutAlsoForLoginRequests || !message.RequestUri.AbsolutePath.Equals(RestPath.SF_LOGIN_PATH))
             {
                 // Override the http timeout and set to 1ms to force all http request to timeout and retry
-                // Disable warning as this is the way to be compliant with netstandard2.0
-                // API reference: https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestmessage?view=netstandard-2.0
-#pragma warning disable CS0618 // Type or member is obsolete
-                message.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY] = TimeSpan.FromTicks(0);
-#pragma warning restore CS0618 // Type or member is obsolete
+                message.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromTicks(0));
             }
 
             return await (base.SendAsync(message, restTimeout, externalCancellationToken).ConfigureAwait(false));

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Core.CredentialManager;
+using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 
@@ -18,8 +19,6 @@ namespace Snowflake.Data.Core
 {
     internal class SFSession
     {
-        public const int SF_SESSION_EXPIRED_CODE = 390112;
-
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
 
         private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
@@ -88,6 +87,8 @@ namespace Snowflake.Data.Core
 
         internal bool _disableSamlUrlCheck;
 
+        private volatile bool _invalidatedForPooling;
+
         public bool GetPooling() => _poolConfig.PoolingEnabled;
 
         public void SetPooling(bool isEnabled)
@@ -98,6 +99,10 @@ namespace Snowflake.Data.Core
         internal String _queryTag;
 
         internal SecureString _mfaToken;
+
+        private bool _honorSessionTimezone = false;
+
+        private volatile TimeZoneInfo _cachedSessionTimezone;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
@@ -196,6 +201,7 @@ namespace Snowflake.Data.Core
             properties = SFSessionProperties.ParseConnectionString(ConnectionString, sessionContext);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
+            _honorSessionTimezone = bool.Parse(properties[SFSessionProperty.HONORSESSIONTIMEZONE]);
             properties.TryGetValue(SFSessionProperty.USER, out _user);
             ValidateApplicationName(properties);
             try
@@ -500,6 +506,10 @@ namespace Snowflake.Data.Core
                 if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
                 {
                     ParameterMap[parameterName] = parameter.value;
+                    if (parameterName == SFSessionParameter.TIMEZONE)
+                    {
+                        _cachedSessionTimezone = null;
+                    }
                 }
             }
             if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
@@ -551,6 +561,42 @@ namespace Snowflake.Data.Core
                 return null;
             }
             return _queryContextCache.GetQueryContextRequest();
+        }
+
+        internal TimeZoneInfo GetSessionTimezone()
+        {
+            if (!_honorSessionTimezone)
+            {
+                return TimeZoneInfo.Local;
+            }
+
+            var cached = _cachedSessionTimezone;
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            var resolved = ResolveSessionTimezone();
+            _cachedSessionTimezone = resolved;
+            return resolved;
+        }
+
+        private TimeZoneInfo ResolveSessionTimezone()
+        {
+            if (ParameterMap.TryGetValue(SFSessionParameter.TIMEZONE, out var value))
+            {
+                var timezoneString = value.ToString();
+                try
+                {
+                    return TimeZoneConverter.TZConvert.GetTimeZoneInfo(timezoneString);
+                }
+                catch (TimeZoneNotFoundException)
+                {
+                    logger.Warn($"Session timezone '{timezoneString}' not found, falling back to local time");
+                    return TimeZoneInfo.Local;
+                }
+            }
+            return TimeZoneInfo.Local;
         }
 
         internal void UpdateSessionProperties(QueryExecResponseData responseData)
@@ -686,7 +732,7 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        if (response.code == SF_SESSION_EXPIRED_CODE)
+                        if (response.IsSessionExpired())
                         {
                             logger.Debug($"SFSession ::heartbeat Session ID: {sessionId} session token expired and retry heartbeat");
                             try
@@ -739,5 +785,15 @@ namespace Snowflake.Data.Core
         }
 
         internal IAuthenticator GetAuthenticator() => authenticator;
+
+        internal void InvalidateForPooling()
+        {
+            if (_invalidatedForPooling)
+                return;
+            logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure or session being destroyed server-side.");
+            _invalidatedForPooling = true;
+        }
+
+        internal virtual bool IsInvalidatedForPooling() => _invalidatedForPooling;
     }
 }

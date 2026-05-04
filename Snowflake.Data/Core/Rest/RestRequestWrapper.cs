@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Core.Rest
 {
@@ -18,6 +19,6 @@ namespace Snowflake.Data.Core.Rest
         }
 
         public TimeSpan GetRestTimeout() =>
-            (TimeSpan)_httpRequestMessage.Properties[REST_REQUEST_TIMEOUT_KEY];
+            (TimeSpan)_httpRequestMessage.GetOption(REST_REQUEST_TIMEOUT_KEY);
     }
 }

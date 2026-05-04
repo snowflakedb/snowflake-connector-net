@@ -4,6 +4,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Core
 {
@@ -51,8 +52,8 @@ namespace Snowflake.Data.Core
         protected HttpRequestMessage newMessage(HttpMethod method, Uri url)
         {
             HttpRequestMessage message = new HttpRequestMessage(method, url);
-            message.Properties[HTTP_REQUEST_TIMEOUT_KEY] = HttpTimeout;
-            message.Properties[REST_REQUEST_TIMEOUT_KEY] = RestTimeout;
+            message.SetOption(HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
+            message.SetOption(REST_REQUEST_TIMEOUT_KEY, RestTimeout);
             return message;
         }
 
@@ -266,6 +267,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "PROVIDER", NullValueHandling = NullValueHandling.Ignore)]
         internal string Provider { get; set; }
 
+        [JsonProperty(PropertyName = "SPCS_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string SpcsToken { get; set; }
+
         [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
         internal Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
 
@@ -317,6 +321,15 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "OS_DETAILS", NullValueHandling = NullValueHandling.Ignore)]
         internal Dictionary<string, string> osDetails { get; set; }
 
+        [JsonProperty(PropertyName = "PLATFORM", NullValueHandling = NullValueHandling.Ignore)]
+        internal string[] platform { get; set; }
+
+        [JsonProperty(PropertyName = "LIBC_FAMILY", NullValueHandling = NullValueHandling.Ignore)]
+        internal string libcFamily { get; set; }
+
+        [JsonProperty(PropertyName = "LIBC_VERSION", NullValueHandling = NullValueHandling.Ignore)]
+        internal string libcVersion { get; set; }
+
         [JsonIgnore]
         internal string processName { get; set; }
 
@@ -340,6 +353,9 @@ namespace Snowflake.Data.Core
                 applicationPath = applicationPath,
                 isa = isa,
                 osDetails = osDetails,
+                platform = Tools.PlatformDetection.GetDetectedPlatforms(),
+                libcFamily = libcFamily,
+                libcVersion = libcVersion,
                 minicoreVersion = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.TryGetVersionSafe(),
                 minicoreFileName = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.GetExpectedLibraryName(),
                 minicoreLoadError = SFEnvironment.MinicoreDisabled

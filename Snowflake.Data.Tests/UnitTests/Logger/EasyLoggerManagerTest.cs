@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
@@ -10,7 +11,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    [TestFixture, NonParallelizable]
+    [TestFixture, NonParallelizable, Order(2)]
     public class EasyLoggerManagerTest
     {
 
@@ -20,8 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         private const string ErrorMessage = "Easy logging Error message";
         private static readonly string s_logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-        [ThreadStatic]
-        private static string t_directoryLogPath;
+        private static AsyncLocal<string> _directoryLogPath = new AsyncLocal<string>();
 
         [OneTimeTearDown]
         public static void CleanUp()
@@ -33,13 +33,13 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         [SetUp]
         public void BeforeEach()
         {
-            t_directoryLogPath = RandomLogsDirectoryPath();
+            _directoryLogPath.Value = RandomLogsDirectoryPath();
         }
 
         [TearDown]
         public void AfterEach()
         {
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
         }
 
         [Test]
@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
 
             // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Off, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Off, _directoryLogPath.Value);
 
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsFalse(logger.IsErrorEnabled());
 
             // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, _directoryLogPath.Value);
 
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsTrue(logger.IsErrorEnabled());
 
             // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
 
             // assert
             Assert.IsFalse(logger.IsDebugEnabled());
@@ -76,7 +76,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsTrue(logger.IsErrorEnabled());
 
             // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, _directoryLogPath.Value);
 
             // assert
             Assert.IsTrue(logger.IsDebugEnabled());
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         {
             // arrange
             var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, _directoryLogPath.Value);
 
             // act
             logger.Debug(DebugMessage);
@@ -99,31 +99,31 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             logger.Error(ErrorMessage);
 
             // assert
-            var logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath));
+            var logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
             Assert.That(logLines, Has.Exactly(0).Matches<string>(s => s.Contains(DebugMessage)));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(InfoMessage)));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(WarnMessage)));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(ErrorMessage)));
 
             // arrange
-            File.Delete(FindLogFilePath(t_directoryLogPath));
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, t_directoryLogPath);
+            File.Delete(FindLogFilePath(_directoryLogPath.Value));
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, _directoryLogPath.Value);
 
             // act
             logger.Debug(DebugMessage);
 
             // assert
-            logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath));
+            logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(DebugMessage)));
         }
 
         [Test]
-        public void TestThatRollsLogIfSizeIsTooBig()
+        public async Task TestThatRollsLogIfSizeIsTooBig()
         {
             // arrange
             const int ExpectedBackupLogCount = 2;
             var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Trace, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Trace, _directoryLogPath.Value);
 
             var appenders = SFLoggerImpl.s_appenders;
             appenders.Remove(appenders[0]);
@@ -131,7 +131,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var logFileName = randomFileName.Substring(0, randomFileName.Length - 4) + ".log";
             var appender = new SFRollingFileAppender(FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance)
             {
-                LogFilePath = Path.Combine(t_directoryLogPath, logFileName),
+                LogFilePath = Path.Combine(_directoryLogPath.Value, logFileName),
                 MaximumFileSizeInBytes = 1,
                 MaxSizeRollBackups = ExpectedBackupLogCount,
                 PatternLayout = EasyLoggerManager.PatternLayout()
@@ -143,9 +143,9 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             for (int i = 0; i < 5; i++)
             {
                 logger.Debug(DebugMessage);
-                Thread.Sleep(1000);
+                await Task.Delay(1000).ConfigureAwait(false);
             }
-            var backupLogs = Directory.GetFiles(t_directoryLogPath, $"{logFileName}.*.bak");
+            var backupLogs = Directory.GetFiles(_directoryLogPath.Value, $"{logFileName}.*.bak");
 
             // assert
             Assert.AreEqual(ExpectedBackupLogCount, backupLogs.Length);
@@ -169,14 +169,14 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             {
                 writer.Write(ConfigWithUnknownFields);
             }
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, t_directoryLogPath);
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
             var parser = new EasyLoggingConfigParser();
 
             // act
             parser.Parse(configFilePath);
 
             // assert
-            var logLines = File.ReadLines(FindLogFilePath(t_directoryLogPath));
+            var logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
             Assert.That(logLines, Has.Exactly(2).Matches<string>(s => s.Contains($"Unknown field from config: {expectedFakeLogField}")));
 
             // cleanup

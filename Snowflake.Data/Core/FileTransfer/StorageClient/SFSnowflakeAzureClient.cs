@@ -166,8 +166,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>The file header of the S3 file.</returns>
         internal FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, BlobProperties response)
         {
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-
             SFEncryptionMetadata encryptionMetadata = null;
             if (TryGetMetadataValueCaseInsensitive(response, "encryptiondata", out var encryptionDataStr))
             {

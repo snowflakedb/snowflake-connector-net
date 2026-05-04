@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509;
@@ -52,8 +53,9 @@ namespace Snowflake.Data.Core.Revocation
                 ThisUpdate = crl.ThisUpdate,
                 NextUpdate = crl.NextUpdate,
                 IssuerName = crl.IssuerDN.ToString(),
+                IssuerNameRawData = crl.IssuerDN.GetEncoded(),
                 IssuerDistributionPoints = ReadIdpFromCrl(crl),
-                RevokedCertificates = crl.GetRevokedCertificates().Select(cert => ConvertToHexadecimalString(cert.SerialNumber)).ToList(),
+                RevokedCertificates = crl.GetRevokedCertificates()?.Select(cert => ConvertToHexadecimalString(cert.SerialNumber)).ToList() ?? new List<string>(),
                 BouncyCastleCrl = crl
             };
         }
