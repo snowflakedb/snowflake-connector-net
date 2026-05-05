@@ -229,7 +229,7 @@ using Snowflake.Data;
 using Newtonsoft.Json;
 ..
 
-                    using var cmd = conn.CreateCommand()
+                    using var cmd = conn.CreateCommand();
                     var vals = new int[] { 1, 2, 3 };
                     var array = JsonConvert.SerializeObject(vals); // alternatively you can do `vals.ToArray()` when passing it to `p1.Value`
                     var sql = "CALL test_db.public.test(parse_json(?))"; // test SP, returns a single value

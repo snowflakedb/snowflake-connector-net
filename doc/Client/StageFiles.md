@@ -7,7 +7,7 @@ More on this topic: [File staging with PUT](https://docs.snowflake.com/en/sql-re
 In the driver the command can be executed in the following way:
 
 ```cs
-using var conn = new SnowflakeDbConnection()
+using var conn = new SnowflakeDbConnection();
 try
 {
     conn.ConnectionString = "<connection parameters>";
