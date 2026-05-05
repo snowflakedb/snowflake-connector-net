@@ -25,7 +25,9 @@ namespace Snowflake.Data.Core.Tools
         [DllImport("libc", EntryPoint = "gnu_get_libc_version", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr GnuGetLibcVersion();
 
-        private LibcDetector() {}
+        private LibcDetector()
+        {
+        }
 
         public (LibcFamily Family, string Version) Detect()
         {
