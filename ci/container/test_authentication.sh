@@ -12,5 +12,5 @@ eval $(jq -r '.authtestparams | to_entries | map("export \(.key)=\(.value|tostri
 export SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH=./.github/workflows/parameters/rsa_keys/rsa_key.p8
 export SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH=./.github/workflows/parameters/rsa_keys/rsa_key_invalid.p8
 
-dotnet restore -p:TargetFrameworks=net9.0 --no-cache
+dotnet restore -p:TargetFrameworks=net9.0 --force -v diag
 dotnet test --framework net9.0 -p:TargetFrameworks=net9.0 -l "console;verbosity=info" --filter FullyQualifiedName~AuthenticationTests
