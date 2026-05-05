@@ -20,7 +20,6 @@ run_tests_and_set_result() {
   ssh -i "$rsa_key_path" -o IdentitiesOnly=yes -p 443 "$host" env BRANCH="$BRANCH" SNOWFLAKE_TEST_WIF_HOST="$snowflake_host" SNOWFLAKE_TEST_WIF_PROVIDER="$provider" SNOWFLAKE_TEST_WIF_ACCOUNT="$SNOWFLAKE_TEST_WIF_ACCOUNT" SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH="${!impersonation_path_var}" SNOWFLAKE_TEST_WIF_USERNAME="${!username_var}" SNOWFLAKE_TEST_WIF_USERNAME_IMPERSONATION="${!username_impersonation_var}" bash << EOF
       set -e
       set -o pipefail
-      docker pull "artifactory.ci1.us-west-2.aws-dev.app.snowflake.com/internal-development-docker-drivers-local/snowflakedb/client-dotnet-ubuntu264-net10-build:2"
       docker run \
         --rm \
         --cpus=1 \
@@ -32,7 +31,7 @@ run_tests_and_set_result() {
         -e SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH \
         -e SNOWFLAKE_TEST_WIF_USERNAME \
         -e SNOWFLAKE_TEST_WIF_USERNAME_IMPERSONATION \
-        "artifactory.ci1.us-west-2.aws-dev.app.snowflake.com/internal-development-docker-drivers-local/snowflakedb/client-dotnet-ubuntu264-net10-build:2" \
+        snowflakedb/client-dotnet-ubuntu264-net10-build:2 \
           bash -c "
             echo 'Running tests on branch: \$BRANCH'
             if [[ \"\$BRANCH\" =~ ^PR-[0-9]+\$ ]]; then
