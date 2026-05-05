@@ -12,4 +12,10 @@ eval $(jq -r '.authtestparams | to_entries | map("export \(.key)=\(.value|tostri
 export SNOWFLAKE_AUTH_TEST_PRIVATE_KEY_PATH=./.github/workflows/parameters/rsa_keys/rsa_key.p8
 export SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH=./.github/workflows/parameters/rsa_keys/rsa_key_invalid.p8
 
-dotnet test --framework net9.0 -p:TargetFrameworks=net9.0 -l "console;verbosity=info" --filter FullyQualifiedName~AuthenticationTests
+# source may contain project.assets.json file from .net10, which uses different formatting.
+rm -rf "$SOURCE_ROOT/Snowflake.Data/obj" "$SOURCE_ROOT/Snowflake.Data.Tests/obj"
+dotnet restore -p:TargetFrameworks=net9.0
+echo "restored"
+dotnet build --no-restore --framework net9.0 -p:TargetFrameworks=net9.0 -v diag
+echo "built"
+dotnet test --no-build --framework net9.0 -p:TargetFrameworks=net9.0 -l "console;verbosity=info" --filter FullyQualifiedName~AuthenticationTests
