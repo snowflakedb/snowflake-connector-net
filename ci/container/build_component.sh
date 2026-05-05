@@ -8,7 +8,5 @@ SOURCE_ROOT=${SOURCE_ROOT:-/mnt/host}
 
 cd $SOURCE_ROOT
 cp Snowflake.Data.Tests/parameters-local.json Snowflake.Data.Tests/parameters.json
-echo "[INFO] Running dotnet restore"
-dotnet restore
 echo "[INFO] Building"
-dotnet build
+dotnet build --framework net9.0 -p:TargetFrameworks=net9.0

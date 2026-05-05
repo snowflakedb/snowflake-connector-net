@@ -12,6 +12,7 @@ using Snowflake.Data.Core.Tools;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [Parallelizable(ParallelScope.Children)]
+    [IgnoreOnJenkins]
     class MaxLobSizeIT : SFBaseTest
     {
         private ResultFormat _resultFormat;

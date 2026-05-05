@@ -15,7 +15,7 @@
     <Authors>Snowflake</Authors>
     <Version>5.5.0</Version>
     <DebugType>Full</DebugType>
-    <LangVersion>14</LangVersion>
+    <LangVersion>13</LangVersion>
   </PropertyGroup>
 
   <!-- Define WINDOWS_BUILD for all Windows-specific targets -->

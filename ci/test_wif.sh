@@ -31,7 +31,7 @@ run_tests_and_set_result() {
         -e SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH \
         -e SNOWFLAKE_TEST_WIF_USERNAME \
         -e SNOWFLAKE_TEST_WIF_USERNAME_IMPERSONATION \
-        snowflakedb/client-dotnet-ubuntu264-net10-test:1 \
+        snowflakedb/client-dotnet-ubuntu204-net9-test:2 \
           bash -c "
             echo 'Running tests on branch: \$BRANCH'
             if [[ \"\$BRANCH\" =~ ^PR-[0-9]+\$ ]]; then

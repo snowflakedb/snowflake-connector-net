@@ -7,7 +7,7 @@
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <LangVersion>14</LangVersion>
+    <LangVersion>13</LangVersion>
     <DefineConstants>$(SEQUENTIAL_ENV)</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
