@@ -37,6 +37,13 @@ RUN apt-get install -y openjdk-17-jre
 RUN apt-get update
 RUN apt-get install -y dotnet-sdk-10.0
 
+# Install .NET SDK 8.0 and 9.0
+RUN apt install -y software-properties-common
+RUN apt-get update
+RUN add-apt-repository ppa:dotnet/backports
+RUN apt-get install -y dotnet-sdk-9.0
+RUN apt-get install -y dotnet-sdk-8.0
+
 # gosu
 RUN wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/1.14/gosu-$(dpkg --print-architecture)" && \
 chmod +x /usr/local/bin/gosu
