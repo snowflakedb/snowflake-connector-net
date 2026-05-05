@@ -255,7 +255,7 @@ Writing to `VARIANT` column with bind variable
 You can use bind variables together with `VARIANT` datatype column. For example, to insert data:
 ```cs
 var cmd = conn.CreateCommand();
-cmd.CommandText = "insert into table (id, data) select parse_json((?))"
+cmd.CommandText = "insert into my_table (id, data) select parse_json((?))"
 var p1 = new SnowflakeDbParameter("data", SFDataType.TEXT) { Value = jsonStr };
 cmd.Parameters.Add(p1);
 await cmd.ExecuteNonQueryAsync(cancellationToken);
