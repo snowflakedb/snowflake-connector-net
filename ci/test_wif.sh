@@ -12,16 +12,12 @@ run_tests_and_set_result() {
   local host="$2"
   local snowflake_host="$3"
   local rsa_key_path="$4"
-  local snowflake_user="$5"
-  local impersonation_path="$6"
-  local snowflake_user_for_impersonation="$7"
-  local impersonation_external_id="${8:-}"
 
   local impersonation_path_var="SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH_${provider}"
   local username_var="SNOWFLAKE_TEST_WIF_USERNAME_${provider}"
   local username_impersonation_var="SNOWFLAKE_TEST_WIF_USERNAME_${provider}_IMPERSONATION"
 
-  ssh -i "$rsa_key_path" -o IdentitiesOnly=yes -p 443 "$host" env BRANCH="$BRANCH" SNOWFLAKE_TEST_WIF_HOST="$snowflake_host" SNOWFLAKE_TEST_WIF_PROVIDER="$provider" SNOWFLAKE_TEST_WIF_ACCOUNT="$SNOWFLAKE_TEST_WIF_ACCOUNT" SNOWFLAKE_TEST_WIF_USERNAME="$snowflake_user" SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH="$impersonation_path" SNOWFLAKE_TEST_WIF_USERNAME_IMPERSONATION="$snowflake_user_for_impersonation" SNOWFLAKE_TEST_WIF_AWS_EXTERNAL_ID="$impersonation_external_id" SNOWFLAKE_TEST_WIF_IMPERSONATION_ROLE_ARN_WITH_EXTERNAL_ID="$SNOWFLAKE_TEST_WIF_IMPERSONATION_ROLE_ARN_WITH_EXTERNAL_ID" SNOWFLAKE_TEST_WIF_IMPERSONATION_USER_WITH_EXTERNAL_ID="$SNOWFLAKE_TEST_WIF_IMPERSONATION_USER_WITH_EXTERNAL_ID" bash << EOF
+  ssh -i "$rsa_key_path" -o IdentitiesOnly=yes -p 443 "$host" env BRANCH="$BRANCH" SNOWFLAKE_TEST_WIF_HOST="$snowflake_host" SNOWFLAKE_TEST_WIF_PROVIDER="$provider" SNOWFLAKE_TEST_WIF_ACCOUNT="$SNOWFLAKE_TEST_WIF_ACCOUNT" SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH="${!impersonation_path_var}" SNOWFLAKE_TEST_WIF_USERNAME="${!username_var}" SNOWFLAKE_TEST_WIF_USERNAME_IMPERSONATION="${!username_impersonation_var}" bash << EOF
       set -e
       set -o pipefail
       docker run \
@@ -35,7 +31,7 @@ run_tests_and_set_result() {
         -e SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH \
         -e SNOWFLAKE_TEST_WIF_USERNAME \
         -e SNOWFLAKE_TEST_WIF_USERNAME_IMPERSONATION \
-        snowflakedb/client-dotnet-ubuntu264-net10-build:2 \
+        snowflakedb/client-dotnet-ubuntu204-net9-test:2 \
           bash -c "
             echo 'Running tests on branch: \$BRANCH'
             if [[ \"\$BRANCH\" =~ ^PR-[0-9]+\$ ]]; then
