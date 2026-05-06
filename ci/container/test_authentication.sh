@@ -14,8 +14,4 @@ export SNOWFLAKE_AUTH_TEST_INVALID_PRIVATE_KEY_PATH=./.github/workflows/paramete
 
 # source may contain project.assets.json file from .net10, which uses different formatting.
 rm -rf "$SOURCE_ROOT/Snowflake.Data/obj" "$SOURCE_ROOT/Snowflake.Data.Tests/obj"
-dotnet restore -p:TargetFrameworks=net9.0
-echo "restored"
-dotnet build --no-restore --framework net9.0 -p:TargetFrameworks=net9.0 -v diag
-echo "built"
-dotnet test --no-build --framework net9.0 -p:TargetFrameworks=net9.0 -l "console;verbosity=info" --filter FullyQualifiedName~AuthenticationTests
+dotnet test -l "console;verbosity=info" --filter FullyQualifiedName~AuthenticationTests
