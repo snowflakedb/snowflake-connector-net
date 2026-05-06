@@ -20,10 +20,10 @@ set -e
 
 # Clone revocation-validation framework
 REVOCATION_DIR="/tmp/revocation-validation"
-DOTNET_VERSION="${DOTNET_VERSION:-net10}"
+DOTNET_VERSION="${DOTNET_VERSION:-10}"
 
 rm -rf "$REVOCATION_DIR"
-if [ "$DOTNET_VERSION" = "net10" ]; then
+if [ "$DOTNET_VERSION" = "10" ]; then
     REVOCATION_BRANCH="SNOW-3470124/net10"
     CLONE_ARGS="--branch $REVOCATION_BRANCH"
 else
@@ -56,8 +56,8 @@ docker run --rm \
     -v "$DRIVER_DIR:/connector" \
     -w /src \
     mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}.0 \
-    bash -c "sed -i 's|${DRIVER_DIR}|/connector|g' SnowflakeTest.csproj && dotnet publish -f ${DOTNET_VERSION}.0 -p:TargetFrameworks=${DOTNET_VERSION}.0 -c Release -o /src/bin/Release/${DOTNET_VERSION}.0"
-echo "[Info] Build complete: $(ls $REVOCATION_DIR/validation/clients/snowflake-dotnet/bin/Release/${DOTNET_VERSION}.0/SnowflakeTest.dll)"
+    bash -c "sed -i 's|${DRIVER_DIR}|/connector|g' SnowflakeTest.csproj && dotnet publish -f net${DOTNET_VERSION}.0 -p:TargetFrameworks=net${DOTNET_VERSION}.0 -c Release -o /src/bin/Release/net${DOTNET_VERSION}.0"
+echo "[Info] Build complete: $(ls $REVOCATION_DIR/validation/clients/snowflake-dotnet/bin/Release/net${DOTNET_VERSION}.0/SnowflakeTest.dll)"
 
 echo "[Info] Running tests with Go $(go version | grep -oE 'go[0-9]+\.[0-9]+')..."
 
