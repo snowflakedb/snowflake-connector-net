@@ -20,7 +20,7 @@ run_tests_and_set_result() {
   ssh -i "$rsa_key_path" -o IdentitiesOnly=yes -p 443 "$host" env BRANCH="$BRANCH" SNOWFLAKE_TEST_WIF_HOST="$snowflake_host" SNOWFLAKE_TEST_WIF_PROVIDER="$provider" SNOWFLAKE_TEST_WIF_ACCOUNT="$SNOWFLAKE_TEST_WIF_ACCOUNT" SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH="${!impersonation_path_var}" SNOWFLAKE_TEST_WIF_USERNAME="${!username_var}" SNOWFLAKE_TEST_WIF_USERNAME_IMPERSONATION="${!username_impersonation_var}" bash << EOF
       set -e
       set -o pipefail
-      sf artifact oci auth
+      eval "$(sf artifact oci auth)"
       docker run \
         --rm \
         --cpus=1 \

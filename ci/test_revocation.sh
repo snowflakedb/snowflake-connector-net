@@ -55,7 +55,7 @@ docker run --rm \
     -v "$REVOCATION_DIR/validation/clients/snowflake-dotnet:/src" \
     -v "$DRIVER_DIR:/connector" \
     -w /src \
-    mcr.microsoft.com/dotnet/sdk:10.0 \
+    mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}.0 \
     bash -c "sed -i 's|${DRIVER_DIR}|/connector|g' SnowflakeTest.csproj && dotnet publish -f ${DOTNET_VERSION}.0 -p:TargetFrameworks=${DOTNET_VERSION}.0 -c Release -o /src/bin/Release/${DOTNET_VERSION}.0"
 echo "[Info] Build complete: $(ls $REVOCATION_DIR/validation/clients/snowflake-dotnet/bin/Release/${DOTNET_VERSION}.0/SnowflakeTest.dll)"
 
