@@ -464,7 +464,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(DbType.Int64, 9999999999L, "9999999999")]
         [TestCase(DbType.Byte, 255, "255")]
         [TestCase(DbType.UInt16, 65535u, "65535")]
-        [TestCase(DbType.UInt32, 4294967295u,  "4294967295")]
+        [TestCase(DbType.UInt32, 4294967295u, "4294967295")]
         [TestCase(DbType.UInt64, 18446744073709551615ul, "18446744073709551615")]
         [TestCase(DbType.VarNumeric, 123, "123")]
         public void TestCSharpTypeValToSfTypeValNumericTypes(DbType dbType, object srcVal, string expectedVal)
