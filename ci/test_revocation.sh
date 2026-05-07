@@ -25,21 +25,16 @@ DOTNET_VERSION="${DOTNET_VERSION:-10}"
 rm -rf "$REVOCATION_DIR"
 if [ "$DOTNET_VERSION" = "10" ]; then
     REVOCATION_BRANCH="SNOW-3470124/net10"
-    CLONE_ARGS="--branch $REVOCATION_BRANCH"
 else
     REVOCATION_BRANCH="main"
-    REVOCATION_COMMIT="TBD"
-    CLONE_ARGS="--branch $REVOCATION_BRANCH"
 fi
+
+CLONE_ARGS="--branch $REVOCATION_BRANCH"
 
 if [ -n "$GITHUB_USER" ] && [ -n "$GITHUB_TOKEN" ]; then
     git clone $CLONE_ARGS "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/snowflake-eng/revocation-validation.git" "$REVOCATION_DIR"
 else
     git clone $CLONE_ARGS "https://github.com/snowflake-eng/revocation-validation.git" "$REVOCATION_DIR"
-fi
-
-if [ -n "$REVOCATION_COMMIT" ]; then
-    git -C "$REVOCATION_DIR" checkout "$REVOCATION_COMMIT"
 fi
 
 cd "$REVOCATION_DIR"
