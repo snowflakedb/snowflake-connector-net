@@ -100,11 +100,11 @@ public sealed class WiremockRunner : IDisposable
 
         if (req.Headers != null)
         {
-            foreach (var (name, spec) in req.Headers)
+            foreach (var kvp in req.Headers)
             {
-                var matchers = BuildMatchers(spec);
+                var matchers = BuildMatchers(kvp.Value);
                 if (matchers != null)
-                    builder = builder.WithHeader(name, matchers);
+                    builder = builder.WithHeader(kvp.Key, matchers);
             }
         }
 
@@ -159,9 +159,9 @@ public sealed class WiremockRunner : IDisposable
 
         if (resp.Headers != null)
         {
-            foreach (var (name, value) in resp.Headers)
+            foreach (var kvp in resp.Headers)
             {
-                builder = builder.WithHeader(name, value);
+                builder = builder.WithHeader(kvp.Key, kvp.Value);
             }
         }
 
