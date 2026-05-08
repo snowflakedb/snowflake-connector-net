@@ -13,7 +13,7 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.UnitTests.Authenticator;
 
 [TestFixture]
-public class ProgrammaticAccessTokenAuthenticationTest
+public sealed class ProgrammaticAccessTokenAuthenticationTest
 {
     private static readonly string s_patMappingPath = Path.Combine("wiremock", "PAT");
     private static readonly string s_successfulPatFlowMappingPath = Path.Combine(s_patMappingPath, "successful_flow.json");

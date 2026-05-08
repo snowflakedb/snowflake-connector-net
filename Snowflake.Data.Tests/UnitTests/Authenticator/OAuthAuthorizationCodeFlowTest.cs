@@ -19,7 +19,7 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.UnitTests.Authenticator;
 
 [TestFixture]
-public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
+public sealed class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
 {
     private static readonly string s_authorizationCodeSuccessfulMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow.json");
     private static readonly string s_authorizationCodeSuccessfulWithSingleUseRefreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow_with_single_use_refresh_token.json");

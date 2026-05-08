@@ -8,7 +8,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator;
 
-public class BaseOAuthFlowTest
+public abstract class BaseOAuthFlowTest
 {
     protected static readonly string s_oauthMappingPath = Path.Combine("wiremock", "OAuth");
     protected static readonly string s_oauthSnowflakeLoginSuccessMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_successful_login.json");
@@ -26,7 +26,6 @@ public class BaseOAuthFlowTest
     protected const string RefreshToken = "refresh-token-123";
     protected const string NewAccessToken = "new-access-token-123";
     protected const string NewRefreshToken = "new-refresh-token-123";
-    protected const string InvalidAccessToken = "invalid-access-token-123";
     protected const string SessionId = "1234567890";
     protected const string User = "testUser";
     protected const string AuthorizationScope = "session:role:ANALYST";

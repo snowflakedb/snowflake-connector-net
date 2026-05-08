@@ -9,12 +9,11 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
-using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator;
 
 [TestFixture]
-public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
+public sealed class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
 {
     private static readonly string s_oauthClientCredentialsMappingPath = Path.Combine(s_oauthMappingPath, "ClientCredentials");
     private static readonly string s_clientCredentialSuccessfulMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "successful_flow.json");

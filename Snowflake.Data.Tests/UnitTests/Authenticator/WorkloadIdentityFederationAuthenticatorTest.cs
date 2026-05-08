@@ -13,6 +13,7 @@ using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator;
 
+[TestFixture]
 public class WorkloadIdentityFederationAuthenticatorTest
 {
     protected static readonly string s_wifMappingPath = Path.Combine("wiremock", "WIF");
