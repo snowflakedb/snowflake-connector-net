@@ -110,11 +110,11 @@ public sealed class WiremockRunner : IDisposable
 
         if (req.QueryParameters != null)
         {
-            foreach (var (name, spec) in req.QueryParameters)
+            foreach (var kvp in req.QueryParameters)
             {
-                var matchers = BuildMatchers(spec);
+                var matchers = BuildMatchers(kvp.Value);
                 if (matchers != null)
-                    builder = builder.WithParam(name, matchers);
+                    builder = builder.WithParam(kvp.Key, matchers);
             }
         }
 
