@@ -1,29 +1,30 @@
 using System.Collections.Generic;
 
-namespace Snowflake.Data.Tests.Util;
-
-public sealed class StringTransformations
+namespace Snowflake.Data.Tests.Util
 {
-    private readonly List<StringTransformation> _transformations = new();
-
-    public static readonly StringTransformations NoTransformationsInstance = new StringTransformations();
-
-    public string Transform(string value)
+    public sealed class StringTransformations
     {
-        var transformedValue = value;
-        foreach (var transformation in _transformations)
+        private readonly List<StringTransformation> _transformations = new();
+
+        public static readonly StringTransformations NoTransformationsInstance = new StringTransformations();
+
+        public string Transform(string value)
         {
-            transformedValue = transformation.Transform(transformedValue);
+            var transformedValue = value;
+            foreach (var transformation in _transformations)
+            {
+                transformedValue = transformation.Transform(transformedValue);
+            }
+            return transformedValue;
         }
-        return transformedValue;
-    }
 
-    public StringTransformations ThenTransform(string oldValue, string newValue) =>
-        ThenTransform(new StringTransformation(oldValue, newValue));
+        public StringTransformations ThenTransform(string oldValue, string newValue) =>
+            ThenTransform(new StringTransformation(oldValue, newValue));
 
-    private StringTransformations ThenTransform(StringTransformation transformation)
-    {
-        _transformations.Add(transformation);
-        return this;
+        private StringTransformations ThenTransform(StringTransformation transformation)
+        {
+            _transformations.Add(transformation);
+            return this;
+        }
     }
 }

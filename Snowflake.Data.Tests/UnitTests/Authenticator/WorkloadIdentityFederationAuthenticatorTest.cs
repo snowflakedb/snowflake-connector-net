@@ -11,123 +11,124 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
-namespace Snowflake.Data.Tests.UnitTests.Authenticator;
-
-[TestFixture]
-public class WorkloadIdentityFederationAuthenticatorTest
+namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    protected static readonly string s_wifMappingPath = Path.Combine("wiremock", "WIF");
-    protected static readonly string s_accessTokenReplacement = "%ACCESS_TOKEN%";
-    protected static readonly string s_WifProviderReplacement = "%WIF_PROVIDER%";
-    private const string MasterToken = "masterToken123";
-    private const string SessionToken = "sessionToken123";
-    private const string SessionId = "1234567890";
-    private static readonly string s_SuccessfulMappingPath = Path.Combine(s_wifMappingPath, "snowflake_successful_login.json");
-
-    internal WiremockRunner Runner;
-
-    protected string WiremockUrl => Runner.Url;
-
-    [OneTimeSetUp]
-    public void BaseBeforeAll()
+    [TestFixture]
+    public class WorkloadIdentityFederationAuthenticatorTest
     {
-        Runner = WiremockRunner.NewWiremock();
-    }
+        protected static readonly string s_wifMappingPath = Path.Combine("wiremock", "WIF");
+        protected static readonly string s_accessTokenReplacement = "%ACCESS_TOKEN%";
+        protected static readonly string s_WifProviderReplacement = "%WIF_PROVIDER%";
+        private const string MasterToken = "masterToken123";
+        private const string SessionToken = "sessionToken123";
+        private const string SessionId = "1234567890";
+        private static readonly string s_SuccessfulMappingPath = Path.Combine(s_wifMappingPath, "snowflake_successful_login.json");
 
-    [SetUp]
-    public void BaseBeforeEach()
-    {
-        Runner.ResetMapping();
-    }
+        internal WiremockRunner Runner;
 
-    [OneTimeTearDown]
-    public void BaseAfterAll()
-    {
-        Runner.Stop();
-    }
+        protected string WiremockUrl => Runner.Url;
 
-    internal SFSession PrepareSession(
-        AttestationProvider? attestationProvider,
-        string connectionStringSuffix,
-        Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator,
-        Action<Mock<TimeProvider>> timeProviderConfigurator,
-        Action<Mock<AwsSdkWrapper>> awsSdkConfigurator)
-    {
-        var wifProviderPart = attestationProvider == null ? string.Empty : $"workload_identity_provider={attestationProvider.ToString()};";
-        var uri = new Uri(Runner.Url);
-        var connectionString = $"authenticator=workload_identity;account=testaccount;{wifProviderPart}{connectionStringSuffix ?? string.Empty};host={uri.Host};port={uri.Port};scheme={uri.Scheme};";
-        var sessionContext = new SessionPropertiesContext();
-        var session = new SFSession(connectionString, sessionContext);
-        var environmentOperations = new Mock<EnvironmentOperations>();
-        environmentOperationsConfigurator(environmentOperations);
-        var timeProvider = new Mock<TimeProvider>();
-        timeProviderConfigurator(timeProvider);
-        var awsSdkWrapper = new Mock<AwsSdkWrapper>();
-        awsSdkConfigurator(awsSdkWrapper);
-        var authenticator = new WorkloadIdentityFederationAuthenticator(session, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, WiremockUrl);
-        session.ReplaceAuthenticator(authenticator);
-        return session;
-    }
+        [OneTimeSetUp]
+        public void BaseBeforeAll()
+        {
+            Runner = WiremockRunner.NewWiremock();
+        }
 
-    [Test]
-    public void TestFailsAuthorizationWhenProviderIsNotGiven()
-    {
-        // arrange/act
-        var exception = Assert.Throws<SnowflakeDbException>(() => PrepareSession(null, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled));
+        [SetUp]
+        public void BaseBeforeEach()
+        {
+            Runner.ResetMapping();
+        }
 
-        // assert
-        Assert.That(exception?.Message, Does.Contain("Required property WORKLOAD_IDENTITY_PROVIDER is not provided"));
-    }
+        [OneTimeTearDown]
+        public void BaseAfterAll()
+        {
+            Runner.Stop();
+        }
 
-    [Test]
-    public void TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
-    {
-        // arrange: throws exception with "Not available" message
-        var session = PrepareSession(AttestationProvider.AWS, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled);
+        internal SFSession PrepareSession(
+            AttestationProvider? attestationProvider,
+            string connectionStringSuffix,
+            Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator,
+            Action<Mock<TimeProvider>> timeProviderConfigurator,
+            Action<Mock<AwsSdkWrapper>> awsSdkConfigurator)
+        {
+            var wifProviderPart = attestationProvider == null ? string.Empty : $"workload_identity_provider={attestationProvider.ToString()};";
+            var uri = new Uri(Runner.Url);
+            var connectionString = $"authenticator=workload_identity;account=testaccount;{wifProviderPart}{connectionStringSuffix ?? string.Empty};host={uri.Host};port={uri.Port};scheme={uri.Scheme};";
+            var sessionContext = new SessionPropertiesContext();
+            var session = new SFSession(connectionString, sessionContext);
+            var environmentOperations = new Mock<EnvironmentOperations>();
+            environmentOperationsConfigurator(environmentOperations);
+            var timeProvider = new Mock<TimeProvider>();
+            timeProviderConfigurator(timeProvider);
+            var awsSdkWrapper = new Mock<AwsSdkWrapper>();
+            awsSdkConfigurator(awsSdkWrapper);
+            var authenticator = new WorkloadIdentityFederationAuthenticator(session, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, WiremockUrl);
+            session.ReplaceAuthenticator(authenticator);
+            return session;
+        }
 
-        // act
-        var exception = Assert.Throws<SnowflakeDbException>(() => session.Open());
+        [Test]
+        public void TestFailsAuthorizationWhenProviderIsNotGiven()
+        {
+            // arrange/act
+            var exception = Assert.Throws<SnowflakeDbException>(() => PrepareSession(null, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled));
 
-        // assert
-        Assert.That(exception?.Message, Does.Contain("Retrieving attestation for AWS failed. Not available"));
-    }
+            // assert
+            Assert.That(exception?.Message, Does.Contain("Required property WORKLOAD_IDENTITY_PROVIDER is not provided"));
+        }
 
-    internal void NoEnvironmentSetup(Mock<EnvironmentOperations> environmentOperations)
-    {
-    }
+        [Test]
+        public void TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
+        {
+            // arrange: throws exception with "Not available" message
+            var session = PrepareSession(AttestationProvider.AWS, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled);
 
-    internal void SetupSystemTime(Mock<TimeProvider> timeProvider) =>
-        timeProvider
-            .Setup(t => t.UtcNow())
-            .Returns(() => DateTime.UtcNow);
+            // act
+            var exception = Assert.Throws<SnowflakeDbException>(() => session.Open());
 
-    internal void SetupTime(Mock<TimeProvider> timeProvider, DateTime utcNow) =>
-        timeProvider
-            .Setup(t => t.UtcNow())
-            .Returns(utcNow);
+            // assert
+            Assert.That(exception?.Message, Does.Contain("Retrieving attestation for AWS failed. Not available"));
+        }
 
-    internal void SetupAwsSdkDisabled(Mock<AwsSdkWrapper> awsSdkWrapper)
-    {
-        awsSdkWrapper
-            .Setup(a => a.GetAwsCredentials())
-            .Throws(() => new Exception("Not available"));
+        internal void NoEnvironmentSetup(Mock<EnvironmentOperations> environmentOperations)
+        {
+        }
 
-        awsSdkWrapper
-            .Setup(a => a.GetAwsRegion())
-            .Throws(() => new Exception("Not available"));
-    }
+        internal void SetupSystemTime(Mock<TimeProvider> timeProvider) =>
+            timeProvider
+                .Setup(t => t.UtcNow())
+                .Returns(() => DateTime.UtcNow);
 
-    internal void SetupSnowflakeAuthentication(WiremockRunner runner, AttestationProvider provider, string accessToken) =>
-        runner.AddMappings(s_SuccessfulMappingPath,
-            new StringTransformations()
-                .ThenTransform(s_accessTokenReplacement, accessToken)
-                .ThenTransform(s_WifProviderReplacement, provider.ToString())
-        );
+        internal void SetupTime(Mock<TimeProvider> timeProvider, DateTime utcNow) =>
+            timeProvider
+                .Setup(t => t.UtcNow())
+                .Returns(utcNow);
 
-    internal void AssertSessionSuccessfullyCreated(SFSession session)
-    {
-        Assert.AreEqual(SessionId, session.sessionId);
-        Assert.AreEqual(MasterToken, session.masterToken);
-        Assert.AreEqual(SessionToken, session.sessionToken);
+        internal void SetupAwsSdkDisabled(Mock<AwsSdkWrapper> awsSdkWrapper)
+        {
+            awsSdkWrapper
+                .Setup(a => a.GetAwsCredentials())
+                .Throws(() => new Exception("Not available"));
+
+            awsSdkWrapper
+                .Setup(a => a.GetAwsRegion())
+                .Throws(() => new Exception("Not available"));
+        }
+
+        internal void SetupSnowflakeAuthentication(WiremockRunner runner, AttestationProvider provider, string accessToken) =>
+            runner.AddMappings(s_SuccessfulMappingPath,
+                new StringTransformations()
+                    .ThenTransform(s_accessTokenReplacement, accessToken)
+                    .ThenTransform(s_WifProviderReplacement, provider.ToString())
+            );
+
+        internal void AssertSessionSuccessfullyCreated(SFSession session)
+        {
+            Assert.AreEqual(SessionId, session.sessionId);
+            Assert.AreEqual(MasterToken, session.masterToken);
+            Assert.AreEqual(SessionToken, session.sessionToken);
+        }
     }
 }

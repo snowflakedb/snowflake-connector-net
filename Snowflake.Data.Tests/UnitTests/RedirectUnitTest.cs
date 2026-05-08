@@ -8,103 +8,104 @@ using System;
 using System.Threading;
 using Snowflake.Data.Core.Extensions;
 
-namespace Snowflake.Data.Tests.UnitTests;
-
-[TestFixture]
-public class RedirectUnitTest
+namespace Snowflake.Data.Tests.UnitTests
 {
-    private WiremockRunner _runner;
-
-    [OneTimeSetUp]
-    public void BeforeAll()
+    [TestFixture]
+    public class RedirectUnitTest
     {
-        _runner = WiremockRunner.NewWiremock();
-    }
+        private WiremockRunner _runner;
 
-    [SetUp]
-    public void BeforeEach()
-    {
-        _runner.ResetMapping();
-    }
-
-    [OneTimeTearDown]
-    public void AfterAll()
-    {
-        _runner.Stop();
-    }
-
-    [Test]
-    public async Task TestHttp307Retry()
-    {
-        // arrange
-        _runner.AddMappings("wiremock/HttpUtil/http_307_retry.json");
-        var expectedQueryId = "http_307_retry_queryId";
-        var httpClient = CreateHttpClientForRetry();
-        var request = CreateQueryRequest();
-
-        //act
-        var response = await httpClient.SendAsync(request);
-
-        // assert
-        await AssertResponseId(response, expectedQueryId);
-    }
-
-    [Test]
-    public async Task TestHttp308Retry()
-    {
-        // arrange
-        _runner.AddMappings("wiremock/HttpUtil/http_308_retry.json");
-        var expectedQueryId = "http_308_retry_queryId";
-        var httpClient = CreateHttpClientForRetry();
-        var request = CreateQueryRequest();
-
-        //act
-        var response = await httpClient.SendAsync(request);
-
-        // assert
-        await AssertResponseId(response, expectedQueryId);
-    }
-
-    private HttpClient CreateHttpClientForRetry()
-    {
-        var config = new HttpClientConfig(null, null, null, null, null, false, false, 7, 20);
-        var handler = new CustomDelegatingHandler(new HttpClientHandler
+        [OneTimeSetUp]
+        public void BeforeAll()
         {
-            ClientCertificateOptions = ClientCertificateOption.Manual,
-            ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
-            AllowAutoRedirect = true,
-        });
-        return HttpUtil.Instance.CreateNewHttpClient(config, handler);
+            _runner = WiremockRunner.NewWiremock();
+        }
+
+        [SetUp]
+        public void BeforeEach()
+        {
+            _runner.ResetMapping();
+        }
+
+        [OneTimeTearDown]
+        public void AfterAll()
+        {
+            _runner.Stop();
+        }
+
+        [Test]
+        public async Task TestHttp307Retry()
+        {
+            // arrange
+            _runner.AddMappings("wiremock/HttpUtil/http_307_retry.json");
+            var expectedQueryId = "http_307_retry_queryId";
+            var httpClient = CreateHttpClientForRetry();
+            var request = CreateQueryRequest();
+
+            //act
+            var response = await httpClient.SendAsync(request);
+
+            // assert
+            await AssertResponseId(response, expectedQueryId);
+        }
+
+        [Test]
+        public async Task TestHttp308Retry()
+        {
+            // arrange
+            _runner.AddMappings("wiremock/HttpUtil/http_308_retry.json");
+            var expectedQueryId = "http_308_retry_queryId";
+            var httpClient = CreateHttpClientForRetry();
+            var request = CreateQueryRequest();
+
+            //act
+            var response = await httpClient.SendAsync(request);
+
+            // assert
+            await AssertResponseId(response, expectedQueryId);
+        }
+
+        private HttpClient CreateHttpClientForRetry()
+        {
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 7, 20);
+            var handler = new CustomDelegatingHandler(new HttpClientHandler
+            {
+                ClientCertificateOptions = ClientCertificateOption.Manual,
+                ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
+                AllowAutoRedirect = true,
+            });
+            return HttpUtil.Instance.CreateNewHttpClient(config, handler);
+        }
+
+        private HttpRequestMessage CreateQueryRequest()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, _runner.SslUrl + "/queries/v1/query-request?requestId=abc");
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultHttpSecondsTimeout));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultRestRetrySecondsTimeout));
+            return request;
+        }
+
+        private async Task AssertResponseId(HttpResponseMessage response, string expectedQueryId)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<QueryExecResponse>(json, JsonUtils.JsonSettings);
+
+            // assert
+            Assert.True(response.IsSuccessStatusCode);
+            Assert.AreEqual(expectedQueryId, result.data.queryId);
+        }
     }
 
-    private HttpRequestMessage CreateQueryRequest()
+    public class CustomDelegatingHandler : DelegatingHandler
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, _runner.SslUrl + "/queries/v1/query-request?requestId=abc");
-        request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultHttpSecondsTimeout));
-        request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultRestRetrySecondsTimeout));
-        return request;
-    }
+        public CustomDelegatingHandler(HttpMessageHandler httpMessageHandler) : base(httpMessageHandler) { }
 
-    private async Task AssertResponseId(HttpResponseMessage response, string expectedQueryId)
-    {
-        var json = await response.Content.ReadAsStringAsync();
-        var result = JsonConvert.DeserializeObject<QueryExecResponse>(json, JsonUtils.JsonSettings);
-
-        // assert
-        Assert.True(response.IsSuccessStatusCode);
-        Assert.AreEqual(expectedQueryId, result.data.queryId);
-    }
-}
-
-public class CustomDelegatingHandler : DelegatingHandler
-{
-    public CustomDelegatingHandler(HttpMessageHandler httpMessageHandler) : base(httpMessageHandler) { }
-
-    protected override async Task<HttpResponseMessage> SendAsync(
-        HttpRequestMessage request,
-        CancellationToken cancellationToken)
-    {
-        var response = await base.SendAsync(request, cancellationToken);
-        return response;
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            var response = await base.SendAsync(request, cancellationToken);
+            return response;
+        }
     }
 }
