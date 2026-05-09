@@ -18,22 +18,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
         );
 
-        [OneTimeSetUp]
-        public void BeforeAll()
-        {
-            _runner = WiremockRunner.NewWiremock();
-        }
-
         [SetUp]
         public void BeforeEach()
         {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Dispose();
+            _runner = WiremockRunner.NewWiremock();
         }
 
         [Test]

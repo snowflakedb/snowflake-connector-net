@@ -32,19 +32,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         protected const string TokenHost = "localhost";
         protected const string ClientSecret = "123";
 
-        [OneTimeSetUp]
+        [SetUp]
         public void BaseBeforeAll()
         {
             Runner = WiremockRunner.NewWiremock();
         }
 
-        [SetUp]
-        public void BaseBeforeEach()
-        {
-            Runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
+        [TearDown]
         public void BaseAfterAll()
         {
             Runner.Stop();

@@ -28,20 +28,14 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         protected string WiremockUrl => Runner.Url;
 
-        [OneTimeSetUp]
-        public void BaseBeforeAll()
+        [SetUp]
+        public void SetUp()
         {
             Runner = WiremockRunner.NewWiremock();
         }
 
-        [SetUp]
-        public void BaseBeforeEach()
-        {
-            Runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void BaseAfterAll()
+        [TearDown]
+        public void TearDown()
         {
             Runner.Stop();
         }
