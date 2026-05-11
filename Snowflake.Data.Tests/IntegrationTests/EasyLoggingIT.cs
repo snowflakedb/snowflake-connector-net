@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Mono.Unix;
 using Mono.Unix.Native;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
@@ -15,13 +15,12 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture, NonParallelizable]
     public class EasyLoggingIT : SFBaseTest
     {
+        public EasyLoggingIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
         private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), $"easy_logging_test_configs_{Path.GetRandomFileName()}");
         private const string LogDirectoryName = "dotnet";
-
-        [OneTimeSetUp]
         public static void BeforeAll()
         {
             if (!Directory.Exists(s_workingDirectory))
@@ -29,15 +28,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Directory.CreateDirectory(s_workingDirectory);
             }
         }
-
-        [OneTimeTearDown]
         public static void AfterAll()
         {
             EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
             Directory.Delete(s_workingDirectory, true);
         }
-
-        [TearDown]
         public static void AfterEach()
         {
             EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
@@ -56,7 +51,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestEnableEasyLogging()
         {
             // arrange
@@ -69,11 +64,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
 
                 // assert
-                Assert.IsTrue(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.True(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
 
-        [Test]
+        [Fact]
         public void TestFailToEnableEasyLoggingForWrongConfiguration()
         {
             // arrange
@@ -86,13 +81,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
 
                 // assert
-                Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
-                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
+                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestReCreateEasyLoggingUnixLogFileWithCustomisedPermissions()
         {
             // arrange
@@ -114,11 +108,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     var logFilePermissions = UnixOperations.Instance.GetFilePermissions(logFile);
-                    Assert.AreEqual(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupRead,
+                    Assert.Equal(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupRead,
                         logFilePermissions);
                     var logs = FileOperations.Instance.ReadAllText(logFile);
-                    Assert.That(logs, Does.Contain("This is a warning message"));
-                    Assert.That(logs, Does.Contain("This is another warning message"));
+                    Assert.Contains("This is a warning message", logs);
+                    Assert.Contains("This is another warning message", logs);
                 }
             }
             finally
@@ -127,8 +121,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Platform("Win")]
+        [Fact]
         public void TestReCreateEasyLoggingWindowsLogFileIgnoringCustomisedPermissions()
         {
             // arrange
@@ -150,8 +143,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     var logs = FileOperations.Instance.ReadAllText(logFile);
-                    Assert.That(logs, Does.Contain("This is a warning message"));
-                    Assert.That(logs, Does.Contain("This is another warning message"));
+                    Assert.Contains("This is a warning message", logs);
+                    Assert.Contains("This is another warning message", logs);
                 }
             }
             finally
@@ -160,8 +153,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
         {
             // arrange
@@ -175,13 +167,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
 
                 // assert
-                Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
-                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
+                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestFailToEnableEasyLoggingWhenLogDirectoryNotAccessible()
         {
             // arrange
@@ -194,14 +185,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
 
                 // assert
-                Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
-                Assert.That(thrown.InnerException.Message, Does.Contain("Failed to create logs directory"));
-                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
+                Assert.Contains("Failed to create logs directory", thrown.InnerException.Message);
+                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestFailToEnableEasyLoggingWhenPathIsAccessibleForGroup()
         {
             // arrange
@@ -218,9 +208,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
 
                 // assert
-                Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
-                Assert.That(thrown.InnerException.Message, Does.Contain("Too broad access permissions for logs directory"));
-                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
+                Assert.Contains("Too broad access permissions for logs directory", thrown.InnerException.Message);
+                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
     }

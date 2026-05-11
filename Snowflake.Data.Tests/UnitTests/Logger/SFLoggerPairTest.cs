@@ -1,4 +1,4 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
 using System;
@@ -6,49 +6,40 @@ using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture, NonParallelizable, Order(1)]
     class SFLoggerPairTest
     {
         SFLogger _loggerPair;
         TestAppender _testAppender;
-
-        [OneTimeSetUp]
         public static void BeforeAll()
         {
             // Log level defaults to Warn on net6.0 builds in github actions
             // Set the root level to Debug
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, "STDOUT");
         }
-
-        [OneTimeTearDown]
         public static void AfterAll()
         {
             EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
         }
-
-        [SetUp]
         public void BeforeTest()
         {
             _loggerPair = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
             _testAppender = new TestAppender();
         }
-
-        [TearDown]
         public void AfterTest()
         {
             SFLoggerImpl.s_appenders.Remove(_testAppender);
         }
 
-        [Test]
+        [Fact]
         public void TestUsingSFLogger()
         {
             _loggerPair = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
-            Assert.IsInstanceOf<SFLoggerPair>(_loggerPair);
+            Assert.IsType<SFLoggerPair>(_loggerPair);
         }
 
-        [Test]
+        [Fact]
         public void TestIsDebugEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
             _loggerPair = GetLogger();
             if (isEnabled)
@@ -60,13 +51,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _loggerPair.IsDebugEnabled());
+            Assert.Equal(isEnabled, _loggerPair.IsDebugEnabled());
             _loggerPair.Debug("debug log message", new Exception("test exception"));
         }
 
-        [Test]
+        [Fact]
         public void TestIsInfoEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
             _loggerPair = GetLogger();
             if (isEnabled)
@@ -78,13 +69,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _loggerPair.IsInfoEnabled());
+            Assert.Equal(isEnabled, _loggerPair.IsInfoEnabled());
             _loggerPair.Info("info log message", new Exception("test exception"));
         }
 
-        [Test]
+        [Fact]
         public void TestIsWarnEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
             _loggerPair = GetLogger();
             if (isEnabled)
@@ -96,13 +87,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _loggerPair.IsWarnEnabled());
+            Assert.Equal(isEnabled, _loggerPair.IsWarnEnabled());
             _loggerPair.Warn("warn log message", new Exception("test exception"));
         }
 
-        [Test]
+        [Fact]
         public void TestIsErrorEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
             _loggerPair = GetLogger();
             if (isEnabled)
@@ -114,7 +105,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _loggerPair.IsErrorEnabled());
+            Assert.Equal(isEnabled, _loggerPair.IsErrorEnabled());
             _loggerPair.Error("error log message", new Exception("test exception"));
         }
 
@@ -125,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return logger;
         }
 
-        [Test]
+        [Fact]
         public void TestMaskedExceptionWithSensitiveData()
         {
             // Arrange
@@ -141,7 +132,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             var loggedExceptionString = _testAppender.LoggedExceptions[0]?.ToString() ?? "";
             var expectedMaskedString = "System.Exception: Connection failed with password=****";
-            Assert.AreEqual(expectedMaskedString, loggedExceptionString);
+            Assert.Equal(expectedMaskedString, loggedExceptionString);
         }
 
         private class TestAppender : SFAppender

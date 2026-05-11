@@ -1,29 +1,29 @@
 using System;
 using System.Data;
-using NUnit.Framework;
+using System.Threading.Tasks;
+using Xunit;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [SetUpFixture]
-    public class IntegrationTestSetup
+    public sealed class IntegrationTestFixture : IAsyncLifetime
     {
-        [OneTimeSetUp]
-        public void SetupIntegrationTests()
+        public ValueTask InitializeAsync()
         {
             var testConfig = TestEnvironment.TestConfig;
             ModifySchema(testConfig.schema, SchemaAction.Create);
+            return ValueTask.CompletedTask;
         }
 
-        [OneTimeTearDown]
-        public void CleanupIntegrationTests()
+        public ValueTask DisposeAsync()
         {
             var testConfig = TestEnvironment.TestConfig;
 
             if (testConfig == null)
-                return;
+                return ValueTask.CompletedTask;
 
             ModifySchema(testConfig.schema, SchemaAction.Drop);
+            return ValueTask.CompletedTask;
         }
 
         private enum SchemaAction
@@ -74,5 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                    $"user={config.user};password={config.password};";
         }
     }
-}
 
+    [CollectionDefinition("Integration")]
+    public class IntegrationTestCollection : ICollectionFixture<IntegrationTestFixture> { }
+}

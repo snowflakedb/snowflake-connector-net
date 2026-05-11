@@ -1,7 +1,7 @@
 using System;
 using System.Data;
 using System.Diagnostics;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests;
 
@@ -14,7 +14,7 @@ namespace Snowflake.Data.WIFTests
     /// 3. Run ci/test_wif.sh
     /// </summary>
     ///
-    [NonParallelizable, IgnoreOnCI]
+    [IgnoreOnCI]
     public class WifLatestTest
     {
         private static readonly string s_account = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_ACCOUNT");
@@ -24,24 +24,23 @@ namespace Snowflake.Data.WIFTests
         private static readonly string s_expectedUsername = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_USERNAME");
         private static readonly string s_expectedUsernameImpersonation = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_USERNAME_IMPERSONATION");
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateUsingWifWithDefinedProvider()
         {
             var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY;workload_identity_provider={s_provider};certRevocationCheckMode=enabled;";
             var user = ConnectAndQueryCurrentUser(connectionString);
             if (!string.IsNullOrEmpty(s_expectedUsername))
             {
-                Assert.AreEqual(s_expectedUsername, user,
-                    $"Expected direct WIF user to be '{s_expectedUsername}' but got '{user}'");
+                Assert.Equal(s_expectedUsername, user);
             }
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateUsingWifWithImpersonation()
         {
             if (string.IsNullOrEmpty(s_impersonationPath))
             {
-                Assert.Ignore("Test only runs when SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH is set");
+                Assert.Skip("Test only runs when SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH is set");
             }
 
             // connect with impersonation
@@ -51,24 +50,22 @@ namespace Snowflake.Data.WIFTests
             // verify the impersonated user matches the expected username
             if (!string.IsNullOrEmpty(s_expectedUsernameImpersonation))
             {
-                Assert.AreEqual(s_expectedUsernameImpersonation, impersonatedUser,
-                    $"Expected impersonated user to be '{s_expectedUsernameImpersonation}' but got '{impersonatedUser}'");
+                Assert.Equal(s_expectedUsernameImpersonation, impersonatedUser);
             }
 
             // verify that impersonation resulted in a different user than the direct identity
             if (!string.IsNullOrEmpty(s_expectedUsername))
             {
-                Assert.AreNotEqual(s_expectedUsername, impersonatedUser,
-                    $"Expected impersonation to change the session user from '{s_expectedUsername}', but it did not");
+                Assert.NotEqual(s_expectedUsername, impersonatedUser);
             }
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateUsingOidc()
         {
             if (!IsProviderGcp())
             {
-                Assert.Ignore("Test only runs when provider is GCP");
+                Assert.Skip("Test only runs when provider is GCP");
             }
 
             var token = GetGcpAccessToken();
@@ -78,7 +75,7 @@ namespace Snowflake.Data.WIFTests
 
         private static bool IsProviderGcp()
         {
-            return string.Equals(s_provider, "GCP", StringComparison.OrdinalIgnoreCase);
+            return string.Equals(s_provider, "GCP");
         }
 
         private string GetGcpAccessToken()
@@ -120,14 +117,14 @@ namespace Snowflake.Data.WIFTests
             {
                 conn.ConnectionString = connectionString;
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT CURRENT_USER()";
                     var result = command.ExecuteScalar();
-                    Assert.IsNotNull(result);
+                    Assert.NotNull(result);
                     var user = result.ToString();
-                    Assert.IsNotEmpty(user, "CURRENT_USER() returned an empty string");
+                    Assert.NotEmpty(user);
                     return user;
                 }
             }
@@ -139,12 +136,12 @@ namespace Snowflake.Data.WIFTests
             {
                 conn.ConnectionString = connectionString;
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT 1";
                     var result = command.ExecuteScalar();
-                    Assert.AreEqual("1", result.ToString());
+                    Assert.Equal("1", result.ToString());
                 }
             }
         }

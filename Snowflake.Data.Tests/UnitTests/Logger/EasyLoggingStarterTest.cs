@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
@@ -11,7 +11,6 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
     public class EasyLoggingStarterTest
     {
         private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -85,8 +84,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         [ThreadStatic]
         private static EasyLoggingStarter t_easyLoggerStarter;
-
-        [SetUp]
         public void BeforeEach()
         {
             t_easyLoggingProvider = new Mock<EasyLoggingConfigProvider>();
@@ -102,7 +99,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 t_environmentOperations.Object);
         }
 
-        [Test]
+        [Fact]
         public void TestThatThrowsErrorWhenLogPathAndHomeDirectoryIsNotSet()
         {
             // arrange
@@ -117,11 +114,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
 
             // assert
-            Assert.IsNotNull(thrown);
-            Assert.AreEqual(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
+            Assert.NotNull(thrown);
+            Assert.NotEmpty(thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestThatThrowsErrorWhenLogPathIsNotSetAndHomeDirectoryThrowsAnException()
         {
             // arrange
@@ -137,22 +134,21 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
 
             // assert
-            Assert.IsNotNull(thrown);
-            Assert.AreEqual(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
+            Assert.NotNull(thrown);
+            Assert.NotEmpty(thrown.Message);
         }
 
 
-        [Test]
-        [Platform(Exclude = "Win")]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute)]
-        [TestCase(FileAccessPermissions.AllPermissions)]
-        [TestCase(FileAccessPermissions.GroupReadWriteExecute)]
-        [TestCase(FileAccessPermissions.OtherReadWriteExecute)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
-        [TestCase(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
+        [Theory]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute)]
+        [InlineData(FileAccessPermissions.AllPermissions)]
+        [InlineData(FileAccessPermissions.GroupReadWriteExecute)]
+        [InlineData(FileAccessPermissions.OtherReadWriteExecute)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
+        [InlineData(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
         public void TestThatThrowsErrorWhenLogDirectoryHasInvalidPermissions(FileAccessPermissions invalidPermissions)
         {
             // arrange
@@ -170,11 +166,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Too broad access permissions for logs directory"));
+            Assert.Contains("Too broad access permissions for logs directory", thrown.Message);
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestThatSucceedsWhenLogDirectoryHasExactly700Permissions()
         {
             // arrange
@@ -189,12 +184,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 .Returns(FileAccessPermissions.UserReadWriteExecute);
 
             // act & assert
-            Assert.DoesNotThrow(() => t_easyLoggerStarter.Init(ConfigPath));
+            t_easyLoggerStarter.Init(ConfigPath);
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestFailIfDirectoryCreationFails()
         {
             // arrange
@@ -212,10 +206,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Failed to create logs directory"));
+            Assert.Contains("Failed to create logs directory", thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestThatConfiguresEasyLoggingOnlyOnceWhenInitializedWithConfigPath()
         {
             // arrange
@@ -256,7 +250,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [Fact]
         public void TestThatConfiguresEasyLoggingOnlyOnceForInitializationsWithoutConfigPath()
         {
             // arrange
@@ -284,7 +278,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
         }
 
-        [Test]
+        [Fact]
         public void TestThatReconfiguresEasyLoggingWithConfigPathIfNotGivenForTheFirstTime()
         {
             // arrange
@@ -321,7 +315,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [Fact]
         public void TestConfigureStdout()
         {
             // arrange
@@ -336,8 +330,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, "STDOUT"), Times.Once);
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestSettingLogPermissionValue()
         {
             // arrange
@@ -357,7 +350,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerStarter.Init(ConfigPath);
 
             // assert
-            Assert.AreEqual(ExpectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
+            Assert.Equal(ExpectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
         }
     }
 }

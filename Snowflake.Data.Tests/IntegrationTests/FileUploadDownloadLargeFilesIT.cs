@@ -1,15 +1,16 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
     public class FileUploadDownloadLargeFilesIT : SFBaseTest
     {
+        public FileUploadDownloadLargeFilesIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
         private const string FileName = "large_file_to_test_dotnet_driver.json";
         private static readonly string s_uniqueId = TestDataGenarator.NextAlphaNumeric(6);
         private static readonly string s_localFolderName = Path.Combine(Path.GetTempPath(), s_uniqueId);
@@ -18,22 +19,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static readonly string s_fullFileName = Path.Combine(s_localFolderName, FileName);
         private static readonly string s_fullDownloadedFileName = Path.Combine(s_downloadFolderName, FileName);
         private static readonly MD5 s_md5 = MD5.Create();
-
-        [OneTimeSetUp]
         public static void GenerateLargeFileForTests()
         {
             CreateLocalDirectory(s_localFolderName);
             GenerateLargeFile(s_fullFileName);
         }
-
-        [OneTimeTearDown]
         public static void DeleteGeneratedLargeFile()
         {
             RemoveLocalFile(s_fullFileName);
             RemoveDirectory(s_localFolderName);
         }
 
-        [Test]
+        [Fact]
         public void TestThatUploadsAndDownloadsTheSameFile()
         {
             // act
@@ -41,7 +38,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             DownloadFile(s_remoteFolderName, s_downloadFolderName, FileName);
 
             // assert
-            Assert.AreEqual(
+            Assert.Equal(
                 CalcualteMD5(s_fullFileName),
                 CalcualteMD5(s_fullDownloadedFileName));
 

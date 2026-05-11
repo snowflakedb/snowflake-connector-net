@@ -1,19 +1,17 @@
 using Mono.Unix;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Log;
 using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    [TestFixture]
-    [Platform(Exclude = "Win")]
     public class UnixFilePermissionsConverterTest
     {
-        [Test]
+        [Fact]
         public void TestConversionForAllPermissionCombinations(
-            [ValueSource(nameof(UserPermissionTestCases))] PermissionTestCase userTestCase,
-            [ValueSource(nameof(GroupPermissionTestCases))] PermissionTestCase groupTestCase,
-            [ValueSource(nameof(OtherPermissionTestCases))] PermissionTestCase otherTestCase)
+            PermissionTestCase userTestCase,
+            PermissionTestCase groupTestCase,
+            PermissionTestCase otherTestCase)
         {
             // arrange
             var permissions = userTestCase.permissions | groupTestCase.permissions | otherTestCase.permissions;
@@ -23,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var convertedPermissions = UnixFilePermissionsConverter.ConvertFileAccessPermissionsToInt(permissions);
 
             // assert
-            Assert.AreEqual(expectedPermissions, convertedPermissions);
+            Assert.Equal(expectedPermissions, convertedPermissions);
         }
 
         public static IEnumerable<PermissionTestCase> UserPermissionTestCases()

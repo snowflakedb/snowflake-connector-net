@@ -1,7 +1,7 @@
 using System;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
-using NUnit.Framework;
+using Xunit;
 using System.Data;
 using System.IO;
 using System.Threading.Tasks;
@@ -9,11 +9,11 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
-    [TestFixture, NonParallelizable]
     class SFReusableChunkTest : SFBaseTest
     {
-        [Test]
+        public SFReusableChunkTest(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
+        [Fact]
         public void TestDelCharPr431()
         {
             const int TestRowCount = 10000;
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                     cmd.CommandText = insertCommand;
                     IDataReader insertReader = cmd.ExecuteReader();
-                    Assert.AreEqual(TestRowCount, insertReader.RecordsAffected);
+                    Assert.Equal(TestRowCount, insertReader.RecordsAffected);
 
                     string selectCommand = $"select * from {TableName}";
                     cmd.CommandText = selectCommand;
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             }
                         }
                     }
-                    Assert.AreEqual(TestRowCount, rowCount, "Expected all rows to be counted since none contain literal 'u007f' strings");
+                    Assert.Equal(TestRowCount, rowCount);
                 }
                 finally
                 {
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestParseJson()
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;
@@ -107,7 +107,7 @@ select parse_json('{{
 ";
                     cmd.CommandText = insertCommand;
                     IDataReader insertReader = cmd.ExecuteReader();
-                    Assert.AreEqual(500, insertReader.RecordsAffected);
+                    Assert.Equal(500, insertReader.RecordsAffected);
 
                     string selectCommand = $"select * from {TableName}";
                     cmd.CommandText = selectCommand;
@@ -122,7 +122,7 @@ select parse_json('{{
                             rowCount++;
                         }
                     }
-                    Assert.AreEqual(500, rowCount);
+                    Assert.Equal(500, rowCount);
 
                     SessionParameterAlterer.RestoreResultFormat(conn);
                     conn.Close();
@@ -134,7 +134,7 @@ select parse_json('{{
             }
         }
 
-        [Test, NonParallelizable]
+        [Fact]
         public void TestChunkRetry()
         {
             const int RetryFailureCount = 6;
@@ -160,7 +160,7 @@ select parse_json('{{
                     string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                     cmd.CommandText = insertCommand;
                     IDataReader insertReader = cmd.ExecuteReader();
-                    Assert.AreEqual(TestRowCount, insertReader.RecordsAffected);
+                    Assert.Equal(TestRowCount, insertReader.RecordsAffected);
 
                     string selectCommand = $"select * from {TableName}";
                     cmd.CommandText = selectCommand;
@@ -180,10 +180,9 @@ select parse_json('{{
                             }
                         }
                     }
-                    Assert.AreEqual(TestRowCount, rowCount);
+                    Assert.Equal(TestRowCount, rowCount);
 
-                    Assert.IsTrue(testFactory.ExceptionsThrown >= RetryFailureCount,
-                        $"Expected at least {RetryFailureCount} retry attempts, but only {testFactory.ExceptionsThrown} occurred");
+                    Assert.True(testFactory.ExceptionsThrown >= RetryFailureCount);
                 }
                 finally
                 {
@@ -194,7 +193,7 @@ select parse_json('{{
             }
         }
 
-        [Test, NonParallelizable]
+        [Fact]
         public void TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
         {
             const int ExcessiveRetryCount = 8;
@@ -222,7 +221,7 @@ select parse_json('{{
                         string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                         cmd.CommandText = insertCommand;
                         IDataReader insertReader = cmd.ExecuteReader();
-                        Assert.AreEqual(TestRowCount, insertReader.RecordsAffected);
+                        Assert.Equal(TestRowCount, insertReader.RecordsAffected);
 
                         string selectCommand = $"select * from {TableName}";
                         cmd.CommandText = selectCommand;
@@ -244,7 +243,7 @@ select parse_json('{{
                                 }
                             }
                         });
-                        Assert.AreNotEqual(TestRowCount, rowCount, "Row count should not match due to retry failures");
+                        Assert.NotEqual(TestRowCount, rowCount);
                     }
                     finally
                     {

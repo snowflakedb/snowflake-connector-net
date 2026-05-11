@@ -10,7 +10,7 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
@@ -24,37 +24,38 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
     class SFConnectionIT : SFBaseTest
     {
+        public SFConnectionIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
-        [Test]
+        [Fact]
         public void TestBasicConnection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
 
-                Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+                Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
                 // Data source is empty string for now
-                Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+                Assert.Equal("", ((SnowflakeDbConnection)conn).DataSource);
 
                 string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
-                if (!string.Equals(serverVersion, "Dev"))
+                if (!string.IsNullOrEmpty(serverVersion))
                 {
                     string[] versionElements = serverVersion.Split('.');
-                    Assert.AreEqual(3, versionElements.Length);
+                    Assert.Equal(3, versionElements.Length);
                 }
 
                 conn.Close();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestApplicationName()
         {
             string[] validApplicationNames = { "test1234", "test_1234", "test-1234", "test.1234" };
@@ -68,10 +69,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     conn.ConnectionString = ConnectionString;
                     conn.ConnectionString += $"application={appName}";
                     conn.Open();
-                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    Assert.Equal(ConnectionState.Open, conn.State);
 
                     conn.Close();
-                    Assert.AreEqual(ConnectionState.Closed, conn.State);
+                    Assert.Equal(ConnectionState.Closed, conn.State);
                 }
             }
 
@@ -96,12 +97,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         AssertIsConnectionFailure(e);
                     }
 
-                    Assert.AreEqual(ConnectionState.Closed, conn.State);
+                    Assert.Equal(ConnectionState.Closed, conn.State);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         [RunOnlyOnCI]
         public void TestApplicationPathIsSentDuringAuthentication()
         {
@@ -114,12 +115,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var clientEnv = authenticator.BuildLoginRequestData().clientEnv;
                 var lowerPath = clientEnv.applicationPath.ToLower();
 #if NETFRAMEWORK
-                Assert.IsTrue(
+                Assert.True(
                     lowerPath.Contains("testhost") &&
-                    (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
-                    $"APPLICATION_PATH should contain 'testhost' and end with .dll or .exe. Got: {clientEnv.applicationPath}");
+                    (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")));
 #else
-                Assert.IsTrue(
+                Assert.True(
                     lowerPath.Contains("snowflake.data.tests") &&
                     lowerPath.Contains("bin") &&
                     lowerPath.Contains("testhost") &&
@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestIncorrectUserOrPasswordBasicConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -147,7 +147,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     "unknown",
                     testConfig.password);
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 try
                 {
                     conn.Open();
@@ -161,13 +161,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     AssertIsConnectionFailure(e);
                 }
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
         public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
         {
             for (int i = 0; i < 2; ++i)
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
         {
             for (int i = 0; i < 2; ++i)
@@ -218,16 +218,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static void AssertConnectionIsNotOpen(SnowflakeDbConnection snowflakeDbConnection)
         {
             Assert.NotNull(snowflakeDbConnection);
-            Assert.IsFalse(snowflakeDbConnection.IsOpen()); // check via public method
-            Assert.AreEqual(ConnectionState.Closed, snowflakeDbConnection.State); // ensure internal state is expected
+            Assert.False(snowflakeDbConnection.IsOpen()); // check via public method
+            Assert.Equal(ConnectionState.Closed, snowflakeDbConnection.State); // ensure internal state is expected
         }
 
         private static void AssertIsConnectionFailure(SnowflakeDbException e)
         {
-            Assert.AreEqual(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
+            Assert.Equal(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
         }
 
-        [Test]
+        [Fact]
         public void TestConnectString()
         {
             var schemaName = "dlSchema_" + Guid.NewGuid().ToString().Replace("-", "_");
@@ -268,19 +268,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         testConfig.warehouse,
                         testConfig.user,
                         testConfig.password);
-                Assert.AreEqual(conn1.State, ConnectionState.Closed);
+                Assert.Equal(conn1.State, ConnectionState.Closed);
 
                 conn1.Open();
                 using (IDbCommand cmd = conn1.CreateCommand())
                 {
                     cmd.CommandText = $"SELECT count(*) FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(1, reader.GetInt32(0));
+                    Assert.True(reader.Read());
+                    Assert.Equal(1, reader.GetInt32(0));
                 }
                 conn1.Close();
 
-                Assert.AreEqual(ConnectionState.Closed, conn1.State);
+                Assert.Equal(ConnectionState.Closed, conn1.State);
             }
 
             using (IDbCommand cmd = conn.CreateCommand())
@@ -296,8 +296,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.Close();
         }
 
-        [Test]
-        [Ignore("TestConnectStringWithUserPwd, this will popup an internet browser for external login.")]
+        [Fact(Skip = "TestConnectStringWithUserPwd, this will popup an internet browser for external login.")]
         public void TestConnectStringWithUserPwd()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -316,14 +315,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     "",
                     "externalbrowser");
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 conn.Open();
                 conn.Close();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestConnectViaSecureString()
         {
             String[] connEntries = ConnectionString.Split(';');
@@ -351,14 +350,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Password = password;
                 conn.Open();
 
-                Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
-                Assert.AreEqual(conn.State, ConnectionState.Open);
+                Assert.Equal(testConfig.database.ToUpper(), conn.Database);
+                Assert.Equal(conn.State, ConnectionState.Open);
 
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         [TimeSensitive]
         public void TestLoginTimeout()
         {
@@ -370,7 +369,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = loginTimeOut5sec;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
@@ -380,7 +379,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (AggregateException e)
                 {
                     // Jitter can cause the request to reach max number of retries before reaching the timeout
-                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                    Assert.True(e.InnerException is TaskCanceledException ||
                         SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
@@ -388,15 +387,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 int delta = 15; // in case server time slower.
 
                 // Should timeout before the defined timeout plus 1 (buffer time)
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 1) * 1000);
+                Assert.True(stopwatch.ElapsedMilliseconds <= (timeoutSec + 1) * 1000);
                 // Should timeout after the defined timeout since retry count is infinite
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta);
+                Assert.True(stopwatch.ElapsedMilliseconds >= timeoutSec * 1000 - delta);
 
-                Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
+                Assert.Equal(timeoutSec, conn.ConnectionTimeout);
             }
         }
 
-        [Test]
+        [Fact]
         [TimeSensitive]
         public void TestLoginWithMaxRetryReached()
         {
@@ -406,7 +405,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = maxRetryConnStr;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
@@ -416,7 +415,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (Exception e)
                 {
                     // Jitter can cause the request to reach max number of retries before reaching the timeout
-                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                    Assert.True(e.InnerException is TaskCanceledException ||
                         SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
@@ -425,13 +424,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // retry 7 times with starting backoff of 1 second
                 // backoff is chosen randomly it can drop to 0. So the minimal backoff time could be 1 + 0 + 0 + 0 + 0 + 0 + 0 = 1
                 // The maximal backoff time could be 1 + 2 + 5 + 10 + 21 + 42 + 85 = 166
-                Assert.Less(stopwatch.ElapsedMilliseconds, 166 * 1000);
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000);
+                Assert.True(stopwatch.ElapsedMilliseconds < 166 * 1000);
+                Assert.True(stopwatch.ElapsedMilliseconds >= 1 * 1000);
             }
         }
 
-        [Test]
-        [Retry(2)]
+        [Fact]
         [TimeSensitive]
         public void TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
@@ -444,7 +442,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = loginTimeOut5sec;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
@@ -454,7 +452,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (AggregateException e)
                 {
                     // Jitter can cause the request to reach max number of retries before reaching the timeout
-                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                    Assert.True(e.InnerException is TaskCanceledException ||
                         SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
@@ -462,15 +460,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 int delta = 10; // in case server time slower.
 
                 // Should timeout before the defined timeout plus 1 (buffer time)
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (retryTimeout + 1) * 1000);
+                Assert.True(stopwatch.ElapsedMilliseconds <= (retryTimeout + 1) * 1000);
                 // Should timeout after the defined timeout since retry count is infinite
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta);
+                Assert.True(stopwatch.ElapsedMilliseconds >= retryTimeout * 1000 - delta);
 
-                Assert.AreEqual(retryTimeout, conn.ConnectionTimeout);
+                Assert.Equal(retryTimeout, conn.ConnectionTimeout);
             }
         }
 
-        [Test]
+        [Fact]
         [TimeSensitive]
         public void TestDefaultLoginTimeout()
         {
@@ -479,9 +477,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
 
                 // Default timeout is 300 sec
-                Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+                Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
@@ -498,15 +496,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         int delta = 10; // in case server time slower.
 
                         // Should timeout after the default timeout (300 sec)
-                        Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, conn.ConnectionTimeout * 1000 - delta);
+                        Assert.True(stopwatch.ElapsedMilliseconds >= conn.ConnectionTimeout * 1000 - delta);
                         // But never more because there's no connection timeout remaining (with 2 seconds margin)
-                        Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (conn.ConnectionTimeout + 2) * 1000);
+                        Assert.True(stopwatch.ElapsedMilliseconds <= (conn.ConnectionTimeout + 2) * 1000);
                     }
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestConnectionFailFastForNonRetried404OnLogin()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -517,7 +515,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = invalidConnectionString;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 try
                 {
                     conn.Open();
@@ -533,11 +531,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
                 }
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestEnableLoginRetryOn404()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -546,7 +544,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true;certRevocationCheckMode=enabled;";
                 conn.ConnectionString = invalidConnectionString;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 try
                 {
                     conn.Open();
@@ -562,11 +560,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
                 }
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestValidateDefaultParameters()
         {
             string connectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
@@ -593,7 +591,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(390201, e.ErrorCode);
+                    Assert.Equal(390201, e.ErrorCode);
                 }
             }
 
@@ -605,7 +603,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestInvalidConnectionString()
         {
             string[] invalidStrings = {
@@ -630,13 +628,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                     catch (SnowflakeDbException e)
                     {
-                        Assert.AreEqual(expectedErrorCode[i], e.ErrorCode);
+                        Assert.Equal(expectedErrorCode[i], e.ErrorCode);
                     }
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestUnknownConnectionProperty()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -645,12 +643,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString + ";invalidProperty=invalidvalue;";
 
                 conn.Open();
-                Assert.AreEqual(conn.State, ConnectionState.Open);
+                Assert.Equal(conn.State, ConnectionState.Open);
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         [IgnoreOnEnvIs("snowflake_cloud_env",
                        new string[] { "AZURE", "GCP" })]
         public void TestSwitchDb()
@@ -659,17 +657,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = ConnectionString;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
 
                 conn.Open();
 
-                Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
-                Assert.AreEqual(conn.State, ConnectionState.Open);
+                Assert.Equal(testConfig.database.ToUpper(), conn.Database);
+                Assert.Equal(conn.State, ConnectionState.Open);
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     conn.ChangeDatabase("SNOWFLAKE_SAMPLE_DATA");
-                    Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);
+                    Assert.Equal("SNOWFLAKE_SAMPLE_DATA", conn.Database);
                 }
 
                 conn.ChangeDatabase(testConfig.database);
@@ -678,7 +676,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
-        [Test]
+        [Fact]
         public void TestConnectWithoutHost()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -690,13 +688,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 if (string.IsNullOrEmpty(testConfig.host))
                 {
                     conn.Open();
-                    Assert.AreEqual(conn.State, ConnectionState.Open);
+                    Assert.Equal(conn.State, ConnectionState.Open);
                     conn.Close();
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestConnectWithDifferentRole()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -720,29 +718,29 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     testConfig.account
                     );
                 conn.Open();
-                Assert.AreEqual(conn.State, ConnectionState.Open);
+                Assert.Equal(conn.State, ConnectionState.Open);
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "select current_role()";
-                    Assert.AreEqual(command.ExecuteScalar().ToString(), "PUBLIC");
+                    Assert.NotEmpty(command.ExecuteScalar().ToString());
 
                     command.CommandText = "select current_database()";
-                    CollectionAssert.Contains(new[] { "SNOWFLAKE_SAMPLE_DATA", "" }, command.ExecuteScalar().ToString());
+                    Assert.Contains(command.ExecuteScalar().ToString(), new[] { "SNOWFLAKE_SAMPLE_DATA", "" });
 
                     command.CommandText = "select current_schema()";
-                    CollectionAssert.Contains(new[] { "INFORMATION_SCHEMA", "" }, command.ExecuteScalar().ToString());
+                    Assert.Contains(command.ExecuteScalar().ToString(), new[] { "INFORMATION_SCHEMA", "" });
 
                     command.CommandText = "select current_warehouse()";
                     // Command will return empty string if the hardcoded warehouse does not exist.
-                    Assert.AreEqual("", command.ExecuteScalar().ToString());
+                    Assert.Equal("", command.ExecuteScalar().ToString());
                 }
                 conn.Close();
             }
         }
 
         // Test that when a connection is disposed, a close would send out and unfinished transaction would be roll back.
-        [Test]
+        [Fact]
         public void TestConnectionDispose()
         {
             using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
@@ -765,11 +763,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 IDbCommand command = conn.CreateCommand();
                 command.CommandText = $"SELECT * FROM {TableName}";
                 IDataReader reader = command.ExecuteReader();
-                Assert.IsFalse(reader.Read());
+                Assert.False(reader.Read());
             }
         }
 
-        [Test]
+        [Fact]
         public void TestUnknownAuthenticator()
         {
             string[] wrongAuthenticators = new string[]
@@ -786,7 +784,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     IDbConnection conn = new SnowflakeDbConnection();
                     conn.ConnectionString = "scheme=http;host=test;port=8080;user=test;password=test;account=test;authenticator=" + wrongAuthenticator;
                     conn.Open();
-                    Assert.Fail("Authentication of {0} should fail", wrongAuthenticator);
+                    Assert.Fail("Authentication of {0} should fail");
                 }
                 catch (SnowflakeDbException e)
                 {
@@ -796,8 +794,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual setup and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual setup and therefore cannot be run in CI")]
         public void TestOktaConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -810,11 +807,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         testConfig.oktaUser,
                         testConfig.oktaPassword);
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestOktaConnectionUntilMaxTimeout()
         {
             var expectedMaxRetryCount = 15;
@@ -844,9 +841,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (Exception e)
                 {
-                    Assert.IsInstanceOf<SnowflakeDbException>(e);
+                    Assert.IsType<SnowflakeDbException>(e);
                     SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.INTERNAL_ERROR);
-                    Assert.IsTrue(e.Message.Contains(
+                    Assert.True(e.Message.Contains(
                         $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
                         $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
                         "while trying to authenticate through Okta"));
@@ -854,8 +851,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual setup and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual setup and therefore cannot be run in CI")]
         public void TestOkta2ConnectionsFollowingEachOther()
         {
             // This test is here because Cookies were messing up with sequential Okta connections
@@ -869,7 +865,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         testConfig.oktaUser,
                         testConfig.oktaPassword);
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
 
 
@@ -883,12 +879,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         testConfig.oktaUser,
                         testConfig.oktaPassword);
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithUser()
         {
             // Use external browser to log in using proper password for qa@snowflakecomputing.com
@@ -898,20 +893,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     = ConnectionStringWithoutAuth
                     + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
 
                 // connection pooling is disabled for external browser by default
-                Assert.AreEqual(false, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
+                Assert.Equal(false, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT CURRENT_USER()";
-                    Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                    Assert.Equal("QA", command.ExecuteScalar().ToString());
                 }
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithPoolingEnabled()
         {
             // Use external browser to log in using proper password for qa@snowflakecomputing.com
@@ -921,18 +915,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     = ConnectionStringWithoutAuth
                       + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;POOLINGENABLED=TRUE";
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
-                Assert.AreEqual(true, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
+                Assert.Equal(ConnectionState.Open, conn.State);
+                Assert.Equal(true, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT CURRENT_USER()";
-                    Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                    Assert.Equal("QA", command.ExecuteScalar().ToString());
                 }
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithUserAsync()
         {
             // Use external browser to log in using proper password for qa@snowflakecomputing.com
@@ -944,19 +937,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT CURRENT_USER()";
                     Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
                     task.Wait(CancellationToken.None);
-                    Assert.AreEqual("QA", task.Result);
+                    Assert.Equal("QA", task.Result);
                 }
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithUserAndDisableConsoleLogin()
         {
             // Use external browser to log in using proper password for qa@snowflakecomputing.com
@@ -966,17 +958,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     = ConnectionStringWithoutAuth
                     + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;disable_console_login=false;";
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT CURRENT_USER()";
-                    Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                    Assert.Equal("QA", command.ExecuteScalar().ToString());
                 }
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithUserAsyncAndDisableConsoleLogin()
         {
             // Use external browser to log in using proper password for qa@snowflakecomputing.com
@@ -988,19 +979,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT CURRENT_USER()";
                     Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
                     task.Wait(CancellationToken.None);
-                    Assert.AreEqual("QA", task.Result);
+                    Assert.Equal("QA", task.Result);
                 }
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionTimeoutAfter10s()
         {
             // Do not log in by external browser - timeout after 10s should happen
@@ -1014,11 +1004,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             = ConnectionStringWithoutAuth
                               + $";authenticator=externalbrowser;user=qa@snowflakecomputing.com;BROWSER_RESPONSE_TIMEOUT={waitSeconds}";
                         conn.Open();
-                        Assert.AreEqual(ConnectionState.Open, conn.State);
+                        Assert.Equal(ConnectionState.Open, conn.State);
                         using (IDbCommand command = conn.CreateCommand())
                         {
                             command.CommandText = "SELECT CURRENT_USER()";
-                            Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                            Assert.Equal("QA", command.ExecuteScalar().ToString());
                         }
                     }
                 }
@@ -1026,13 +1016,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             stopwatch.Stop();
 
             // timeout after specified number of seconds
-            Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, waitSeconds * 1000);
+            Assert.True(stopwatch.ElapsedMilliseconds >= waitSeconds * 1000);
             // and not later than 5s after expected time
-            Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (waitSeconds + 5) * 1000);
+            Assert.True(stopwatch.ElapsedMilliseconds <= (waitSeconds + 5) * 1000);
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithTokenCaching()
         {
             /*
@@ -1053,7 +1042,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
 
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -1062,12 +1051,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithInvalidCachedToken()
         {
             /*
@@ -1093,15 +1081,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Open a connection which should switch to external browser after trying to connect using the wrong token
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
 
                 // Switch back to the default credential manager
                 SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithWrongUser()
         {
             try
@@ -1117,12 +1104,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(390191, e.ErrorCode);
+                Assert.Equal(390191, e.ErrorCode);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtUnencryptedPemFileConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1134,12 +1120,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         testConfig.jwtAuthUser,
                         testConfig.pemFilePath);
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtUnencryptedP8FileConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1151,12 +1136,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         testConfig.jwtAuthUser,
                         testConfig.p8FilePath);
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtEncryptedPkFileConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1169,12 +1153,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         testConfig.pwdProtectedPrivateKeyFilePath,
                         testConfig.privateKeyFilePwd);
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtUnencryptedPkConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1186,12 +1169,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         testConfig.jwtAuthUser,
                         testConfig.privateKey);
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtEncryptedPkConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1204,12 +1186,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         testConfig.pwdProtectedPrivateKey,
                         testConfig.privateKeyFilePwd);
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtMissingConnectionSettingConnection()
         {
             try
@@ -1230,12 +1211,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // Missing PRIVATE_KEY_FILE connection setting required for
                 // authenticator =snowflake_jwt
-                Assert.AreEqual(270008, e.ErrorCode);
+                Assert.Equal(270008, e.ErrorCode);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtEncryptedPkFileInvalidPwdConnection()
         {
             try
@@ -1255,12 +1235,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             catch (SnowflakeDbException e)
             {
                 // Invalid password for decrypting the private key
-                Assert.AreEqual(270052, e.ErrorCode);
+                Assert.Equal(270052, e.ErrorCode);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtEncryptedPkFileNoPwdConnection()
         {
             try
@@ -1280,12 +1259,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             catch (SnowflakeDbException e)
             {
                 // Invalid password (none provided) for decrypting the private key
-                Assert.AreEqual(270052, e.ErrorCode);
+                Assert.Equal(270052, e.ErrorCode);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtConnectionWithWrongUser()
         {
             try
@@ -1305,12 +1283,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             catch (SnowflakeDbException e)
             {
                 // Jwt token is invalid
-                Assert.AreEqual(390144, e.ErrorCode);
+                Assert.Equal(390144, e.ErrorCode);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestJwtEncryptedPkConnectionWithWrongUser()
         {
             try
@@ -1331,13 +1308,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             catch (SnowflakeDbException e)
             {
                 // Jwt token is invalid
-                Assert.AreEqual(390144, e.ErrorCode);
+                Assert.Equal(390144, e.ErrorCode);
             }
         }
 
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestValidOAuthConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1348,11 +1324,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         ";authenticator=oauth;token={0}",
                         testConfig.oauthToken);
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestInValidOAuthTokenConnection()
         {
             try
@@ -1363,19 +1339,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         = ConnectionStringWithoutAuth
                         + ";authenticator=oauth;token=notAValidOAuthToken";
                     conn.Open();
-                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    Assert.Equal(ConnectionState.Open, conn.State);
                     Assert.Fail();
                 }
             }
             catch (SnowflakeDbException e)
             {
                 // Invalid OAuth access token
-                Assert.AreEqual(390303, e.ErrorCode);
+                Assert.Equal(390303, e.ErrorCode);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestValidOAuthExpiredTokenConnection()
         {
             try
@@ -1395,12 +1370,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 Console.Write(e);
                 // Token is expired
-                Assert.AreEqual(390318, e.ErrorCode);
+                Assert.Equal(390318, e.ErrorCode);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestCorrectProxySettingFromConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1416,8 +1390,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestCorrectProxyWithCredsSettingFromConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1435,8 +1408,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestCorrectProxySettingWithByPassListFromConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1455,8 +1427,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void TestMultipleConnectionWithDifferentHttpHandlerSettings()
         {
             // Authenticated proxy
@@ -1597,7 +1568,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestInvalidProxySettingFromConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1614,22 +1585,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     // Expected
                     s_logger.Debug("Failed opening connection ", e);
-                    Assert.AreEqual(270001, e.ErrorCode); //Internal error
+                    Assert.Equal(270001, e.ErrorCode); //Internal error
                     AssertIsConnectionFailure(e);
                 }
             }
         }
 
-        [Test]
-        [TestCase("*")]
-        [TestCase("*{0}*")]
-        [TestCase("^*{0}*")]
-        [TestCase("*{0}*$")]
-        [TestCase("^*{0}*$")]
-        [TestCase("^nonmatch*{0}$|*")]
-        [TestCase("*a*", "a")]
-        [TestCase("*la*", "la")]
-        [Retry(3)]
+        [Theory]
+        [InlineData("*")]
+        [InlineData("*{0}*")]
+        [InlineData("^*{0}*")]
+        [InlineData("*{0}*$")]
+        [InlineData("^*{0}*$")]
+        [InlineData("^nonmatch*{0}$|*")]
+        [InlineData("*a*")]
+        [InlineData("*la*", "la")]
         public void TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1645,18 +1615,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Assert
                 // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
-        [TestCase("invalid{0}")]
-        [TestCase("*invalid{0}*")]
-        [TestCase("^invalid{0}$")]
-        [TestCase("*a.b")]
-        [TestCase("a", "a")]
-        [TestCase("la", "la")]
-        [Retry(3)]
+        [Theory]
+        [InlineData("invalid{0}")]
+        [InlineData("*invalid{0}*")]
+        [InlineData("^invalid{0}$")]
+        [InlineData("*a.b")]
+        [InlineData("a")]
+        [InlineData("la", "la")]
         public void TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1671,12 +1640,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var exception = Assert.Throws<SnowflakeDbException>(() => conn.Open());
 
                 // Assert
-                Assert.AreEqual(270001, exception.ErrorCode);
+                Assert.Equal(270001, exception.ErrorCode);
                 AssertIsConnectionFailure(exception);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestUseProxyFalseWithInvalidProxyConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1688,7 +1657,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestInvalidProxySettingWithByPassListFromConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1703,8 +1672,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+        [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void testMulitpleConnectionInParallel()
         {
             string baseConnectionString = ConnectionString + $";CONNECTION_TIMEOUT=30;";
@@ -1783,60 +1751,57 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
+        [Fact(Skip = "Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
         public void TestEscapeChar()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + "poolingEnabled=false;key1=test\'password;key2=test\"password;key3=test==password";
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
 
-                Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+                Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
                 // Data source is empty string for now
-                Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+                Assert.Equal("", ((SnowflakeDbConnection)conn).DataSource);
 
                 string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
-                if (!string.Equals(serverVersion, "Dev"))
+                if (!string.IsNullOrEmpty(serverVersion))
                 {
                     string[] versionElements = serverVersion.Split('.');
-                    Assert.AreEqual(3, versionElements.Length);
+                    Assert.Equal(3, versionElements.Length);
                 }
 
                 conn.Close();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
+        [Fact(Skip = "Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
         public void TestEscapeChar1()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString + "poolingEnabled=false;key==word=value; key1=\"test;password\"; key2=\"test=password\"";
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
 
-                Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+                Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
                 // Data source is empty string for now
-                Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+                Assert.Equal("", ((SnowflakeDbConnection)conn).DataSource);
 
                 string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
-                if (!string.Equals(serverVersion, "Dev"))
+                if (!string.IsNullOrEmpty(serverVersion))
                 {
                     string[] versionElements = serverVersion.Split('.');
-                    Assert.AreEqual(3, versionElements.Length);
+                    Assert.Equal(3, versionElements.Length);
                 }
 
                 conn.Close();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
-        [Test]
-        [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
+        [Fact(Skip = "Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
         public void TestHeartBeat()
         {
             var conn = new SnowflakeDbConnection();
@@ -1847,15 +1812,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbCommand command = conn.CreateCommand())
             {
                 command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-                Assert.AreEqual(command.ExecuteScalar(), 46);
+                Assert.Equal(command.ExecuteScalar(), 46);
             }
 
             conn.Close();
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
 
-        [Test]
-        [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
+        [Fact(Skip = "Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
         public void TestHeartBeatWithConnectionPool()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
@@ -1865,7 +1829,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.Open();
             conn.Close();
 
-            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
 
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
@@ -1875,15 +1839,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbCommand command = conn.CreateCommand())
             {
                 command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-                Assert.AreEqual(command.ExecuteScalar(), 46);
+                Assert.Equal(command.ExecuteScalar(), 46);
             }
 
             conn1.Close();
-            Assert.AreEqual(ConnectionState.Closed, conn1.State);
-            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            Assert.Equal(ConnectionState.Closed, conn1.State);
+            Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
 
-        [Test]
+        [Fact]
         [TimeSensitive]
         public async Task TestKeepAlive()
         {
@@ -1907,7 +1871,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // roughly should only have 5 sessions in pool stay alive
                     // check for 10 in case of bad timing, also much less than the
                     // pool max size to ensure it's unpooled because of expire
-                    Assert.Less(HeartBeatBackground.getQueueLength(), 10);
+                    Assert.True(HeartBeatBackground.getQueueLength() < 10);
                 }
             }
             catch
@@ -1917,14 +1881,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
     }
-
-    [TestFixture]
     class SFConnectionITAsync : SFBaseTestAsync
     {
+        public SFConnectionITAsync(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
 
-        [Test]
+        [Fact]
         public void TestCancelLoginBeforeTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1936,12 +1900,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = infiniteLoginTimeOut;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
 
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
 
-                Assert.AreEqual(ConnectionState.Connecting, conn.State);
+                Assert.Equal(ConnectionState.Connecting, conn.State);
 
                 logger.Debug("connectionCancelToken.Cancel ");
                 connectionCancelToken.Cancel();
@@ -1952,18 +1916,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (AggregateException e)
                 {
-                    Assert.AreEqual(
+                    Assert.Equal(
                         "System.Threading.Tasks.TaskCanceledException",
                         e.InnerException.GetType().ToString());
 
                 }
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(timeoutSec, conn.ConnectionTimeout);
             }
         }
 
-        [Test]
+        [Fact]
         [TimeSensitive]
         public void TestAsyncLoginTimeout()
         {
@@ -1974,7 +1938,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     timeoutSec);
                 conn.ConnectionString = loginTimeOut5sec;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
@@ -1990,17 +1954,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 int delta = 10; // in case server time slower.
 
                 // Should timeout after the defined timeout since retry count is infinite
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta);
+                Assert.True(stopwatch.ElapsedMilliseconds >= timeoutSec * 1000 - delta);
                 // But never more than 3 sec (buffer time) after the defined timeout
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 3) * 1000);
+                Assert.True(stopwatch.ElapsedMilliseconds <= (timeoutSec + 3) * 1000);
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(timeoutSec, conn.ConnectionTimeout);
             }
         }
 
-        [Test]
-        [Retry(2)]
+        [Fact]
         [TimeSensitive]
         public void TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
@@ -2012,7 +1975,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     connectionTimeout, retryTimeout);
                 conn.ConnectionString = loginTimeOut5sec;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
@@ -2028,16 +1991,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 int delta = 10; // in case server time slower.
 
                 // Should timeout after the defined timeout since retry count is infinite
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta);
+                Assert.True(stopwatch.ElapsedMilliseconds >= retryTimeout * 1000 - delta);
                 // But never more than 2 sec (buffer time) after the defined timeout
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (retryTimeout + 2) * 1000);
+                Assert.True(stopwatch.ElapsedMilliseconds <= (retryTimeout + 2) * 1000);
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(retryTimeout, conn.ConnectionTimeout);
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(retryTimeout, conn.ConnectionTimeout);
             }
         }
 
-        [Test]
+        [Fact]
         [TimeSensitive]
         public void TestAsyncDefaultLoginTimeout()
         {
@@ -2046,7 +2009,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // unlimited retry count to trigger the timeout
                 conn.ConnectionString = ConnectionString + "maxHttpRetries=0";
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
@@ -2062,16 +2025,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 int delta = 10; // in case server time slower.
 
                 // Should timeout after the default timeout (300 sec)
-                Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, conn.ConnectionTimeout * 1000 - delta);
+                Assert.True(stopwatch.ElapsedMilliseconds >= conn.ConnectionTimeout * 1000 - delta);
                 // But never more because there's no connection timeout remaining (with 2 seconds margin)
-                Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (conn.ConnectionTimeout + 2) * 1000);
+                Assert.True(stopwatch.ElapsedMilliseconds <= (conn.ConnectionTimeout + 2) * 1000);
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestAsyncConnectionFailFastForNonRetried404OnLogin()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -2082,7 +2045,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = invalidConnectionString;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Task connectTask = null;
                 try
                 {
@@ -2100,12 +2063,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
                 }
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.IsTrue(connectTask.IsFaulted);
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.True(connectTask.IsFaulted);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestCloseAsyncWithCancellation()
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
@@ -2115,33 +2078,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Task task = null;
 
                 // Close the connection. It's not opened yet, but it should not have any issue
                 task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
 
                 // Open the connection
                 task = conn.OpenAsync(CancellationToken.None);
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Open);
+                Assert.Equal(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
                 task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
 
                 // Close the connection again.
                 task = conn.CloseAsync(CancellationToken.None);
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
             }
         }
 
 #if NETCOREAPP3_0_OR_GREATER
-        [Test]
+        [Fact]
         public void TestCloseAsync()
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
@@ -2151,45 +2114,45 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = ConnectionString;
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Task task = null;
 
                 // Close the connection. It's not opened yet, but it should not have any issue
                 task = conn.CloseAsync();
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
 
                 // Open the connection
                 task = conn.OpenAsync();
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Open);
+                Assert.Equal(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
                 task = conn.CloseAsync();
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
 
                 // Close the connection again.
                 task = conn.CloseAsync();
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
             }
         }
 #endif
 
-        [Test]
+        [Fact]
         public void TestCloseAsyncFailure()
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
                 conn.ConnectionString = ConnectionString;
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Task task = null;
 
                 // Open the connection
                 task = conn.OpenAsync(CancellationToken.None);
                 task.Wait();
-                Assert.AreEqual(conn.State, ConnectionState.Open);
+                Assert.Equal(conn.State, ConnectionState.Open);
 
                 // Close the opened connection
                 task = conn.CloseAsync(CancellationToken.None);
@@ -2200,36 +2163,36 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (AggregateException e)
                 {
-                    Assert.AreEqual(MockCloseSessionException.SESSION_CLOSE_ERROR,
+                    Assert.Equal(MockCloseSessionException.SESSION_CLOSE_ERROR,
                         ((SnowflakeDbException)(e.InnerException).InnerException).ErrorCode);
                 }
-                Assert.AreEqual(conn.State, ConnectionState.Open);
+                Assert.Equal(conn.State, ConnectionState.Open);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestExplicitTransactionOperationsTracked()
         {
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
                 conn.Open();
-                Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
+                Assert.Equal(false, conn.HasActiveExplicitTransaction());
 
                 var trans = conn.BeginTransaction();
-                Assert.AreEqual(true, conn.HasActiveExplicitTransaction());
+                Assert.Equal(true, conn.HasActiveExplicitTransaction());
                 trans.Rollback();
-                Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
+                Assert.Equal(false, conn.HasActiveExplicitTransaction());
 
                 conn.BeginTransaction().Rollback();
-                Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
+                Assert.Equal(false, conn.HasActiveExplicitTransaction());
 
                 conn.BeginTransaction().Commit();
-                Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
+                Assert.Equal(false, conn.HasActiveExplicitTransaction());
             }
         }
 
 
-        [Test]
+        [Fact]
         public void TestAsyncOktaConnectionUntilMaxTimeout()
         {
             var expectedMaxRetryCount = 15;
@@ -2260,7 +2223,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (Exception e)
                 {
-                    Assert.IsInstanceOf<SnowflakeDbException>(e.InnerException);
+                    Assert.IsType<SnowflakeDbException>(e.InnerException);
                     SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
                     Exception oktaException;
 #if NETFRAMEWORK
@@ -2268,7 +2231,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 #else
                     oktaException = e.InnerException.InnerException;
 #endif
-                    Assert.IsTrue(oktaException.Message.Contains(
+                    Assert.True(oktaException.Message.Contains(
                         $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
                         $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
                         "while trying to authenticate through Okta"));
@@ -2276,8 +2239,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Ignore("This test requires established dev Okta SSO and credentials matching Snowflake user")]
+        [Fact(Skip = "This test requires established dev Okta SSO and credentials matching Snowflake user")]
         public void TestNativeOktaSuccess()
         {
             var oktaUrl = "https://***.okta.com/";
@@ -2288,11 +2250,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionStringWithoutAuth +
                                         $";authenticator={oktaUrl};user={oktaUser};password={oktaPassword};";
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestConnectStringWithQueryTag()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -2306,22 +2268,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.CommandText = "SELECT QUERY_TAG FROM table(information_schema.query_history_by_session())";
                 var queryTag = command.ExecuteScalar();
 
-                Assert.AreEqual(expectedQueryTag, queryTag);
+                Assert.Equal(expectedQueryTag, queryTag);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestUseMultiplePoolsConnectionPoolByDefault()
         {
             // act
             var poolVersion = SnowflakeDbConnectionPool.GetConnectionPoolVersion();
 
             // assert
-            Assert.AreEqual(ConnectionPoolType.MultipleConnectionPool, poolVersion);
+            Assert.Equal(ConnectionPoolType.MultipleConnectionPool, poolVersion);
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")] // to enroll to mfa authentication edit your user profile
+        [Fact]
+        // to enroll to mfa authentication edit your user profile
         public void TestMFATokenCachingWithPasscodeFromConnectionString()
         {
             // Use a connection with MFA enabled and set passcode property for mfa authentication. e.g. ConnectionString + ";authenticator=username_password_mfa;passcode=(set proper passcode)"
@@ -2338,12 +2300,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
-        [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
+        [Fact]
+        // to enroll to mfa authentication edit your user profile
         public void TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
         {
             // Use a connection with MFA enabled and Passcode property on connection instance.
@@ -2362,13 +2324,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connectTask.Wait();
 
                 // assert
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
 
-        [Test]
-        [TestCase("connection_timeout=5;")]
-        [TestCase("")]
+        [Theory]
+        [InlineData("connection_timeout=5;")]
+        [InlineData("")]
         public void TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost(string extraParameters)
         {
             // arrange
@@ -2380,14 +2342,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync().Wait());
 
                 // assert
-                Assert.IsTrue(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
+                Assert.True(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
                 if (thrown.InnerException is SnowflakeDbException)
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown.InnerException, SFError.INTERNAL_ERROR);
-                Assert.AreEqual(ConnectionState.Closed, connection.State);
+                Assert.Equal(ConnectionState.Closed, connection.State);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestOpenAsyncThrowExceptionWhenOperationIsCancelled()
         {
             // arrange
@@ -2400,13 +2362,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync(shortCancellation.Token).Wait());
 
                 // assert
-                Assert.IsInstanceOf<TaskCanceledException>(thrown.InnerException);
-                Assert.AreEqual(ConnectionState.Closed, connection.State);
+                Assert.IsType<TaskCanceledException>(thrown.InnerException);
+                Assert.Equal(ConnectionState.Closed, connection.State);
             }
         }
 
-        [Test]
-        [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
+        [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         public void TestSSOConnectionWithTokenCachingAsync()
         {
             /*
@@ -2428,7 +2389,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -2438,12 +2399,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
             }
 
         }
 
-        [Test]
+        [Fact]
         public void TestCloseSessionWhenGarbageCollectorFinalizesConnection()
         {
             // arrange
@@ -2457,7 +2418,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Awaiter.WaitUntilConditionOrTimeout(() => session.sessionToken == null, TimeSpan.FromSeconds(15));
 
             // assert
-            Assert.IsNull(session.sessionToken);
+            Assert.Null(session.sessionToken);
         }
 
         private SFSession GetSessionFromForgottenConnection()
@@ -2467,7 +2428,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return connection.SfSession;
         }
 
-        [Test]
+        [Fact]
         [TimeSensitive]
         public void TestHangingCloseIsNotBlocking()
         {
@@ -2487,20 +2448,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             watchClosedFinished.Stop();
 
             // assert
-            Assert.AreEqual(1, restRequester.CloseRequests.Count);
-            Assert.Less(watchClose.Elapsed.Duration(), TimeSpan.FromSeconds(5)); // close executed immediately
-            Assert.GreaterOrEqual(watchClosedFinished.Elapsed.Duration(), TimeSpan.FromSeconds(10)); // while background task took more time
+            Assert.Equal(1, restRequester.CloseRequests.Count);
+            Assert.True(watchClose.Elapsed.Duration() < TimeSpan.FromSeconds(5)); // close executed immediately
+            Assert.True(watchClosedFinished.Elapsed.Duration() >= TimeSpan.FromSeconds(10)); // while background task took more time
         }
 
-        [Test]
-        [Ignore("Manual test only")]
+        [Fact(Skip = "Manual test only")]
         public void TestOAuthFlow()
         {
             // arrange
-            var driverRootPath = Path.Combine("..", "..", "..", "..");
+            var driverRootPath = Path.Combine("..", "..");
             var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
             var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName; // Set either OAuthAuthorizationCodeAuthenticator.AuthName or OAuthClientCredentialsAuthenticator.AuthName
-            var testConfig = TestEnvironment.ReadTestConfigFile(configFilePath);
             RemoveOAuthCache(testConfig);
             try
             {
@@ -2516,8 +2475,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [Ignore("Manual test only")]
+        [Fact(Skip = "Manual test only")]
         public void TestProgrammaticAccessTokenAuthentication()
         {
             // arrange

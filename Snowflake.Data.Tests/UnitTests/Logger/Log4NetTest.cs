@@ -1,16 +1,13 @@
-using NUnit.Framework;
+using Xunit;
 using Microsoft.Extensions.Logging;
 using System;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    [TestFixture, NonParallelizable]
     class Log4NetTest : LoggerTest
     {
         private const string Log4NetFileName = "test_log4net.log";
-
-        [OneTimeSetUp]
         public void SetUp()
         {
             Environment.SetEnvironmentVariable("TEST_LOG4NET_FILE_NAME", Log4NetFileName);

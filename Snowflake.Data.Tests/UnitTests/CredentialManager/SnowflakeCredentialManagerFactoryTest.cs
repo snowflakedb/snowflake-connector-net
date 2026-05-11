@@ -1,21 +1,19 @@
 using System;
 using System.Runtime.InteropServices;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
-    [TestFixture, NonParallelizable]
     public class SnowflakeCredentialManagerFactoryTest
     {
-        [TearDown]
         public void TearDown()
         {
             SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
         }
 
-        [Test]
+        [Fact]
         public void TestUsingDefaultCredentialManager()
         {
             // arrange
@@ -27,15 +25,15 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // assert
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Assert.IsInstanceOf<SFCredentialManagerWindowsNativeImpl>(credentialManager);
+                Assert.IsType<SFCredentialManagerWindowsNativeImpl>(credentialManager);
             }
             else
             {
-                Assert.IsInstanceOf<SFCredentialManagerFileImpl>(credentialManager);
+                Assert.IsType<SFCredentialManagerFileImpl>(credentialManager);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSettingCustomCredentialManager()
         {
             // arrange
@@ -45,10 +43,10 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // assert
-            Assert.IsInstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
+            Assert.IsType<SFCredentialManagerInMemoryImpl>(credentialManager);
         }
 
-        [Test]
+        [Fact]
         public void TestUseMemoryImplCredentialManager()
         {
             // arrange
@@ -58,37 +56,35 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // assert
-            Assert.IsInstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
+            Assert.IsType<SFCredentialManagerInMemoryImpl>(credentialManager);
         }
 
-        [Test]
+        [Fact]
         public void TestThatThrowsErrorWhenTryingToSetCredentialManagerToNull()
         {
             // act and assert
             var exception = Assert.Throws<SnowflakeDbException>(() => SnowflakeCredentialManagerFactory.SetCredentialManager(null));
-            Assert.That(exception.Message, Does.Contain("Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method."));
+            Assert.Contains("Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method.", exception.Message);
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestUseWindowsCredentialManagerFailsOnUnix()
         {
             // act
             var thrown = Assert.Throws<Exception>(SnowflakeCredentialManagerFactory.UseWindowsCredentialManager);
 
             // assert
-            Assert.AreEqual("Windows native credential manager implementation can be used only on Windows", thrown.Message);
+            Assert.Equal("Windows native credential manager implementation can be used only on Windows", thrown.Message);
         }
 
-        [Test]
-        [Platform("Win")]
+        [Fact]
         public void TestUseFileCredentialManagerFailsOnWindows()
         {
             // act
             var thrown = Assert.Throws<Exception>(SnowflakeCredentialManagerFactory.UseFileCredentialManager);
 
             // assert
-            Assert.AreEqual("File credential manager implementation is not supported on Windows", thrown.Message);
+            Assert.Equal("File credential manager implementation is not supported on Windows", thrown.Message);
         }
     }
 }

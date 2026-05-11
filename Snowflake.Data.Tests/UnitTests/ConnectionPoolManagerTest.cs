@@ -2,7 +2,7 @@ using System;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Moq;
@@ -12,7 +12,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture, NonParallelizable]
     class ConnectionPoolManagerTest
     {
         private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();
@@ -21,40 +20,34 @@ namespace Snowflake.Data.Tests.UnitTests
         private const string ConnectionStringWithoutPassword = "db=D3;warehouse=W3;account=A3;user=U3;role=R3;minPoolSize=1;";
         private readonly SecureString _password3 = SecureStringHelper.Encode("P3");
         private static PoolConfig s_poolConfig;
-
-        [OneTimeSetUp]
         public static void BeforeAllTests()
         {
             s_poolConfig = new PoolConfig();
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SessionPool.SessionFactory = new MockSessionFactory();
         }
-
-        [OneTimeTearDown]
         public static void AfterAllTests()
         {
             s_poolConfig.Reset();
             SessionPool.SessionFactory = new SessionFactory();
         }
-
-        [SetUp]
         public void BeforeEach()
         {
             _connectionPoolManager.ClearAllPools();
         }
 
-        [Test]
+        [Fact]
         public void TestPoolManagerReturnsSessionPoolForGivenConnectionString()
         {
             // Act
             var sessionPool = _connectionPoolManager.GetPool(ConnectionString1, new SessionPropertiesContext());
 
             // Assert
-            Assert.AreEqual(ConnectionString1, sessionPool.ConnectionString);
-            Assert.AreEqual(null, sessionPool.Password);
+            Assert.Equal(ConnectionString1, sessionPool.ConnectionString);
+            Assert.Equal(null, sessionPool.Password);
         }
 
-        [Test]
+        [Fact]
         public void TestPoolManagerReturnsSessionPoolForGivenConnectionStringAndSecurelyProvidedPassword()
         {
             // Arrange
@@ -64,18 +57,18 @@ namespace Snowflake.Data.Tests.UnitTests
             var sessionPool = _connectionPoolManager.GetPool(ConnectionStringWithoutPassword, sessionContext);
 
             // Assert
-            Assert.AreEqual(ConnectionStringWithoutPassword, sessionPool.ConnectionString);
-            Assert.AreEqual(_password3, sessionPool.Password);
+            Assert.Equal(ConnectionStringWithoutPassword, sessionPool.ConnectionString);
+            Assert.Equal(_password3, sessionPool.Password);
         }
 
-        [Test]
+        [Fact]
         public void TestPoolManagerThrowsWhenPasswordNotProvided()
         {
             // Act/Assert
             Assert.Throws<SnowflakeDbException>(() => _connectionPoolManager.GetPool(ConnectionStringWithoutPassword, new SessionPropertiesContext()));
         }
 
-        [Test]
+        [Fact]
         public void TestPoolManagerReturnsSamePoolForGivenConnectionString()
         {
             // Arrange
@@ -86,49 +79,49 @@ namespace Snowflake.Data.Tests.UnitTests
             var sessionPool2 = _connectionPoolManager.GetPool(anotherConnectionString, new SessionPropertiesContext());
 
             // Assert
-            Assert.AreEqual(sessionPool1, sessionPool2);
+            Assert.Equal(sessionPool1, sessionPool2);
         }
 
-        [Test]
+        [Fact]
         public void TestDifferentPoolsAreReturnedForDifferentConnectionStrings()
         {
             // Arrange
-            Assert.AreNotSame(ConnectionString1, ConnectionString2);
+            Assert.NotSame(ConnectionString1, ConnectionString2);
 
             // Act
             var sessionPool1 = _connectionPoolManager.GetPool(ConnectionString1, new SessionPropertiesContext());
             var sessionPool2 = _connectionPoolManager.GetPool(ConnectionString2, new SessionPropertiesContext());
 
             // Assert
-            Assert.AreNotSame(sessionPool1, sessionPool2);
-            Assert.AreEqual(ConnectionString1, sessionPool1.ConnectionString);
-            Assert.AreEqual(ConnectionString2, sessionPool2.ConnectionString);
+            Assert.NotSame(sessionPool1, sessionPool2);
+            Assert.Equal(ConnectionString1, sessionPool1.ConnectionString);
+            Assert.Equal(ConnectionString2, sessionPool2.ConnectionString);
         }
 
 
-        [Test]
+        [Fact]
         public void TestGetSessionWorksForSpecifiedConnectionString()
         {
             // Act
             var sfSession = _connectionPoolManager.GetSession(ConnectionString1, new SessionPropertiesContext());
 
             // Assert
-            Assert.AreEqual(ConnectionString1, sfSession.ConnectionString);
-            Assert.AreEqual(null, sfSession.PropertiesContext.Password);
+            Assert.Equal(ConnectionString1, sfSession.ConnectionString);
+            Assert.Equal(null, sfSession.PropertiesContext.Password);
         }
 
-        [Test]
+        [Fact]
         public async Task TestGetSessionAsyncWorksForSpecifiedConnectionString()
         {
             // Act
             var sfSession = await _connectionPoolManager.GetSessionAsync(ConnectionString1, new SessionPropertiesContext(), CancellationToken.None);
 
             // Assert
-            Assert.AreEqual(ConnectionString1, sfSession.ConnectionString);
-            Assert.AreEqual(null, sfSession.PropertiesContext.Password);
+            Assert.Equal(ConnectionString1, sfSession.ConnectionString);
+            Assert.Equal(null, sfSession.PropertiesContext.Password);
         }
 
-        [Test]
+        [Fact]
         public void TestCountingOfSessionProvidedByPool()
         {
             // Act
@@ -136,10 +129,10 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             var sessionPool = _connectionPoolManager.GetPool(ConnectionString1, new SessionPropertiesContext());
-            Assert.AreEqual(1, sessionPool.GetCurrentPoolSize());
+            Assert.Equal(1, sessionPool.GetCurrentPoolSize());
         }
 
-        [Test]
+        [Fact]
         public void TestCountingOfSessionReturnedBackToPool()
         {
             // Arrange
@@ -150,10 +143,10 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             var sessionPool = _connectionPoolManager.GetPool(ConnectionString1, new SessionPropertiesContext());
-            Assert.AreEqual(1, sessionPool.GetCurrentPoolSize());
+            Assert.Equal(1, sessionPool.GetCurrentPoolSize());
         }
 
-        [Test]
+        [Fact]
         public void TestSetMaxPoolSizeForAllPoolsDisabled()
         {
             // Arrange
@@ -163,10 +156,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<Exception>(() => _connectionPoolManager.SetMaxPoolSize(3));
 
             // Assert
-            Assert.That(thrown.Message, Does.Contain("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
+            Assert.Contains("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool", thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestSetTimeoutForAllPoolsDisabled()
         {
             // Arrange
@@ -176,10 +169,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<Exception>(() => _connectionPoolManager.SetTimeout(3000));
 
             // Assert
-            Assert.That(thrown.Message, Does.Contain("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
+            Assert.Contains("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool", thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestSetPoolingForAllPoolsDisabled()
         {
             // Arrange
@@ -189,10 +182,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<Exception>(() => _connectionPoolManager.SetPooling(false));
 
             // Assert
-            Assert.That(thrown.Message, Does.Contain("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool"));
+            Assert.Contains("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool", thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestGetPoolingOnManagerLevelAlwaysTrue()
         {
             // Arrange
@@ -205,24 +198,24 @@ namespace Snowflake.Data.Tests.UnitTests
             var pooling = _connectionPoolManager.GetPooling();
 
             // Assert
-            Assert.IsTrue(pooling);
-            Assert.IsTrue(sessionPool1.GetPooling());
-            Assert.IsFalse(sessionPool2.GetPooling());
+            Assert.True(pooling);
+            Assert.True(sessionPool1.GetPooling());
+            Assert.False(sessionPool2.GetPooling());
         }
 
-        [Test]
-        [TestCase("authenticator=externalbrowser;account=test;user=test;")]
-        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key")]
+        [Theory]
+        [InlineData("authenticator=externalbrowser;account=test;user=test;")]
+        [InlineData("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key")]
         public void TestDisabledPoolingWhenSecretesProvidedExternally(string connectionString)
         {
             // act
             var pool = _connectionPoolManager.GetPool(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.IsFalse(pool.GetPooling());
+            Assert.False(pool.GetPooling());
         }
 
-        [Test]
+        [Fact]
         public void TestGetTimeoutOnManagerLevelWhenNotAllPoolsEqual()
         {
             // Arrange
@@ -233,12 +226,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act/Assert
             var exception = Assert.Throws<SnowflakeDbException>(() => _connectionPoolManager.GetTimeout());
-            Assert.IsNotNull(exception);
-            Assert.AreEqual(SFError.INCONSISTENT_RESULT_ERROR.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
-            Assert.IsTrue(exception.Message.Contains("Multiple pools have different Timeout values"));
+            Assert.NotNull(exception);
+            Assert.Equal(SFError.INCONSISTENT_RESULT_ERROR.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+            Assert.True(exception.Message.Contains("Multiple pools have different Timeout values"));
         }
 
-        [Test]
+        [Fact]
         public void TestGetTimeoutOnManagerLevelWhenAllPoolsEqual()
         {
             // Arrange
@@ -248,10 +241,10 @@ namespace Snowflake.Data.Tests.UnitTests
             sessionPool2.SetTimeout(3600);
 
             // Act/Assert
-            Assert.AreEqual(3600, _connectionPoolManager.GetTimeout());
+            Assert.Equal(3600, _connectionPoolManager.GetTimeout());
         }
 
-        [Test]
+        [Fact]
         public void TestGetMaxPoolSizeOnManagerLevelWhenNotAllPoolsEqual()
         {
             // Arrange
@@ -262,12 +255,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act/Assert
             var exception = Assert.Throws<SnowflakeDbException>(() => _connectionPoolManager.GetMaxPoolSize());
-            Assert.IsNotNull(exception);
-            Assert.AreEqual(SFError.INCONSISTENT_RESULT_ERROR.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
-            Assert.IsTrue(exception.Message.Contains("Multiple pools have different Max Pool Size values"));
+            Assert.NotNull(exception);
+            Assert.Equal(SFError.INCONSISTENT_RESULT_ERROR.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+            Assert.True(exception.Message.Contains("Multiple pools have different Max Pool Size values"));
         }
 
-        [Test]
+        [Fact]
         public void TestGetMaxPoolSizeOnManagerLevelWhenAllPoolsEqual()
         {
             // Arrange
@@ -277,10 +270,10 @@ namespace Snowflake.Data.Tests.UnitTests
             sessionPool2.SetMaxPoolSize(33);
 
             // Act/Assert
-            Assert.AreEqual(33, _connectionPoolManager.GetMaxPoolSize());
+            Assert.Equal(33, _connectionPoolManager.GetMaxPoolSize());
         }
 
-        [Test]
+        [Fact]
         public void TestGetCurrentPoolSizeReturnsSumOfPoolSizes()
         {
             // Arrange
@@ -291,10 +284,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var poolSize = _connectionPoolManager.GetCurrentPoolSize();
 
             // assert
-            Assert.AreEqual(5, poolSize);
+            Assert.Equal(5, poolSize);
         }
 
-        [Test]
+        [Fact]
         public void TestReturnPoolForSecurePassword()
         {
             // arrange
@@ -307,11 +300,11 @@ namespace Snowflake.Data.Tests.UnitTests
             var pool = _connectionPoolManager.GetPool(ConnectionStringWithoutPassword, anotherPasswordContext); // a new pool has been created because the password is different
 
             // assert
-            Assert.AreEqual(0, pool.GetCurrentPoolSize());
-            Assert.AreEqual(AnotherPassword, SecureStringHelper.Decode(pool.Password));
+            Assert.Equal(0, pool.GetCurrentPoolSize());
+            Assert.Equal(AnotherPassword, SecureStringHelper.Decode(pool.Password));
         }
 
-        [Test]
+        [Fact]
         public void TestReturnDifferentPoolWhenPasswordProvidedInDifferentWay()
         {
             // arrange
@@ -327,14 +320,14 @@ namespace Snowflake.Data.Tests.UnitTests
             var pool3 = _connectionPoolManager.GetPool(connectionStringWithPassword, sessionContext);
 
             // assert
-            Assert.AreEqual(2, pool1.GetCurrentPoolSize());
-            Assert.AreEqual(5, pool2.GetCurrentPoolSize());
-            Assert.AreEqual(8, pool3.GetCurrentPoolSize());
+            Assert.Equal(2, pool1.GetCurrentPoolSize());
+            Assert.Equal(5, pool2.GetCurrentPoolSize());
+            Assert.Equal(8, pool3.GetCurrentPoolSize());
         }
 
-        [Test]
-        [TestCase(null)]
-        [TestCase("")]
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
         public void TestGetPoolFailsWhenNoPasswordProvided(string password)
         {
             // arrange
@@ -345,10 +338,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<SnowflakeDbException>(() => _connectionPoolManager.GetPool(ConnectionStringWithoutPassword, sessionContext));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Required property PASSWORD is not provided"));
+            Assert.Contains("Required property PASSWORD is not provided", thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestPoolDoesNotSerializePassword()
         {
             // arrange
@@ -361,7 +354,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var serializedPool = pool.ToString();
 
             // assert
-            Assert.IsFalse(serializedPool.Contains(password));
+            Assert.False(serializedPool.Contains(password));
         }
 
         private void EnsurePoolSize(string connectionString, SessionPropertiesContext sessionContext, int requiredCurrentSize)
@@ -372,7 +365,7 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 _connectionPoolManager.GetSession(connectionString, sessionContext);
             }
-            Assert.AreEqual(requiredCurrentSize, sessionPool.GetCurrentPoolSize());
+            Assert.Equal(requiredCurrentSize, sessionPool.GetCurrentPoolSize());
         }
     }
 

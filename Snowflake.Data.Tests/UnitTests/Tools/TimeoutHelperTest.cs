@@ -1,75 +1,74 @@
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
     public class TimeoutHelperTest
     {
-        [Test]
-        [TestCaseSource(nameof(InfiniteTimeouts))]
+        [Theory]
+        [MemberData(nameof(InfiniteTimeouts))]
         public void TestInfinity(TimeSpan infiniteTimeout)
         {
             // act
             var isInfinite = TimeoutHelper.IsInfinite(infiniteTimeout);
 
             // assert
-            Assert.IsTrue(isInfinite);
+            Assert.True(isInfinite);
         }
 
-        [Test]
-        [TestCaseSource(nameof(FiniteTimeouts))]
+        [Theory]
+        [MemberData(nameof(FiniteTimeouts))]
         public void TestFiniteValue(TimeSpan finiteTimeout)
         {
             // act
             var isInfinite = TimeoutHelper.IsInfinite(finiteTimeout);
 
             // assert
-            Assert.IsFalse(isInfinite);
+            Assert.False(isInfinite);
         }
 
-        [Test]
-        [TestCaseSource(nameof(ZeroLengthTimeouts))]
+        [Theory]
+        [MemberData(nameof(ZeroLengthTimeouts))]
         public void TestZeroLength(TimeSpan zeroTimeout)
         {
             // act
             var isZeroLength = TimeoutHelper.IsZeroLength(zeroTimeout);
 
             // assert
-            Assert.IsTrue(isZeroLength);
+            Assert.True(isZeroLength);
         }
 
-        [Test]
-        [TestCaseSource(nameof(NonZeroLengthTimeouts))]
+        [Theory]
+        [MemberData(nameof(NonZeroLengthTimeouts))]
         public void TestNonZeroLength(TimeSpan nonZeroTimeout)
         {
             // act
             var isZeroLength = TimeoutHelper.IsZeroLength(nonZeroTimeout);
 
             // assert
-            Assert.IsFalse(isZeroLength);
+            Assert.False(isZeroLength);
         }
 
-        [Test]
-        [TestCase(1000, 1000)]
-        [TestCase(1000, 2000)]
+        [Theory]
+        [InlineData(1000, 1000)]
+        [InlineData(1000, 2000)]
         public void TestInfiniteTimeoutDoesNotExpire(long startedAtMillis, long nowMillis)
         {
             // act
             var isExpired = TimeoutHelper.IsExpired(startedAtMillis, nowMillis, TimeoutHelper.Infinity());
 
             // assert
-            Assert.IsFalse(isExpired);
+            Assert.False(isExpired);
         }
 
-        [Test]
-        [TestCase(1000, 1000, 0, true)]
-        [TestCase(1000, 2000, 0, true)]
-        [TestCase(1000, 1100, 100, true)]
-        [TestCase(1000, 1099, 100, false)]
-        [TestCase(1000, 2000, 100, true)]
+        [Theory]
+        [InlineData(1000, 1000, 0, true)]
+        [InlineData(1000, 2000, 0, true)]
+        [InlineData(1000, 1100, 100, true)]
+        [InlineData(1000, 1099, 100, false)]
+        [InlineData(1000, 2000, 100, true)]
         public void TestExpiredTimeout(long startedAtMillis, long nowMillis, long timeoutMillis, bool expectedIsExpired)
         {
             // arrange
@@ -79,25 +78,25 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var isExpired = TimeoutHelper.IsExpired(startedAtMillis, nowMillis, timeout);
 
             // assert
-            Assert.AreEqual(expectedIsExpired, isExpired);
+            Assert.Equal(expectedIsExpired, isExpired);
         }
 
-        [Test]
+        [Fact]
         public void TestInfiniteTimeoutNeverExpires()
         {
             // act
             var isExpired = TimeoutHelper.IsExpired(1000, TimeoutHelper.Infinity());
 
             // assert
-            Assert.IsFalse(isExpired);
+            Assert.False(isExpired);
         }
 
-        [Test]
-        [TestCase(0, 0, true)]
-        [TestCase(1000, 0, true)]
-        [TestCase(100, 100, true)]
-        [TestCase(99, 100, false)]
-        [TestCase(1000, 100, true)]
+        [Theory]
+        [InlineData(0, 0, true)]
+        [InlineData(1000, 0, true)]
+        [InlineData(100, 100, true)]
+        [InlineData(99, 100, false)]
+        [InlineData(1000, 100, true)]
         public void TestExpiredTimeoutByDuration(long durationMillis, long timeoutMillis, bool expectedIsExpired)
         {
             // arrange
@@ -107,10 +106,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var isExpired = TimeoutHelper.IsExpired(durationMillis, timeout);
 
             // assert
-            Assert.AreEqual(expectedIsExpired, isExpired);
+            Assert.Equal(expectedIsExpired, isExpired);
         }
 
-        [Test]
+        [Fact]
         public void TestFiniteTimeoutLeftFailsForInfiniteTimeout()
         {
             // act
@@ -118,15 +117,15 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                 TimeoutHelper.FiniteTimeoutLeftMillis(1000, 2000, TimeoutHelper.Infinity()));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Infinite timeout cannot be used to determine milliseconds left"));
+            Assert.Contains("Infinite timeout cannot be used to determine milliseconds left", thrown.Message);
         }
 
 
-        [Test]
-        [TestCase(1000, 1000, 0, 0)]
-        [TestCase(1000, 2000, 0, 0)]
-        [TestCase(1000, 1100, 100, 0)]
-        [TestCase(1000, 1095, 100, 5)]
+        [Theory]
+        [InlineData(1000, 1000, 0, 0)]
+        [InlineData(1000, 2000, 0, 0)]
+        [InlineData(1000, 1100, 100, 0)]
+        [InlineData(1000, 1095, 100, 5)]
         public void TestFiniteTimeoutLeft(long startedAtMillis, long nowMillis, long timeoutMillis, long expectedMillisLeft)
         {
             // arrange
@@ -136,7 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var millisLeft = TimeoutHelper.FiniteTimeoutLeftMillis(startedAtMillis, nowMillis, timeout);
 
             // assert
-            Assert.AreEqual(expectedMillisLeft, millisLeft);
+            Assert.Equal(expectedMillisLeft, millisLeft);
         }
 
         public static IEnumerable<TimeSpan> InfiniteTimeouts()

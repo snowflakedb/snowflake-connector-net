@@ -1,79 +1,78 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
     public sealed class RestResponseExtensionsTest
     {
-        [Test]
+        [Fact]
         public void TestRequestInProgressReturnsTrueForQueryInProgress()
         {
             var response = new NullDataResponse { code = 333333 };
-            Assert.IsTrue(response.IsQueryInProgress());
+            Assert.True(response.IsQueryInProgress());
         }
 
-        [Test]
+        [Fact]
         public void TestRequestInProgressReturnsTrueForQueryInProgressAsync()
         {
             var response = new NullDataResponse { code = 333334 };
-            Assert.IsTrue(response.IsQueryInProgress());
+            Assert.True(response.IsQueryInProgress());
         }
 
-        [Test]
-        [TestCase(0)]
-        [TestCase(200000)]
-        [TestCase(390112)]
-        [TestCase(333335)]
-        [TestCase(333332)]
-        [TestCase(-1)]
+        [Theory]
+        [InlineData(0)]
+        [InlineData(200000)]
+        [InlineData(390112)]
+        [InlineData(333335)]
+        [InlineData(333332)]
+        [InlineData(-1)]
         public void TestRequestInProgressReturnsFalseForOtherCodes(int code)
         {
             var response = new NullDataResponse { code = code };
-            Assert.IsFalse(response.IsQueryInProgress());
+            Assert.False(response.IsQueryInProgress());
         }
 
-        [Test]
+        [Fact]
         public void TestSessionExpiredReturnsTrueForExpiredCode()
         {
             var response = new NullDataResponse { code = 390112 };
-            Assert.IsTrue(response.IsSessionExpired());
+            Assert.True(response.IsSessionExpired());
         }
 
-        [Test]
-        [TestCase(0)]
-        [TestCase(200000)]
-        [TestCase(333333)]
-        [TestCase(333334)]
-        [TestCase(390111)]
-        [TestCase(390113)]
-        [TestCase(-1)]
+        [Theory]
+        [InlineData(0)]
+        [InlineData(200000)]
+        [InlineData(333333)]
+        [InlineData(333334)]
+        [InlineData(390111)]
+        [InlineData(390113)]
+        [InlineData(-1)]
         public void TestSessionExpiredReturnsFalseForOtherCodes(int code)
         {
             var response = new NullDataResponse { code = code };
-            Assert.IsFalse(response.IsSessionExpired());
+            Assert.False(response.IsSessionExpired());
         }
 
-        [Test]
+        [Fact]
         public void TestSessionNoLongerExistsReturnsTrueForNoLongerExistsCode()
         {
             var response = new NullDataResponse { code = 390111 };
-            Assert.IsTrue(response.IsSessionGone());
+            Assert.True(response.IsSessionGone());
         }
 
-        [Test]
-        [TestCase(0)]
-        [TestCase(200000)]
-        [TestCase(333333)]
-        [TestCase(333334)]
-        [TestCase(390110)]
-        [TestCase(390112)]
-        [TestCase(-1)]
+        [Theory]
+        [InlineData(0)]
+        [InlineData(200000)]
+        [InlineData(333333)]
+        [InlineData(333334)]
+        [InlineData(390110)]
+        [InlineData(390112)]
+        [InlineData(-1)]
         public void TestSessionNoLongerExistsReturnsFalseForOtherCodes(int code)
         {
             var response = new NullDataResponse { code = code };
-            Assert.IsFalse(response.IsSessionGone());
+            Assert.False(response.IsSessionGone());
         }
     }
 }

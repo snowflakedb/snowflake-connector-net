@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
@@ -12,7 +12,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
     public class WorkflowIdentityFederationAuthenticatorGcpTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private static readonly string s_wifGcpMappingPath = Path.Combine(s_wifMappingPath, "GCP");
@@ -24,26 +23,20 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string JWTGCPUnparsableToken = "unparsable.token";
 
         private WiremockRunner _runner;
-
-        [OneTimeSetUp]
         public void BeforeAll()
         {
             _runner = WiremockRunner.NewWiremock();
         }
-
-        [SetUp]
         public void BeforeEach()
         {
             _runner.ResetMapping();
         }
-
-        [OneTimeTearDown]
         public void AfterAll()
         {
             _runner.Stop();
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulGCPAuthorization()
         {
             // arrange
@@ -58,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestSuccessfulGCPAuthorizationAsync()
         {
             // arrange
@@ -73,7 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulGCPAttestation()
         {
             // arrange
@@ -85,15 +78,15 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.GCP, attestation.Provider);
-            Assert.AreEqual("some-subject", attestation.UserIdentifierComponents["sub"]);
-            Assert.AreEqual(JWTGCPToken, attestation.Credential);
+            Assert.Equal(AttestationProvider.GCP, attestation.Provider);
+            Assert.Equal("some-subject", attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(JWTGCPToken, attestation.Credential);
         }
 
-        [Test]
-        [TestCase(JWTGCPTokenWithoutIssuer, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
-        [TestCase(JWTGCPTokenWithoutSubject, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
-        [TestCase(JWTGCPUnparsableToken, "Retrieving attestation for GCP failed. Reading of the token failed.")]
+        [Theory]
+        [InlineData(JWTGCPTokenWithoutIssuer)]
+        [InlineData(JWTGCPTokenWithoutSubject, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
+        [InlineData(JWTGCPUnparsableToken, "Retrieving attestation for GCP failed. Reading of the token failed.")]
         public void TestFailAttestationForInvalidToken(string token, string expectedErrorMessage)
         {
             // arrange
@@ -106,10 +99,10 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
+            Assert.Contains(expectedErrorMessage, thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestFailAttestationWhenHttpError()
         {
             // arrange
@@ -122,10 +115,10 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.That(thrown.Message, Does.Contain("Retrieving attestation for GCP failed. Failed to get token: Response status code does not indicate success: 400 (Bad Request)."));
+            Assert.Contains("Retrieving attestation for GCP failed. Failed to get token: Response status code does not indicate success: 400 (Bad Request).", thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulGCPTransitiveImpersonation()
         {
             // arrange
@@ -140,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulGCPTransitiveImpersonationAttestation()
         {
             // arrange
@@ -152,9 +145,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.GCP, attestation.Provider);
-            Assert.AreEqual("some-subject", attestation.UserIdentifierComponents["sub"]);
-            Assert.AreEqual(JWTGCPToken, attestation.Credential);
+            Assert.Equal(AttestationProvider.GCP, attestation.Provider);
+            Assert.Equal("some-subject", attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(JWTGCPToken, attestation.Credential);
         }
 
         private void AddGcpWiremockMapping(string token) =>

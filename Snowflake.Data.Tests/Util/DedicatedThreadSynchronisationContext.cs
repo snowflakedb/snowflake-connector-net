@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using NUnit.Framework;
+using Xunit;
 
 namespace Snowflake.Data.Tests.Util
 {
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.Util
         public static void Verify()
         {
             MockSynchronizationContext ctx = (MockSynchronizationContext)SynchronizationContext.Current;
-            Assert.Zero(ctx.callCount, "MockSynchronizationContext was called - this can cause deadlock. Make sure ConfigureAwait(false) is used in every await point in the library");
+            Assert.Equal(0, ctx.callCount);
             SynchronizationContext.SetSynchronizationContext(null);
         }
     }

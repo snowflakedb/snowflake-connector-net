@@ -8,18 +8,18 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using System;
+using System.Threading;
     using System.IO;
     using System.Linq;
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.FileTransfer;
-
-    [TestFixture]
-    [Parallelizable(ParallelScope.Children)]
     class SFPutGetTest : SFBaseTest
     {
+        public SFPutGetTest(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
         private const int NumberOfRows = 4;
         private static readonly string[] s_colName = { "C1", "C2", "C3" };
         private static readonly string[] s_colData = { "FIRST", "SECOND", "THIRD" };
@@ -46,27 +46,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
             TABLE,
             NAMED
         }
-
-        [OneTimeSetUp]
         public static void OneTimeSetUp()
         {
             // Create temp output directory for downloaded files
             s_outputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             Directory.CreateDirectory(s_outputDirectory);
         }
-
-        [OneTimeTearDown]
         public static void OneTimeTearDown()
         {
             // Delete temp output directory and downloaded files
             Directory.Delete(s_outputDirectory, true);
         }
-
-        [SetUp]
         public void SetUp()
         {
             // Base object's names on on worker thread id
-            var threadSuffix = TestContext.CurrentContext.WorkerId?.Replace('#', '_');
+            var threadSuffix = Thread.CurrentThread.ManagedThreadId.ToString()?.Replace('#', '_');
 
             t_schemaName = testConfig.schema;
             t_tableName = $"TABLE_{threadSuffix}";
@@ -94,8 +88,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-
-        [TearDown]
         public void TearDown()
         {
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -123,7 +115,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutFileAsteriskWildcard()
         {
             var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
@@ -146,7 +138,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutFileAsteriskWildcardWithExtension()
         {
             var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
@@ -171,7 +163,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutFileQuestionMarkWildcard()
         {
             var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
@@ -196,7 +188,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutFileRelativePathWithoutDirectory()
         {
             // Set the PUT query variables
@@ -213,8 +205,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        public void TestPutGetOnClosedConnectionThrowsWithoutQueryId([Values("GET", "PUT")] string command)
+        [Fact]
+        public void TestPutGetOnClosedConnectionThrowsWithoutQueryId(string command)
         {
             t_inputFilePath = "unexisting_file.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
@@ -225,12 +217,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // conn.Open(); // intentionally closed
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => ProcessFile(command, conn));
                 Assert.NotNull(snowflakeDbException);
-                Assert.IsNull(snowflakeDbException.QueryId);
+                Assert.Null(snowflakeDbException.QueryId);
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetNonExistentFileReturnsFalseAndDoesNotThrow()
         {
             t_inputFilePath = "non_existent_file.csv";
@@ -245,12 +237,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     command.CommandText = sql;
                     var reader = command.ExecuteReader();
-                    Assert.AreEqual(false, reader.Read());
+                    Assert.Equal(false, reader.Read());
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutNonExistentFileThrowsWithQueryId()
         {
             t_inputFilePath = "non_existent_file.csv";
@@ -261,13 +253,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
-                Assert.IsNotNull(snowflakeDbException);
-                Assert.IsNotNull(snowflakeDbException.QueryId);
+                Assert.NotNull(snowflakeDbException);
+                Assert.NotNull(snowflakeDbException.QueryId);
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutFileProvidesQueryIdOnFailure()
         {
             // Arrange
@@ -283,13 +275,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var queryId = snowflakeDbException.QueryId;
 
                 // Assert
-                Assert.IsNotEmpty(queryId);
-                Assert.DoesNotThrow(() => Guid.Parse(queryId));
+                Assert.NotEmpty(queryId);
+                Guid.Parse(queryId);
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutFileWithSyntaxErrorProvidesQueryIdOnFailure()
         {
             // Arrange
@@ -305,14 +297,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var queryId = snowflakeDbException.QueryId;
 
                 // Assert
-                Assert.IsNotEmpty(queryId);
-                Assert.DoesNotThrow(() => Guid.Parse(queryId));
-                Assert.That(snowflakeDbException.ErrorCode, Is.EqualTo(1003));
-                Assert.That(snowflakeDbException.InnerException, Is.Null);
+                Assert.NotEmpty(queryId);
+                Guid.Parse(queryId);
+                Assert.Equal(1003, snowflakeDbException.ErrorCode);
+                Assert.Null(snowflakeDbException.InnerException);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutFileProvidesQueryIdOnSuccess()
         {
             // Arrange
@@ -328,13 +320,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var queryId = PutFile(conn);
 
                 // Assert
-                Assert.IsNotNull(queryId);
-                Assert.DoesNotThrow(() => Guid.Parse(queryId));
+                Assert.NotNull(queryId);
+                Guid.Parse(queryId);
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutFileRelativePathWithDirectory()
         {
             var guid = Guid.NewGuid();
@@ -355,7 +347,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutFileRelativePathAsteriskWildcard()
         {
             var relativePath = $"{Guid.NewGuid()}";
@@ -378,7 +370,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         // presigned url is enabled on CI so we need to disable the test
         // it should be enabled when downscoped credential is the default option
         [IgnoreOnEnvIs("snowflake_cloud_env", new[] { "GCP" })]
@@ -399,7 +391,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutFileWithOverwriteFlagRunsSecondUpload()
         {
             var overwriteAttribute = "OVERWRITE=TRUE";
@@ -419,7 +411,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutDirectoryAsteriskWildcard()
         {
             // Prepare the data files to be copied
@@ -447,7 +439,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutDirectoryQuestionMarkWildcard()
         {
             // Prepare the data files to be copied
@@ -475,7 +467,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutDirectoryMixedWildcard()
         {
             // Prepare the data files to be copied
@@ -503,12 +495,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutGetCommand(
-            [Values("none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd")] string sourceFileCompressionType,
-            [Values] StageType stageType,
-            [Values("", "/TEST_PATH", "/DEEP/TEST_PATH")] string stagePath,
-            [Values] bool autoCompress)
+            string sourceFileCompressionType,
+            StageType stageType,
+            string stagePath,
+            bool autoCompress)
         {
             PrepareTest(sourceFileCompressionType, stageType, stagePath, autoCompress);
 
@@ -521,11 +513,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutGetCommandForNamedStageWithoutClientSideEncryption(
-            [Values("none", "gzip")] string sourceFileCompressionType,
-            [Values("", "/DEEP/TEST_PATH")] string stagePath,
-            [Values] bool autoCompress)
+            string sourceFileCompressionType,
+            string stagePath,
+            bool autoCompress)
         {
             PrepareTest(sourceFileCompressionType, StageType.NAMED, stagePath, autoCompress, false);
 
@@ -539,11 +531,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         // Test small file upload/download with GCS_USE_DOWNSCOPED_CREDENTIAL set to true
-        [Test]
+        [Fact]
         [IgnoreOnEnvIs("snowflake_cloud_env", new[] { "AWS", "AZURE" })]
         public void TestPutGetGcsDownscopedCredential(
-            [Values] StageType stageType,
-            [Values("", "/TEST_PATH")] string stagePath)
+            StageType stageType,
+            string stagePath)
         {
             PrepareTest(null, stageType, stagePath, false);
 
@@ -557,10 +549,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutGetFileWithSpaceAndSingleQuote(
-            [Values] StageType stageType,
-            [Values("/STAGE PATH WITH SPACE")] string stagePath)
+            StageType stageType,
+            string stagePath)
         {
             PrepareTest(null, stageType, stagePath, false, true, true);
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -652,37 +644,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = command.ExecuteReader();
                 try
                 {
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                 }
                 catch (SnowflakeDbException e)
                 {
                     // to make sure in a failure case command was set properly with a failed QueryId
-                    Assert.AreEqual(e.QueryId, ((SnowflakeDbCommand)command).GetQueryId());
+                    Assert.Equal(e.QueryId, ((SnowflakeDbCommand)command).GetQueryId());
                     throw;
                 }
                 // Checking query id when reader succeeded
                 queryId = ((SnowflakeDbDataReader)reader).GetQueryId();
                 // Checking if query Id is provided on the command level as well
-                Assert.AreEqual(queryId, ((SnowflakeDbCommand)command).GetQueryId());
+                Assert.Equal(queryId, ((SnowflakeDbCommand)command).GetQueryId());
                 // Check file status
-                Assert.AreEqual(expectedStatus.ToString(),
+                Assert.Equal(expectedStatus.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check source and destination compression type
                 if (t_autoCompress)
                 {
-                    Assert.AreEqual(t_sourceCompressionType,
+                    Assert.Equal(t_sourceCompressionType,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                    Assert.AreEqual(t_destCompressionType,
+                    Assert.Equal(t_destCompressionType,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                 }
                 else
                 {
-                    Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
+                    Assert.Equal(SFFileCompressionTypes.NONE.Name,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                    Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
+                    Assert.Equal(SFFileCompressionTypes.NONE.Name,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                 }
-                Assert.IsNull(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
+                Assert.Null(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
             }
             return queryId;
         }
@@ -713,13 +705,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     for (var i = 0; i < s_colData.Length; i++)
                     {
-                        Assert.AreEqual(reader.GetString(i), s_colData[i]);
+                        Assert.Equal(reader.GetString(i), s_colData[i]);
                     }
                 }
 
                 // Check row count is correct
                 command.CommandText = $"SELECT COUNT(*) FROM {t_schemaName}.{t_tableName}";
-                Assert.AreEqual(NumberOfRows, command.ExecuteScalar());
+                Assert.Equal(NumberOfRows, command.ExecuteScalar());
             }
         }
 
@@ -736,10 +728,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Download file
                 command.CommandText = getQuery;
                 var reader = command.ExecuteReader();
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
 
                 // Check file status
-                Assert.AreEqual(ResultStatus.DOWNLOADED.ToString(),
+                Assert.Equal(ResultStatus.DOWNLOADED.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
 
                 // Check file contents
@@ -750,7 +742,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     for (var i = 0; i < s_colData.Length; i++)
                     {
-                        Assert.AreEqual(s_colData[i], values[i]);
+                        Assert.Equal(s_colData[i], values[i]);
                     }
                 }
             }
@@ -795,7 +787,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var bytes = new byte[stream.Length];
             stream.Position = 0;
             var readBytes = stream.Read(bytes, 0, (int)stream.Length);
-            Assert.AreEqual(stream.Length, readBytes);
+            Assert.Equal(stream.Length, readBytes);
             return Encoding.UTF8.GetString(bytes).Split('\n');
         }
 
@@ -829,7 +821,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var dbDataReader = cmd.ExecuteReader();
                 var dt = new DataTable();
                 dt.Load(dbDataReader);
-                Assert.AreEqual(files.Count, dt.Rows.Count);
+                Assert.Equal(files.Count, dt.Rows.Count);
             }
         }
     }

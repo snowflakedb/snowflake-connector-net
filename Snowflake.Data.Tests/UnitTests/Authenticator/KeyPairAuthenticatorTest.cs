@@ -1,22 +1,21 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture]
     public class KeyPairAuthenticatorTest
     {
-        [Test]
-        [TestCase("snowflake_jwt", true)]
-        [TestCase("SNOWFLAKE_JWT", true)]
-        [TestCase("username_password_mfa", false)]
+        [Theory]
+        [InlineData("snowflake_jwt", true)]
+        [InlineData("SNOWFLAKE_JWT", true)]
+        [InlineData("username_password_mfa", false)]
         public void TestRecognizeKeyPairAuthenticator(string authenticator, bool expectedResult)
         {
             // act
             var result = KeyPairAuthenticator.IsKeyPairAuthenticator(authenticator);
 
             // assert
-            Assert.AreEqual(expectedResult, result);
+            Assert.Equal(expectedResult, result);
         }
     }
 }

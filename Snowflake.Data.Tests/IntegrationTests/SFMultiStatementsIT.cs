@@ -2,26 +2,23 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture(ResultFormat.ARROW)]
-    [TestFixture(ResultFormat.JSON)]
-    [TestFixture]
     class SFMultiStatementsIT : SFBaseTest
     {
         private readonly ResultFormat _resultFormat;
 
-        public SFMultiStatementsIT(ResultFormat resultFormat)
+        public SFMultiStatementsIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(envFixture)
         {
             _resultFormat = resultFormat;
         }
 
-        [Test]
+        [Fact]
         public void TestSelectWithoutBinding()
         {
             var testDate = "2020-03-11 12:34:56 +0000";
@@ -42,55 +39,55 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                   $"select '{testDate}'::DATETIME, '{testDate}'::TIMESTAMP_TZ, '{testTime}'::TIME";
                 IDataReader reader = cmd.ExecuteReader();
 
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(1, reader.GetDouble(0));
-                Assert.AreEqual(1, reader.GetFloat(0));
-                Assert.AreEqual(1, reader.GetInt64(0));
-                Assert.AreEqual(1, reader.GetInt32(0));
-                Assert.AreEqual(1, reader.GetInt16(0));
-                Assert.AreEqual(1, reader.GetByte(0));
-                Assert.AreEqual(1, reader.GetValue(0));
-                Assert.IsFalse(reader.Read());
+                Assert.True(reader.Read());
+                Assert.Equal(1, reader.GetDouble(0));
+                Assert.Equal(1, reader.GetFloat(0));
+                Assert.Equal(1, reader.GetInt64(0));
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.Equal(1, reader.GetInt16(0));
+                Assert.Equal(1, reader.GetByte(0));
+                Assert.Equal(1, reader.GetValue(0));
+                Assert.False(reader.Read());
 
-                Assert.IsTrue(reader.NextResult());
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(2, reader.GetInt32(0));
-                Assert.AreEqual(3, reader.GetInt32(1));
-                Assert.IsFalse(reader.Read());
+                Assert.True(reader.NextResult());
+                Assert.True(reader.Read());
+                Assert.Equal(2, reader.GetInt32(0));
+                Assert.Equal(3, reader.GetInt32(1));
+                Assert.False(reader.Read());
 
-                Assert.IsTrue(reader.NextResult());
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(4, reader.GetInt32(0));
-                Assert.AreEqual(5, reader.GetInt32(1));
-                Assert.AreEqual(6, reader.GetInt32(2));
-                Assert.IsFalse(reader.Read());
+                Assert.True(reader.NextResult());
+                Assert.True(reader.Read());
+                Assert.Equal(4, reader.GetInt32(0));
+                Assert.Equal(5, reader.GetInt32(1));
+                Assert.Equal(6, reader.GetInt32(2));
+                Assert.False(reader.Read());
 
-                Assert.IsTrue(reader.NextResult());
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(true, reader.GetBoolean(0));
-                Assert.AreEqual(false, reader.GetBoolean(1));
-                Assert.AreEqual(DBNull.Value, reader.GetValue(2));
-                Assert.IsFalse(reader.IsDBNull(0));
-                Assert.IsFalse(reader.IsDBNull(1));
-                Assert.IsTrue(reader.IsDBNull(2));
-                Assert.IsFalse(reader.Read());
+                Assert.True(reader.NextResult());
+                Assert.True(reader.Read());
+                Assert.Equal(true, reader.GetBoolean(0));
+                Assert.Equal(false, reader.GetBoolean(1));
+                Assert.Equal(DBNull.Value, reader.GetValue(2));
+                Assert.False(reader.IsDBNull(0));
+                Assert.False(reader.IsDBNull(1));
+                Assert.True(reader.IsDBNull(2));
+                Assert.False(reader.Read());
 
-                Assert.IsTrue(reader.NextResult());
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(DateTime.Parse(testDate).ToUniversalTime(), reader.GetDateTime(0));
-                Assert.AreEqual(DateTimeOffset.Parse(testDate).ToUniversalTime(), ((SnowflakeDbDataReader)reader).GetValue(1));
-                Assert.AreEqual(TimeSpan.Parse(testTime), ((SnowflakeDbDataReader)reader).GetTimeSpan(2));
-                Assert.IsFalse(reader.Read());
+                Assert.True(reader.NextResult());
+                Assert.True(reader.Read());
+                Assert.Equal(DateTime.Parse(testDate).ToUniversalTime(), reader.GetDateTime(0));
+                Assert.Equal(DateTimeOffset.Parse(testDate).ToUniversalTime(), ((SnowflakeDbDataReader)reader).GetValue(1));
+                Assert.Equal(TimeSpan.Parse(testTime), ((SnowflakeDbDataReader)reader).GetTimeSpan(2));
+                Assert.False(reader.Read());
 
-                Assert.IsFalse(reader.NextResult());
-                Assert.IsFalse(reader.Read());
+                Assert.False(reader.NextResult());
+                Assert.False(reader.Read());
 
                 reader.Close();
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         public async Task TestSelectAsync()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -108,31 +105,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = "select 1; select 2, 3";
                 DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
-                Assert.IsTrue(await reader.ReadAsync().ConfigureAwait(false));
-                Assert.AreEqual(1, reader.GetDouble(0));
-                Assert.AreEqual(1, reader.GetFloat(0));
-                Assert.AreEqual(1, reader.GetInt64(0));
-                Assert.AreEqual(1, reader.GetInt32(0));
-                Assert.AreEqual(1, reader.GetInt16(0));
-                Assert.AreEqual(1, reader.GetByte(0));
-                Assert.AreEqual(1, reader.GetValue(0));
-                Assert.IsFalse(await reader.ReadAsync().ConfigureAwait(false));
+                Assert.True(await reader.ReadAsync().ConfigureAwait(false));
+                Assert.Equal(1, reader.GetDouble(0));
+                Assert.Equal(1, reader.GetFloat(0));
+                Assert.Equal(1, reader.GetInt64(0));
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.Equal(1, reader.GetInt16(0));
+                Assert.Equal(1, reader.GetByte(0));
+                Assert.Equal(1, reader.GetValue(0));
+                Assert.False(await reader.ReadAsync().ConfigureAwait(false));
 
-                Assert.IsTrue(await reader.NextResultAsync().ConfigureAwait(false));
-                Assert.IsTrue(await reader.ReadAsync().ConfigureAwait(false));
-                Assert.AreEqual(2, reader.GetInt32(0));
-                Assert.AreEqual(3, reader.GetInt32(1));
-                Assert.IsFalse(await reader.ReadAsync().ConfigureAwait(false));
+                Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
+                Assert.True(await reader.ReadAsync().ConfigureAwait(false));
+                Assert.Equal(2, reader.GetInt32(0));
+                Assert.Equal(3, reader.GetInt32(1));
+                Assert.False(await reader.ReadAsync().ConfigureAwait(false));
 
-                Assert.IsFalse(await reader.NextResultAsync().ConfigureAwait(false));
-                Assert.IsFalse(await reader.ReadAsync().ConfigureAwait(false));
+                Assert.False(await reader.NextResultAsync().ConfigureAwait(false));
+                Assert.False(await reader.ReadAsync().ConfigureAwait(false));
 
                 reader.Close();
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSelectWithBinding()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -161,31 +158,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = "select ?; select ?, ?; select ?, ?, ?";
                 IDataReader reader = cmd.ExecuteReader();
 
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(1, reader.GetInt32(0));
-                Assert.IsFalse(reader.Read());
+                Assert.True(reader.Read());
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.False(reader.Read());
 
-                Assert.IsTrue(reader.NextResult());
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(2, reader.GetInt32(0));
-                Assert.AreEqual(3, reader.GetInt32(1));
-                Assert.IsFalse(reader.Read());
+                Assert.True(reader.NextResult());
+                Assert.True(reader.Read());
+                Assert.Equal(2, reader.GetInt32(0));
+                Assert.Equal(3, reader.GetInt32(1));
+                Assert.False(reader.Read());
 
-                Assert.IsTrue(reader.NextResult());
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(4, reader.GetInt32(0));
-                Assert.AreEqual(5, reader.GetInt32(1));
-                Assert.AreEqual(6, reader.GetInt32(2));
-                Assert.IsFalse(reader.Read());
+                Assert.True(reader.NextResult());
+                Assert.True(reader.Read());
+                Assert.Equal(4, reader.GetInt32(0));
+                Assert.Equal(5, reader.GetInt32(1));
+                Assert.Equal(6, reader.GetInt32(2));
+                Assert.False(reader.Read());
 
-                Assert.IsFalse(reader.NextResult());
+                Assert.False(reader.NextResult());
 
                 reader.Close();
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         public void TestMixedQueryTypeWithBinding()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -249,40 +246,40 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     DbDataReader reader = cmd.ExecuteReader();
 
                     // result of create
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of insert #1
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(1, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(1, reader.RecordsAffected);
 
                     // result of insert #2
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(2, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(2, reader.RecordsAffected);
 
                     // result of select
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(-1, reader.RecordsAffected);
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(1, reader.GetInt32(0));
-                    Assert.AreEqual("str1", reader.GetString(1));
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(2, reader.GetInt32(0));
-                    Assert.AreEqual("str2", reader.GetString(1));
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(3, reader.GetInt32(0));
-                    Assert.AreEqual("str3", reader.GetString(1));
-                    Assert.IsFalse(reader.Read());
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(-1, reader.RecordsAffected);
+                    Assert.True(reader.Read());
+                    Assert.Equal(1, reader.GetInt32(0));
+                    Assert.Equal("str1", reader.GetString(1));
+                    Assert.True(reader.Read());
+                    Assert.Equal(2, reader.GetInt32(0));
+                    Assert.Equal("str2", reader.GetString(1));
+                    Assert.True(reader.Read());
+                    Assert.Equal(3, reader.GetInt32(0));
+                    Assert.Equal("str3", reader.GetString(1));
+                    Assert.False(reader.Read());
 
                     // result of drop
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(0, reader.RecordsAffected);
 
-                    Assert.IsFalse(reader.NextResult());
+                    Assert.False(reader.NextResult());
                     reader.Close();
                 }
 
@@ -290,7 +287,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestWithExecuteNonQuery()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -352,14 +349,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p6);
 
                     int count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(3, count);
+                    Assert.Equal(3, count);
                 }
 
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         public void TestWithAllQueryTypes()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -392,67 +389,67 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     DbDataReader reader = cmd.ExecuteReader();
 
                     // result of select
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(-1, reader.RecordsAffected);
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(-1, reader.RecordsAffected);
 
                     // result of create
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of explain
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
                     // server used to return query type of explain as select
                     // but now it could be a specific type of explain
-                    Assert.IsTrue((reader.RecordsAffected == 0) ||
+                    Assert.True((reader.RecordsAffected == 0) ||
                                   (reader.RecordsAffected == -1));
 
                     // result of show
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of insert
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(1, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(1, reader.RecordsAffected);
 
                     // result of describe
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of list
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsFalse(reader.HasRows); // no files staged for table t1
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.False(reader.HasRows); // no files staged for table t1
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of remove
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsFalse(reader.HasRows); // no files staged for table t1
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.False(reader.HasRows); // no files staged for table t1
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of create
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of call
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
                     // The server behaivor is inconsistant for now, some of
                     // them returns procedure call as select while some of
                     // them use the new type.
-                    Assert.IsTrue((reader.RecordsAffected == 0) ||
+                    Assert.True((reader.RecordsAffected == 0) ||
                                   (reader.RecordsAffected == -1));
 
                     // result of use
-                    Assert.IsTrue(reader.NextResult());
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.True(reader.NextResult());
+                    Assert.True(reader.HasRows);
+                    Assert.Equal(0, reader.RecordsAffected);
 
-                    Assert.IsFalse(reader.NextResult());
+                    Assert.False(reader.NextResult());
                     reader.Close();
                 }
 
@@ -460,7 +457,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestWithMultipleStatementSetting()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -548,7 +545,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test, NonParallelizable]
+        [Fact]
         public void TestResultSetReturnedForAllQueryTypes()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -588,18 +585,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     DbDataReader reader = cmd.ExecuteReader();
 
                     // at least one row in the first result set
-                    Assert.IsTrue(reader.HasRows);
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.HasRows);
+                    Assert.True(reader.Read());
 
                     for (int i = 1; i < stmtCount; i++)
                     {
-                        Assert.IsTrue(reader.NextResult());
+                        Assert.True(reader.NextResult());
 
                         // at least one row in subsequent result sets
-                        Assert.IsTrue(reader.HasRows);
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.HasRows);
+                        Assert.True(reader.Read());
                     }
-                    Assert.IsFalse(reader.NextResult());
+                    Assert.False(reader.NextResult());
                     reader.Close();
                 }
 

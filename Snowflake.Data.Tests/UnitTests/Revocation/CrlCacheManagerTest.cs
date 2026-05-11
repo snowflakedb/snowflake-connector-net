@@ -4,19 +4,16 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Web;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
     public class CrlCacheManagerTest
     {
         const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";
         const string CrlUrl2 = "http://snowflakecomputing.com/crl2.crl";
-
-        [SetUp]
         public void SetUp()
         {
             var cacheDir = GetCrlCacheDirectory();
@@ -36,10 +33,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Test]
-        [TestCase(true, false)]
-        [TestCase(false, true)]
-        [TestCase(true, true)]
+        [Theory]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(true, true)]
         public void TestGetWithDifferentCacheConfigurations(bool inMemoryCacheEnabled, bool onDiskCacheEnabled)
         {
             // arrange
@@ -68,11 +65,11 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
             // assert
             Assert.NotNull(retrieved);
-            Assert.AreEqual(issuerName, retrieved.IssuerName);
+            Assert.Equal(issuerName, retrieved.IssuerName);
         }
 
 
-        [Test]
+        [Fact]
         public void TestGetReturnsNullForMissingEntry()
         {
             // arrange
@@ -89,7 +86,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Null(result);
         }
 
-        [Test]
+        [Fact]
         public void TestScheduledCleanupRemovesExpiredEntries()
         {
             // arrange
@@ -117,18 +114,18 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
             manager.Set(CrlUrl1, expiredCrl);
             manager.Set(CrlUrl2, validCrl);
-            Assert.NotNull(manager.Get(CrlUrl1), "CRL should be in cache before cleanup runs");
-            Assert.NotNull(manager.Get(CrlUrl2), "CRL should be in cache before cleanup runs");
+            Assert.NotNull(manager.Get(CrlUrl1));
+            Assert.NotNull(manager.Get(CrlUrl2));
 
             // act
             Thread.Sleep(1500);
 
             // assert
-            Assert.Null(manager.Get(CrlUrl1), "Expired CRL should have been removed by cleanup");
-            Assert.NotNull(manager.Get(CrlUrl2), "Valid CRL should remain in cache");
+            Assert.Null(manager.Get(CrlUrl1));
+            Assert.NotNull(manager.Get(CrlUrl2));
         }
 
-        [Test]
+        [Fact]
         public void TestScheduledCleanupRemovesStaleEntries()
         {
             // arrange
@@ -156,18 +153,18 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
             manager.Set(CrlUrl1, staleCrl);
             manager.Set(CrlUrl2, validCrl);
-            Assert.NotNull(manager.Get(CrlUrl1), "CRL should be in cache before cleanup runs");
-            Assert.NotNull(manager.Get(CrlUrl2), "CRL should be in cache before cleanup runs");
+            Assert.NotNull(manager.Get(CrlUrl1));
+            Assert.NotNull(manager.Get(CrlUrl2));
 
             // act
             Thread.Sleep(1500);
 
             // assert
-            Assert.Null(manager.Get(CrlUrl1), "Stale CRL should have been removed by cleanup");
-            Assert.NotNull(manager.Get(CrlUrl2), "Valid CRL should remain in cache");
+            Assert.Null(manager.Get(CrlUrl1));
+            Assert.NotNull(manager.Get(CrlUrl2));
         }
 
-        [Test]
+        [Fact]
         public void TestCleanupKeepsValidEntries()
         {
             // arrange
@@ -187,16 +184,16 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             };
 
             manager.Set(CrlUrl1, validCrl);
-            Assert.NotNull(manager.Get(CrlUrl1), "Valid CRL should be in cache");
+            Assert.NotNull(manager.Get(CrlUrl1));
 
             // act
             Thread.Sleep(1500);
 
             // assert
-            Assert.NotNull(manager.Get(CrlUrl1), "Valid CRL should remain in cache after cleanup");
+            Assert.NotNull(manager.Get(CrlUrl1));
         }
 
-        [Test]
+        [Fact]
         public void TestGetPromotesFromFileCacheToMemoryCache()
         {
             // arrange
@@ -241,8 +238,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result2 = manager2.Get(CrlUrl1);
 
             // assert
-            Assert.NotNull(result2, "CRL should be found in memory cache even after file deletion");
-            Assert.AreEqual(issuerName, result2.IssuerName);
+            Assert.NotNull(result2);
+            Assert.Equal(issuerName, result2.IssuerName);
         }
 
         private static string GetCrlCacheDirectory()

@@ -1,7 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
@@ -9,12 +9,12 @@ using Snowflake.Data.Core.Revocation;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
     [IgnoreOnJenkins]
     public class CertificateRevocationIT : SFBaseTest
     {
-        [Test]
-        [Ignore("Temporarily ignored")]
+        public CertificateRevocationIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
+        [Fact(Skip = "Temporarily ignored")]
         public void TestCertificate()
         {
             // arrange
@@ -41,12 +41,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var thrown = Assert.Throws<AggregateException>(() => restRequester.Get(new RestRequestWrapper(request)));
 
             // assert
-            Assert.That(thrown.InnerException, Is.TypeOf<HttpRequestException>());
+            Assert.IsType<HttpRequestException>(thrown.InnerException);
             var innerException = (HttpRequestException)thrown.InnerException;
 #if NETFRAMEWORK
-            Assert.That(innerException.Message, Does.Contain("Unauthorized"));
+            Assert.Contains("Unauthorized", innerException.Message);
 #else
-            Assert.AreEqual(HttpStatusCode.Unauthorized, innerException.StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, innerException.StatusCode);
 #endif
             // In case of failed revocation check the StatusCode would be null
             // and HttpRequestException would contain an inner exception of type AuthenticationException

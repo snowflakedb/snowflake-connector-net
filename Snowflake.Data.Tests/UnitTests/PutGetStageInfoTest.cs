@@ -1,15 +1,14 @@
 using System.Collections.Generic;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.FileTransfer;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
     public class PutGetStageInfoTest
     {
-        [Test]
-        [TestCaseSource(nameof(TestCases))]
+        [Theory]
+        [MemberData(nameof(TestCases))]
         public void TestGcsRegionalUrl(string region, bool useRegionalUrl, string endPoint, string expectedGcsEndpoint)
         {
             // arrange
@@ -19,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var gcsCustomEndpoint = stageInfo.GcsCustomEndpoint();
 
             // assert
-            Assert.AreEqual(expectedGcsEndpoint, gcsCustomEndpoint);
+            Assert.Equal(expectedGcsEndpoint, gcsCustomEndpoint);
         }
 
         internal static IEnumerable<object[]> TestCases()

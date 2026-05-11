@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Mono.Unix;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
@@ -12,11 +12,9 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
-    [TestFixture, NonParallelizable]
     public class SnowflakeDbConnectionTest
     {
-        [Test]
+        [Fact]
         public void TestFillConnectionStringFromTomlConfig()
         {
             // Arrange
@@ -34,11 +32,11 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 conn.FillConnectionStringFromTomlConfigIfNotSet();
                 // Assert
-                Assert.AreEqual("account=testaccount;user=testuser;password=testpassword;", conn.ConnectionString);
+                Assert.Equal("account=testaccount;user=testuser;password=testpassword;", conn.ConnectionString);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestTomlConfigurationDoesNotOverrideExistingConnectionString()
         {
             // Arrange
@@ -56,11 +54,11 @@ namespace Snowflake.Data.Tests.UnitTests
                 conn.ConnectionString = connectionTest;
                 conn.FillConnectionStringFromTomlConfigIfNotSet();
                 // Assert
-                Assert.AreEqual(connectionTest, conn.ConnectionString);
+                Assert.Equal(connectionTest, conn.ConnectionString);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestUseConfigurationProvidedOutsideOfConnectionString()
         {
             // arrange
@@ -109,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestUseConfigurationProvidedOutsideOfConnectionStringAsync()
         {
             // arrange

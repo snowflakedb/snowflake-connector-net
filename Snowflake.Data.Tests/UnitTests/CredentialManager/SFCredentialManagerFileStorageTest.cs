@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using NUnit.Framework;
+using Xunit;
 using Moq;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
@@ -8,7 +8,6 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
-    [TestFixture]
     public class SFCredentialManagerFileStorageTest
     {
         private const string SnowflakeCacheLocation = "/Users/snowflake/cache";
@@ -17,14 +16,12 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
         [ThreadStatic]
         private static Mock<EnvironmentOperations> t_environmentOperations;
-
-        [SetUp]
         public void SetUp()
         {
             t_environmentOperations = new Mock<EnvironmentOperations>();
         }
 
-        [Test]
+        [Fact]
         public void TestChooseLocationFromSnowflakeCacheEnvironmentVariable()
         {
             // arrange
@@ -39,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             AssertFileStorageForLocation(SnowflakeCacheLocation, fileStorage);
         }
 
-        [Test]
+        [Fact]
         public void TestChooseLocationFromCommonCacheEnvironmentVariable()
         {
             // arrange
@@ -54,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             AssertFileStorageForLocation(expectedLocation, fileStorage);
         }
 
-        [Test]
+        [Fact]
         public void TestChooseLocationFromHomeFolder()
         {
             // arrange
@@ -68,22 +65,22 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             AssertFileStorageForLocation(expectedLocation, fileStorage);
         }
 
-        [Test]
+        [Fact]
         public void TestFailWhenLocationCannotBeIdentified()
         {
             // act
             var thrown = Assert.Throws<Exception>(() => new SFCredentialManagerFileStorage(t_environmentOperations.Object));
 
             // assert
-            Assert.That(thrown.Message, Contains.Substring("Unable to identify credential cache directory"));
+            Assert.Contains("Unable to identify credential cache directory", thrown.Message);
         }
 
         private void AssertFileStorageForLocation(string directory, SFCredentialManagerFileStorage fileStorage)
         {
             Assert.NotNull(fileStorage);
-            Assert.AreEqual(directory, fileStorage.JsonCacheDirectory);
-            Assert.AreEqual(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheFileName), fileStorage.JsonCacheFilePath);
-            Assert.AreEqual(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheLockName), fileStorage.JsonCacheLockPath);
+            Assert.Equal(directory, fileStorage.JsonCacheDirectory);
+            Assert.Equal(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheFileName), fileStorage.JsonCacheFilePath);
+            Assert.Equal(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheLockName), fileStorage.JsonCacheLockPath);
         }
 
         private void MockSnowflakeCacheEnvironmentVariable()

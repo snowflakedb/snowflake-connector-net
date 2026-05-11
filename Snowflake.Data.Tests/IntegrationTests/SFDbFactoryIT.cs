@@ -1,18 +1,16 @@
-using NUnit.Framework;
+using Xunit;
 using System.Data;
 using System.Data.Common;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
-    [TestFixture]
     class SFDbFactoryIT : SFBaseTest
     {
+        public SFDbFactoryIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
         DbProviderFactory _factory;
         DbCommand _command;
         DbConnection _connection;
-
-        [SetUp]
         public new void BeforeTest()
         {
 #if NETFRAMEWORK
@@ -30,14 +28,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _connection.ConnectionString = ConnectionString;
             _connection.Open();
         }
-
-        [TearDown]
         public new void AfterTest()
         {
             _connection.Close();
         }
 
-        [Test]
+        [Fact]
         public void TestSimpleDbFactory()
         {
             // set commnad's connection object
@@ -46,10 +42,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             object res = _command.ExecuteScalar();
 
-            Assert.AreEqual(1, res);
+            Assert.Equal(1, res);
         }
 
-        [Test]
+        [Fact]
         public void TestDbFactoryWithParameter()
         {
             int expectedIntValue = 1;
@@ -66,10 +62,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             var result = _command.ExecuteScalar();
 
-            Assert.AreEqual(expectedIntValue, result);
+            Assert.Equal(expectedIntValue, result);
         }
 
-        [Test]
+        [Fact]
         public void TestDbFactoryWithConnectionStringBuilder()
         {
             DbConnectionStringBuilder builder = _factory.CreateConnectionStringBuilder();
@@ -84,10 +80,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             var result = _command.ExecuteScalar();
 
-            Assert.AreEqual(1, result);
+            Assert.Equal(1, result);
         }
 
-        [Test]
+        [Fact]
         public void TestDbFactoryWithCommandBuilderAndAdapter()
         {
             // set command's connection object
@@ -102,7 +98,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             adapter.Fill(ds);
 
-            Assert.AreEqual(1, ds.Tables[0].Rows[0].ItemArray[0]);
+            Assert.Equal(1, ds.Tables[0].Rows[0].ItemArray[0]);
         }
     }
 }

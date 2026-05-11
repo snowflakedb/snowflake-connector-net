@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net10.0;net462;net471;net472;net48;net481</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net10.0;net472;net48;net481</TargetFrameworks>
     <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
     <Title>Snowflake.Data.Tests</Title>
     <Description>Snowflake Connector for .NET</Description>
     <Company>Snowflake Computing, Inc</Company>
@@ -9,6 +10,9 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <LangVersion>13</LangVersion>
     <DefineConstants>$(SEQUENTIAL_ENV)</DefineConstants>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <!-- Suppress xUnit analyzer rules that conflict with NUnit-migrated code patterns (internal classes, non-public methods, InlineData mismatches) -->
+    <NoWarn>$(NoWarn);xUnit1000;xUnit1001;xUnit1019;xUnit1016;xUnit1002;xUnit1009</NoWarn>
   </PropertyGroup>
   <ItemGroup>
       <Content Include="wiremock\**\*.*">
@@ -26,10 +30,10 @@
     <PackageReference Include="JunitXml.TestLogger" Version="3.1.12" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="Microsoft.Extensions.Logging.Log4Net.AspNetCore" Version="8.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.1" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.5.0" />
-    <PackageReference Include="NUnit" Version="3.14.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+      <PackageReference Include="xunit" Version="2.9.3"/>
+      <PackageReference Include="Xunit.SkippableFact" Version="1.5.61"/>
+      <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4"/>
     <PackageReference Include="RichardSzalay.MockHttp" Version="6.0.0" />
     <PackageReference Include="Serilog" Version="4.3.1" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.2" />
@@ -48,7 +52,7 @@
     <Folder Include="Properties\" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net471' Or '$(TargetFramework)' == 'net472'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web" />
     <Reference Include="System.Net.Http.WebRequest" />

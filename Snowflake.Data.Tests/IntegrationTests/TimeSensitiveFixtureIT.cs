@@ -2,24 +2,21 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
-    [Parallelizable(ParallelScope.Children)]
-    [Order(3)]
     public sealed class TimeSensitiveFixtureIT
     {
-        [TestCaseSource(nameof(SFBaseTestCases))]
-        [Retry(3)]
+        [Theory]
+        [MemberData(nameof(SFBaseTestCases))]
         public async Task SFBaseTest((Type, MethodInfo) args)
         {
             // Arrange
             var testClass = Activator.CreateInstance(args.Item1);
-            var startupMethod = args.Item1.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(x => x.GetCustomAttribute<SetUpAttribute>() != null);
-            var tearDownMethod = args.Item1.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(x => x.GetCustomAttribute<TearDownAttribute>() != null);
+            var startupMethod = args.Item1.GetMethod("BeforeTest", BindingFlags.Public | BindingFlags.Instance);
+            var tearDownMethod = args.Item1.GetMethod("AfterTest", BindingFlags.Public | BindingFlags.Instance);
 
             try
             {
@@ -33,14 +30,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [TestCaseSource(nameof(SFBaseAsyncTestCases))]
-        [Retry(3)]
+        [Theory]
+        [MemberData(nameof(SFBaseAsyncTestCases))]
         public async Task SFBaseAsyncTest((Type, MethodInfo) args)
         {
             // Arrange
             var testClass = Activator.CreateInstance(args.Item1);
-            var startupMethod = args.Item1.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(x => x.GetCustomAttribute<SetUpAttribute>() != null);
-            var tearDownMethod = args.Item1.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(x => x.GetCustomAttribute<TearDownAttribute>() != null);
+            var startupMethod = args.Item1.GetMethod("BeforeTest", BindingFlags.Public | BindingFlags.Instance);
+            var tearDownMethod = args.Item1.GetMethod("AfterTest", BindingFlags.Public | BindingFlags.Instance);
 
             startupMethod?.Invoke(testClass, null);
 
@@ -55,10 +52,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        public static TestCaseData[] SFBaseAsyncTestCases = GetTestCaseData(typeof(SFBaseTestAsync), typeof(SFBaseTest));
-        public static TestCaseData[] SFBaseTestCases = GetTestCaseData(typeof(SFBaseTest));
+        public static object[][] SFBaseAsyncTestCases = GetTestCaseData(typeof(SFBaseTestAsync), typeof(SFBaseTest));
+        public static object[][] SFBaseTestCases = GetTestCaseData(typeof(SFBaseTest));
 
-        private static TestCaseData[] GetTestCaseData(Type assignableTo, Type notAssignableTo = null) => Assembly
+        private static object[][] GetTestCaseData(Type assignableTo, Type notAssignableTo = null) => Assembly
             .GetExecutingAssembly()
             .GetTypes()
             .Where(x => assignableTo.IsAssignableFrom(x) && (notAssignableTo == null || !notAssignableTo.IsAssignableFrom(x)))
@@ -66,7 +63,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             .Where(x => x.Method.GetCustomAttributes(typeof(TimeSensitiveAttribute), false).Any())
             .GroupBy(x => x.Method.Name)
             .SelectMany(x => x.Select(y => (Data: y, HasDuplicateName: x.Count() > 1)))
-            .Select(x => new TestCaseData(x.Data).SetName(x.HasDuplicateName ? x.Data.Type.FullName + x.Data.Method.Name : x.Data.Method.Name))
+            .Select(x => new object[] { x.Data })
             .ToArray();
     }
 }

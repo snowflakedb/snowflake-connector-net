@@ -2,7 +2,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
@@ -12,7 +12,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
     public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     {
         private static readonly string s_oauthClientCredentialsMappingPath = Path.Combine(s_oauthMappingPath, "ClientCredentials");
@@ -21,26 +20,20 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_tokenRequestNoRefreshTokenMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "successful_without_refresh_token.json");
 
         private WiremockRunner _runner;
-
-        [OneTimeSetUp]
         public void BeforeAll()
         {
             _runner = WiremockRunner.NewWiremock();
         }
-
-        [SetUp]
         public void BeforeEach()
         {
             _runner.ResetMapping();
         }
-
-        [OneTimeTearDown]
         public void AfterAll()
         {
             _runner.Stop();
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulClientCredentialsFlow()
         {
             // arrange
@@ -56,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestSuccessfulClientCredentialsFlowAsync()
         {
             // arrange
@@ -72,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulFlowWithoutRefreshToken()
         {
             // arrange
@@ -88,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestSuccessfulFlowWithoutRefreshTokenAsync()
         {
             // arrange
@@ -104,7 +97,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulAuthorizationCodeFlowWithClientSecretProvidedExternally()
         {
             // arrange
@@ -120,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestTokenRequestError()
         {
             // arrange
@@ -131,30 +124,30 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
 
             // assert
-            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode));
-            Assert.That(thrown.Message, Does.Contain("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)"));
+            Assert.Equal(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Contains("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)", thrown.Message);
         }
 
-        [Test]
-        public void TestTokenRequestErrorAsync()
+        [Fact]
+        public async Task TestTokenRequestErrorAsync()
         {
             // arrange
             _runner.AddMappings(s_tokenRequestErrorMappingPath);
             var session = PrepareSession();
 
             // act
-            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
 
             // assert
-            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode));
-            Assert.That(thrown.Message, Does.Contain("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)"));
+            Assert.Equal(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Contains("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)", thrown.Message);
         }
 
         private void AssertAccessTokenSetInAuthenticator(SFSession session, string expectedAccessToken = AccessToken)
         {
             var authenticator = (OAuthClientCredentialsAuthenticator)session.GetAuthenticator();
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(expectedAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(expectedAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
         }
 
         private SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")

@@ -1,7 +1,7 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
 using System;
@@ -10,30 +10,23 @@ using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture, NonParallelizable]
     public class RedirectUnitTest
     {
         private WiremockRunner _runner;
-
-        [OneTimeSetUp]
         public void BeforeAll()
         {
             _runner = WiremockRunner.NewWiremock();
         }
-
-        [SetUp]
         public void BeforeEach()
         {
             _runner.ResetMapping();
         }
-
-        [OneTimeTearDown]
         public void AfterAll()
         {
             _runner.Stop();
         }
 
-        [Test]
+        [Fact]
         public async Task TestHttp307Retry()
         {
             // arrange
@@ -49,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await AssertResponseId(response, expectedQueryId);
         }
 
-        [Test]
+        [Fact]
         public async Task TestHttp308Retry()
         {
             // arrange
@@ -92,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.True(response.IsSuccessStatusCode);
-            Assert.AreEqual(expectedQueryId, result.data.queryId);
+            Assert.Equal(expectedQueryId, result.data.queryId);
         }
     }
 

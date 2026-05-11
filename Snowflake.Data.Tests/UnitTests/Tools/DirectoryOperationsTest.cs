@@ -2,13 +2,12 @@ using System.Collections.Generic;
 using System.IO;
 using Mono.Unix;
 using Mono.Unix.Native;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
     public class DirectoryOperationsTest
     {
         private static DirectoryOperations s_directoryOperations;
@@ -16,8 +15,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
         private static readonly string s_dirName = "testdir";
         private static readonly string s_dirAbsolutePath = Path.Combine(s_workingDirectory, s_dirName);
-
-        [SetUp]
         public static void Before()
         {
             if (!Directory.Exists(s_workingDirectory))
@@ -27,15 +24,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             s_directoryOperations = new DirectoryOperations();
         }
-
-        [TearDown]
         public static void After()
         {
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
-        [Platform("Win")]
+        [Fact]
         public void TestDirectoryIsSafeOnWindows()
         {
             // arrange
@@ -43,35 +37,32 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Directory.CreateDirectory(absoluteFilePath);
 
             // act and assert
-            Assert.IsTrue(s_directoryOperations.IsDirectorySafe(absoluteFilePath));
+            Assert.True(s_directoryOperations.IsDirectorySafe(absoluteFilePath));
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestDirectoryIsNotSafeOnNotWindowsWhenPermissionsAreTooBroad(
-            [ValueSource(nameof(InsecurePermissions))]
             FileAccessPermissions permissions)
         {
             // arrange
             Syscall.mkdir(s_dirAbsolutePath, (FilePermissions)permissions);
 
             // act and assert
-            Assert.IsFalse(s_directoryOperations.IsDirectorySafe(s_dirAbsolutePath));
+            Assert.False(s_directoryOperations.IsDirectorySafe(s_dirAbsolutePath));
         }
 
-        [Test]
+        [Fact]
         public void TestShouldCreateDirectoryWithSafePermissions()
         {
             // act
             s_directoryOperations.CreateDirectory(s_dirAbsolutePath);
 
             // assert
-            Assert.IsTrue(Directory.Exists(s_dirAbsolutePath));
-            Assert.IsTrue(s_directoryOperations.IsDirectorySafe(s_dirAbsolutePath));
+            Assert.True(Directory.Exists(s_dirAbsolutePath));
+            Assert.True(s_directoryOperations.IsDirectorySafe(s_dirAbsolutePath));
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestOwnerIsCurrentUser()
         {
             // arrange
@@ -79,11 +70,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var dirOps = new DirectoryOperations(mockUnixOperations);
 
             // act and assert
-            Assert.IsTrue(dirOps.IsDirectoryOwnedByCurrentUser(s_dirAbsolutePath));
+            Assert.True(dirOps.IsDirectoryOwnedByCurrentUser(s_dirAbsolutePath));
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
@@ -91,11 +81,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var dirOps = new DirectoryOperations(mockUnixOperations);
 
             // act and assert
-            Assert.IsFalse(dirOps.IsDirectoryOwnedByCurrentUser(s_dirAbsolutePath));
+            Assert.False(dirOps.IsDirectoryOwnedByCurrentUser(s_dirAbsolutePath));
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [Fact]
         public void TestDirectoryIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange
@@ -103,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var dirOps = new DirectoryOperations(mockUnixOperations);
 
             // act and assert
-            Assert.IsFalse(dirOps.IsDirectorySafe(s_dirAbsolutePath));
+            Assert.False(dirOps.IsDirectorySafe(s_dirAbsolutePath));
         }
 
         // User permissions are required for all of the tests to be able to access directory information

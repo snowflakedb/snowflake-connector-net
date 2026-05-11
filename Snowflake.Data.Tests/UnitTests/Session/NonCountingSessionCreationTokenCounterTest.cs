@@ -1,13 +1,12 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
     public class NonCountingSessionCreationTokenCounterTest
     {
-        [Test]
+        [Fact]
         public void TestGrantSessionCreation()
         {
             // arrange
@@ -17,10 +16,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.NewToken();
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
 
-        [Test]
+        [Fact]
         public void TestCompleteSessionCreation()
         {
             // arrange
@@ -31,10 +30,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.RemoveToken(token);
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
 
-        [Test]
+        [Fact]
         public void TestCompleteUnknownTokenDoesNotThrowExceptions()
         {
             // arrange
@@ -46,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.RemoveToken(unknownToken);
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
     }
 }

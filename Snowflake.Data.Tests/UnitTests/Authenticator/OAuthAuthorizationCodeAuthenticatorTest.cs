@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.Browser;
@@ -10,7 +10,6 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture]
     public class OAuthAuthorizationCodeAuthenticatorTest
     {
         private const string Account = "testaccount";
@@ -33,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_defaultRedirectUriWithSlash = s_defaultRedirectUri + "/";
         private const string CodeVerifier = "codeVerifierForAuthorizationCodeFlowMustBeALongString";
 
-        [Test]
+        [Fact]
         public void TestUseDefaultValues()
         {
             // arrange
@@ -53,17 +52,17 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var listener = authenticator.StartListenerUpdatingRedirectUri(authorizationData.Request);
 
             // assert
-            Assert.AreEqual(httpListener, listener);
-            Assert.AreEqual(s_defaultAuthorizationEndpoint, authorizationData.Request.AuthorizationEndpoint);
-            Assert.AreEqual(DefaultScope, authorizationData.Request.AuthorizationScope);
-            Assert.AreEqual(ClientId, authorizationData.Request.ClientId);
-            Assert.AreEqual(s_defaultRedirectUri, authorizationData.Request.RedirectUri);
+            Assert.Equal(httpListener, listener);
+            Assert.Equal(s_defaultAuthorizationEndpoint, authorizationData.Request.AuthorizationEndpoint);
+            Assert.Equal(DefaultScope, authorizationData.Request.AuthorizationScope);
+            Assert.Equal(ClientId, authorizationData.Request.ClientId);
+            Assert.Equal(s_defaultRedirectUri, authorizationData.Request.RedirectUri);
             Assert.NotNull(authorizationData.Request.CodeChallenge);
-            Assert.AreEqual(State, authorizationData.Request.State);
+            Assert.Equal(State, authorizationData.Request.State);
             listenerStarter.Verify(s => s.StartHttpListener(s_defaultRedirectUriWithSlash), Times.Once);
         }
 
-        [Test]
+        [Fact]
         public void TestFailWhenCannotFindFreeRandomPortForDefaultRedirectUri()
         {
             // arrange
@@ -83,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Throws<HttpListenerException>(() => authenticator.StartListenerUpdatingRedirectUri(authorizationData.Request));
         }
 
-        [Test]
+        [Fact]
         public void TestUseCustomizedValues()
         {
             // arrange
@@ -101,18 +100,18 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var listener = authenticator.StartListenerUpdatingRedirectUri(authorizationData.Request);
 
             // assert
-            Assert.AreEqual(httpListener, listener);
-            Assert.AreEqual(ExternalAuthorizationUrl, authorizationData.Request.AuthorizationEndpoint);
-            Assert.AreEqual(AuthorizationScope, authorizationData.Request.AuthorizationScope);
-            Assert.AreEqual(ClientId, authorizationData.Request.ClientId);
-            Assert.AreEqual(CustomRedirectUri, authorizationData.Request.RedirectUri);
+            Assert.Equal(httpListener, listener);
+            Assert.Equal(ExternalAuthorizationUrl, authorizationData.Request.AuthorizationEndpoint);
+            Assert.Equal(AuthorizationScope, authorizationData.Request.AuthorizationScope);
+            Assert.Equal(ClientId, authorizationData.Request.ClientId);
+            Assert.Equal(CustomRedirectUri, authorizationData.Request.RedirectUri);
             Assert.NotNull(authorizationData.Request.CodeChallenge);
-            Assert.AreEqual(State, authorizationData.Request.State);
+            Assert.Equal(State, authorizationData.Request.State);
             listenerStarter.Verify(s => s.StartHttpListener(CustomRedirectUriWithSlash), Times.Once);
             listenerStarter.Verify(s => s.GetRandomUnusedPort(), Times.Never);
         }
 
-        [Test]
+        [Fact]
         public void TestBrowserShouldFailWithExceptionWithMaskedUrl()
         {
             // arrange
@@ -130,9 +129,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => browserStarter.StartBrowser(invalidUrl));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Invalid browser url"));
+            Assert.Contains("Invalid browser url", thrown.Message);
             var urlInException = thrown.Message.Split('\"')[1];
-            Assert.AreEqual(expectedUrlInException, urlInException);
+            Assert.Equal(expectedUrlInException, urlInException);
         }
 
         private OAuthAuthorizationCodeAuthenticator PrepareAuthenticator(

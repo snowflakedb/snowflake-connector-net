@@ -1,16 +1,13 @@
-using NUnit.Framework;
+using Xunit;
 using Serilog;
 using Serilog.Extensions.Logging;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    [TestFixture, NonParallelizable]
     class SerilogTest : LoggerTest
     {
         private const string SerilogFileName = "test_serilog.log";
-
-        [OneTimeSetUp]
         public void SetUp()
         {
             var loggerSerilog = new LoggerConfiguration()

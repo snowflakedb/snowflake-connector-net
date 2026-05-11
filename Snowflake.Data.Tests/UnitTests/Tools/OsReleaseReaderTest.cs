@@ -1,13 +1,12 @@
 using System.Collections.Generic;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
     public class OsReleaseReaderTest
     {
-        [Test]
+        [Fact]
         public void TestParseFullOsRelease()
         {
             // arrange
@@ -29,18 +28,18 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(5, result.Count);
-            Assert.AreEqual("Arch Linux", result["NAME"]);
-            Assert.AreEqual("Arch Linux", result["PRETTY_NAME"]);
-            Assert.AreEqual("arch", result["ID"]);
-            Assert.AreEqual("rolling", result["BUILD_ID"]);
-            Assert.AreEqual("20251019.0.436919", result["VERSION_ID"]);
-            Assert.IsFalse(result.ContainsKey("ANSI_COLOR"));
-            Assert.IsFalse(result.ContainsKey("HOME_URL"));
-            Assert.IsFalse(result.ContainsKey("LOGO"));
+            Assert.Equal(5, result.Count);
+            Assert.Equal("Arch Linux", result["NAME"]);
+            Assert.Equal("Arch Linux", result["PRETTY_NAME"]);
+            Assert.Equal("arch", result["ID"]);
+            Assert.Equal("rolling", result["BUILD_ID"]);
+            Assert.Equal("20251019.0.436919", result["VERSION_ID"]);
+            Assert.False(result.ContainsKey("ANSI_COLOR"));
+            Assert.False(result.ContainsKey("HOME_URL"));
+            Assert.False(result.ContainsKey("LOGO"));
         }
 
-        [Test]
+        [Fact]
         public void TestParseUbuntuOsRelease()
         {
             // arrange
@@ -59,16 +58,16 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(5, result.Count);
-            Assert.AreEqual("Ubuntu 22.04.3 LTS", result["PRETTY_NAME"]);
-            Assert.AreEqual("Ubuntu", result["NAME"]);
-            Assert.AreEqual("22.04", result["VERSION_ID"]);
-            Assert.AreEqual("22.04.3 LTS (Jammy Jellyfish)", result["VERSION"]);
-            Assert.AreEqual("ubuntu", result["ID"]);
-            Assert.IsFalse(result.ContainsKey("ID_LIKE"));
+            Assert.Equal(5, result.Count);
+            Assert.Equal("Ubuntu 22.04.3 LTS", result["PRETTY_NAME"]);
+            Assert.Equal("Ubuntu", result["NAME"]);
+            Assert.Equal("22.04", result["VERSION_ID"]);
+            Assert.Equal("22.04.3 LTS (Jammy Jellyfish)", result["VERSION"]);
+            Assert.Equal("ubuntu", result["ID"]);
+            Assert.False(result.ContainsKey("ID_LIKE"));
         }
 
-        [Test]
+        [Fact]
         public void TestParseAllAllowedKeys()
         {
             // arrange
@@ -86,40 +85,40 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(8, result.Count);
-            Assert.AreEqual("Test OS", result["NAME"]);
-            Assert.AreEqual("Test OS 1.0", result["PRETTY_NAME"]);
-            Assert.AreEqual("testos", result["ID"]);
-            Assert.AreEqual("test-image", result["IMAGE_ID"]);
-            Assert.AreEqual("1.0.0", result["IMAGE_VERSION"]);
-            Assert.AreEqual("20250101", result["BUILD_ID"]);
-            Assert.AreEqual("1.0", result["VERSION"]);
-            Assert.AreEqual("1.0", result["VERSION_ID"]);
+            Assert.Equal(8, result.Count);
+            Assert.Equal("Test OS", result["NAME"]);
+            Assert.Equal("Test OS 1.0", result["PRETTY_NAME"]);
+            Assert.Equal("testos", result["ID"]);
+            Assert.Equal("test-image", result["IMAGE_ID"]);
+            Assert.Equal("1.0.0", result["IMAGE_VERSION"]);
+            Assert.Equal("20250101", result["BUILD_ID"]);
+            Assert.Equal("1.0", result["VERSION"]);
+            Assert.Equal("1.0", result["VERSION_ID"]);
         }
 
-        [Test]
+        [Fact]
         public void TestParseEmptyContent()
         {
             // act
             var result = OsReleaseReader.ParseOsReleaseContents("");
 
             // assert
-            Assert.IsNotNull(result);
-            Assert.AreEqual(0, result.Count);
+            Assert.NotNull(result);
+            Assert.Equal(0, result.Count);
         }
 
-        [Test]
+        [Fact]
         public void TestParseNullContent()
         {
             // act
             var result = OsReleaseReader.ParseOsReleaseContents(null);
 
             // assert
-            Assert.IsNotNull(result);
-            Assert.AreEqual(0, result.Count);
+            Assert.NotNull(result);
+            Assert.Equal(0, result.Count);
         }
 
-        [Test]
+        [Fact]
         public void TestParseIgnoresComments()
         {
             // arrange
@@ -133,12 +132,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(2, result.Count);
-            Assert.AreEqual("Test", result["NAME"]);
-            Assert.AreEqual("test", result["ID"]);
+            Assert.Equal(2, result.Count);
+            Assert.Equal("Test", result["NAME"]);
+            Assert.Equal("test", result["ID"]);
         }
 
-        [Test]
+        [Fact]
         public void TestParseIgnoresEmptyLines()
         {
             // arrange
@@ -153,12 +152,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(2, result.Count);
-            Assert.AreEqual("Test", result["NAME"]);
-            Assert.AreEqual("test", result["ID"]);
+            Assert.Equal(2, result.Count);
+            Assert.Equal("Test", result["NAME"]);
+            Assert.Equal("test", result["ID"]);
         }
 
-        [Test]
+        [Fact]
         public void TestParseIgnoresLowercaseKeys()
         {
             // arrange
@@ -170,11 +169,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual("Valid", result["NAME"]);
+            Assert.Equal(1, result.Count);
+            Assert.Equal("Valid", result["NAME"]);
         }
 
-        [Test]
+        [Fact]
         public void TestParseQuotedAndUnquotedValues()
         {
             // arrange
@@ -188,14 +187,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(4, result.Count);
-            Assert.AreEqual("Quoted Value", result["NAME"]);
-            Assert.AreEqual("unquoted", result["ID"]);
-            Assert.AreEqual("1.0", result["VERSION_ID"]);
-            Assert.AreEqual("rolling", result["BUILD_ID"]);
+            Assert.Equal(4, result.Count);
+            Assert.Equal("Quoted Value", result["NAME"]);
+            Assert.Equal("unquoted", result["ID"]);
+            Assert.Equal("1.0", result["VERSION_ID"]);
+            Assert.Equal("rolling", result["BUILD_ID"]);
         }
 
-        [Test]
+        [Fact]
         public void TestParseEmptyQuotedValue()
         {
             // arrange
@@ -205,11 +204,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual("", result["NAME"]);
+            Assert.Equal(1, result.Count);
+            Assert.Equal("", result["NAME"]);
         }
 
-        [Test]
+        [Fact]
         public void TestParseOnlyDisallowedKeys()
         {
             // arrange
@@ -224,10 +223,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(0, result.Count);
+            Assert.Equal(0, result.Count);
         }
 
-        [Test]
+        [Fact]
         public void TestParseIgnoresPartiallyMatchingKeys()
         {
             // arrange
@@ -251,24 +250,24 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(6, result.Count);
-            Assert.AreEqual("Valid", result["NAME"]);
-            Assert.AreEqual("valid", result["ID"]);
-            Assert.AreEqual("1.0", result["VERSION_ID"]);
-            Assert.AreEqual("valid", result["BUILD_ID"]);
-            Assert.AreEqual("valid", result["IMAGE_ID"]);
-            Assert.AreEqual("Valid", result["PRETTY_NAME"]);
-            Assert.IsFalse(result.ContainsKey("NAMES"));
-            Assert.IsFalse(result.ContainsKey("USERNAME"));
-            Assert.IsFalse(result.ContainsKey("USER_ID"));
-            Assert.IsFalse(result.ContainsKey("ID_LIKE"));
-            Assert.IsFalse(result.ContainsKey("VERSION_IDENTIFIER"));
-            Assert.IsFalse(result.ContainsKey("BUILD_IDS"));
-            Assert.IsFalse(result.ContainsKey("IMAGE_IDENTIFIER"));
-            Assert.IsFalse(result.ContainsKey("PRETTY_NAMES"));
+            Assert.Equal(6, result.Count);
+            Assert.Equal("Valid", result["NAME"]);
+            Assert.Equal("valid", result["ID"]);
+            Assert.Equal("1.0", result["VERSION_ID"]);
+            Assert.Equal("valid", result["BUILD_ID"]);
+            Assert.Equal("valid", result["IMAGE_ID"]);
+            Assert.Equal("Valid", result["PRETTY_NAME"]);
+            Assert.False(result.ContainsKey("NAMES"));
+            Assert.False(result.ContainsKey("USERNAME"));
+            Assert.False(result.ContainsKey("USER_ID"));
+            Assert.False(result.ContainsKey("ID_LIKE"));
+            Assert.False(result.ContainsKey("VERSION_IDENTIFIER"));
+            Assert.False(result.ContainsKey("BUILD_IDS"));
+            Assert.False(result.ContainsKey("IMAGE_IDENTIFIER"));
+            Assert.False(result.ContainsKey("PRETTY_NAMES"));
         }
 
-        [Test]
+        [Fact]
         public void TestParseHandlesCarriageReturnLineFeed()
         {
             // arrange
@@ -278,9 +277,9 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.AreEqual(2, result.Count);
-            Assert.AreEqual("Test", result["NAME"]);
-            Assert.AreEqual("test", result["ID"]);
+            Assert.Equal(2, result.Count);
+            Assert.Equal("Test", result["NAME"]);
+            Assert.Equal("test", result["ID"]);
         }
     }
 }

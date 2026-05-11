@@ -1,35 +1,34 @@
 using System.Text.RegularExpressions;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture]
     public class ChallengeProviderTest
     {
         private readonly ChallengeProvider _challengeProvider = new();
         private readonly Regex _onlyDigitsOrNumbers = new(@"^[0-9a-zA-Z]+$");
 
-        [Test]
+        [Fact]
         public void TestGenerateState()
         {
             // act
             var state = _challengeProvider.GenerateState();
 
             // assert
-            Assert.AreEqual(32, state.Length);
+            Assert.Equal(32, state.Length);
             Assert.True(_onlyDigitsOrNumbers.IsMatch(state));
         }
 
-        [Test]
+        [Fact]
         public void TestGenerateCodeVerifier()
         {
             // act
             var codeVerifier = _challengeProvider.GenerateCodeVerifier().Value;
 
             // assert
-            Assert.That(codeVerifier.Length, Is.GreaterThanOrEqualTo(43).And.LessThanOrEqualTo(128));
-            Assert.IsTrue(_onlyDigitsOrNumbers.IsMatch(codeVerifier));
+            Assert.True(codeVerifier.Length >= 43 && codeVerifier.Length <= 128);
+            Assert.True(_onlyDigitsOrNumbers.IsMatch(codeVerifier));
         }
     }
 }

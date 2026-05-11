@@ -3,14 +3,12 @@ using System.IO;
 using System.Security;
 using Mono.Unix;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
-    [TestFixture, NonParallelizable]
-    [Platform(Exclude = "Win")]
     public class SFCredentialManagerFileImplTest : SFBaseCredentialManagerTest
     {
         [ThreadStatic]
@@ -32,8 +30,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         private static readonly string s_customLockPath = Path.Combine(CustomJsonDir, SFCredentialManagerFileStorage.CredentialCacheLockName);
 
         private const int UserId = 1;
-
-        [SetUp]
         public void SetUp()
         {
             t_fileOperations = new Mock<FileOperations>();
@@ -42,8 +38,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_environmentOperations = new Mock<EnvironmentOperations>();
             _credentialManager = SFCredentialManagerFileImpl.Instance;
         }
-
-        [TearDown]
         public void CleanAll()
         {
             if (SFCredentialManagerFileImpl.Instance._fileStorage != null)
@@ -52,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [Test]
+        [Fact]
         public void TestThatThrowsErrorWhenCacheFailToCreateCacheFile()
         {
             // arrange
@@ -87,10 +81,10 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var thrown = Assert.Throws<Exception>(() => _credentialManager.SaveCredentials("key", "token"));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Failed to create the JSON token cache file"));
+            Assert.Contains("Failed to create the JSON token cache file", thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestThatThrowsErrorWhenCacheFileCanBeAccessedByOthers()
         {
             // arrange
@@ -108,7 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 var thrown = Assert.Throws<SecurityException>(() => _credentialManager.SaveCredentials("key", "token"));
 
                 // assert
-                Assert.That(thrown.Message, Does.Contain("Attempting to read or write a file with too broad permissions assigned"));
+                Assert.Contains("Attempting to read or write a file with too broad permissions assigned", thrown.Message);
             }
             finally
             {
@@ -116,7 +110,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [Test]
+        [Fact]
         public void TestThatJsonFileIsCheckedIfAlreadyExists()
         {
             // arrange
@@ -154,7 +148,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_fileOperations.Verify(f => f.Exists(s_customJsonPath), Times.Exactly(2));
         }
 
-        [Test]
+        [Fact]
         public void TestWritingIsUnavailableIfFailedToCreateDirLock()
         {
             // arrange
@@ -192,7 +186,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_fileOperations.Verify(f => f.Write(s_customJsonPath, It.IsAny<string>(), It.IsAny<Action<UnixStream>>()), Times.Never);
         }
 
-        [Test]
+        [Fact]
         public void TestReadingIsUnavailableIfFailedToCreateDirLock()
         {
             // arrange
@@ -230,7 +224,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_fileOperations.Verify(f => f.ReadAllText(s_customJsonPath, It.IsAny<Action<UnixStream>>()), Times.Never);
         }
 
-        [Test]
+        [Fact]
         public void TestReadingAndWritingAreUnavailableIfDirLockExists()
         {
             // arrange
@@ -249,7 +243,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 var result = _credentialManager.GetCredentials("key");
 
                 // assert
-                Assert.AreEqual(string.Empty, result);
+                Assert.Equal(string.Empty, result);
             }
             finally
             {
@@ -257,7 +251,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [Test]
+        [Fact]
         public void TestThatDoesNotChangeCacheDirPermissionsWhenInsecure()
         {
             // arrange
@@ -277,8 +271,8 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 var result = _credentialManager.GetCredentials("key");
 
                 // assert
-                Assert.AreEqual("token", result);
-                Assert.AreEqual(insecurePermissions, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
+                Assert.Equal("token", result);
+                Assert.Equal(insecurePermissions, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
             }
             finally
             {
@@ -286,7 +280,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [Test]
+        [Fact]
         public void TestCreateDirectoryWithSecurePermissions()
         {
             // arrange
@@ -302,8 +296,8 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 var result = _credentialManager.GetCredentials("key");
 
                 // assert
-                Assert.AreEqual("token", result);
-                Assert.AreEqual(FileAccessPermissions.UserReadWriteExecute, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
+                Assert.Equal("token", result);
+                Assert.Equal(FileAccessPermissions.UserReadWriteExecute, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
             }
             finally
             {

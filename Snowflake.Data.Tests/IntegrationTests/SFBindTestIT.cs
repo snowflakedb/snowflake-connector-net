@@ -6,7 +6,7 @@ using System.Linq;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using System.Text;
@@ -16,13 +16,13 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
-    [TestFixture]
     class SFBindTestIT : SFBaseTest
     {
+        public SFBindTestIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
 
-        [Test]
+        [Fact]
         public void TestArrayBind()
         {
 
@@ -55,15 +55,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p2);
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(3, count);
+                    Assert.Equal(3, count);
                 }
 
                 conn.Close();
             }
         }
 
-        [Test]
-        [TestCaseSource(nameof(NullTestCases))]
+        [Theory]
+        [MemberData(nameof(NullTestCases))]
         public void TestBindNullValue(object nullValue)
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             param.Value = nullValue;
                             command.Parameters.Add(param);
                             int rowsInserted = command.ExecuteNonQuery();
-                            Assert.AreEqual(1, rowsInserted);
+                            Assert.Equal(1, rowsInserted);
                         }
                         else
                         {
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             }
                             catch (SnowflakeDbException e)
                             {
-                                Assert.AreEqual(270053, e.ErrorCode);
+                                Assert.Equal(270053, e.ErrorCode);
                             }
                         }
                     }
@@ -185,7 +185,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             using (IDataReader reader = command.ExecuteReader())
                             {
                                 reader.Read();
-                                Assert.IsTrue(reader.IsDBNull(0));
+                                Assert.True(reader.IsDBNull(0));
                                 reader.Close();
                             }
                         }
@@ -204,7 +204,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static IEnumerable<object?> NullTestCases() =>
             new object?[] { DBNull.Value, null };
 
-        [Test]
+        [Fact]
         public void TestBindValue()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
@@ -314,7 +314,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             command.CommandText = $"insert into {TableName}({colName}) values(:p0)";
                             command.Parameters.Add(param);
                             int rowsInserted = command.ExecuteNonQuery();
-                            Assert.AreEqual(1, rowsInserted);
+                            Assert.Equal(1, rowsInserted);
                         }
                         else
                         {
@@ -327,7 +327,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             }
                             catch (SnowflakeDbException e)
                             {
-                                Assert.AreEqual(270053, e.ErrorCode);
+                                Assert.Equal(270053, e.ErrorCode);
                             }
                         }
                     }
@@ -340,7 +340,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             using (IDataReader reader = command.ExecuteReader())
                             {
                                 reader.Read();
-                                Assert.IsTrue(!reader.IsDBNull(0));
+                                Assert.True(!reader.IsDBNull(0));
                                 reader.Close();
                             }
                         }
@@ -356,7 +356,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestBindValueWithSFDataType()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
@@ -438,7 +438,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 command.CommandText = $"insert into {TableName}(data) values(:p0)";
                                 command.Parameters.Add(param);
                                 int rowsInserted = command.ExecuteNonQuery();
-                                Assert.AreEqual(1, rowsInserted);
+                                Assert.Equal(1, rowsInserted);
                             }
                             // DB rejects query if param type is VARIANT, OBJECT or ARRAY
                             else if (!type.Equals(SFDataType.VARIANT) &&
@@ -454,7 +454,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 }
                                 catch (SnowflakeDbException e)
                                 {
-                                    Assert.AreEqual(270054, e.ErrorCode);
+                                    Assert.Equal(270054, e.ErrorCode);
                                 }
                             }
                         }
@@ -467,7 +467,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 using (IDataReader reader = command.ExecuteReader())
                                 {
                                     reader.Read();
-                                    Assert.IsTrue(!reader.IsDBNull(0));
+                                    Assert.True(!reader.IsDBNull(0));
                                     reader.Close();
                                 }
                             }
@@ -477,7 +477,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestParameterCollection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -512,28 +512,28 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Throws<NotImplementedException>(
                         () => { cmd.Parameters.CopyTo(parameters, 5); });
 
-                    Assert.AreEqual(3, cmd.Parameters.Count);
-                    Assert.IsTrue(cmd.Parameters.Contains(p2));
-                    Assert.IsTrue(cmd.Parameters.Contains("2"));
-                    Assert.AreEqual(1, cmd.Parameters.IndexOf(p2));
-                    Assert.AreEqual(1, cmd.Parameters.IndexOf("2"));
+                    Assert.Equal(3, cmd.Parameters.Count);
+                    Assert.True(cmd.Parameters.Contains(p2));
+                    Assert.True(cmd.Parameters.Contains("2"));
+                    Assert.Equal(1, cmd.Parameters.IndexOf(p2));
+                    Assert.Equal(1, cmd.Parameters.IndexOf("2"));
 
                     cmd.Parameters.Remove(p2);
-                    Assert.AreEqual(2, cmd.Parameters.Count);
-                    Assert.AreSame(p1, cmd.Parameters[0]);
+                    Assert.Equal(2, cmd.Parameters.Count);
+                    Assert.Same(p1, cmd.Parameters[0]);
 
                     cmd.Parameters.RemoveAt(0);
-                    Assert.AreSame(p3, cmd.Parameters[0]);
+                    Assert.Same(p3, cmd.Parameters[0]);
 
                     cmd.Parameters.Clear();
-                    Assert.AreEqual(0, cmd.Parameters.Count);
+                    Assert.Equal(0, cmd.Parameters.Count);
                 }
 
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutArrayBind()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -651,19 +651,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p6);
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(total * 3, count);
+                    Assert.Equal(total * 3, count);
 
                     cmd.Parameters.Clear();
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                 }
 
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
         {
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
@@ -725,18 +725,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p3);
 
                     var rowsCount = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(total * 3, rowsCount);
+                    Assert.Equal(total * 3, rowsCount);
 
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                 }
 
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         public void TestPutArrayIntegerBind()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -768,17 +768,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p1);
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(70000, count);
+                    Assert.Equal(70000, count);
 
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                 }
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         public void TestExplicitDbTypeAssignmentForSimpleValue()
         {
 
@@ -803,14 +803,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p1);
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(1, count);
+                    Assert.Equal(1, count);
                 }
 
                 conn.Close();
             }
         }
 
-        [Test]
+        [Fact]
         public void TestExplicitDbTypeAssignmentForArrayValue()
         {
 
@@ -835,7 +835,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p1);
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(3, count);
+                    Assert.Equal(3, count);
                 }
 
                 conn.Close();
@@ -849,52 +849,53 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private const string FormatYmdHmsZ = "yyyy/MM/dd HH\\:mm\\:ss zzz";
 
         // STANDARD Tables
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [Theory]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         /* TODO: Enable when features available on the automated tests environment
         // HYBRID Tables
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         // ICEBERG Tables; require env variables: ICEBERG_EXTERNAL_VOLUME, ICEBERG_CATALOG, ICEBERG_BASE_LOCATION.
-        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        // [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)] // Unsupported data type 'TIMESTAMP_TZ(6)' for iceberg tables
-        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        // [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTime, FormatYmdHmsZ, null)] // Unsupported data type 'TIMESTAMP_TZ(6)' for iceberg tables
-        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        // [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)] // Unsupported data type 'TIMESTAMP_TZ(6)' for iceberg tables
+        [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        // [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTime, FormatYmdHmsZ, null)] // Unsupported data type 'TIMESTAMP_TZ(6)' for iceberg tables
+        [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         */
         // Session TimeZone cases
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
-        [Test, NonParallelizable]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
+        [Fact]
         public void TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
         {
             // Arrange
@@ -955,7 +956,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ++row;
                         string faultMessage = $"Mismatch for row: {row}, {testCase}";
-                        Assert.AreEqual(row, reader.GetInt32(0));
+                        Assert.Equal(row, reader.GetInt32(0));
 
                         for (int i = 0; i < timestamps.Length; ++i)
                         {
@@ -963,7 +964,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         }
                     }
                 }
-                Assert.AreEqual(1 + smallBatchRowCount + bigBatchRowCount, row);
+                Assert.Equal(1 + smallBatchRowCount + bigBatchRowCount, row);
             }
         }
 
@@ -1000,8 +1001,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var rowsAffected = insert.ExecuteNonQuery();
 
                 // Assert
-                Assert.AreEqual(1, rowsAffected);
-                Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
+                Assert.Equal(1, rowsAffected);
+                Assert.Null(((SnowflakeDbCommand)insert).GetBindStage());
             }
         }
 
@@ -1039,11 +1040,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var rowsAffected = insert.ExecuteNonQuery();
 
                 // Assert
-                Assert.AreEqual(rowsCount, rowsAffected);
+                Assert.Equal(rowsCount, rowsAffected);
                 if (shouldUseBinding)
-                    Assert.IsNotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
+                    Assert.NotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
                 else
-                    Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
+                    Assert.Null(((SnowflakeDbCommand)insert).GetBindStage());
             }
         }
 
@@ -1097,13 +1098,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             switch (_columnType)
             {
                 case SFDataType.TIMESTAMP_TZ:
-                    Assert.AreEqual(GetDateTimeOffsets()[index].ToString(comparisonFormat), ((DateTimeOffset)actual).ToString(comparisonFormat), faultMessage);
+                    Assert.Equal(GetDateTimeOffsets()[index].ToString(comparisonFormat), ((DateTimeOffset)actual).ToString(comparisonFormat));
                     break;
                 case SFDataType.TIMESTAMP_LTZ:
-                    Assert.AreEqual(GetDateTimeOffsets()[index].ToUniversalTime().ToString(comparisonFormat), ((DateTimeOffset)actual).ToUniversalTime().ToString(comparisonFormat), faultMessage);
+                    Assert.Equal(GetDateTimeOffsets()[index].ToUniversalTime().ToString(comparisonFormat), ((DateTimeOffset)actual).ToUniversalTime().ToString(comparisonFormat));
                     break;
                 default:
-                    Assert.AreEqual(GetDateTimes()[index].ToString(comparisonFormat), ((DateTime)actual).ToString(comparisonFormat), faultMessage);
+                    Assert.Equal(GetDateTimes()[index].ToString(comparisonFormat), ((DateTime)actual).ToString(comparisonFormat));
                     break;
             }
         }

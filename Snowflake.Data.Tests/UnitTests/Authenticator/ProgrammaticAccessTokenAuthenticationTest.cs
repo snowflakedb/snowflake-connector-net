@@ -2,7 +2,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
@@ -11,7 +11,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
     public class ProgrammaticAccessTokenAuthenticationTest
     {
         private static readonly string s_patMappingPath = Path.Combine("wiremock", "PAT");
@@ -26,26 +25,20 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string Token = "MOCK_TOKEN";
 
         private WiremockRunner _runner;
-
-        [OneTimeSetUp]
         public void BeforeAll()
         {
             _runner = WiremockRunner.NewWiremock();
         }
-
-        [SetUp]
         public void BeforeEach()
         {
             _runner.ResetMapping();
         }
-
-        [OneTimeTearDown]
         public void AfterAll()
         {
             _runner.Stop();
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulPatAuthentication()
         {
             // arrange
@@ -59,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestSuccessfulPatAuthenticationAsync()
         {
             // arrange
@@ -73,7 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestInvalidPatAuthentication()
         {
             // arrange
@@ -84,21 +77,21 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
 
             // assert
-            Assert.That(thrown.Message, Contains.Substring("Programmatic access token is invalid."));
+            Assert.Contains("Programmatic access token is invalid.", thrown.Message);
         }
 
-        [Test]
-        public void TestInvalidPatAuthenticationAsync()
+        [Fact]
+        public async Task TestInvalidPatAuthenticationAsync()
         {
             // arrange
             _runner.AddMappings(s_invalidPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
-            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
 
             // assert
-            Assert.That(thrown.Message, Contains.Substring("Programmatic access token is invalid."));
+            Assert.Contains("Programmatic access token is invalid.", thrown.Message);
         }
 
         private SFSession PrepareSession()
@@ -127,9 +120,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         private void AssertSessionSuccessfullyCreated(SFSession session)
         {
-            Assert.AreEqual(SessionId, session.sessionId);
-            Assert.AreEqual(MasterToken, session.masterToken);
-            Assert.AreEqual(SessionToken, session.sessionToken);
+            Assert.Equal(SessionId, session.sessionId);
+            Assert.Equal(MasterToken, session.masterToken);
+            Assert.Equal(SessionToken, session.sessionToken);
         }
     }
 }

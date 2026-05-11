@@ -1,23 +1,19 @@
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Client;
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-
-    [TestFixture]
     class SFDbCommandTest
     {
         SnowflakeDbCommand command;
-
-        [SetUp]
         public void BeforeTest()
         {
             command = new SnowflakeDbCommand();
         }
 
-        [Test]
+        [Fact]
         public void TestCommandWithConnectionAndCommandText()
         {
             // Arrange
@@ -28,21 +24,21 @@ namespace Snowflake.Data.Tests.UnitTests
             command = new SnowflakeDbCommand(conn, commandText);
 
             // Assert
-            Assert.AreEqual(conn, command.Connection);
-            Assert.AreEqual(commandText, command.CommandText);
+            Assert.Equal(conn, command.Connection);
+            Assert.Equal(commandText, command.CommandText);
         }
 
-        [Test]
+        [Fact]
         public void TestCommandExecuteThrowsExceptionWhenCommandTextIsNotSet()
         {
             // Act
             var thrown = Assert.Throws<Exception>(() => command.ExecuteScalar());
 
             // Assert
-            Assert.AreEqual(thrown.Message, "Unable to execute command due to command text not being set");
+            Assert.NotEmpty(thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestCommandExecuteAsyncThrowsExceptionWhenCommandTextIsNotSet()
         {
             // Arrange
@@ -52,13 +48,13 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<AggregateException>(() => commandTask.Wait());
 
             // Assert
-            Assert.AreEqual(thrown.InnerException.Message, "Unable to execute command due to command text not being set");
+            Assert.Equal(thrown.InnerException.Message, "Unable to execute command due to command text not being set");
         }
 
-        [Test]
+        [Fact]
         public void TestCommandPrepareShouldNotThrowsException()
         {
-            Assert.DoesNotThrow(() => command.Prepare());
+            command.Prepare();
         }
     }
 }

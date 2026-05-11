@@ -1,6 +1,6 @@
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Configuration;
     using Snowflake.Data.Core;
     using System;
@@ -9,20 +9,16 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Security;
     using System.Text;
     using System.Threading;
-
-    [TestFixture, NonParallelizable]
     class ChunkParserFactoryTest
     {
         int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
-
-        [TearDown]
         public void AfterTest()
         {
             SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
         }
 
-        [Test]
-        public void TestGetParser([Values(1, 2, 3, 4)] int chunkParserVersion)
+        [Fact]
+        public void TestGetParser(int chunkParserVersion)
         {
             try
             {
@@ -38,12 +34,12 @@ namespace Snowflake.Data.Tests.UnitTests
                     if (chunkParserVersion == 4)
                     {
                         Exception ex = Assert.Throws<Exception>(() => parser = ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream));
-                        Assert.That(ex.Message, Does.Contain("Unsupported Chunk Parser version"));
+                        Assert.Contains("Unsupported Chunk Parser version", ex.Message);
                     }
                     else
                     {
                         parser = ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream);
-                        Assert.IsTrue(parser is ReusableChunkParser);
+                        Assert.True(parser is ReusableChunkParser);
                     }
                 }
             }

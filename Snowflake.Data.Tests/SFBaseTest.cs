@@ -2,70 +2,232 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using NUnit.Framework;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
+using Xunit.Sdk;
 
-[assembly: LevelOfParallelism(20)]
+[assembly: CollectionBehavior(MaxParallelThreads = 20)]
 
 namespace Snowflake.Data.Tests
 {
-    using NUnit.Framework;
-    using NUnit.Framework.Interfaces;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Serialization;
+    /*
+     * Sequential collection definition for tests that cannot run in parallel.
+     */
+    [CollectionDefinition(SequentialCollectionName, DisableParallelization = true)]
+    public class SequentialCollection
+    {
+        public const string SequentialCollectionName = "Sequential";
+    }
 
     /*
-     * Base infrastructure shared by all test classes - provides common test utilities
+     * Setting up environment collection definition for integration tests.
      */
-    public class BaseTestInfrastructure
+    [CollectionDefinition(TestEnvironmentCollectionName)]
+    public class TestEnvironmentCollection : ICollectionFixture<TestEnvironmentFixture>
     {
-        protected virtual string TestName => TestContext.CurrentContext.Test.MethodName;
-        protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
+        public const string TestEnvironmentCollectionName = "TestEnvironment";
+    }
+
+
+    public sealed class TestEnvironmentFixture : IDisposable
+    {
+        public static TestEnvironmentFixture Instance { get; private set; }
+
+        public TestConfig TestConfig { get; private set; }
+
+        private Dictionary<string, TimeSpan> _testPerformance;
+
+        private readonly object _testPerformanceLock = new object();
+
+        public void RecordTestPerformance(string name, TimeSpan time)
+        {
+            lock (_testPerformanceLock)
+            {
+                _testPerformance[name] = time;
+            }
+        }
+
+        public TestEnvironmentFixture()
+        {
+            Instance = this;
+
+#if NETFRAMEWORK
+            log4net.GlobalContext.Properties["framework"] = "net471";
+            log4net.Config.XmlConfigurator.Configure();
+#else
+            log4net.GlobalContext.Properties["framework"] = "net10.0";
+            var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
+            log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
+#endif
+            var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+            Assert.True(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP",
+                $"{cloud} is not supported. Specify AWS, AZURE or GCP as cloud environment");
+
+            TestConfig = ReadTestConfig();
+
+            _testPerformance = new Dictionary<string, TimeSpan>();
+
+            // A lot of blocking code + async mixup does not play along well with standard thread pool allocation algo
+            ThreadPool.SetMinThreads(100, 100);
+        }
+
+        public void Dispose()
+        {
+            CreateTestTimeArtifact();
+        }
+
+        private static TestConfig ReadTestConfig()
+        {
+            var fileName = "parameters.json";
+            var testConfig = File.Exists(fileName) ? ReadTestConfigFile(fileName) : ReadTestConfigEnvVariables();
+            testConfig.schema = testConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
+            return testConfig;
+        }
+
+        private static TestConfig ReadTestConfigEnvVariables()
+        {
+            var config = new TestConfig();
+            config.user = ReadEnvVariableIfSet(config.user, "SNOWFLAKE_TEST_USER");
+            config.password = ReadEnvVariableIfSet(config.password, "SNOWFLAKE_TEST_PASSWORD");
+            config.account = ReadEnvVariableIfSet(config.account, "SNOWFLAKE_TEST_ACCOUNT");
+            config.host = ReadEnvVariableIfSet(config.host, "SNOWFLAKE_TEST_HOST");
+            config.port = ReadEnvVariableIfSet(config.port, "SNOWFLAKE_TEST_PORT");
+            config.warehouse = ReadEnvVariableIfSet(config.warehouse, "SNOWFLAKE_TEST_WAREHOUSE");
+            config.database = ReadEnvVariableIfSet(config.database, "SNOWFLAKE_TEST_DATABASE");
+            config.schema = ReadEnvVariableIfSet(config.schema, "SNOWFLAKE_TEST_SCHEMA");
+            config.role = ReadEnvVariableIfSet(config.role, "SNOWFLAKE_TEST_ROLE");
+            config.protocol = ReadEnvVariableIfSet(config.protocol, "SNOWFLAKE_TEST_PROTOCOL");
+            config.authenticator = ReadEnvVariableIfSet(config.authenticator, "SNOWFLAKE_TEST_AUTHENTICATOR");
+            config.oktaUser = ReadEnvVariableIfSet(config.oktaUser, "SNOWFLAKE_TEST_OKTA_USER");
+            config.oktaPassword = ReadEnvVariableIfSet(config.oktaPassword, "SNOWFLAKE_TEST_OKTA_PASSWORD");
+            config.oktaUrl = ReadEnvVariableIfSet(config.oktaUrl, "SNOWFLAKE_TEST_OKTA_URL");
+            config.jwtAuthUser = ReadEnvVariableIfSet(config.jwtAuthUser, "SNOWFLAKE_TEST_JWT_USER");
+            config.pemFilePath = ReadEnvVariableIfSet(config.pemFilePath, "SNOWFLAKE_TEST_PEM_FILE");
+            config.p8FilePath = ReadEnvVariableIfSet(config.p8FilePath, "SNOWFLAKE_TEST_P8_FILE");
+            config.pwdProtectedPrivateKeyFilePath = ReadEnvVariableIfSet(config.pwdProtectedPrivateKeyFilePath, "SNOWFLAKE_TEST_PWD_PROTECTED_PK_FILE");
+            config.privateKey = ReadEnvVariableIfSet(config.privateKey, "SNOWFLAKE_TEST_PK_CONTENT");
+            config.pwdProtectedPrivateKey = ReadEnvVariableIfSet(config.pwdProtectedPrivateKey, "SNOWFLAKE_TEST_PROTECTED_PK_CONTENT");
+            config.privateKeyFilePwd = ReadEnvVariableIfSet(config.privateKeyFilePwd, "SNOWFLAKE_TEST_PK_PWD");
+            config.oauthToken = ReadEnvVariableIfSet(config.oauthToken, "SNOWFLAKE_TEST_OAUTH_TOKEN");
+            config.expOauthToken = ReadEnvVariableIfSet(config.expOauthToken, "SNOWFLAKE_TEST_EXP_OAUTH_TOKEN");
+            config.proxyHost = ReadEnvVariableIfSet(config.proxyHost, "SNOWFLAKE_TEST_PROXY_HOST");
+            config.proxyPort = ReadEnvVariableIfSet(config.proxyPort, "SNOWFLAKE_TEST_PROXY_PORT");
+            config.authProxyHost = ReadEnvVariableIfSet(config.authProxyHost, "SNOWFLAKE_TEST_AUTH_PROXY_HOST");
+            config.authProxyPort = ReadEnvVariableIfSet(config.authProxyPort, "SNOWFLAKE_TEST_AUTH_PROXY_PORT");
+            config.authProxyUser = ReadEnvVariableIfSet(config.authProxyUser, "SNOWFLAKE_TEST_AUTH_PROXY_USER");
+            config.authProxyPwd = ReadEnvVariableIfSet(config.authProxyPwd, "SNOWFLAKE_TEST_AUTH_PROXY_PWD");
+            config.nonProxyHosts = ReadEnvVariableIfSet(config.nonProxyHosts, "SNOWFLAKE_TEST_NON_PROXY_HOSTS");
+            config.oauthClientId = ReadEnvVariableIfSet(config.oauthClientId, "SNOWFLAKE_TEST_OAUTH_CLIENT_ID");
+            config.oauthClientSecret = ReadEnvVariableIfSet(config.oauthClientSecret, "SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET");
+            config.oauthScope = ReadEnvVariableIfSet(config.oauthScope, "SNOWFLAKE_TEST_OAUTH_SCOPE");
+            config.oauthRedirectUri = ReadEnvVariableIfSet(config.oauthRedirectUri, "SNOWFLAKE_TEST_OAUTH_REDIRECT_URI");
+            config.oauthAuthorizationUrl = ReadEnvVariableIfSet(config.oauthAuthorizationUrl, "SNOWFLAKE_TEST_OAUTH_AUTHORIZATION_URL");
+            config.oauthTokenRequestUrl = ReadEnvVariableIfSet(config.oauthTokenRequestUrl, "SNOWFLAKE_TEST_OAUTH_TOKEN_REQUEST_URL");
+            config.programmaticAccessToken = ReadEnvVariableIfSet(config.programmaticAccessToken, "SNOWFLAKE_TEST_PROGRAMMATIC_ACCESS_TOKEN");
+            return config;
+        }
+
+        private static string ReadEnvVariableIfSet(string defaultValue, string variableName)
+        {
+            var variableValue = Environment.GetEnvironmentVariable(variableName);
+            return string.IsNullOrEmpty(variableValue) ? defaultValue : variableValue;
+        }
+
+        internal static TestConfig ReadTestConfigFile(string fileName)
+        {
+            var reader = new StreamReader(fileName);
+            var testConfigString = reader.ReadToEnd();
+            // Local JSON settings to avoid using system wide settings which could be different
+            // than the default ones
+            var jsonSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new DefaultNamingStrategy()
+                }
+            };
+            var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
+            if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
+            {
+                return testConnectionConfig;
+            }
+            else
+            {
+                Assert.Fail("Failed to load test configuration");
+                throw new Exception("Failed to load test configuration");
+            }
+        }
+
+        private void CreateTestTimeArtifact()
+        {
+            if (_testPerformance == null || _testPerformance.Count == 0)
+                return;
+
+            var resultText = "test;time_in_ms\n";
+            resultText += string.Join("\n",
+                _testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}"));
+
+            var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
+            var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+
+            var separator = Path.DirectorySeparatorChar;
+
+            // We have to go up 3 times as the working directory path looks as follows:
+            // Snowflake.Data.Tests/bin/debug/{.net_version}/
+            File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
+        }
+
+        private static string GetOs()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return "windows";
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return "linux";
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return "macos";
+            }
+
+            return "unknown";
+        }
+    }
+
+    /// <summary>
+    /// Static accessor for TestEnvironment - provides backward compat with code that referenced TestEnvironment.TestConfig
+    /// </summary>
+    public static class TestEnvironment
+    {
+        public static TestConfig TestConfig => TestEnvironmentFixture.Instance?.TestConfig;
     }
 
     /*
      * Base class for unit tests - it uses MockSynchronizationContext to verify that
      * there are no async deadlocks in the library
      */
-    [TestFixture]
-    public class UnitTestBase : BaseTestInfrastructure
+    // TODO
+    public class UnitTestBase : IDisposable
     {
-        [SetUp]
-        public static void SetUpMockContext()
+        public UnitTestBase()
         {
             MockSynchronizationContext.SetupContext();
         }
 
-        [TearDown]
-        public static void TearDownMockContext()
-        {
-            MockSynchronizationContext.Verify();
-        }
-    }
-
-    /*
-     * Base class for integration tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that
-     * there are no async deadlocks in the library
-     */
-    [TestFixture]
-    [Timeout(1_000 * 60 * 10)] // 10 mins
-    public class SFBaseTest : SFBaseTestAsync
-    {
-        [SetUp]
-        public static void SetUpContext()
-        {
-            MockSynchronizationContext.SetupContext();
-        }
-
-        [TearDown]
-        public static void TearDownContext()
+        public void Dispose()
         {
             MockSynchronizationContext.Verify();
         }
@@ -74,45 +236,61 @@ namespace Snowflake.Data.Tests
     /*
      * Base class for integration tests that call async methods - provides database connection infrastructure
      */
-    [TestFixture]
-    [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
-    [SetCulture("en-US")]
-#if !SEQUENTIAL_TEST_RUN
-    [Parallelizable(ParallelScope.All)]
-#endif
-    public class SFBaseTestAsync
+    [CollectionDefinition(TestEnvironmentCollection.TestEnvironmentCollectionName)]
+    public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsync>, ICollectionFixture<TestEnvironmentFixture>
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
+        protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture testEnvironmentFixture)
+        {
+            fixture.SetTestConfig(testEnvironmentFixture.TestConfig);
+        }
+    }
+
+    public class SFBaseTestAsyncFixture : IAsyncLifetime
+    {
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsyncFixture>();
 
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7};";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         private const string ConnectionStringJwtAuthFmt = ";authenticator=snowflake_jwt;user={0};private_key_file={1};";
         private const string ConnectionStringJwtContentFmt = ";authenticator=snowflake_jwt;user={0};private_key={1};";
-        protected virtual string TestName => TestContext.CurrentContext.Test.MethodName;
-        protected string TestNameWithWorker => TestName + TestContext.CurrentContext.WorkerId?.Replace("#", "_");
+
+        protected virtual string TestName => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
+        protected string TestNameWithWorker => TestName;
         protected string TableName => TestNameWithWorker;
 
         private Stopwatch _stopwatch;
 
         private List<string> _tablesToRemove;
 
-        [SetUp]
-        public void BeforeTest()
+        protected readonly TestEnvironmentFixture _envFixture;
+
+        public SFBaseTestAsyncFixture(TestEnvironmentFixture envFixture)
         {
+            _envFixture = envFixture;
+            testConfig = TestEnvironment.TestConfig;
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
             _tablesToRemove = new List<string>();
         }
 
-        [TearDown]
-        public void AfterTest()
+        public void SetTestConfig(TestConfig testConfig)
+        {
+            this.testConfig = testConfig ?? throw new ArgumentNullException(nameof(testConfig));
+        }
+
+        public virtual Task InitializeAsync()
+        {
+            return Task.CompletedTask;
+        }
+
+        public virtual Task DisposeAsync()
         {
             _stopwatch.Stop();
-            var testName = TestContext.CurrentContext.Test.FullName;
-
-            TestEnvironment.RecordTestPerformance(testName, _stopwatch.Elapsed);
+            var testName = GetType().FullName + "." + TestName;
+            _envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
             RemoveTables();
+            return Task.CompletedTask;
         }
 
         private void RemoveTables()
@@ -153,11 +331,6 @@ namespace Snowflake.Data.Tests
         protected void AddTableToRemoveList(string tableName)
         {
             _tablesToRemove.Add(tableName);
-        }
-
-        public SFBaseTestAsync()
-        {
-            testConfig = TestEnvironment.TestConfig;
         }
 
         protected string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
@@ -261,7 +434,7 @@ namespace Snowflake.Data.Tests
                                                  "unknown",
                                                  testConfig.password);
 
-        protected TestConfig testConfig { get; }
+        protected TestConfig testConfig { get; private set; }
 
         protected string ResolveHost()
         {
@@ -269,166 +442,21 @@ namespace Snowflake.Data.Tests
         }
     }
 
-    [SetUpFixture]
-    public class TestEnvironment
+    /*
+     * Base class for integration tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that
+     * there are no async deadlocks in the library
+     */
+    public class SFBaseTest : SFBaseTestAsync, IAsyncDisposable
     {
-
-        public static TestConfig TestConfig { get; private set; }
-
-        private static Dictionary<string, TimeSpan> s_testPerformance;
-
-        private static readonly object s_testPerformanceLock = new object();
-
-        public static void RecordTestPerformance(string name, TimeSpan time)
+        public SFBaseTest(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture)
         {
-            lock (s_testPerformanceLock)
-            {
-                s_testPerformance[name] = time;
-            }
+            MockSynchronizationContext.SetupContext();
         }
 
-        [OneTimeSetUp]
-        public void Setup()
+        public ValueTask DisposeAsync()
         {
-#if NETFRAMEWORK
-            log4net.GlobalContext.Properties["framework"] = "net471";
-            log4net.Config.XmlConfigurator.Configure();
-
-#else
-            log4net.GlobalContext.Properties["framework"] = "net6.0";
-            var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
-            log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
-#endif
-            var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
-
-            TestConfig = ReadTestConfig();
-
-            // A lot of blocking code + async mixup does not play along well with standard thread pool allocation algo
-            ThreadPool.SetMinThreads(100, 100);
-        }
-
-        private static TestConfig ReadTestConfig()
-        {
-            var fileName = "parameters.json";
-            var testConfig = File.Exists(fileName) ? ReadTestConfigFile(fileName) : ReadTestConfigEnvVariables();
-            testConfig.schema = testConfig.schema + "_" + Guid.NewGuid().ToString().Replace("-", "_");
-            return testConfig;
-        }
-
-        private static TestConfig ReadTestConfigEnvVariables()
-        {
-            var config = new TestConfig();
-            config.user = ReadEnvVariableIfSet(config.user, "SNOWFLAKE_TEST_USER");
-            config.password = ReadEnvVariableIfSet(config.password, "SNOWFLAKE_TEST_PASSWORD");
-            config.account = ReadEnvVariableIfSet(config.account, "SNOWFLAKE_TEST_ACCOUNT");
-            config.host = ReadEnvVariableIfSet(config.host, "SNOWFLAKE_TEST_HOST");
-            config.port = ReadEnvVariableIfSet(config.port, "SNOWFLAKE_TEST_PORT");
-            config.warehouse = ReadEnvVariableIfSet(config.warehouse, "SNOWFLAKE_TEST_WAREHOUSE");
-            config.database = ReadEnvVariableIfSet(config.database, "SNOWFLAKE_TEST_DATABASE");
-            config.schema = ReadEnvVariableIfSet(config.schema, "SNOWFLAKE_TEST_SCHEMA");
-            config.role = ReadEnvVariableIfSet(config.role, "SNOWFLAKE_TEST_ROLE");
-            config.protocol = ReadEnvVariableIfSet(config.protocol, "SNOWFLAKE_TEST_PROTOCOL");
-            config.authenticator = ReadEnvVariableIfSet(config.authenticator, "SNOWFLAKE_TEST_AUTHENTICATOR");
-            config.oktaUser = ReadEnvVariableIfSet(config.oktaUser, "SNOWFLAKE_TEST_OKTA_USER");
-            config.oktaPassword = ReadEnvVariableIfSet(config.oktaPassword, "SNOWFLAKE_TEST_OKTA_PASSWORD");
-            config.oktaUrl = ReadEnvVariableIfSet(config.oktaUrl, "SNOWFLAKE_TEST_OKTA_URL");
-            config.jwtAuthUser = ReadEnvVariableIfSet(config.jwtAuthUser, "SNOWFLAKE_TEST_JWT_USER");
-            config.pemFilePath = ReadEnvVariableIfSet(config.pemFilePath, "SNOWFLAKE_TEST_PEM_FILE");
-            config.p8FilePath = ReadEnvVariableIfSet(config.p8FilePath, "SNOWFLAKE_TEST_P8_FILE");
-            config.pwdProtectedPrivateKeyFilePath = ReadEnvVariableIfSet(config.pwdProtectedPrivateKeyFilePath, "SNOWFLAKE_TEST_PWD_PROTECTED_PK_FILE");
-            config.privateKey = ReadEnvVariableIfSet(config.privateKey, "SNOWFLAKE_TEST_PK_CONTENT");
-            config.pwdProtectedPrivateKey = ReadEnvVariableIfSet(config.pwdProtectedPrivateKey, "SNOWFLAKE_TEST_PROTECTED_PK_CONTENT");
-            config.privateKeyFilePwd = ReadEnvVariableIfSet(config.privateKeyFilePwd, "SNOWFLAKE_TEST_PK_PWD");
-            config.oauthToken = ReadEnvVariableIfSet(config.oauthToken, "SNOWFLAKE_TEST_OAUTH_TOKEN");
-            config.expOauthToken = ReadEnvVariableIfSet(config.expOauthToken, "SNOWFLAKE_TEST_EXP_OAUTH_TOKEN");
-            config.proxyHost = ReadEnvVariableIfSet(config.proxyHost, "SNOWFLAKE_TEST_PROXY_HOST");
-            config.proxyPort = ReadEnvVariableIfSet(config.proxyPort, "SNOWFLAKE_TEST_PROXY_PORT");
-            config.authProxyHost = ReadEnvVariableIfSet(config.authProxyHost, "SNOWFLAKE_TEST_AUTH_PROXY_HOST");
-            config.authProxyPort = ReadEnvVariableIfSet(config.authProxyPort, "SNOWFLAKE_TEST_AUTH_PROXY_PORT");
-            config.authProxyUser = ReadEnvVariableIfSet(config.authProxyUser, "SNOWFLAKE_TEST_AUTH_PROXY_USER");
-            config.authProxyPwd = ReadEnvVariableIfSet(config.authProxyPwd, "SNOWFLAKE_TEST_AUTH_PROXY_PWD");
-            config.nonProxyHosts = ReadEnvVariableIfSet(config.nonProxyHosts, "SNOWFLAKE_TEST_NON_PROXY_HOSTS");
-            config.oauthClientId = ReadEnvVariableIfSet(config.oauthClientId, "SNOWFLAKE_TEST_OAUTH_CLIENT_ID");
-            config.oauthClientSecret = ReadEnvVariableIfSet(config.oauthClientSecret, "SNOWFLAKE_TEST_OAUTH_CLIENT_SECRET");
-            config.oauthScope = ReadEnvVariableIfSet(config.oauthScope, "SNOWFLAKE_TEST_OAUTH_SCOPE");
-            config.oauthRedirectUri = ReadEnvVariableIfSet(config.oauthRedirectUri, "SNOWFLAKE_TEST_OAUTH_REDIRECT_URI");
-            config.oauthAuthorizationUrl = ReadEnvVariableIfSet(config.oauthAuthorizationUrl, "SNOWFLAKE_TEST_OAUTH_AUTHORIZATION_URL");
-            config.oauthTokenRequestUrl = ReadEnvVariableIfSet(config.oauthTokenRequestUrl, "SNOWFLAKE_TEST_OAUTH_TOKEN_REQUEST_URL");
-            config.programmaticAccessToken = ReadEnvVariableIfSet(config.programmaticAccessToken, "SNOWFLAKE_TEST_PROGRAMMATIC_ACCESS_TOKEN");
-            return config;
-        }
-
-        private static string ReadEnvVariableIfSet(string defaultValue, string variableName)
-        {
-            var variableValue = Environment.GetEnvironmentVariable(variableName);
-            return string.IsNullOrEmpty(variableValue) ? defaultValue : variableValue;
-        }
-
-        internal static TestConfig ReadTestConfigFile(string fileName)
-        {
-            var reader = new StreamReader(fileName);
-            var testConfigString = reader.ReadToEnd();
-            // Local JSON settings to avoid using system wide settings which could be different
-            // than the default ones
-            var jsonSettings = new JsonSerializerSettings
-            {
-                ContractResolver = new DefaultContractResolver
-                {
-                    NamingStrategy = new DefaultNamingStrategy()
-                }
-            };
-            var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, jsonSettings);
-            if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
-            {
-                return testConnectionConfig;
-            }
-            else
-            {
-                Assert.Fail("Failed to load test configuration");
-                throw new Exception("Failed to load test configuration");
-            }
-        }
-
-        [OneTimeSetUp]
-        public void SetupTestPerformance()
-        {
-            s_testPerformance = new Dictionary<string, TimeSpan>();
-        }
-
-        [OneTimeTearDown]
-        public void CreateTestTimeArtifact()
-        {
-            var resultText = "test;time_in_ms\n";
-            resultText += string.Join("\n",
-                s_testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}"));
-
-            var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
-            var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-
-            var separator = Path.DirectorySeparatorChar;
-
-            // We have to go up 3 times as the working directory path looks as follows:
-            // Snowflake.Data.Tests/bin/debug/{.net_version}/
-            File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
-        }
-
-        private static string GetOs()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return "windows";
-            }
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                return "linux";
-            }
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                return "macos";
-            }
-
-            return "unknown";
+            MockSynchronizationContext.Verify();
+            return ValueTask.CompletedTask;
         }
     }
 
@@ -552,12 +580,10 @@ namespace Snowflake.Data.Tests
         }
     }
 
-    public class IgnoreOnEnvIsAttribute : Attribute, ITestAction
+    public class IgnoreOnEnvIsAttribute : BeforeAfterTestAttribute
     {
         private readonly string _key;
-
         private readonly string[] _values;
-
         private readonly string _reason;
 
         public IgnoreOnEnvIsAttribute(string key, string[] values, string reason = null)
@@ -567,25 +593,17 @@ namespace Snowflake.Data.Tests
             _reason = reason;
         }
 
-        public void BeforeTest(ITest test)
+        public override void Before(MethodInfo methodUnderTest)
         {
             foreach (var value in _values)
             {
-                if (Environment.GetEnvironmentVariable(_key) == value)
-                {
-                    Assert.Ignore("Test is ignored when environment variable {0} is {1}. {2}", _key, value, _reason);
-                }
+                var shouldSkip = Environment.GetEnvironmentVariable(_key) == value;
+                Skip.If(shouldSkip, $"Test is ignored when environment variable {_key} is {value}. {_reason}");
             }
         }
-
-        public void AfterTest(ITest test)
-        {
-        }
-
-        public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
     }
 
-    public class IgnoreOnEnvIsSetAttribute : Attribute, ITestAction
+    public class IgnoreOnEnvIsSetAttribute : BeforeAfterTestAttribute
     {
         private readonly string _key;
 
@@ -594,22 +612,14 @@ namespace Snowflake.Data.Tests
             _key = key;
         }
 
-        public void BeforeTest(ITest test)
+        public override void Before(MethodInfo methodUnderTest)
         {
-            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(_key)))
-            {
-                Assert.Ignore("Test is ignored when environment variable {0} is set ", _key);
-            }
+            var shouldSkip = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(_key));
+            Skip.If(shouldSkip, $"Test is ignored when environment variable {_key} is set.");
         }
-
-        public void AfterTest(ITest test)
-        {
-        }
-
-        public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
     }
 
-    public class IgnoreOnEnvNotSetAttribute : Attribute, ITestAction
+    public class IgnoreOnEnvNotSetAttribute : BeforeAfterTestAttribute
     {
         private readonly string _key;
 
@@ -618,19 +628,11 @@ namespace Snowflake.Data.Tests
             _key = key;
         }
 
-        public void BeforeTest(ITest test)
+        public override void Before(MethodInfo methodUnderTest)
         {
-            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(_key)))
-            {
-                Assert.Ignore("Test is ignored when environment variable {0} is not set", _key);
-            }
+            var shouldSkip = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(_key));
+            Skip.If(shouldSkip, $"Test is ignored when environment variable {_key} is not set.");
         }
-
-        public void AfterTest(ITest test)
-        {
-        }
-
-        public ActionTargets Targets => ActionTargets.Test | ActionTargets.Suite;
     }
 
     public class RunOnlyOnCI : IgnoreOnEnvNotSetAttribute
@@ -651,6 +653,92 @@ namespace Snowflake.Data.Tests
     {
         public IgnoreOnJenkins() : base("JENKINS_HOME")
         {
+        }
+    }
+
+    /// <summary>
+    /// Sets the current thread culture for the duration of a test.
+    /// </summary>
+    public sealed class SetCultureAttribute : BeforeAfterTestAttribute
+    {
+        private readonly CultureInfo _culture;
+        private CultureInfo _originalCulture;
+        private CultureInfo _originalUICulture;
+
+        public SetCultureAttribute(string culture)
+        {
+            _culture = new CultureInfo(culture);
+        }
+
+        public override void Before(MethodInfo methodUnderTest)
+        {
+            _originalCulture = Thread.CurrentThread.CurrentCulture;
+            _originalUICulture = Thread.CurrentThread.CurrentUICulture;
+            Thread.CurrentThread.CurrentCulture = _culture;
+            Thread.CurrentThread.CurrentUICulture = _culture;
+        }
+
+        public override void After(MethodInfo methodUnderTest)
+        {
+            Thread.CurrentThread.CurrentCulture = _originalCulture;
+            Thread.CurrentThread.CurrentUICulture = _originalUICulture;
+        }
+    }
+
+    /// <summary>
+    /// Platform-conditional Fact attributes
+    /// </summary>
+    public sealed class WindowsOnlyFactAttribute : FactAttribute
+    {
+        public WindowsOnlyFactAttribute()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                Skip = "This test runs only on Windows";
+        }
+    }
+
+    public sealed class WindowsOnlyTheoryAttribute : TheoryAttribute
+    {
+        public WindowsOnlyTheoryAttribute()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                Skip = "This test runs only on Windows";
+        }
+    }
+
+    public sealed class LinuxOnlyFactAttribute : FactAttribute
+    {
+        public LinuxOnlyFactAttribute()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                Skip = "This test runs only on Linux";
+        }
+    }
+
+    public sealed class LinuxOnlyTheoryAttribute : TheoryAttribute
+    {
+        public LinuxOnlyTheoryAttribute()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                Skip = "This test runs only on Linux";
+        }
+    }
+
+    public sealed class UnixOnlyFactAttribute : FactAttribute
+    {
+        public UnixOnlyFactAttribute()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                Skip = "This test runs only on Unix (Linux/macOS)";
+        }
+    }
+
+    public sealed class UnixOnlyTheoryAttribute : TheoryAttribute
+    {
+        public UnixOnlyTheoryAttribute()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                Skip = "This test runs only on Unix (Linux/macOS)";
         }
     }
 }

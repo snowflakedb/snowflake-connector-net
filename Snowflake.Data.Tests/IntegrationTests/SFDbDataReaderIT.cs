@@ -4,32 +4,30 @@ using System.Data.Common;
 using System.Data;
 using System.Globalization;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture(ResultFormat.ARROW)]
-    [TestFixture(ResultFormat.JSON)]
     class SFDbDataReaderIT : SFBaseTest
     {
         protected override string TestName => base.TestName + _resultFormat;
 
         private readonly ResultFormat _resultFormat;
 
-        public SFDbDataReaderIT(ResultFormat resultFormat)
+        public SFDbDataReaderIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(envFixture)
         {
             _resultFormat = resultFormat;
         }
 
         private void ValidateResultFormat(IDataReader reader)
         {
-            Assert.AreEqual(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
+            Assert.Equal(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
         }
 
-        [Test]
+        [Fact]
         public void TestRecordsAffected()
         {
             using (var conn = CreateAndOpenConnection())
@@ -41,23 +39,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 string insertCommand = $"insert into {TableName} values (1),(1),(1)";
                 cmd.CommandText = insertCommand;
                 IDataReader reader = cmd.ExecuteReader();
-                Assert.AreEqual(3, reader.RecordsAffected);
+                Assert.Equal(3, reader.RecordsAffected);
 
                 // Reader's RecordsAffected should be available even if the reader is closed
                 reader.Close();
-                Assert.AreEqual(3, reader.RecordsAffected);
+                Assert.Equal(3, reader.RecordsAffected);
 
                 cmd.CommandText = $"drop table if exists {TableName}";
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, count);
+                Assert.Equal(0, count);
 
                 // Reader's RecordsAffected should be available even if the connection is closed
                 CloseConnection(conn);
-                Assert.AreEqual(3, reader.RecordsAffected);
+                Assert.Equal(3, reader.RecordsAffected);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetNumber()
         {
             using (var conn = CreateAndOpenConnection())
@@ -92,23 +90,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.Parameters.Add(p3);
 
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(3, count);
+                Assert.Equal(3, count);
 
                 cmd.CommandText = $"select * from {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(numInt, reader.GetInt32(0));
+                Assert.True(reader.Read());
+                Assert.Equal(numInt, reader.GetInt32(0));
 
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(numLong, reader.GetInt64(0));
+                Assert.True(reader.Read());
+                Assert.Equal(numLong, reader.GetInt64(0));
 
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(numShort, reader.GetInt16(0));
+                Assert.True(reader.Read());
+                Assert.Equal(numShort, reader.GetInt16(0));
 
-                Assert.IsFalse(reader.Read());
+                Assert.False(reader.Read());
                 reader.Close();
 
                 CloseConnection(conn);
@@ -116,11 +114,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
-        [Test]
-        [TestCase("NUMBER(18,10)")]
-        [TestCase("NUMBER(18,12)")]
-        [TestCase("NUMBER(38,20)")]
-        [TestCase("NUMBER(38,28)")]
+        [Theory]
+        [InlineData("NUMBER(18,10)")]
+        [InlineData("NUMBER(18,12)")]
+        [InlineData("NUMBER(38,20)")]
+        [InlineData("NUMBER(38,28)")]
         public void TestGetNumberWithHighScale(string columnType)
         {
             using (var conn = CreateAndOpenConnection())
@@ -135,21 +133,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var reader = cmd.ExecuteReader())
                 {
                     ValidateResultFormat(reader);
-                    Assert.AreEqual("FIXED", reader.GetDataTypeName(0));
-                    Assert.AreEqual(typeof(decimal), reader.GetFieldType(0));
-                    Assert.IsTrue(reader.Read());
+                    Assert.Equal("FIXED", reader.GetDataTypeName(0));
+                    Assert.Equal(typeof(decimal), reader.GetFieldType(0));
+                    Assert.True(reader.Read());
                     var rawValue = reader.GetValue(0);
-                    Assert.IsInstanceOf<decimal>(rawValue);
-                    Assert.AreEqual(1.23m, (decimal)rawValue);
-                    Assert.AreEqual(1.23m, reader.GetDecimal(0));
-                    Assert.IsFalse(reader.Read());
+                    Assert.IsType<decimal>(rawValue);
+                    Assert.Equal(1.23m, (decimal)rawValue);
+                    Assert.Equal(1.23m, reader.GetDecimal(0));
+                    Assert.False(reader.Read());
                 }
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetDecfloatWithHighPrecision()
         {
             using (var conn = CreateAndOpenConnection())
@@ -159,21 +157,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var reader = cmd.ExecuteReader())
                 {
                     ValidateResultFormat(reader);
-                    Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
-                    Assert.AreEqual(typeof(string), reader.GetFieldType(0));
-                    Assert.IsTrue(reader.Read());
+                    Assert.Equal("DECFLOAT", reader.GetDataTypeName(0));
+                    Assert.Equal(typeof(string), reader.GetFieldType(0));
+                    Assert.True(reader.Read());
                     var value = reader.GetValue(0);
-                    Assert.IsInstanceOf<string>(value);
-                    Assert.That((string)value, Does.Contain("1234567890123456789"));
-                    Assert.AreEqual((string)value, reader.GetString(0));
-                    Assert.IsFalse(reader.Read());
+                    Assert.IsType<string>(value);
+                    Assert.Contains("1234567890123456789", (string)value);
+                    Assert.Equal((string)value, reader.GetString(0));
+                    Assert.False(reader.Read());
                 }
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetDouble()
         {
             using (var conn = CreateAndOpenConnection())
@@ -201,41 +199,41 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.Parameters.Add(p2);
 
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(2, count);
+                Assert.Equal(2, count);
 
                 cmd.CommandText = $"select * from {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(numFloat, reader.GetFloat(0));
-                Assert.AreEqual((decimal)numFloat, reader.GetDecimal(0));
+                Assert.True(reader.Read());
+                Assert.Equal(numFloat, reader.GetFloat(0));
+                Assert.Equal((decimal)numFloat, reader.GetDecimal(0));
 
 
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(numDouble, reader.GetDouble(0));
+                Assert.True(reader.Read());
+                Assert.Equal(numDouble, reader.GetDouble(0));
 
-                Assert.IsFalse(reader.Read());
+                Assert.False(reader.Read());
                 reader.Close();
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
-        [TestCase(null)]
-        [TestCase("9999-12-31 00:00:00.0000000")]
-        [TestCase("9999-12-30 00:00:00.0000000")]
-        [TestCase("1982-01-18 00:00:00.0000000")]
-        [TestCase("1969-07-21 00:00:00.0000000")]
-        [TestCase("1900-09-03 00:00:00.0000000")]
+        [Theory]
+        [InlineData(null)]
+        [InlineData("9999-12-31 00:00:00.0000000")]
+        [InlineData("9999-12-30 00:00:00.0000000")]
+        [InlineData("1982-01-18 00:00:00.0000000")]
+        [InlineData("1969-07-21 00:00:00.0000000")]
+        [InlineData("1900-09-03 00:00:00.0000000")]
         public void TestGetDate(string inputTimeStr)
         {
             TestGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
         }
 
-        [Test]
+        [Fact]
         public void TestDateOutputFormat()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -252,8 +250,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"select TO_DATE('2013-05-17')";
                     IDataReader reader = cmd.ExecuteReader();
 
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual("05/17/2013", reader.GetString(0));
+                    Assert.True(reader.Read());
+                    Assert.Equal("05/17/2013", reader.GetString(0));
 
                     reader.Close();
                 }
@@ -268,37 +266,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [TestCase(null, null)]
-        [TestCase(null, 3)]
-        [TestCase("9999-12-31 23:59:59.9999999", null)]
-        [TestCase("9999-12-31 23:59:59.9999999", 5)]
-        [TestCase("1982-01-18 16:20:00.6666666", null)]
-        [TestCase("1982-01-18 16:20:00.6666666", 3)]
-        [TestCase("1969-07-21 02:56:15.1234567", null)]
-        [TestCase("1969-07-21 02:56:15.1234567", 1)]
-        [TestCase("1900-09-03 12:12:12.1212121", null)]
-        [TestCase("1900-09-03 12:12:12.1212121", 1)]
+        [Theory]
+        [InlineData(null, null)]
+        [InlineData(null, 3)]
+        [InlineData("9999-12-31 23:59:59.9999999", null)]
+        [InlineData("9999-12-31 23:59:59.9999999", 5)]
+        [InlineData("1982-01-18 16:20:00.6666666", null)]
+        [InlineData("1982-01-18 16:20:00.6666666", 3)]
+        [InlineData("1969-07-21 02:56:15.1234567", null)]
+        [InlineData("1969-07-21 02:56:15.1234567", 1)]
+        [InlineData("1900-09-03 12:12:12.1212121", null)]
+        [InlineData("1900-09-03 12:12:12.1212121", 1)]
         public void TestGetTime(string inputTimeStr, int? precision)
         {
             TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIME);
         }
 
-        [Test]
-        [TestCase("11:22:33.4455667")]
-        [TestCase("23:59:59.9999999")]
-        [TestCase("16:20:00.6666666")]
-        [TestCase("00:00:00.0000000")]
-        [TestCase("00:00:00")]
-        [TestCase("23:59:59.1")]
-        [TestCase("23:59:59.12")]
-        [TestCase("23:59:59.123")]
-        [TestCase("23:59:59.1234")]
-        [TestCase("23:59:59.12345")]
-        [TestCase("23:59:59.123456")]
-        [TestCase("23:59:59.1234567")]
-        [TestCase("23:59:59.12345678")]
-        [TestCase("23:59:59.123456789")]
+        [Theory]
+        [InlineData("11:22:33.4455667")]
+        [InlineData("23:59:59.9999999")]
+        [InlineData("16:20:00.6666666")]
+        [InlineData("00:00:00.0000000")]
+        [InlineData("00:00:00")]
+        [InlineData("23:59:59.1")]
+        [InlineData("23:59:59.12")]
+        [InlineData("23:59:59.123")]
+        [InlineData("23:59:59.1234")]
+        [InlineData("23:59:59.12345")]
+        [InlineData("23:59:59.123456")]
+        [InlineData("23:59:59.1234567")]
+        [InlineData("23:59:59.12345678")]
+        [InlineData("23:59:59.123456789")]
         public void TestGetTimeSpan(string inputTimeStr)
         {
             using (var conn = CreateAndOpenConnection())
@@ -315,14 +313,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 string insertCommand = $"insert into {TableName} values ('{inputTimeStr}')";
                 cmd.CommandText = insertCommand;
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 cmd.CommandText = $"SELECT cola FROM {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
 
                 // For time, we getDateTime on the column and ignore date part
                 DateTime dateTimeTime = reader.GetDateTime(0);
@@ -332,17 +330,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // The expected result. Timespan precision only goes up to 7 digits
                 TimeSpan expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
                 // Verify the result
-                Assert.AreEqual(expected, timeSpanTime);
-                Assert.AreEqual(dateTimeTime.Hour, timeSpanTime.Hours);
-                Assert.AreEqual(dateTimeTime.Minute, timeSpanTime.Minutes);
-                Assert.AreEqual(dateTimeTime.Second, timeSpanTime.Seconds);
-                Assert.AreEqual(dateTimeTime.Millisecond, timeSpanTime.Milliseconds);
+                Assert.Equal(expected, timeSpanTime);
+                Assert.Equal(dateTimeTime.Hour, timeSpanTime.Hours);
+                Assert.Equal(dateTimeTime.Minute, timeSpanTime.Minutes);
+                Assert.Equal(dateTimeTime.Second, timeSpanTime.Seconds);
+                Assert.Equal(dateTimeTime.Millisecond, timeSpanTime.Milliseconds);
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetTimeSpanError()
         {
             // Only Time data can be retrieved using GetTimeSpan, other type will fail
@@ -376,21 +374,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = insertCommand;
                 //Console.WriteLine(insertCommand);
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 insertCommand = $"update {TableName} set C2 = 2.5, C3 = 'C3Val', C4 = TO_BINARY('C4'), C5 = true, C6 = '2021-01-01', " +
                 "C7 = '2017-01-01 12:00:00', C8 = '2017-01-01 12:00:00 +04:00', C9 = '2014-01-02 16:00:00 +10:00', C14 = '12:00:00' where C1 = 1";
                 cmd.CommandText = insertCommand;
                 //Console.WriteLine(insertCommand);
                 count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 cmd.CommandText = $"SELECT * FROM {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
 
                 // All types except TIME fail conversion when calling GetTimeSpan
                 for (int i = 0; i < 12; i++)
@@ -403,7 +401,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
                     catch (SnowflakeDbException e)
                     {
-                        Assert.AreEqual(270003, e.ErrorCode);
+                        Assert.Equal(270003, e.ErrorCode);
                     }
                 }
 
@@ -474,44 +472,44 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.Parameters.Add(p1);
 
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 cmd.CommandText = $"select * from {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
 
                 // For time, we getDateTime on the column and ignore date part
                 DateTime actualTime = reader.GetDateTime(0);
 
                 if (dataType == SFDataType.DATE)
                 {
-                    Assert.AreEqual(inputTime.Date, actualTime);
-                    Assert.AreEqual(inputTime.Date.ToString("yyyy-MM-dd"), reader.GetString(0));
+                    Assert.Equal(inputTime.Date, actualTime);
+                    Assert.Equal(inputTime.Date.ToString("yyyy-MM-dd"), reader.GetString(0));
                 }
                 if (dataType != SFDataType.DATE)
                 {
                     var inputTimeTicksOfTheDay = inputTime.Ticks - inputTime.Date.Ticks;
                     var actualTimeTicksOfTheDay = actualTime.Ticks - actualTime.Date.Ticks;
                     var allowedPrecisionLossInTicks = precision < 7 ? Math.Pow(10, (double)(7 - precision)) - 1 : 0d;
-                    Assert.AreEqual(inputTimeTicksOfTheDay, actualTimeTicksOfTheDay, allowedPrecisionLossInTicks);
+                    Assert.Equal(inputTimeTicksOfTheDay, actualTimeTicksOfTheDay, allowedPrecisionLossInTicks);
                 }
                 if (dataType == SFDataType.TIMESTAMP_NTZ)
                 {
                     if (precision == 9)
                     {
-                        Assert.AreEqual(inputTime, actualTime);
+                        Assert.Equal(inputTime, actualTime);
                     }
                     else
                     {
-                        Assert.AreEqual(inputTime.Date, actualTime.Date);
+                        Assert.Equal(inputTime.Date, actualTime.Date);
                     }
                 }
 
                 // DATE, TIME and TIMESTAMP_NTZ should be returned with DateTimeKind.Unspecified
-                Assert.AreEqual(DateTimeKind.Unspecified, actualTime.Kind);
+                Assert.Equal(DateTimeKind.Unspecified, actualTime.Kind);
 
                 reader.Close();
 
@@ -519,33 +517,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [TestCase(null, null)]
-        [TestCase(null, 3)]
-        [TestCase("2100-12-31 23:59:59.9999999", null)]
-        [TestCase("2100-12-31 23:59:59.9999999", 5)]
-        [TestCase("9999-12-31 23:59:59.9999999", null)]
-        [TestCase("9999-12-31 23:59:59.9999999", 5)]
-        [TestCase("9999-12-30 23:59:59.9999999", null)]
-        [TestCase("9999-12-30 23:59:59.9999999", 5)]
-        [TestCase("1982-01-18 16:20:00.6666666", null)]
-        [TestCase("1982-01-18 16:20:00.6666666", 3)]
-        //[TestCase("1969-07-21 02:56:15.1234567", null)] //parsing fails with dates with second fractions before the unix epoch
-        [TestCase("1969-07-21 02:56:15.0000000", 1)] //dates w/o second fractions before the unix epoch are fine
-        //[TestCase("1900-09-03 12:12:12.1212121", null)] // fails
-        [TestCase("1900-09-03 12:12:12.0000000", 1)]
+        [Theory]
+        [InlineData(null, null)]
+        [InlineData(null, 3)]
+        [InlineData("2100-12-31 23:59:59.9999999", null)]
+        [InlineData("2100-12-31 23:59:59.9999999", 5)]
+        [InlineData("9999-12-31 23:59:59.9999999", null)]
+        [InlineData("9999-12-31 23:59:59.9999999", 5)]
+        [InlineData("9999-12-30 23:59:59.9999999", null)]
+        [InlineData("9999-12-30 23:59:59.9999999", 5)]
+        [InlineData("1982-01-18 16:20:00.6666666", null)]
+        [InlineData("1982-01-18 16:20:00.6666666", 3)]
+        //[InlineData("1969-07-21 02:56:15.1234567", null)] //parsing fails with dates with second fractions before the unix epoch
+        [InlineData("1969-07-21 02:56:15.0000000", 1)] //dates w/o second fractions before the unix epoch are fine
+        //[InlineData("1900-09-03 12:12:12.1212121", null)] // fails
+        [InlineData("1900-09-03 12:12:12.0000000", 1)]
         public void TestGetTimestampNTZ(string inputTimeStr, int? precision)
         {
             TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIMESTAMP_NTZ);
         }
 
 
-        [Test]
-        [TestCase(0)]
-        [TestCase(5)]
-        [TestCase(-5)]
-        [TestCase(14)]
-        [TestCase(-14)]
+        [Theory]
+        [InlineData(0)]
+        [InlineData(5)]
+        [InlineData(-5)]
+        [InlineData(14)]
+        [InlineData(-14)]
         public void TestGetTimestampTZ(int timezoneOffsetInHours)
         {
             using (var conn = CreateAndOpenConnection())
@@ -566,26 +564,26 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.Parameters.Add(p1);
 
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 cmd.CommandText = $"select * from {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
                 reader.Close();
 
-                Assert.AreEqual(now, dtOffset);
-                Assert.AreEqual(now.Offset, dtOffset.Offset);
+                Assert.Equal(now, dtOffset);
+                Assert.Equal(now.Offset, dtOffset.Offset);
 
                 CloseConnection(conn);
             }
 
         }
 
-        [Test]
+        [Fact]
         public void TestGetTimestampLTZ()
         {
             using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
@@ -611,25 +609,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.Parameters.Add(p1);
 
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 cmd.CommandText = $"select * from {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
                 reader.Close();
 
-                Assert.AreEqual(insertValue.UtcDateTime, dtOffset.UtcDateTime);
+                Assert.Equal(insertValue.UtcDateTime, dtOffset.UtcDateTime);
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
-        public void TestGetBoolean([Values] bool value)
+        [Fact]
+        public void TestGetBoolean(bool value)
         {
             using (var conn = CreateAndOpenConnection())
             {
@@ -647,22 +645,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.Parameters.Add(p1);
 
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 cmd.CommandText = $"select * from {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(value, reader.GetBoolean(0));
+                Assert.True(reader.Read());
+                Assert.Equal(value, reader.GetBoolean(0));
                 reader.Close();
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetByte()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -697,13 +695,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     while (reader.Read())
                     {
                         // Assert
-                        Assert.AreEqual(testBytes[index++], reader.GetByte(0));
+                        Assert.Equal(testBytes[index++], reader.GetByte(0));
                     }
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetBinary()
         {
             using (var conn = CreateAndOpenConnection())
@@ -729,49 +727,49 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.Parameters.Add(p1);
 
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 cmd.CommandText = $"select * from {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 // Auto type conversion
-                Assert.IsTrue(testBytes.SequenceEqual((byte[])reader.GetValue(0)));
-                Assert.IsTrue(testChars.Equals(reader.GetValue(1)));
-                Assert.IsTrue(testDouble.Equals(reader.GetValue(2)));
+                Assert.True(testBytes.SequenceEqual((byte[])reader.GetValue(0)));
+                Assert.True(testChars.Equals(reader.GetValue(1)));
+                Assert.True(testDouble.Equals(reader.GetValue(2)));
 
                 // Read all 'TEST_GET_BINARAY' data
                 int toReadLength = testBytes.Length;
                 byte[] sub = new byte[toReadLength];
                 long read = reader.GetBytes(0, 0, sub, 0, toReadLength);
-                Assert.AreEqual(read, toReadLength);
-                Assert.IsTrue(testBytes.SequenceEqual(sub));
+                Assert.Equal(read, toReadLength);
+                Assert.True(testBytes.SequenceEqual(sub));
 
                 // Read subset 'GET_BINARAY' from actual 'TEST_GET_BINARAY' data
                 toReadLength = 11;
                 byte[] testSubBytes = Encoding.UTF8.GetBytes("GET_BINARAY");
                 sub = new byte[toReadLength];
                 read = reader.GetBytes(0, 5, sub, 0, toReadLength);
-                Assert.AreEqual(read, toReadLength);
-                Assert.IsTrue(testSubBytes.SequenceEqual(sub));
+                Assert.Equal(read, toReadLength);
+                Assert.True(testSubBytes.SequenceEqual(sub));
 
                 // Read subset 'GET_CHARS' from actual 'TEST_GET_CHARS' data
                 toReadLength = 9;
                 testSubBytes = Encoding.UTF8.GetBytes("GET_CHARS");
                 sub = new byte[toReadLength];
                 read = reader.GetBytes(1, 5, sub, 0, toReadLength);
-                Assert.AreEqual(read, toReadLength);
-                Assert.IsTrue(testSubBytes.SequenceEqual(sub));
+                Assert.Equal(read, toReadLength);
+                Assert.True(testSubBytes.SequenceEqual(sub));
 
                 // Read subset '5678' from actual '1.2345678' data
                 toReadLength = 4;
                 testSubBytes = Encoding.UTF8.GetBytes("5678");
                 sub = new byte[toReadLength];
                 read = reader.GetBytes(2, 5, sub, 0, toReadLength);
-                Assert.AreEqual(read, toReadLength);
-                Assert.IsTrue(testSubBytes.SequenceEqual(sub));
+                Assert.Equal(read, toReadLength);
+                Assert.True(testSubBytes.SequenceEqual(sub));
 
                 // Read subset 'GET_BINARAY'  from actual 'TEST_GET_BINARAY' data
                 // and copy inside existing buffer replacing Xs
@@ -779,13 +777,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 byte[] testSubBytesWithTargetOffset = Encoding.UTF8.GetBytes("OFFSET GET_BINARAY EXTRA");
                 sub = Encoding.UTF8.GetBytes("OFFSET XXXXXXXXXXX EXTRA");
                 read = reader.GetBytes(0, 5, sub, 7, toReadLength);
-                Assert.AreEqual(read, toReadLength);
-                Assert.IsTrue(testSubBytesWithTargetOffset.SequenceEqual(sub));
+                Assert.Equal(read, toReadLength);
+                Assert.True(testSubBytesWithTargetOffset.SequenceEqual(sub));
 
                 // Less data than 'ask' for
                 int dataOffset = 10;
                 read = reader.GetBytes(0, dataOffset, sub, 0, toReadLength);
-                Assert.AreEqual(read, testBytes.Length - dataOffset);
+                Assert.Equal(read, testBytes.Length - dataOffset);
 
                 //** Invalid data offsets **/
                 try
@@ -796,7 +794,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (ArgumentException e)
                 {
-                    Assert.AreEqual("dataOffset", e.ParamName);
+                    Assert.Equal("dataOffset", e.ParamName);
                 }
 
                 try
@@ -807,7 +805,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (ArgumentException e)
                 {
-                    Assert.AreEqual("dataOffset", e.ParamName);
+                    Assert.Equal("dataOffset", e.ParamName);
                 }
 
                 //** Invalid buffer offsets **//
@@ -819,7 +817,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (ArgumentException e)
                 {
-                    Assert.AreEqual("buffer", e.ParamName);
+                    Assert.Equal("buffer", e.ParamName);
                 }
 
                 try
@@ -830,14 +828,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (ArgumentException e)
                 {
-                    Assert.AreEqual("bufferOffset", e.ParamName);
+                    Assert.Equal("bufferOffset", e.ParamName);
                 }
 
                 //** Null buffer **//
                 // If null, this method returns the size required of the array in order to fit all
                 // of the specified data.
                 read = reader.GetBytes(0, 6, null, 0, toReadLength);
-                Assert.AreEqual(testBytes.Length, read);
+                Assert.Equal(testBytes.Length, read);
 
                 reader.Close();
 
@@ -845,7 +843,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetChar()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -870,13 +868,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (IDataReader reader = cmd.ExecuteReader())
                 {
                     // Assert
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(testChar, reader.GetChar(0));
+                    Assert.True(reader.Read());
+                    Assert.Equal(testChar, reader.GetChar(0));
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetChars()
         {
             using (var conn = CreateAndOpenConnection())
@@ -902,50 +900,50 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 cmd.CommandText = $"select * from {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 // Auto type conversion
-                Assert.IsTrue(testChars.Equals(reader.GetValue(0)));
-                Assert.IsTrue(testBytes.SequenceEqual((byte[])reader.GetValue(1)));
-                Assert.IsTrue(testDouble.Equals(reader.GetValue(2)));
+                Assert.True(testChars.Equals(reader.GetValue(0)));
+                Assert.True(testBytes.SequenceEqual((byte[])reader.GetValue(1)));
+                Assert.True(testDouble.Equals(reader.GetValue(2)));
 
                 // Read all 'TEST_GET_CHARS' data
                 int toReadLength = 14;
                 char[] testSubChars = testChars.ToArray<char>();
                 char[] sub = new char[toReadLength];
                 long read = reader.GetChars(0, 0, sub, 0, toReadLength);
-                Assert.AreEqual(read, toReadLength);
-                Assert.IsTrue(testSubChars.SequenceEqual(sub));
+                Assert.Equal(read, toReadLength);
+                Assert.True(testSubChars.SequenceEqual(sub));
 
                 // Read subset 'GET_CHARS' from actual 'TEST_GET_CHARS' data
                 toReadLength = 9;
                 testSubChars = "GET_CHARS".ToArray<char>();
                 sub = new char[toReadLength];
                 read = reader.GetChars(0, 5, sub, 0, toReadLength);
-                Assert.AreEqual(read, toReadLength);
-                Assert.IsTrue(testSubChars.SequenceEqual(sub));
+                Assert.Equal(read, toReadLength);
+                Assert.True(testSubChars.SequenceEqual(sub));
 
                 // Read subset 'GET_BINARY' from actual 'TEST_GET_BINARY' data
                 toReadLength = 10;
                 testSubChars = "GET_BINARY".ToArray<char>();
                 sub = new char[toReadLength];
                 read = reader.GetChars(1, 5, sub, 0, toReadLength);
-                Assert.AreEqual(read, toReadLength);
-                Assert.IsTrue(testSubChars.SequenceEqual(sub));
+                Assert.Equal(read, toReadLength);
+                Assert.True(testSubChars.SequenceEqual(sub));
 
                 // Read subset '5678' from actual '1.2345678' data
                 toReadLength = 4;
                 testSubChars = "5678".ToArray<char>();
                 sub = new char[toReadLength];
                 read = reader.GetChars(2, 5, sub, 0, toReadLength);
-                Assert.AreEqual(read, toReadLength);
-                Assert.IsTrue(testSubChars.SequenceEqual(sub));
+                Assert.Equal(read, toReadLength);
+                Assert.True(testSubChars.SequenceEqual(sub));
 
 
                 // Read subset 'GET_CHARS'  from actual 'TEST_GET_CHARS' data
@@ -954,13 +952,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 toReadLength = 9;
                 sub = "OFFSET XXXXXXXXX EXTRA".ToArray<char>();
                 read = reader.GetChars(0, 5, sub, 7, toReadLength);
-                Assert.AreEqual(read, toReadLength);
-                Assert.IsTrue(testSubCharsWithTargetOffset.SequenceEqual(sub));
+                Assert.Equal(read, toReadLength);
+                Assert.True(testSubCharsWithTargetOffset.SequenceEqual(sub));
 
                 // Less data than 'ask' for
                 int dataOffset = 10;
                 read = reader.GetChars(0, dataOffset, sub, 0, toReadLength);
-                Assert.AreEqual(read, testChars.Length - dataOffset);
+                Assert.Equal(read, testChars.Length - dataOffset);
 
                 //** Invalid data offsets **//
                 try
@@ -971,7 +969,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (ArgumentException e)
                 {
-                    Assert.AreEqual("dataOffset", e.ParamName);
+                    Assert.Equal("dataOffset", e.ParamName);
                 }
 
                 try
@@ -982,7 +980,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (ArgumentException e)
                 {
-                    Assert.AreEqual("dataOffset", e.ParamName);
+                    Assert.Equal("dataOffset", e.ParamName);
                 }
 
                 //** Invalid buffer offsets **//
@@ -994,7 +992,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (ArgumentException e)
                 {
-                    Assert.AreEqual("buffer", e.ParamName);
+                    Assert.Equal("buffer", e.ParamName);
                 }
 
                 try
@@ -1005,14 +1003,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (ArgumentException e)
                 {
-                    Assert.AreEqual("bufferOffset", e.ParamName);
+                    Assert.Equal("bufferOffset", e.ParamName);
                 }
 
                 //** Null buffer **//
                 // If null, this method returns the size required of the array in order to fit all
                 // of the specified data.
                 read = reader.GetChars(0, 6, null, 0, toReadLength);
-                Assert.AreEqual(testChars.Length, read);
+                Assert.Equal(testChars.Length, read);
 
                 reader.Close();
 
@@ -1020,7 +1018,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetDataTypeName()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -1056,15 +1054,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (DbDataReader reader = (DbDataReader)cmd.ExecuteReader())
                 {
                     // Assert
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual("TEXT", reader.GetDataTypeName(0));
-                    Assert.AreEqual("BINARY", reader.GetDataTypeName(1));
-                    Assert.AreEqual("REAL", reader.GetDataTypeName(2));
+                    Assert.True(reader.Read());
+                    Assert.Equal("TEXT", reader.GetDataTypeName(0));
+                    Assert.Equal("BINARY", reader.GetDataTypeName(1));
+                    Assert.Equal("REAL", reader.GetDataTypeName(2));
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetStream()
         {
             using (var conn = CreateAndOpenConnection())
@@ -1090,37 +1088,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 cmd.CommandText = $"select * from {TableName}";
                 DbDataReader reader = (DbDataReader)cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
 
                 // Auto type conversion
-                Assert.IsTrue(testChars.Equals(reader.GetValue(0)));
-                Assert.IsTrue(testBytes.SequenceEqual((byte[])reader.GetValue(1)));
-                Assert.IsTrue(testDouble.Equals(reader.GetValue(2)));
+                Assert.True(testChars.Equals(reader.GetValue(0)));
+                Assert.True(testBytes.SequenceEqual((byte[])reader.GetValue(1)));
+                Assert.True(testDouble.Equals(reader.GetValue(2)));
 
                 using (var stream = reader.GetStream(0))
                 {
                     byte[] col1ToBytes = Encoding.UTF8.GetBytes(testChars);
                     byte[] buf = new byte[col1ToBytes.Length];
                     var readBytes = stream.Read(buf, 0, col1ToBytes.Length);
-                    Assert.AreEqual(col1ToBytes.Length, readBytes);
-                    Assert.IsTrue(-1 == stream.ReadByte()); // No more data
-                    Assert.IsTrue(col1ToBytes.SequenceEqual(buf));
+                    Assert.Equal(col1ToBytes.Length, readBytes);
+                    Assert.True(-1 == stream.ReadByte()); // No more data
+                    Assert.True(col1ToBytes.SequenceEqual(buf));
                 }
 
                 using (var stream = reader.GetStream(1))
                 {
                     byte[] buf = new byte[testBytes.Length];
                     var readBytes = stream.Read(buf, 0, testBytes.Length);
-                    Assert.AreEqual(testBytes.Length, readBytes);
-                    Assert.IsTrue(-1 == stream.ReadByte()); // No more data
-                    Assert.IsTrue(testBytes.SequenceEqual(buf));
+                    Assert.Equal(testBytes.Length, readBytes);
+                    Assert.True(-1 == stream.ReadByte()); // No more data
+                    Assert.True(testBytes.SequenceEqual(buf));
                 }
 
                 using (var stream = reader.GetStream(2))
@@ -1128,9 +1126,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     byte[] col3ToBytes = Encoding.UTF8.GetBytes(testDouble.ToString());
                     byte[] buf = new byte[col3ToBytes.Length];
                     var readBytes = stream.Read(buf, 0, col3ToBytes.Length);
-                    Assert.AreEqual(col3ToBytes.Length, readBytes);
-                    Assert.IsTrue(-1 == stream.ReadByte()); // No more data
-                    Assert.IsTrue(col3ToBytes.SequenceEqual(buf));
+                    Assert.Equal(col3ToBytes.Length, readBytes);
+                    Assert.True(-1 == stream.ReadByte()); // No more data
+                    Assert.True(col3ToBytes.SequenceEqual(buf));
                 }
 
 
@@ -1141,7 +1139,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Test]
+        [Fact]
         public void TestGetValueIndexOutOfBound()
         {
             using (var conn = CreateAndOpenConnection())
@@ -1152,7 +1150,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
 
                 try
                 {
@@ -1161,7 +1159,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(270002, e.ErrorCode);
+                    Assert.Equal(270002, e.ErrorCode);
                 }
 
                 try
@@ -1171,7 +1169,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(270002, e.ErrorCode);
+                    Assert.Equal(270002, e.ErrorCode);
                 }
                 reader.Close();
 
@@ -1179,7 +1177,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestBasicDataReader()
         {
             using (var conn = CreateAndOpenConnection())
@@ -1191,28 +1189,28 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Assert.AreEqual(2, reader.FieldCount);
-                        Assert.AreEqual(0, reader.Depth);
-                        Assert.IsTrue(((SnowflakeDbDataReader)reader).HasRows);
-                        Assert.IsFalse(reader.IsClosed);
-                        Assert.AreEqual("COLONE", reader.GetName(0));
-                        Assert.AreEqual("COLTWO", reader.GetName(1));
+                        Assert.Equal(2, reader.FieldCount);
+                        Assert.Equal(0, reader.Depth);
+                        Assert.True(((SnowflakeDbDataReader)reader).HasRows);
+                        Assert.False(reader.IsClosed);
+                        Assert.Equal("COLONE", reader.GetName(0));
+                        Assert.Equal("COLTWO", reader.GetName(1));
 
-                        Assert.AreEqual(typeof(long), reader.GetFieldType(0));
-                        Assert.AreEqual(typeof(long), reader.GetFieldType(1));
+                        Assert.Equal(typeof(long), reader.GetFieldType(0));
+                        Assert.Equal(typeof(long), reader.GetFieldType(1));
 
-                        Assert.IsFalse(reader.NextResult());
-                        Assert.AreEqual(-1, reader.RecordsAffected);
+                        Assert.False(reader.NextResult());
+                        Assert.Equal(-1, reader.RecordsAffected);
 
-                        Assert.AreEqual(0, reader.GetOrdinal("COLONE"));
+                        Assert.Equal(0, reader.GetOrdinal("COLONE"));
                         // reapet calling to test if cache in memory worked or not
-                        Assert.AreEqual(0, reader.GetOrdinal("COLONE"));
-                        Assert.AreEqual(0, reader.GetOrdinal("COLONE"));
-                        Assert.AreEqual(1, reader.GetOrdinal("COLTWO"));
-                        Assert.AreEqual(-1, reader.GetOrdinal("COL_NOT_EXISTS"));
+                        Assert.Equal(0, reader.GetOrdinal("COLONE"));
+                        Assert.Equal(0, reader.GetOrdinal("COLONE"));
+                        Assert.Equal(1, reader.GetOrdinal("COLTWO"));
+                        Assert.Equal(-1, reader.GetOrdinal("COL_NOT_EXISTS"));
 
                         reader.Close();
-                        Assert.IsTrue(reader.IsClosed);
+                        Assert.True(reader.IsClosed);
 
                         try
                         {
@@ -1221,7 +1219,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         }
                         catch (SnowflakeDbException e)
                         {
-                            Assert.AreEqual(270010, e.ErrorCode);
+                            Assert.Equal(270010, e.ErrorCode);
                         }
 
                         try
@@ -1231,7 +1229,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         }
                         catch (SnowflakeDbException e)
                         {
-                            Assert.AreEqual(270010, e.ErrorCode);
+                            Assert.Equal(270010, e.ErrorCode);
                         }
                     }
                 }
@@ -1240,7 +1238,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestReadOutNullVal()
         {
             using (var conn = CreateAndOpenConnection())
@@ -1264,9 +1262,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         reader.Read();
                         object nullVal = reader.GetValue(0);
-                        Assert.AreEqual(DBNull.Value, nullVal);
-                        Assert.IsTrue(reader.IsDBNull(0));
-                        Assert.IsTrue(reader.IsDBNull(1));
+                        Assert.Equal(DBNull.Value, nullVal);
+                        Assert.True(reader.IsDBNull(0));
+                        Assert.True(reader.IsDBNull(1));
 
                         reader.Close();
                     }
@@ -1276,7 +1274,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetGuid()
         {
             using (var conn = CreateAndOpenConnection())
@@ -1296,23 +1294,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.Parameters.Add(p1);
 
                 var count = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, count);
+                Assert.Equal(1, count);
 
                 cmd.CommandText = $"select * from {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
 
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(val, reader.GetGuid(0));
+                Assert.True(reader.Read());
+                Assert.Equal(val, reader.GetGuid(0));
 
                 // test using [] operator
-                Assert.AreEqual(val.ToString(), reader[0]);
-                Assert.AreEqual(val.ToString(), reader["COLA"]);
+                Assert.Equal(val.ToString(), reader[0]);
+                Assert.Equal(val.ToString(), reader["COLA"]);
 
                 object[] values = new object[1];
-                Assert.AreEqual(1, reader.GetValues(values));
-                Assert.AreEqual(val.ToString(), values[0]);
+                Assert.Equal(1, reader.GetValues(values));
+                Assert.Equal(val.ToString(), values[0]);
 
                 reader.Close();
 
@@ -1320,7 +1318,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestCopyCmdUpdateCount()
         {
             var stageName = TestName;
@@ -1334,7 +1332,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 cmd.CommandText = $"copy into {TableName} from @{stageName}";
                 int updateCount = cmd.ExecuteNonQuery();
-                Assert.AreEqual(0, updateCount);
+                Assert.Equal(0, updateCount);
 
                 // test rows_loaded exists
                 cmd.CommandText = $"copy into @%{TableName} from (select 'test_string')";
@@ -1342,7 +1340,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 cmd.CommandText = $"copy into {TableName}";
                 updateCount = cmd.ExecuteNonQuery();
-                Assert.AreEqual(1, updateCount);
+                Assert.Equal(1, updateCount);
 
                 // clean up
                 cmd.CommandText = $"drop stage {stageName}";
@@ -1352,7 +1350,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestCopyCmdResultSet()
         {
             var stageName = TestName;
@@ -1368,7 +1366,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var rdr = cmd.ExecuteReader())
                 {
                     // Can read the first row
-                    Assert.AreEqual(true, rdr.Read());
+                    Assert.Equal(true, rdr.Read());
                 }
 
                 // test rows_loaded exists
@@ -1376,14 +1374,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var rdr = cmd.ExecuteReader())
                 {
                     // Can read the first row
-                    Assert.AreEqual(true, rdr.Read());
+                    Assert.Equal(true, rdr.Read());
                 }
 
                 cmd.CommandText = $"copy into {TableName}";
                 using (var rdr = cmd.ExecuteReader())
                 {
                     // Can read the first row
-                    Assert.AreEqual(true, rdr.Read());
+                    Assert.Equal(true, rdr.Read());
                 }
 
                 // clean up
@@ -1394,7 +1392,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestRetrieveSemiStructuredData()
         {
             using (var conn = CreateAndOpenConnection())
@@ -1414,17 +1412,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     ValidateResultFormat(reader);
 
-                    Assert.AreEqual(true, reader.Read());
-                    Assert.AreEqual("[\n  \"1\",\n  \"2\"\n]", reader.GetString(0));
-                    Assert.AreEqual("[\n  \"1\",\n  \"2\"\n]", reader.GetString(1));
-                    Assert.AreEqual("{\n  \"key\": \"value\"\n}", reader.GetString(2));
+                    Assert.Equal(true, reader.Read());
+                    Assert.Equal("[\n  \"1\",\n  \"2\"\n]", reader.GetString(0));
+                    Assert.Equal("[\n  \"1\",\n  \"2\"\n]", reader.GetString(1));
+                    Assert.Equal("{\n  \"key\": \"value\"\n}", reader.GetString(2));
                 }
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestResultSetMetadata()
         {
             using (var conn = CreateAndOpenConnection())
@@ -1451,52 +1449,52 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     dataTable = dataTable.DefaultView.ToTable();
 
                     DataRow row = dataTable.Rows[0];
-                    Assert.AreEqual("C1", row[SchemaTableColumn.ColumnName]);
-                    Assert.AreEqual(0, row[SchemaTableColumn.ColumnOrdinal]);
-                    Assert.AreEqual(20, row[SchemaTableColumn.NumericPrecision]);
-                    Assert.AreEqual(4, row[SchemaTableColumn.NumericScale]);
-                    Assert.AreEqual(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.Equal("C1", row[SchemaTableColumn.ColumnName]);
+                    Assert.Equal(0, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.Equal(20, row[SchemaTableColumn.NumericPrecision]);
+                    Assert.Equal(4, row[SchemaTableColumn.NumericScale]);
+                    Assert.Equal(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.Equal(true, row[SchemaTableColumn.AllowDBNull]);
 
                     row = dataTable.Rows[1];
-                    Assert.AreEqual("C2", row[SchemaTableColumn.ColumnName]);
-                    Assert.AreEqual(1, row[SchemaTableColumn.ColumnOrdinal]);
-                    Assert.AreEqual(100, row[SchemaTableColumn.ColumnSize]);
-                    Assert.AreEqual(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.Equal("C2", row[SchemaTableColumn.ColumnName]);
+                    Assert.Equal(1, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.Equal(100, row[SchemaTableColumn.ColumnSize]);
+                    Assert.Equal(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.Equal(true, row[SchemaTableColumn.AllowDBNull]);
 
                     row = dataTable.Rows[2];
-                    Assert.AreEqual("C3", row[SchemaTableColumn.ColumnName]);
-                    Assert.AreEqual(2, row[SchemaTableColumn.ColumnOrdinal]);
-                    Assert.AreEqual(SFDataType.REAL, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.Equal("C3", row[SchemaTableColumn.ColumnName]);
+                    Assert.Equal(2, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.Equal(SFDataType.REAL, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.Equal(true, row[SchemaTableColumn.AllowDBNull]);
 
                     row = dataTable.Rows[3];
-                    Assert.AreEqual("C4", row[SchemaTableColumn.ColumnName]);
-                    Assert.AreEqual(3, row[SchemaTableColumn.ColumnOrdinal]);
-                    Assert.AreEqual(0, row[SchemaTableColumn.NumericPrecision]);
-                    Assert.AreEqual(9, row[SchemaTableColumn.NumericScale]);
-                    Assert.AreEqual(SFDataType.TIMESTAMP_NTZ, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.Equal("C4", row[SchemaTableColumn.ColumnName]);
+                    Assert.Equal(3, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.Equal(0, row[SchemaTableColumn.NumericPrecision]);
+                    Assert.Equal(9, row[SchemaTableColumn.NumericScale]);
+                    Assert.Equal(SFDataType.TIMESTAMP_NTZ, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.Equal(true, row[SchemaTableColumn.AllowDBNull]);
 
                     row = dataTable.Rows[4];
-                    Assert.AreEqual("C5", row[SchemaTableColumn.ColumnName]);
-                    Assert.AreEqual(4, row[SchemaTableColumn.ColumnOrdinal]);
-                    Assert.AreEqual(SFDataType.VARIANT, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.AreEqual(false, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.Equal("C5", row[SchemaTableColumn.ColumnName]);
+                    Assert.Equal(4, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.Equal(SFDataType.VARIANT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.Equal(false, row[SchemaTableColumn.AllowDBNull]);
 
                     row = dataTable.Rows[5];
-                    Assert.AreEqual("C6", row[SchemaTableColumn.ColumnName]);
-                    Assert.AreEqual(5, row[SchemaTableColumn.ColumnOrdinal]);
-                    Assert.AreEqual(SFDataType.BOOLEAN, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.Equal("C6", row[SchemaTableColumn.ColumnName]);
+                    Assert.Equal(5, row[SchemaTableColumn.ColumnOrdinal]);
+                    Assert.Equal(SFDataType.BOOLEAN, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                    Assert.Equal(true, row[SchemaTableColumn.AllowDBNull]);
                 }
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestHasRows()
         {
             using (var conn = CreateAndOpenConnection())
@@ -1508,13 +1506,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 ValidateResultFormat(reader);
 
-                Assert.IsFalse(reader.HasRows);
+                Assert.False(reader.HasRows);
                 reader.Close();
                 CloseConnection(conn);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestHasRowsMultiStatement()
         {
             using (var conn = CreateAndOpenConnection())
@@ -1533,45 +1531,45 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 DbDataReader reader = cmd.ExecuteReader();
 
-                Assert.AreEqual(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
+                Assert.Equal(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
 
                 // select 1
-                Assert.IsTrue(reader.HasRows);
+                Assert.True(reader.HasRows);
                 reader.Read();
-                Assert.IsTrue(reader.HasRows);
+                Assert.True(reader.HasRows);
                 reader.NextResult();
 
                 // select 1 where 1=2
-                Assert.IsFalse(reader.HasRows);
+                Assert.False(reader.HasRows);
                 reader.NextResult();
 
                 // select 1
-                Assert.IsTrue(reader.HasRows);
+                Assert.True(reader.HasRows);
                 reader.Read();
-                Assert.IsTrue(reader.HasRows);
+                Assert.True(reader.HasRows);
                 reader.NextResult();
 
                 // select 1 where 1=2
-                Assert.IsFalse(reader.HasRows);
+                Assert.False(reader.HasRows);
                 reader.NextResult();
-                Assert.IsFalse(reader.HasRows);
+                Assert.False(reader.HasRows);
 
                 reader.Close();
                 CloseConnection(conn);
             }
         }
 
-        [Test]
-        [TestCase("99")]                           // Int8
-        [TestCase("9.9")]                          // Int8 + scale
-        [TestCase("999")]                          // Int16
-        [TestCase("9.99")]                         // Int16 + scale
-        [TestCase("99999999")]                     // Int32
-        [TestCase("999999.99")]                    // Int32 + scale
-        [TestCase("99999999999")]                  // Int64
-        [TestCase("999999999.99")]                 // Int64 + scale
-        [TestCase("999999999999999999999999999")]  // Decimal
-        [TestCase("9999999999999999999999999.99")] // Decimal + scale
+        [Theory]
+        [InlineData("99")]                           // Int8
+        [InlineData("9.9")]                          // Int8 + scale
+        [InlineData("999")]                          // Int16
+        [InlineData("9.99")]                         // Int16 + scale
+        [InlineData("99999999")]                     // Int32
+        [InlineData("999999.99")]                    // Int32 + scale
+        [InlineData("99999999999")]                  // Int64
+        [InlineData("999999999.99")]                 // Int64 + scale
+        [InlineData("999999999999999999999999999")]  // Decimal
+        [InlineData("9999999999999999999999999.99")] // Decimal + scale
         public void TestNumericValues(string testValue)
         {
             using (var conn = CreateAndOpenConnection())
@@ -1584,26 +1582,26 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     while (reader.Read())
                     {
-                        Assert.AreEqual(Convert.ToDecimal(testValue), reader.GetDecimal(0));
-                        Assert.AreEqual(Convert.ToDouble(testValue), reader.GetDouble(0));
-                        Assert.AreEqual(Convert.ToSingle(testValue), reader.GetFloat(0));
+                        Assert.Equal(Convert.ToDecimal(testValue), reader.GetDecimal(0));
+                        Assert.Equal(Convert.ToDouble(testValue), reader.GetDouble(0));
+                        Assert.Equal(Convert.ToSingle(testValue), reader.GetFloat(0));
                         if (!testValue.Contains('.'))
                         {
                             decimal value = Decimal.Parse(testValue);
                             if (value >= Int64.MinValue && value <= Int64.MaxValue)
-                                Assert.AreEqual(Convert.ToInt64(testValue), reader.GetInt64(0));
+                                Assert.Equal(Convert.ToInt64(testValue), reader.GetInt64(0));
                             else
                                 Assert.Throws<OverflowException>(() => reader.GetInt64(0));
                             if (value >= Int32.MinValue && value <= Int32.MaxValue)
-                                Assert.AreEqual(Convert.ToInt32(testValue), reader.GetInt32(0));
+                                Assert.Equal(Convert.ToInt32(testValue), reader.GetInt32(0));
                             else
                                 Assert.Throws<OverflowException>(() => reader.GetInt32(0));
                             if (value >= Int16.MinValue && value <= Int16.MaxValue)
-                                Assert.AreEqual(Convert.ToInt16(testValue), reader.GetInt16(0));
+                                Assert.Equal(Convert.ToInt16(testValue), reader.GetInt16(0));
                             else
                                 Assert.Throws<OverflowException>(() => reader.GetInt16(0));
                             if (value >= 0 && value <= 255)
-                                Assert.AreEqual(Convert.ToByte(testValue), reader.GetByte(0));
+                                Assert.Equal(Convert.ToByte(testValue), reader.GetByte(0));
                             else
                                 Assert.Throws<OverflowException>(() => reader.GetByte(0));
                         }
@@ -1613,13 +1611,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        [TestCase("2019-01-01 12:12:12.1234567 +0500", 7)]
-        [TestCase("2019-01-01 12:12:12.1234567 -0500", 7)]
-        [TestCase("2019-01-01 12:12:12.1234567 +1400", 7)]
-        [TestCase("2019-01-01 12:12:12.1234567 -1400", 7)]
-        [TestCase("0001-01-01 00:00:00.0000000 +0000", 9)]
-        [TestCase("9999-12-31 23:59:59.9999999 +0000", 9)]
+        [Theory]
+        [InlineData("2019-01-01 12:12:12.1234567 +0500", 7)]
+        [InlineData("2019-01-01 12:12:12.1234567 -0500", 7)]
+        [InlineData("2019-01-01 12:12:12.1234567 +1400", 7)]
+        [InlineData("2019-01-01 12:12:12.1234567 -1400", 7)]
+        [InlineData("0001-01-01 00:00:00.0000000 +0000", 9)]
+        [InlineData("9999-12-31 23:59:59.9999999 +0000", 9)]
         public void TestTimestampTz(string testValue, int scale)
         {
             using (var conn = CreateAndOpenConnection())
@@ -1635,20 +1633,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     var expectedValue = DateTimeOffset.Parse(testValue);
 
-                    Assert.AreEqual(expectedValue, reader.GetValue(0));
+                    Assert.Equal(expectedValue, reader.GetValue(0));
                 }
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
-        [TestCase("2019-01-01 12:12:12.1234567 +0200", 7, "2019-01-01 02:12:12.1234567 -08:00")]
-        [TestCase("2019-01-01 12:12:12.1234567 +1400", 7, "2018-12-31 14:12:12.1234567 -08:00")]
-        [TestCase("1900-01-15 00:00:00.0000000 +0000", 9, "1900-01-14 16:00:00.0000000 -08:00")]
-        [TestCase("1883-11-19 00:00:00.0000000 +0000", 9, "1883-11-18 16:00:00.0000000 -08:00")]
-        [TestCase("9999-12-31 23:59:59.9999999 +0000", 9, "9999-12-31 15:59:59.9999999 -08:00")]
-        [TestCase("2019-01-01 12:12:12.1234567", 7, "2019-01-01 12:12:12.1234567 -08:00")]
+        [Theory]
+        [InlineData("2019-01-01 12:12:12.1234567 +0200", 7, "2019-01-01 02:12:12.1234567 -08:00")]
+        [InlineData("2019-01-01 12:12:12.1234567 +1400", 7, "2018-12-31 14:12:12.1234567 -08:00")]
+        [InlineData("1900-01-15 00:00:00.0000000 +0000", 9, "1900-01-14 16:00:00.0000000 -08:00")]
+        [InlineData("1883-11-19 00:00:00.0000000 +0000", 9, "1883-11-18 16:00:00.0000000 -08:00")]
+        [InlineData("9999-12-31 23:59:59.9999999 +0000", 9, "9999-12-31 15:59:59.9999999 -08:00")]
+        [InlineData("2019-01-01 12:12:12.1234567", 7, "2019-01-01 12:12:12.1234567 -08:00")]
         public void TestTimestampLtz(string testValue, int scale, string expectedValue)
         {
             using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
@@ -1667,17 +1665,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     var expected = DateTimeOffset.Parse(expectedValue);
 
-                    Assert.AreEqual(expected, reader.GetValue(0));
+                    Assert.Equal(expected, reader.GetValue(0));
                 }
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
-        [TestCase("2019-01-01 12:12:12.1234567", 7)]
-        [TestCase("0001-01-01 00:00:00.0000000", 9)]
-        [TestCase("9999-12-31 23:59:59.9999999", 9)]
+        [Theory]
+        [InlineData("2019-01-01 12:12:12.1234567", 7)]
+        [InlineData("0001-01-01 00:00:00.0000000", 9)]
+        [InlineData("9999-12-31 23:59:59.9999999", 9)]
         public void TestTimestampNtz(string testValue, int scale)
         {
             using (var conn = CreateAndOpenConnection())
@@ -1693,17 +1691,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     var expectedValue = DateTime.Parse(testValue);
 
-                    Assert.AreEqual(expectedValue, reader.GetValue(0));
+                    Assert.Equal(expectedValue, reader.GetValue(0));
                 }
 
                 CloseConnection(conn);
             }
         }
 
-        [Test]
-        [TestCase("array")]
-        [TestCase("object")]
-        [TestCase("variant")]
+        [Theory]
+        [InlineData("array")]
+        [InlineData("object")]
+        [InlineData("variant")]
         public void TestDataTableLoadOnSemiStructuredColumn(string type)
         {
             using (var conn = CreateAndOpenConnection())
@@ -1718,7 +1716,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = insertCommand;
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(1, count);
+                    Assert.Equal(1, count);
 
                     cmd.CommandText = $"select {colName} from {TableName}";
                     using (var reader = cmd.ExecuteReader())
@@ -1726,13 +1724,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         ValidateResultFormat(reader);
                         var dt = new DataTable();
                         dt.Load(reader);
-                        Assert.AreEqual(expectedVal, DataTableParser.GetFirstRowValue(dt, colName));
+                        Assert.Equal(expectedVal, DataTableParser.GetFirstRowValue(dt, colName));
                     }
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestTimestampLtzHonorsSessionTimezone()
         {
             using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
@@ -1750,7 +1748,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     using (var reader = cmd.ExecuteReader())
                     {
-                        Assert.IsTrue(reader.Read(), "Should read a record");
+                        Assert.True(reader.Read(), "Should read a record");
                         var timestamp1 = reader.GetDateTime(0);
 
                         var warsawTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Europe/Warsaw");
@@ -1758,8 +1756,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         var expectedUtc1 = TimeZoneInfo.ConvertTimeToUtc(expectedTime1, warsawTz);
                         var expectedInWarsaw = TimeZoneInfo.ConvertTimeFromUtc(expectedUtc1, warsawTz);
 
-                        Assert.AreEqual(expectedInWarsaw, timestamp1,
-                            $"Timestamp should be returned in Warsaw timezone. Expected: {expectedInWarsaw}, Got: {timestamp1}");
+                        Assert.Equal(expectedInWarsaw, timestamp1);
                     }
 
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Pacific/Honolulu'";
@@ -1768,7 +1765,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     using (var reader = cmd.ExecuteReader())
                     {
-                        Assert.IsTrue(reader.Read(), "Should read a record");
+                        Assert.True(reader.Read());
                         var timestamp2 = reader.GetDateTime(0);
 
                         var honoluluTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Pacific/Honolulu");
@@ -1778,8 +1775,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         var utcTime = TimeZoneInfo.ConvertTimeToUtc(originalTimeInWarsaw, warsawTz);
                         var expectedInHonolulu = TimeZoneInfo.ConvertTimeFromUtc(utcTime, honoluluTz);
 
-                        Assert.AreEqual(expectedInHonolulu, timestamp2,
-                            $"Timestamp should be returned in Honolulu timezone. Expected: {expectedInHonolulu}, Got: {timestamp2}");
+                        Assert.Equal(expectedInHonolulu, timestamp2);
                     }
                 }
 
@@ -1787,7 +1783,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestTimestampLtzWithMultipleSessionTimezones()
         {
             using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
@@ -1820,14 +1816,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         cmd.CommandText = $"SELECT val FROM {TableName}";
                         using (var reader = cmd.ExecuteReader())
                         {
-                            Assert.IsTrue(reader.Read());
+                            Assert.True(reader.Read());
                             var timestamp = reader.GetDateTime(0);
 
                             var tz = TimeZoneConverter.TZConvert.GetTimeZoneInfo(tzName);
                             var expected = TimeZoneInfo.ConvertTimeFromUtc(utcBase, tz);
 
-                            Assert.AreEqual(expected, timestamp,
-                                $"TIMESTAMP_LTZ should be in {tzName} timezone");
+                            Assert.Equal(expected, timestamp);
                         }
                     }
                 }
@@ -1836,7 +1831,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestTimestampLtzUsesLocalTimezoneByDefault()
         {
             // Verifies that without HonorSessionTimezone, TIMESTAMP_LTZ uses the local machine
@@ -1858,24 +1853,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = $"SELECT val FROM {TableName}";
                     using (var reader = cmd.ExecuteReader())
                     {
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
                         var timestamp = (DateTimeOffset)reader.GetValue(0);
 
                         var utcTime = new DateTime(2024, 6, 15, 12, 0, 0, DateTimeKind.Utc);
                         var expectedLocal = TimeZoneInfo.ConvertTimeFromUtc(utcTime, TimeZoneInfo.Local);
                         var expectedOffset = TimeZoneInfo.Local.GetUtcOffset(expectedLocal);
 
-                        Assert.AreEqual(expectedLocal, timestamp.DateTime,
-                            "TIMESTAMP_LTZ should be in local machine timezone when HonorSessionTimezone is not set");
-                        Assert.AreEqual(expectedOffset, timestamp.Offset,
-                            "Offset should match local machine timezone, not session timezone (Auckland)");
+                        Assert.Equal(expectedLocal, timestamp.DateTime);
+                        Assert.Equal(expectedOffset, timestamp.Offset);
 
                         var aucklandTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Pacific/Auckland");
                         var aucklandOffset = aucklandTz.GetUtcOffset(utcTime);
                         if (aucklandOffset != expectedOffset)
                         {
-                            Assert.AreNotEqual(aucklandOffset, timestamp.Offset,
-                                "Offset must NOT match Auckland timezone when HonorSessionTimezone is not set");
+                            Assert.NotEqual(aucklandOffset, timestamp.Offset);
                         }
                     }
                 }

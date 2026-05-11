@@ -4,27 +4,25 @@ using System.Data.Common;
 using System.Data;
 using System.Globalization;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture(ResultFormat.ARROW)]
-    [TestFixture(ResultFormat.JSON)]
     class SFDbDataReaderGetEnumeratorIT : SFBaseTest
     {
         protected override string TestName => base.TestName + _resultFormat;
 
         private readonly ResultFormat _resultFormat;
 
-        public SFDbDataReaderGetEnumeratorIT(ResultFormat resultFormat)
+        public SFDbDataReaderGetEnumeratorIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(envFixture)
         {
             _resultFormat = resultFormat;
         }
 
-        [Test]
+        [Fact]
         public void TestGetEnumerator()
         {
             using (var conn = CreateAndOpenConnection())
@@ -37,13 +35,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
 
                 var enumerator = reader.GetEnumerator();
-                Assert.IsTrue(enumerator.MoveNext());
-                Assert.AreEqual(3, (enumerator.Current as DbDataRecord).GetInt64(0));
-                Assert.IsTrue(enumerator.MoveNext());
-                Assert.AreEqual(5, (enumerator.Current as DbDataRecord).GetInt64(0));
-                Assert.IsTrue(enumerator.MoveNext());
-                Assert.AreEqual(8, (enumerator.Current as DbDataRecord).GetInt64(0));
-                Assert.IsFalse(enumerator.MoveNext());
+                Assert.True(enumerator.MoveNext());
+                Assert.Equal(3, (enumerator.Current as DbDataRecord).GetInt64(0));
+                Assert.True(enumerator.MoveNext());
+                Assert.Equal(5, (enumerator.Current as DbDataRecord).GetInt64(0));
+                Assert.True(enumerator.MoveNext());
+                Assert.Equal(8, (enumerator.Current as DbDataRecord).GetInt64(0));
+                Assert.False(enumerator.MoveNext());
 
                 reader.Close();
 
@@ -51,7 +49,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetEnumeratorShouldBeEmptyWhenNotRowsReturned()
         {
             using (var conn = CreateAndOpenConnection())
@@ -64,15 +62,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
 
                 var enumerator = reader.GetEnumerator();
-                Assert.IsFalse(enumerator.MoveNext());
-                Assert.IsNull(enumerator.Current);
+                Assert.False(enumerator.MoveNext());
+                Assert.Null(enumerator.Current);
 
                 reader.Close();
                 DropTestTableAndCloseConnection(conn);
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetEnumeratorWithCastMethod()
         {
             using (var conn = CreateAndOpenConnection())
@@ -85,7 +83,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
 
                 var dataRecords = reader.Cast<DbDataRecord>().ToList();
-                Assert.AreEqual(3, dataRecords.Count);
+                Assert.Equal(3, dataRecords.Count);
 
                 reader.Close();
 
@@ -93,7 +91,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetEnumeratorForEachShouldNotEnterWhenResultsIsEmpty()
         {
             using (var conn = CreateAndOpenConnection())
@@ -115,7 +113,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestGetEnumeratorShouldThrowNonSupportedExceptionWhenReset()
         {
             using (var conn = CreateAndOpenConnection())
@@ -128,7 +126,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
 
                 var enumerator = reader.GetEnumerator();
-                Assert.IsTrue(enumerator.MoveNext());
+                Assert.True(enumerator.MoveNext());
 
                 Assert.Throws<NotSupportedException>(() => enumerator.Reset());
 
@@ -143,7 +141,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             IDbCommand cmd = conn.CreateCommand();
             cmd.CommandText = $"drop table if exists {TableName}";
             var count = cmd.ExecuteNonQuery();
-            Assert.AreEqual(0, count);
+            Assert.Equal(0, count);
 
             CloseConnection(conn);
         }

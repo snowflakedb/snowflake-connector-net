@@ -1,18 +1,17 @@
 using System;
 using System.Threading;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
     public class SessionCreationTokenCounterTest
     {
         private static readonly TimeSpan s_longTime = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan s_shortTime = TimeSpan.FromMilliseconds(50);
 
-        [Test]
+        [Fact]
         public void TestGrantSessionCreation()
         {
             // arrange
@@ -22,16 +21,16 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.NewToken();
 
             // assert
-            Assert.AreEqual(1, tokens.Count());
+            Assert.Equal(1, tokens.Count());
 
             // act
             tokens.NewToken();
 
             // assert
-            Assert.AreEqual(2, tokens.Count());
+            Assert.Equal(2, tokens.Count());
         }
 
-        [Test]
+        [Fact]
         public void TestCompleteSessionCreation()
         {
             // arrange
@@ -43,16 +42,16 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.RemoveToken(token1);
 
             // assert
-            Assert.AreEqual(1, tokens.Count());
+            Assert.Equal(1, tokens.Count());
 
             // act
             tokens.RemoveToken(token2);
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
 
-        [Test]
+        [Fact]
         public void TestCompleteUnknownTokenDoesNotThrowExceptions()
         {
             // arrange
@@ -64,17 +63,17 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.RemoveToken(unknownToken);
 
             // assert
-            Assert.AreEqual(1, tokens.Count());
+            Assert.Equal(1, tokens.Count());
         }
 
-        [Test]
+        [Fact]
         public void TestCompleteCleansExpiredTokens()
         {
             // arrange
             var tokens = new SessionCreationTokenCounter(s_shortTime);
             var token = tokens.NewToken();
             tokens.NewToken(); // this token will be cleaned because of expiration
-            Assert.AreEqual(2, tokens.Count());
+            Assert.Equal(2, tokens.Count());
             const int EpsilonMillis = 5;
             Thread.Sleep((int)s_shortTime.TotalMilliseconds + EpsilonMillis);
 
@@ -82,10 +81,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.RemoveToken(token);
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
 
-        [Test]
+        [Fact]
         public void TestResetTokens()
         {
             // arrange
@@ -97,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.Reset();
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
     }
 }

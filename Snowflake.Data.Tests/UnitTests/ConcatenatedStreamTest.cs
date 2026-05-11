@@ -1,18 +1,14 @@
 using Snowflake.Data.Tests.Util;
-using NUnit.Framework;
+using Xunit;
 using System;
 using System.IO;
 using System.Text;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
-    [TestFixture]
     class ConcatenatedStreamTest
     {
         Stream _concatStream;
-
-        [SetUp]
         public void BeforeTest()
         {
             string data = "12345678";
@@ -25,83 +21,83 @@ namespace Snowflake.Data.Tests.UnitTests
             _concatStream = new ConcatenatedStream(new Stream[3] { openBracket, stream, closeBracket });
         }
 
-        [Test]
+        [Fact]
         public void TestCanRead()
         {
-            Assert.IsTrue(_concatStream.CanRead);
+            Assert.True(_concatStream.CanRead);
         }
 
-        [Test]
+        [Fact]
         public void TestCanSeek()
         {
-            Assert.IsFalse(_concatStream.CanSeek);
+            Assert.False(_concatStream.CanSeek);
         }
 
-        [Test]
+        [Fact]
         public void TestCanWrite()
         {
-            Assert.IsFalse(_concatStream.CanWrite);
+            Assert.False(_concatStream.CanWrite);
         }
 
-        [Test]
+        [Fact]
         public void TestFlush()
         {
             Assert.Throws<NotImplementedException>(() => _concatStream.Flush());
         }
 
-        [Test]
+        [Fact]
         public void TestLength()
         {
             Assert.Throws<NotImplementedException>(() => _ = _concatStream.Length);
         }
 
-        [Test]
+        [Fact]
         public void TestGetPosition()
         {
             Assert.Throws<NotImplementedException>(() => _ = _concatStream.Position);
         }
 
-        [Test]
+        [Fact]
         public void TestSetPosition()
         {
             Assert.Throws<NotImplementedException>(() => _concatStream.Position = 1);
         }
 
-        [Test]
+        [Fact]
         public void TestSeek()
         {
             Assert.Throws<NotImplementedException>(() => _concatStream.Seek(1, new SeekOrigin()));
         }
 
-        [Test]
+        [Fact]
         public void TestSetLength()
         {
             Assert.Throws<NotImplementedException>(() => _concatStream.SetLength(1));
         }
 
-        [Test]
+        [Fact]
         public void TestWrite()
         {
             Assert.Throws<NotImplementedException>(() => _concatStream.Write(null, 0, 0));
         }
 
-        [Test]
+        [Fact]
         public void TestReadZeroByte()
         {
             byte[] buffer = new byte[0];
-            Assert.AreEqual(0, _concatStream.Read(buffer, 0, 0)); // Read 0 byte
+            Assert.Equal(0, _concatStream.Read(buffer, 0, 0)); // Read 0 byte
         }
 
-        [Test]
+        [Fact]
         public void TestReadBytes()
         {
             byte[] buffer = new byte[3];
-            Assert.AreEqual(1, _concatStream.Read(buffer, 0, 1)); // Read 1 byte
-            Assert.AreEqual(2, _concatStream.Read(buffer, 0, 2)); // Read 2 bytes
-            Assert.AreEqual(3, _concatStream.Read(buffer, 0, 3)); // Read 3 bytes
+            Assert.Equal(1, _concatStream.Read(buffer, 0, 1)); // Read 1 byte
+            Assert.Equal(2, _concatStream.Read(buffer, 0, 2)); // Read 2 bytes
+            Assert.Equal(3, _concatStream.Read(buffer, 0, 3)); // Read 3 bytes
         }
 
-        [Test]
+        [Fact]
         public void TestReadMoreBytesThanBufferSize()
         {
             byte[] buffer = new byte[3];
@@ -116,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 // NET 4.7.1 throws an ArgumentException
                 // NET 4.7.2 throws an ArgumentOutOfRangeException
-                Assert.IsTrue(ex is ArgumentException);
+                Assert.True(ex is ArgumentException);
             }
         }
     }

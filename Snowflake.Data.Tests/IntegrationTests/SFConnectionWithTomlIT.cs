@@ -3,7 +3,7 @@ using System.Data;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix.Native;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
@@ -13,33 +13,28 @@ using Tomlyn.Model;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
-    [TestFixture, NonParallelizable]
     class SFConnectionWithTomlIT : SFBaseTest
     {
+        public SFConnectionWithTomlIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         private static string s_workingDirectory;
-
-
-        [SetUp]
         public new void BeforeTest()
         {
-            s_workingDirectory ??= Path.Combine(TestContext.CurrentContext.WorkDirectory, "../../..", "toml_config_folder");
+            s_workingDirectory ??= Path.Combine(AppContext.BaseDirectory, "../../..", "toml_config_folder");
             if (!Directory.Exists(s_workingDirectory))
             {
                 Directory.CreateDirectory(s_workingDirectory);
             }
             CreateTomlConfigBaseOnConnectionString(ConnectionString);
         }
-
-        [TearDown]
         public new void AfterTest()
         {
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
+        [Fact]
         public void TestLocalDefaultConnectStringReadFromToml()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
@@ -49,7 +44,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.Open();
-                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    Assert.Equal(ConnectionState.Open, conn.State);
                 }
             }
             finally
@@ -58,7 +53,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestThrowExceptionIfTomlNotFoundWithOtherConnectionString()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
@@ -69,7 +64,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
-                    Assert.Throws<SnowflakeDbException>(() => conn.Open(), "Unable to connect. Specified connection name does not exist in connections.toml");
+                    Assert.Throws<SnowflakeDbException>(() => conn.Open());
                 }
             }
             finally
@@ -79,7 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public void TestThrowExceptionIfTomlFromNotFoundFromDbConnection()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
@@ -88,7 +83,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
-                    Assert.Throws<SnowflakeDbException>(() => conn.Open(), "Error: Required property ACCOUNT is not provided");
+                    Assert.Throws<SnowflakeDbException>(() => conn.Open());
                 }
             }
             finally

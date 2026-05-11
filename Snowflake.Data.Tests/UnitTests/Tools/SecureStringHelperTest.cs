@@ -1,12 +1,11 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
     public class SecureStringHelperTest
     {
-        [Test]
+        [Fact]
         public void TestConvertPassword()
         {
             // arrange
@@ -17,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var decodedPassword = SecureStringHelper.Decode(securePassword);
 
             // assert
-            Assert.AreEqual(passwordText, decodedPassword);
+            Assert.Equal(passwordText, decodedPassword);
         }
     }
 }

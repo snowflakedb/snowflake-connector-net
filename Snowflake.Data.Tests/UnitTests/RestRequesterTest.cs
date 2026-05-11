@@ -5,15 +5,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using Moq.Protected;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
     public class RestRequesterTest
     {
-        [Test]
+        [Fact]
         public void TestSendAsyncTags401OnException()
         {
             // arrange — real RestRequester with an HttpClient that returns 401
@@ -41,11 +40,11 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             // assert — the production SendAsync must tag the exception with 401
-            Assert.IsNotNull(caught);
-            Assert.IsTrue(RestRequester.HasUnauthorizedStatusCode(caught));
+            Assert.NotNull(caught);
+            Assert.True(RestRequester.HasUnauthorizedStatusCode(caught));
         }
 
-        [Test]
+        [Fact]
         public void TestSendAsyncTags403OnException()
         {
             // arrange
@@ -73,11 +72,11 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             // assert — 403 should NOT be detected as unauthorized
-            Assert.IsNotNull(caught);
-            Assert.IsFalse(RestRequester.HasUnauthorizedStatusCode(caught));
+            Assert.NotNull(caught);
+            Assert.False(RestRequester.HasUnauthorizedStatusCode(caught));
         }
 
-        [Test]
+        [Fact]
         public void TestSendAsyncDoesNotTagOnSuccess()
         {
             // arrange
@@ -97,19 +96,19 @@ namespace Snowflake.Data.Tests.UnitTests
             var request = CreateMockRestRequest();
 
             // act & assert — no exception, no tagging
-            Assert.DoesNotThrow(() => restRequester.Get<string>(request));
+            restRequester.Get<string>(request);
         }
 
-        [Test]
+        [Fact]
         public void TestHasUnauthorizedStatusCodeReturnsFalseForNull()
         {
-            Assert.IsFalse(RestRequester.HasUnauthorizedStatusCode(null));
+            Assert.False(RestRequester.HasUnauthorizedStatusCode(null));
         }
 
-        [Test]
+        [Fact]
         public void TestHasUnauthorizedStatusCodeReturnsFalseForPlainException()
         {
-            Assert.IsFalse(RestRequester.HasUnauthorizedStatusCode(new Exception("no http info")));
+            Assert.False(RestRequester.HasUnauthorizedStatusCode(new Exception("no http info")));
         }
 
         private static IRestRequest CreateMockRestRequest()

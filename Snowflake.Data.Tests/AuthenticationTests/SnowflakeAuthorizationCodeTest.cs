@@ -1,5 +1,5 @@
 using System.Threading;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Tests;
@@ -14,7 +14,7 @@ namespace Snowflake.Data.AuthenticationTests
         private string _password;
 
 
-        [SetUp, IgnoreOnCI]
+        [IgnoreOnCI]
         public void SetUp()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -27,7 +27,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateSnowflakeAuthorizationCodeSuccessful()
 
         {
@@ -39,7 +39,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateSnowflakeAuthorizationCodeMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -56,7 +56,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token.");
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateSnowflakeAuthorizationCodeWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -75,7 +75,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateSnowflakeAuthorizationCodeTimeout()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -88,7 +88,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateSnowflakeAuthorizationCodeWithTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -119,7 +119,7 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateSnowflakeAuthorizationCodeWithoutTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

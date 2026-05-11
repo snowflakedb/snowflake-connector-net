@@ -1,23 +1,21 @@
 using System.IO;
 using Mono.Unix;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
-    [Platform(Exclude = "Win")]
     public class DirectoryUnixInformationTest
     {
         private const long UserId = 5;
         private const long AnotherUserId = 6;
         static readonly string s_directoryFullName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
-        [Test]
-        [TestCase(FileAccessPermissions.UserWrite)]
-        [TestCase(FileAccessPermissions.UserRead)]
-        [TestCase(FileAccessPermissions.UserExecute)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute)]
+        [Theory]
+        [InlineData(FileAccessPermissions.UserWrite)]
+        [InlineData(FileAccessPermissions.UserRead)]
+        [InlineData(FileAccessPermissions.UserExecute)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute)]
         public void TestSafeDirectory(FileAccessPermissions securePermissions)
         {
             // arrange
@@ -30,9 +28,9 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isSafe);
         }
 
-        [Test]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
+        [Theory]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
         public void TestUnsafePermissions(FileAccessPermissions unsecurePermissions)
         {
             // arrange
@@ -45,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isSafe);
         }
 
-        [Test]
+        [Fact]
         public void TestSafeExactlyDirectory()
         {
             // arrange
@@ -58,10 +56,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isSafe);
         }
 
-        [Test]
-        [TestCase(FileAccessPermissions.UserRead)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
+        [Theory]
+        [InlineData(FileAccessPermissions.UserRead)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
         public void TestUnsafeExactlyPermissions(FileAccessPermissions unsecurePermissions)
         {
             // arrange
@@ -74,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isSafe);
         }
 
-        [Test]
+        [Fact]
         public void TestOwnedByOthers()
         {
             // arrange

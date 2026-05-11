@@ -1,15 +1,13 @@
 using System.Diagnostics;
 using System.Threading;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
-    [Parallelizable(ParallelScope.Self)]
     public class NonWaitingQueueTest
     {
-        [Test]
+        [Fact]
         public void TestWaitDoesNotHangAndReturnsFalse()
         {
             // arrange
@@ -22,11 +20,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
-            Assert.LessOrEqual(watch.ElapsedMilliseconds, 50);
+            Assert.False(result);
+            Assert.True(watch.ElapsedMilliseconds <= 50);
         }
 
-        [Test]
+        [Fact]
         public void TestNoOneIsWaiting()
         {
             // arrange
@@ -37,10 +35,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isAnyoneWaiting = nonWaitingQueue.IsAnyoneWaiting();
 
             // assert
-            Assert.IsFalse(isAnyoneWaiting);
+            Assert.False(isAnyoneWaiting);
         }
 
-        [Test]
+        [Fact]
         public void TestWaitingDisabled()
         {
             // arrange
@@ -50,17 +48,17 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isWaitingEnabled = nonWaitingQueue.IsWaitingEnabled();
 
             // assert
-            Assert.IsFalse(isWaitingEnabled);
+            Assert.False(isWaitingEnabled);
         }
 
-        [Test]
+        [Fact]
         public void TestReset()
         {
             // arrange
             var nonWaitingQueue = new NonWaitingQueue();
 
             // act/assert
-            Assert.DoesNotThrow(() => nonWaitingQueue.Reset());
+            nonWaitingQueue.Reset();
         }
     }
 }

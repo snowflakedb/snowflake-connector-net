@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
@@ -11,7 +11,6 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    [TestFixture, NonParallelizable, Order(2)]
     public class EasyLoggerManagerTest
     {
 
@@ -22,27 +21,21 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         private static readonly string s_logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         private static AsyncLocal<string> _directoryLogPath = new AsyncLocal<string>();
-
-        [OneTimeTearDown]
         public static void CleanUp()
         {
             EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
             RemoveEasyLoggingLogFiles();
         }
-
-        [SetUp]
         public void BeforeEach()
         {
             _directoryLogPath.Value = RandomLogsDirectoryPath();
         }
-
-        [TearDown]
         public void AfterEach()
         {
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
         }
 
-        [Test]
+        [Fact]
         public void TestThatChangesLogLevel()
         {
             // arrange
@@ -52,40 +45,40 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Off, _directoryLogPath.Value);
 
             // assert
-            Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInfoEnabled());
-            Assert.IsFalse(logger.IsWarnEnabled());
-            Assert.IsFalse(logger.IsErrorEnabled());
+            Assert.False(logger.IsDebugEnabled());
+            Assert.False(logger.IsInfoEnabled());
+            Assert.False(logger.IsWarnEnabled());
+            Assert.False(logger.IsErrorEnabled());
 
             // act
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, _directoryLogPath.Value);
 
             // assert
-            Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInfoEnabled());
-            Assert.IsFalse(logger.IsWarnEnabled());
-            Assert.IsTrue(logger.IsErrorEnabled());
+            Assert.False(logger.IsDebugEnabled());
+            Assert.False(logger.IsInfoEnabled());
+            Assert.False(logger.IsWarnEnabled());
+            Assert.True(logger.IsErrorEnabled());
 
             // act
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
 
             // assert
-            Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInfoEnabled());
-            Assert.IsTrue(logger.IsWarnEnabled());
-            Assert.IsTrue(logger.IsErrorEnabled());
+            Assert.False(logger.IsDebugEnabled());
+            Assert.False(logger.IsInfoEnabled());
+            Assert.True(logger.IsWarnEnabled());
+            Assert.True(logger.IsErrorEnabled());
 
             // act
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, _directoryLogPath.Value);
 
             // assert
-            Assert.IsTrue(logger.IsDebugEnabled());
-            Assert.IsTrue(logger.IsInfoEnabled());
-            Assert.IsTrue(logger.IsWarnEnabled());
-            Assert.IsTrue(logger.IsErrorEnabled());
+            Assert.True(logger.IsDebugEnabled());
+            Assert.True(logger.IsInfoEnabled());
+            Assert.True(logger.IsWarnEnabled());
+            Assert.True(logger.IsErrorEnabled());
         }
 
-        [Test]
+        [Fact]
         public static void TestThatLogsToProperFileWithProperLogLevelOnly()
         {
             // arrange
@@ -100,10 +93,10 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // assert
             var logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
-            Assert.That(logLines, Has.Exactly(0).Matches<string>(s => s.Contains(DebugMessage)));
-            Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(InfoMessage)));
-            Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(WarnMessage)));
-            Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(ErrorMessage)));
+            Assert.Equal(0, logLines.Count(s => s.Contains(DebugMessage)));
+            Assert.Equal(1, logLines.Count(s => s.Contains(InfoMessage)));
+            Assert.Equal(1, logLines.Count(s => s.Contains(WarnMessage)));
+            Assert.Equal(1, logLines.Count(s => s.Contains(ErrorMessage)));
 
             // arrange
             File.Delete(FindLogFilePath(_directoryLogPath.Value));
@@ -114,10 +107,10 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // assert
             logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
-            Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(DebugMessage)));
+            Assert.Equal(1, logLines.Count(s => s.Contains(DebugMessage)));
         }
 
-        [Test]
+        [Fact]
         public async Task TestThatRollsLogIfSizeIsTooBig()
         {
             // arrange
@@ -148,10 +141,10 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var backupLogs = Directory.GetFiles(_directoryLogPath.Value, $"{logFileName}.*.bak");
 
             // assert
-            Assert.AreEqual(ExpectedBackupLogCount, backupLogs.Length);
+            Assert.Equal(ExpectedBackupLogCount, backupLogs.Length);
         }
 
-        [Test]
+        [Fact]
         public void TestThatOnlyUnknownFieldsAreLogged()
         {
             // arrange
@@ -177,7 +170,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
             // assert
             var logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
-            Assert.That(logLines, Has.Exactly(2).Matches<string>(s => s.Contains($"Unknown field from config: {expectedFakeLogField}")));
+            Assert.Equal(2, logLines.Count(s => s.Contains($"Unknown field from config: {expectedFakeLogField}")));
 
             // cleanup
             File.Delete(configFilePath);
@@ -191,16 +184,16 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
         internal static string FindLogFilePath(string directoryLogPath)
         {
-            Assert.IsTrue(Directory.Exists(directoryLogPath));
+            Assert.True(Directory.Exists(directoryLogPath));
             var files = Directory.GetFiles(directoryLogPath);
-            Assert.AreEqual(1, files.Length);
+            Assert.Equal(1, files.Length);
             return files.First();
         }
 
         private static void RemoveEasyLoggingLogFiles()
         {
             Directory.GetFiles(s_logsDirectory)
-                .Where(filePath => filePath.StartsWith(Path.Combine(s_logsDirectory, "easy_logging_logs")))
+                .Where(filePath => filePath.StartsWith(Path.Combine(s_logsDirectory)))
                 .AsParallel()
                 .ForAll(filePath => File.Delete(filePath));
         }

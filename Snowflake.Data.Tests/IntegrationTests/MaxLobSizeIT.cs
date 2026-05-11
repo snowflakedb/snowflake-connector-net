@@ -1,7 +1,8 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -11,10 +12,11 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [Parallelizable(ParallelScope.Children)]
     [IgnoreOnJenkins]
     class MaxLobSizeIT : SFBaseTest
     {
+        public MaxLobSizeIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
         private ResultFormat _resultFormat;
 
         //private const int MaxLobSize = (128 * 1024 * 1024); // new max LOB size
@@ -35,27 +37,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [ThreadStatic] private static string t_outputFilePath;
         [ThreadStatic] private static List<string> t_filesToDelete;
         [ThreadStatic] private static string[] t_colData;
-
-        [OneTimeSetUp]
         public static void OneTimeSetUp()
         {
             // Create temp output directory for downloaded files
             s_outputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             Directory.CreateDirectory(s_outputDirectory);
         }
-
-        [OneTimeTearDown]
         public static void OneTimeTearDown()
         {
             // Delete temp output directory and downloaded files
             Directory.Delete(s_outputDirectory, true);
         }
-
-        [SetUp]
         public void SetUp()
         {
             // Base object's names on worker thread id
-            var threadSuffix = TestContext.CurrentContext.WorkerId?.Replace('#', '_');
+            var threadSuffix = Thread.CurrentThread.ManagedThreadId.ToString()?.Replace('#', '_');
 
             t_tableName = $"LOB_TABLE_{threadSuffix}";
             var tableNameWithColumns = $"{t_tableName}({string.Join(", ", s_colName.Select(col => col))})";
@@ -77,8 +73,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-
-        [TearDown]
         public void TearDown()
         {
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -100,7 +94,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-        [Test, TestCaseSource(nameof(SelectOnSpecifiedSizeTestCases))]
+        [Fact, MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
             // arrange
@@ -116,15 +110,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     string row = (string)command.ExecuteScalar();
 
                     // assert
-                    Assert.AreEqual(size, row.Length);
+                    Assert.Equal(size, row.Length);
                 }
             }
         }
 
 
-        [Test, TestCaseSource(nameof(LiteralInsertTestCases))]
-        [Retry(3)]
-        [NonParallelizable]
+        [Fact, MemberData(nameof(LiteralInsertTestCases))]
         public void TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -148,17 +140,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = command.ExecuteReader();
 
                     // assert
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(c1, reader.GetString(0));
-                    Assert.AreEqual(c2, reader.GetString(1));
-                    Assert.AreEqual(c3, reader.GetInt64(2));
+                    Assert.True(reader.Read());
+                    Assert.Equal(c1, reader.GetString(0));
+                    Assert.Equal(c2, reader.GetString(1));
+                    Assert.Equal(c3, reader.GetInt64(2));
                     CheckColumnMetadata(reader);
                 }
             }
         }
 
-        [Test, TestCaseSource(nameof(PositionalInsertTestCases))]
-        [Retry(3)]
+        [Fact, MemberData(nameof(PositionalInsertTestCases))]
         public void TestPositionalInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -201,17 +192,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = command.ExecuteReader();
 
                     // assert
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(c1, reader.GetString(0));
-                    Assert.AreEqual(c2, reader.GetString(1));
-                    Assert.AreEqual(c3, reader.GetInt64(2));
+                    Assert.True(reader.Read());
+                    Assert.Equal(c1, reader.GetString(0));
+                    Assert.Equal(c2, reader.GetString(1));
+                    Assert.Equal(c3, reader.GetInt64(2));
                     CheckColumnMetadata(reader);
                 }
             }
         }
 
 
-        [Test, TestCaseSource(nameof(NamedInsertTestCases))]
+        [Fact, MemberData(nameof(NamedInsertTestCases))]
         public void TestNamedInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -254,18 +245,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = command.ExecuteReader();
 
                     // assert
-                    Assert.IsTrue(reader.Read());
-                    Assert.AreEqual(c1, reader.GetString(0));
-                    Assert.AreEqual(c2, reader.GetString(1));
-                    Assert.AreEqual(c3, reader.GetInt64(2));
+                    Assert.True(reader.Read());
+                    Assert.Equal(c1, reader.GetString(0));
+                    Assert.Equal(c2, reader.GetString(1));
+                    Assert.Equal(c3, reader.GetInt64(2));
                     CheckColumnMetadata(reader);
                 }
             }
         }
 
-        [Test, TestCaseSource(nameof(PutGetCommandTestCases))]
-        [Retry(3)]
-        [NonParallelizable]
+        [Fact, MemberData(nameof(PutGetCommandTestCases))]
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -298,31 +287,30 @@ namespace Snowflake.Data.Tests.IntegrationTests
         static IEnumerable<ResultFormat> ResultFormats => new[]
             { ResultFormat.ARROW, ResultFormat.JSON };
 
-        static IEnumerable<TestCaseData> CombinedTestCases(string baseTestName)
+        static IEnumerable<object[]> CombinedTestCases(string baseTestName)
         {
             foreach (var resultFormat in ResultFormats)
             {
                 foreach (var lobSize in LobSizeTestCases)
                 {
-                    yield return new TestCaseData(resultFormat, lobSize)
-                        .SetName($"{baseTestName}_{resultFormat}_{lobSize}");
+                    yield return new object[] { resultFormat, lobSize };
                 }
             }
         }
 
-        static IEnumerable<TestCaseData> SelectOnSpecifiedSizeTestCases() =>
+        static IEnumerable<object[]> SelectOnSpecifiedSizeTestCases() =>
             CombinedTestCases(nameof(TestSelectOnSpecifiedSize));
 
-        static IEnumerable<TestCaseData> LiteralInsertTestCases() =>
+        static IEnumerable<object[]> LiteralInsertTestCases() =>
             CombinedTestCases(nameof(TestLiteralInsert));
 
-        static IEnumerable<TestCaseData> PositionalInsertTestCases() =>
+        static IEnumerable<object[]> PositionalInsertTestCases() =>
             CombinedTestCases(nameof(TestPositionalInsert));
 
-        static IEnumerable<TestCaseData> NamedInsertTestCases() =>
+        static IEnumerable<object[]> NamedInsertTestCases() =>
             CombinedTestCases(nameof(TestNamedInsert));
 
-        static IEnumerable<TestCaseData> PutGetCommandTestCases() =>
+        static IEnumerable<object[]> PutGetCommandTestCases() =>
             CombinedTestCases(nameof(TestPutGetCommand));
 
         void PrepareTest()
@@ -353,8 +341,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = command.ExecuteReader();
 
                 // assert
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(ResultStatus.UPLOADED.ToString(),
+                Assert.True(reader.Read());
+                Assert.Equal(ResultStatus.UPLOADED.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
             }
         }
@@ -376,7 +364,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = command.ExecuteReader();
 
                 // assert
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 AssertOnColData(reader, 0);
                 AssertOnColData(reader, 1);
                 AssertOnColData(reader, 2);
@@ -388,7 +376,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var actual = reader.GetString(index);
             var substringLength = t_colData[index].Length > 20 ? 20 : t_colData[index].Length;
-            Assert.IsTrue(t_colData[index] == actual, $"Expected strings to be equal. Expected: '{t_colData[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
+            Assert.True(t_colData[index] == actual, $"Expected strings to be equal. Expected: '{t_colData[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
         }
 
         private void GetFile(DbConnection conn)
@@ -402,17 +390,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = command.ExecuteReader();
 
                 // assert
-                Assert.IsTrue(reader.Read());
-                Assert.AreEqual(ResultStatus.DOWNLOADED.ToString(),
+                Assert.True(reader.Read());
+                Assert.Equal(ResultStatus.DOWNLOADED.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
 
                 // arrange
                 var content = File.ReadAllText(t_outputFilePath).Split(',');
 
                 // assert
-                Assert.AreEqual(t_colData[0], content[0]);
-                Assert.AreEqual(t_colData[1], content[1]);
-                Assert.AreEqual(t_colData[2], content[2]);
+                Assert.Equal(t_colData[0], content[0]);
+                Assert.Equal(t_colData[1], content[1]);
+                Assert.Equal(t_colData[2], content[2]);
             }
         }
 
@@ -437,22 +425,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var dataTable = reader.GetSchemaTable();
 
             DataRow row = dataTable.Rows[0];
-            Assert.AreEqual(s_colName[0], row[SchemaTableColumn.ColumnName]);
-            Assert.AreEqual(0, row[SchemaTableColumn.ColumnOrdinal]);
-            Assert.AreEqual(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
-            Assert.AreEqual(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+            Assert.Equal(s_colName[0], row[SchemaTableColumn.ColumnName]);
+            Assert.Equal(0, row[SchemaTableColumn.ColumnOrdinal]);
+            Assert.Equal(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
+            Assert.Equal(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
 
             row = dataTable.Rows[1];
-            Assert.AreEqual(s_colName[1], row[SchemaTableColumn.ColumnName]);
-            Assert.AreEqual(1, row[SchemaTableColumn.ColumnOrdinal]);
-            Assert.AreEqual(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
-            Assert.AreEqual(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+            Assert.Equal(s_colName[1], row[SchemaTableColumn.ColumnName]);
+            Assert.Equal(1, row[SchemaTableColumn.ColumnOrdinal]);
+            Assert.Equal(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
+            Assert.Equal(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
 
             row = dataTable.Rows[2];
-            Assert.AreEqual(s_colName[2], row[SchemaTableColumn.ColumnName]);
-            Assert.AreEqual(2, row[SchemaTableColumn.ColumnOrdinal]);
-            Assert.AreEqual(0, row[SchemaTableColumn.ColumnSize]);
-            Assert.AreEqual(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
+            Assert.Equal(s_colName[2], row[SchemaTableColumn.ColumnName]);
+            Assert.Equal(2, row[SchemaTableColumn.ColumnOrdinal]);
+            Assert.Equal(0, row[SchemaTableColumn.ColumnSize]);
+            Assert.Equal(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
         }
 
         private static string GenerateRandomString(int sizeInBytes)

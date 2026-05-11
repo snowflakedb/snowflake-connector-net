@@ -1,14 +1,14 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Tests;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-    [NonParallelizable, IgnoreOnCI]
+    [IgnoreOnCI]
     public class MfaTest
     {
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateUsingMfaSuccessful()
         {
             var parameters = AuthConnectionString.GetMfaConnectionString();
@@ -18,12 +18,12 @@ namespace Snowflake.Data.AuthenticationTests
 
             // Generate TOTP codes
             var totpCodes = authTestHelper.GetTotp();
-            Assert.IsNotNull(totpCodes, "TOTP codes should not be null");
-            Assert.IsTrue(totpCodes.Length > 0, $"Should have TOTP codes but got {totpCodes.Length}");
+            Assert.NotNull(totpCodes);
+            Assert.True(totpCodes.Length > 0, $"Should have TOTP codes but got {totpCodes.Length}");
 
             // Test MFA authentication with TOTP codes
             var connectionSuccess = authTestHelper.ConnectAndExecuteSimpleQueryWithMfaToken(connectionString, totpCodes);
-            Assert.IsTrue(connectionSuccess, $"Failed to connect with any of the {totpCodes.Length} TOTP codes");
+            Assert.True(connectionSuccess, $"Failed to connect with any of the {totpCodes.Length} TOTP codes");
             authTestHelper.VerifyExceptionIsNotThrown();
 
             // Test MFA token caching with second connection (without passcode)

@@ -3,15 +3,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Data;
     using System.Data.Common;
     using System;
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using System.Threading.Tasks;
-
-    [TestFixture]
     class SFDbTransactionIT : SFBaseTest
     {
-        [Test]
+        public SFDbTransactionIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
+        [Fact]
         public void TestTransactionDbConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -24,12 +24,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (IDbTransaction t1 = conn.BeginTransaction())
                 {
                     // Assert
-                    Assert.AreEqual(conn, t1.Connection);
+                    Assert.Equal(conn, t1.Connection);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestTransactionIsolationLevel()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -42,12 +42,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (IDbTransaction t1 = conn.BeginTransaction())
                 {
                     // Assert
-                    Assert.AreEqual(IsolationLevel.ReadCommitted, t1.IsolationLevel);
+                    Assert.Equal(IsolationLevel.ReadCommitted, t1.IsolationLevel);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         // Test that when a transaction is disposed, rollback would be sent out
         public void TestTransactionDispose()
         {
@@ -70,11 +70,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 IDbCommand c2 = conn.CreateCommand();
                 c2.CommandText = $"SELECT * FROM {TableName}";
                 IDataReader reader2 = c2.ExecuteReader();
-                Assert.IsFalse(reader2.Read());
+                Assert.False(reader2.Read());
             }
         }
 
-        [Test]
+        [Fact]
         // Test SNOW-761136 unnecessary ROLLBACK 
         public void TestTransactionRollback()
         {
@@ -120,12 +120,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Console.Write("Row %d: %s, %d", row, dataDate.ToString(), dataInt);
                 row++;
             }
-            Assert.AreEqual(row, 4);
+            Assert.Equal(row, 4);
 
             conn.Close();
         }
 
-        [Test]
+        [Fact]
         // Test SNOW-761136 unnecessary ROLLBACK 
         public void TestTransactionRollbackOn2Transactions()
         {
@@ -169,12 +169,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Console.Write("Row %d: %s, %d", row, dataDate.ToString(), dataInt);
                 row++;
             }
-            Assert.AreEqual(row, 3);
+            Assert.Equal(row, 3);
 
             conn.Close();
         }
 
-        [Test]
+        [Fact]
         public void TestThrowsExceptionWhenBeginTransactionWithoutOpen()
         {
             using (var conn = new SnowflakeDbConnection(ConnectionString))

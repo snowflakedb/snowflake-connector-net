@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Converter;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
     public class StructuredTypesTest
     {
-        [Test]
-        [TestCaseSource(nameof(TimeConversionCases))]
+        [Theory]
+        [MemberData(nameof(TimeConversionCases))]
         public void TestTimeConversions(string value, string sfTypeString, object expected)
         {
             // arrange
@@ -22,11 +21,11 @@ namespace Snowflake.Data.Tests.UnitTests
             var result = timeConverter.Convert(value, sfType, csharpType, TimeZoneInfo.Local);
 
             // assert
-            Assert.AreEqual(expected, result);
+            Assert.Equal(expected, result);
 
             if (csharpType == typeof(DateTime))
             {
-                Assert.AreEqual(((DateTime)expected).Kind, ((DateTime)result).Kind);
+                Assert.Equal(((DateTime)expected).Kind, ((DateTime)result).Kind);
             }
         }
 
@@ -61,8 +60,8 @@ namespace Snowflake.Data.Tests.UnitTests
             yield return new object[] { "0001-01-01 00:00:00.123456 -13:00", SFDataType.TIMESTAMP_LTZ.ToString(), DateTime.Parse("0001-01-01 13:00:00.123456").ToLocalTime() };
         }
 
-        [Test]
-        [TestCaseSource(nameof(TimeConversionWithNamedTimezoneCases))]
+        [Theory]
+        [MemberData(nameof(TimeConversionWithNamedTimezoneCases))]
         public void TestTimeConversionsWithNamedTimezone(string value, string sfTypeString, string tzName, object expected)
         {
             var timeConverter = new TimeConverter();
@@ -72,14 +71,14 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var result = timeConverter.Convert(value, sfType, csharpType, tz);
 
-            Assert.AreEqual(expected, result);
+            Assert.Equal(expected, result);
             if (csharpType == typeof(DateTime))
             {
-                Assert.AreEqual(((DateTime)expected).Kind, ((DateTime)result).Kind);
+                Assert.Equal(((DateTime)expected).Kind, ((DateTime)result).Kind);
             }
             if (csharpType == typeof(DateTimeOffset))
             {
-                Assert.AreEqual(((DateTimeOffset)expected).Offset, ((DateTimeOffset)result).Offset);
+                Assert.Equal(((DateTimeOffset)expected).Offset, ((DateTimeOffset)result).Offset);
             }
         }
 
@@ -140,7 +139,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
         }
 
-        [Test]
+        [Fact]
         public void TestTimeConverterThrowsWhenSessionTimezoneIsNull()
         {
             var timeConverter = new TimeConverter();
@@ -148,10 +147,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var ex = Assert.Throws<StructuredTypesReadingException>(() =>
                 timeConverter.Convert("2024-01-01 00:00:00 +0:00", SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), null));
 
-            Assert.That(ex.Message, Does.Contain("Session timezone is required"));
+            Assert.Contains("Session timezone is required", ex.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestTimeConverterLtzReturnsStringWhenTargetIsString()
         {
             var timeConverter = new TimeConverter();
@@ -159,7 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var result = timeConverter.Convert("2024-01-01 00:00:00 +0:00", SFDataType.TIMESTAMP_LTZ, typeof(string), tokyoTz);
 
-            Assert.AreEqual("2024-01-01 00:00:00 +0:00", result);
+            Assert.Equal("2024-01-01 00:00:00 +0:00", result);
         }
     }
 }

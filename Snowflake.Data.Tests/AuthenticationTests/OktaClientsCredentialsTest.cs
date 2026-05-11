@@ -1,15 +1,15 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Tests;
 using Snowflake.Data.Core;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-    [NonParallelizable, IgnoreOnCI]
+    [IgnoreOnCI]
     public class OktaClientsCredentialsTest
     {
         private string _connectionString = "";
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateOktaClientCredentialsSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -21,7 +21,7 @@ namespace Snowflake.Data.AuthenticationTests
         }
 
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateOktaClientCredentialsMismatchedUsername()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -34,7 +34,7 @@ namespace Snowflake.Data.AuthenticationTests
         }
 
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateOktaClientCredentialsUnauthorized()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

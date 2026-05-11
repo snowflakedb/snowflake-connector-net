@@ -1,16 +1,15 @@
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    [TestFixture]
     public class EasyLoggingConfigProviderTest
     {
         private const string FilePathFromConnectionString = "/Users/dotnet/config.json";
         private const string FilePathToUse = "/home/config.json";
 
-        [Test]
+        [Fact]
         public void TestThatProvidesConfiguration()
         {
             // arrange
@@ -29,10 +28,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var result = configProvider.ProvideConfig(FilePathFromConnectionString);
 
             // assert
-            Assert.AreSame(config, result);
+            Assert.Same(config, result);
         }
 
-        [Test]
+        [Fact]
         public void TestThatReturnsNullWhenNoConfigurationFound()
         {
             // arrange
@@ -47,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var result = configProvider.ProvideConfig(FilePathFromConnectionString);
 
             // assert
-            Assert.IsNull(result);
+            Assert.Null(result);
             configParser.Verify(parser => parser.Parse(It.IsAny<string>()), Times.Never);
         }
     }

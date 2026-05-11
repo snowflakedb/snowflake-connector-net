@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
     public class CertificateCrlDistributionPointsExtractorTest
     {
-        [Test]
-        [TestCaseSource(nameof(CrlsTestCases))]
+        [Theory]
+        [MemberData(nameof(CrlsTestCases))]
         public void TestExtractCertificateDistributionPoints(CrlExtractionTestCase testCase)
         {
             // arrange
@@ -21,8 +20,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlUrls = crlExtractor.Extract(certificate);
 
             // assert
-            Assert.AreEqual(testCase.ExpectedCrlUrls.Length, crlUrls.Length);
-            Assert.That(testCase.ExpectedCrlUrls, Is.EquivalentTo(crlUrls));
+            Assert.Equal(testCase.ExpectedCrlUrls.Length, crlUrls.Length);
+            Assert.Equivalent(crlUrls, testCase.ExpectedCrlUrls);
         }
 
         public static IEnumerable<CrlExtractionTestCase> CrlsTestCases()

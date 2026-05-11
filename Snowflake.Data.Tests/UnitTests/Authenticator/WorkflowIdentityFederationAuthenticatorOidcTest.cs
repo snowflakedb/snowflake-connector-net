@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
@@ -9,30 +9,23 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
     public class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private WiremockRunner _runner;
-
-        [OneTimeSetUp]
         public void BeforeAll()
         {
             _runner = WiremockRunner.NewWiremock();
         }
-
-        [SetUp]
         public void BeforeEach()
         {
             _runner.ResetMapping();
         }
-
-        [OneTimeTearDown]
         public void AfterAll()
         {
             _runner.Stop();
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulOidcAuthentication()
         {
             // arrange
@@ -47,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestSuccessfulOidcAuthenticationAsync()
         {
             // arrange
@@ -62,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestOidcAttestation()
         {
             // arrange
@@ -76,13 +69,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.OIDC, attestation.Provider);
-            Assert.AreEqual(subject, attestation.UserIdentifierComponents["sub"]);
-            Assert.AreEqual(issuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(token, attestation.Credential);
+            Assert.Equal(AttestationProvider.OIDC, attestation.Provider);
+            Assert.Equal(subject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(issuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(token, attestation.Credential);
         }
 
-        [Test]
+        [Fact]
         public void TestFailOidcAttestationForWrongToken()
         {
             // arrange
@@ -94,10 +87,10 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.That(thrown.Message, Does.Contain("Retrieving attestation for OIDC failed. Failed to parse a token for OIDC workload identity federation."));
+            Assert.Contains("Retrieving attestation for OIDC failed. Failed to parse a token for OIDC workload identity federation.", thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestFailOidcAttestationWhenImpersonationIsUsed()
         {
             // arrange
@@ -116,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.That(thrown.Message, Does.Contain("Impersonation is not supported for OIDC workload identity provider"));
+            Assert.Contains("Impersonation is not supported for OIDC workload identity provider", thrown.Message);
         }
 
         private SFSession CreateSessionForOidc(string token) =>

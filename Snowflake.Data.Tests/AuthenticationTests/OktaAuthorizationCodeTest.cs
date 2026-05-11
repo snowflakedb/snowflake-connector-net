@@ -1,19 +1,19 @@
 using System.Threading;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Tests;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-    [NonParallelizable, IgnoreOnCI]
+    [IgnoreOnCI]
     public class OktaAuthorizationCodeTest
     {
         private string _connectionString = "";
         private string _login = AuthConnectionString.SsoUser;
         private string _password = AuthConnectionString.SsoPassword;
 
-        [SetUp, IgnoreOnCI]
+        [IgnoreOnCI]
         public void SetUp()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -24,7 +24,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateOktaAuthorizationCodeSuccessful()
 
         {
@@ -37,7 +37,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateOktaAuthorizationCodeMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -54,7 +54,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token");
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateOktaAuthorizationCodeWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -73,7 +73,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateOktaAuthorizationCodeTimeout()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -86,7 +86,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [Fact, IgnoreOnCI]
         public void TestAuthenticateOktaAuthorizationCodeWithTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

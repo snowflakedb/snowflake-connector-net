@@ -1,6 +1,6 @@
 using System.IO;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.FileTransfer;
 
 namespace Snowflake.Data.Tests
@@ -11,18 +11,18 @@ namespace Snowflake.Data.Tests
         private const int MaxBytesInMemory = 50;
         private static readonly string s_longText = RandomJsonGenerator.GenerateRandomJsonString(5);
 
-        [Test]
+        [Fact]
         public void TestThatSwitchesFromMemoryToFileOnGivenThresholdAndAllowsToReadAll()
         {
             // expect
-            Assert.IsTrue(ShortText.Length < MaxBytesInMemory);
-            Assert.IsTrue(s_longText.Length > MaxBytesInMemory);
+            Assert.True(ShortText.Length < MaxBytesInMemory);
+            Assert.True(s_longText.Length > MaxBytesInMemory);
 
             // arrange
             var stream = new FileBackedOutputStream(MaxBytesInMemory, Path.GetTempPath());
 
             // assert
-            Assert.IsFalse(stream.IsUsingFileOutputStream());
+            Assert.False(stream.IsUsingFileOutputStream());
 
             // arrange
             var bytesSmallEnoughToResideInMemory = Encoding.ASCII.GetBytes(ShortText);
@@ -31,13 +31,13 @@ namespace Snowflake.Data.Tests
             stream.Write(bytesSmallEnoughToResideInMemory, 0, bytesSmallEnoughToResideInMemory.Length);
 
             // assert
-            Assert.IsFalse(stream.IsUsingFileOutputStream());
+            Assert.False(stream.IsUsingFileOutputStream());
 
             // act
             ToByteStream(s_longText).CopyTo(stream);
 
             // assert
-            Assert.IsTrue(stream.IsUsingFileOutputStream());
+            Assert.True(stream.IsUsingFileOutputStream());
 
             // act
             var memoryStream = new MemoryStream();
@@ -46,29 +46,29 @@ namespace Snowflake.Data.Tests
 
             // assert
             var allTextFromStream = Encoding.ASCII.GetString(memoryStream.ToArray());
-            Assert.AreEqual(ShortText + s_longText, allTextFromStream);
+            Assert.Equal(ShortText + s_longText, allTextFromStream);
         }
 
-        [Test]
+        [Fact]
         public void TestThatAfterDisposeNoTemporaryFileExists()
         {
             // expect
-            Assert.IsTrue(s_longText.Length > MaxBytesInMemory);
+            Assert.True(s_longText.Length > MaxBytesInMemory);
 
             // arrange
             var stream = new FileBackedOutputStream(MaxBytesInMemory, Path.GetTempPath());
             ToByteStream(s_longText).CopyTo(stream);
 
             // assert
-            Assert.IsTrue(stream.IsUsingFileOutputStream());
+            Assert.True(stream.IsUsingFileOutputStream());
             var fileName = stream.GetFileName();
-            Assert.IsTrue(File.Exists(fileName));
+            Assert.True(File.Exists(fileName));
 
             // act
             stream.Dispose();
 
             // assert
-            Assert.IsFalse(File.Exists(fileName));
+            Assert.False(File.Exists(fileName));
         }
 
         private MemoryStream ToByteStream(string value) => new MemoryStream(Encoding.ASCII.GetBytes(value));

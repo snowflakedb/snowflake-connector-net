@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Data;
 using Newtonsoft.Json.Linq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Client;
@@ -9,25 +9,22 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture(ResultFormat.ARROW, false)]
-    [TestFixture(ResultFormat.ARROW, true)]
-    [TestFixture(ResultFormat.JSON, false)]
     public class StructuredObjectIT : StructuredTypesIT
     {
         private readonly ResultFormat _resultFormat;
         private readonly bool _nativeArrow;
 
-        public StructuredObjectIT(ResultFormat resultFormat, bool nativeArrow)
+        public StructuredObjectIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat, bool nativeArrow) : base(envFixture)
         {
             _resultFormat = resultFormat;
             _nativeArrow = nativeArrow;
         }
 
-        [Test]
+        [Fact]
         public void TestDataTableLoadOnStructuredObject()
         {
             if (_resultFormat != ResultFormat.JSON)
-                Assert.Ignore("skip test on arrow");
+                Assert.Skip("skip test on arrow");
 
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionString))
@@ -49,13 +46,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         dt.Load(reader);
 
                         // assert
-                        Assert.AreEqual($"{key}:{value}", DataTableParser.GetFirstRowValue(dt, colName));
+                        Assert.Equal($"{key}:{value}", DataTableParser.GetFirstRowValue(dt, colName));
                     }
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSelectStructuredTypeObject()
         {
             // arrange
@@ -68,31 +65,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA')::OBJECT(city VARCHAR, state VARCHAR)";
                     command.CommandText = $"SELECT {addressAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var address = reader.GetObject<Address>(0);
 
                     // assert
-                    Assert.AreEqual("San Mateo", address.city);
-                    Assert.AreEqual("CA", address.state);
-                    Assert.IsNull(address.zip);
+                    Assert.Equal("San Mateo", address.city);
+                    Assert.Equal("CA", address.state);
+                    Assert.Null(address.zip);
 
                     if (_nativeArrow)
                     {
                         var arrowString = reader.GetString(0);
                         EnableStructuredTypes(connection, ResultFormat.JSON);
                         reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
                         var jsonString = reader.GetString(0);
 
-                        Assert.IsTrue(JToken.DeepEquals(JObject.Parse(jsonString), JObject.Parse(arrowString)));
+                        Assert.True(JToken.DeepEquals(JObject.Parse(jsonString), JObject.Parse(arrowString)));
                     }
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSelectNestedStructuredTypeObject()
         {
             // arrange
@@ -106,22 +103,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA', 'zip', OBJECT_CONSTRUCT('prefix', '00', 'postfix', '11'))::OBJECT(city VARCHAR, state VARCHAR, zip OBJECT(prefix VARCHAR, postfix VARCHAR))";
                     command.CommandText = $"SELECT {addressAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var address = reader.GetObject<Address>(0);
 
                     // assert
-                    Assert.AreEqual("San Mateo", address.city);
-                    Assert.AreEqual("CA", address.state);
+                    Assert.Equal("San Mateo", address.city);
+                    Assert.Equal("CA", address.state);
                     Assert.NotNull(address.zip);
-                    Assert.AreEqual("00", address.zip.prefix);
-                    Assert.AreEqual("11", address.zip.postfix);
+                    Assert.Equal("00", address.zip.prefix);
+                    Assert.Equal("11", address.zip.postfix);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSelectObjectWithMap()
         {
             // arrange
@@ -134,21 +131,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var objectWithMap = "OBJECT_CONSTRUCT('names', OBJECT_CONSTRUCT('Excellent', '6', 'Poor', '1'))::OBJECT(names MAP(VARCHAR,VARCHAR))";
                     command.CommandText = $"SELECT {objectWithMap}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var grades = reader.GetObject<GradesWithMap>(0);
 
                     // assert
                     Assert.NotNull(grades);
-                    Assert.AreEqual(2, grades.Names.Count);
-                    Assert.AreEqual("6", grades.Names["Excellent"]);
-                    Assert.AreEqual("1", grades.Names["Poor"]);
+                    Assert.Equal(2, grades.Names.Count);
+                    Assert.Equal("6", grades.Names["Excellent"]);
+                    Assert.Equal("1", grades.Names["Poor"]);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSelectObjectWithArrays()
         {
             // arrange
@@ -161,19 +158,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var objectWithArray = "OBJECT_CONSTRUCT('names', ARRAY_CONSTRUCT('Excellent', 'Poor'))::OBJECT(names ARRAY(TEXT))";
                     command.CommandText = $"SELECT {objectWithArray}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var grades = reader.GetObject<Grades>(0);
 
                     // assert
                     Assert.NotNull(grades);
-                    CollectionAssert.AreEqual(new[] { "Excellent", "Poor" }, grades.Names);
+                    Assert.Equal(new[] { "Excellent", "Poor" }, grades.Names);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSelectObjectWithList()
         {
             // arrange
@@ -186,22 +183,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var objectWithArray = "OBJECT_CONSTRUCT('names', ARRAY_CONSTRUCT('Excellent', 'Poor'))::OBJECT(names ARRAY(TEXT))";
                     command.CommandText = $"SELECT {objectWithArray}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var grades = reader.GetObject<GradesWithList>(0);
 
                     // assert
                     Assert.NotNull(grades);
-                    CollectionAssert.AreEqual(new List<string> { "Excellent", "Poor" }, grades.Names);
+                    Assert.Equal(new List<string> { "Excellent", "Poor" }, grades.Names);
                 }
             }
         }
 
-        [Test]
-        [TestCase(@"OBJECT_CONSTRUCT('Value', OBJECT_CONSTRUCT('a', 'b'))::OBJECT(Value OBJECT)", "{\"a\": \"b\"}")]
-        [TestCase(@"OBJECT_CONSTRUCT('Value', ARRAY_CONSTRUCT('a', 'b'))::OBJECT(Value ARRAY)", "[\"a\", \"b\"]")]
-        [TestCase(@"OBJECT_CONSTRUCT('Value', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::OBJECT(Value VARIANT)", "{\"a\": \"b\"}")]
+        [Theory]
+        [InlineData(@"OBJECT_CONSTRUCT('Value', OBJECT_CONSTRUCT('a', 'b'))::OBJECT(Value OBJECT)", "{\"a\": \"b\"}")]
+        [InlineData(@"OBJECT_CONSTRUCT('Value', ARRAY_CONSTRUCT('a', 'b'))::OBJECT(Value ARRAY)", "[\"a\", \"b\"]")]
+        [InlineData(@"OBJECT_CONSTRUCT('Value', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::OBJECT(Value VARIANT)", "{\"a\": \"b\"}")]
         public void TestSelectSemiStructuredTypesInObject(string valueSfString, string expectedValue)
         {
             // arrange
@@ -213,19 +210,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     command.CommandText = $"SELECT {valueSfString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var wrapperObject = reader.GetObject<StringWrapper>(0);
 
                     // assert
                     Assert.NotNull(wrapperObject);
-                    Assert.AreEqual(RemoveWhiteSpaces(expectedValue), RemoveWhiteSpaces(wrapperObject.Value));
+                    Assert.Equal(RemoveWhiteSpaces(expectedValue), RemoveWhiteSpaces(wrapperObject.Value));
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSelectStructuredTypesAsNulls()
         {
             // arrange
@@ -252,24 +249,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var objectWithStructuredTypes = reader.GetObject<ObjectArrayMapWrapper>(0);
 
                     // assert
                     Assert.NotNull(objectWithStructuredTypes);
-                    Assert.IsNull(objectWithStructuredTypes.ObjectValue);
-                    Assert.IsNull(objectWithStructuredTypes.ListValue);
-                    Assert.IsNull(objectWithStructuredTypes.ArrayValue);
-                    Assert.IsNull(objectWithStructuredTypes.IListValue);
-                    Assert.IsNull(objectWithStructuredTypes.MapValue);
-                    Assert.IsNull(objectWithStructuredTypes.IMapValue);
+                    Assert.Null(objectWithStructuredTypes.ObjectValue);
+                    Assert.Null(objectWithStructuredTypes.ListValue);
+                    Assert.Null(objectWithStructuredTypes.ArrayValue);
+                    Assert.Null(objectWithStructuredTypes.IListValue);
+                    Assert.Null(objectWithStructuredTypes.MapValue);
+                    Assert.Null(objectWithStructuredTypes.IMapValue);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSelectNestedStructuredTypesNotNull()
         {
             // arrange
@@ -296,28 +293,28 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var objectWithStructuredTypes = reader.GetObject<ObjectArrayMapWrapper>(0);
 
                     // assert
                     Assert.NotNull(objectWithStructuredTypes);
-                    Assert.AreEqual(new Identity("John"), objectWithStructuredTypes.ObjectValue);
-                    CollectionAssert.AreEqual(new[] { "a", "b" }, objectWithStructuredTypes.ListValue);
-                    CollectionAssert.AreEqual(new[] { "c" }, objectWithStructuredTypes.ArrayValue);
-                    CollectionAssert.AreEqual(new[] { "d", "e" }, objectWithStructuredTypes.IListValue);
-                    Assert.AreEqual(typeof(List<string>), objectWithStructuredTypes.IListValue.GetType());
-                    Assert.AreEqual(1, objectWithStructuredTypes.MapValue.Count);
-                    Assert.AreEqual(5, objectWithStructuredTypes.MapValue[3]);
-                    Assert.AreEqual(1, objectWithStructuredTypes.IMapValue.Count);
-                    Assert.AreEqual(13, objectWithStructuredTypes.IMapValue[8]);
-                    Assert.AreEqual(typeof(Dictionary<int, int>), objectWithStructuredTypes.IMapValue.GetType());
+                    Assert.Equal(new Identity("John"), objectWithStructuredTypes.ObjectValue);
+                    Assert.Equal(new[] { "a", "b" }, objectWithStructuredTypes.ListValue);
+                    Assert.Equal(new[] { "c" }, objectWithStructuredTypes.ArrayValue);
+                    Assert.Equal(new[] { "d", "e" }, objectWithStructuredTypes.IListValue);
+                    Assert.Equal(typeof(List<string>), objectWithStructuredTypes.IListValue.GetType());
+                    Assert.Equal(1, objectWithStructuredTypes.MapValue.Count);
+                    Assert.Equal(5, objectWithStructuredTypes.MapValue[3]);
+                    Assert.Equal(1, objectWithStructuredTypes.IMapValue.Count);
+                    Assert.Equal(13, objectWithStructuredTypes.IMapValue[8]);
+                    Assert.Equal(typeof(Dictionary<int, int>), objectWithStructuredTypes.IMapValue.GetType());
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestRenamePropertyForPropertiesNamesConstruction()
         {
             // arrange
@@ -336,21 +333,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var objectForAnnotatedClass = reader.GetObject<AnnotatedClassForPropertiesNamesConstruction>(0);
 
                     // assert
                     Assert.NotNull(objectForAnnotatedClass);
-                    Assert.AreEqual("abc", objectForAnnotatedClass.StringValue);
-                    Assert.IsNull(objectForAnnotatedClass.IgnoredValue);
-                    Assert.AreEqual(8, objectForAnnotatedClass.IntegerValue);
+                    Assert.Equal("abc", objectForAnnotatedClass.StringValue);
+                    Assert.Null(objectForAnnotatedClass.IgnoredValue);
+                    Assert.Equal(8, objectForAnnotatedClass.IntegerValue);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestIgnorePropertyForPropertiesOrderConstruction()
         {
             // arrange
@@ -369,21 +366,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var objectForAnnotatedClass = reader.GetObject<AnnotatedClassForPropertiesOrderConstruction>(0);
 
                     // assert
                     Assert.NotNull(objectForAnnotatedClass);
-                    Assert.AreEqual("abc", objectForAnnotatedClass.StringValue);
-                    Assert.IsNull(objectForAnnotatedClass.IgnoredValue);
-                    Assert.AreEqual(8, objectForAnnotatedClass.IntegerValue);
+                    Assert.Equal("abc", objectForAnnotatedClass.StringValue);
+                    Assert.Null(objectForAnnotatedClass.IgnoredValue);
+                    Assert.Equal(8, objectForAnnotatedClass.IntegerValue);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestConstructorConstructionMethod()
         {
             // arrange
@@ -402,21 +399,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var objectForAnnotatedClass = reader.GetObject<AnnotatedClassForConstructorConstruction>(0);
 
                     // assert
                     Assert.NotNull(objectForAnnotatedClass);
-                    Assert.AreEqual("abc", objectForAnnotatedClass.StringValue);
-                    Assert.IsNull(objectForAnnotatedClass.IgnoredValue);
-                    Assert.AreEqual(8, objectForAnnotatedClass.IntegerValue);
+                    Assert.Equal("abc", objectForAnnotatedClass.StringValue);
+                    Assert.Null(objectForAnnotatedClass.IgnoredValue);
+                    Assert.Equal(8, objectForAnnotatedClass.IntegerValue);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSelectNullObject()
         {
             // arrange
@@ -429,18 +426,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var nullObjectSFString = "NULL::OBJECT(Name TEXT)";
                     command.CommandText = $"SELECT {nullObjectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var nullObject = reader.GetObject<Identity>(0);
 
                     // assert
-                    Assert.IsNull(nullObject);
+                    Assert.Null(nullObject);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestThrowExceptionForInvalidObject()
         {
             // arrange
@@ -453,20 +450,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var objectSFString = "OBJECT_CONSTRUCT('x', 'y')::OBJECT";
                     command.CommandText = $"SELECT {objectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetObject<Identity>(0));
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
-                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an object"));
-                    Assert.That(thrown.Message, Does.Contain("Method GetObject<Snowflake.Data.Tests.Client.Identity> can be used only for structured object"));
+                    Assert.Contains("Failed to read structured type when getting an object", thrown.Message);
+                    Assert.Contains("Method GetObject<Snowflake.Data.Tests.Client.Identity> can be used only for structured object", thrown.Message);
                 }
             }
         }
 
-        [Test]
+        [Fact]
         public void TestThrowExceptionForInvalidPropertyType()
         {
             // arrange
@@ -479,7 +476,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var objectSFString = "OBJECT_CONSTRUCT('x', 'a', 'y', 'b')::OBJECT(x VARCHAR, y VARCHAR)";
                     command.CommandText = $"SELECT {objectSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetObject<AnnotatedClassForConstructorConstruction>(0));
@@ -488,13 +485,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     if (_resultFormat == ResultFormat.JSON || !_nativeArrow)
                     {
                         SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
-                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]."));
-                        Assert.That(thrown.Message, Does.Contain("Could not read text type into System.Int32"));
+                        Assert.Contains("Failed to read structured type when reading path $[1].", thrown.Message);
+                        Assert.Contains("Could not read text type into System.Int32", thrown.Message);
                     }
                     else
                     {
                         SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
-                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an object."));
+                        Assert.Contains("Failed to read structured type when getting an object.", thrown.Message);
                     }
                 }
             }

@@ -1,12 +1,10 @@
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Newtonsoft.Json;
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Core;
     using System;
     using System.Collections.Generic;
-
-    [TestFixture]
     class QueryContextCacheTest
     {
         private QueryContextCache _qcc = null;
@@ -75,30 +73,30 @@ namespace Snowflake.Data.Tests.UnitTests
         private void AssertCacheDataWithContext(string context)
         {
             int size = _qcc.GetSize();
-            Assert.IsTrue(size == MaxCapacity);
+            Assert.True(size == MaxCapacity);
 
             // Compare elements
             SortedSet<QueryContextElement> elements = _qcc.getElements();
             int i = 0;
             foreach (QueryContextElement elem in elements)
             {
-                Assert.AreEqual(_expectedIDs[i], elem.Id);
-                Assert.AreEqual(_expectedReadTimestamp[i], elem.ReadTimestamp);
-                Assert.AreEqual(_expectedPriority[i], elem.Priority);
-                Assert.AreEqual(context, elem.Context);
+                Assert.Equal(_expectedIDs[i], elem.Id);
+                Assert.Equal(_expectedReadTimestamp[i], elem.ReadTimestamp);
+                Assert.Equal(_expectedPriority[i], elem.Priority);
+                Assert.Equal(context, elem.Context);
                 i++;
             }
-            Assert.AreEqual(i, MaxCapacity);
+            Assert.Equal(i, MaxCapacity);
         }
 
-        [Test]
+        [Fact]
         public void TestIsEmpty()
         {
             InitCache();
-            Assert.IsTrue(_qcc.GetSize() == 0);
+            Assert.True(_qcc.GetSize() == 0);
         }
 
-        [Test]
+        [Fact]
         public void TestWithSomeData()
         {
             InitCacheWithData();
@@ -106,7 +104,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertCacheData();
         }
 
-        [Test]
+        [Fact]
         public void TestWithSomeDataInRandomOrder()
         {
             InitCacheWithDataInRandomOrder();
@@ -114,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertCacheData();
         }
 
-        [Test]
+        [Fact]
         public void TestMoreThanCapacity()
         {
             InitCacheWithData();
@@ -129,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertCacheData();
         }
 
-        [Test]
+        [Fact]
         public void TestChangingCapacity()
         {
             InitCacheWithData();
@@ -140,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _qcc.Merge(BaseId + i, BaseReadTimestamp + i, BasePriority + i, Context);
             _qcc.SyncPriorityMap();
             _qcc.CheckCacheCapacity();
-            Assert.IsTrue(_qcc.GetSize() == MaxCapacity + 1);
+            Assert.True(_qcc.GetSize() == MaxCapacity + 1);
 
             // reduce the capacity back
             _qcc.SetCapacity(MaxCapacity);
@@ -148,7 +146,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertCacheData();
         }
 
-        [Test]
+        [Fact]
         public void TestUpdateTimestamp()
         {
             InitCacheWithData();
@@ -165,7 +163,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertCacheData();
         }
 
-        [Test]
+        [Fact]
         public void TestUpdatePriority()
         {
             InitCacheWithData();
@@ -194,7 +192,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertCacheData();
         }
 
-        [Test]
+        [Fact]
         public void TestAddSamePriority()
         {
             InitCacheWithData();
@@ -212,7 +210,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertCacheData();
         }
 
-        [Test]
+        [Fact]
         public void TestAddSameIDButStaleTimestamp()
         {
             InitCacheWithData();
@@ -227,26 +225,26 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertCacheData();
         }
 
-        [Test]
+        [Fact]
         public void TestEmptyCacheWithNullData()
         {
             InitCacheWithData();
 
             _qcc.Update(null);
-            Assert.AreEqual(_qcc.GetSize(), 0);
+            Assert.Equal(_qcc.GetSize(), 0);
         }
 
-        [Test]
+        [Fact]
         public void TestEmptyCacheWithEmptyResponseData()
         {
             InitCacheWithData();
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>("", JsonUtils.JsonSettings);
             _qcc.Update(rsp);
-            Assert.AreEqual(_qcc.GetSize(), 0);
+            Assert.Equal(_qcc.GetSize(), 0);
         }
 
-        [Test]
+        [Fact]
         public void TestSerializeRequestAndDeserializeResponseData()
         {
             // Init _qcc
@@ -257,14 +255,14 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Clear _qcc
             _qcc.ClearCache();
-            Assert.AreEqual(_qcc.GetSize(), 0);
+            Assert.Equal(_qcc.GetSize(), 0);
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
             _qcc.Update(rsp);
             AssertCacheData();
         }
 
-        [Test]
+        [Fact]
         public void TestSerializeRequestAndDeserializeResponseDataWithNullContext()
         {
             // Init _qcc
@@ -275,7 +273,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Clear _qcc
             _qcc.ClearCache();
-            Assert.AreEqual(_qcc.GetSize(), 0);
+            Assert.Equal(_qcc.GetSize(), 0);
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
             _qcc.Update(rsp);

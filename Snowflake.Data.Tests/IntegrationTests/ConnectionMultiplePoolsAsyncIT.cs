@@ -3,7 +3,7 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
@@ -12,27 +12,23 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
-    [NonParallelizable]
     public class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync
     {
+        public ConnectionMultiplePoolsAsyncIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
         private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
-
-        [SetUp]
         public new void BeforeTest()
         {
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
-
-        [TearDown]
         public new void AfterTest()
         {
             _previousPoolConfig.Reset();
         }
 
-        [Test]
+        [Fact]
         public async Task TestAddToPoolOnOpenAsync()
         {
             // arrange
@@ -43,13 +39,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            Assert.Equal(1, pool.GetCurrentPoolSize());
 
             // cleanup
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
-        [Test]
+        [Fact]
         public async Task TestFailForInvalidConnectionAsync()
         {
             // arrange
@@ -66,10 +62,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var thrown = Assert.Throws<SnowflakeDbException>(() => SnowflakeDbConnectionPool.GetPool(connection.ConnectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Required property ACCOUNT is not provided"));
+            Assert.Contains("Required property ACCOUNT is not provided", thrown.Message);
         }
 
-        [Test]
+        [Fact]
         public void TestConnectionPoolWithInvalidOpenAsync()
         {
             // make the connection string unique so it won't pick up connection
@@ -116,7 +112,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [Fact]
         public async Task TestMinPoolSizeAsync()
         {
             // arrange
@@ -129,13 +125,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
             Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentPoolSize() == 3, TimeSpan.FromMilliseconds(1000));
-            Assert.AreEqual(3, pool.GetCurrentPoolSize());
+            Assert.Equal(3, pool.GetCurrentPoolSize());
 
             // cleanup
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
-        [Test]
+        [Fact]
         public async Task TestPreventConnectionFromReturningToPool()
         {
             // arrange
@@ -143,17 +139,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connection = new SnowflakeDbConnection(connectionString);
             await connection.OpenAsync().ConfigureAwait(false);
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            Assert.Equal(1, pool.GetCurrentPoolSize());
 
             // act
             connection.PreventPooling();
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             // assert
-            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+            Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
-        [Test]
+        [Fact]
         public async Task TestReleaseConnectionWhenRollbackFailsAsync()
         {
             // arrange
@@ -162,21 +158,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var commandThrowingExceptionOnlyForRollback = MockHelper.CommandThrowingExceptionOnlyForRollback();
             var mockDbProviderFactory = new Mock<DbProviderFactory>();
             mockDbProviderFactory.Setup(p => p.CreateCommand()).Returns(commandThrowingExceptionOnlyForRollback.Object);
-            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+            Assert.Equal(0, pool.GetCurrentPoolSize());
             var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object);
             connection.ConnectionString = connectionString;
             await connection.OpenAsync().ConfigureAwait(false);
             connection.BeginTransaction(); // not using async version because it is not available on .net framework
-            Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
+            Assert.Equal(true, connection.HasActiveExplicitTransaction());
 
             // act
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             // assert
-            Assert.AreEqual(0, pool.GetCurrentPoolSize(), "Should not return connection to the pool");
+            Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
-        [Test(Description = "test connection pooling with concurrent connection using async calls")]
+        [Fact(DisplayName = "test connection pooling with concurrent connection using async calls")]
         public void TestConcurrentConnectionPoolingAsync()
         {
             // add test case name in connection string to make in unique for each test case
@@ -185,7 +181,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3);
         }
 
-        [Test(Description = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
+        [Fact(DisplayName = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
         public void TestConcurrentConnectionPoolingDisposeAsync()
         {
             // add test case name in connection string to make in unique for each test case

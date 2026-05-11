@@ -1,12 +1,11 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
     public class WiremockRunnerTest
     {
         private WiremockRunner _runner;
@@ -17,26 +16,20 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                 ServerCertificateCustomValidationCallback = (_, _, _, _) => true
             }
         );
-
-        [OneTimeSetUp]
         public void BeforeAll()
         {
             _runner = WiremockRunner.NewWiremock();
         }
-
-        [SetUp]
         public void BeforeEach()
         {
             _runner.ResetMapping();
         }
-
-        [OneTimeTearDown]
         public void AfterAll()
         {
             _runner.Stop();
         }
 
-        [Test]
+        [Fact]
         public void TestRunnerAddMapping()
         {
             // arrange
@@ -49,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(response.IsSuccessStatusCode);
         }
 
-        [Test]
+        [Fact]
         public void TestWiremockResetMapping()
         {
             // arrange
@@ -64,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // assert
             Assert.True(response.IsSuccessStatusCode);
             dynamic jsonObject = JsonConvert.DeserializeObject(Task.Run(async () => await response.Content.ReadAsStringAsync()).Result);
-            Assert.AreEqual("0", jsonObject?.meta.total.ToString());
+            Assert.Equal("0", jsonObject?.meta.total.ToString());
         }
     }
 }

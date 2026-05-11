@@ -3,7 +3,7 @@ using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Mock;
@@ -11,33 +11,29 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
-    [NonParallelizable]
     public class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync
     {
-        private readonly PoolConfig _previousPoolConfig = new PoolConfig();
+        public ConnectionSinglePoolCacheAsyncIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
 
-        [SetUp]
+        private readonly PoolConfig _previousPoolConfig = new PoolConfig();
         public new void BeforeTest()
         {
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
-
-        [TearDown]
         public new void AfterTest()
         {
             _previousPoolConfig.Reset();
         }
 
 
-        [Test]
+        [Fact]
         public async Task TestPutConnectionToPoolOnCloseAsync()
         {
             // arrange
             using (var conn = new SnowflakeDbConnection(ConnectionString))
             {
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 await conn.OpenAsync(connectionCancelToken.Token).ConfigureAwait(false);
 
@@ -45,19 +41,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await conn.CloseAsync(connectionCancelToken.Token).ConfigureAwait(false);
 
                 // assert
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
             }
         }
 
-        [Test]
+        [Fact]
         public async Task TestDoNotPutInvalidConnectionToPoolAsync()
         {
             // arrange
             var invalidConnectionString = ";connection_timeout=0";
             using (var conn = new SnowflakeDbConnection(invalidConnectionString))
             {
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 try
                 {
@@ -70,12 +66,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await conn.CloseAsync(connectionCancelToken.Token).ConfigureAwait(false);
 
                 // assert
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
             }
         }
 
-        [Test]
+        [Fact]
         public void TestConnectionPoolWithInvalidOpenAsync()
         {
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
@@ -123,7 +119,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test(Description = "test connection pooling with concurrent connection using async calls")]
+        [Fact(DisplayName = "test connection pooling with concurrent connection using async calls")]
         public void TestConcurrentConnectionPoolingAsync()
         {
             // add test case name in connection string to make in unique for each test case
@@ -134,7 +130,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
-        [Test(Description = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
+        [Fact(DisplayName = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
         public void TestConcurrentConnectionPoolingDisposeAsync()
         {
             // add test case name in connection string to make in unique for each test case

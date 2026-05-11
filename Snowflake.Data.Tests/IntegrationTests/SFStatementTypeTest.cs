@@ -1,14 +1,14 @@
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using System.Data;
     using Snowflake.Data.Client;
     using System.Data.Common;
-
-    [TestFixture]
     class SFStatementTypeTest : SFBaseTest
     {
-        [Test]
+        public SFStatementTypeTest(TestEnvironmentFixture envFixture) : base(envFixture) { }
+
+        [Fact]
         public void TestCallStatement()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     catch (SnowflakeDbException ex)
                     {
                         // Expected error - SqlState: 22023, VendorCode: 1006
-                        Assert.AreEqual("22023", ex.SqlState);
+                        Assert.Equal("22023", ex.SqlState);
                     }
 
                     command.CommandText = "create or replace procedure\n"
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     string result = "1 \"[2,3]\" [2,3]";
                     while (reader.Read())
                     {
-                        Assert.AreEqual(result, reader.GetString(0));
+                        Assert.Equal(result, reader.GetString(0));
                     }
 
                     command.CommandText = "drop procedure if exists TEST_SP_CALL_STMT_ENABLED(float, variant)";

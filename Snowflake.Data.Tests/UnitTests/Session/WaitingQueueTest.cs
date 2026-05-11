@@ -1,19 +1,17 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
-    [Parallelizable(ParallelScope.Self)]
     public class WaitingQueueTest
     {
         private static readonly int s_timeMeasurementLeftToleranceInMs = Stopwatch.IsHighResolution ? 1 : 20; // DateTime precision is ~10ms, safety coefficient = x2
 
-        [Test]
+        [Fact]
         public void TestWaitForTheResourceUntilTimeout()
         {
             // arrange
@@ -26,11 +24,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
+            Assert.False(result);
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
-        [Test]
+        [Fact]
         public void TestWaitForTheResourceUntilCancellation()
         {
             // arrange
@@ -44,11 +42,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
+            Assert.False(result);
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
-        [Test]
+        [Fact]
         public void TestWaitUntilResourceAvailable()
         {
             // arrange
@@ -66,11 +64,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsTrue(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
+            Assert.True(result);
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
-        [Test]
+        [Fact]
         public void TestWaitingEnabled()
         {
             // arrange
@@ -80,10 +78,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isWaitingEnabled = queue.IsWaitingEnabled();
 
             // assert
-            Assert.IsTrue(isWaitingEnabled);
+            Assert.True(isWaitingEnabled);
         }
 
-        [Test]
+        [Fact]
         public void TestNoOneIsWaiting()
         {
             // arrange
@@ -93,10 +91,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isAnyoneWaiting = queue.IsAnyoneWaiting();
 
             // assert
-            Assert.IsFalse(isAnyoneWaiting);
+            Assert.False(isAnyoneWaiting);
         }
 
-        [Test]
+        [Fact]
         public async Task TestSomeoneIsWaiting()
         {
             // arrange
@@ -114,10 +112,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isAnyoneWaiting = queue.IsAnyoneWaiting();
 
             // assert
-            Assert.IsTrue(isAnyoneWaiting);
+            Assert.True(isAnyoneWaiting);
         }
 
-        [Test]
+        [Fact]
         public void TestReturnUnsuccessfulOnResetWhileWaiting()
         {
             // arrange
@@ -135,8 +133,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
+            Assert.False(result);
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
     }
 }

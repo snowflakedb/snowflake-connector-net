@@ -1,15 +1,13 @@
 using System.Collections.Generic;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
-    [TestFixture]
     public class SFHttpClientProxyPropertiesTest
     {
-        [Test, TestCaseSource(nameof(ProxyPropertiesProvider))]
+        [Fact, MemberData(nameof(ProxyPropertiesProvider))]
         public void ShouldExtractProxyProperties(ProxyPropertiesTestCase testCase)
         {
             // given
@@ -20,11 +18,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var proxyProperties = extractor.ExtractProperties(properties);
 
             // then
-            Assert.AreEqual(testCase.expectedProperties.proxyHost, proxyProperties.proxyHost);
-            Assert.AreEqual(testCase.expectedProperties.proxyPort, proxyProperties.proxyPort);
-            Assert.AreEqual(testCase.expectedProperties.nonProxyHosts, proxyProperties.nonProxyHosts);
-            Assert.AreEqual(testCase.expectedProperties.proxyPassword, proxyProperties.proxyPassword);
-            Assert.AreEqual(testCase.expectedProperties.proxyUser, proxyProperties.proxyUser);
+            Assert.Equal(testCase.expectedProperties.proxyHost, proxyProperties.proxyHost);
+            Assert.Equal(testCase.expectedProperties.proxyPort, proxyProperties.proxyPort);
+            Assert.Equal(testCase.expectedProperties.nonProxyHosts, proxyProperties.nonProxyHosts);
+            Assert.Equal(testCase.expectedProperties.proxyPassword, proxyProperties.proxyPassword);
+            Assert.Equal(testCase.expectedProperties.proxyUser, proxyProperties.proxyUser);
         }
 
         public static IEnumerable<ProxyPropertiesTestCase> ProxyPropertiesProvider()

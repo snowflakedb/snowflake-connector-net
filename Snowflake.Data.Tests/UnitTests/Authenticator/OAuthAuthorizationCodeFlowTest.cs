@@ -3,7 +3,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
@@ -17,7 +17,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
     public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         private static readonly string s_authorizationCodeSuccessfulMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow.json");
@@ -29,28 +28,22 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_externalAuthorizationUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/authorize";
 
         private WiremockRunner _runner;
-
-        [OneTimeSetUp]
         public void BeforeAll()
         {
             _runner = WiremockRunner.NewWiremock();
         }
-
-        [SetUp]
         public void BeforeEach()
         {
             SnowflakeCredentialManagerFactory.SetCredentialManager(new SFCredentialManagerInMemoryImpl());
             _runner.ResetMapping();
         }
-
-        [OneTimeTearDown]
         public void AfterAll()
         {
             SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
             _runner.Stop();
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulAuthorizationCodeFlow()
         {
             // arrange
@@ -64,13 +57,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestSuccessfulAuthorizationCodeFlowAsync()
         {
             // arrange
@@ -84,13 +77,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulAuthorizationCodeFlowWithSingleUseRefreshTokens()
         {
             // arrange
@@ -104,13 +97,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestSuccessfulAuthorizationCodeFlowWithSingleUseRefreshTokensAsync()
         {
             // arrange
@@ -124,13 +117,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulAuthorizationCodeFlowWithDefaultCache()
         {
             // arrange
@@ -149,9 +142,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
                 // assert
                 Assert.NotNull(authenticator.AccessToken);
-                Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-                Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-                Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+                Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+                Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+                Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
                 AssertSessionSuccessfullyCreated(session);
             }
             finally
@@ -161,7 +154,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             }
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulAuthorizationFlowWithoutRefreshToken()
         {
             // arrange
@@ -175,13 +168,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestSuccessfulAuthorizationFlowWithoutRefreshTokenAsync()
         {
             // arrange
@@ -195,13 +188,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestSuccessfulAuthorizationCodeFlowWithClientSecretProvidedExternally()
         {
             // arrange
@@ -215,13 +208,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestDontUseCacheWhenUserNotProvided()
         {
             // arrange
@@ -235,12 +228,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(0, InMemoryCacheCount());
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(0, InMemoryCacheCount());
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestDontUseCacheWhenUserNotProvidedAsync()
         {
             // arrange
@@ -254,12 +247,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(0, InMemoryCacheCount());
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(0, InMemoryCacheCount());
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestDontUseCacheWhenClientStoreTemporaryCredentialsIsOff()
         {
             // arrange
@@ -273,12 +266,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(0, InMemoryCacheCount());
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(0, InMemoryCacheCount());
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestDontUseCacheWhenClientStoreTemporaryCredentialsIsOffAsync()
         {
             // arrange
@@ -292,12 +285,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(0, InMemoryCacheCount());
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(0, InMemoryCacheCount());
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestUseCachedAccessToken()
         {
             // arrange
@@ -311,13 +304,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.IsEmpty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Empty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestUseCachedAccessTokenAsync()
         {
             // arrange
@@ -331,13 +324,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.IsEmpty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Empty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestRefreshToken()
         {
             // arrange
@@ -353,13 +346,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public async Task TestRefreshTokenAsync()
         {
             // arrange
@@ -375,13 +368,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [Fact]
         public void TestInvalidScope()
         {
             // arrange
@@ -392,30 +385,30 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
 
             // assert
-            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
-            Assert.That(thrown.Message, Does.Contain("Invalid response from browser: Authorization code response has error 'invalid_scope' and description 'One or more scopes are not configured for the authorization server resource.'"));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Contains("Invalid response from browser: Authorization code response has error 'invalid_scope' and description 'One or more scopes are not configured for the authorization server resource.'", thrown.Message);
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        [Test]
-        public void TestInvalidScopeAsync()
+        [Fact]
+        public async Task TestInvalidScopeAsync()
         {
             // arrange
             _runner.AddMappings(s_invalidScopeErrorMappingPath);
             var session = PrepareSession();
 
             // act
-            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
 
             // assert
-            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
-            Assert.That(thrown.Message, Does.Contain("Invalid response from browser: Authorization code response has error 'invalid_scope' and description 'One or more scopes are not configured for the authorization server resource.'"));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Contains("Invalid response from browser: Authorization code response has error 'invalid_scope' and description 'One or more scopes are not configured for the authorization server resource.'", thrown.Message);
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        [Test]
+        [Fact]
         public void TestInvalidState()
         {
             // arrange
@@ -426,30 +419,30 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
 
             // assert
-            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
-            Assert.That(thrown.Message, Does.Contain("Invalid response from browser: State mismatch for authorization code request and response."));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Contains("Invalid response from browser: State mismatch for authorization code request and response.", thrown.Message);
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        [Test]
-        public void TestInvalidStateAsync()
+        [Fact]
+        public async Task TestInvalidStateAsync()
         {
             // arrange
             _runner.AddMappings(s_invalidStateErrorMappingPath);
             var session = PrepareSession();
 
             // act
-            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
 
             // assert
-            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
-            Assert.That(thrown.Message, Does.Contain("Invalid response from browser: State mismatch for authorization code request and response."));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Contains("Invalid response from browser: State mismatch for authorization code request and response.", thrown.Message);
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        [Test]
+        [Fact]
         public void TestTokenRequestError()
         {
             // arrange
@@ -460,27 +453,27 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
 
             // assert
-            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode));
-            Assert.That(thrown.Message, Does.Contain("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)"));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Contains("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)", thrown.Message);
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        [Test]
-        public void TestTokenRequestErrorAsync()
+        [Fact]
+        public async Task TestTokenRequestErrorAsync()
         {
             // arrange
             _runner.AddMappings(s_badTokenRequestErrorMappingPath);
             var session = PrepareSession();
 
             // act
-            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
 
             // assert
-            Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode));
-            Assert.That(thrown.Message, Does.Contain("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)"));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Contains("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)", thrown.Message);
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         private SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")

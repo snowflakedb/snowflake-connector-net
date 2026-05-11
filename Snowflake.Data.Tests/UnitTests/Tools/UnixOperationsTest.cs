@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security;
 using Mono.Unix;
 using Mono.Unix.Native;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
@@ -16,14 +17,10 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
-    [Platform(Exclude = "Win")]
     public class UnixOperationsTest
     {
         private static UnixOperations s_unixOperations;
         private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-
-        [OneTimeSetUp]
         public static void BeforeAll()
         {
             if (!Directory.Exists(s_workingDirectory))
@@ -32,18 +29,16 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
             s_unixOperations = new UnixOperations();
         }
-
-        [OneTimeTearDown]
         public static void AfterAll()
         {
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
+        [Fact]
         public void TestDetectGroupOrOthersWritablePermissions(
-            [ValueSource(nameof(GroupOrOthersWritablePermissions))] FileAccessPermissions groupOrOthersWritablePermissions,
-            [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
-            [ValueSource(nameof(OtherNotWritablePermissions))] FileAccessPermissions otherNotWritablePermissions)
+            FileAccessPermissions groupOrOthersWritablePermissions,
+            FileAccessPermissions groupNotWritablePermissions,
+            FileAccessPermissions otherNotWritablePermissions)
         {
             // arrange
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
@@ -56,14 +51,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
 
             // assert
-            Assert.IsTrue(result);
+            Assert.True(result);
         }
 
-        [Test]
+        [Fact]
         public void TestDetectGroupOrOthersNotWritablePermissions(
-            [ValueSource(nameof(UserPermissions))] FileAccessPermissions userPermissions,
-            [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
-            [ValueSource(nameof(OtherNotWritablePermissions))] FileAccessPermissions otherNotWritablePermissions)
+            FileAccessPermissions userPermissions,
+            FileAccessPermissions groupNotWritablePermissions,
+            FileAccessPermissions otherNotWritablePermissions)
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
             var filePermissions = userPermissions | groupNotWritablePermissions | otherNotWritablePermissions;
@@ -74,12 +69,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
 
             // assert
-            Assert.IsFalse(result);
+            Assert.False(result);
         }
 
-        [Test]
+        [Fact]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
-            [ValueSource(nameof(UserAllowedPermissions))] FileAccessPermissions userAllowedPermissions)
+            FileAccessPermissions userAllowedPermissions)
         {
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
@@ -89,10 +84,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(content, result);
+            Assert.Equal(content, result);
         }
 
-        [Test]
+        [Fact]
         public void TestSkipReadPermissionsWhenSkipIsEnabled()
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -111,14 +106,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(content, result);
+            Assert.Equal(content, result);
             var logLines = File.ReadLines(Logger.EasyLoggerManagerTest.FindLogFilePath(logPath));
-            Assert.That(logLines, Has.Exactly(0).Matches<string>(s => s.Contains("File is readable by someone other than the owner")));
+            Assert.Equal(0, logLines.Count(s => s.Contains("File is readable by someone other than the owner")));
 
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
         }
 
-        [Test]
+        [Fact]
         public void TestCheckReadPermissionsWhenSkipIsDisabled()
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -137,15 +132,16 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(content, result);
+            Assert.Equal(content, result);
             var logLines = File.ReadLines(Logger.EasyLoggerManagerTest.FindLogFilePath(logPath));
-            Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains("File is readable by someone other than the owner")));
+            Assert.Equal(1, logLines.Count(s => s.Contains("File is readable by someone other than the owner")));
 
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
         }
 
-        [TestCase("true", false)]
-        [TestCase("false", true)]
+        [Theory]
+        [InlineData("true", false)]
+        [InlineData("false", true)]
         public void TestTomlPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
@@ -155,13 +151,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             if (shouldThrow)
                 Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
             else
-                Assert.DoesNotThrow(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
+                s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
 
-        [TestCase("true", false)]
-        [TestCase("false", true)]
+        [Theory]
+        [InlineData("true", false)]
+        [InlineData("false", true)]
         public void TestCredentialManagerPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
@@ -171,31 +168,31 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             if (shouldThrow)
                 Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
             else
-                Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+                s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
 
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
 
-        [Test]
+        [Fact]
         public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
-            [ValueSource(nameof(UserAllowedWritePermissions))] FileAccessPermissions userAllowedPermissions)
+            FileAccessPermissions userAllowedPermissions)
         {
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
             Syscall.chmod(filePath, (FilePermissions)userAllowedPermissions);
 
             // act and assert
-            Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+            s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
         }
 
-        [Test]
-        public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
-            [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
-            [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
+        [Fact]
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations(FileAccessPermissions userPermissions,
+            FileAccessPermissions groupPermissions,
+            FileAccessPermissions othersPermissions)
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Assert.Ignore("Skip test when group and others have no permissions");
+                Assert.Skip("Skip test when group and others have no permissions");
             }
 
             var content = "random text";
@@ -207,17 +204,17 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // act and assert
             if ((groupPermissions & (FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)) != 0 ||
                 (othersPermissions & (FileAccessPermissions.OtherWrite | FileAccessPermissions.OtherExecute)) != 0)
-                Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions), "Attempting to read a file with too broad permissions assigned");
+                Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
         }
 
-        [Test]
-        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
-            [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
-            [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
+        [Fact]
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile(FileAccessPermissions userPermissions,
+            FileAccessPermissions groupPermissions,
+            FileAccessPermissions othersPermissions)
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Assert.Ignore("Skip test when group and others have no permissions");
+                Assert.Skip("Skip test when group and others have no permissions");
             }
 
             var content = "random text";
@@ -227,17 +224,17 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions), "Attempting to read or write a file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
         }
 
-        [Test]
-        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
-            [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
-            [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
+        [Fact]
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFile(FileAccessPermissions userPermissions,
+            FileAccessPermissions groupPermissions,
+            FileAccessPermissions othersPermissions)
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Assert.Ignore("Skip test when group and others have no permissions");
+                Assert.Skip("Skip test when group and others have no permissions");
             }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);
@@ -246,10 +243,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", EasyLoggerValidator.Instance.ValidateLogFilePermissions), "Attempting to read or write to log file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", EasyLoggerValidator.Instance.ValidateLogFilePermissions));
         }
 
-        [Test]
+        [Fact]
         public void TestCreateFileWithUserRwPermissions()
         {
             // arrange
@@ -261,10 +258,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // assert
             var fileInfo = new UnixFileInfo(filePath);
             var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
-            Assert.IsFalse(result);
+            Assert.False(result);
         }
 
-        [Test]
+        [Fact]
         public void TestCreateDirectoryWithUserRwxPermissions()
         {
             // arrange
@@ -276,10 +273,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // assert
             var dirInfo = new UnixDirectoryInfo(dirPath);
             var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
-            Assert.IsFalse(result);
+            Assert.False(result);
         }
 
-        [Test]
+        [Fact]
         public void TestNestedDir()
         {
             // arrange
@@ -291,10 +288,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
 
             // assert
-            Assert.IsFalse(result);
+            Assert.False(result);
         }
 
-        [Test]
+        [Fact]
         public void TestReadBytesFromEmptyFile()
         {
             // arrange
@@ -305,15 +302,15 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
-            Assert.AreEqual(0, bytes.Length);
+            Assert.Equal(0, bytes.Length);
         }
 
-        [Test]
+        [Fact]
         public void TestReadBytesFromSmallFile()
         {
             // arrange
             var randomBytes = TestDataGenarator.NextBytes(19);
-            var filePath = Path.Combine(s_workingDirectory, $"small_file_{Path.GetRandomFileName()}");
+            var filePath = Path.Combine(s_workingDirectory);
             s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
             s_unixOperations.WriteAllBytes(filePath, randomBytes, _ => { });
 
@@ -321,21 +318,21 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
-            CollectionAssert.AreEqual(randomBytes, bytes);
+            Assert.Equal(randomBytes, bytes);
         }
 
-        [Test]
+        [Fact]
         public void TestReadBytesFromLargeFile()
         {
             // arrange
-            var filePath = Path.Combine("crl", "DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl");
+            var filePath = Path.Combine("crl");
             var expectedBytes = File.ReadAllBytes(filePath);
 
             // act
             var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
-            CollectionAssert.AreEqual(expectedBytes, bytes);
+            Assert.Equal(expectedBytes, bytes);
         }
 
         public static IEnumerable<FileAccessPermissions> UserPermissions()

@@ -2,19 +2,15 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Configuration;
     using Snowflake.Data.Core;
     using System;
     using System.Collections.Generic;
     using System.Threading;
-
-    [TestFixture, NonParallelizable]
     class ChunkDownloaderFactoryTest
     {
         int ChunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
-
-        [TearDown]
         public void AfterTest()
         {
             SFConfiguration.Instance().ChunkDownloaderVersion = ChunkDownloaderVersionDefault; // Return to default version
@@ -49,8 +45,8 @@ namespace Snowflake.Data.Tests.UnitTests
             return new SFResultSet(responseData, new SFStatement(session), token);
         }
 
-        [Test, NonParallelizable]
-        public void TestGetDownloader([Values(1, 2, 3, 4)] int chunkDownloaderVersion)
+        [Fact]
+        public void TestGetDownloader(int chunkDownloaderVersion)
         {
             // Set configuration settings
             SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
@@ -60,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests
             if (chunkDownloaderVersion == 4)
             {
                 Exception ex = Assert.Throws<Exception>(() => ChunkDownloaderFactory.GetDownloader(null, null, token));
-                Assert.AreEqual("Unsupported Chunk Downloader version specified in the SFConfiguration", ex.Message);
+                Assert.Equal("Unsupported Chunk Downloader version specified in the SFConfiguration", ex.Message);
             }
             else
             {
@@ -69,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 IChunkDownloader downloader = ChunkDownloaderFactory.GetDownloader(responseData, resultSet, token);
 
-                Assert.IsTrue(downloader is SFBlockingChunkDownloaderV3);
+                Assert.True(downloader is SFBlockingChunkDownloaderV3);
             }
         }
     }
