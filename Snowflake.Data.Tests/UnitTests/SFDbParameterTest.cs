@@ -4,11 +4,22 @@ namespace Snowflake.Data.Tests
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using System;
+    using System.Collections.Generic;
     using System.Data;
+    using System.Linq;
     using System.Text;
     class SFDbParameterTest
     {
         SnowflakeDbParameter _parameter;
+
+        public static IEnumerable<object[]> AllSFDataTypes() =>
+            Enum.GetValues(typeof(SFDataType)).Cast<SFDataType>().Select(v => new object[] { v });
+
+        public static IEnumerable<object[]> AllDbTypes() =>
+            Enum.GetValues(typeof(DbType)).Cast<DbType>().Select(v => new object[] { v });
+
+        public static IEnumerable<object[]> AllParameterDirections() =>
+            Enum.GetValues(typeof(ParameterDirection)).Cast<ParameterDirection>().Select(v => new object[] { v });
 
         [Fact]
         public void TestDefaultDbParameter()
@@ -18,6 +29,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllSFDataTypes))]
         public void TestDbParameterWithNameAndDataType(SFDataType expectedSFDataType)
         {
             string expectedParameterName = "1";
@@ -27,6 +39,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllSFDataTypes))]
         public void TestDbParameterWithIndexAndDataType(SFDataType expectedSFDataType)
         {
             int expectedParameterIndex = 1;
@@ -37,6 +50,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllDbTypes))]
         public void TestDbParameterDbType(DbType expectedDbType)
         {
             _parameter = new SnowflakeDbParameter();
@@ -45,6 +59,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllParameterDirections))]
         public void TestDbParameterDirection(ParameterDirection ParameterDirection)
         {
             _parameter = new SnowflakeDbParameter();
@@ -61,6 +76,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllSFDataTypes))]
         public void TestDbParameterIsNullable(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -71,6 +87,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllSFDataTypes))]
         public void TestDbParameterSize(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -81,6 +98,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllSFDataTypes))]
         public void TestDbParameterSourceColumn(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -92,6 +110,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllSFDataTypes))]
         public void TestDbParameterSourceColumnNullMapping(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -102,6 +121,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllSFDataTypes))]
         public void TestDbParameterValue(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -113,6 +133,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllSFDataTypes))]
         public void TestDbParameterResetDbType(SFDataType expectedSFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, expectedSFDataType);
@@ -123,6 +144,7 @@ namespace Snowflake.Data.Tests
         }
 
         [Theory]
+        [MemberData(nameof(AllDbTypes))]
         public void TestDbTypeExplicitAssignment(DbType expectedDbType)
         {
             _parameter = new SnowflakeDbParameter();

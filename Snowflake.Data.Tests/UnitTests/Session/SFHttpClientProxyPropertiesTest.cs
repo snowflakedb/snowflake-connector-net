@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 {
     public class SFHttpClientProxyPropertiesTest
     {
-        [Fact, MemberData(nameof(ProxyPropertiesProvider))]
+        [Theory, MemberData(nameof(ProxyPropertiesProvider))]
         public void ShouldExtractProxyProperties(ProxyPropertiesTestCase testCase)
         {
             // given
@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(testCase.expectedProperties.proxyUser, proxyProperties.proxyUser);
         }
 
-        public static IEnumerable<ProxyPropertiesTestCase> ProxyPropertiesProvider()
+        public static IEnumerable<object[]> ProxyPropertiesProvider()
         {
             var noProxyPropertiesCase = new ProxyPropertiesTestCase()
             {
@@ -76,12 +76,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     proxyUser = "Chris"
                 }
             };
-            return new[]
+            return new object[][]
             {
-                noProxyPropertiesCase,
-                proxyPropertiesConfiguredButDisabledCase,
-                proxyPropertiesConfiguredAndEnabledCase,
-                proxyPropertiesAllConfiguredAndEnabled
+                new object[] { noProxyPropertiesCase },
+                new object[] { proxyPropertiesConfiguredButDisabledCase },
+                new object[] { proxyPropertiesConfiguredAndEnabledCase },
+                new object[] { proxyPropertiesAllConfiguredAndEnabled }
             };
         }
 

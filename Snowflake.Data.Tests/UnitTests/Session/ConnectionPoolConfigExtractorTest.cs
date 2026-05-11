@@ -288,51 +288,51 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             }
         }
 
-        public static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithZeroUnchanged() =>
+        public static IEnumerable<object[]> CorrectTimeoutsWithZeroUnchanged() =>
             CorrectTimeoutsWithoutZero().Concat(ZeroUnchangedTimeouts());
 
-        public static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithZeroAsInfinite() =>
+        public static IEnumerable<object[]> CorrectTimeoutsWithZeroAsInfinite() =>
             CorrectTimeoutsWithoutZero().Concat(ZeroAsInfiniteTimeouts());
 
-        public static IEnumerable<TimeoutTestCase> PositiveTimeoutsAndZeroUnchanged() =>
+        public static IEnumerable<object[]> PositiveTimeoutsAndZeroUnchanged() =>
             PositiveTimeouts().Concat(ZeroUnchangedTimeouts());
 
-        private static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithoutZero() =>
+        private static IEnumerable<object[]> CorrectTimeoutsWithoutZero() =>
             NegativeAsInfinityTimeouts().Concat(PositiveTimeouts());
 
-        private static IEnumerable<TimeoutTestCase> NegativeAsInfinityTimeouts()
+        private static IEnumerable<object[]> NegativeAsInfinityTimeouts()
         {
-            yield return new TimeoutTestCase("-1", TimeoutHelper.Infinity());
+            yield return new object[] { new TimeoutTestCase("-1", TimeoutHelper.Infinity()) };
         }
 
-        private static IEnumerable<TimeoutTestCase> PositiveTimeouts()
+        private static IEnumerable<object[]> PositiveTimeouts()
         {
-            yield return new TimeoutTestCase("5", TimeSpan.FromSeconds(5));
-            yield return new TimeoutTestCase("6s", TimeSpan.FromSeconds(6));
-            yield return new TimeoutTestCase("7S", TimeSpan.FromSeconds(7));
-            yield return new TimeoutTestCase("8m", TimeSpan.FromMinutes(8));
-            yield return new TimeoutTestCase("9M", TimeSpan.FromMinutes(9));
-            yield return new TimeoutTestCase("10ms", TimeSpan.FromMilliseconds(10));
-            yield return new TimeoutTestCase("11ms", TimeSpan.FromMilliseconds(11));
+            yield return new object[] { new TimeoutTestCase("5", TimeSpan.FromSeconds(5)) };
+            yield return new object[] { new TimeoutTestCase("6s", TimeSpan.FromSeconds(6)) };
+            yield return new object[] { new TimeoutTestCase("7S", TimeSpan.FromSeconds(7)) };
+            yield return new object[] { new TimeoutTestCase("8m", TimeSpan.FromMinutes(8)) };
+            yield return new object[] { new TimeoutTestCase("9M", TimeSpan.FromMinutes(9)) };
+            yield return new object[] { new TimeoutTestCase("10ms", TimeSpan.FromMilliseconds(10)) };
+            yield return new object[] { new TimeoutTestCase("11ms", TimeSpan.FromMilliseconds(11)) };
         }
 
-        private static IEnumerable<TimeoutTestCase> ZeroAsInfiniteTimeouts()
+        private static IEnumerable<object[]> ZeroAsInfiniteTimeouts()
         {
-            yield return new TimeoutTestCase("0", TimeoutHelper.Infinity());
-            yield return new TimeoutTestCase("0ms", TimeoutHelper.Infinity());
+            yield return new object[] { new TimeoutTestCase("0", TimeoutHelper.Infinity()) };
+            yield return new object[] { new TimeoutTestCase("0ms", TimeoutHelper.Infinity()) };
         }
 
-        private static IEnumerable<TimeoutTestCase> ZeroUnchangedTimeouts()
+        private static IEnumerable<object[]> ZeroUnchangedTimeouts()
         {
-            yield return new TimeoutTestCase("0", TimeSpan.Zero);
-            yield return new TimeoutTestCase("0ms", TimeSpan.Zero);
+            yield return new object[] { new TimeoutTestCase("0", TimeSpan.Zero) };
+            yield return new object[] { new TimeoutTestCase("0ms", TimeSpan.Zero) };
         }
 
-        public static IEnumerable<string> IncorrectTimeouts()
+        public static IEnumerable<object[]> IncorrectTimeouts()
         {
-            yield return "wrong value";
-            yield return "1h";
-            yield return "1s1s";
+            yield return new object[] { "wrong value" };
+            yield return new object[] { "1h" };
+            yield return new object[] { "1s1s" };
         }
     }
 }

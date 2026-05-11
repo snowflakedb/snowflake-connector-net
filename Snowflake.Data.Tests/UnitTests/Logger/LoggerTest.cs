@@ -44,7 +44,9 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.IsType<LoggerEmptyImpl>(SFLoggerFactory.s_customLogger);
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestBeginScope(
             bool isEnabled)
         {
@@ -56,7 +58,9 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             }
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsDebugEnabled(
             bool isEnabled)
         {
@@ -64,7 +68,9 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Debug));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsInfoEnabled(
             bool isEnabled)
         {
@@ -72,7 +78,9 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Information));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsWarnEnabled(
             bool isEnabled)
         {
@@ -80,7 +88,9 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Warning));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsErrorEnabled(
             bool isEnabled)
         {
@@ -88,7 +98,9 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Error));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsFatalEnabled(
             bool isEnabled)
         {

@@ -34,7 +34,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(TestDetectGroupOrOthersWritablePermissionsData))]
         public void TestDetectGroupOrOthersWritablePermissions(
             FileAccessPermissions groupOrOthersWritablePermissions,
             FileAccessPermissions groupNotWritablePermissions,
@@ -54,7 +55,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(result);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(TestDetectGroupOrOthersNotWritablePermissionsData))]
         public void TestDetectGroupOrOthersNotWritablePermissions(
             FileAccessPermissions userPermissions,
             FileAccessPermissions groupNotWritablePermissions,
@@ -72,7 +74,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(UserAllowedPermissionsData))]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
             FileAccessPermissions userAllowedPermissions)
         {
@@ -173,7 +176,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(UserAllowedWritePermissionsData))]
         public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
             FileAccessPermissions userAllowedPermissions)
         {
@@ -185,7 +189,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidationsData))]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations(FileAccessPermissions userPermissions,
             FileAccessPermissions groupPermissions,
             FileAccessPermissions othersPermissions)
@@ -207,7 +212,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                 Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFileData))]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile(FileAccessPermissions userPermissions,
             FileAccessPermissions groupPermissions,
             FileAccessPermissions othersPermissions)
@@ -227,7 +233,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFileData))]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFile(FileAccessPermissions userPermissions,
             FileAccessPermissions groupPermissions,
             FileAccessPermissions othersPermissions)
@@ -407,5 +414,41 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             yield return FileAccessPermissions.OtherRead;
             yield return FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
         }
+
+        public static IEnumerable<object[]> TestDetectGroupOrOthersWritablePermissionsData() =>
+            from a in GroupOrOthersWritablePermissions()
+            from b in GroupNotWritablePermissions()
+            from c in OtherNotWritablePermissions()
+            select new object[] { a, b, c };
+
+        public static IEnumerable<object[]> TestDetectGroupOrOthersNotWritablePermissionsData() =>
+            from a in UserPermissions()
+            from b in GroupNotWritablePermissions()
+            from c in OtherNotWritablePermissions()
+            select new object[] { a, b, c };
+
+        public static IEnumerable<object[]> UserAllowedPermissionsData() =>
+            UserAllowedPermissions().Select(x => new object[] { x });
+
+        public static IEnumerable<object[]> UserAllowedWritePermissionsData() =>
+            UserAllowedWritePermissions().Select(x => new object[] { x });
+
+        public static IEnumerable<object[]> TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidationsData() =>
+            from a in UserPermissions()
+            from b in GroupPermissions()
+            from c in OthersPermissions()
+            select new object[] { a, b, c };
+
+        public static IEnumerable<object[]> TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFileData() =>
+            from a in UserPermissions()
+            from b in GroupPermissions()
+            from c in OthersPermissions()
+            select new object[] { a, b, c };
+
+        public static IEnumerable<object[]> TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFileData() =>
+            from a in UserPermissions()
+            from b in GroupPermissions()
+            from c in OthersPermissions()
+            select new object[] { a, b, c };
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security;
 using Mono.Unix;
 using Mono.Unix.Native;
@@ -39,7 +40,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(UserAllowedFilePermissionsData))]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
             FileAccessPermissions userAllowedFilePermissions)
         {
@@ -55,7 +57,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, result);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(UserAllowedFilePermissionsData))]
         public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadConfigurationFile(
             FileAccessPermissions userAllowedFilePermissions)
         {
@@ -80,7 +83,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(InsecurePermissionsData))]
         public void TestFileIsNotSafeOnNotWindowsWhenTooBroadPermissionsAreUsed(
             FileAccessPermissions permissions)
         {
@@ -194,6 +198,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             yield return FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute;
             yield return FileAccessPermissions.AllPermissions;
         }
+
+        public static IEnumerable<object[]> UserAllowedFilePermissionsData() =>
+            UserAllowedFilePermissions().Select(x => new object[] { x });
+
+        public static IEnumerable<object[]> InsecurePermissionsData() =>
+            InsecurePermissions().Select(x => new object[] { x });
     
         public void Dispose()
         {

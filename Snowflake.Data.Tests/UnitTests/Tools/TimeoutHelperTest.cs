@@ -138,31 +138,31 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(expectedMillisLeft, millisLeft);
         }
 
-        public static IEnumerable<TimeSpan> InfiniteTimeouts()
+        public static IEnumerable<object[]> InfiniteTimeouts()
         {
-            yield return TimeoutHelper.Infinity();
-            yield return TimeSpan.FromMilliseconds(-1);
+            yield return new object[] { TimeoutHelper.Infinity() };
+            yield return new object[] { TimeSpan.FromMilliseconds(-1) };
         }
 
-        public static IEnumerable<TimeSpan> FiniteTimeouts()
+        public static IEnumerable<object[]> FiniteTimeouts()
         {
-            yield return TimeSpan.Zero;
-            yield return TimeSpan.FromMilliseconds(1);
-            yield return TimeSpan.FromSeconds(2);
+            yield return new object[] { TimeSpan.Zero };
+            yield return new object[] { TimeSpan.FromMilliseconds(1) };
+            yield return new object[] { TimeSpan.FromSeconds(2) };
         }
 
-        public static IEnumerable<TimeSpan> ZeroLengthTimeouts()
+        public static IEnumerable<object[]> ZeroLengthTimeouts()
         {
-            yield return TimeSpan.Zero;
-            yield return TimeSpan.FromMilliseconds(0);
-            yield return TimeSpan.FromSeconds(0);
+            yield return new object[] { TimeSpan.Zero };
+            yield return new object[] { TimeSpan.FromMilliseconds(0) };
+            yield return new object[] { TimeSpan.FromSeconds(0) };
         }
 
-        public static IEnumerable<TimeSpan> NonZeroLengthTimeouts()
+        public static IEnumerable<object[]> NonZeroLengthTimeouts()
         {
-            yield return TimeoutHelper.Infinity();
-            yield return TimeSpan.FromMilliseconds(3);
-            yield return TimeSpan.FromSeconds(5);
+            yield return new object[] { TimeoutHelper.Infinity() };
+            yield return new object[] { TimeSpan.FromMilliseconds(3) };
+            yield return new object[] { TimeSpan.FromSeconds(5) };
         }
     }
 }

@@ -436,6 +436,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestReturningCancelledSessionsToThePool(bool cancelAsync)
         {
             var connectionString = _fixture.ConnectionString + "minPoolSize=0;maxPoolSize=2;application=TestReturningCancelledSessionsToThePool;poolingEnabled=true";

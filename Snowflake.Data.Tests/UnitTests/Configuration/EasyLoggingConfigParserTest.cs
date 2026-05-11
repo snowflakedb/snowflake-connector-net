@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Mono.Unix;
 using Moq;
 using Xunit;
@@ -87,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Contains($"Parsing easy logging configuration failed", thrown.Message);
         }
 
-        [Fact, MemberData(nameof(ConfigFilesWithoutValues))]
+        [Theory, MemberData(nameof(ConfigFilesWithoutValues))]
         public void TestThatParsesConfigFileWithNullValues(string filePath)
         {
             // arrange
@@ -132,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.True(thrown.Message.Contains("Finding easy logging configuration failed"));
         }
 
-        [Fact, MemberData(nameof(WrongConfigFiles))]
+        [Theory, MemberData(nameof(WrongConfigFiles))]
         public void TestThatFailsIfMissingOrInvalidRequiredFields(string filePath)
         {
             // arrange
@@ -215,24 +216,24 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.NotEmpty(thrown.Message);
         }
 
-        public static IEnumerable<string> ConfigFilesWithoutValues()
+        public static IEnumerable<object[]> ConfigFilesWithoutValues()
         {
             BeforeAll();
             return new[]
             {
                 CreateConfigTempFile(s_workingDirectory, EmptyCommonConfig),
                 CreateConfigTempFile(s_workingDirectory, Config(null, null))
-            };
+            }.Select(f => new object[] { f });
         }
 
-        public static IEnumerable<string> WrongConfigFiles()
+        public static IEnumerable<object[]> WrongConfigFiles()
         {
             BeforeAll();
             return new[]
             {
                 CreateConfigTempFile(s_workingDirectory, EmptyConfig),
                 CreateConfigTempFile(s_workingDirectory, Config("unknown", LogPath)),
-            };
+            }.Select(f => new object[] { f });
         }
     }
 }

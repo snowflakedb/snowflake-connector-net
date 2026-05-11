@@ -628,6 +628,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestGetBoolean(bool value)
         {
             using (var conn = CreateAndOpenConnection())

@@ -26,7 +26,9 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.IsType<SFLoggerImpl>(_logger);
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsDebugEnabled(
             bool isEnabled)
         {
@@ -44,7 +46,9 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Debug("debug log message", new Exception("test exception"));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsInfoEnabled(
             bool isEnabled)
         {
@@ -62,7 +66,9 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Info("info log message", new Exception("test exception"));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsWarnEnabled(
             bool isEnabled)
         {
@@ -80,7 +86,9 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Warn("warn log message", new Exception("test exception"));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsErrorEnabled(
             bool isEnabled)
         {
@@ -98,7 +106,19 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Error("error log message", new Exception("test exception"));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false, LoggingEvent.OFF)]
+        [InlineData(false, LoggingEvent.TRACE)]
+        [InlineData(false, LoggingEvent.DEBUG)]
+        [InlineData(false, LoggingEvent.INFO)]
+        [InlineData(false, LoggingEvent.WARN)]
+        [InlineData(false, LoggingEvent.ERROR)]
+        [InlineData(true, LoggingEvent.OFF)]
+        [InlineData(true, LoggingEvent.TRACE)]
+        [InlineData(true, LoggingEvent.DEBUG)]
+        [InlineData(true, LoggingEvent.INFO)]
+        [InlineData(true, LoggingEvent.WARN)]
+        [InlineData(true, LoggingEvent.ERROR)]
         public void TestSetLevel(
             bool isEnabled,
             LoggingEvent logLevel)

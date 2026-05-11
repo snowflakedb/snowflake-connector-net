@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests
     {
         private const string DifferentHostsWarning = "Properties OAUTHAUTHORIZATIONURL and OAUTHTOKENREQUESTURL are configured for a different host";
 
-        [Fact, MemberData(nameof(ConnectionStringTestCases))]
+        [Theory, MemberData(nameof(ConnectionStringTestCases))]
         public void TestThatPropertiesAreParsed(TestCase testcase)
         {
             // arrange
@@ -714,7 +714,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedTimeout, properties[SFSessionProperty.CRLDOWNLOADTIMEOUT]);
         }
 
-        public static IEnumerable<TestCase> ConnectionStringTestCases()
+        public static IEnumerable<object[]> ConnectionStringTestCases()
         {
             string defAccount = "testaccount";
             string defUser = "testuser";
@@ -1211,7 +1211,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 testCaseUnderscoredAccountName,
                 testCaseUnderscoredAccountNameWithEnabledAllowUnderscores,
                 testCaseQueryTag
-            };
+            }.Select(tc => new object[] { tc });
         }
 
         private static string DefaultValue(SFSessionProperty property)

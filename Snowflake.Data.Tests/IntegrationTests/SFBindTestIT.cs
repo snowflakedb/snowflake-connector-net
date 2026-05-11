@@ -202,8 +202,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private static IEnumerable<object?> NullTestCases() =>
-            new object?[] { DBNull.Value, null };
+        public static IEnumerable<object?[]> NullTestCases() =>
+            new[] { new object?[] { DBNull.Value }, new object?[] { null } };
 
         [Fact]
         public void TestBindValue()

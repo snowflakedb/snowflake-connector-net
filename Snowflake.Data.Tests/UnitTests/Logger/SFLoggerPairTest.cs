@@ -37,7 +37,9 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.IsType<SFLoggerPair>(_loggerPair);
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsDebugEnabled(
             bool isEnabled)
         {
@@ -55,7 +57,9 @@ namespace Snowflake.Data.Tests.UnitTests
             _loggerPair.Debug("debug log message", new Exception("test exception"));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsInfoEnabled(
             bool isEnabled)
         {
@@ -73,7 +77,9 @@ namespace Snowflake.Data.Tests.UnitTests
             _loggerPair.Info("info log message", new Exception("test exception"));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsWarnEnabled(
             bool isEnabled)
         {
@@ -91,7 +97,9 @@ namespace Snowflake.Data.Tests.UnitTests
             _loggerPair.Warn("warn log message", new Exception("test exception"));
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsErrorEnabled(
             bool isEnabled)
         {

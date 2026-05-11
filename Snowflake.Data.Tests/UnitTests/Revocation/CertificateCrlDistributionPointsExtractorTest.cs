@@ -24,28 +24,28 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equivalent(crlUrls, testCase.ExpectedCrlUrls);
         }
 
-        public static IEnumerable<CrlExtractionTestCase> CrlsTestCases()
+        public static IEnumerable<object[]> CrlsTestCases()
         {
-            yield return new CrlExtractionTestCase
+            yield return new object[] { new CrlExtractionTestCase
             {
                 CrlDistributionPoints = new[] { new[] { "http://snowflake.com/crl1.crl" }, new[] { "http://snowflake.com/crl2.crl" } },
                 ExpectedCrlUrls = new[] { "http://snowflake.com/crl1.crl", "http://snowflake.com/crl2.crl" }
-            };
+            } };
 
-            yield return new CrlExtractionTestCase
+            yield return new object[] { new CrlExtractionTestCase
             {
                 CrlDistributionPoints = new[] {
                     new[] { "http://snowflake.com/crl1.crl", "ftp://snowflake.com/crl1.crl" },
                     new[] { "ftp://snowflake.com/crl2.crl", "http://snowflake.com/crl2.crl" }
                 },
                 ExpectedCrlUrls = new[] { "http://snowflake.com/crl1.crl", "http://snowflake.com/crl2.crl" }
-            };
+            } };
 
-            yield return new CrlExtractionTestCase
+            yield return new object[] { new CrlExtractionTestCase
             {
                 CrlDistributionPoints = new string[][] { },
                 ExpectedCrlUrls = new string[] { }
-            };
+            } };
         }
 
         public class CrlExtractionTestCase

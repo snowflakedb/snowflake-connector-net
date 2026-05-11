@@ -26,7 +26,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(15, value);
         }
 
-        [Fact]
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestReturnDefaultValueWhenValueIsMissing(
             bool failOnWrongValue)
         {

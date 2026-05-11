@@ -3,12 +3,14 @@ using Xunit;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
     public class UnixFilePermissionsConverterTest
     {
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [MemberData(nameof(TestConversionForAllPermissionCombinationsData))]
         public void TestConversionForAllPermissionCombinations(
             PermissionTestCase userTestCase,
             PermissionTestCase groupTestCase,
@@ -210,6 +212,12 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
                 allPermissionsTestCase
             };
         }
+
+        public static IEnumerable<object[]> TestConversionForAllPermissionCombinationsData() =>
+            from u in UserPermissionTestCases()
+            from g in GroupPermissionTestCases()
+            from o in OtherPermissionTestCases()
+            select new object[] { u, g, o };
 
         public class PermissionTestCase
         {

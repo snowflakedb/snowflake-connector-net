@@ -708,6 +708,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(4)]
         public void TestDefaultChunkDownloaderWithPrefetchThreads(int prefetchThreads)
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))

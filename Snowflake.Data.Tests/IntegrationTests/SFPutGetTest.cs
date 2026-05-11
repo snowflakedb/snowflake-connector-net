@@ -207,6 +207,8 @@ using System.Threading;
         }
 
         [Theory]
+        [InlineData("GET")]
+        [InlineData("PUT")]
         public void TestPutGetOnClosedConnectionThrowsWithoutQueryId(string command)
         {
             t_inputFilePath = "unexisting_file.csv";
@@ -496,7 +498,7 @@ using System.Threading;
             }
         }
 
-        [Fact]
+        [Theory, MemberData(nameof(PutGetCommandTestCases))]
         public void TestPutGetCommand(
             string sourceFileCompressionType,
             StageType stageType,
@@ -514,7 +516,7 @@ using System.Threading;
             }
         }
 
-        [Fact]
+        [Theory, MemberData(nameof(PutGetCommandForNamedStageWithoutClientSideEncryptionTestCases))]
         public void TestPutGetCommandForNamedStageWithoutClientSideEncryption(
             string sourceFileCompressionType,
             string stagePath,
@@ -532,7 +534,7 @@ using System.Threading;
         }
 
         // Test small file upload/download with GCS_USE_DOWNSCOPED_CREDENTIAL set to true
-        [Fact]
+        [Theory, MemberData(nameof(PutGetGcsDownscopedCredentialTestCases))]
         [IgnoreOnEnvIs("snowflake_cloud_env", new[] { "AWS", "AZURE" })]
         public void TestPutGetGcsDownscopedCredential(
             StageType stageType,
@@ -550,7 +552,7 @@ using System.Threading;
             }
         }
 
-        [Fact]
+        [Theory, MemberData(nameof(PutGetFileWithSpaceAndSingleQuoteTestCases))]
         public void TestPutGetFileWithSpaceAndSingleQuote(
             StageType stageType,
             string stagePath)
@@ -563,6 +565,44 @@ using System.Threading;
                 CopyIntoTable(conn, true);
                 GetFile(conn, true);
             }
+        }
+
+        public static IEnumerable<object[]> PutGetCommandTestCases()
+        {
+            var compressionTypes = new[] { "none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd" };
+            var stageTypes = (StageType[])Enum.GetValues(typeof(StageType));
+            var stagePaths = new[] { "", "/TEST_PATH", "/DEEP/TEST_PATH" };
+            foreach (var compressionType in compressionTypes)
+                foreach (var stageType in stageTypes)
+                    foreach (var stagePath in stagePaths)
+                        foreach (var autoCompress in new[] { false, true })
+                            yield return new object[] { compressionType, stageType, stagePath, autoCompress };
+        }
+
+        public static IEnumerable<object[]> PutGetCommandForNamedStageWithoutClientSideEncryptionTestCases()
+        {
+            var compressionTypes = new[] { "none", "gzip" };
+            var stagePaths = new[] { "", "/DEEP/TEST_PATH" };
+            foreach (var compressionType in compressionTypes)
+                foreach (var stagePath in stagePaths)
+                    foreach (var autoCompress in new[] { false, true })
+                        yield return new object[] { compressionType, stagePath, autoCompress };
+        }
+
+        public static IEnumerable<object[]> PutGetFileWithSpaceAndSingleQuoteTestCases()
+        {
+            var stageTypes = (StageType[])Enum.GetValues(typeof(StageType));
+            foreach (var stageType in stageTypes)
+                yield return new object[] { stageType, "/STAGE PATH WITH SPACE" };
+        }
+
+        public static IEnumerable<object[]> PutGetGcsDownscopedCredentialTestCases()
+        {
+            var stageTypes = (StageType[])Enum.GetValues(typeof(StageType));
+            var stagePaths = new[] { "", "/TEST_PATH" };
+            foreach (var stageType in stageTypes)
+                foreach (var stagePath in stagePaths)
+                    yield return new object[] { stageType, stagePath };
         }
 
         private void PrepareTest(string sourceFileCompressionType, StageType stageType, string stagePath,
