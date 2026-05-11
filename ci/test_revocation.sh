@@ -20,13 +20,21 @@ set -e
 
 # Clone revocation-validation framework
 REVOCATION_DIR="/tmp/revocation-validation"
-REVOCATION_BRANCH="${REVOCATION_BRANCH:-main}"
+DOTNET_VERSION="${DOTNET_VERSION:-10}"
 
 rm -rf "$REVOCATION_DIR"
-if [ -n "$GITHUB_USER" ] && [ -n "$GITHUB_TOKEN" ]; then
-    git clone --depth 1 --branch "$REVOCATION_BRANCH" "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/snowflake-eng/revocation-validation.git" "$REVOCATION_DIR"
+if [ "$DOTNET_VERSION" = "10" ]; then
+    REVOCATION_BRANCH="SNOW-3470124/net10"
 else
-    git clone --depth 1 --branch "$REVOCATION_BRANCH" "https://github.com/snowflake-eng/revocation-validation.git" "$REVOCATION_DIR"
+    REVOCATION_BRANCH="main"
+fi
+
+CLONE_ARGS="--branch $REVOCATION_BRANCH"
+
+if [ -n "$GITHUB_USER" ] && [ -n "$GITHUB_TOKEN" ]; then
+    git clone $CLONE_ARGS "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/snowflake-eng/revocation-validation.git" "$REVOCATION_DIR"
+else
+    git clone $CLONE_ARGS "https://github.com/snowflake-eng/revocation-validation.git" "$REVOCATION_DIR"
 fi
 
 cd "$REVOCATION_DIR"
@@ -42,9 +50,9 @@ docker run --rm \
     -v "$REVOCATION_DIR/validation/clients/snowflake-dotnet:/src" \
     -v "$DRIVER_DIR:/connector" \
     -w /src \
-    mcr.microsoft.com/dotnet/sdk:9.0 \
-    bash -c "sed -i 's|${DRIVER_DIR}|/connector|g' SnowflakeTest.csproj && dotnet publish -c Release -o /src/bin/Release/net9.0"
-echo "[Info] Build complete: $(ls $REVOCATION_DIR/validation/clients/snowflake-dotnet/bin/Release/net9.0/SnowflakeTest.dll)"
+    mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}.0 \
+    bash -c "sed -i 's|${DRIVER_DIR}|/connector|g' SnowflakeTest.csproj && dotnet publish -f net${DOTNET_VERSION}.0 -p:TargetFrameworks=net${DOTNET_VERSION}.0 -c Release -o /src/bin/Release/net${DOTNET_VERSION}.0"
+echo "[Info] Build complete: $(ls $REVOCATION_DIR/validation/clients/snowflake-dotnet/bin/Release/net${DOTNET_VERSION}.0/SnowflakeTest.dll)"
 
 echo "[Info] Running tests with Go $(go version | grep -oE 'go[0-9]+\.[0-9]+')..."
 

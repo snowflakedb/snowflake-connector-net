@@ -15,6 +15,7 @@ The Snowflake .NET connector supports the following .NET framework and library v
 - .NET 7.0
 - .NET 8.0
 - .NET 9.0
+- .NET 10.0
 
 The connector targets `netstandard2.0` but only the versions listed above are tested and supported.
 
@@ -22,14 +23,21 @@ The connector targets `netstandard2.0` but only the versions listed above are te
 
 Starting from version **5.2.0**, the connector uses multi-targeting to provide optimized builds for different platforms:
 
-| Target Framework | Platform | Description |
-|------------------|----------|-------------|
-| `net481` | Windows (.NET Framework 4.8.1) | Optimized build without Mono.Unix |
-| `net8.0-windows` | Windows (.NET 8+) | Optimized build without Mono.Unix |
-| `net8.0` | Linux, macOS (.NET 8+) | Full Unix file system support with Mono.Unix |
-| `netstandard2.0` | All platforms | Backward compatibility for older .NET versions |
+| Target Framework  | Platform                       | Description                                                  |
+|-------------------|--------------------------------|--------------------------------------------------------------|
+| `net481`          | Windows (.NET Framework 4.8.1) | Optimized build for Windows .NET Framework without Mono.Unix |
+| `net8.0-windows`  | Windows (.NET 8+)              | Optimized build for Windows .NET 8+ without Mono.Unix        |
+| `net10.0-windows` | Windows (.NET 10+)             | Optimized build for Windows .NET 10+ without Mono.Unix       |
+| `net8.0`          | Linux, macOS (.NET 8+)         | Full Unix file system support with Mono.Unix                 |
+| `net10.0`         | Linux, macOS (.NET 10+)        | Full Unix file system support with Mono.Unix                 |
+| `netstandard2.0`  | All platforms                  | Backward compatibility for older .NET versions               |
 
 NuGet automatically selects the appropriate build based on the application's target framework and operating system.
+
+- **Windows users** on .NET Framework 4.8.1 will receive the `net481` build without the `Mono.Unix` dependency.
+- **Windows users** on .NET 8 or higher will receive a version-matched Windows build (e.g. `net8.0-windows` or `net10.0-windows`) without the `Mono.Unix` dependency.
+- **Linux and macOS users** on .NET 8 or higher will receive a version-matched build (e.g. `net8.0` or `net10.0`) with full Unix file system support.
+- **Older .NET versions** (including older .NET Framework and .NET versions) will use the `netstandard2.0` build for backward compatibility.
 
 **Note:** On Linux, only **glibc-based** distributions are supported (e.g. Ubuntu, Debian, RHEL, CentOS). Musl-based distributions (e.g. Alpine), Android-based runtimes (Bionic), and other non-glibc environments are not supported.
 
@@ -127,7 +135,7 @@ Detailed documentation for each area of the driver is maintained in separate pag
 
 5.  This driver currently does not support GCP regional endpoints. Please ensure that any workloads using through this driver do not require support for regional endpoints on GCP. If you have questions about this, please contact Snowflake Support.
 
-6. The driver uses Rust library called sf_mini_core, you can find its source code [here](https://github.com/snowflakedb/universal-driver/tree/main/sf_mini_core) 
+6. The driver uses Rust library called sf_mini_core, you can find its source code [here](https://github.com/snowflakedb/universal-driver/tree/main/sf_mini_core)
 
 Note that the driver is now targeting .NET Standard 2.0. When upgrading, you might also need to run "Update-Package -reinstall" to update the dependencies.
 
