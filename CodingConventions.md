@@ -203,7 +203,7 @@ Use test names in PascalCase notation (but without MS proposed underline charact
 
 ```csharp
 [Test]
-public void TestThatLoginWithInvalidPassowrdFails() {
+public void TestThatLoginWithInvalidPasswordFails() {
 }
 
 [Test]
