@@ -14,16 +14,17 @@ namespace Snowflake.Data.Tests.UnitTests
     [NonParallelizable]
     public class RedirectUnitTest
     {
-        private WiremockRunner _runner = WiremockRunner.NewWiremock();
+        private WiremockRunner _runner;
 
         [SetUp]
         public void SetUp()
         {
+            _runner = WiremockRunner.NewWiremock();
             _runner.ResetMapping();
         }
 
         [TearDown]
-        public void AfterAll()
+        public void TearDown()
         {
             _runner.Stop();
         }
