@@ -12,25 +12,30 @@ using Moq;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class ConnectionSinglePoolCacheIT : SFBaseTest
+    public sealed class ConnectionSinglePoolCacheITFixture : IDisposable
+    {
+        public void Dispose()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+    }
+
+    public class ConnectionSinglePoolCacheIT : SFBaseTest, IClassFixture<ConnectionSinglePoolCacheITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public ConnectionSinglePoolCacheIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
-
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
-        public new void BeforeTest()
+
+        public ConnectionSinglePoolCacheIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ConnectionSinglePoolCacheITFixture classFixture) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetPooling(true);
         }
-        public new void AfterTest()
+
+        public void Dispose()
         {
             _previousPoolConfig.Reset();
-        }
-        public static void AfterAllTests()
-        {
-            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         [Fact]

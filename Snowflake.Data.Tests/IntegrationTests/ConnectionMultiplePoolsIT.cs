@@ -13,24 +13,29 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class ConnectionMultiplePoolsIT : SFBaseTest
+    public sealed class ConnectionMultiplePoolsITFixture : IDisposable
+    {
+        public void Dispose()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+    }
+
+    public class ConnectionMultiplePoolsIT : SFBaseTest, IClassFixture<ConnectionMultiplePoolsITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public ConnectionMultiplePoolsIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
-
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
-        public new void BeforeTest()
+
+        public ConnectionMultiplePoolsIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ConnectionMultiplePoolsITFixture classFixture) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
-        public new void AfterTest()
+
+        public void Dispose()
         {
             _previousPoolConfig.Reset();
-        }
-        public static void AfterAllTests()
-        {
-            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         [Fact]

@@ -12,26 +12,33 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class ConnectionPoolManagerTest
+    public sealed class ConnectionPoolManagerTestFixture : IDisposable
+    {
+        private readonly PoolConfig _poolConfig;
+
+        public ConnectionPoolManagerTestFixture()
+        {
+            _poolConfig = new PoolConfig();
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+            SessionPool.SessionFactory = new MockSessionFactory();
+        }
+
+        public void Dispose()
+        {
+            _poolConfig.Reset();
+            SessionPool.SessionFactory = new SessionFactory();
+        }
+    }
+
+    public class ConnectionPoolManagerTest : IClassFixture<ConnectionPoolManagerTestFixture>
     {
         private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();
         private const string ConnectionString1 = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=1;";
         private const string ConnectionString2 = "db=D2;warehouse=W2;account=A2;user=U2;password=P2;role=R2;minPoolSize=1;";
         private const string ConnectionStringWithoutPassword = "db=D3;warehouse=W3;account=A3;user=U3;role=R3;minPoolSize=1;";
         private readonly SecureString _password3 = SecureStringHelper.Encode("P3");
-        private static PoolConfig s_poolConfig;
-        public static void BeforeAllTests()
-        {
-            s_poolConfig = new PoolConfig();
-            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
-            SessionPool.SessionFactory = new MockSessionFactory();
-        }
-        public static void AfterAllTests()
-        {
-            s_poolConfig.Reset();
-            SessionPool.SessionFactory = new SessionFactory();
-        }
-        public void BeforeEach()
+
+        public ConnectionPoolManagerTest(ConnectionPoolManagerTestFixture fixture)
         {
             _connectionPoolManager.ClearAllPools();
         }

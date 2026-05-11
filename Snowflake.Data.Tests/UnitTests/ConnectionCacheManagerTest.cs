@@ -1,3 +1,4 @@
+using System;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
@@ -5,23 +6,30 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    public class ConnectionCacheManagerTest
+    public sealed class ConnectionCacheManagerTestFixture : IDisposable
     {
-        private readonly ConnectionCacheManager _connectionCacheManager = new ConnectionCacheManager();
-        private const string ConnectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=1;";
-        private static PoolConfig s_poolConfig;
-        public static void BeforeAllTests()
+        private readonly PoolConfig _poolConfig;
+
+        public ConnectionCacheManagerTestFixture()
         {
-            s_poolConfig = new PoolConfig();
+            _poolConfig = new PoolConfig();
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
             SessionPool.SessionFactory = new MockSessionFactory();
         }
-        public static void AfterAllTests()
+
+        public void Dispose()
         {
-            s_poolConfig.Reset();
+            _poolConfig.Reset();
             SessionPool.SessionFactory = new SessionFactory();
         }
-        public void BeforeEach()
+    }
+
+    public class ConnectionCacheManagerTest : IClassFixture<ConnectionCacheManagerTestFixture>
+    {
+        private readonly ConnectionCacheManager _connectionCacheManager = new ConnectionCacheManager();
+        private const string ConnectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=1;";
+
+        public ConnectionCacheManagerTest(ConnectionCacheManagerTestFixture fixture)
         {
             _connectionCacheManager.ClearAllPools();
         }

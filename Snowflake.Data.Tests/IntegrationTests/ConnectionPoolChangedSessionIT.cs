@@ -1,3 +1,4 @@
+using System;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -6,10 +7,35 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class ConnectionPoolChangedSessionIT : SFBaseTest
+    public sealed class ConnectionPoolChangedSessionITFixture : IDisposable
+    {
+        private readonly PoolConfig _previousPoolConfigRestorer;
+
+        public ConnectionPoolChangedSessionITFixture()
+        {
+            _previousPoolConfigRestorer = new PoolConfig();
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+        }
+
+        public void Dispose()
+        {
+            _previousPoolConfigRestorer.Reset();
+        }
+    }
+
+    public class ConnectionPoolChangedSessionIT : SFBaseTest, IClassFixture<ConnectionPoolChangedSessionITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ConnectionPoolChangedSessionITFixture classFixture) : base(fixture, envFixture)
+        {
+            _fixture = fixture;
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+
+        public void Dispose()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
 
         private readonly QueryExecResponseData _queryExecResponseChangedRole = new()
         {
@@ -42,25 +68,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
             finalRoleName = TestEnvironment.TestConfig.role,
             finalWarehouseName = "warehouse changed"
         };
-
-        private static PoolConfig s_previousPoolConfigRestorer;
-        public static void BeforeAllTests()
-        {
-            s_previousPoolConfigRestorer = new PoolConfig();
-            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
-        }
-        public new void BeforeTest()
-        {
-            SnowflakeDbConnectionPool.ClearAllPools();
-        }
-        public new void AfterTest()
-        {
-            SnowflakeDbConnectionPool.ClearAllPools();
-        }
-        public static void AfterAllTests()
-        {
-            s_previousPoolConfigRestorer.Reset();
-        }
 
         [Fact]
         public void TestPoolDestroysConnectionWhenChangedSessionProperties()

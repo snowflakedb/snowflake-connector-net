@@ -17,21 +17,34 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    public class UnixOperationsTest
+    public sealed class UnixOperationsTestFixture : IDisposable
     {
-        private static UnixOperations s_unixOperations;
-        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-        public static void BeforeAll()
+        public string WorkingDirectory { get; }
+        internal UnixOperations UnixOperations { get; }
+
+        public UnixOperationsTestFixture()
         {
-            if (!Directory.Exists(s_workingDirectory))
+            WorkingDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            if (!Directory.Exists(WorkingDirectory))
             {
-                Directory.CreateDirectory(s_workingDirectory);
+                Directory.CreateDirectory(WorkingDirectory);
             }
-            s_unixOperations = new UnixOperations();
+            UnixOperations = new UnixOperations();
         }
-        public static void AfterAll()
+
+        public void Dispose()
         {
-            Directory.Delete(s_workingDirectory, true);
+            Directory.Delete(WorkingDirectory, true);
+        }
+    }
+
+    public class UnixOperationsTest : IClassFixture<UnixOperationsTestFixture>
+    {
+        private readonly UnixOperationsTestFixture _fixture;
+
+        public UnixOperationsTest(UnixOperationsTestFixture fixture)
+        {
+            _fixture = fixture;
         }
 
         [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
@@ -42,14 +55,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             FileAccessPermissions otherNotWritablePermissions)
         {
             // arrange
-            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, "random text");
             var readWriteUserPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
             var filePermissions = readWriteUserPermissions | groupOrOthersWritablePermissions | groupNotWritablePermissions | otherNotWritablePermissions;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
             var fileInfo = new UnixFileInfo(filePath);
 
             // act
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
+            var result = _fixture.UnixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
 
             // assert
             Assert.True(result);
@@ -62,13 +75,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             FileAccessPermissions groupNotWritablePermissions,
             FileAccessPermissions otherNotWritablePermissions)
         {
-            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, "random text");
             var filePermissions = userPermissions | groupNotWritablePermissions | otherNotWritablePermissions;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
             var fileInfo = new UnixFileInfo(filePath);
 
             // act
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
+            var result = _fixture.UnixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
 
             // assert
             Assert.False(result);
@@ -80,11 +93,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             FileAccessPermissions userAllowedPermissions)
         {
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
             Syscall.chmod(filePath, (FilePermissions)userAllowedPermissions);
 
             // act
-            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
+            var result = _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
             Assert.Equal(content, result);
@@ -99,14 +112,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, logPath);
 
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
 
             var filePermissions = FileAccessPermissions.UserWrite | FileAccessPermissions.UserRead |
                 FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
-            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
+            var result = _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
             Assert.Equal(content, result);
@@ -125,14 +138,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, logPath);
 
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
 
             var filePermissions = FileAccessPermissions.UserWrite | FileAccessPermissions.UserRead |
                 FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
-            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
+            var result = _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
             Assert.Equal(content, result);
@@ -147,14 +160,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [InlineData("false", true)]
         public void TestTomlPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
         {
-            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, "random text");
             Syscall.chmod(filePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupWrite));
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, skipValue);
 
             if (shouldThrow)
-                Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
+                Assert.Throws<SecurityException>(() => _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
             else
-                s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
+                _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
@@ -164,14 +177,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [InlineData("false", true)]
         public void TestCredentialManagerPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
         {
-            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, "random text");
             Syscall.chmod(filePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupWrite));
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, skipValue);
 
             if (shouldThrow)
-                Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+                Assert.Throws<SecurityException>(() => _fixture.UnixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
             else
-                s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
+                _fixture.UnixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
 
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
@@ -182,11 +195,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             FileAccessPermissions userAllowedPermissions)
         {
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
             Syscall.chmod(filePath, (FilePermissions)userAllowedPermissions);
 
             // act and assert
-            s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
+            _fixture.UnixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
         }
 
         [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
@@ -201,7 +214,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
 
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
 
             var filePermissions = userPermissions | groupPermissions | othersPermissions;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
@@ -209,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // act and assert
             if ((groupPermissions & (FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)) != 0 ||
                 (othersPermissions & (FileAccessPermissions.OtherWrite | FileAccessPermissions.OtherExecute)) != 0)
-                Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
+                Assert.Throws<SecurityException>(() => _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
         }
 
         [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
@@ -224,13 +237,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
 
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
 
             var filePermissions = userPermissions | groupPermissions | othersPermissions;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+            Assert.Throws<SecurityException>(() => _fixture.UnixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
         }
 
         [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
@@ -244,27 +257,27 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                 Skip.If(true, "Skip test when group and others have no permissions");
             }
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
 
             var filePermissions = userPermissions | groupPermissions | othersPermissions;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", EasyLoggerValidator.Instance.ValidateLogFilePermissions));
+            Assert.Throws<SecurityException>(() => _fixture.UnixOperations.WriteAllText(filePath, "test", EasyLoggerValidator.Instance.ValidateLogFilePermissions));
         }
 
         [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestCreateFileWithUserRwPermissions()
         {
             // arrange
-            var filePath = Path.Combine(s_workingDirectory, "testfile");
+            var filePath = Path.Combine(_fixture.WorkingDirectory, "testfile");
 
             // act
-            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+            _fixture.UnixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
 
             // assert
             var fileInfo = new UnixFileInfo(filePath);
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
+            var result = _fixture.UnixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
             Assert.False(result);
         }
 
@@ -272,14 +285,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestCreateDirectoryWithUserRwxPermissions()
         {
             // arrange
-            var dirPath = Path.Combine(s_workingDirectory, "testdir");
+            var dirPath = Path.Combine(_fixture.WorkingDirectory, "testdir");
 
             // act
-            s_unixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
+            _fixture.UnixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
 
             // assert
             var dirInfo = new UnixDirectoryInfo(dirPath);
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
+            var result = _fixture.UnixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
             Assert.False(result);
         }
 
@@ -287,12 +300,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestNestedDir()
         {
             // arrange
-            var dirPath = Path.Combine(s_workingDirectory, "testdir", "a", "b", "c");
-            s_unixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
+            var dirPath = Path.Combine(_fixture.WorkingDirectory, "testdir", "a", "b", "c");
+            _fixture.UnixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
 
             // act
             var dirInfo = new UnixDirectoryInfo(dirPath);
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
+            var result = _fixture.UnixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
 
             // assert
             Assert.False(result);
@@ -302,11 +315,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestReadBytesFromEmptyFile()
         {
             // arrange
-            var filePath = Path.Combine(s_workingDirectory, $"empty_file_{Path.GetRandomFileName()}");
-            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+            var filePath = Path.Combine(_fixture.WorkingDirectory, $"empty_file_{Path.GetRandomFileName()}");
+            _fixture.UnixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
 
             // act
-            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+            var bytes = _fixture.UnixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
             Assert.Equal(0, bytes.Length);
@@ -317,12 +330,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             // arrange
             var randomBytes = TestDataGenarator.NextBytes(19);
-            var filePath = Path.Combine(s_workingDirectory);
-            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
-            s_unixOperations.WriteAllBytes(filePath, randomBytes, _ => { });
+            var filePath = Path.Combine(_fixture.WorkingDirectory);
+            _fixture.UnixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+            _fixture.UnixOperations.WriteAllBytes(filePath, randomBytes, _ => { });
 
             // act
-            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+            var bytes = _fixture.UnixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
             Assert.Equal(randomBytes, bytes);
@@ -336,7 +349,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var expectedBytes = File.ReadAllBytes(filePath);
 
             // act
-            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+            var bytes = _fixture.UnixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
             Assert.Equal(expectedBytes, bytes);

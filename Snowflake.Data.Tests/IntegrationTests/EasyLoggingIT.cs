@@ -16,30 +16,42 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class EasyLoggingIT : SFBaseTest
+    public sealed class EasyLoggingITFixture : IDisposable
     {
-        private readonly SFBaseTestAsyncFixture _fixture;
-        public EasyLoggingIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public readonly string WorkingDirectory = Path.Combine(Path.GetTempPath(), $"easy_logging_test_configs_{Path.GetRandomFileName()}");
 
-        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), $"easy_logging_test_configs_{Path.GetRandomFileName()}");
-        private const string LogDirectoryName = "dotnet";
-        public static void BeforeAll()
+        public EasyLoggingITFixture()
         {
-            if (!Directory.Exists(s_workingDirectory))
+            if (!Directory.Exists(WorkingDirectory))
             {
-                Directory.CreateDirectory(s_workingDirectory);
+                Directory.CreateDirectory(WorkingDirectory);
             }
         }
-        public static void AfterAll()
+
+        public void Dispose()
         {
             EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
-            Directory.Delete(s_workingDirectory, true);
+            Directory.Delete(WorkingDirectory, true);
         }
-        public static void AfterEach()
+    }
+
+    public class EasyLoggingIT : SFBaseTest, IClassFixture<EasyLoggingITFixture>, IDisposable
+    {
+        private readonly SFBaseTestAsyncFixture _fixture;
+        private readonly EasyLoggingITFixture _classFixture;
+        private const string LogDirectoryName = "dotnet";
+
+        public EasyLoggingIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, EasyLoggingITFixture classFixture) : base(fixture, envFixture)
+        {
+            _fixture = fixture;
+            _classFixture = classFixture;
+        }
+
+        public void Dispose()
         {
             EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
 
-            var logDirectory = Path.Combine(s_workingDirectory, LogDirectoryName);
+            var logDirectory = Path.Combine(_classFixture.WorkingDirectory, LogDirectoryName);
             if (Directory.Exists(logDirectory))
             {
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -57,7 +69,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestEnableEasyLogging()
         {
             // arrange
-            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory));
+            var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", _classFixture.WorkingDirectory));
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
@@ -74,7 +86,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestFailToEnableEasyLoggingForWrongConfiguration()
         {
             // arrange
-            var configFilePath = CreateConfigTempFile(s_workingDirectory, "random config content");
+            var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, "random config content");
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
@@ -94,7 +106,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             try
             {
-                var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
+                var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", _classFixture.WorkingDirectory, "640"));
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
@@ -129,7 +141,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             try
             {
-                var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
+                var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", _classFixture.WorkingDirectory, "640"));
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
@@ -159,7 +171,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
         {
             // arrange
-            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory));
+            var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", _classFixture.WorkingDirectory));
             Syscall.chmod(configFilePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IWGRP);
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -178,7 +190,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestFailToEnableEasyLoggingWhenLogDirectoryNotAccessible()
         {
             // arrange
-            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", "/"));
+            var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", "/"));
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
@@ -197,11 +209,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestFailToEnableEasyLoggingWhenPathIsAccessibleForGroup()
         {
             // arrange
-            var logDirectory = Path.Combine(s_workingDirectory, LogDirectoryName);
+            var logDirectory = Path.Combine(_classFixture.WorkingDirectory, LogDirectoryName);
             Directory.CreateDirectory(logDirectory);
             Syscall.chmod(logDirectory, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR | FilePermissions.S_IRGRP);
 
-            var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
+            var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", _classFixture.WorkingDirectory, "640"));
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";

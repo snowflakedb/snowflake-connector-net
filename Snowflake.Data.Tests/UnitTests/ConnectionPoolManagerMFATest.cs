@@ -8,28 +8,38 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Client;
     using Snowflake.Data.Core.Tools;
     using Snowflake.Data.Tests.Util;
-    class ConnectionPoolManagerMFATest
+
+    public sealed class ConnectionPoolManagerMFATestFixture : IDisposable
     {
-        private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();
-        private const string ConnectionStringMFACache = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;authenticator=username_password_mfa";
-        private static PoolConfig s_poolConfig;
-        private static MockLoginMFATokenCacheRestRequester s_restRequester;
-        public static void BeforeAllTests()
+        private readonly PoolConfig _poolConfig;
+        internal MockLoginMFATokenCacheRestRequester RestRequester { get; }
+
+        public ConnectionPoolManagerMFATestFixture()
         {
-            s_poolConfig = new PoolConfig();
-            s_restRequester = new MockLoginMFATokenCacheRestRequester();
+            _poolConfig = new PoolConfig();
+            RestRequester = new MockLoginMFATokenCacheRestRequester();
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
-            SessionPool.SessionFactory = new MockSessionFactoryMFA(s_restRequester);
+            SessionPool.SessionFactory = new MockSessionFactoryMFA(RestRequester);
         }
-        public static void AfterAllTests()
+
+        public void Dispose()
         {
-            s_poolConfig.Reset();
+            _poolConfig.Reset();
             SessionPool.SessionFactory = new SessionFactory();
         }
-        public void BeforeEach()
+    }
+
+    public class ConnectionPoolManagerMFATest : IClassFixture<ConnectionPoolManagerMFATestFixture>
+    {
+        private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();
+        private readonly ConnectionPoolManagerMFATestFixture _fixture;
+        private const string ConnectionStringMFACache = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;authenticator=username_password_mfa";
+
+        public ConnectionPoolManagerMFATest(ConnectionPoolManagerMFATestFixture fixture)
         {
+            _fixture = fixture;
             _connectionPoolManager.ClearAllPools();
-            s_restRequester.Reset();
+            _fixture.RestRequester.Reset();
         }
 
         [Fact]
@@ -37,12 +47,12 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             var testToken = "testToken1234";
-            s_restRequester.LoginResponses.Enqueue(new LoginResponseData()
+            _fixture.RestRequester.LoginResponses.Enqueue(new LoginResponseData()
             {
                 mfaToken = testToken,
                 authResponseSessionInfo = new SessionInfo()
             });
-            s_restRequester.LoginResponses.Enqueue(new LoginResponseData()
+            _fixture.RestRequester.LoginResponses.Enqueue(new LoginResponseData()
             {
                 mfaToken = testToken,
                 authResponseSessionInfo = new SessionInfo()
@@ -51,14 +61,14 @@ namespace Snowflake.Data.Tests.UnitTests
             var session = _connectionPoolManager.GetSession(ConnectionStringMFACache, new SessionPropertiesContext());
 
             // Assert
-            Awaiter.WaitUntilConditionOrTimeout(() => s_restRequester.LoginRequests.Count == 2, TimeSpan.FromSeconds(15));
-            Assert.Equal(2, s_restRequester.LoginRequests.Count);
-            var loginRequest1 = s_restRequester.LoginRequests.Dequeue();
+            Awaiter.WaitUntilConditionOrTimeout(() => _fixture.RestRequester.LoginRequests.Count == 2, TimeSpan.FromSeconds(15));
+            Assert.Equal(2, _fixture.RestRequester.LoginRequests.Count);
+            var loginRequest1 = _fixture.RestRequester.LoginRequests.Dequeue();
             Assert.Equal(string.Empty, loginRequest1.data.Token);
             Assert.Equal(testToken, SecureStringHelper.Decode(session._mfaToken));
             Assert.True(loginRequest1.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
             Assert.Equal("passcode", loginRequest1.data.extAuthnDuoMethod);
-            var loginRequest2 = s_restRequester.LoginRequests.Dequeue();
+            var loginRequest2 = _fixture.RestRequester.LoginRequests.Dequeue();
             Assert.Equal(testToken, loginRequest2.data.Token);
             Assert.True(loginRequest2.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value1) && (bool)value1);
             Assert.Equal("passcode", loginRequest2.data.extAuthnDuoMethod);

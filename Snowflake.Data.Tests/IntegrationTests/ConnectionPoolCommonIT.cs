@@ -10,21 +10,26 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    class ConnectionPoolCommonIT : SFBaseTest
+    internal sealed class ConnectionPoolCommonITFixture : IDisposable
+    {
+        public void Dispose()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+    }
+
+    internal class ConnectionPoolCommonIT : SFBaseTest, IClassFixture<ConnectionPoolCommonITFixture>, IDisposable
     {
         private readonly ConnectionPoolType _connectionPoolTypeUnderTest;
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
         private readonly PoolConfig _previousPoolConfig;
 
         private readonly SFBaseTestAsyncFixture _fixture;
-        public ConnectionPoolCommonIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ConnectionPoolType connectionPoolTypeUnderTest) : base(fixture, envFixture)
+        public ConnectionPoolCommonIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ConnectionPoolCommonITFixture classFixture, ConnectionPoolType connectionPoolTypeUnderTest) : base(fixture, envFixture)
         {
             _fixture = fixture;
             _connectionPoolTypeUnderTest = connectionPoolTypeUnderTest;
             _previousPoolConfig = new PoolConfig();
-        }
-        public new void BeforeTest()
-        {
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(_connectionPoolTypeUnderTest);
             SnowflakeDbConnectionPool.ClearAllPools();
             if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
@@ -34,13 +39,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             s_logger.Debug($"---------------- BeforeTest ---------------------");
             s_logger.Debug($"Testing Pool Type: {SnowflakeDbConnectionPool.GetConnectionPoolVersion()}");
         }
-        public new void AfterTest()
+
+        public void Dispose()
         {
             _previousPoolConfig.Reset();
-        }
-        public static void AfterAllTests()
-        {
-            SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         [Fact]

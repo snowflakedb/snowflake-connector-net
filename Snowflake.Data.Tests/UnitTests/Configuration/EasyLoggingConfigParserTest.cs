@@ -12,12 +12,29 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    public class EasyLoggingConfigParserTest
+    public sealed class EasyLoggingConfigParserTestFixture : IDisposable
+    {
+        public EasyLoggingConfigParserTestFixture()
+        {
+        }
+
+        public void Dispose()
+        {
+            EasyLoggingConfigParserTest.CleanupWorkingDirectory();
+        }
+    }
+
+    public class EasyLoggingConfigParserTest : IClassFixture<EasyLoggingConfigParserTestFixture>
     {
         private const string NotExistingFilePath = "../../../Resources/EasyLogging/not_existing_config.json";
         private const string LogLevel = "info";
         private const string LogPath = "./test-logs/log_file.log";
         private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
+
+        public EasyLoggingConfigParserTest(EasyLoggingConfigParserTestFixture fixture)
+        {
+        }
+
         public static void BeforeAll()
         {
             if (!Directory.Exists(s_workingDirectory))
@@ -25,9 +42,13 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
                 Directory.CreateDirectory(s_workingDirectory);
             }
         }
-        public static void AfterAll()
+
+        internal static void CleanupWorkingDirectory()
         {
-            Directory.Delete(s_workingDirectory, true);
+            if (Directory.Exists(s_workingDirectory))
+            {
+                Directory.Delete(s_workingDirectory, true);
+            }
         }
 
         [Theory]
@@ -36,6 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatParsesConfigFile(string logFileUnixPermissions)
         {
             // arrange
+            BeforeAll();
             var parser = new EasyLoggingConfigParser();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, logFileUnixPermissions));
 
@@ -60,6 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatThrowsExceptionForInvalidPermissionValue()
         {
             // arrange
+            BeforeAll();
             var invalidValue = "800";
             var parser = new EasyLoggingConfigParser();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, invalidValue));
@@ -76,6 +99,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatThrowsExceptionForIncorrectPermissionValueType()
         {
             // arrange
+            BeforeAll();
             var incorrectValueType = "abc";
             var parser = new EasyLoggingConfigParser();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, incorrectValueType));
@@ -150,6 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
         {
             // arrange
+            BeforeAll();
             var unixOperations = new Mock<UnixOperations>();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, null);
             var stream = new UnixFileInfo(configFilePath).OpenRead();
@@ -177,6 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatConfigFileIsNotUsedIfUserDoesNotOwnConfigFile()
         {
             // arrange
+            BeforeAll();
             var unixOperations = new Mock<UnixOperations>();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, null);
             var stream = new UnixFileInfo(configFilePath).OpenRead();
@@ -197,6 +223,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatConfigFileIsNotUsedIfGroupDoesNotOwnConfigFile()
         {
             // arrange
+            BeforeAll();
             var unixOperations = new Mock<UnixOperations>();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, null);
             var stream = new UnixFileInfo(configFilePath).OpenRead();
