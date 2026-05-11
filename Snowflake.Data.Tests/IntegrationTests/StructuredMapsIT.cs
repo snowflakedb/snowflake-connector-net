@@ -15,8 +15,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly ResultFormat _resultFormat;
         private readonly bool _nativeArrow;
 
-        public StructuredMapsIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat, bool nativeArrow) : base(envFixture)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public StructuredMapsIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat, bool nativeArrow) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
             _nativeArrow = nativeArrow;
         }
@@ -25,10 +27,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestDataTableLoadOnStructuredMap()
         {
             if (_resultFormat != ResultFormat.JSON)
-                Assert.Skip("skip test on arrow");
+                Skip.If(true, "skip test on arrow");
 
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -57,7 +59,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectMap()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -96,7 +98,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectMapWithIntegerKeys()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -124,7 +126,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectMapWithLongKeys()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -152,7 +154,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectMapOfObjects()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -182,7 +184,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectMapOfArrays()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -208,7 +210,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectMapOfLists()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -234,7 +236,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectMapOfMaps()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -264,7 +266,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectSemiStructuredTypesInMap(string valueSfString, string expectedValue)
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -289,7 +291,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectNullMap()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -313,7 +315,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestThrowExceptionForInvalidMap()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -339,7 +341,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestThrowExceptionForInvalidMapElement()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())

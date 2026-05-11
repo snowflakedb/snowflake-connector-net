@@ -13,12 +13,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     class SFDbDataReaderIT : SFBaseTest
     {
-        protected override string TestName => base.TestName + _resultFormat;
 
         private readonly ResultFormat _resultFormat;
 
-        public SFDbDataReaderIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(envFixture)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFDbDataReaderIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
         }
 
@@ -32,11 +33,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "cola NUMBER" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola NUMBER" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
-                string insertCommand = $"insert into {TableName} values (1),(1),(1)";
+                string insertCommand = $"insert into {_fixture.TableName} values (1),(1),(1)";
                 cmd.CommandText = insertCommand;
                 IDataReader reader = cmd.ExecuteReader();
                 Assert.Equal(3, reader.RecordsAffected);
@@ -45,7 +46,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 reader.Close();
                 Assert.Equal(3, reader.RecordsAffected);
 
-                cmd.CommandText = $"drop table if exists {TableName}";
+                cmd.CommandText = $"drop table if exists {_fixture.TableName}";
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(0, count);
 
@@ -60,7 +61,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "cola NUMBER" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola NUMBER" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -68,7 +69,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 long numLong = 1000000L;
                 short numShort = 10;
 
-                string insertCommand = $"insert into {TableName} values (?),(?),(?)";
+                string insertCommand = $"insert into {_fixture.TableName} values (?),(?),(?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -92,7 +93,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(3, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -123,13 +124,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { $"cola {columnType}" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { $"cola {columnType}" });
 
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = $"INSERT INTO {TableName} SELECT 1.23";
+                cmd.CommandText = $"INSERT INTO {_fixture.TableName} SELECT 1.23";
                 cmd.ExecuteNonQuery();
 
-                cmd.CommandText = $"SELECT cola FROM {TableName}";
+                cmd.CommandText = $"SELECT cola FROM {_fixture.TableName}";
                 using (var reader = cmd.ExecuteReader())
                 {
                     ValidateResultFormat(reader);
@@ -176,14 +177,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "cola DOUBLE" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola DOUBLE" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
                 float numFloat = (float)1.23;
                 double numDouble = (double)1.2345678;
 
-                string insertCommand = $"insert into {TableName} values (?),(?)";
+                string insertCommand = $"insert into {_fixture.TableName} values (?),(?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -201,7 +202,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(2, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -238,7 +239,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -304,18 +305,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Insert data
                 int fractionalPartIndex = inputTimeStr.IndexOf('.');
                 var precision = fractionalPartIndex > 0 ? inputTimeStr.Length - (inputTimeStr.IndexOf('.') + 1) : 0;
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     $"cola TIME{ (precision > 0 ? string.Empty : $"({precision})")}"
                 });
                 IDbCommand cmd = conn.CreateCommand();
 
-                string insertCommand = $"insert into {TableName} values ('{inputTimeStr}')";
+                string insertCommand = $"insert into {_fixture.TableName} values ('{inputTimeStr}')";
                 cmd.CommandText = insertCommand;
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"SELECT cola FROM {TableName}";
+                cmd.CommandText = $"SELECT cola FROM {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -346,7 +347,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Only Time data can be retrieved using GetTimeSpan, other type will fail
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "C1 NUMBER",
                     "C2 FLOAT",
@@ -367,7 +368,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Insert data
                 IDbCommand cmd = conn.CreateCommand();
 
-                string insertCommand = $"insert into {TableName}(C1, C10, C11, C12) select 1, " +
+                string insertCommand = $"insert into {_fixture.TableName}(C1, C10, C11, C12) select 1, " +
                 "PARSE_JSON('{ \"key1\": \"value1\", \"key2\": \"value2\" }')" +
                  ", PARSE_JSON(' { \"outer_key1\": { \"inner_key1A\": \"1a\", \"inner_key1B\": NULL }, '||' \"outer_key2\": { \"inner_key2\": 2 } '||' } ')," +
                  " ARRAY_CONSTRUCT(1, 2, 3, NULL)";
@@ -376,14 +377,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                insertCommand = $"update {TableName} set C2 = 2.5, C3 = 'C3Val', C4 = TO_BINARY('C4'), C5 = true, C6 = '2021-01-01', " +
+                insertCommand = $"update {_fixture.TableName} set C2 = 2.5, C3 = 'C3Val', C4 = TO_BINARY('C4'), C5 = true, C6 = '2021-01-01', " +
                 "C7 = '2017-01-01 12:00:00', C8 = '2017-01-01 12:00:00 +04:00', C9 = '2014-01-02 16:00:00 +10:00', C14 = '12:00:00' where C1 = 1";
                 cmd.CommandText = insertCommand;
                 //Console.WriteLine(insertCommand);
                 count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"SELECT * FROM {TableName}";
+                cmd.CommandText = $"SELECT * FROM {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -442,13 +443,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     $"cola {dataType}{ (precision == null ? string.Empty : $"({precision})" )}"
                 });
 
                 IDbCommand cmd = conn.CreateCommand();
-                string insertCommand = $"insert into {TableName} values (?)";
+                string insertCommand = $"insert into {_fixture.TableName} values (?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -474,7 +475,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -548,13 +549,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "cola TIMESTAMP_TZ" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola TIMESTAMP_TZ" });
 
                 DateTimeOffset now = DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(timezoneOffsetInHours));
 
                 IDbCommand cmd = conn.CreateCommand();
 
-                string insertCommand = $"insert into {TableName} values (?)";
+                string insertCommand = $"insert into {_fixture.TableName} values (?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -566,7 +567,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -592,13 +593,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 setTimezoneCmd.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
                 setTimezoneCmd.ExecuteNonQuery();
 
-                CreateOrReplaceTable(conn, TableName, new[] { "cola TIMESTAMP_LTZ" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola TIMESTAMP_LTZ" });
 
                 DateTimeOffset insertValue = new DateTimeOffset(2024, 1, 15, 18, 30, 45, 123, TimeSpan.Zero);
 
                 IDbCommand cmd = conn.CreateCommand();
 
-                string insertCommand = $"insert into {TableName} values (?)";
+                string insertCommand = $"insert into {_fixture.TableName} values (?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = (SnowflakeDbParameter)cmd.CreateParameter();
@@ -611,7 +612,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -631,11 +632,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "cola BOOLEAN" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola BOOLEAN" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
-                string insertCommand = $"insert into {TableName} values (?)";
+                string insertCommand = $"insert into {_fixture.TableName} values (?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -647,7 +648,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -666,10 +667,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "col1 NUMBER(3)",
                 });
@@ -684,9 +685,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 p1.Value = testBytes;
 
                 cmd.Parameters.Add(p1);
-                cmd.CommandText = $"insert into {TableName} values (?)";
+                cmd.CommandText = $"insert into {_fixture.TableName} values (?)";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = $"select * from {TableName} order by 1";
+                cmd.CommandText = $"select * from {_fixture.TableName} order by 1";
 
                 // Act
                 using (IDataReader reader = cmd.ExecuteReader())
@@ -706,7 +707,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "col1 BINARY",
                     "col2 VARCHAR(50)",
@@ -716,7 +717,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
                 string testChars = "TEST_GET_CHARS";
                 double testDouble = 1.2345678;
-                string insertCommand = $"insert into {TableName} values (?, '{testChars}',{testDouble.ToString()})";
+                string insertCommand = $"insert into {_fixture.TableName} values (?, '{testChars}',{testDouble.ToString()})";
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = insertCommand;
 
@@ -729,7 +730,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -849,10 +850,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "col1 VARCHAR(50)",
                 });
@@ -860,9 +861,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 char testChar = 'T';
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = $"insert into {TableName} values ('{testChar}')";
+                cmd.CommandText = $"insert into {_fixture.TableName} values ('{testChar}')";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
 
                 // Act
                 using (IDataReader reader = cmd.ExecuteReader())
@@ -879,7 +880,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "col1 VARCHAR(50)",
                     "col2 BINARY",
@@ -890,7 +891,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
                 double testDouble = 1.2345678;
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = $"insert into {TableName} values ('{testChars}', ?, {testDouble.ToString()})";
+                cmd.CommandText = $"insert into {_fixture.TableName} values ('{testChars}', ?, {testDouble.ToString()})";
 
                 var p1 = cmd.CreateParameter();
                 p1.ParameterName = "1";
@@ -902,7 +903,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -1024,10 +1025,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "col1 VARCHAR(50)",
                     "col2 BINARY",
@@ -1046,9 +1047,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 p1.Value = testBytes;
 
                 cmd.Parameters.Add(p1);
-                cmd.CommandText = $"insert into {TableName} values ('{testChars}', ?, {testDouble.ToString()})";
+                cmd.CommandText = $"insert into {_fixture.TableName} values ('{testChars}', ?, {testDouble.ToString()})";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
 
                 // Act
                 using (DbDataReader reader = (DbDataReader)cmd.ExecuteReader())
@@ -1067,7 +1068,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "col1 VARCHAR(50)",
                     "col2 BINARY",
@@ -1078,7 +1079,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
                 double testDouble = 1.2345678;
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = $"insert into {TableName} values ('{testChars}', ?, {testDouble.ToString()})";
+                cmd.CommandText = $"insert into {_fixture.TableName} values ('{testChars}', ?, {testDouble.ToString()})";
 
                 var p1 = cmd.CreateParameter();
                 p1.ParameterName = "1";
@@ -1090,7 +1091,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 DbDataReader reader = (DbDataReader)cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -1243,7 +1244,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "a INTEGER",
                     "b STRING"
@@ -1252,10 +1253,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
 
-                    cmd.CommandText = $"insert into {TableName} values(null, null)";
+                    cmd.CommandText = $"insert into {_fixture.TableName} values(null, null)";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = $"select * from {TableName}";
+                    cmd.CommandText = $"select * from {_fixture.TableName}";
                     using (IDataReader reader = cmd.ExecuteReader())
                     {
                         ValidateResultFormat(reader);
@@ -1279,10 +1280,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "cola STRING" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
-                string insertCommand = $"insert into {TableName} values (?)";
+                string insertCommand = $"insert into {_fixture.TableName} values (?)";
                 cmd.CommandText = insertCommand;
 
                 Guid val = Guid.NewGuid();
@@ -1296,7 +1297,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 IDataReader reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
@@ -1321,24 +1322,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestCopyCmdUpdateCount()
         {
-            var stageName = TestName;
+            var stageName = _fixture.TestName;
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "cola STRING" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = $"create or replace stage {stageName}";
                 cmd.ExecuteNonQuery();
 
-                cmd.CommandText = $"copy into {TableName} from @{stageName}";
+                cmd.CommandText = $"copy into {_fixture.TableName} from @{stageName}";
                 int updateCount = cmd.ExecuteNonQuery();
                 Assert.Equal(0, updateCount);
 
                 // test rows_loaded exists
-                cmd.CommandText = $"copy into @%{TableName} from (select 'test_string')";
+                cmd.CommandText = $"copy into @%{_fixture.TableName} from (select 'test_string')";
                 cmd.ExecuteNonQuery();
 
-                cmd.CommandText = $"copy into {TableName}";
+                cmd.CommandText = $"copy into {_fixture.TableName}";
                 updateCount = cmd.ExecuteNonQuery();
                 Assert.Equal(1, updateCount);
 
@@ -1353,16 +1354,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestCopyCmdResultSet()
         {
-            var stageName = TestName;
+            var stageName = _fixture.TestName;
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "cola STRING" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = $"create or replace stage {stageName}";
                 cmd.ExecuteNonQuery();
 
-                cmd.CommandText = $"copy into {TableName} from @{stageName}";
+                cmd.CommandText = $"copy into {_fixture.TableName} from @{stageName}";
                 using (var rdr = cmd.ExecuteReader())
                 {
                     // Can read the first row
@@ -1370,14 +1371,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
 
                 // test rows_loaded exists
-                cmd.CommandText = $"copy into @%{TableName} from (select 'test_string')";
+                cmd.CommandText = $"copy into @%{_fixture.TableName} from (select 'test_string')";
                 using (var rdr = cmd.ExecuteReader())
                 {
                     // Can read the first row
                     Assert.Equal(true, rdr.Read());
                 }
 
-                cmd.CommandText = $"copy into {TableName}";
+                cmd.CommandText = $"copy into {_fixture.TableName}";
                 using (var rdr = cmd.ExecuteReader())
                 {
                     // Can read the first row
@@ -1397,7 +1398,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                     {
                         "cola VARIANT",
                         "colb ARRAY",
@@ -1407,7 +1408,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 IDbCommand cmd = conn.CreateCommand();
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 using (IDataReader reader = cmd.ExecuteReader())
                 {
                     ValidateResultFormat(reader);
@@ -1427,7 +1428,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "c1 NUMBER(20, 4)",
                     "c2 STRING(100)",
@@ -1439,7 +1440,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 IDbCommand cmd = conn.CreateCommand();
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 using (IDataReader reader = cmd.ExecuteReader())
                 {
                     ValidateResultFormat(reader);
@@ -1708,17 +1709,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 var colName = "c1";
                 var expectedVal = "id:1";
-                CreateOrReplaceTable(conn, TableName, new[] { $"{colName} {type}" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { $"{colName} {type}" });
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} select parse_json('{{{expectedVal}}}')";
+                    string insertCommand = $"insert into {_fixture.TableName} select parse_json('{{{expectedVal}}}')";
                     cmd.CommandText = insertCommand;
 
                     var count = cmd.ExecuteNonQuery();
                     Assert.Equal(1, count);
 
-                    cmd.CommandText = $"select {colName} from {TableName}";
+                    cmd.CommandText = $"select {colName} from {_fixture.TableName}";
                     using (var reader = cmd.ExecuteReader())
                     {
                         ValidateResultFormat(reader);
@@ -1735,17 +1736,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "val TIMESTAMP_LTZ" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "val TIMESTAMP_LTZ" });
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Europe/Warsaw'";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = $"INSERT INTO {TableName} VALUES('2023-08-09 10:00:00')";
+                    cmd.CommandText = $"INSERT INTO {_fixture.TableName} VALUES('2023-08-09 10:00:00')";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = $"SELECT * FROM {TableName}";
+                    cmd.CommandText = $"SELECT * FROM {_fixture.TableName}";
                     using (var reader = cmd.ExecuteReader())
                     {
                         Assert.True(reader.Read(), "Should read a record");
@@ -1762,7 +1763,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Pacific/Honolulu'";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = $"SELECT * FROM {TableName}";
+                    cmd.CommandText = $"SELECT * FROM {_fixture.TableName}";
                     using (var reader = cmd.ExecuteReader())
                     {
                         Assert.True(reader.Read());
@@ -1788,14 +1789,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "val TIMESTAMP_LTZ" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "val TIMESTAMP_LTZ" });
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'UTC'";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = $"INSERT INTO {TableName} VALUES('2024-01-01 00:00:00')";
+                    cmd.CommandText = $"INSERT INTO {_fixture.TableName} VALUES('2024-01-01 00:00:00')";
                     cmd.ExecuteNonQuery();
 
                     var utcBase = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -1813,7 +1814,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         cmd.CommandText = $"ALTER SESSION SET TIMEZONE = '{tzName}'";
                         cmd.ExecuteNonQuery();
 
-                        cmd.CommandText = $"SELECT val FROM {TableName}";
+                        cmd.CommandText = $"SELECT val FROM {_fixture.TableName}";
                         using (var reader = cmd.ExecuteReader())
                         {
                             Assert.True(reader.Read());
@@ -1838,19 +1839,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // timezone regardless of what the session timezone is set to.
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "val TIMESTAMP_LTZ" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "val TIMESTAMP_LTZ" });
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'UTC'";
                     cmd.ExecuteNonQuery();
-                    cmd.CommandText = $"INSERT INTO {TableName} VALUES('2024-06-15 12:00:00')";
+                    cmd.CommandText = $"INSERT INTO {_fixture.TableName} VALUES('2024-06-15 12:00:00')";
                     cmd.ExecuteNonQuery();
 
                     cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'Pacific/Auckland'";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = $"SELECT val FROM {TableName}";
+                    cmd.CommandText = $"SELECT val FROM {_fixture.TableName}";
                     using (var reader = cmd.ExecuteReader())
                     {
                         Assert.True(reader.Read());
@@ -1878,7 +1879,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private DbConnection CreateAndOpenConnection()
         {
-            var conn = new SnowflakeDbConnection(ConnectionString);
+            var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
             conn.Open();
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
             return conn;
@@ -1886,7 +1887,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private DbConnection CreateAndOpenConnectionWithHonorSessionTimezone()
         {
-            var conn = new SnowflakeDbConnection(ConnectionString + "HonorSessionTimezone=true;");
+            var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "HonorSessionTimezone=true;");
             conn.Open();
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
             return conn;

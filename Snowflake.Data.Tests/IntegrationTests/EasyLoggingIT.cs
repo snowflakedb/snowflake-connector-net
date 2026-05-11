@@ -17,7 +17,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public class EasyLoggingIT : SFBaseTest
     {
-        public EasyLoggingIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public EasyLoggingIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), $"easy_logging_test_configs_{Path.GetRandomFileName()}");
         private const string LogDirectoryName = "dotnet";
@@ -58,7 +59,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory));
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
                 conn.Open();
@@ -75,7 +76,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var configFilePath = CreateConfigTempFile(s_workingDirectory, "random config content");
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
@@ -95,7 +96,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
-                    conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                    conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
                     conn.Open();
                     var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
                     var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
@@ -130,7 +131,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
-                    conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                    conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
                     conn.Open();
                     var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
                     var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
@@ -161,7 +162,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Syscall.chmod(configFilePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IWGRP);
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
@@ -179,7 +180,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", "/"));
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
@@ -202,7 +203,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config("WARN", s_workingDirectory, "640"));
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
+                conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
                 var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());

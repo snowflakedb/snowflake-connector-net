@@ -18,7 +18,8 @@ using System.Threading;
     using Snowflake.Data.Core.FileTransfer;
     class SFPutGetTest : SFBaseTest
     {
-        public SFPutGetTest(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFPutGetTest(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private const int NumberOfRows = 4;
         private static readonly string[] s_colName = { "C1", "C2", "C3" };
@@ -62,13 +63,13 @@ using System.Threading;
             // Base object's names on on worker thread id
             var threadSuffix = Thread.CurrentThread.ManagedThreadId.ToString()?.Replace('#', '_');
 
-            t_schemaName = testConfig.schema;
+            t_schemaName = _fixture.testConfig.schema;
             t_tableName = $"TABLE_{threadSuffix}";
             t_stageName = $"STAGE_{threadSuffix}";
             t_stageNameSse = $"STAGE_{threadSuffix}_SSE";
             t_filesToDelete = new List<string>();
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 using (var command = conn.CreateCommand())
@@ -90,7 +91,7 @@ using System.Threading;
         }
         public void TearDown()
         {
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 using (var command = conn.CreateCommand())
@@ -130,7 +131,7 @@ using System.Threading;
             t_inputFilePath = $"{absolutePathPrefix}*";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -155,7 +156,7 @@ using System.Threading;
             t_inputFilePath = $"{absolutePathPrefix}*.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -180,7 +181,7 @@ using System.Threading;
             t_inputFilePath = $"{absolutePathPrefix}_?.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -197,7 +198,7 @@ using System.Threading;
 
             PrepareFileData(t_inputFilePath);
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -212,7 +213,7 @@ using System.Threading;
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             // Act
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 // conn.Open(); // intentionally closed
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => ProcessFile(command, conn));
@@ -229,7 +230,7 @@ using System.Threading;
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             // Act
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 var sql = $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
@@ -249,7 +250,7 @@ using System.Threading;
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             // Act
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
@@ -268,7 +269,7 @@ using System.Threading;
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             // Act
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
@@ -290,7 +291,7 @@ using System.Threading;
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
             // Act
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
@@ -314,7 +315,7 @@ using System.Threading;
             PrepareFileData(t_inputFilePath);
 
             // Act
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 var queryId = PutFile(conn);
@@ -339,7 +340,7 @@ using System.Threading;
 
             PrepareFileData(t_inputFilePath);
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -362,7 +363,7 @@ using System.Threading;
             t_inputFilePath = $"{relativePath}*";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -382,7 +383,7 @@ using System.Threading;
 
             PrepareFileData(t_inputFilePath);
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn, expectedStatus: ResultStatus.UPLOADED);
@@ -402,7 +403,7 @@ using System.Threading;
 
             PrepareFileData(t_inputFilePath);
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
@@ -431,7 +432,7 @@ using System.Threading;
             t_inputFilePath = $"{path}*{Path.DirectorySeparatorChar}*";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -459,7 +460,7 @@ using System.Threading;
             t_inputFilePath = $"{path}_?{Path.DirectorySeparatorChar}{guid}_?_file.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -487,7 +488,7 @@ using System.Threading;
             t_inputFilePath = $"{path}_*{Path.DirectorySeparatorChar}{guid}_?_file.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -504,7 +505,7 @@ using System.Threading;
         {
             PrepareTest(sourceFileCompressionType, stageType, stagePath, autoCompress);
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -521,7 +522,7 @@ using System.Threading;
         {
             PrepareTest(sourceFileCompressionType, StageType.NAMED, stagePath, autoCompress, false);
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn);
@@ -539,7 +540,7 @@ using System.Threading;
         {
             PrepareTest(null, stageType, stagePath, false);
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString + ";GCS_USE_DOWNSCOPED_CREDENTIAL=true"))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + ";GCS_USE_DOWNSCOPED_CREDENTIAL=true"))
             {
                 conn.Open();
 
@@ -555,7 +556,7 @@ using System.Threading;
             string stagePath)
         {
             PrepareTest(null, stageType, stagePath, false, true, true);
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 PutFile(conn, "", ResultStatus.UPLOADED, true);

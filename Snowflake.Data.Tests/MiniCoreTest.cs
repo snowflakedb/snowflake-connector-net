@@ -9,7 +9,8 @@ namespace Snowflake.Data.Tests
     [Trait("Category", "MiniCore")]
     public class MiniCoreTest : SFBaseTest
     {
-        public MiniCoreTest(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public MiniCoreTest(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private bool _originalMinicoreState;
         public void SetUp()

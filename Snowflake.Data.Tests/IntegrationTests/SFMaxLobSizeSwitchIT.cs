@@ -6,14 +6,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public class SFMaxLobSizeSwitchIT : SFBaseTest
     {
-        public SFMaxLobSizeSwitchIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFMaxLobSizeSwitchIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private const string SqlSelectLargeString = "select randstr(20000000, random()) as large_str";
 
         [Fact(Skip = "TODO: Enable when Max LOB size is available on the automated tests environment")]
         public void TestIncreaseMaxLobSizeParameterSwitchSelect()
         {
-            using (var conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
             {
                 conn.Open();
                 IDbCommand cmd = conn.CreateCommand();

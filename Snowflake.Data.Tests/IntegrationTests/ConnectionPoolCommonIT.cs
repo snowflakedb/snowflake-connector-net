@@ -16,8 +16,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
         private readonly PoolConfig _previousPoolConfig;
 
-        public ConnectionPoolCommonIT(TestEnvironmentFixture envFixture, ConnectionPoolType connectionPoolTypeUnderTest) : base(envFixture)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public ConnectionPoolCommonIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ConnectionPoolType connectionPoolTypeUnderTest) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             _connectionPoolTypeUnderTest = connectionPoolTypeUnderTest;
             _previousPoolConfig = new PoolConfig();
         }
@@ -44,8 +46,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestConnectionPoolMultiThreading()
         {
-            Thread t1 = new Thread(() => ThreadProcess1(ConnectionString));
-            Thread t2 = new Thread(() => ThreadProcess2(ConnectionString));
+            Thread t1 = new Thread(() => ThreadProcess1(_fixture.ConnectionString));
+            Thread t2 = new Thread(() => ThreadProcess2(_fixture.ConnectionString));
 
             t1.Start();
             t2.Start();
@@ -106,7 +108,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestFailWhenPreventingFromReturningToPoolNotOpenedConnection()
         {
             // arrange
-            var connection = new SnowflakeDbConnection(ConnectionString);
+            var connection = new SnowflakeDbConnection(_fixture.ConnectionString);
 
             // act
             var thrown = Assert.Throws<Exception>(() => connection.PreventPooling());
@@ -210,9 +212,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
             {
                 SnowflakeDbConnectionPool.SetMaxPoolSize(1);
-                return ConnectionString;
+                return _fixture.ConnectionString;
             }
-            return ConnectionString + "maxPoolSize=1;minPoolSize=0;poolingEnabled=true";
+            return _fixture.ConnectionString + "maxPoolSize=1;minPoolSize=0;poolingEnabled=true";
         }
 
         private int ExpectedPoolCountAfterOpen()

@@ -18,7 +18,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     class SFBindTestIT : SFBaseTest
     {
-        public SFBindTestIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFBindTestIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
 
@@ -28,10 +29,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING"
@@ -39,7 +40,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} values (?, ?)";
+                    string insertCommand = $"insert into {_fixture.TableName} values (?, ?)";
                     cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
@@ -68,9 +69,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
-                dbConnection.ConnectionString = ConnectionString;
+                dbConnection.ConnectionString = _fixture.ConnectionString;
                 dbConnection.Open();
-                CreateOrReplaceTable(dbConnection, TableName, new[]
+                _fixture.CreateOrReplaceTable(dbConnection, _fixture.TableName, new[]
                 {
                     "intData NUMBER",
                     "fixedNumericData NUMBER(10,1)",
@@ -155,7 +156,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         if (isTypeSupported)
                         {
-                            command.CommandText = $"insert into {TableName}({colName}) values(:p0)";
+                            command.CommandText = $"insert into {_fixture.TableName}({colName}) values(:p0)";
                             param.Value = nullValue;
                             command.Parameters.Add(param);
                             int rowsInserted = command.ExecuteNonQuery();
@@ -165,7 +166,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             try
                             {
-                                command.CommandText = $"insert into {TableName}(stringData) values(:p0)";
+                                command.CommandText = $"insert into {_fixture.TableName}(stringData) values(:p0)";
                                 param.Value = nullValue;
                                 command.Parameters.Add(param);
                                 int rowsInserted = command.ExecuteNonQuery();
@@ -181,7 +182,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         using (IDbCommand command = dbConnection.CreateCommand())
                         {
-                            command.CommandText = $"select {colName} from {TableName};";
+                            command.CommandText = $"select {colName} from {_fixture.TableName};";
                             using (IDataReader reader = command.ExecuteReader())
                             {
                                 reader.Read();
@@ -194,7 +195,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Clean up between each case
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
-                        command.CommandText = $"DELETE FROM {TableName}";
+                        command.CommandText = $"DELETE FROM {_fixture.TableName}";
                         command.ExecuteNonQuery();
                     }
                 }
@@ -209,10 +210,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
-                dbConnection.ConnectionString = ConnectionString;
+                dbConnection.ConnectionString = _fixture.ConnectionString;
                 dbConnection.Open();
 
-                CreateOrReplaceTable(dbConnection, TableName, new[]
+                _fixture.CreateOrReplaceTable(dbConnection, _fixture.TableName, new[]
                 {
                     "intData NUMBER",
                     "fixedNumericData NUMBER(10,1)",
@@ -311,7 +312,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         if (isTypeSupported)
                         {
-                            command.CommandText = $"insert into {TableName}({colName}) values(:p0)";
+                            command.CommandText = $"insert into {_fixture.TableName}({colName}) values(:p0)";
                             command.Parameters.Add(param);
                             int rowsInserted = command.ExecuteNonQuery();
                             Assert.Equal(1, rowsInserted);
@@ -320,7 +321,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             try
                             {
-                                command.CommandText = $"insert into {TableName}(stringData) values(:p0)";
+                                command.CommandText = $"insert into {_fixture.TableName}(stringData) values(:p0)";
                                 param.Value = DBNull.Value;
                                 command.Parameters.Add(param);
                                 command.ExecuteNonQuery();
@@ -336,7 +337,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         using (IDbCommand command = dbConnection.CreateCommand())
                         {
-                            command.CommandText = $"select {colName} from {TableName};";
+                            command.CommandText = $"select {colName} from {_fixture.TableName};";
                             using (IDataReader reader = command.ExecuteReader())
                             {
                                 reader.Read();
@@ -349,7 +350,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Clean up between each case
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
-                        command.CommandText = $"DELETE FROM {TableName}";
+                        command.CommandText = $"DELETE FROM {_fixture.TableName}";
                         command.ExecuteNonQuery();
                     }
                 }
@@ -361,7 +362,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
-                dbConnection.ConnectionString = ConnectionString;
+                dbConnection.ConnectionString = _fixture.ConnectionString;
                 dbConnection.Open();
                 foreach (SFDataType type in Enum.GetValues(typeof(SFDataType)))
                 {
@@ -386,7 +387,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             };
                         }
 
-                        CreateOrReplaceTable(dbConnection, TableName, columns);
+                        _fixture.CreateOrReplaceTable(dbConnection, _fixture.TableName, columns);
 
                         using (IDbCommand command = dbConnection.CreateCommand())
                         {
@@ -435,7 +436,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             {
                                 // Set to an unsupported DB type to check that SFDataType has precedence
                                 param.DbType = DbType.Object;
-                                command.CommandText = $"insert into {TableName}(data) values(:p0)";
+                                command.CommandText = $"insert into {_fixture.TableName}(data) values(:p0)";
                                 command.Parameters.Add(param);
                                 int rowsInserted = command.ExecuteNonQuery();
                                 Assert.Equal(1, rowsInserted);
@@ -447,7 +448,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             {
                                 try
                                 {
-                                    command.CommandText = $"insert into {TableName}(unsupportedType) values(:p0)";
+                                    command.CommandText = $"insert into {_fixture.TableName}(unsupportedType) values(:p0)";
                                     param.Value = DBNull.Value;
                                     command.Parameters.Add(param);
                                     command.ExecuteNonQuery();
@@ -463,7 +464,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             using (IDbCommand command = dbConnection.CreateCommand())
                             {
-                                command.CommandText = $"select data from {TableName};";
+                                command.CommandText = $"select data from {_fixture.TableName};";
                                 using (IDataReader reader = command.ExecuteReader())
                                 {
                                     reader.Read();
@@ -482,7 +483,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
                 using (IDbCommand cmd = conn.CreateCommand())
@@ -538,10 +539,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING",
@@ -553,7 +554,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} values (?, ?, ?, ?, ?, ?)";
+                    string insertCommand = $"insert into {_fixture.TableName} values (?, ?, ?, ?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
                     int total = 250000;
@@ -654,7 +655,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(total * 3, count);
 
                     cmd.Parameters.Clear();
-                    cmd.CommandText = $"SELECT * FROM {TableName}";
+                    cmd.CommandText = $"SELECT * FROM {_fixture.TableName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.True(reader.Read());
                 }
@@ -671,11 +672,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 TypeNameHandling = TypeNameHandling.Auto
             };
 
-            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            using (IDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "cola REAL",
                     "colb TEXT",
@@ -684,7 +685,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    var insertCommand = $"insert into {TableName} values (?, ?, ?)";
+                    var insertCommand = $"insert into {_fixture.TableName} values (?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
                     var total = 250;
@@ -727,7 +728,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var rowsCount = cmd.ExecuteNonQuery();
                     Assert.Equal(total * 3, rowsCount);
 
-                    cmd.CommandText = $"SELECT * FROM {TableName}";
+                    cmd.CommandText = $"SELECT * FROM {_fixture.TableName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.True(reader.Read());
                 }
@@ -741,17 +742,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "cola INTEGER"
                 });
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} values (?)";
+                    string insertCommand = $"insert into {_fixture.TableName} values (?)";
                     cmd.CommandText = insertCommand;
 
                     int total = 70000;
@@ -770,7 +771,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var count = cmd.ExecuteNonQuery();
                     Assert.Equal(70000, count);
 
-                    cmd.CommandText = $"SELECT * FROM {TableName}";
+                    cmd.CommandText = $"SELECT * FROM {_fixture.TableName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.True(reader.Read());
                 }
@@ -784,17 +785,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "cola INTEGER",
                 });
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} values (?)";
+                    string insertCommand = $"insert into {_fixture.TableName} values (?)";
                     cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
@@ -816,17 +817,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
                     "cola INTEGER",
                 });
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} values (?)";
+                    string insertCommand = $"insert into {_fixture.TableName} values (?)";
                     cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
@@ -913,7 +914,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var bigBatchRowCount = bindingThreshold / 2;
             s_logger.Info(testCase);
 
-            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
+            using (IDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
             {
                 conn.Open();
 
@@ -934,21 +935,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     sql_values += ",?";
                 }
 
-                CreateOrReplaceTable(conn,
-                    TableName,
+                _fixture.CreateOrReplaceTable(conn,
+                    _fixture.TableName,
                     tableType.TableDDLCreationPrefix(),
                     columns,
                     tableType.TableDDLCreationFlags());
 
                 // Act+Assert
-                var sqlInsert = $"insert into {TableName} ({sql_columns}) values ({sql_values})";
+                var sqlInsert = $"insert into {_fixture.TableName} ({sql_columns}) values ({sql_values})";
                 InsertSingleRecord(conn, sqlInsert, bindingType, 1, expected);
                 InsertMultipleRecords(conn, sqlInsert, bindingType, 2, expected, smallBatchRowCount, false);
                 InsertMultipleRecords(conn, sqlInsert, bindingType, smallBatchRowCount + 2, expected, bigBatchRowCount, true);
 
                 // Assert
                 var row = 0;
-                using (var select = conn.CreateCommand($"select {sql_columns} from {TableName} order by id"))
+                using (var select = conn.CreateCommand($"select {sql_columns} from {_fixture.TableName} order by id"))
                 {
                     s_logger.Debug(select.CommandText);
                     var reader = select.ExecuteReader();

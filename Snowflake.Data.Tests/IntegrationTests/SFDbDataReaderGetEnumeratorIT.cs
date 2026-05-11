@@ -13,12 +13,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     class SFDbDataReaderGetEnumeratorIT : SFBaseTest
     {
-        protected override string TestName => base.TestName + _resultFormat;
 
         private readonly ResultFormat _resultFormat;
 
-        public SFDbDataReaderGetEnumeratorIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(envFixture)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFDbDataReaderGetEnumeratorIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
         }
 
@@ -29,7 +30,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 CreateAndPopulateTestTable(conn);
 
-                string selectCommandText = $"select * from {TableName}";
+                string selectCommandText = $"select * from {_fixture.TableName}";
                 IDbCommand selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
                 DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
@@ -56,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 CreateAndPopulateTestTable(conn);
 
-                string selectCommandText = $"select * from {TableName} WHERE cola > 10";
+                string selectCommandText = $"select * from {_fixture.TableName} WHERE cola > 10";
                 IDbCommand selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
                 DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
@@ -77,7 +78,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 CreateAndPopulateTestTable(conn);
 
-                string selectCommandText = $"select * from {TableName}";
+                string selectCommandText = $"select * from {_fixture.TableName}";
                 IDbCommand selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
                 DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
@@ -98,7 +99,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 CreateAndPopulateTestTable(conn);
 
-                string selectCommandText = $"select * from {TableName} WHERE cola > 10";
+                string selectCommandText = $"select * from {_fixture.TableName} WHERE cola > 10";
                 IDbCommand selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
                 DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
@@ -120,7 +121,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 CreateAndPopulateTestTable(conn);
 
-                string selectCommandText = $"select * from {TableName}";
+                string selectCommandText = $"select * from {_fixture.TableName}";
                 IDbCommand selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
                 DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
@@ -139,7 +140,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private void DropTestTableAndCloseConnection(DbConnection conn)
         {
             IDbCommand cmd = conn.CreateCommand();
-            cmd.CommandText = $"drop table if exists {TableName}";
+            cmd.CommandText = $"drop table if exists {_fixture.TableName}";
             var count = cmd.ExecuteNonQuery();
             Assert.Equal(0, count);
 
@@ -148,18 +149,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private void CreateAndPopulateTestTable(DbConnection conn)
         {
-            CreateOrReplaceTable(conn, TableName, new[] { "cola NUMBER" });
+            _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola NUMBER" });
 
             var cmd = conn.CreateCommand();
 
-            string insertCommand = $"insert into {TableName} values (3),(5),(8)";
+            string insertCommand = $"insert into {_fixture.TableName} values (3),(5),(8)";
             cmd.CommandText = insertCommand;
             cmd.ExecuteNonQuery();
         }
 
         private DbConnection CreateAndOpenConnection()
         {
-            var conn = new SnowflakeDbConnection(ConnectionString);
+            var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
             conn.Open();
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
             return conn;

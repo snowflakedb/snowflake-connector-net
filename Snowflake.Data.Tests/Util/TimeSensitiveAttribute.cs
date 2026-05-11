@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 using Xunit;
-using Xunit.v3;
+using Xunit.Sdk;
 using Snowflake.Data.Tests.IntegrationTests;
 
 namespace Snowflake.Data.Tests.Util
@@ -22,10 +22,10 @@ namespace Snowflake.Data.Tests.Util
 
         public TimeSensitiveAttribute() : this(string.Empty) { }
 
-        public override void Before(MethodInfo methodUnderTest, IXunitTest test)
+        public override void Before(MethodInfo methodUnderTest)
         {
             var extraInfoText = string.IsNullOrEmpty(_extraInfo) ? string.Empty : $"Extra info: {_extraInfo}";
-            Assert.Skip($"This test is run separately, due to time dependencies. Look for {nameof(TimeSensitiveFixtureIT)} {extraInfoText}.");
+            Skip.If(true, $"This test is run separately, due to time dependencies. Look for {nameof(TimeSensitiveFixtureIT)} {extraInfoText}.");
         }
     }
 }

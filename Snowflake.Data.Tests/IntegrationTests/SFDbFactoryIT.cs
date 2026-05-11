@@ -6,7 +6,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     class SFDbFactoryIT : SFBaseTest
     {
-        public SFDbFactoryIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFDbFactoryIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         DbProviderFactory _factory;
         DbCommand _command;
@@ -25,7 +26,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _command = _factory.CreateCommand();
             _connection = _factory.CreateConnection();
 
-            _connection.ConnectionString = ConnectionString;
+            _connection.ConnectionString = _fixture.ConnectionString;
             _connection.Open();
         }
         public new void AfterTest()
@@ -69,7 +70,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestDbFactoryWithConnectionStringBuilder()
         {
             DbConnectionStringBuilder builder = _factory.CreateConnectionStringBuilder();
-            builder.ConnectionString = ConnectionString;
+            builder.ConnectionString = _fixture.ConnectionString;
 
             _connection.ConnectionString = builder.ConnectionString;
             _connection.Open();

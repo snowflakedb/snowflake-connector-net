@@ -26,7 +26,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     class SFConnectionIT : SFBaseTest
     {
-        public SFConnectionIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFConnectionIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
@@ -35,7 +36,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
 
@@ -66,7 +67,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
-                    conn.ConnectionString = ConnectionString;
+                    conn.ConnectionString = _fixture.ConnectionString;
                     conn.ConnectionString += $"application={appName}";
                     conn.Open();
                     Assert.Equal(ConnectionState.Open, conn.State);
@@ -81,7 +82,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
-                    conn.ConnectionString = ConnectionString;
+                    conn.ConnectionString = _fixture.ConnectionString;
                     conn.ConnectionString += $"application={appName}";
                     try
                     {
@@ -108,7 +109,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
                 var authenticator = (BaseAuthenticator)conn.SfSession.authenticator;
@@ -136,16 +137,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
             "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
-                    testConfig.protocol,
-                    testConfig.host,
-                    testConfig.port,
-                    testConfig.account,
-                    testConfig.role,
-                    testConfig.database,
-                    testConfig.schema,
-                    testConfig.warehouse,
+                    _fixture.testConfig.protocol,
+                    _fixture.testConfig.host,
+                    _fixture.testConfig.port,
+                    _fixture.testConfig.account,
+                    _fixture.testConfig.role,
+                    _fixture.testConfig.database,
+                    _fixture.testConfig.schema,
+                    _fixture.testConfig.warehouse,
                     "unknown",
-                    testConfig.password);
+                    _fixture.testConfig.password);
 
                 Assert.Equal(conn.State, ConnectionState.Closed);
                 try
@@ -176,7 +177,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 SnowflakeDbConnection snowflakeConnection = null;
                 try
                 {
-                    snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName);
+                    snowflakeConnection = new SnowflakeDbConnection(_fixture.ConnectionStringWithInvalidUserName);
                     snowflakeConnection.Open();
                     Assert.Fail("Connection open should fail");
                 }
@@ -202,7 +203,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 SnowflakeDbConnection snowflakeConnection = null;
                 try
                 {
-                    using (snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName))
+                    using (snowflakeConnection = new SnowflakeDbConnection(_fixture.ConnectionStringWithInvalidUserName))
                     {
                         snowflakeConnection.Open();
                     }
@@ -232,7 +233,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var schemaName = "dlSchema_" + Guid.NewGuid().ToString().Replace("-", "_");
             var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString;
+            conn.ConnectionString = _fixture.ConnectionString;
             conn.Open();
             using (IDbCommand cmd = conn.CreateCommand())
             {
@@ -245,10 +246,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = $"use schema \"{schemaName}\"";
                 cmd.ExecuteNonQuery();
                 //cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
-                cmd.CommandText = $"create table {TableName} (col1 string, col2 int)";
+                cmd.CommandText = $"create table {_fixture.TableName} (col1 string, col2 int)";
                 cmd.ExecuteNonQuery();
                 //cmd.CommandText = "insert into \"dlTest\".\"dlSchema\".test1 Values ('test 1', 1);";
-                cmd.CommandText = $"insert into {TableName} Values ('test 1', 1);";
+                cmd.CommandText = $"insert into {_fixture.TableName} Values ('test 1', 1);";
                 cmd.ExecuteNonQuery();
             }
 
@@ -256,24 +257,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn1.ConnectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                     "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
-                        testConfig.protocol,
-                        testConfig.host,
-                        testConfig.port,
-                        testConfig.account,
-                        testConfig.role,
+                        _fixture.testConfig.protocol,
+                        _fixture.testConfig.host,
+                        _fixture.testConfig.port,
+                        _fixture.testConfig.account,
+                        _fixture.testConfig.role,
                         //"\"dlTest\"",
-                        testConfig.database,
+                        _fixture.testConfig.database,
                         $"\"{schemaName}\"",
-                        //testConfig.schema,
-                        testConfig.warehouse,
-                        testConfig.user,
-                        testConfig.password);
+                        //_fixture.testConfig.schema,
+                        _fixture.testConfig.warehouse,
+                        _fixture.testConfig.user,
+                        _fixture.testConfig.password);
                 Assert.Equal(conn1.State, ConnectionState.Closed);
 
                 conn1.Open();
                 using (IDbCommand cmd = conn1.CreateCommand())
                 {
-                    cmd.CommandText = $"SELECT count(*) FROM {TableName}";
+                    cmd.CommandText = $"SELECT count(*) FROM {_fixture.TableName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.True(reader.Read());
                     Assert.Equal(1, reader.GetInt32(0));
@@ -288,9 +289,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 //cmd.CommandText = "drop database \"dlTest\"";
                 cmd.CommandText = $"drop schema \"{schemaName}\"";
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = "use database " + testConfig.database;
+                cmd.CommandText = "use database " + _fixture.testConfig.database;
                 cmd.ExecuteNonQuery();
-                cmd.CommandText = "use schema " + testConfig.schema;
+                cmd.CommandText = "use schema " + _fixture.testConfig.schema;
                 cmd.ExecuteNonQuery();
             }
             conn.Close();
@@ -303,14 +304,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.ConnectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
             "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};authenticator={10};",
-                    testConfig.protocol,
-                    testConfig.host,
-                    testConfig.port,
-                    testConfig.account,
-                    testConfig.role,
-                    testConfig.database,
-                    testConfig.schema,
-                    testConfig.warehouse,
+                    _fixture.testConfig.protocol,
+                    _fixture.testConfig.host,
+                    _fixture.testConfig.port,
+                    _fixture.testConfig.account,
+                    _fixture.testConfig.role,
+                    _fixture.testConfig.database,
+                    _fixture.testConfig.schema,
+                    _fixture.testConfig.warehouse,
                     "",
                     "",
                     "externalbrowser");
@@ -325,7 +326,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestConnectViaSecureString()
         {
-            String[] connEntries = ConnectionString.Split(';');
+            String[] connEntries = _fixture.ConnectionString.Split(';');
             String connectionStringWithoutPassword = "";
             using (var conn = new SnowflakeDbConnection())
             {
@@ -350,7 +351,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Password = password;
                 conn.Open();
 
-                Assert.Equal(testConfig.database.ToUpper(), conn.Database);
+                Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
                 Assert.Equal(conn.State, ConnectionState.Open);
 
                 conn.Close();
@@ -364,7 +365,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new MockSnowflakeDbConnection())
             {
                 int timeoutSec = 5;
-                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};maxHttpRetries=0",
+                string loginTimeOut5sec = String.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                     timeoutSec);
 
                 conn.ConnectionString = loginTimeOut5sec;
@@ -401,7 +402,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
             {
-                string maxRetryConnStr = ConnectionString + "maxHttpRetries=7";
+                string maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=7";
 
                 conn.ConnectionString = maxRetryConnStr;
 
@@ -437,7 +438,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 int connectionTimeout = 600;
                 int retryTimeout = 350;
-                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+                string loginTimeOut5sec = String.Format(_fixture.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
                     connectionTimeout, retryTimeout);
 
                 conn.ConnectionString = loginTimeOut5sec;
@@ -474,7 +475,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
 
                 // Default timeout is 300 sec
                 Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
@@ -569,16 +570,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             string connectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
             "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
-                    testConfig.protocol,
-                    testConfig.host,
-                    testConfig.port,
-                    testConfig.account,
-                    testConfig.role,
-                    testConfig.database,
-                    testConfig.schema,
+                    _fixture.testConfig.protocol,
+                    _fixture.testConfig.host,
+                    _fixture.testConfig.port,
+                    _fixture.testConfig.account,
+                    _fixture.testConfig.role,
+                    _fixture.testConfig.database,
+                    _fixture.testConfig.schema,
                     "WAREHOUSE_NEVER_EXISTS",
-                    testConfig.user,
-                    testConfig.password);
+                    _fixture.testConfig.user,
+                    _fixture.testConfig.password);
 
             // By default should validate parameters
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -640,7 +641,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 // invalid propety will be ignored.
-                conn.ConnectionString = ConnectionString + ";invalidProperty=invalidvalue;";
+                conn.ConnectionString = _fixture.ConnectionString + ";invalidProperty=invalidvalue;";
 
                 conn.Open();
                 Assert.Equal(conn.State, ConnectionState.Open);
@@ -655,13 +656,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
 
                 Assert.Equal(conn.State, ConnectionState.Closed);
 
                 conn.Open();
 
-                Assert.Equal(testConfig.database.ToUpper(), conn.Database);
+                Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
                 Assert.Equal(conn.State, ConnectionState.Open);
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -670,7 +671,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal("SNOWFLAKE_SAMPLE_DATA", conn.Database);
                 }
 
-                conn.ChangeDatabase(testConfig.database);
+                conn.ChangeDatabase(_fixture.testConfig.database);
                 conn.Close();
             }
 
@@ -682,10 +683,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 string connStrFmt = "account={0};user={1};password={2};certRevocationCheckMode=enabled;";
-                conn.ConnectionString = string.Format(connStrFmt, testConfig.account,
-                    testConfig.user, testConfig.password);
+                conn.ConnectionString = string.Format(connStrFmt, _fixture.testConfig.account,
+                    _fixture.testConfig.user, _fixture.testConfig.password);
                 // Check that connection succeeds if host is not specified in test configs, i.e. default should work.
-                if (string.IsNullOrEmpty(testConfig.host))
+                if (string.IsNullOrEmpty(_fixture.testConfig.host))
                 {
                     conn.Open();
                     Assert.Equal(conn.State, ConnectionState.Open);
@@ -699,10 +700,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                var host = testConfig.host;
+                var host = _fixture.testConfig.host;
                 if (string.IsNullOrEmpty(host))
                 {
-                    host = $"{testConfig.account}.snowflakecomputing.com";
+                    host = $"{_fixture.testConfig.account}.snowflakecomputing.com";
                 }
 
                 string connStrFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
@@ -710,12 +711,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = string.Format(
                     connStrFmt,
-                    testConfig.protocol,
-                    testConfig.host,
-                    testConfig.port,
-                    testConfig.user,
-                    testConfig.password,
-                    testConfig.account
+                    _fixture.testConfig.protocol,
+                    _fixture.testConfig.host,
+                    _fixture.testConfig.port,
+                    _fixture.testConfig.user,
+                    _fixture.testConfig.password,
+                    _fixture.testConfig.account
                     );
                 conn.Open();
                 Assert.Equal(conn.State, ConnectionState.Open);
@@ -743,14 +744,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestConnectionDispose()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            using (IDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
-                CreateOrReplaceTable(conn, TableName, new[] { "c INT" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "c INT" });
                 var t1 = conn.BeginTransaction();
                 var t1c1 = conn.CreateCommand();
                 t1c1.Transaction = t1;
-                t1c1.CommandText = $"insert into {TableName} values (1)";
+                t1c1.CommandText = $"insert into {_fixture.TableName} values (1)";
                 t1c1.ExecuteNonQuery();
             }
 
@@ -758,10 +759,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // Previous connection would be disposed and
                 // uncommitted txn would rollback at this point
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 IDbCommand command = conn.CreateCommand();
-                command.CommandText = $"SELECT * FROM {TableName}";
+                command.CommandText = $"SELECT * FROM {_fixture.TableName}";
                 IDataReader reader = command.ExecuteReader();
                 Assert.False(reader.Read());
             }
@@ -800,12 +801,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator={0};user={1};password={2};",
-                        testConfig.oktaUrl,
-                        testConfig.oktaUser,
-                        testConfig.oktaPassword);
+                        _fixture.testConfig.oktaUrl,
+                        _fixture.testConfig.oktaUser,
+                        _fixture.testConfig.oktaPassword);
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
@@ -830,7 +831,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 try
                 {
                     conn.ConnectionString
-                        = ConnectionStringWithoutAuth
+                        = _fixture.ConnectionStringWithoutAuth
                         + String.Format(
                             ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
                             oktaUrl,
@@ -858,12 +859,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator={0};user={1};password={2};",
-                        testConfig.oktaUrl,
-                        testConfig.oktaUser,
-                        testConfig.oktaPassword);
+                        _fixture.testConfig.oktaUrl,
+                        _fixture.testConfig.oktaUser,
+                        _fixture.testConfig.oktaPassword);
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
@@ -872,12 +873,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator={0};user={1};password={2};",
-                        testConfig.oktaUrl,
-                        testConfig.oktaUser,
-                        testConfig.oktaPassword);
+                        _fixture.testConfig.oktaUrl,
+                        _fixture.testConfig.oktaUser,
+                        _fixture.testConfig.oktaPassword);
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
@@ -890,7 +891,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
@@ -912,7 +913,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                       + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;POOLINGENABLED=TRUE";
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
@@ -932,7 +933,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                       + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
@@ -955,7 +956,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;disable_console_login=false;";
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
@@ -974,7 +975,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                       + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;disable_console_login=false;";
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
@@ -1001,7 +1002,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     using (IDbConnection conn = new SnowflakeDbConnection())
                     {
                         conn.ConnectionString
-                            = ConnectionStringWithoutAuth
+                            = _fixture.ConnectionStringWithoutAuth
                               + $";authenticator=externalbrowser;user=qa@snowflakecomputing.com;BROWSER_RESPONSE_TIMEOUT={waitSeconds}";
                         conn.Open();
                         Assert.Equal(ConnectionState.Open, conn.State);
@@ -1033,8 +1034,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
             // The specified user should be configured for SSO
             var externalBrowserConnectionString
-                = ConnectionStringWithoutAuth
-                    + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;poolingEnabled=false";
+                = _fixture.ConnectionStringWithoutAuth
+                    + $";authenticator=externalbrowser;user={_fixture.testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;poolingEnabled=false";
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
@@ -1068,11 +1069,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
-                        + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;";
+                    = _fixture.ConnectionStringWithoutAuth
+                        + $";authenticator=externalbrowser;user={_fixture.testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;";
 
                 // Create a credential manager and save a wrong token for the test user
-                var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(testConfig.host, testConfig.user, TokenType.IdToken);
+                var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(_fixture.testConfig.host, _fixture.testConfig.user, TokenType.IdToken);
                 var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
                 credentialManager.SaveCredentials(key, "wrongToken");
 
@@ -1096,7 +1097,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString
-                        = ConnectionStringWithoutAuth
+                        = _fixture.ConnectionStringWithoutAuth
                         + ";authenticator=externalbrowser;user=wrong@snowflakecomputing.com";
                     conn.Open();
                     Assert.Fail();
@@ -1114,11 +1115,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
-                        testConfig.jwtAuthUser,
-                        testConfig.pemFilePath);
+                        _fixture.testConfig.jwtAuthUser,
+                        _fixture.testConfig.pemFilePath);
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
@@ -1130,11 +1131,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
-                        testConfig.jwtAuthUser,
-                        testConfig.p8FilePath);
+                        _fixture.testConfig.jwtAuthUser,
+                        _fixture.testConfig.p8FilePath);
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
@@ -1146,12 +1147,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator=snowflake_jwt;user={0};private_key_file={1};private_key_pwd={2}",
-                        testConfig.jwtAuthUser,
-                        testConfig.pwdProtectedPrivateKeyFilePath,
-                        testConfig.privateKeyFilePwd);
+                        _fixture.testConfig.jwtAuthUser,
+                        _fixture.testConfig.pwdProtectedPrivateKeyFilePath,
+                        _fixture.testConfig.privateKeyFilePwd);
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
@@ -1163,11 +1164,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator=snowflake_jwt;user={0};private_key={1}",
-                        testConfig.jwtAuthUser,
-                        testConfig.privateKey);
+                        _fixture.testConfig.jwtAuthUser,
+                        _fixture.testConfig.privateKey);
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
@@ -1179,12 +1180,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator=snowflake_jwt;user={0};private_key={1};private_key_pwd={2}",
-                        testConfig.jwtAuthUser,
-                        testConfig.pwdProtectedPrivateKey,
-                        testConfig.privateKeyFilePwd);
+                        _fixture.testConfig.jwtAuthUser,
+                        _fixture.testConfig.pwdProtectedPrivateKey,
+                        _fixture.testConfig.privateKeyFilePwd);
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
@@ -1198,11 +1199,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString
-                        = ConnectionStringWithoutAuth
+                        = _fixture.ConnectionStringWithoutAuth
                         + String.Format(
                             ";authenticator=snowflake_jwt;user={0};private_key_pwd={1}",
-                            testConfig.jwtAuthUser,
-                            testConfig.privateKeyFilePwd);
+                            _fixture.testConfig.jwtAuthUser,
+                            _fixture.testConfig.privateKeyFilePwd);
                     conn.Open();
                     Assert.Fail();
                 }
@@ -1223,11 +1224,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString
-                        = ConnectionStringWithoutAuth
+                        = _fixture.ConnectionStringWithoutAuth
                         + String.Format(
                             ";authenticator=snowflake_jwt;user={0};private_key_file={1};private_key_pwd=Invalid",
-                            testConfig.jwtAuthUser,
-                            testConfig.pwdProtectedPrivateKeyFilePath);
+                            _fixture.testConfig.jwtAuthUser,
+                            _fixture.testConfig.pwdProtectedPrivateKeyFilePath);
                     conn.Open();
                     Assert.Fail();
                 }
@@ -1247,11 +1248,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString
-                        = ConnectionStringWithoutAuth
+                        = _fixture.ConnectionStringWithoutAuth
                         + String.Format(
                             ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
-                            testConfig.jwtAuthUser,
-                            testConfig.pwdProtectedPrivateKeyFilePath);
+                            _fixture.testConfig.jwtAuthUser,
+                            _fixture.testConfig.pwdProtectedPrivateKeyFilePath);
                     conn.Open();
                     Assert.Fail();
                 }
@@ -1271,11 +1272,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString
-                        = ConnectionStringWithoutAuth
+                        = _fixture.ConnectionStringWithoutAuth
                         + String.Format(
                             ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
                             "WrongUser",
-                            testConfig.pemFilePath);
+                            _fixture.testConfig.pemFilePath);
                     conn.Open();
                     Assert.Fail();
                 }
@@ -1295,12 +1296,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString
-                        = ConnectionStringWithoutAuth
+                        = _fixture.ConnectionStringWithoutAuth
                         + String.Format(
                             ";authenticator=snowflake_jwt;user={0};private_key_file={1};private_key_pwd={2}",
                             "WrongUser",
-                            testConfig.pwdProtectedPrivateKeyFilePath,
-                            testConfig.privateKeyFilePwd);
+                            _fixture.testConfig.pwdProtectedPrivateKeyFilePath,
+                            _fixture.testConfig.privateKeyFilePwd);
                     conn.Open();
                     Assert.Fail();
                 }
@@ -1319,10 +1320,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                     + String.Format(
                         ";authenticator=oauth;token={0}",
-                        testConfig.oauthToken);
+                        _fixture.testConfig.oauthToken);
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
@@ -1336,7 +1337,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString
-                        = ConnectionStringWithoutAuth
+                        = _fixture.ConnectionStringWithoutAuth
                         + ";authenticator=oauth;token=notAValidOAuthToken";
                     conn.Open();
                     Assert.Equal(ConnectionState.Open, conn.State);
@@ -1358,10 +1359,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString
-                   = ConnectionStringWithoutAuth
+                   = _fixture.ConnectionStringWithoutAuth
                    + String.Format(
                        ";authenticator=oauth;token={0}",
-                       testConfig.expOauthToken);
+                       _fixture.testConfig.expOauthToken);
                     conn.Open();
                     Assert.Fail();
                 }
@@ -1380,11 +1381,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                = ConnectionString
+                = _fixture.ConnectionString
                 + String.Format(
                     ";useProxy=true;proxyHost={0};proxyPort={1}",
-                    testConfig.proxyHost,
-                    testConfig.proxyPort);
+                    _fixture.testConfig.proxyHost,
+                    _fixture.testConfig.proxyPort);
 
                 conn.Open();
             }
@@ -1396,13 +1397,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                = ConnectionString
+                = _fixture.ConnectionString
                 + String.Format(
                     ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3}",
-                    testConfig.authProxyHost,
-                    testConfig.authProxyPort,
-                    testConfig.authProxyUser,
-                    testConfig.authProxyPwd);
+                    _fixture.testConfig.authProxyHost,
+                    _fixture.testConfig.authProxyPort,
+                    _fixture.testConfig.authProxyUser,
+                    _fixture.testConfig.authProxyPwd);
 
                 conn.Open();
             }
@@ -1414,14 +1415,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                = ConnectionString
+                = _fixture.ConnectionString
                 + String.Format(
                     ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};nonProxyHosts={4}",
-                    testConfig.authProxyHost,
-                    testConfig.authProxyPort,
-                    testConfig.authProxyUser,
-                    testConfig.authProxyPwd,
-                    "*.foo.com %7C" + testConfig.host + "|localhost");
+                    _fixture.testConfig.authProxyHost,
+                    _fixture.testConfig.authProxyPort,
+                    _fixture.testConfig.authProxyUser,
+                    _fixture.testConfig.authProxyPwd,
+                    "*.foo.com %7C" + _fixture.testConfig.host + "|localhost");
 
                 conn.Open();
             }
@@ -1433,31 +1434,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Authenticated proxy
             using (var conn1 = new SnowflakeDbConnection())
             {
-                conn1.ConnectionString = ConnectionString
+                conn1.ConnectionString = _fixture.ConnectionString
                     + String.Format(
                         ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3}",
-                        testConfig.authProxyHost,
-                        testConfig.authProxyPort,
-                        testConfig.authProxyUser,
-                        testConfig.authProxyPwd);
+                        _fixture.testConfig.authProxyHost,
+                        _fixture.testConfig.authProxyPort,
+                        _fixture.testConfig.authProxyUser,
+                        _fixture.testConfig.authProxyPwd);
                 conn1.Open();
             }
 
             // No proxy
             using (var conn2 = new SnowflakeDbConnection())
             {
-                conn2.ConnectionString = ConnectionString;
+                conn2.ConnectionString = _fixture.ConnectionString;
                 conn2.Open();
             }
 
             // Non authenticated proxy
             using (var conn3 = new SnowflakeDbConnection())
             {
-                conn3.ConnectionString = ConnectionString
+                conn3.ConnectionString = _fixture.ConnectionString
                 + String.Format(
                     ";useProxy=true;proxyHost={0};proxyPort={1}",
-                    testConfig.proxyHost,
-                    testConfig.proxyPort);
+                    _fixture.testConfig.proxyHost,
+                    _fixture.testConfig.proxyPort);
                 conn3.Open();
             }
 
@@ -1465,7 +1466,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn4 = new SnowflakeDbConnection())
             {
                 conn4.ConnectionString =
-                    ConnectionString + "connection_timeout=20;useProxy=true;proxyHost=Invalid;proxyPort=8080;";
+                    _fixture.ConnectionString + "connection_timeout=20;useProxy=true;proxyHost=Invalid;proxyPort=8080;";
                 try
                 {
                     conn4.Open();
@@ -1481,13 +1482,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Will use a different httpclient
             using (var conn5 = new SnowflakeDbConnection())
             {
-                conn5.ConnectionString = ConnectionStringModifier.DisableCrlRevocationCheck(ConnectionString
+                conn5.ConnectionString = ConnectionStringModifier.DisableCrlRevocationCheck(_fixture.ConnectionString
                     + String.Format(
                         ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};",
-                        testConfig.authProxyHost,
-                        testConfig.authProxyPort,
-                        testConfig.authProxyUser,
-                        testConfig.authProxyPwd));
+                        _fixture.testConfig.authProxyHost,
+                        _fixture.testConfig.authProxyPort,
+                        _fixture.testConfig.authProxyUser,
+                        _fixture.testConfig.authProxyPwd));
                 conn5.Open();
             }
 
@@ -1496,7 +1497,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn6 = new SnowflakeDbConnection())
             {
 
-                conn6.ConnectionString = ConnectionStringModifier.DisableCrlRevocationCheck(ConnectionString);
+                conn6.ConnectionString = ConnectionStringModifier.DisableCrlRevocationCheck(_fixture.ConnectionString);
                 conn6.Open();
             }
 
@@ -1505,14 +1506,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn7 = new SnowflakeDbConnection())
             {
                 conn7.ConnectionString
-              = ConnectionString
+              = _fixture.ConnectionString
               + String.Format(
                   ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};nonProxyHosts={4}",
-                  testConfig.authProxyHost,
-                  testConfig.authProxyPort,
-                  testConfig.authProxyUser,
-                  testConfig.authProxyPwd,
-                  "*.foo.com %7C" + testConfig.host + "|localhost");
+                  _fixture.testConfig.authProxyHost,
+                  _fixture.testConfig.authProxyPort,
+                  _fixture.testConfig.authProxyUser,
+                  _fixture.testConfig.authProxyPwd,
+                  "*.foo.com %7C" + _fixture.testConfig.host + "|localhost");
 
                 conn7.Open();
             }
@@ -1521,7 +1522,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Should use same httpclient than conn2
             using (var conn8 = new SnowflakeDbConnection())
             {
-                conn8.ConnectionString = ConnectionString;
+                conn8.ConnectionString = _fixture.ConnectionString;
                 conn8.Open();
             }
 
@@ -1530,14 +1531,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn9 = new SnowflakeDbConnection())
             {
                 conn9.ConnectionString
-              = ConnectionStringModifier.DisableCrlRevocationCheck(ConnectionString)
+              = ConnectionStringModifier.DisableCrlRevocationCheck(_fixture.ConnectionString)
                 + String.Format(
                     ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};nonProxyHosts={4};",
-                    testConfig.authProxyHost,
-                    testConfig.authProxyPort,
-                    testConfig.authProxyUser,
-                    testConfig.authProxyPwd,
-                    "*.foo.com %7C" + testConfig.host + "|localhost");
+                    _fixture.testConfig.authProxyHost,
+                    _fixture.testConfig.authProxyPort,
+                    _fixture.testConfig.authProxyUser,
+                    _fixture.testConfig.authProxyPwd,
+                    "*.foo.com %7C" + _fixture.testConfig.host + "|localhost");
 
                 conn9.Open();
             }
@@ -1547,14 +1548,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn10 = new SnowflakeDbConnection())
             {
                 conn10.ConnectionString
-              = ConnectionString
+              = _fixture.ConnectionString
               + String.Format(
                   ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};nonProxyHosts={4}",
-                  testConfig.authProxyHost,
-                  testConfig.authProxyPort,
-                  testConfig.authProxyUser,
-                  testConfig.authProxyPwd,
-                  "*.foo.com %7C" + testConfig.host + "|localhost");
+                  _fixture.testConfig.authProxyHost,
+                  _fixture.testConfig.authProxyPort,
+                  _fixture.testConfig.authProxyUser,
+                  _fixture.testConfig.authProxyPwd,
+                  "*.foo.com %7C" + _fixture.testConfig.host + "|localhost");
 
                 conn10.Open();
             }
@@ -1563,7 +1564,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Should use same httpclient than conn6
             using (var conn11 = new SnowflakeDbConnection())
             {
-                conn11.ConnectionString = ConnectionStringModifier.DisableCrlRevocationCheck(ConnectionString);
+                conn11.ConnectionString = ConnectionStringModifier.DisableCrlRevocationCheck(_fixture.ConnectionString);
                 conn11.Open();
             }
         }
@@ -1575,7 +1576,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
 
                 conn.ConnectionString =
-                    ConnectionString + "connection_timeout=5;useProxy=true;proxyHost=Invalid;proxyPort=8080";
+                    _fixture.ConnectionString + "connection_timeout=5;useProxy=true;proxyHost=Invalid;proxyPort=8080";
                 try
                 {
                     conn.Open();
@@ -1605,10 +1606,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                var host = ResolveHost();
+                var host = _fixture.ResolveHost();
                 var nonProxyHosts = string.Format(regexHost, $"{host}");
                 conn.ConnectionString =
-                    $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                    $"{_fixture.ConnectionString}USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
 
                 // Act
                 conn.Open();
@@ -1631,9 +1632,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                var nonProxyHosts = string.Format(regexHost, $"{testConfig.host}");
+                var nonProxyHosts = string.Format(regexHost, $"{_fixture.testConfig.host}");
                 conn.ConnectionString =
-                    $"{ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                    $"{_fixture.ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
 
                 // Act/Assert
                 // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
@@ -1651,7 +1652,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString =
-                    ConnectionString + ";useProxy=false;proxyHost=Invalid;proxyPort=8080";
+                    _fixture.ConnectionString + ";useProxy=false;proxyHost=Invalid;proxyPort=8080";
                 conn.Open();
                 // Because useProxy=false, the proxy settings are ignored
             }
@@ -1663,25 +1664,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                = ConnectionString
+                = _fixture.ConnectionString
                 + String.Format(
                     ";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
-                    $"*.foo.com %7C{testConfig.account}.snowflakecomputing.com|*{testConfig.host}*");
+                    $"*.foo.com %7C{_fixture.testConfig.account}.snowflakecomputing.com|*{_fixture.testConfig.host}*");
                 conn.Open();
-                // Because testConfig.host is in the bypass list, the proxy should not be used
+                // Because _fixture.testConfig.host is in the bypass list, the proxy should not be used
             }
         }
 
         [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void testMulitpleConnectionInParallel()
         {
-            string baseConnectionString = ConnectionString + $";CONNECTION_TIMEOUT=30;";
+            string baseConnectionString = _fixture.ConnectionString + $";CONNECTION_TIMEOUT=30;";
             string authenticatedProxy = String.Format("useProxy =true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};",
-                  testConfig.authProxyHost,
-                  testConfig.authProxyPort,
-                  testConfig.authProxyUser,
-                  testConfig.authProxyPwd);
-            string byPassList = "nonProxyHosts=*.foo.com %7C" + testConfig.host + "|localhost;";
+                  _fixture.testConfig.authProxyHost,
+                  _fixture.testConfig.authProxyPort,
+                  _fixture.testConfig.authProxyUser,
+                  _fixture.testConfig.authProxyPwd);
+            string byPassList = "nonProxyHosts=*.foo.com %7C" + _fixture.testConfig.host + "|localhost;";
 
             string[] connectionStrings = {
                 baseConnectionString,
@@ -1756,7 +1757,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false;key1=test\'password;key2=test\"password;key3=test==password";
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false;key1=test\'password;key2=test\"password;key3=test==password";
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
 
@@ -1781,7 +1782,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false;key==word=value; key1=\"test;password\"; key2=\"test=password\"";
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false;key==word=value; key1=\"test;password\"; key2=\"test=password\"";
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
 
@@ -1805,7 +1806,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestHeartBeat()
         {
             var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString + "poolingEnabled=false;CLIENT_SESSION_KEEP_ALIVE=true";
+            conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false;CLIENT_SESSION_KEEP_ALIVE=true";
             conn.Open();
 
             Thread.Sleep(TimeSpan.FromSeconds(14430)); // more than 4 hrs
@@ -1825,14 +1826,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.ClearAllPools();
 
             var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString + "maxPoolSize=2;minPoolSize=0;expirationTimeout=14800;CLIENT_SESSION_KEEP_ALIVE=true";
+            conn.ConnectionString = _fixture.ConnectionString + "maxPoolSize=2;minPoolSize=0;expirationTimeout=14800;CLIENT_SESSION_KEEP_ALIVE=true";
             conn.Open();
             conn.Close();
 
             Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
 
             var conn1 = new SnowflakeDbConnection();
-            conn1.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
+            conn1.ConnectionString = _fixture.ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
             conn1.Open();
             Thread.Sleep(TimeSpan.FromSeconds(14430)); // more than 4 hrs
 
@@ -1855,7 +1856,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connCount = 100;
             // pooled connection expires in 5 seconds so after 5 seconds,
             // one connection per second will be closed
-            var connectionString = ConnectionString + "maxPoolSize=20;ExpirationTimeout=5;CLIENT_SESSION_KEEP_ALIVE=true";
+            var connectionString = _fixture.ConnectionString + "maxPoolSize=20;ExpirationTimeout=5;CLIENT_SESSION_KEEP_ALIVE=true";
             // heart beat interval is validity/4 so send out per 5 seconds
             HeartBeatBackground.setValidity(20);
             try
@@ -1883,7 +1884,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     }
     class SFConnectionITAsync : SFBaseTestAsync
     {
-        public SFConnectionITAsync(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFConnectionITAsync(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
@@ -1895,7 +1897,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // No timeout
                 int timeoutSec = 0;
-                string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
+                string infiniteLoginTimeOut = String.Format(_fixture.ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
                     timeoutSec);
 
                 conn.ConnectionString = infiniteLoginTimeOut;
@@ -1934,7 +1936,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new MockSnowflakeDbConnection())
             {
                 int timeoutSec = 5;
-                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};maxHttpRetries=0",
+                string loginTimeOut5sec = String.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                     timeoutSec);
                 conn.ConnectionString = loginTimeOut5sec;
 
@@ -1971,7 +1973,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 int connectionTimeout = 600;
                 int retryTimeout = 350;
-                string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+                string loginTimeOut5sec = String.Format(_fixture.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
                     connectionTimeout, retryTimeout);
                 conn.ConnectionString = loginTimeOut5sec;
 
@@ -2007,7 +2009,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new MockSnowflakeDbConnection())
             {
                 // unlimited retry count to trigger the timeout
-                conn.ConnectionString = ConnectionString + "maxHttpRetries=0";
+                conn.ConnectionString = _fixture.ConnectionString + "maxHttpRetries=0";
 
                 Assert.Equal(conn.State, ConnectionState.Closed);
 
@@ -2077,7 +2079,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // No exception is generated.
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 Assert.Equal(conn.State, ConnectionState.Closed);
                 Task task = null;
 
@@ -2113,7 +2115,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // No exception is generated.
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 Assert.Equal(conn.State, ConnectionState.Closed);
                 Task task = null;
 
@@ -2145,7 +2147,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 Assert.Equal(conn.State, ConnectionState.Closed);
                 Task task = null;
 
@@ -2173,7 +2175,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestExplicitTransactionOperationsTracked()
         {
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 Assert.Equal(false, conn.HasActiveExplicitTransaction());
@@ -2211,7 +2213,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 try
                 {
                     conn.ConnectionString
-                        = ConnectionStringWithoutAuth
+                        = _fixture.ConnectionStringWithoutAuth
                         + String.Format(
                             ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
                             oktaUrl,
@@ -2247,7 +2249,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var oktaPassword = "***";
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionStringWithoutAuth +
+                conn.ConnectionString = _fixture.ConnectionStringWithoutAuth +
                                         $";authenticator={oktaUrl};user={oktaUser};password={oktaPassword};";
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
@@ -2260,7 +2262,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 string expectedQueryTag = "Test QUERY_TAG 12345";
-                conn.ConnectionString = ConnectionString + $";query_tag={expectedQueryTag}";
+                conn.ConnectionString = _fixture.ConnectionString + $";query_tag={expectedQueryTag}";
 
                 conn.Open();
                 var command = conn.CreateCommand();
@@ -2286,14 +2288,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         // to enroll to mfa authentication edit your user profile
         public void TestMFATokenCachingWithPasscodeFromConnectionString()
         {
-            // Use a connection with MFA enabled and set passcode property for mfa authentication. e.g. ConnectionString + ";authenticator=username_password_mfa;passcode=(set proper passcode)"
+            // Use a connection with MFA enabled and set passcode property for mfa authentication. e.g. _fixture.ConnectionString + ";authenticator=username_password_mfa;passcode=(set proper passcode)"
             // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
             // On Mac/Linux OS the default credential manager is a file based one. Uncomment the following line to test in memory implementation.
             // SnowflakeCredentialManagerFactory.UseInMemoryCredentialManager();
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionString
+                    = _fixture.ConnectionString
                       + ";authenticator=username_password_mfa;application=DuoTest;minPoolSize=0;passcode=(set proper passcode)";
 
 
@@ -2317,7 +2319,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Passcode = SecureStringHelper.Encode("$(set proper passcode)");
                 // manual action: stop here in breakpoint to provide proper passcode by: conn.Passcode = SecureStringHelper.Encode("...");
-                conn.ConnectionString = ConnectionString + "minPoolSize=2;application=DuoTest;";
+                conn.ConnectionString = _fixture.ConnectionString + "minPoolSize=2;application=DuoTest;";
 
                 // act
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
@@ -2379,8 +2381,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
             // The specified user should be configured for SSO
             var externalBrowserConnectionString
-                = ConnectionStringWithoutAuth
-                    + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;poolingEnabled=false";
+                = _fixture.ConnectionStringWithoutAuth
+                    + $";authenticator=externalbrowser;user={_fixture.testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;poolingEnabled=false";
 
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
@@ -2423,7 +2425,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private SFSession GetSessionFromForgottenConnection()
         {
-            var connection = new SnowflakeDbConnection(ConnectionString + ";poolingEnabled=false;application=TestGarbageCollectorCloseSession");
+            var connection = new SnowflakeDbConnection(_fixture.ConnectionString + ";poolingEnabled=false;application=TestGarbageCollectorCloseSession");
             connection.Open();
             return connection.SfSession;
         }
@@ -2460,10 +2462,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var driverRootPath = Path.Combine("..", "..");
             var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
             var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName; // Set either OAuthAuthorizationCodeAuthenticator.AuthName or OAuthClientCredentialsAuthenticator.AuthName
-            RemoveOAuthCache(testConfig);
+            RemoveOAuthCache(_fixture.testConfig);
             try
             {
-                using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthFlows(testConfig, authenticator)))
+                using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthFlows(_fixture.testConfig, authenticator)))
                 {
                     // act
                     connection.Open();
@@ -2471,7 +2473,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             finally
             {
-                RemoveOAuthCache(testConfig);
+                RemoveOAuthCache(_fixture.testConfig);
             }
         }
 
@@ -2479,7 +2481,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestProgrammaticAccessTokenAuthentication()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionStringForPat(testConfig)))
+            using (var connection = new SnowflakeDbConnection(ConnectionStringForPat(_fixture.testConfig)))
             {
                 // act
                 connection.Open();
@@ -2488,9 +2490,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private void RemoveOAuthCache(TestConfig testConfig)
         {
-            var host = new Uri(testConfig.oauthTokenRequestUrl).Host;
-            var accessCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthAccessToken);
-            var refreshCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthRefreshToken);
+            var host = new Uri(_fixture.testConfig.oauthTokenRequestUrl).Host;
+            var accessCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, _fixture.testConfig.user, TokenType.OAuthAccessToken);
+            var refreshCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, _fixture.testConfig.user, TokenType.OAuthRefreshToken);
             var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
             credentialManager.RemoveCredentials(accessCacheKey);
             credentialManager.RemoveCredentials(refreshCacheKey);
@@ -2499,17 +2501,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private string ConnectionStringForOAuthFlows(TestConfig testConfig, string authenticator)
         {
             var builder = new StringBuilder()
-                .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};certRevocationCheckMode=enabled;")
-                .Append($"db={testConfig.database};role={testConfig.role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
-                .Append($"oauthClientId={testConfig.oauthClientId};oauthClientSecret={testConfig.oauthClientSecret};oauthScope={testConfig.oauthScope};")
-                .Append($"oauthTokenRequestUrl={testConfig.oauthTokenRequestUrl};")
+                .Append($"authenticator={authenticator};user={_fixture.testConfig.user};password={_fixture.testConfig.password};account={_fixture.testConfig.account};certRevocationCheckMode=enabled;")
+                .Append($"db={_fixture.testConfig.database};role={_fixture.testConfig.role};warehouse={_fixture.testConfig.warehouse};host={_fixture.testConfig.host};port={_fixture.testConfig.port};")
+                .Append($"oauthClientId={_fixture.testConfig.oauthClientId};oauthClientSecret={_fixture.testConfig.oauthClientSecret};oauthScope={_fixture.testConfig.oauthScope};")
+                .Append($"oauthTokenRequestUrl={_fixture.testConfig.oauthTokenRequestUrl};")
                 .Append("poolingEnabled=false;");
             switch (authenticator)
             {
                 case OAuthAuthorizationCodeAuthenticator.AuthName:
                     return builder
-                        .Append($"oauthRedirectUri={testConfig.oauthRedirectUri};")
-                        .Append($"oauthAuthorizationUrl={testConfig.oauthAuthorizationUrl}")
+                        .Append($"oauthRedirectUri={_fixture.testConfig.oauthRedirectUri};")
+                        .Append($"oauthAuthorizationUrl={_fixture.testConfig.oauthAuthorizationUrl}")
                         .ToString();
                 case OAuthClientCredentialsAuthenticator.AuthName:
                     return builder.ToString();
@@ -2522,9 +2524,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var role = "ANALYST";
             return new StringBuilder()
-                .Append($"authenticator=programmatic_access_token;user={testConfig.user};account={testConfig.account};certRevocationCheckMode=enabled;")
-                .Append($"db={testConfig.database};role={role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
-                .Append($"token={testConfig.programmaticAccessToken};")
+                .Append($"authenticator=programmatic_access_token;user={_fixture.testConfig.user};account={_fixture.testConfig.account};certRevocationCheckMode=enabled;")
+                .Append($"db={_fixture.testConfig.database};role={role};warehouse={_fixture.testConfig.warehouse};host={_fixture.testConfig.host};port={_fixture.testConfig.port};")
+                .Append($"token={_fixture.testConfig.programmaticAccessToken};")
                 .Append("poolingEnabled=false;")
                 .ToString();
         }

@@ -17,8 +17,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly ResultFormat _resultFormat;
         private readonly bool _nativeArrow;
 
-        public StructuredArraysIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat, bool nativeArrow) : base(envFixture)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public StructuredArraysIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat, bool nativeArrow) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
             _nativeArrow = nativeArrow;
         }
@@ -27,10 +29,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestDataTableLoadOnStructuredArrayJsonFormat()
         {
             if (_resultFormat != ResultFormat.JSON)
-                Assert.Skip("skip test on arrow");
+                Skip.If(true, "skip test on arrow");
 
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -60,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArray()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -96,7 +98,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArrayOfObjects()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -121,7 +123,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestSelectArrayOfArrays()
         {
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 // arrange
                 connection.Open();
@@ -147,7 +149,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArrayOfMap()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -178,7 +180,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectSemiStructuredTypesInArray(string valueSfString, string expectedValue)
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -202,7 +204,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArrayOfIntegers()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -227,7 +229,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArrayOfLong()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -252,7 +254,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArrayOfFloats()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -277,7 +279,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArrayOfDoubles()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -302,7 +304,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArrayOfDoublesWithExponentNotation()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -327,7 +329,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArrayOfBooleans()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -352,7 +354,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArrayOfBinaries()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -378,7 +380,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectArrayOfDates()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -403,7 +405,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectStringArrayWithNulls()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -428,7 +430,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectIntArrayWithNulls()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -453,7 +455,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectNullArray()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -477,7 +479,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestThrowExceptionForInvalidArray()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -503,7 +505,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestThrowExceptionForInvalidArrayElement()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -532,7 +534,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestThrowExceptionForNextedInvalidElement()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())

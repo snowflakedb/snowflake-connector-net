@@ -40,7 +40,7 @@ namespace Snowflake.Data.WIFTests
         {
             if (string.IsNullOrEmpty(s_impersonationPath))
             {
-                Assert.Skip("Test only runs when SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH is set");
+                Skip.If(true, "Test only runs when SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH is set");
             }
 
             // connect with impersonation
@@ -65,7 +65,7 @@ namespace Snowflake.Data.WIFTests
         {
             if (!IsProviderGcp())
             {
-                Assert.Skip("Test only runs when provider is GCP");
+                Skip.If(true, "Test only runs when provider is GCP");
             }
 
             var token = GetGcpAccessToken();

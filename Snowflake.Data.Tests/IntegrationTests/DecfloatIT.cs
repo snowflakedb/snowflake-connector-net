@@ -8,25 +8,39 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
+    public sealed class DecfloatITJson : DecfloatIT
+    {
+        public DecfloatITJson(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON)
+        {
+        }
+    }
+
+    public sealed class DecfloatITArrow : DecfloatIT
+    {
+        public DecfloatITArrow(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW)
+        {
+        }
+    }
+
     /// <summary>
     /// Integration tests for DECFLOAT data type support.
     /// DECFLOAT values are returned as strings to preserve full precision.
     /// Arrow format uses scientific notation; JSON format uses backend's format.
     /// </summary>
-    class DecfloatIT : SFBaseTest
+    public abstract class DecfloatIT : SFBaseTest
     {
-        protected override string TestName => base.TestName + _resultFormat;
-
         private readonly ResultFormat _resultFormat;
 
-        public DecfloatIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(envFixture)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public DecfloatIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
         }
 
         private SnowflakeDbConnection CreateAndOpenConnection()
         {
-            var conn = new SnowflakeDbConnection(ConnectionString);
+            var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
             conn.Open();
             return conn;
         }
@@ -252,14 +266,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 SetResultFormat(conn);
 
-                CreateOrReplaceTable(conn, TableName, new[] { "col_decfloat DECFLOAT" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "col_decfloat DECFLOAT" });
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"INSERT INTO {TableName} VALUES (123.456), (-999.999), (NULL)";
+                    cmd.CommandText = $"INSERT INTO {_fixture.TableName} VALUES (123.456), (-999.999), (NULL)";
                     cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = $"SELECT col_decfloat FROM {TableName} ORDER BY col_decfloat NULLS LAST";
+                    cmd.CommandText = $"SELECT col_decfloat FROM {_fixture.TableName} ORDER BY col_decfloat NULLS LAST";
 
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -291,7 +305,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT 
+                    cmd.CommandText = @"SELECT
                         1.1::DECFLOAT AS col1,
                         2.2::DECFLOAT AS col2,
                         3.3::DECFLOAT AS col3";

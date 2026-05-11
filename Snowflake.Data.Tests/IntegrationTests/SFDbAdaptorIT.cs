@@ -6,7 +6,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Runtime.InteropServices;
     class SFDbAdaptorIT : SFBaseTest
     {
-        public SFDbAdaptorIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFDbAdaptorIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private IDbDataAdapter _adapter;
         private SnowflakeDbCommand _command;
@@ -29,7 +30,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestCreatingDataAdapterWithSelectCommandTextAndConnection()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";
-            SnowflakeDbConnection conn = new SnowflakeDbConnection(ConnectionString);
+            SnowflakeDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString);
             _adapter = new SnowflakeDbDataAdapter(_command.CommandText, conn);
 
             Assert.Equal(_command.CommandText, _adapter.SelectCommand.CommandText);
@@ -42,7 +43,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             DataSet ds = new DataSet("ds");
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
                 _adapter = new SnowflakeDbDataAdapter("select 1 as col1, 2 AS col2", conn);

@@ -9,7 +9,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public class FileUploadDownloadLargeFilesIT : SFBaseTest
     {
-        public FileUploadDownloadLargeFilesIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public FileUploadDownloadLargeFilesIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private const string FileName = "large_file_to_test_dotnet_driver.json";
         private static readonly string s_uniqueId = TestDataGenarator.NextAlphaNumeric(6);
@@ -57,7 +58,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "FILE_TRANSFER_MEMORY_THRESHOLD=1048576;";
+                conn.ConnectionString = _fixture.ConnectionString + "FILE_TRANSFER_MEMORY_THRESHOLD=1048576;";
                 conn.Open();
                 var command = conn.CreateCommand();
                 command.CommandText = $"PUT file://{fullFileName} @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
@@ -70,7 +71,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var filePattern = $"{remoteFolderName}/{fileName}";
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 var command = conn.CreateCommand();
                 command.CommandText = $"GET @~/{remoteFolderName} file://{downloadFolderName} PATTERN='{filePattern}'";
@@ -82,7 +83,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 var command = conn.CreateCommand();
                 command.CommandText = $"remove @~/{remoteFolderName};";

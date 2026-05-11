@@ -10,8 +10,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         private readonly ResultFormat _resultFormat;
 
-        public VectorTypesIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(envFixture)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public VectorTypesIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
         }
 
@@ -20,27 +22,27 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = $"CREATE OR REPLACE TABLE {TableName} (a VECTOR(INT, 3));";
+                    command.CommandText = $"CREATE OR REPLACE TABLE {_fixture.TableName} (a VECTOR(INT, 3));";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {TableName} SELECT [1,2,3]::VECTOR(INT,3);";
+                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [1,2,3]::VECTOR(INT,3);";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {TableName} SELECT [4,5,6]::VECTOR(INT,3);";
+                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [4,5,6]::VECTOR(INT,3);";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {TableName} SELECT [7,8,9]::VECTOR(INT,3);";
+                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [7,8,9]::VECTOR(INT,3);";
                     command.ExecuteNonQuery();
 
-                    command.CommandText = $"SELECT COUNT(*) FROM {TableName};";
+                    command.CommandText = $"SELECT COUNT(*) FROM {_fixture.TableName};";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.True(reader.Read());
                     Assert.Equal(3, reader.GetInt16(0));
 
-                    command.CommandText = $"SELECT * FROM {TableName};";
+                    command.CommandText = $"SELECT * FROM {_fixture.TableName};";
                     reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
                     Assert.True(reader.Read());
@@ -64,7 +66,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(8, arr[1]);
                     Assert.Equal(9, arr[2]);
 
-                    command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
+                    command.CommandText = $"DROP TABLE IF EXISTS {_fixture.TableName};";
                     command.ExecuteNonQuery();
                 }
             }
@@ -75,27 +77,27 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = $"CREATE OR REPLACE TABLE {TableName} (a VECTOR(FLOAT, 3));";
+                    command.CommandText = $"CREATE OR REPLACE TABLE {_fixture.TableName} (a VECTOR(FLOAT, 3));";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {TableName} SELECT [1.1,2.2,3.3]::VECTOR(FLOAT,3);";
+                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [1.1,2.2,3.3]::VECTOR(FLOAT,3);";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {TableName} SELECT [4.4,5.5,6.6]::VECTOR(FLOAT,3);";
+                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [4.4,5.5,6.6]::VECTOR(FLOAT,3);";
                     command.ExecuteNonQuery();
-                    command.CommandText = $"INSERT INTO {TableName} SELECT [7.7,8.8,9.9]::VECTOR(FLOAT,3);";
+                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [7.7,8.8,9.9]::VECTOR(FLOAT,3);";
                     command.ExecuteNonQuery();
 
-                    command.CommandText = $"SELECT COUNT(*) FROM {TableName};";
+                    command.CommandText = $"SELECT COUNT(*) FROM {_fixture.TableName};";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.True(reader.Read());
                     Assert.Equal(3, reader.GetInt16(0));
 
-                    command.CommandText = $"SELECT * FROM {TableName};";
+                    command.CommandText = $"SELECT * FROM {_fixture.TableName};";
                     reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
                     Assert.True(reader.Read());
@@ -119,7 +121,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(8.8f, arr[1]);
                     Assert.Equal(9.9f, arr[2]);
 
-                    command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
+                    command.CommandText = $"DROP TABLE IF EXISTS {_fixture.TableName};";
                     command.ExecuteNonQuery();
                 }
             }
@@ -130,7 +132,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 
@@ -155,7 +157,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 
@@ -179,7 +181,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 
@@ -199,7 +201,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 
@@ -219,7 +221,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 
@@ -245,7 +247,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 
@@ -273,7 +275,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 
@@ -298,7 +300,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 
@@ -323,7 +325,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 AlterSessionSettings(conn);
 

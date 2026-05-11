@@ -9,7 +9,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Threading.Tasks;
     class SFDbTransactionIT : SFBaseTest
     {
-        public SFDbTransactionIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFDbTransactionIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
         public void TestTransactionDbConnection()
@@ -17,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
                 // Act
@@ -35,7 +36,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
                 // Act
@@ -53,22 +54,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
-                CreateOrReplaceTable(conn, TableName, new[] { "c INT" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "c INT" });
 
                 using (IDbTransaction t1 = conn.BeginTransaction())
                 {
                     IDbCommand t1c1 = conn.CreateCommand();
                     t1c1.Transaction = t1;
-                    t1c1.CommandText = $"insert into {TableName} values (1)";
+                    t1c1.CommandText = $"insert into {_fixture.TableName} values (1)";
                     t1c1.ExecuteNonQuery();
                 }
 
                 // Transaction t1 would be disposed and rollback at this point, tuple inserted is not visible
                 IDbCommand c2 = conn.CreateCommand();
-                c2.CommandText = $"SELECT * FROM {TableName}";
+                c2.CommandText = $"SELECT * FROM {_fixture.TableName}";
                 IDataReader reader2 = c2.ExecuteReader();
                 Assert.False(reader2.Read());
             }
@@ -79,10 +80,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestTransactionRollback()
         {
             var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString;
+            conn.ConnectionString = _fixture.ConnectionString;
             conn.Open();
 
-            CreateOrReplaceTable(conn, TableName, new[]
+            _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
@@ -92,7 +93,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 IDbCommand t1c1 = conn.CreateCommand();
                 t1c1.Transaction = transaction;
-                t1c1.CommandText = $"insert into {TableName} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
+                t1c1.CommandText = $"insert into {_fixture.TableName} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
                 t1c1.ExecuteNonQuery();
                 t1c1.Transaction.Commit();
 
@@ -103,13 +104,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 IDbCommand t1c3 = conn.CreateCommand();
                 t1c3.Transaction = transaction;
-                t1c3.CommandText = $"insert into {TableName} values (current_timestamp(), 4)";
+                t1c3.CommandText = $"insert into {_fixture.TableName} values (current_timestamp(), 4)";
                 t1c3.ExecuteNonQuery();
                 t1c3.Transaction.Rollback();
             }
 
             IDbCommand command1 = conn.CreateCommand();
-            command1.CommandText = $"Select * from {TableName}";
+            command1.CommandText = $"Select * from {_fixture.TableName}";
             IDataReader reader = command1.ExecuteReader();
 
             int row = 0;
@@ -130,10 +131,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestTransactionRollbackOn2Transactions()
         {
             var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString;
+            conn.ConnectionString = _fixture.ConnectionString;
             conn.Open();
 
-            CreateOrReplaceTable(conn, TableName, new[]
+            _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
@@ -143,7 +144,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 IDbCommand t1c1 = conn.CreateCommand();
                 t1c1.Transaction = transaction;
-                t1c1.CommandText = $"insert into {TableName} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
+                t1c1.CommandText = $"insert into {_fixture.TableName} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
                 t1c1.ExecuteNonQuery();
                 t1c1.Transaction.Commit();
             }
@@ -152,13 +153,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 IDbCommand t2c2 = conn.CreateCommand();
                 t2c2.Transaction = transaction2;
-                t2c2.CommandText = $"insert into {TableName} values (current_timestamp(), 4)";
+                t2c2.CommandText = $"insert into {_fixture.TableName} values (current_timestamp(), 4)";
                 t2c2.ExecuteNonQuery();
                 t2c2.Transaction.Rollback();
             }
 
             IDbCommand command1 = conn.CreateCommand();
-            command1.CommandText = $"Select * from {TableName}";
+            command1.CommandText = $"Select * from {_fixture.TableName}";
             IDataReader reader = command1.ExecuteReader();
 
             int row = 0;
@@ -177,7 +178,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestThrowsExceptionWhenBeginTransactionWithoutOpen()
         {
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 Assert.Throws<SnowflakeDbException>(() => conn.BeginTransaction());
             }

@@ -12,7 +12,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [IgnoreOnJenkins]
     public class CertificateRevocationIT : SFBaseTest
     {
-        public CertificateRevocationIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public CertificateRevocationIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact(Skip = "Temporarily ignored")]
         public void TestCertificate()
@@ -56,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private HttpRequestMessage CreateRequest()
         {
-            var host = string.IsNullOrEmpty(testConfig.host) ? $"{testConfig.account}.snowflakecomputing.com" : testConfig.host;
+            var host = string.IsNullOrEmpty(_fixture.testConfig.host) ? $"{_fixture.testConfig.account}.snowflakecomputing.com" : _fixture.testConfig.host;
             var request = new HttpRequestMessage(HttpMethod.Post, $"https://{host}/queries/v1/abort-request");
             var timeout = TimeSpan.FromSeconds(30);
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, timeout);

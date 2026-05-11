@@ -15,7 +15,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     class SFConnectionWithTomlIT : SFBaseTest
     {
-        public SFConnectionWithTomlIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFConnectionWithTomlIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
@@ -27,7 +28,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 Directory.CreateDirectory(s_workingDirectory);
             }
-            CreateTomlConfigBaseOnConnectionString(ConnectionString);
+            CreateTomlConfigBaseOnConnectionString(_fixture.ConnectionString);
         }
         public new void AfterTest()
         {

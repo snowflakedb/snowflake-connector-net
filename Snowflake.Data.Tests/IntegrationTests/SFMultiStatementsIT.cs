@@ -13,8 +13,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         private readonly ResultFormat _resultFormat;
 
-        public SFMultiStatementsIT(TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(envFixture)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFMultiStatementsIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
         }
 
@@ -25,7 +27,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var testTime = "12:34:56";
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
@@ -92,7 +94,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
@@ -134,7 +136,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
@@ -187,17 +189,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"create or replace table {TableName}(cola integer, colb string);" +
-                                      $"insert into {TableName} values (?, ?);" +
-                                      $"insert into {TableName} values (?, ?), (?, ?);" +
-                                      $"select * from {TableName};" +
-                                      $"drop table if exists {TableName}";
+                    cmd.CommandText = $"create or replace table {_fixture.TableName}(cola integer, colb string);" +
+                                      $"insert into {_fixture.TableName} values (?, ?);" +
+                                      $"insert into {_fixture.TableName} values (?, ?), (?, ?);" +
+                                      $"select * from {_fixture.TableName};" +
+                                      $"drop table if exists {_fixture.TableName}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
@@ -292,17 +294,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"create or replace temporary table {TableName}(cola integer, colb string);" +
-                                      $"insert into {TableName} values (?, ?);" +
-                                      $"insert into {TableName} values (?, ?), (?, ?);" +
-                                      $"select * from {TableName};" +
-                                      $"drop table if exists {TableName}";
+                    cmd.CommandText = $"create or replace temporary table {_fixture.TableName}(cola integer, colb string);" +
+                                      $"insert into {_fixture.TableName} values (?, ?);" +
+                                      $"insert into {_fixture.TableName} values (?, ?), (?, ?);" +
+                                      $"select * from {_fixture.TableName};" +
+                                      $"drop table if exists {_fixture.TableName}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
@@ -361,23 +363,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "select 1;" +
-                                      $"create or replace temporary table {TableName}(c1 varchar);" +
-                                      $"explain using text select * from {TableName};" +
+                                      $"create or replace temporary table {_fixture.TableName}(c1 varchar);" +
+                                      $"explain using text select * from {_fixture.TableName};" +
                                       "show parameters;" +
-                                      $"insert into {TableName} values ('str1');" +
-                                      $"desc table {TableName};" +
-                                      $"list @%{TableName};" +
-                                      $"remove @%{TableName};" +
-                                      $"create or replace temporary procedure P1_{TableName}() returns varchar language javascript as $$ return ''; $$;" +
-                                      $"call P1_{TableName}();" +
-                                      $"use role {testConfig.role}";
+                                      $"insert into {_fixture.TableName} values ('str1');" +
+                                      $"desc table {_fixture.TableName};" +
+                                      $"list @%{_fixture.TableName};" +
+                                      $"remove @%{_fixture.TableName};" +
+                                      $"create or replace temporary procedure P1_{_fixture.TableName}() returns varchar language javascript as $$ return ''; $$;" +
+                                      $"call P1_{_fixture.TableName}();" +
+                                      $"use role {_fixture.testConfig.role}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
@@ -462,7 +464,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
@@ -550,7 +552,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
@@ -559,19 +561,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = "set query_tag = (select 'dummy_tag');" +
                                       "alter session set query_tag='dummy_tag';" +
                                       "select 1;" +
-                                      $"create or replace temporary table {TableName}(c1 varchar);" +
-                                      $"explain using text select * from {TableName};" +
+                                      $"create or replace temporary table {_fixture.TableName}(c1 varchar);" +
+                                      $"explain using text select * from {_fixture.TableName};" +
                                       "show parameters;" +
-                                      $"insert into {TableName} values ('str1');" +
-                                      $"update {TableName} set c1 = 'str2';" +
-                                      $"select * from {TableName};" +
-                                      $"desc table {TableName};" +
-                                      $"copy into @%{TableName} from {TableName};" +
-                                      $"list @%{TableName};" +
-                                      $"remove @%{TableName};" +
-                                      $"create or replace temporary procedure P1_{TableName}() returns varchar language javascript as $$ return ''; $$;" +
-                                      $"call P1_{TableName}();" +
-                                      $"use role {testConfig.role}";
+                                      $"insert into {_fixture.TableName} values ('str1');" +
+                                      $"update {_fixture.TableName} set c1 = 'str2';" +
+                                      $"select * from {_fixture.TableName};" +
+                                      $"desc table {_fixture.TableName};" +
+                                      $"copy into @%{_fixture.TableName} from {_fixture.TableName};" +
+                                      $"list @%{_fixture.TableName};" +
+                                      $"remove @%{_fixture.TableName};" +
+                                      $"create or replace temporary procedure P1_{_fixture.TableName}() returns varchar language javascript as $$ return ''; $$;" +
+                                      $"call P1_{_fixture.TableName}();" +
+                                      $"use role {_fixture.testConfig.role}";
 
                     var stmtCount = 16;
 

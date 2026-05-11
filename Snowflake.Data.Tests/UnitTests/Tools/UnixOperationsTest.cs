@@ -192,7 +192,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Assert.Skip("Skip test when group and others have no permissions");
+                Skip.If(true, "Skip test when group and others have no permissions");
             }
 
             var content = "random text";
@@ -214,7 +214,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Assert.Skip("Skip test when group and others have no permissions");
+                Skip.If(true, "Skip test when group and others have no permissions");
             }
 
             var content = "random text";
@@ -234,7 +234,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Assert.Skip("Skip test when group and others have no permissions");
+                Skip.If(true, "Skip test when group and others have no permissions");
             }
             var content = "random text";
             var filePath = CreateConfigTempFile(s_workingDirectory, content);

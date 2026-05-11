@@ -8,22 +8,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public sealed class IntegrationTestFixture : IAsyncLifetime
     {
-        public ValueTask InitializeAsync()
+        public Task InitializeAsync()
         {
             var testConfig = TestEnvironment.TestConfig;
             ModifySchema(testConfig.schema, SchemaAction.Create);
-            return ValueTask.CompletedTask;
+            return Task.CompletedTask;
         }
 
-        public ValueTask DisposeAsync()
+        public Task DisposeAsync()
         {
             var testConfig = TestEnvironment.TestConfig;
 
             if (testConfig == null)
-                return ValueTask.CompletedTask;
+                return Task.CompletedTask;
 
             ModifySchema(testConfig.schema, SchemaAction.Drop);
-            return ValueTask.CompletedTask;
+            return Task.CompletedTask;
         }
 
         private enum SchemaAction

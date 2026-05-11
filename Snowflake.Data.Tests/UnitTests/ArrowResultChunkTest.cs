@@ -11,7 +11,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class ArrowResultChunkTest
+    public class ArrowResultChunkTest
     {
         private const int RowCountBatchOne = 10;
         private const int RowCountBatchTwo = 20;

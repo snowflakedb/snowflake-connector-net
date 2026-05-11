@@ -11,16 +11,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public class StructuredTypesWithEmbeddedUnstructuredIT : StructuredTypesIT
     {
-        public StructuredTypesWithEmbeddedUnstructuredIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public StructuredTypesWithEmbeddedUnstructuredIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         // Connection string with HonorSessionTimezone enabled for tests that use session timezone
-        private string ConnectionStringWithHonorSessionTimezone => ConnectionString + "HonorSessionTimezone=true;";
+        private string ConnectionStringWithHonorSessionTimezone => _fixture.ConnectionString + "HonorSessionTimezone=true;";
 
         [Fact]
         public void TestSelectAllUnstructuredTypesObject()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -110,7 +111,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectAllUnstructuredTypesObjectIntoNullableFields()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -200,7 +201,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void TestSelectNullIntoUnstructuredTypesObject()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())

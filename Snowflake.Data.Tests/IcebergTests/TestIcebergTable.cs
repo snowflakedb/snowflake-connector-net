@@ -64,8 +64,10 @@ namespace Snowflake.Data.Tests.IcebergTests
         private const string FormatYmdHmsf = "yyyy-MM-dd HH:mm:ss.fffffff";
         private const string FormatYmdHmsfZ = "yyyy-MM-dd HH:mm:ss.fffffff zzz";
 
-        public TestIcebergTable(TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(envFixture)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public TestIcebergTable(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
         }
 
@@ -363,7 +365,7 @@ namespace Snowflake.Data.Tests.IcebergTests
 
         private SnowflakeDbConnection OpenConnection()
         {
-            var conn = new SnowflakeDbConnection(ConnectionString);
+            var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
             conn.Open();
             return conn;
         }

@@ -11,7 +11,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     class SFReusableChunkTest : SFBaseTest
     {
-        public SFReusableChunkTest(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFReusableChunkTest(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
         public void TestDelCharPr431()
@@ -20,24 +21,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
                 try
                 {
                     SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                    CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
+                    _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "col STRING" });
 
                     IDbCommand cmd = conn.CreateCommand();
                     int rowCount = 0;
 
                     // Insert data with DEL character (0x7F) embedded: "snow\x7FFLAKE"
-                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
+                    string insertCommand = $"insert into {_fixture.TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                     cmd.CommandText = insertCommand;
                     IDataReader insertReader = cmd.ExecuteReader();
                     Assert.Equal(TestRowCount, insertReader.RecordsAffected);
 
-                    string selectCommand = $"select * from {TableName}";
+                    string selectCommand = $"select * from {_fixture.TableName}";
                     cmd.CommandText = selectCommand;
 
                     rowCount = 0;
@@ -77,18 +78,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
-                    conn.ConnectionString = ConnectionString;
+                    conn.ConnectionString = _fixture.ConnectionString;
                     conn.Open();
 
                     SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                    CreateOrReplaceTable(conn, TableName, new[] { "src VARIANT" });
+                    _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "src VARIANT" });
 
                     IDbCommand cmd = conn.CreateCommand();
                     int rowCount = 0;
 
                     string insertCommand = $@"
 -- borrowed from https://docs.snowflake.com/en/user-guide/querying-semistructured.html#sample-data-used-in-examples
-insert into {TableName} (
+insert into {_fixture.TableName} (
 select parse_json('{{
     ""date"" : ""2017 - 04 - 28"",
     ""dealership"" : ""Valley View Auto Sales"",
@@ -109,7 +110,7 @@ select parse_json('{{
                     IDataReader insertReader = cmd.ExecuteReader();
                     Assert.Equal(500, insertReader.RecordsAffected);
 
-                    string selectCommand = $"select * from {TableName}";
+                    string selectCommand = $"select * from {_fixture.TableName}";
                     cmd.CommandText = selectCommand;
                     cmd.CommandType = System.Data.CommandType.Text;
 
@@ -145,24 +146,24 @@ select parse_json('{{
 
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
                 try
                 {
                     ChunkParserFactory.Instance = testFactory;
                     SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                    CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
+                    _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "col STRING" });
 
                     IDbCommand cmd = conn.CreateCommand();
                     int rowCount = 0;
 
-                    string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
+                    string insertCommand = $"insert into {_fixture.TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                     cmd.CommandText = insertCommand;
                     IDataReader insertReader = cmd.ExecuteReader();
                     Assert.Equal(TestRowCount, insertReader.RecordsAffected);
 
-                    string selectCommand = $"select * from {TableName}";
+                    string selectCommand = $"select * from {_fixture.TableName}";
                     cmd.CommandText = selectCommand;
 
                     rowCount = 0;
@@ -207,23 +208,23 @@ select parse_json('{{
 
                 using (IDbConnection conn = new SnowflakeDbConnection())
                 {
-                    conn.ConnectionString = ConnectionString;
+                    conn.ConnectionString = _fixture.ConnectionString;
                     conn.Open();
 
                     try
                     {
                         SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                        CreateOrReplaceTable(conn, TableName, new[] { "col STRING" });
+                        _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "col STRING" });
 
                         IDbCommand cmd = conn.CreateCommand();
                         int rowCount = 0;
 
-                        string insertCommand = $"insert into {TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
+                        string insertCommand = $"insert into {_fixture.TableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                         cmd.CommandText = insertCommand;
                         IDataReader insertReader = cmd.ExecuteReader();
                         Assert.Equal(TestRowCount, insertReader.RecordsAffected);
 
-                        string selectCommand = $"select * from {TableName}";
+                        string selectCommand = $"select * from {_fixture.TableName}";
                         cmd.CommandText = selectCommand;
 
                         rowCount = 0;

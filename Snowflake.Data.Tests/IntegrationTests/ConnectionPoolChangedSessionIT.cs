@@ -8,7 +8,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public class ConnectionPoolChangedSessionIT : SFBaseTest
     {
-        public ConnectionPoolChangedSessionIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private readonly QueryExecResponseData _queryExecResponseChangedRole = new()
         {
@@ -64,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestPoolDestroysConnectionWhenChangedSessionProperties()
         {
-            var connectionString = ConnectionString + "application=Destroy;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=Destroy;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
@@ -78,7 +79,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestPoolingWhenSessionPropertiesUnchanged()
         {
-            var connectionString = ConnectionString + "application=NoSessionChanges;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=NoSessionChanges;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
@@ -91,7 +92,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestPoolingWhenConnectionPropertiesChangedForOriginalPoolMode()
         {
-            var connectionString = ConnectionString + "application=OriginalPoolMode;ChangedSession=OriginalPool;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=OriginalPoolMode;ChangedSession=OriginalPool;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
@@ -112,7 +113,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestPoolingWhenConnectionPropertiesChangedForDefaultPoolMode()
         {
-            var connectionString = ConnectionString + "application=DefaultPoolMode;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=DefaultPoolMode;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
@@ -132,7 +133,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestPoolDestroysAndRecreatesConnection()
         {
-            var connectionString = ConnectionString + "application=DestroyRecreateSession;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=DestroyRecreateSession;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var connection = new SnowflakeDbConnection(connectionString);
             connection.Open();
@@ -152,7 +153,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestCompareSessionChangesCaseInsensitiveWhenUnquoted()
         {
-            var connectionString = ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var responseData = new QueryExecResponseData()
             {
@@ -180,7 +181,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact]
         public void TestCompareSessionChangesCaseSensitiveWhenQuoted()
         {
-            var connectionString = ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var responseData = new QueryExecResponseData()
             {

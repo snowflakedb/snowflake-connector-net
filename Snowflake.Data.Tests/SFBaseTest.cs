@@ -255,9 +255,9 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringJwtAuthFmt = ";authenticator=snowflake_jwt;user={0};private_key_file={1};";
         private const string ConnectionStringJwtContentFmt = ";authenticator=snowflake_jwt;user={0};private_key={1};";
 
-        protected virtual string TestName => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
-        protected string TestNameWithWorker => TestName;
-        protected string TableName => TestNameWithWorker;
+        public virtual string TestName => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
+        public string TestNameWithWorker => TestName;
+        public string TableName => TestNameWithWorker;
 
         private Stopwatch _stopwatch;
 
@@ -312,12 +312,12 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        protected void CreateOrReplaceTable(IDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
+        public void CreateOrReplaceTable(IDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
         {
             CreateOrReplaceTable(conn, tableName, "", columns, additionalQueryStr);
         }
 
-        protected void CreateOrReplaceTable(IDbConnection conn, string tableName, string tableType, IEnumerable<string> columns, string additionalQueryStr = null)
+        public void CreateOrReplaceTable(IDbConnection conn, string tableName, string tableType, IEnumerable<string> columns, string additionalQueryStr = null)
         {
             var columnsStr = string.Join(", ", columns);
             var cmd = conn.CreateCommand();
@@ -328,12 +328,12 @@ namespace Snowflake.Data.Tests
             _tablesToRemove.Add(tableName);
         }
 
-        protected void AddTableToRemoveList(string tableName)
+        public void AddTableToRemoveList(string tableName)
         {
             _tablesToRemove.Add(tableName);
         }
 
-        protected string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
+        public string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
                     testConfig.protocol,
                     testConfig.host,
                     testConfig.port,
@@ -343,7 +343,7 @@ namespace Snowflake.Data.Tests
                     testConfig.schema,
                     testConfig.warehouse);
 
-        protected string ConnectionString => ConnectionStringWithoutAuth + GetAuthenticationString();
+        public string ConnectionString => ConnectionStringWithoutAuth + GetAuthenticationString();
 
         private string GetAuthenticationString()
         {
@@ -429,14 +429,14 @@ namespace Snowflake.Data.Tests
         }
 
 
-        protected string ConnectionStringWithInvalidUserName => ConnectionStringWithoutAuth +
+        public string ConnectionStringWithInvalidUserName => ConnectionStringWithoutAuth +
                                              string.Format(ConnectionStringSnowflakeAuthFmt,
                                                  "unknown",
                                                  testConfig.password);
 
-        protected TestConfig testConfig { get; private set; }
+        public TestConfig testConfig { get; private set; }
 
-        protected string ResolveHost()
+        public string ResolveHost()
         {
             return testConfig.host ?? $"{testConfig.account}.snowflakecomputing.com";
         }

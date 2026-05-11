@@ -15,7 +15,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [IgnoreOnJenkins]
     class MaxLobSizeIT : SFBaseTest
     {
-        public MaxLobSizeIT(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public MaxLobSizeIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private ResultFormat _resultFormat;
 
@@ -61,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t_selectQuery = $"SELECT * FROM {t_tableName}";
             t_filesToDelete = new List<string>();
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 using (var command = conn.CreateCommand())
@@ -75,7 +76,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
         public void TearDown()
         {
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 using (var command = conn.CreateCommand())
@@ -100,7 +101,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             _resultFormat = resultFormat;
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 using (var command = conn.CreateCommand())
@@ -125,7 +126,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 AlterSessionSettings(conn);
@@ -158,7 +159,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 AlterSessionSettings(conn);
@@ -211,7 +212,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 AlterSessionSettings(conn);
@@ -266,7 +267,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             PrepareTest();
 
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
                 AlterSessionSettings(conn);

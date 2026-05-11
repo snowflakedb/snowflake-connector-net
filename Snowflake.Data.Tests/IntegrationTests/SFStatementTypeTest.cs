@@ -6,14 +6,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Data.Common;
     class SFStatementTypeTest : SFBaseTest
     {
-        public SFStatementTypeTest(TestEnvironmentFixture envFixture) : base(envFixture) { }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFStatementTypeTest(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
         public void TestCallStatement()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.Open();
 
                 using (DbCommand command = conn.CreateCommand())
