@@ -11,6 +11,7 @@ using Snowflake.Data.Core.Extensions;
 namespace Snowflake.Data.Tests.UnitTests
 {
     [TestFixture]
+    [NonParallelizable]
     public class RedirectUnitTest
     {
         private WiremockRunner _runner;
