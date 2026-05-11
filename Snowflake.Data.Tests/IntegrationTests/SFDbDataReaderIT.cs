@@ -11,7 +11,17 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    class SFDbDataReaderIT : SFBaseTest
+    public sealed class SFDbDataReaderITJson : SFDbDataReaderIT
+    {
+        public SFDbDataReaderITJson(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
+    }
+
+    public sealed class SFDbDataReaderITArrow : SFDbDataReaderIT
+    {
+        public SFDbDataReaderITArrow(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
+    }
+
+    public abstract class SFDbDataReaderIT : SFBaseTest
     {
 
         private readonly ResultFormat _resultFormat;

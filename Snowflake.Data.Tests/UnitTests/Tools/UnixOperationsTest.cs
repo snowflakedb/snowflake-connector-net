@@ -38,6 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
     }
 
+    [Collection(SequentialCollection.SequentialCollectionName)]
     public class UnixOperationsTest : IClassFixture<UnixOperationsTestFixture>
     {
         private readonly UnixOperationsTestFixture _fixture;
@@ -210,7 +211,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Skip.If(true, "Skip test when group and others have no permissions");
+                // Skip test when group and others have no permissions
+                return;
             }
 
             var content = "random text";
@@ -233,7 +235,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Skip.If(true, "Skip test when group and others have no permissions");
+                // Skip test when group and others have no permissions
+                return;
             }
 
             var content = "random text";
@@ -254,7 +257,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Skip.If(true, "Skip test when group and others have no permissions");
+                // Skip test when group and others have no permissions
+                return;
             }
             var content = "random text";
             var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
@@ -330,7 +334,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             // arrange
             var randomBytes = TestDataGenarator.NextBytes(19);
-            var filePath = Path.Combine(_fixture.WorkingDirectory);
+            var filePath = Path.Combine(_fixture.WorkingDirectory, $"small_file_{Path.GetRandomFileName()}");
             _fixture.UnixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
             _fixture.UnixOperations.WriteAllBytes(filePath, randomBytes, _ => { });
 
@@ -345,7 +349,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestReadBytesFromLargeFile()
         {
             // arrange
-            var filePath = Path.Combine("crl");
+            var filePath = Path.Combine("crl", "DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl");
             var expectedBytes = File.ReadAllBytes(filePath);
 
             // act

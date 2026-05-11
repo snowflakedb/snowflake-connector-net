@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -6,9 +7,24 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    public class WiremockRunnerTest
+    public class WiremockRunnerFixture : IDisposable
     {
-        private WiremockRunner _runner;
+        internal WiremockRunner _runner { get; set; }
+
+        public WiremockRunnerFixture()
+        {
+            _runner = WiremockRunner.NewWiremock();
+        }
+
+        public void Dispose()
+        {
+            _runner.Stop();
+        }
+    }
+
+    [Collection(SequentialCollection.SequentialCollectionName)]
+    public class WiremockRunnerTest : IClassFixture<WiremockRunnerFixture>
+    {
         private readonly HttpClient _httpClient = new(
             new HttpClientHandler
             {
@@ -16,17 +32,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                 ServerCertificateCustomValidationCallback = (_, _, _, _) => true
             }
         );
-        public void BeforeAll()
+
+        private readonly WiremockRunner _runner;
+
+        public WiremockRunnerTest(WiremockRunnerFixture fixture)
         {
-            _runner = WiremockRunner.NewWiremock();
-        }
-        public void BeforeEach()
-        {
+            _runner = fixture._runner;
             _runner.ResetMapping();
-        }
-        public void AfterAll()
-        {
-            _runner.Stop();
         }
 
         [Fact]

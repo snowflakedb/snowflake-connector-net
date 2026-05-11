@@ -9,7 +9,17 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    class SFMultiStatementsIT : SFBaseTest
+    public sealed class SFMultiStatementsITJson : SFMultiStatementsIT
+    {
+        public SFMultiStatementsITJson(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
+    }
+
+    public sealed class SFMultiStatementsITArrow : SFMultiStatementsIT
+    {
+        public SFMultiStatementsITArrow(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
+    }
+
+    public abstract class SFMultiStatementsIT : SFBaseTest
     {
         private readonly ResultFormat _resultFormat;
 

@@ -9,7 +9,22 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class StructuredObjectIT : StructuredTypesIT
+    public sealed class StructuredObjectITJsonManaged : StructuredObjectIT
+    {
+        public StructuredObjectITJsonManaged(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON, false) { }
+    }
+
+    public sealed class StructuredObjectITArrowManaged : StructuredObjectIT
+    {
+        public StructuredObjectITArrowManaged(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, false) { }
+    }
+
+    public sealed class StructuredObjectITArrowNative : StructuredObjectIT
+    {
+        public StructuredObjectITArrowNative(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, true) { }
+    }
+
+    public abstract class StructuredObjectIT : StructuredTypesIT
     {
         private readonly ResultFormat _resultFormat;
         private readonly bool _nativeArrow;

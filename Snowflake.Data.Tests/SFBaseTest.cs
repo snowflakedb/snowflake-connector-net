@@ -237,7 +237,7 @@ namespace Snowflake.Data.Tests
      * Base class for integration tests that call async methods - provides database connection infrastructure
      */
     [CollectionDefinition(TestEnvironmentCollection.TestEnvironmentCollectionName)]
-    public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsync>, ICollectionFixture<TestEnvironmentFixture>
+    public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>, ICollectionFixture<TestEnvironmentFixture>
     {
         protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture testEnvironmentFixture)
         {

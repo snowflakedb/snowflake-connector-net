@@ -6,7 +6,17 @@ using System;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    class VectorTypesIT : SFBaseTest
+    public sealed class VectorTypesITJson : VectorTypesIT
+    {
+        public VectorTypesITJson(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
+    }
+
+    public sealed class VectorTypesITArrow : VectorTypesIT
+    {
+        public VectorTypesITArrow(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
+    }
+
+    public abstract class VectorTypesIT : SFBaseTest
     {
         private readonly ResultFormat _resultFormat;
 

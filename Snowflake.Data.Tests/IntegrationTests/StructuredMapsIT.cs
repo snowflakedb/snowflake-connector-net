@@ -10,7 +10,22 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class StructuredMapsIT : StructuredTypesIT
+    public sealed class StructuredMapsITJsonManaged : StructuredMapsIT
+    {
+        public StructuredMapsITJsonManaged(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON, false) { }
+    }
+
+    public sealed class StructuredMapsITArrowManaged : StructuredMapsIT
+    {
+        public StructuredMapsITArrowManaged(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, false) { }
+    }
+
+    public sealed class StructuredMapsITArrowNative : StructuredMapsIT
+    {
+        public StructuredMapsITArrowNative(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, true) { }
+    }
+
+    public abstract class StructuredMapsIT : StructuredTypesIT
     {
         private readonly ResultFormat _resultFormat;
         private readonly bool _nativeArrow;
