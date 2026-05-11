@@ -19,6 +19,12 @@ namespace Snowflake.Data.Tests.UnitTests
         [SetUp]
         public void SetUp()
         {
+            _runner.ResetMapping();
+        }
+
+        [OneTimeSetUp]
+        public void BeforeAll()
+        {
             _runner = WiremockRunner.NewWiremock();
         }
 
