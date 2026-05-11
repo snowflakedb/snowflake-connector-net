@@ -627,7 +627,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [Theory]
         public void TestGetBoolean(bool value)
         {
             using (var conn = CreateAndOpenConnection())

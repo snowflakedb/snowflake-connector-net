@@ -8,6 +8,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     public class SpcsTokenProviderTest
     {
+        public SpcsTokenProviderTest()
+        {
+            Setup();
+        }
+
         [ThreadStatic]
         private static Mock<FileOperations> t_fileOperations;
 

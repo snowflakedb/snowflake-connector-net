@@ -12,7 +12,7 @@
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
       <SuppressTfmSupportBuildErrors>true</SuppressTfmSupportBuildErrors>
     <!-- Suppress xUnit analyzer rules that conflict with NUnit-migrated code patterns (internal classes, non-public methods, InlineData mismatches) -->
-    <NoWarn>$(NoWarn);xUnit1000;xUnit1001;xUnit1019;xUnit1016;xUnit1002;xUnit1009</NoWarn>
+    <NoWarn>$(NoWarn);xUnit1000;xUnit1001;xUnit1003;xUnit1019;xUnit1016;xUnit1002;xUnit1009</NoWarn>
   </PropertyGroup>
   <ItemGroup>
       <Content Include="wiremock\**\*.*">

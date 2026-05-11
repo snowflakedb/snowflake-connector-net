@@ -76,12 +76,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         // Parameters: request url, expected value
-        [Theory]
         [InlineData("https://test.snowflakecomputing.com/session/v1/login-request", true)]
         [InlineData("https://test.snowflakecomputing.com/session/authenticator-request", true)]
         [InlineData("https://test.snowflakecomputing.com/session/token-request", true)]
         [InlineData("https://test.snowflakecomputing.com/queries/v1/query-request", false)]
-        [Fact]
+        [Theory]
         public void TestIsLoginUrl(string requestUrl, bool expectedIsLoginEndpoint)
         {
             // given
@@ -95,12 +94,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         // Parameters: request url, expected value
-        [Theory]
         [InlineData("https://dev.okta.com/sso/saml", true)]
         [InlineData("https://test.snowflakecomputing.com/session/v1/login-request", false)]
         [InlineData("https://test.snowflakecomputing.com/session/authenticator-request", false)]
         [InlineData("https://test.snowflakecomputing.com/session/token-request", false)]
-        [Fact]
+        [Theory]
         public void TestIsOktaSSORequest(string requestUrl, bool expectedIsOktaSSORequest)
         {
             // given
@@ -114,14 +112,13 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         // Parameters: time in seconds
-        [Theory]
         [InlineData(4)]
         [InlineData(8)]
         [InlineData(16)]
         [InlineData(32)]
         [InlineData(64)]
         [InlineData(128)]
-        [Fact]
+        [Theory]
         public void TestGetJitter(int seconds)
         {
             // given

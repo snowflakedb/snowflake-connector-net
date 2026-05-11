@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security;
@@ -11,8 +12,13 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    public class FileOperationsUnixTest
+    public class FileOperationsUnixTest : IDisposable
     {
+        public FileOperationsUnixTest()
+        {
+            Before();
+        }
+
         private static FileOperations s_fileOperations;
         private static readonly string s_relativeWorkingDirectory = $"file_operations_test_{Path.GetRandomFileName()}";
         private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
@@ -187,5 +193,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             yield return FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute;
             yield return FileAccessPermissions.AllPermissions;
         }
-    }
+    
+        public void Dispose()
+        {
+            After();
+        }
+}
 }

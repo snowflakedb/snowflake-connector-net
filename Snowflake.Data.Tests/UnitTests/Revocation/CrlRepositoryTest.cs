@@ -6,6 +6,11 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
     public class CrlRepositoryTest
     {
+        public CrlRepositoryTest()
+        {
+            SetUp();
+        }
+
         public void SetUp()
         {
             Environment.SetEnvironmentVariable("SF_CRL_CACHE_REMOVAL_DELAY", null);

@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return new SFResultSet(responseData, new SFStatement(session), token);
         }
 
-        [Fact]
+        [Theory]
         public void TestGetDownloader(int chunkDownloaderVersion)
         {
             // Set configuration settings

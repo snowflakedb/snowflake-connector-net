@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Xunit;
 using Snowflake.Data.Core;
@@ -7,8 +8,13 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    public class FileOperationsWindowsTest
+    public class FileOperationsWindowsTest : IDisposable
     {
+        public FileOperationsWindowsTest()
+        {
+            Before();
+        }
+
         private static FileOperations s_fileOperations;
         private static readonly string s_relativeWorkingDirectory = $"file_operations_test_{Path.GetRandomFileName()}";
         private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
@@ -50,6 +56,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // act and assert
             Assert.True(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
-    }
+    
+        public void Dispose()
+        {
+            After();
+        }
+}
 }
 

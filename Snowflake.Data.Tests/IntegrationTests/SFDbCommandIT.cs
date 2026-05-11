@@ -707,7 +707,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [Theory]
         public void TestDefaultChunkDownloaderWithPrefetchThreads(int prefetchThreads)
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))

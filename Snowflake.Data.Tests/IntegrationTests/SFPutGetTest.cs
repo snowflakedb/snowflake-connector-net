@@ -206,7 +206,7 @@ using System.Threading;
             }
         }
 
-        [Fact]
+        [Theory]
         public void TestPutGetOnClosedConnectionThrowsWithoutQueryId(string command)
         {
             t_inputFilePath = "unexisting_file.csv";

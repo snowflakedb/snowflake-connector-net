@@ -6,7 +6,7 @@ using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
-    public class SnowflakeCredentialManagerFactoryTest
+    public class SnowflakeCredentialManagerFactoryTest : IDisposable
     {
         public void TearDown()
         {
@@ -86,5 +86,10 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // assert
             Assert.Equal("File credential manager implementation is not supported on Windows", thrown.Message);
         }
-    }
+    
+        public void Dispose()
+        {
+            TearDown();
+        }
+}
 }

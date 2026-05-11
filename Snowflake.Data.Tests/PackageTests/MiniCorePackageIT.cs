@@ -13,8 +13,13 @@ using Xunit;
 namespace Snowflake.Data.Tests.PackageTests
 {
     [Trait("Category", "MiniCore")]
-    public class MiniCorePackageIT
+    public class MiniCorePackageIT : IDisposable
     {
+        public MiniCorePackageIT()
+        {
+            Setup();
+        }
+
         private string _tempDir;
         private string _artifactsDir;
         private string _repoRoot;
@@ -120,5 +125,10 @@ namespace Snowflake.Data.Tests.PackageTests
 
             return (process.ExitCode, output);
         }
-    }
+    
+        public void Dispose()
+        {
+            TearDown();
+        }
+}
 }

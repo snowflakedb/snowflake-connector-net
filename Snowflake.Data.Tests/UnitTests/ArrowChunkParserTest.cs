@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Threading.Tasks;
     class ArrowChunkParserTest
     {
-        [Fact]
+        [Theory]
         public void TestParseChunkReadsRecordBatches(int numberOfRecordBatch)
         {
             // Arrange

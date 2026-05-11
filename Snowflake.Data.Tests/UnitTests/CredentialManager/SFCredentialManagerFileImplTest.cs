@@ -9,8 +9,12 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
-    public class SFCredentialManagerFileImplTest : SFBaseCredentialManagerTest
-    {
+    public class SFCredentialManagerFileImplTest : SFBaseCredentialManagerTest{
+        public SFCredentialManagerFileImplTest()
+        {
+            SetUp();
+        }
+
         [ThreadStatic]
         private static Mock<FileOperations> t_fileOperations;
 
