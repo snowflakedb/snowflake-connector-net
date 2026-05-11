@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestDetectGroupOrOthersWritablePermissions(
             FileAccessPermissions groupOrOthersWritablePermissions,
             FileAccessPermissions groupNotWritablePermissions,
@@ -54,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(result);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestDetectGroupOrOthersNotWritablePermissions(
             FileAccessPermissions userPermissions,
             FileAccessPermissions groupNotWritablePermissions,
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
             FileAccessPermissions userAllowedPermissions)
         {
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(content, result);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestSkipReadPermissionsWhenSkipIsEnabled()
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestCheckReadPermissionsWhenSkipIsDisabled()
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
         }
 
-        [Theory]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         [InlineData("true", false)]
         [InlineData("false", true)]
         public void TestTomlPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
@@ -156,7 +156,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
 
-        [Theory]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         [InlineData("true", false)]
         [InlineData("false", true)]
         public void TestCredentialManagerPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
@@ -173,7 +173,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
             FileAccessPermissions userAllowedPermissions)
         {
@@ -185,7 +185,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations(FileAccessPermissions userPermissions,
             FileAccessPermissions groupPermissions,
             FileAccessPermissions othersPermissions)
@@ -207,7 +207,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                 Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile(FileAccessPermissions userPermissions,
             FileAccessPermissions groupPermissions,
             FileAccessPermissions othersPermissions)
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFile(FileAccessPermissions userPermissions,
             FileAccessPermissions groupPermissions,
             FileAccessPermissions othersPermissions)
@@ -246,7 +246,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", EasyLoggerValidator.Instance.ValidateLogFilePermissions));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestCreateFileWithUserRwPermissions()
         {
             // arrange
@@ -261,7 +261,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestCreateDirectoryWithUserRwxPermissions()
         {
             // arrange
@@ -276,7 +276,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestNestedDir()
         {
             // arrange
@@ -291,7 +291,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestReadBytesFromEmptyFile()
         {
             // arrange
@@ -305,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(0, bytes.Length);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestReadBytesFromSmallFile()
         {
             // arrange
@@ -321,7 +321,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(randomBytes, bytes);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestReadBytesFromLargeFile()
         {
             // arrange

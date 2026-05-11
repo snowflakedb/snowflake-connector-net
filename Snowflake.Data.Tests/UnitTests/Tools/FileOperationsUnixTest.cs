@@ -8,6 +8,7 @@ using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
+using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
@@ -38,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
             FileAccessPermissions userAllowedFilePermissions)
         {
@@ -54,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, result);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadConfigurationFile(
             FileAccessPermissions userAllowedFilePermissions)
         {
@@ -68,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestFileIsSafeOnNotWindows()
         {
             // arrange
@@ -79,7 +80,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestFileIsNotSafeOnNotWindowsWhenTooBroadPermissionsAreUsed(
             FileAccessPermissions permissions)
         {
@@ -91,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestOwnerIsCurrentUser()
         {
             // arrange
@@ -103,7 +104,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(fileOps.IsFileOwnedByCurrentUser(absolutePath));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
@@ -115,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(fileOps.IsFileOwnedByCurrentUser(absolutePath));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestFileIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange
@@ -135,7 +136,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestFileCopyUsesProperPermissions()
         {
             // arrange
@@ -156,7 +157,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, File.ReadAllText(DestFilePath));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestFileCopyShouldThrowExecptionIfTooBroadPermissionsAreUsed()
         {
             // arrange

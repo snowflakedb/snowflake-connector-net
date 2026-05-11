@@ -6,6 +6,7 @@ using Moq;
 using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
@@ -144,7 +145,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.NotEmpty(thrown.Message);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
         {
             // arrange
@@ -171,7 +172,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.NotEmpty(thrown.Message);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestThatConfigFileIsNotUsedIfUserDoesNotOwnConfigFile()
         {
             // arrange
@@ -191,7 +192,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.NotEmpty(thrown.Message);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestThatConfigFileIsNotUsedIfGroupDoesNotOwnConfigFile()
         {
             // arrange

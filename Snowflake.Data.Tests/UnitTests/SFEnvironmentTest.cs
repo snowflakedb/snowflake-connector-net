@@ -7,6 +7,7 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -118,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(firstClientCredentialEnvJson, secondClientCredentialEnvJson);
         }
 
-        [Fact]
+        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestOsDetailsExtractionOnLinux()
         {
             var osDetails = SFEnvironment.ExtractOsDetails();
@@ -152,7 +153,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(clientEnv.platform);
         }
 
-        [Fact]
+        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestStaticConstructorSetsLibcFieldsOnLinux()
         {
             var clientEnv = SFEnvironment.ClientEnv;
@@ -164,7 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Matches(@"^\d+\.\d+", clientEnv.libcVersion);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestStaticConstructorSetsLibcFieldsOnNonLinux()
         {
             var clientEnv = SFEnvironment.ClientEnv;
@@ -173,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(clientEnv.libcVersion);
         }
 
-        [Fact]
+        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestStaticConstructorSetsOsDetailsOnLinux()
         {
             var clientEnv = SFEnvironment.ClientEnv;
@@ -188,7 +189,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.NotEmpty(clientEnv.osDetails);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestStaticConstructorSetsOsDetailsOnNonLinux()
         {
             var clientEnv = SFEnvironment.ClientEnv;
@@ -196,14 +197,14 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(clientEnv.osDetails);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestOsDetailsExtractionOnNonLinux()
         {
             var osDetails = SFEnvironment.ExtractOsDetails();
             Assert.Null(osDetails);
         }
 
-        [Fact]
+        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestOsDetailsFiltersUnwantedKeys()
         {
             var osDetails = SFEnvironment.ExtractOsDetails();

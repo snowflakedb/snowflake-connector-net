@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
@@ -67,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.Contains("Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method.", exception.Message);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestUseWindowsCredentialManagerFailsOnUnix()
         {
             // act
@@ -77,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.Equal("Windows native credential manager implementation can be used only on Windows", thrown.Message);
         }
 
-        [Fact]
+        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestUseFileCredentialManagerFailsOnWindows()
         {
             // act

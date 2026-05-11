@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         protected ISnowflakeCredentialManager _credentialManager;
 
         [Fact]
-        public void TestSavingAndRemovingCredentials()
+        public virtual void TestSavingAndRemovingCredentials()
         {
             // arrange
             var key = "mockKey";
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         [Fact]
-        public void TestSavingCredentialsForAnExistingKey()
+        public virtual void TestSavingCredentialsForAnExistingKey()
         {
             // arrange
             var key = "mockKey";
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         [Fact]
-        public void TestRemovingCredentialsForKeyThatDoesNotExist()
+        public virtual void TestRemovingCredentialsForKeyThatDoesNotExist()
         {
             // arrange
             var key = "mockKey";
@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         [Fact]
-        public void TestGetCredentialsForProperKey()
+        public virtual void TestGetCredentialsForProperKey()
         {
             // arrange
             var key = "key";
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         [Fact]
-        public void TestGetCredentialsForTokenWithManyCharacters()
+        public virtual void TestGetCredentialsForTokenWithManyCharacters()
         {
             // arrange
             var key = "mockKey";
@@ -107,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         [Fact]
-        public void TestGetCredentialsForCredentialsThatDoesNotExist()
+        public virtual void TestGetCredentialsForCredentialsThatDoesNotExist()
         {
             // arrange
             var key = "fakeKey";

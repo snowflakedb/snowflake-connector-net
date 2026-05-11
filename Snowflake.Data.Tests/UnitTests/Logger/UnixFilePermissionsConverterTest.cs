@@ -1,13 +1,14 @@
 using Mono.Unix;
 using Xunit;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Util;
 using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
     public class UnixFilePermissionsConverterTest
     {
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestConversionForAllPermissionCombinations(
             PermissionTestCase userTestCase,
             PermissionTestCase groupTestCase,

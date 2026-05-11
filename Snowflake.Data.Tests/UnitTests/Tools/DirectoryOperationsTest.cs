@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Mono.Unix;
 using Mono.Unix.Native;
 using Xunit;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
@@ -38,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
         }
 
-        [Fact]
+        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestDirectoryIsSafeOnWindows()
         {
             // arrange
@@ -49,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(_directoryOperations.IsDirectorySafe(absoluteFilePath));
         }
 
-        [Theory]
+        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         [MemberData(nameof(InsecurePermissionsData))]
         public void TestDirectoryIsNotSafeOnNotWindowsWhenPermissionsAreTooBroad(
             FileAccessPermissions permissions)
@@ -72,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(_directoryOperations.IsDirectorySafe(_dirAbsolutePath));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestOwnerIsCurrentUser()
         {
             // arrange
@@ -83,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(dirOps.IsDirectoryOwnedByCurrentUser(_dirAbsolutePath));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
@@ -94,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(dirOps.IsDirectoryOwnedByCurrentUser(_dirAbsolutePath));
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
         public void TestDirectoryIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange

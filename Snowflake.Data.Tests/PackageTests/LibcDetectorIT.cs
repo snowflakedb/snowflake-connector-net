@@ -1,11 +1,12 @@
 using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.PackageTests
 {
     public sealed class LibcDetectorIT
     {
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestDetectReturnsNotApplicableOnNonLinux()
         {
             // Act
@@ -16,7 +17,7 @@ namespace Snowflake.Data.Tests.PackageTests
             Assert.Null(version);
         }
 
-        [Fact]
+        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestDetectReturnsKnownFamilyOnLinux()
         {
             // Act
@@ -26,7 +27,7 @@ namespace Snowflake.Data.Tests.PackageTests
             Assert.NotEqual(LibcFamily.NotApplicable, family);
         }
 
-        [Fact]
+        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestDetectReturnsVersionStringOnLinuxGlibc()
         {
             // Act
@@ -50,7 +51,7 @@ namespace Snowflake.Data.Tests.PackageTests
             LibcDetector.TryGetGlibcVersion(out _);
         }
 
-        [Fact]
+        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestTryGetGlibcVersionReturnsFalseOnNonLinux()
         {
             // Act
@@ -61,7 +62,7 @@ namespace Snowflake.Data.Tests.PackageTests
             Assert.Null(version);
         }
 
-        [Fact]
+        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
         public void TestTryGetGlibcVersionReturnsTrueOnLinuxGlibc()
         {
             // Act
