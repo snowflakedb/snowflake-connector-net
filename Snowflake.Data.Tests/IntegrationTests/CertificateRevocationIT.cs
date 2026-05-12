@@ -6,10 +6,10 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [IgnoreOnJenkins]
     public class CertificateRevocationIT : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;

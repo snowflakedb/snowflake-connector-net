@@ -2,10 +2,10 @@ using System;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-    [IgnoreOnCI]
     public class PatTest
     {
         private string _connectionString = "";

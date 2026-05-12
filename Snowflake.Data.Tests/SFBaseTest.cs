@@ -115,7 +115,8 @@ namespace Snowflake.Data.Tests
             config.jwtAuthUser = ReadEnvVariableIfSet(config.jwtAuthUser, "SNOWFLAKE_TEST_JWT_USER");
             config.pemFilePath = ReadEnvVariableIfSet(config.pemFilePath, "SNOWFLAKE_TEST_PEM_FILE");
             config.p8FilePath = ReadEnvVariableIfSet(config.p8FilePath, "SNOWFLAKE_TEST_P8_FILE");
-            config.pwdProtectedPrivateKeyFilePath = ReadEnvVariableIfSet(config.pwdProtectedPrivateKeyFilePath, "SNOWFLAKE_TEST_PWD_PROTECTED_PK_FILE");
+            config.pwdProtectedPrivateKeyFilePath =
+                ReadEnvVariableIfSet(config.pwdProtectedPrivateKeyFilePath, "SNOWFLAKE_TEST_PWD_PROTECTED_PK_FILE");
             config.privateKey = ReadEnvVariableIfSet(config.privateKey, "SNOWFLAKE_TEST_PK_CONTENT");
             config.pwdProtectedPrivateKey = ReadEnvVariableIfSet(config.pwdProtectedPrivateKey, "SNOWFLAKE_TEST_PROTECTED_PK_CONTENT");
             config.privateKeyFilePwd = ReadEnvVariableIfSet(config.privateKeyFilePwd, "SNOWFLAKE_TEST_PK_PWD");
@@ -194,10 +195,12 @@ namespace Snowflake.Data.Tests
             {
                 return "windows";
             }
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 return "linux";
             }
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 return "macos";
@@ -235,6 +238,7 @@ namespace Snowflake.Data.Tests
 
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                                                               "account={3};role={4};db={5};schema={6};warehouse={7};";
+
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         private const string ConnectionStringJwtAuthFmt = ";authenticator=snowflake_jwt;user={0};private_key_file={1};";
         private const string ConnectionStringJwtContentFmt = ";authenticator=snowflake_jwt;user={0};private_key={1};";
@@ -296,7 +300,8 @@ namespace Snowflake.Data.Tests
             CreateOrReplaceTable(conn, tableName, "", columns, additionalQueryStr);
         }
 
-        public void CreateOrReplaceTable(IDbConnection conn, string tableName, string tableType, IEnumerable<string> columns, string additionalQueryStr = null)
+        public void CreateOrReplaceTable(IDbConnection conn, string tableName, string tableType, IEnumerable<string> columns,
+            string additionalQueryStr = null)
         {
             var columnsStr = string.Join(", ", columns);
             var cmd = conn.CreateCommand();
@@ -313,14 +318,14 @@ namespace Snowflake.Data.Tests
         }
 
         public string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
-                    testConfig.protocol,
-                    testConfig.host,
-                    testConfig.port,
-                    testConfig.account,
-                    testConfig.role,
-                    testConfig.database,
-                    testConfig.schema,
-                    testConfig.warehouse);
+            testConfig.protocol,
+            testConfig.host,
+            testConfig.port,
+            testConfig.account,
+            testConfig.role,
+            testConfig.database,
+            testConfig.schema,
+            testConfig.warehouse);
 
         public string ConnectionString => ConnectionStringWithoutAuth + GetAuthenticationString();
 
@@ -366,11 +371,12 @@ namespace Snowflake.Data.Tests
         private string DiscoverRsaKeyFile()
         {
             // Search locations in priority order - start with CI/CD location first
-            string[] searchPaths = {
-                "../../..",            // From bin/Debug/netX.0 back to Snowflake.Data.Tests (CI/CD)
-                ".",                   // Current directory (local dev)
-                "../../../..",         // From bin/Debug/netX.0/publish back to Snowflake.Data.Tests
-                "../../../../.."       // From deeper nested directories
+            string[] searchPaths =
+            {
+                "../../..", // From bin/Debug/netX.0 back to Snowflake.Data.Tests (CI/CD)
+                ".", // Current directory (local dev)
+                "../../../..", // From bin/Debug/netX.0/publish back to Snowflake.Data.Tests
+                "../../../../.." // From deeper nested directories
             };
 
             foreach (var searchPath in searchPaths)
@@ -409,9 +415,9 @@ namespace Snowflake.Data.Tests
 
 
         public string ConnectionStringWithInvalidUserName => ConnectionStringWithoutAuth +
-                                             string.Format(ConnectionStringSnowflakeAuthFmt,
-                                                 "unknown",
-                                                 testConfig.password);
+                                                             string.Format(ConnectionStringSnowflakeAuthFmt,
+                                                                 "unknown",
+                                                                 testConfig.password);
 
         public TestConfig testConfig { get; private set; }
 
@@ -556,169 +562,6 @@ namespace Snowflake.Data.Tests
         {
             protocol = "https";
             port = "443";
-        }
-    }
-
-    public class IgnoreOnEnvIsAttribute : BeforeAfterTestAttribute
-    {
-        private readonly string _key;
-        private readonly string[] _values;
-        private readonly string _reason;
-
-        public IgnoreOnEnvIsAttribute(string key, string[] values, string reason = null)
-        {
-            _key = key;
-            _values = values;
-            _reason = reason;
-        }
-
-        public override void Before(MethodInfo methodUnderTest)
-        {
-            foreach (var value in _values)
-            {
-                var shouldSkip = Environment.GetEnvironmentVariable(_key) == value;
-                Skip.If(shouldSkip, $"Test is ignored when environment variable {_key} is {value}. {_reason}");
-            }
-        }
-    }
-
-    public class IgnoreOnEnvIsSetAttribute : BeforeAfterTestAttribute
-    {
-        private readonly string _key;
-
-        public IgnoreOnEnvIsSetAttribute(string key)
-        {
-            _key = key;
-        }
-
-        public override void Before(MethodInfo methodUnderTest)
-        {
-            var shouldSkip = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(_key));
-            Skip.If(shouldSkip, $"Test is ignored when environment variable {_key} is set.");
-        }
-    }
-
-    public class IgnoreOnEnvNotSetAttribute : BeforeAfterTestAttribute
-    {
-        private readonly string _key;
-
-        public IgnoreOnEnvNotSetAttribute(string key)
-        {
-            _key = key;
-        }
-
-        public override void Before(MethodInfo methodUnderTest)
-        {
-            var shouldSkip = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(_key));
-            Skip.If(shouldSkip, $"Test is ignored when environment variable {_key} is not set.");
-        }
-    }
-
-
-    public class RunOnlyOnCI : IgnoreOnEnvNotSetAttribute
-    {
-        public RunOnlyOnCI() : base("CI")
-        {
-        }
-    }
-
-    public class IgnoreOnCI : IgnoreOnEnvIsAttribute
-    {
-        public IgnoreOnCI(string reason = null) : base("CI", new[] { "true" }, reason)
-        {
-        }
-    }
-
-    public class IgnoreOnJenkins : IgnoreOnEnvIsSetAttribute
-    {
-        public IgnoreOnJenkins() : base("JENKINS_HOME")
-        {
-        }
-    }
-
-    /// <summary>
-    /// Sets the current thread culture for the duration of a test.
-    /// </summary>
-    public sealed class SetCultureAttribute : BeforeAfterTestAttribute
-    {
-        private readonly CultureInfo _culture;
-        private CultureInfo _originalCulture;
-        private CultureInfo _originalUICulture;
-
-        public SetCultureAttribute(string culture)
-        {
-            _culture = new CultureInfo(culture);
-        }
-
-        public override void Before(MethodInfo methodUnderTest)
-        {
-            _originalCulture = Thread.CurrentThread.CurrentCulture;
-            _originalUICulture = Thread.CurrentThread.CurrentUICulture;
-            Thread.CurrentThread.CurrentCulture = _culture;
-            Thread.CurrentThread.CurrentUICulture = _culture;
-        }
-
-        public override void After(MethodInfo methodUnderTest)
-        {
-            Thread.CurrentThread.CurrentCulture = _originalCulture;
-            Thread.CurrentThread.CurrentUICulture = _originalUICulture;
-        }
-    }
-
-    /// <summary>
-    /// Platform-conditional Fact attributes
-    /// </summary>
-    public sealed class WindowsOnlyFactAttribute : FactAttribute
-    {
-        public WindowsOnlyFactAttribute()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                Skip = "This test runs only on Windows";
-        }
-    }
-
-    public sealed class WindowsOnlyTheoryAttribute : TheoryAttribute
-    {
-        public WindowsOnlyTheoryAttribute()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                Skip = "This test runs only on Windows";
-        }
-    }
-
-    public sealed class LinuxOnlyFactAttribute : FactAttribute
-    {
-        public LinuxOnlyFactAttribute()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                Skip = "This test runs only on Linux";
-        }
-    }
-
-    public sealed class LinuxOnlyTheoryAttribute : TheoryAttribute
-    {
-        public LinuxOnlyTheoryAttribute()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                Skip = "This test runs only on Linux";
-        }
-    }
-
-    public sealed class UnixOnlyFactAttribute : FactAttribute
-    {
-        public UnixOnlyFactAttribute()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                Skip = "This test runs only on Unix (Linux/macOS)";
-        }
-    }
-
-    public sealed class UnixOnlyTheoryAttribute : TheoryAttribute
-    {
-        public UnixOnlyTheoryAttribute()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                Skip = "This test runs only on Unix (Linux/macOS)";
         }
     }
 }

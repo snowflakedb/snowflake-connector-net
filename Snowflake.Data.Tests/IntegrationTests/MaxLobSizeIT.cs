@@ -9,10 +9,10 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [IgnoreOnJenkins]
     class MaxLobSizeIT : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-        [Theory, MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
+        [Theory, IgnoreOnJenkins, MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
             // arrange
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Theory, MemberData(nameof(LiteralInsertTestCases))]
+        [Theory, IgnoreOnJenkins, MemberData(nameof(LiteralInsertTestCases))]
         public void TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory, MemberData(nameof(PositionalInsertTestCases))]
+        [Theory, IgnoreOnJenkins, MemberData(nameof(PositionalInsertTestCases))]
         public void TestPositionalInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -203,7 +203,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Theory, MemberData(nameof(NamedInsertTestCases))]
+        [Theory, IgnoreOnJenkins, MemberData(nameof(NamedInsertTestCases))]
         public void TestNamedInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -255,7 +255,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory, MemberData(nameof(PutGetCommandTestCases))]
+        [Theory, IgnoreOnJenkins, MemberData(nameof(PutGetCommandTestCases))]
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange

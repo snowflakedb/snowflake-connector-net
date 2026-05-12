@@ -3,10 +3,10 @@ using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-    [IgnoreOnCI]
     public class OktaAuthorizationCodeTest
     {
         private string _connectionString = "";

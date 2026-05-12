@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.WIFTests
 {
@@ -14,7 +15,6 @@ namespace Snowflake.Data.WIFTests
     /// 3. Run ci/test_wif.sh
     /// </summary>
     ///
-    [IgnoreOnCI]
     public class WifLatestTest
     {
         private static readonly string s_account = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_ACCOUNT");
