@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The Snowflake .NET connector supports the following .NET framework and libraries versions:
+The Snowflake .NET connector supports the following .NET framework and library versions:
 
 - .NET Framework 4.6.2
 - .NET Framework 4.7.1
@@ -17,11 +17,11 @@ The Snowflake .NET connector supports the following .NET framework and libraries
 - .NET 9.0
 - .NET 10.0
 
-Disclaimer: While the connector targets netstandard2.0 and may work with versions in its [support matrix](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version), only the versions listed above are supported and tested by the connector
+The connector targets `netstandard2.0` but only the versions listed above are tested and supported.
 
 ## Target Frameworks and Platform-Specific Builds
 
-Starting from version **5.2.0**, the Snowflake .NET connector uses multi-targeting to provide optimized builds for different platforms:
+Starting from version **5.2.0**, the connector uses multi-targeting to provide optimized builds for different platforms:
 
 | Target Framework  | Platform                       | Description                                                  |
 |-------------------|--------------------------------|--------------------------------------------------------------|
@@ -32,81 +32,44 @@ Starting from version **5.2.0**, the Snowflake .NET connector uses multi-targeti
 | `net10.0`         | Linux, macOS (.NET 10+)        | Full Unix file system support with Mono.Unix                 |
 | `netstandard2.0`  | All platforms                  | Backward compatibility for older .NET versions               |
 
-**What this means for you:**
+NuGet automatically selects the appropriate build based on the application's target framework and operating system.
 
 - **Windows users** on .NET Framework 4.8.1 will receive the `net481` build without the `Mono.Unix` dependency.
 - **Windows users** on .NET 8 or higher will receive a version-matched Windows build (e.g. `net8.0-windows` or `net10.0-windows`) without the `Mono.Unix` dependency.
 - **Linux and macOS users** on .NET 8 or higher will receive a version-matched build (e.g. `net8.0` or `net10.0`) with full Unix file system support.
 - **Older .NET versions** (including older .NET Framework and .NET versions) will use the `netstandard2.0` build for backward compatibility.
 
-The appropriate build is automatically selected by NuGet based on your application's target framework and operating system.
+**Note:** On Linux, only **glibc-based** distributions are supported (e.g. Ubuntu, Debian, RHEL, CentOS). Musl-based distributions (e.g. Alpine), Android-based runtimes (Bionic), and other non-glibc environments are not supported.
 
-Please refer to the [Notice](#notice) section below for information about safe usage of the .NET Driver
+Please refer to the [Notice](#notice) section for information about safe usage of the .NET Driver.
 
-# Coding conventions for the project
 
-If you would like to contribute to this project, please get to know coding conventions we would like to follow:
-[Coding conventions](CodingConventions.md).
+# Installation
 
-# Building the Package
+The NuGet package ID is **Snowflake.Data**. Install it via any of the standard methods:
 
-You can build Snowflake .NET connector applications for Window, Macintosh, and Linux operating systems. For information about supported operating system versions, refer to the [Client Versions and Support Policy](https://docs.snowflake.com/release-notes/requirements).
-
-## Prerequisites
-
-This project is developed under Visual Studio 2017. Earlier versions of Visual Studio are not supported.
-
-## Steps
-
-Prerequisites: Install dotnet, git, nuget, and mono (Only on Mac)
-
-1. Check out the source code from GitHub:
-
-```{r, engine='bash', code_block_name}
-git clone git@github.com:snowflakedb/snowflake-connector-net snowflake-connector-net
+**Package Manager Console:**
 ```
-
-2. Pull down the dependency:
-
-```{r, engine='bash', code_block_name}
-cd snowflake-connector-net
-nuget restore
-```
-
-3. Build the solution file
-- To build the connector only:
-```{r, engine='bash', code_block_name}
-cd Snowflake.Data
-dotnet build --configuration Release
-```
-- To build the connector and test project:
-```
-Add a parameters.json file to Snowflake.Data.Tests
-dotnet build
-```
-
-# Installing the Package
-
-Package ID for Snowflake Connector for .Net is Snowflake.Data.
-
-Packages can be directly downloaded from [nuget.org](https://www.nuget.org/).
-
-It can also be downloaded using Visual Studio UI (Tools > NuGet Package Manager > Manage NuGet Packages for Solution and search for "Snowflake.Data")
-
-Alternatively, packages can also be downloaded using Package Manager Console:
-
-```{r, engine='bash', code_block_name}
 PM> Install-Package Snowflake.Data
 ```
 
-# Verifying the package signature
+**.NET CLI:**
+```
+dotnet add package Snowflake.Data
+```
 
-Starting from version v4.2.0 the driver package is signed with a signature allowing to verify its authenticity and integrity.
-Steps to verify the signature:
+**Visual Studio UI:** Tools > NuGet Package Manager > Manage NuGet Packages for Solution > search for `Snowflake.Data`.
+
+Packages are also available for direct download from [nuget.org](https://www.nuget.org/packages/Snowflake.Data/).
+
+## Verifying the Package Signature
+
+Starting from version v4.2.0 the driver package is signed, allowing verification of its authenticity and integrity.
+
 1. Install `cosign`
 2. Download the driver package file (`.nupkg`) from nuget, e.g.: https://www.nuget.org/packages/Snowflake.Data/4.2.0
 3. Download the signatures file from the release, e.g.: https://github.com/snowflakedb/snowflake-connector-net/releases/tag/v4.2.0
-4. Verify the signature, e.g:
+4. Verify the signature:
 ```shell
 cosign verify-blob snowflake.data.4.2.0.nupkg \
 --key snowflake-connector-net-v4.2.0.pub \
@@ -115,64 +78,26 @@ cosign verify-blob snowflake.data.4.2.0.nupkg \
 Verified OK
 ```
 
-# Testing and Code Coverage
-
-[Running tests](doc/Testing.md)
-
-[Code coverage](doc/CodeCoverage.md)
-
 ---
 
 # Usage
 
-## Create a Connection
+Detailed documentation for each area of the driver is maintained in separate pages. The table below links to the relevant guide for each topic.
 
-To create a connection get familiar with: [Connecting and Authentication Methods](doc/Connecting.md)
+| Topic | Description | Documentation |
+|-------|-------------|---------------|
+| Connecting | Connection string parameters and authentication methods | [Connecting](doc/Client/Connecting.md) |
+| Connection Pools | Pool lifecycle, sizing, and configuration (v4.0.0+) | [Connection Pooling](doc/Client/ConnectionPooling.md) |
+| Data Types | .NET to Snowflake type mapping, Arrow format | [Data Types](doc/Client/DataTypes.md) |
+| Querying Data | Sync/async queries, bindings, multi-statement support | [Querying Data](doc/Client/QueryingData.md) |
+| Structured Types | Reading objects, arrays, and maps into .NET types | [Structured Types](doc/Client/StructuredTypes.md) |
+| Vector Type | Reading `VECTOR(INT)` / `VECTOR(FLOAT)` columns | [Vector Type](doc/Client/VectorType.md) |
+| Stage Files | PUT/GET commands for uploading and downloading files | [Stage Files](doc/Client/StageFiles.md) |
+| Logging | Built-in and custom `ILogger` integration, easy logging | [Logging](doc/Client/Logging.md) |
+| Certificate Validation | CRL-based revocation checks (differs from other Snowflake drivers) | [Certificate Validation](doc/Client/CertficateValidation.md) |
+| Cache | Token caching for SSO/MFA/OAuth, CRL cache | [Cache](doc/Client/Cache.md) |
 
-## Using Connection Pools
-
-Connection pooling description: [Multiple Connection Pools](doc/ConnectionPooling.md).
-
-Pooling prior to v4.0.0 is described: [Single Connection Pool](doc/ConnectionPoolingDeprecated.md) - `deprecated`
-
-## Data Types and Formats
-
-Snowflake data types and their .NET types is covered in: [Data Types and Data Formats](doc/DataTypes.md)
-
-## Querying Data
-
-How execute a query, use query bindings, run queries synchronously and asynchronously:
-[Running Queries and Reading Results](doc/QueryingData.md)
-
-## Structured types
-
-Using structured types: [Structured types](doc/StructuredTypes.md)
-
-## Vector type
-
-Using vector type: [Vector type](doc/VectorType.md)
-
-## Stage Files
-
-Using stage files within PUT/GET commands:
-[PUT and GET Files to/from Stage](doc/StageFiles.md)
-
-## Logging
-
-Logging description and configuration:
-[Logging and Easy Logging](doc/Logging.md)
-
-## Certificate validation
-Method of validating the connection's certificates in the .NET driver differs from the rest of the Snowflake drivers.
-Read more in [certificate validation](doc/CertficateValidation.md) docs.
-
-## Cache
-
-Storing tokens in cache for SSO/MFA authentication.
-
-Read more in [cache](doc/Cache.md) docs.
-
----------------
+---
 
 ## Notice
 
@@ -187,14 +112,14 @@ Read more in [cache](doc/Cache.md) docs.
         In order to mitigate this vulnerability, we recommend to update to higher Runtime versions. If you're already running on a .NET Runtime version higher than the ones listed above, you're not going to be affected by this vulnerability.
 
 2.  Logging -
-    Snowflake has identified an issue on Feb 20, 2020, with our logging code for the .NET drivers in which we write Master and Session tokens in the clear to the debug logs. The debug logs are collected locally on the drive where your programs are running. This issue impacts only those instances where the programs are run with debug flags enabled, i.e. setting the log level value= "Debug” or “All" in the log4Net config
+    Snowflake has identified an issue on Feb 20, 2020, with our logging code for the .NET drivers in which we write Master and Session tokens in the clear to the debug logs. The debug logs are collected locally on the drive where your programs are running. This issue impacts only those instances where the programs are run with debug flags enabled, i.e. setting the log level value= "Debug" or "All" in the log4Net config
 
     Under normal conditions, the Master and Session tokens captured in the log files are short-lived for about 4 and 1 hours, respectively. They will expire after the 4-hour window unless explicitly refreshed, in which case they could be refreshed indefinitely.
 
     If you are using the .NET driver please take the following action:
 
     - Upgrade to the latest version(v1.1.0) as soon as possible.
-    - Remove all “Debugging” options for any existing .NET drivers in use.
+    - Remove all "Debugging" options for any existing .NET drivers in use.
     - Delete any logs collected thus far and make sure that all copies are deleted.
     - If you cannot upgrade for any reason, please ensure all debugging is disabled
     - If you are concerned about a potential compromise, contact Snowflake Customer Support for assistance with invalidating all active sessions/tokens.
@@ -212,8 +137,50 @@ Read more in [cache](doc/Cache.md) docs.
 
 6. The driver uses Rust library called sf_mini_core, you can find its source code [here](https://github.com/snowflakedb/universal-driver/tree/main/sf_mini_core)
 
-Note that the driver is now targeting .NET Standard 2.0. When upgrading, you might also need to run “Update-Package -reinstall” to update the dependencies.
+Note that the driver is now targeting .NET Standard 2.0. When upgrading, you might also need to run "Update-Package -reinstall" to update the dependencies.
 
 See more:
 * [Security Policy](SECURITY.md)
 * [Security Advisories](../../security/advisories)
+
+---
+
+# Contributing
+
+## Coding Conventions
+
+If you would like to contribute to this project, please get to know coding conventions we would like to follow:
+[Coding conventions](CodingConventions.md).
+
+## Building the Package
+
+Install dotnet, git, nuget, and mono (only on Mac).
+
+1. Check out the source code from GitHub:
+```bash
+git clone git@github.com:snowflakedb/snowflake-connector-net snowflake-connector-net
+```
+
+2. Pull down the dependency:
+```bash
+cd snowflake-connector-net
+nuget restore
+```
+
+3. Build the solution file
+- To build the connector only:
+```bash
+cd Snowflake.Data
+dotnet build --configuration Release
+```
+- To build the connector and test project:
+```
+Add a parameters.json file to Snowflake.Data.Tests
+dotnet build
+```
+
+## Testing and Code Coverage
+
+[Running tests](doc/Library%20Contributions/Testing.md)
+
+[Code coverage](doc/Library%20Contributions/CodeCoverage.md)
