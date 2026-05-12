@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -11,8 +12,25 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public class ProgrammaticAccessTokenAuthenticationTest
+    public sealed class ProgrammaticAccessTokenAuthenticationFixture : IDisposable
     {
+        internal readonly WiremockRunner Runner;
+
+        public ProgrammaticAccessTokenAuthenticationFixture()
+        {
+            Runner = WiremockRunner.NewWiremock();
+        }
+
+        public void Dispose()
+        {
+            Runner.Stop();
+        }
+    }
+
+    [Collection(SequentialCollection.SequentialCollectionName)]
+    public class ProgrammaticAccessTokenAuthenticationTest : IClassFixture<ProgrammaticAccessTokenAuthenticationFixture>
+    {
+        private readonly ProgrammaticAccessTokenAuthenticationFixture _fixture;
         private static readonly string s_patMappingPath = Path.Combine("wiremock", "PAT");
         private static readonly string s_successfulPatFlowMappingPath = Path.Combine(s_patMappingPath, "successful_flow.json");
         private static readonly string s_invalidPatFlowMappingPath = Path.Combine(s_patMappingPath, "invalid_pat_token.json");
@@ -24,25 +42,17 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string Account = "MOCK_ACCOUNT_NAME";
         private const string Token = "MOCK_TOKEN";
 
-        private WiremockRunner _runner;
-        public void BeforeAll()
+        public ProgrammaticAccessTokenAuthenticationTest(ProgrammaticAccessTokenAuthenticationFixture fixture)
         {
-            _runner = WiremockRunner.NewWiremock();
-        }
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-        public void AfterAll()
-        {
-            _runner.Stop();
+            _fixture = fixture;
+            _fixture.Runner.ResetMapping();
         }
 
         [Fact]
         public void TestSuccessfulPatAuthentication()
         {
             // arrange
-            _runner.AddMappings(s_successfulPatFlowMappingPath);
+            _fixture.Runner.AddMappings(s_successfulPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
@@ -56,7 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestSuccessfulPatAuthenticationAsync()
         {
             // arrange
-            _runner.AddMappings(s_successfulPatFlowMappingPath);
+            _fixture.Runner.AddMappings(s_successfulPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
@@ -70,7 +80,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestInvalidPatAuthentication()
         {
             // arrange
-            _runner.AddMappings(s_invalidPatFlowMappingPath);
+            _fixture.Runner.AddMappings(s_invalidPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
@@ -84,7 +94,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestInvalidPatAuthenticationAsync()
         {
             // arrange
-            _runner.AddMappings(s_invalidPatFlowMappingPath);
+            _fixture.Runner.AddMappings(s_invalidPatFlowMappingPath);
             var session = PrepareSession();
 
             // act

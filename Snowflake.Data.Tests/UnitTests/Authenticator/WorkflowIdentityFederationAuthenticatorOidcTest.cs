@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -9,20 +10,30 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadIdentityFederationAuthenticatorTest
+    public sealed class WorkflowIdentityFederationAuthenticatorOidcFixture : IDisposable
     {
-        private WiremockRunner _runner;
-        public void BeforeAll()
+        internal readonly WiremockRunner Runner;
+
+        public WorkflowIdentityFederationAuthenticatorOidcFixture()
         {
-            _runner = WiremockRunner.NewWiremock();
+            Runner = WiremockRunner.NewWiremock();
         }
-        public void BeforeEach()
+
+        public void Dispose()
         {
-            _runner.ResetMapping();
+            Runner.Stop();
         }
-        public void AfterAll()
+    }
+
+    [Collection(SequentialCollection.SequentialCollectionName)]
+    public sealed class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadIdentityFederationAuthenticatorTest, IClassFixture<WorkflowIdentityFederationAuthenticatorOidcFixture>
+    {
+        private readonly WorkflowIdentityFederationAuthenticatorOidcFixture _fixture;
+
+        public WorkflowIdentityFederationAuthenticatorOidcTest(WorkflowIdentityFederationAuthenticatorOidcFixture fixture)
         {
-            _runner.Stop();
+            _fixture = fixture;
+            _fixture.Runner.ResetMapping();
         }
 
         [Fact]
@@ -30,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.OIDC, token);
+            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.OIDC, token);
             var session = CreateSessionForOidc(token);
 
             // act
@@ -45,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.OIDC, token);
+            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.OIDC, token);
             var session = CreateSessionForOidc(token);
 
             // act

@@ -16,13 +16,14 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class SFExternalBrowserTest
+    sealed class SFExternalBrowserTest
     {
         [ThreadStatic]
         private static Mock<IWebBrowserRunner> t_browserRunner;
 
         private static HttpClient s_httpClient = new HttpClient();
-        public void BeforeEach()
+
+        public SFExternalBrowserTest()
         {
             t_browserRunner = new Mock<IWebBrowserRunner>();
         }

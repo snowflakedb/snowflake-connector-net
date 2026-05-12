@@ -11,7 +11,25 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    public class EasyLoggerManagerTest
+    public sealed class EasyLoggerManagerTestFixture : IDisposable
+    {
+        public void Dispose()
+        {
+            EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
+            RemoveEasyLoggingLogFiles();
+        }
+
+        private static void RemoveEasyLoggingLogFiles()
+        {
+            var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            Directory.GetFiles(logsDirectory)
+                .Where(filePath => filePath.StartsWith(Path.Combine(logsDirectory)))
+                .AsParallel()
+                .ForAll(filePath => File.Delete(filePath));
+        }
+    }
+
+    public sealed class EasyLoggerManagerTest : IClassFixture<EasyLoggerManagerTestFixture>, IDisposable
     {
 
         private const string InfoMessage = "Easy logging Info message";
@@ -21,16 +39,13 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         private static readonly string s_logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         private static AsyncLocal<string> _directoryLogPath = new AsyncLocal<string>();
-        public static void CleanUp()
-        {
-            EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
-            RemoveEasyLoggingLogFiles();
-        }
-        public void BeforeEach()
+
+        public EasyLoggerManagerTest()
         {
             _directoryLogPath.Value = RandomLogsDirectoryPath();
         }
-        public void AfterEach()
+
+        public void Dispose()
         {
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
         }
@@ -190,12 +205,5 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             return files.First();
         }
 
-        private static void RemoveEasyLoggingLogFiles()
-        {
-            Directory.GetFiles(s_logsDirectory)
-                .Where(filePath => filePath.StartsWith(Path.Combine(s_logsDirectory)))
-                .AsParallel()
-                .ForAll(filePath => File.Delete(filePath));
-        }
     }
 }

@@ -12,7 +12,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    public class EasyLoggingStarterTest
+    public sealed class EasyLoggingStarterTest
     {
         private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         private static readonly string LogPath = Path.Combine(HomeDirectory, "some-logs-path/some-folder");
@@ -85,7 +85,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         [ThreadStatic]
         private static EasyLoggingStarter t_easyLoggerStarter;
-        public void BeforeEach()
+
+        public EasyLoggingStarterTest()
         {
             t_easyLoggingProvider = new Mock<EasyLoggingConfigProvider>();
             t_easyLoggerManager = new Mock<EasyLoggerManager>();

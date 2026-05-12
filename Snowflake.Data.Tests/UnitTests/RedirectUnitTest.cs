@@ -1,36 +1,46 @@
+using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Xunit;
 using Snowflake.Data.Core;
-using Snowflake.Data.Tests.Util;
-using System;
-using System.Threading;
 using Snowflake.Data.Core.Extensions;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    public class RedirectUnitTest
+    public sealed class RedirectUnitTestFixture : IDisposable
     {
-        private WiremockRunner _runner;
-        public void BeforeAll()
+        internal WiremockRunner Runner { get; }
+
+        public RedirectUnitTestFixture()
         {
-            _runner = WiremockRunner.NewWiremock();
+            Runner = WiremockRunner.NewWiremock();
         }
-        public void BeforeEach()
+
+        public void Dispose()
         {
-            _runner.ResetMapping();
+            Runner.Stop();
         }
-        public void AfterAll()
+    }
+
+    [Collection(SequentialCollection.SequentialCollectionName)]
+    public sealed class RedirectUnitTest : IClassFixture<RedirectUnitTestFixture>
+    {
+        private readonly RedirectUnitTestFixture _fixture;
+
+        public RedirectUnitTest(RedirectUnitTestFixture fixture)
         {
-            _runner.Stop();
+            _fixture = fixture;
+            _fixture.Runner.ResetMapping();
         }
 
         [Fact]
         public async Task TestHttp307Retry()
         {
             // arrange
-            _runner.AddMappings("wiremock/HttpUtil/http_307_retry.json");
+            _fixture.Runner.AddMappings("wiremock/HttpUtil/http_307_retry.json");
             var expectedQueryId = "http_307_retry_queryId";
             var httpClient = CreateHttpClientForRetry();
             var request = CreateQueryRequest();
@@ -46,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestHttp308Retry()
         {
             // arrange
-            _runner.AddMappings("wiremock/HttpUtil/http_308_retry.json");
+            _fixture.Runner.AddMappings("wiremock/HttpUtil/http_308_retry.json");
             var expectedQueryId = "http_308_retry_queryId";
             var httpClient = CreateHttpClientForRetry();
             var request = CreateQueryRequest();
@@ -72,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private HttpRequestMessage CreateQueryRequest()
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, _runner.WiremockBaseHttpsUrl + "/queries/v1/query-request?requestId=abc");
+            var request = new HttpRequestMessage(HttpMethod.Post, _fixture.Runner.WiremockBaseHttpsUrl + "/queries/v1/query-request?requestId=abc");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultHttpSecondsTimeout));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultRestRetrySecondsTimeout));
             return request;
