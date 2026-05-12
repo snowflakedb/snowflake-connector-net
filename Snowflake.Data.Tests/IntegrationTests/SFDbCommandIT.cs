@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFDbCommandITAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbCommandITAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) { _fixture = fixture; }
+        public SFDbCommandITAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
         public void TestExecAsyncAPI()

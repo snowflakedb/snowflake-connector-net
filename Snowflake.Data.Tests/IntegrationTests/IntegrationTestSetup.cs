@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public const string IntegrationTestCollectionName = "IntegrationTest";
     }
 
-    public sealed class IntegrationTestFixture : TestEnvironmentFixture, IAsyncLifetime
+    public class IntegrationTestFixture : TestEnvironmentFixture, IAsyncLifetime
     {
         public TaskOrValueTask InitializeAsync()
         {

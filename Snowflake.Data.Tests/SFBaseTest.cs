@@ -34,6 +34,17 @@ namespace Snowflake.Data.Tests
         public const string SequentialCollectionName = "Sequential";
     }
 
+    [CollectionDefinition(SequentialIntegrationCollectionName, DisableParallelization = true)]
+    public class SequentialIntegrationCollection : ICollectionFixture<SequentialIntegrationFixture>
+    {
+        public const string SequentialIntegrationCollectionName = "SequentialIntegration";
+    }
+
+    public class SequentialIntegrationFixture : IntegrationTestFixture
+    {
+
+    }
+
     [CollectionDefinition(TestEnvironmentCollectionName)]
     public class TestEnvironmentCollection : ICollectionFixture<TestEnvironmentFixture>
     {
@@ -230,6 +241,10 @@ namespace Snowflake.Data.Tests
     [Collection(IntegrationTestCollection.IntegrationTestCollectionName)]
     public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>
     {
+        protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
+        {
+            fixture.SetTestEnvironmentFixture(envFixture);
+        }
     }
 
 
@@ -252,15 +267,19 @@ namespace Snowflake.Data.Tests
 
         private List<string> _tablesToRemove;
 
-        protected readonly TestEnvironmentFixture _envFixture;
+        protected TestEnvironmentFixture _envFixture;
 
-        public SFBaseTestAsyncFixture(IntegrationTestFixture envFixture)
+        public SFBaseTestAsyncFixture()
         {
-            _envFixture = envFixture;
-            testConfig = envFixture.TestConfig;
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
             _tablesToRemove = new List<string>();
+        }
+
+        public void SetTestEnvironmentFixture(TestEnvironmentFixture fixture)
+        {
+            _envFixture = fixture;
+            testConfig = fixture.TestConfig;
         }
 
         public virtual TaskOrValueTask InitializeAsync() => TaskOrValueTask.CompletedTask;
@@ -431,7 +450,7 @@ namespace Snowflake.Data.Tests
      */
     public class SFBaseTest : SFBaseTestAsync, IAsyncDisposable
     {
-        public SFBaseTest(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
+        protected SFBaseTest(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
         {
             MockSynchronizationContext.SetupContext();
         }

@@ -35,14 +35,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
+    [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
     public class EasyLoggingIT : SFBaseTest, IClassFixture<EasyLoggingITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         private readonly EasyLoggingITFixture _classFixture;
         private const string LogDirectoryName = "dotnet";
 
-        public EasyLoggingIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, EasyLoggingITFixture classFixture) : base(fixture, envFixture)
+        public EasyLoggingIT(SFBaseTestAsyncFixture fixture, SequentialIntegrationFixture envFixture, EasyLoggingITFixture classFixture) : base(fixture, envFixture)
         {
             _fixture = fixture;
             _classFixture = classFixture;
