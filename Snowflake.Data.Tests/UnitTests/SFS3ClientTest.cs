@@ -15,7 +15,7 @@ using Amazon.S3.Model;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    sealed class SFS3ClientTest : UnitTestBase
+    sealed class SFS3ClientTest
     {
         private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
         // Mock data for file metadata

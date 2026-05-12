@@ -208,10 +208,9 @@ namespace Snowflake.Data.Tests
     }
 
     /*
-     * Base class for unit tests - it uses MockSynchronizationContext to verify that
+     * Base class for unit tests that call async methods - sets up MockSynchronizationContext to ensure
      * there are no async deadlocks in the library
      */
-    // TODO
     public class UnitTestBase : IDisposable
     {
         public UnitTestBase()
@@ -225,9 +224,6 @@ namespace Snowflake.Data.Tests
         }
     }
 
-    /*
-     * Base class for integration tests that call async methods - provides database connection infrastructure
-     */
     [Collection(IntegrationTestCollection.IntegrationTestCollectionName)]
     public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>
     {

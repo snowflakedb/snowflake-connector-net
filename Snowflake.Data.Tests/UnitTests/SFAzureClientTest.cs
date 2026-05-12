@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Moq;
     using Azure;
     using Azure.Storage.Blobs.Models;
-    sealed class SFAzureClientTest : UnitTestBase
+    sealed class SFAzureClientTest
     {
         private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
         // Mock data for file metadata

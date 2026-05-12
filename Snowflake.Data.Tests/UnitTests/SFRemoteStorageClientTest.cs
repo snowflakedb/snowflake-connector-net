@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Text;
     using System.Net;
     using Moq;
-    sealed class SFRemoteStorageClientTest : UnitTestBase, IDisposable
+    sealed class SFRemoteStorageClientTest: IDisposable
     {
         private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
         // Mock data for file metadata
@@ -127,8 +127,6 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 File.Delete(t_downloadFileName);
             }
-
-            base.Dispose();
         }
 
         [Fact(Skip = "RemoteStorageClientTest")]
