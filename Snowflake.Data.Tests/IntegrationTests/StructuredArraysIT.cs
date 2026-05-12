@@ -15,37 +15,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public sealed class StructuredArraysITJsonManaged : StructuredArraysIT
     {
         public StructuredArraysITJsonManaged(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON, false) { }
-    }
-
-    public sealed class StructuredArraysITArrowManaged : StructuredArraysIT
-    {
-        public StructuredArraysITArrowManaged(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, false) { }
-    }
-
-    public sealed class StructuredArraysITArrowNative : StructuredArraysIT
-    {
-        public StructuredArraysITArrowNative(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, true) { }
-    }
-
-    public abstract class StructuredArraysIT : StructuredTypesIT
-    {
-        private readonly ResultFormat _resultFormat;
-        private readonly bool _nativeArrow;
-
-        private readonly SFBaseTestAsyncFixture _fixture;
-        public StructuredArraysIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat, bool nativeArrow) : base(fixture, envFixture)
-        {
-            _fixture = fixture;
-            _resultFormat = resultFormat;
-            _nativeArrow = nativeArrow;
-        }
 
         [Fact]
         public void TestDataTableLoadOnStructuredArrayJsonFormat()
         {
-            if (_resultFormat != ResultFormat.JSON)
-                Skip.If(true, "skip test on arrow");
-
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
@@ -72,6 +45,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
+
+    }
+
+    public sealed class StructuredArraysITArrowManaged : StructuredArraysIT
+    {
+        public StructuredArraysITArrowManaged(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, false) { }
+    }
+
+    public sealed class StructuredArraysITArrowNative : StructuredArraysIT
+    {
+        public StructuredArraysITArrowNative(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, true) { }
+    }
+
+    public abstract class StructuredArraysIT : StructuredTypesIT
+    {
+        protected readonly ResultFormat _resultFormat;
+        protected readonly bool _nativeArrow;
+
+        protected readonly SFBaseTestAsyncFixture _fixture;
+        public StructuredArraysIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat, bool nativeArrow) : base(fixture, envFixture)
+        {
+            _fixture = fixture;
+            _resultFormat = resultFormat;
+            _nativeArrow = nativeArrow;
+        }
+
 
         [Fact]
         public void TestSelectArray()

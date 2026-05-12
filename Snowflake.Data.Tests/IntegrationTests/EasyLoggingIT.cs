@@ -35,6 +35,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
     }
 
+    [Collection(SequentialCollection.SequentialCollectionName)]
     public class EasyLoggingIT : SFBaseTest, IClassFixture<EasyLoggingITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;

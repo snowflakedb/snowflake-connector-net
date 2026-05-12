@@ -22,18 +22,12 @@ using Xunit.Sdk;
 
 namespace Snowflake.Data.Tests
 {
-    /*
-     * Sequential collection definition for tests that cannot run in parallel.
-     */
     [CollectionDefinition(SequentialCollectionName, DisableParallelization = true)]
     public class SequentialCollection
     {
         public const string SequentialCollectionName = "Sequential";
     }
 
-    /*
-     * Setting up environment collection definition for integration tests.
-     */
     [CollectionDefinition(TestEnvironmentCollectionName)]
     public class TestEnvironmentCollection : ICollectionFixture<TestEnvironmentFixture>
     {
@@ -441,7 +435,11 @@ namespace Snowflake.Data.Tests
         public ValueTask DisposeAsync()
         {
             MockSynchronizationContext.Verify();
+            #if NET_FRAMEWORK
+            return new ValueTask(Task.CompletedTask);
+            #else
             return ValueTask.CompletedTask;
+            #endif
         }
     }
 

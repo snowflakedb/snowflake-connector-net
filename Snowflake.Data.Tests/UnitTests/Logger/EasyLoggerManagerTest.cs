@@ -29,6 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         }
     }
 
+    [Collection(SequentialCollection.SequentialCollectionName)]
     public sealed class EasyLoggerManagerTest : IClassFixture<EasyLoggerManagerTestFixture>, IDisposable
     {
 
