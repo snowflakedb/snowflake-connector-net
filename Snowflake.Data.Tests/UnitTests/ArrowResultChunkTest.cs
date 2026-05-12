@@ -584,7 +584,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        void TestExtractCell(IEnumerable testValues, SFDataType sfType, long scale, long divider = 0)
+        void TestExtractCell<T>(IEnumerable<T> testValues, SFDataType sfType, long scale, long divider = 0)
         {
             var recordBatch = PrepareRecordBatch(sfType, scale, testValues);
             var chunk = new ArrowResultChunk(recordBatch);
@@ -593,10 +593,17 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 chunk.Next();
 
-                var expectedValue = (divider == 0) ? testValue : Convert.ToDecimal(testValue) / divider;
+                if (divider == 0)
+                {
+                    Assert.Equal(testValue, chunk.ExtractCell(0, sfType, scale, TimeZoneInfo.Utc));
+                    return;
+                }
+
+                var expectedValue = Convert.ToDecimal(testValue) / divider;
                 Assert.Equal(expectedValue, chunk.ExtractCell(0, sfType, scale, TimeZoneInfo.Utc));
             }
         }
+
         public static RecordBatch PrepareRecordBatch(SFDataType sfType, long scale, object values)
         {
             IArrowArray column = null;
