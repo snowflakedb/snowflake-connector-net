@@ -439,10 +439,10 @@ namespace Snowflake.Data.Tests
         public ValueTask DisposeAsync()
         {
             MockSynchronizationContext.Verify();
-            #if NET_FRAMEWORK
-            return new ValueTask(Task.CompletedTask);
-            #else
+            #if NET6_0_OR_GREATER
             return ValueTask.CompletedTask;
+            #else
+            return new ValueTask(Task.CompletedTask);
             #endif
         }
     }
