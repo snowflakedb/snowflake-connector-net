@@ -1,8 +1,12 @@
 using System;
 using System.Data;
-using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
+#if NET8_0_OR_GREATER
+using TaskOrValueTask = System.Threading.Tasks.ValueTask;
+#else
+using TaskOrValueTask = System.Threading.Tasks.Task;
+#endif
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -14,20 +18,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     public sealed class IntegrationTestFixture : TestEnvironmentFixture, IAsyncLifetime
     {
-        public Task InitializeAsync()
+        public TaskOrValueTask InitializeAsync()
         {
             ModifySchema(TestConfig.schema, SchemaAction.Create);
-            return Task.CompletedTask;
+            return TaskOrValueTask.CompletedTask;
         }
 
-        public Task DisposeAsync()
+        public TaskOrValueTask DisposeAsync()
         {
             if (TestConfig == null)
-                return Task.CompletedTask;
+                return TaskOrValueTask.CompletedTask;
 
             ModifySchema(TestConfig.schema, SchemaAction.Drop);
             Dispose();
-            return Task.CompletedTask;
+            return TaskOrValueTask.CompletedTask;
         }
 
         private enum SchemaAction

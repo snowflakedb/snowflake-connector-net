@@ -11,12 +11,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
+using Xunit;
 using Snowflake.Data.Tests.IntegrationTests;
 using Snowflake.Data.Tests.Util;
 using Xunit.Sdk;
+
+#if NET8_0_OR_GREATER
+using TaskOrValueTask = System.Threading.Tasks.ValueTask;
+#else
+using TaskOrValueTask = System.Threading.Tasks.Task;
+#endif
 
 [assembly: CollectionBehavior(MaxParallelThreads = 20)]
 
@@ -226,6 +232,7 @@ namespace Snowflake.Data.Tests
     {
     }
 
+
     public class SFBaseTestAsyncFixture : IAsyncLifetime
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsyncFixture>();
@@ -256,18 +263,15 @@ namespace Snowflake.Data.Tests
             _tablesToRemove = new List<string>();
         }
 
-        public virtual Task InitializeAsync()
-        {
-            return Task.CompletedTask;
-        }
+        public virtual TaskOrValueTask InitializeAsync() => TaskOrValueTask.CompletedTask;
 
-        public virtual Task DisposeAsync()
+        public virtual TaskOrValueTask DisposeAsync()
         {
             _stopwatch.Stop();
             var testName = GetType().FullName + "." + TestName;
             _envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
             RemoveTables();
-            return Task.CompletedTask;
+            return TaskOrValueTask.CompletedTask;
         }
 
         private void RemoveTables()
