@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFDbTransactionIT : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbTransactionIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFDbTransactionIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
         public void TestTransactionDbConnection()
@@ -76,7 +76,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        // Test SNOW-761136 unnecessary ROLLBACK 
+        // Test SNOW-761136 unnecessary ROLLBACK
         public void TestTransactionRollback()
         {
             var conn = new SnowflakeDbConnection();
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        // Test SNOW-761136 unnecessary ROLLBACK 
+        // Test SNOW-761136 unnecessary ROLLBACK
         public void TestTransactionRollbackOn2Transactions()
         {
             var conn = new SnowflakeDbConnection();

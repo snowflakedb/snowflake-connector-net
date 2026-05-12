@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class MaxLobSizeIT : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public MaxLobSizeIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public MaxLobSizeIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private ResultFormat _resultFormat;
 

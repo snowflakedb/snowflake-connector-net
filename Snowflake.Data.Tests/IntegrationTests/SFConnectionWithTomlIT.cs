@@ -13,16 +13,15 @@ using Tomlyn.Model;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    class SFConnectionWithTomlIT : SFBaseTest
+    sealed class SFConnectionWithTomlIT : SFBaseTest, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFConnectionWithTomlIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
-
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
-
         private static string s_workingDirectory;
-        public new void BeforeTest()
+
+        public SFConnectionWithTomlIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             s_workingDirectory ??= Path.Combine(AppContext.BaseDirectory, "../../..", "toml_config_folder");
             if (!Directory.Exists(s_workingDirectory))
             {
@@ -30,7 +29,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             CreateTomlConfigBaseOnConnectionString(_fixture.ConnectionString);
         }
-        public new void AfterTest()
+
+        public void Dispose()
         {
             Directory.Delete(s_workingDirectory, true);
         }

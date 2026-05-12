@@ -13,12 +13,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public sealed class SFDbDataReaderGetEnumeratorITJson : SFDbDataReaderGetEnumeratorIT
     {
-        public SFDbDataReaderGetEnumeratorITJson(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
+        public SFDbDataReaderGetEnumeratorITJson(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
     }
 
     public sealed class SFDbDataReaderGetEnumeratorITArrow : SFDbDataReaderGetEnumeratorIT
     {
-        public SFDbDataReaderGetEnumeratorITArrow(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
+        public SFDbDataReaderGetEnumeratorITArrow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
     }
 
     public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTest
@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly ResultFormat _resultFormat;
 
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbDataReaderGetEnumeratorIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
+        public SFDbDataReaderGetEnumeratorIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
         {
             _fixture = fixture;
             _resultFormat = resultFormat;

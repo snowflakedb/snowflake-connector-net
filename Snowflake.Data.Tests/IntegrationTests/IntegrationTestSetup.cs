@@ -6,7 +6,13 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public sealed class IntegrationTestFixture : IAsyncLifetime
+    [CollectionDefinition(IntegrationTestCollectionName)]
+    public class IntegrationTestCollection : ICollectionFixture<IntegrationTestFixture>
+    {
+        public const string IntegrationTestCollectionName = "IntegrationTest";
+    }
+
+    public sealed class IntegrationTestFixture : TestEnvironmentFixture, IAsyncLifetime
     {
         public Task InitializeAsync()
         {
@@ -23,6 +29,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 return Task.CompletedTask;
 
             ModifySchema(testConfig.schema, SchemaAction.Drop);
+            Dispose();
             return Task.CompletedTask;
         }
 
@@ -74,7 +81,4 @@ namespace Snowflake.Data.Tests.IntegrationTests
                    $"user={config.user};password={config.password};";
         }
     }
-
-    [CollectionDefinition("Integration")]
-    public class IntegrationTestCollection : ICollectionFixture<IntegrationTestFixture> { }
 }

@@ -1,19 +1,20 @@
+using System;
 using Xunit;
 using System.Data;
 using System.Data.Common;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    class SFDbFactoryIT : SFBaseTest
+    sealed class SFDbFactoryIT : SFBaseTest, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbFactoryIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
-
         DbProviderFactory _factory;
         DbCommand _command;
         DbConnection _connection;
-        public new void BeforeTest()
+
+        public SFDbFactoryIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
         {
+            _fixture = fixture;
 #if NETFRAMEWORK
             _factory = DbProviderFactories.GetFactory("Snowflake.Data");
 #else
@@ -29,7 +30,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _connection.ConnectionString = _fixture.ConnectionString;
             _connection.Open();
         }
-        public new void AfterTest()
+
+        public void Dispose()
         {
             _connection.Close();
         }

@@ -5,10 +5,11 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    class SFDbCommandTest
+    sealed class SFDbCommandTest
     {
         SnowflakeDbCommand command;
-        public void BeforeTest()
+
+        public SFDbCommandTest()
         {
             command = new SnowflakeDbCommand();
         }

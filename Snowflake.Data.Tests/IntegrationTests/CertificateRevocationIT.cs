@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class CertificateRevocationIT : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public CertificateRevocationIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public CertificateRevocationIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact(Skip = "Temporarily ignored")]
         public void TestCertificate()

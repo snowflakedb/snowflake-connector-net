@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class StructuredTypesWithEmbeddedUnstructuredIT : StructuredTypesIT
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public StructuredTypesWithEmbeddedUnstructuredIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public StructuredTypesWithEmbeddedUnstructuredIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         // Connection string with HonorSessionTimezone enabled for tests that use session timezone
         private string ConnectionStringWithHonorSessionTimezone => _fixture.ConnectionString + "HonorSessionTimezone=true;";

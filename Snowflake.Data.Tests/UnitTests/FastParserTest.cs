@@ -5,10 +5,11 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using System;
     using System.Text;
-    class FastParserTest
+    sealed class FastParserTest : IDisposable
     {
         byte[] _byte;
-        public void AfterTest()
+
+        public void Dispose()
         {
             _byte = null;
         }

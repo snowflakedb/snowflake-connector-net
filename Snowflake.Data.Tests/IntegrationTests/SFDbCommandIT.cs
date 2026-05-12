@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFDbCommandITAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbCommandITAsync(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFDbCommandITAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
         public void TestExecAsyncAPI()
@@ -172,7 +172,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive("If this takes too long, query will be in success state.")]
         public async Task TestAsyncExecQueryAsync()
         {
             string queryId;
@@ -523,7 +522,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFDbCommandITSlow : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbCommandITSlow(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFDbCommandITSlow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
         public void TestLongRunningQuery()
@@ -568,7 +567,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFDbCommandIT : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbCommandIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFDbCommandIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
         public void TestSimpleCommand()
@@ -764,7 +763,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive]
         public async Task TestCancelQuery()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -1378,7 +1376,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive("It needs to take max 5 seconds.")]
         public void TestAsyncExecQuery()
         {
             string queryId;

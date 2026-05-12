@@ -15,14 +15,15 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class ArrowResultSetTest
+    sealed class ArrowResultSetTest
     {
         private const int RowCount = 10;
         private const int ColumnIndex = 0;
 
         private RecordBatch _recordBatch;
         private ArrowResultSet _arrowResultSet;
-        public void BeforeTest()
+
+        public ArrowResultSetTest()
         {
             // by default generate Int32 values from 1 to RowCount
             PrepareTestCase(SFDataType.FIXED, 0, Enumerable.Range(1, RowCount).ToArray());

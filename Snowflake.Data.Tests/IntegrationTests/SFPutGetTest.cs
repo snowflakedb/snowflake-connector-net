@@ -19,7 +19,7 @@ using System.Threading;
     class SFPutGetTest : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFPutGetTest(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFPutGetTest(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private const int NumberOfRows = 4;
         private static readonly string[] s_colName = { "C1", "C2", "C3" };

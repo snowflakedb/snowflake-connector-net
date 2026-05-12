@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFConnectionIT : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFConnectionIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFConnectionIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
@@ -359,7 +359,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive]
         public void TestLoginTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -397,7 +396,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive]
         public void TestLoginWithMaxRetryReached()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -431,7 +429,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive]
         public void TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -470,7 +467,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive]
         public void TestDefaultLoginTimeout()
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection())
@@ -1849,7 +1845,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive]
         public async Task TestKeepAlive()
         {
             // create 100 connections, one per second
@@ -1885,7 +1880,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFConnectionITAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFConnectionITAsync(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFConnectionITAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
@@ -1930,7 +1925,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive]
         public void TestAsyncLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1966,7 +1960,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive]
         public void TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -2003,7 +1996,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive]
         public void TestAsyncDefaultLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -2431,7 +2423,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [TimeSensitive]
         public void TestHangingCloseIsNotBlocking()
         {
             // arrange

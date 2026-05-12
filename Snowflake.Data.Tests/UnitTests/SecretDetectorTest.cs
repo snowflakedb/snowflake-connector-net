@@ -6,10 +6,11 @@ using System.Text;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class SecretDetectorTest
+    sealed class SecretDetectorTest
     {
         SecretDetector.Mask mask;
-        public void BeforeTest()
+
+        public SecretDetectorTest()
         {
             mask = SecretDetector.MaskSecrets(null);
         }

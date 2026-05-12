@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly EasyLoggingITFixture _classFixture;
         private const string LogDirectoryName = "dotnet";
 
-        public EasyLoggingIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, EasyLoggingITFixture classFixture) : base(fixture, envFixture)
+        public EasyLoggingIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, EasyLoggingITFixture classFixture) : base(fixture, envFixture)
         {
             _fixture = fixture;
             _classFixture = classFixture;

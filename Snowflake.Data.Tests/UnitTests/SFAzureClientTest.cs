@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Moq;
     using Azure;
     using Azure.Storage.Blobs.Models;
-    class SFAzureClientTest : UnitTestBase
+    sealed class SFAzureClientTest : UnitTestBase
     {
         private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
         // Mock data for file metadata
@@ -53,7 +53,8 @@ namespace Snowflake.Data.Tests.UnitTests
         // The mock client and metadata
         SFSnowflakeAzureClient _client;
         SFFileMetadata _fileMetadata;
-        public void BeforeTest()
+
+        public SFAzureClientTest()
         {
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
 

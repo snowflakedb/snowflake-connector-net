@@ -7,12 +7,23 @@ using System.Text;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests.IntegrationTests;
 using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.Util.TestData;
 
 namespace Snowflake.Data.Tests.IcebergTests
 {
-    public class TestIcebergTable : SFBaseTest
+    public sealed class TestIcebergTableJson : TestIcebergTable
+    {
+        public TestIcebergTableJson(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
+    }
+
+    public sealed class TestIcebergTableArrow : TestIcebergTable
+    {
+        public TestIcebergTableArrow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
+    }
+
+    public abstract class TestIcebergTable : SFBaseTest
     {
         private const string TableNameIceberg = "DOTNET_TEST_DATA_IB";
         private const string TableNameHybrid = "DOTNET_TEST_DATA_HY";
@@ -65,7 +76,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         private const string FormatYmdHmsfZ = "yyyy-MM-dd HH:mm:ss.fffffff zzz";
 
         private readonly SFBaseTestAsyncFixture _fixture;
-        public TestIcebergTable(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
+        public TestIcebergTable(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
         {
             _fixture = fixture;
             _resultFormat = resultFormat;

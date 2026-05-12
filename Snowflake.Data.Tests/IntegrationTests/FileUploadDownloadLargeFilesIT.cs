@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class FileUploadDownloadLargeFilesIT : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public FileUploadDownloadLargeFilesIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public FileUploadDownloadLargeFilesIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private const string FileName = "large_file_to_test_dotnet_driver.json";
         private static readonly string s_uniqueId = TestDataGenarator.NextAlphaNumeric(6);

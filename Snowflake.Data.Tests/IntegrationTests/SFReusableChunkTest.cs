@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFReusableChunkTest : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFReusableChunkTest(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFReusableChunkTest(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
         public void TestDelCharPr431()

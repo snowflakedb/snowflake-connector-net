@@ -6,10 +6,11 @@ using System.Text;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class ConcatenatedStreamTest
+    sealed class ConcatenatedStreamTest
     {
         Stream _concatStream;
-        public void BeforeTest()
+
+        public ConcatenatedStreamTest()
         {
             string data = "12345678";
             byte[] bytes = Encoding.UTF8.GetBytes(data);

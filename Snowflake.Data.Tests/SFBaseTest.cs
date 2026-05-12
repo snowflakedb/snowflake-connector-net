@@ -14,6 +14,7 @@ using Newtonsoft.Json.Serialization;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests.IntegrationTests;
 using Snowflake.Data.Tests.Util;
 using Xunit.Sdk;
 
@@ -39,8 +40,7 @@ namespace Snowflake.Data.Tests
         public const string TestEnvironmentCollectionName = "TestEnvironment";
     }
 
-
-    public sealed class TestEnvironmentFixture : IDisposable
+    public class TestEnvironmentFixture : IDisposable
     {
         public static TestEnvironmentFixture Instance { get; private set; }
 
@@ -236,10 +236,10 @@ namespace Snowflake.Data.Tests
     /*
      * Base class for integration tests that call async methods - provides database connection infrastructure
      */
-    [CollectionDefinition(TestEnvironmentCollection.TestEnvironmentCollectionName)]
-    public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>, ICollectionFixture<TestEnvironmentFixture>
+    [Collection(IntegrationTestCollection.IntegrationTestCollectionName)]
+    public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>
     {
-        protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture testEnvironmentFixture)
+        protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture testEnvironmentFixture)
         {
             fixture.SetTestConfig(testEnvironmentFixture.TestConfig);
         }
@@ -265,7 +265,7 @@ namespace Snowflake.Data.Tests
 
         protected readonly TestEnvironmentFixture _envFixture;
 
-        public SFBaseTestAsyncFixture(TestEnvironmentFixture envFixture)
+        public SFBaseTestAsyncFixture(IntegrationTestFixture envFixture)
         {
             _envFixture = envFixture;
             testConfig = TestEnvironment.TestConfig;
@@ -448,7 +448,7 @@ namespace Snowflake.Data.Tests
      */
     public class SFBaseTest : SFBaseTestAsync, IAsyncDisposable
     {
-        public SFBaseTest(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture)
+        public SFBaseTest(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
         {
             MockSynchronizationContext.SetupContext();
         }

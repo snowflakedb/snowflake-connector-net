@@ -4,15 +4,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Client;
     using System.Data;
     using System.Runtime.InteropServices;
-    class SFDbAdaptorIT : SFBaseTest
+    sealed class SFDbAdaptorIT : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbAdaptorIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
-
         private IDbDataAdapter _adapter;
         private SnowflakeDbCommand _command;
-        public new void BeforeTest()
+
+        public SFDbAdaptorIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             _adapter = new SnowflakeDbDataAdapter();
             _command = new SnowflakeDbCommand();
         }

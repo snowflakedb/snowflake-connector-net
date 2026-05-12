@@ -8,7 +8,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    abstract class ILoggerTest
+    abstract class ILoggerTest : IDisposable
     {
         private const string InfoMessage = "Info message";
         private const string DebugMessage = "Debug message";
@@ -19,7 +19,8 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         protected ILogger _customLogger;
         protected ILogger _logger;
         protected string _logFile;
-        public void AfterTest()
+
+        public void Dispose()
         {
             // Return to default setting
             SnowflakeDbLoggerConfig.ResetCustomLogger();

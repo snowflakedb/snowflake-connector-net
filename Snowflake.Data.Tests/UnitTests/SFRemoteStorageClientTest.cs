@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Text;
     using System.Net;
     using Moq;
-    class SFRemoteStorageClientTest : UnitTestBase
+    sealed class SFRemoteStorageClientTest : UnitTestBase, IDisposable
     {
         private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
         // Mock data for file metadata
@@ -64,7 +64,8 @@ namespace Snowflake.Data.Tests.UnitTests
         // Flags for non-async and async mock methods
         const bool NotAsync = false;
         const bool IsAsync = true;
-        public void BeforeTest()
+
+        public SFRemoteStorageClientTest()
         {
             t_realSourceFilePath = TestNameWithWorker + "_realSrcFilePath.txt";
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
@@ -112,7 +113,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             _cancellationToken = new CancellationToken();
         }
-        public void AfterTest()
+
+        public new void Dispose()
         {
             // Delete temporary files from upload
             if (File.Exists(_fileMetadata.realSrcFilePath))
@@ -125,6 +127,8 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 File.Delete(t_downloadFileName);
             }
+
+            base.Dispose();
         }
 
         [Fact(Skip = "RemoteStorageClientTest")]

@@ -9,10 +9,11 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Security;
     using System.Text;
     using System.Threading;
-    class ChunkParserFactoryTest
+    sealed class ChunkParserFactoryTest : IDisposable
     {
         int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
-        public void AfterTest()
+
+        public void Dispose()
         {
             SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
         }

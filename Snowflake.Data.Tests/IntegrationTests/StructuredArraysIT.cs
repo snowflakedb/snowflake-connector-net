@@ -14,17 +14,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public sealed class StructuredArraysITJsonManaged : StructuredArraysIT
     {
-        public StructuredArraysITJsonManaged(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON, false) { }
+        public StructuredArraysITJsonManaged(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON, false) { }
     }
 
     public sealed class StructuredArraysITArrowManaged : StructuredArraysIT
     {
-        public StructuredArraysITArrowManaged(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, false) { }
+        public StructuredArraysITArrowManaged(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, false) { }
     }
 
     public sealed class StructuredArraysITArrowNative : StructuredArraysIT
     {
-        public StructuredArraysITArrowNative(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, true) { }
+        public StructuredArraysITArrowNative(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, true) { }
     }
 
     public abstract class StructuredArraysIT : StructuredTypesIT
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly bool _nativeArrow;
 
         private readonly SFBaseTestAsyncFixture _fixture;
-        public StructuredArraysIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ResultFormat resultFormat, bool nativeArrow) : base(fixture, envFixture)
+        public StructuredArraysIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat, bool nativeArrow) : base(fixture, envFixture)
         {
             _fixture = fixture;
             _resultFormat = resultFormat;

@@ -15,7 +15,7 @@ using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class SFGCSClientTest : UnitTestBase
+    sealed class SFGCSClientTest : UnitTestBase
     {
         private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
         // Mock data for file metadata
@@ -48,7 +48,8 @@ namespace Snowflake.Data.Tests.UnitTests
         // The mock client and metadata
         SFGCSClient _client;
         SFFileMetadata _fileMetadata;
-        public void BeforeTest()
+
+        public SFGCSClientTest()
         {
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
 

@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     class SFBindTestIT : SFBaseTest
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFBindTestIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFBindTestIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
 

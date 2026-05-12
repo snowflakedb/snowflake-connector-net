@@ -12,19 +12,20 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync
+    public sealed class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public ConnectionMultiplePoolsAsyncIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
-
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
         private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
-        public new void BeforeTest()
+
+        public ConnectionMultiplePoolsAsyncIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
         {
+            _fixture = fixture;
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
-        public new void AfterTest()
+
+        public void Dispose()
         {
             _previousPoolConfig.Reset();
         }

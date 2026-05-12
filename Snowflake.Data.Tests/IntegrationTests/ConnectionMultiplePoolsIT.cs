@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly SFBaseTestAsyncFixture _fixture;
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
-        public ConnectionMultiplePoolsIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ConnectionMultiplePoolsITFixture classFixture) : base(fixture, envFixture)
+        public ConnectionMultiplePoolsIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ConnectionMultiplePoolsITFixture classFixture) : base(fixture, envFixture)
         {
             _fixture = fixture;
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
@@ -489,7 +489,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // operation cancelled properly
             var thrown = Assert.Throws<AggregateException>(() => task.Wait());
-            Assert.IsType<OperationCanceledException>(thrown.InnerException);
+            Assert.IsAssignableFrom<OperationCanceledException>(thrown.InnerException);
 
             // one idle session
             Assert.Equal(1, pool.GetCurrentState().IdleSessionsCount);

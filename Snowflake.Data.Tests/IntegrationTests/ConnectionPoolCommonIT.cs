@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly PoolConfig _previousPoolConfig;
 
         private readonly SFBaseTestAsyncFixture _fixture;
-        public ConnectionPoolCommonIT(SFBaseTestAsyncFixture fixture, TestEnvironmentFixture envFixture, ConnectionPoolCommonITFixture classFixture, ConnectionPoolType connectionPoolTypeUnderTest) : base(fixture, envFixture)
+        public ConnectionPoolCommonIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ConnectionPoolCommonITFixture classFixture, ConnectionPoolType connectionPoolTypeUnderTest) : base(fixture, envFixture)
         {
             _fixture = fixture;
             _connectionPoolTypeUnderTest = connectionPoolTypeUnderTest;
