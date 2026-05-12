@@ -8,7 +8,7 @@ namespace Snowflake.Data.AuthenticationTests
     {
         private string _connectionString = "";
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingKeyPairFileContentSuccessful()
 
         {
@@ -21,7 +21,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingKeyPairFileContentInvalidKey()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -34,7 +34,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Error: JWT token is invalid");
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingKeyPairFilePathSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -46,7 +46,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingKeyPairFilePathInvalidKey()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

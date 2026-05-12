@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net10.0', 'net472', 'net48', 'net481']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net10.0', 'net462', 'net471', 'net472', 'net48', 'net481']
         cloud_env: ['AZURE', 'GCP', 'AWS']
         include:
           - dotnet: net6.0
@@ -99,7 +99,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml --verbosity normal" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml --verbosity diag
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}

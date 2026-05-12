@@ -11,7 +11,7 @@ namespace Snowflake.Data.AuthenticationTests
         private string _connectionString = "";
         private string _patName = "";
 
-        [IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void SetUp()
         {
             var parameters = AuthConnectionString.GetPatConnectionParameters();
@@ -19,7 +19,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingPatSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -38,7 +38,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingPatInvalid()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -49,7 +49,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Programmatic access token is invalid.");
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingPatMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

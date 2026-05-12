@@ -14,7 +14,7 @@ namespace Snowflake.Data.AuthenticationTests
         private string _login;
         private string _password;
 
-        [IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void SetUp()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -27,7 +27,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -39,7 +39,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -56,7 +56,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token.");
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -75,7 +75,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 30 seconds");
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsTimeout()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -88,7 +88,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateSnowflakeAuthorizationCodeWildcardsWithTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

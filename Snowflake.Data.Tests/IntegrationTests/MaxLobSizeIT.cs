@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-        [Theory, IgnoreOnJenkins, MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
+        [IgnoreOnJenkinsTheory, MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
             // arrange
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Theory, IgnoreOnJenkins, MemberData(nameof(LiteralInsertTestCases))]
+        [IgnoreOnJenkinsTheory, MemberData(nameof(LiteralInsertTestCases))]
         public void TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory, IgnoreOnJenkins, MemberData(nameof(PositionalInsertTestCases))]
+        [IgnoreOnJenkinsTheory, MemberData(nameof(PositionalInsertTestCases))]
         public void TestPositionalInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -203,7 +203,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Theory, IgnoreOnJenkins, MemberData(nameof(NamedInsertTestCases))]
+        [IgnoreOnJenkinsTheory, MemberData(nameof(NamedInsertTestCases))]
         public void TestNamedInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -255,7 +255,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory, IgnoreOnJenkins, MemberData(nameof(PutGetCommandTestCases))]
+        [IgnoreOnJenkinsTheory, MemberData(nameof(PutGetCommandTestCases))]
         public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange

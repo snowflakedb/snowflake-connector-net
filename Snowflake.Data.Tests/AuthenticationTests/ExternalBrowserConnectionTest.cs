@@ -13,7 +13,7 @@ namespace Snowflake.Data.AuthenticationTests
         private string _login = AuthConnectionString.SsoUser;
         private string _password = AuthConnectionString.SsoPassword;
 
-        [IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void SetUp()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -24,7 +24,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingExternalBrowserSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -36,7 +36,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingExternalBrowserMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -53,7 +53,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user currently logged in at the IDP");
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingExternalBrowserWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -72,7 +72,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingExternalBrowserTimeout()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

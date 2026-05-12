@@ -10,7 +10,7 @@ namespace Snowflake.Data.AuthenticationTests
     {
         private string _connectionString = "";
 
-        [IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void SetUp()
         {
             string token = AuthConnectionString.GetOauthToken();
@@ -18,7 +18,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingOauthSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -27,7 +27,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Fact, IgnoreOnCI]
+        [IgnoreOnCIFact]
         public void TestAuthenticateUsingOauthInvalidToken()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -40,7 +40,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
         }
 
-        [Fact(Skip = "Skipped, waits for SNOW-1893041"), IgnoreOnCI]
+        [Fact(Skip = "Skipped, waits for SNOW-1893041"), IgnoreOnCIFact]
         public void TestAuthenticateUsingOauthMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
