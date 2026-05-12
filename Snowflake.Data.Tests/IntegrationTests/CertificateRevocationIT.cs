@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly SFBaseTestAsyncFixture _fixture;
         public CertificateRevocationIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
-        [Fact(Skip = "Temporarily ignored")]
+        [Fact(Skip = "Temporarily ignored"), IgnoreOnJenkins]
         public void TestCertificate()
         {
             // arrange
