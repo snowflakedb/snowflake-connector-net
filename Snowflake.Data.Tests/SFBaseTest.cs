@@ -207,14 +207,6 @@ namespace Snowflake.Data.Tests
         }
     }
 
-    /// <summary>
-    /// Static accessor for TestEnvironment - provides backward compat with code that referenced TestEnvironment.TestConfig
-    /// </summary>
-    public static class TestEnvironment
-    {
-        public static TestConfig TestConfig => TestEnvironmentFixture.Instance?.TestConfig;
-    }
-
     /*
      * Base class for unit tests - it uses MockSynchronizationContext to verify that
      * there are no async deadlocks in the library
@@ -239,10 +231,6 @@ namespace Snowflake.Data.Tests
     [Collection(IntegrationTestCollection.IntegrationTestCollectionName)]
     public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>
     {
-        protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture testEnvironmentFixture)
-        {
-            fixture.SetTestConfig(testEnvironmentFixture.TestConfig);
-        }
     }
 
     public class SFBaseTestAsyncFixture : IAsyncLifetime
@@ -268,15 +256,10 @@ namespace Snowflake.Data.Tests
         public SFBaseTestAsyncFixture(IntegrationTestFixture envFixture)
         {
             _envFixture = envFixture;
-            testConfig = TestEnvironment.TestConfig;
+            testConfig = envFixture.TestConfig;
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
             _tablesToRemove = new List<string>();
-        }
-
-        public void SetTestConfig(TestConfig testConfig)
-        {
-            this.testConfig = testConfig ?? throw new ArgumentNullException(nameof(testConfig));
         }
 
         public virtual Task InitializeAsync()
@@ -448,7 +431,7 @@ namespace Snowflake.Data.Tests
      */
     public class SFBaseTest : SFBaseTestAsync, IAsyncDisposable
     {
-        public SFBaseTest(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
+        public SFBaseTest(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
         {
             MockSynchronizationContext.SetupContext();
         }

@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
         private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
-        public ConnectionMultiplePoolsAsyncIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
+        public ConnectionMultiplePoolsAsyncIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
         {
             _fixture = fixture;
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);

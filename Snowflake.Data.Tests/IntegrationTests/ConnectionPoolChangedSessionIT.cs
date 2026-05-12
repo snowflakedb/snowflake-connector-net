@@ -37,35 +37,35 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.ClearAllPools();
         }
 
-        private readonly QueryExecResponseData _queryExecResponseChangedRole = new()
+        private QueryExecResponseData _queryExecResponseChangedRole() => new()
         {
-            finalDatabaseName = TestEnvironment.TestConfig.database,
-            finalSchemaName = TestEnvironment.TestConfig.schema,
+            finalDatabaseName = _fixture.testConfig.database,
+            finalSchemaName = _fixture.testConfig.schema,
             finalRoleName = "role change",
-            finalWarehouseName = TestEnvironment.TestConfig.warehouse
+            finalWarehouseName = _fixture.testConfig.warehouse
         };
 
-        private readonly QueryExecResponseData _queryExecResponseChangedDatabase = new()
+        private QueryExecResponseData _queryExecResponseChangedDatabase() => new()
         {
             finalDatabaseName = "database changed",
-            finalSchemaName = TestEnvironment.TestConfig.schema,
-            finalRoleName = TestEnvironment.TestConfig.role,
-            finalWarehouseName = TestEnvironment.TestConfig.warehouse
+            finalSchemaName = _fixture.testConfig.schema,
+            finalRoleName = _fixture.testConfig.role,
+            finalWarehouseName = _fixture.testConfig.warehouse
         };
 
-        private readonly QueryExecResponseData _queryExecResponseChangedSchema = new()
+        private QueryExecResponseData _queryExecResponseChangedSchema => new()
         {
-            finalDatabaseName = TestEnvironment.TestConfig.database,
+            finalDatabaseName = _fixture.testConfig.database,
             finalSchemaName = "schema changed",
-            finalRoleName = TestEnvironment.TestConfig.role,
-            finalWarehouseName = TestEnvironment.TestConfig.warehouse
+            finalRoleName = _fixture.testConfig.role,
+            finalWarehouseName = _fixture.testConfig.warehouse
         };
 
-        private readonly QueryExecResponseData _queryExecResponseChangedWarehouse = new()
+        private QueryExecResponseData _queryExecResponseChangedWarehouse() => new()
         {
-            finalDatabaseName = TestEnvironment.TestConfig.database,
-            finalSchemaName = TestEnvironment.TestConfig.schema,
-            finalRoleName = TestEnvironment.TestConfig.role,
+            finalDatabaseName = _fixture.testConfig.database,
+            finalSchemaName = _fixture.testConfig.schema,
+            finalRoleName = _fixture.testConfig.role,
             finalWarehouseName = "warehouse changed"
         };
 
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             var connection = new SnowflakeDbConnection(connectionString);
             connection.Open();
-            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedDatabase);
+            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedDatabase());
             connection.Close();
 
             Assert.Equal(0, pool.GetCurrentPoolSize());
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             var connection = new SnowflakeDbConnection(connectionString);
             connection.Open();
-            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedWarehouse);
+            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedWarehouse());
             var sessionId = connection.SfSession.sessionId;
             connection.Close();
 
@@ -125,7 +125,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             var connection = new SnowflakeDbConnection(connectionString);
             connection.Open();
-            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedRole);
+            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedRole());
             var sessionId = connection.SfSession.sessionId;
             connection.Close();
 
@@ -164,10 +164,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             var responseData = new QueryExecResponseData()
             {
-                finalDatabaseName = TestEnvironment.TestConfig.database.ToLower(),
-                finalSchemaName = TestEnvironment.TestConfig.schema.ToUpper(),
-                finalRoleName = $"{char.ToUpper(TestEnvironment.TestConfig.role[0])}{TestEnvironment.TestConfig.role.Substring(1).ToLower()}",
-                finalWarehouseName = TestEnvironment.TestConfig.warehouse.ToLower()
+                finalDatabaseName = _fixture.testConfig.database.ToLower(),
+                finalSchemaName = _fixture.testConfig.schema.ToUpper(),
+                finalRoleName = $"{char.ToUpper(_fixture.testConfig.role[0])}{_fixture.testConfig.role.Substring(1).ToLower()}",
+                finalWarehouseName = _fixture.testConfig.warehouse.ToLower()
             };
 
             var connection = new SnowflakeDbConnection(connectionString);
@@ -192,10 +192,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             var responseData = new QueryExecResponseData()
             {
-                finalDatabaseName = TestEnvironment.TestConfig.database,
-                finalSchemaName = TestEnvironment.TestConfig.schema,
+                finalDatabaseName = _fixture.testConfig.database,
+                finalSchemaName = _fixture.testConfig.schema,
                 finalRoleName = $"\\\"SomeQuotedValue\\\"",
-                finalWarehouseName = TestEnvironment.TestConfig.warehouse.ToLower()
+                finalWarehouseName = _fixture.testConfig.warehouse.ToLower()
             };
 
             var connection = new SnowflakeDbConnection(connectionString);

@@ -16,19 +16,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         public Task InitializeAsync()
         {
-            var testConfig = TestEnvironment.TestConfig;
-            ModifySchema(testConfig.schema, SchemaAction.Create);
+            ModifySchema(TestConfig.schema, SchemaAction.Create);
             return Task.CompletedTask;
         }
 
         public Task DisposeAsync()
         {
-            var testConfig = TestEnvironment.TestConfig;
-
-            if (testConfig == null)
+            if (TestConfig == null)
                 return Task.CompletedTask;
 
-            ModifySchema(testConfig.schema, SchemaAction.Drop);
+            ModifySchema(TestConfig.schema, SchemaAction.Drop);
             Dispose();
             return Task.CompletedTask;
         }
@@ -39,13 +36,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Drop
         }
 
-        private static void ModifySchema(string schemaName, SchemaAction schemaAction)
+        private void ModifySchema(string schemaName, SchemaAction schemaAction)
         {
-            var testConfig = TestEnvironment.TestConfig;
-
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = BuildConnectionString(testConfig);
+                conn.ConnectionString = BuildConnectionString(TestConfig);
                 conn.Open();
                 var dbCommand = conn.CreateCommand();
 
