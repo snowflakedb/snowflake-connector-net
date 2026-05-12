@@ -27,6 +27,7 @@
       </Content>
   </ItemGroup>
   <ItemGroup>
+      <PackageReference Include="Apache.Arrow" Version="14.0.2" />
     <PackageReference Include="JunitXml.TestLogger" Version="3.1.12" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
