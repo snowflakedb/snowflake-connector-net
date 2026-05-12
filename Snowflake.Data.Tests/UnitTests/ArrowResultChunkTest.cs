@@ -600,7 +600,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
 
                 var expectedValue = Convert.ToDecimal(testValue) / divider;
-                Assert.Equal(expectedValue, chunk.ExtractCell(0, sfType, scale, TimeZoneInfo.Utc));
+                var actualMemory = chunk.ExtractCell(0, sfType, scale, TimeZoneInfo.Utc);
+                Assert.Equal(expectedValue, Convert.ToDecimal(actualMemory));
             }
         }
 

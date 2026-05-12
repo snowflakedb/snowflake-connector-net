@@ -44,8 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedVersion, actualVersion);
         }
 
-        [Fact]
-        [RunOnlyOnCI]
+        [RunOnlyOnCIFact]
         public void TestApplicationPathExtraction()
         {
             var applicationPath = SFEnvironment.ExtractApplicationPath();

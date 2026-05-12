@@ -3,9 +3,9 @@ using Xunit;
 
 namespace Snowflake.Data.Tests.Util;
 
-public class IgnoreOnEnvNotSetAttribute : FactAttribute
+public class IgnoreOnEnvNotSetFactAttribute : FactAttribute
 {
-    public IgnoreOnEnvNotSetAttribute(string key)
+    public IgnoreOnEnvNotSetFactAttribute(string key)
     {
         var shouldSkip = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key));
         if (shouldSkip)

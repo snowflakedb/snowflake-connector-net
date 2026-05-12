@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        [RunOnlyOnCI]
+        [RunOnlyOnCIFact]
         public void TestApplicationPathIsSentDuringAuthentication()
         {
             using (var conn = new SnowflakeDbConnection())
