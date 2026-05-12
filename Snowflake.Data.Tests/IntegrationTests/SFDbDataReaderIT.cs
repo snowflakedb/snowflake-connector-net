@@ -1439,10 +1439,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = CreateAndOpenConnection())
             {
-                CreateOrReplaceTable(conn, TableName, new[] { "cola VARIANT" });
+                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola VARIANT" });
 
                 var cmd = conn.CreateCommand();
-                var insertCommand = $"insert into {TableName} (cola) select parse_json( (?) )";
+                var insertCommand = $"insert into {_fixture.TableName} (cola) select parse_json( (?) )";
                 cmd.CommandText = insertCommand;
 
                 var val = "    {\"FieldB\":21,\"FieldA\":37}   ";
@@ -1457,7 +1457,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var count = cmd.ExecuteNonQuery();
                 Assert.Equal(1, count);
 
-                cmd.CommandText = $"select * from {TableName}";
+                cmd.CommandText = $"select * from {_fixture.TableName}";
                 var reader = cmd.ExecuteReader();
 
                 ValidateResultFormat(reader);
