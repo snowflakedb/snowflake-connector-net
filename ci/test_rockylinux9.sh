@@ -67,9 +67,9 @@ popd
 echo "[INFO] Running tests for ${net_version}"
 pushd "${CONNECTOR_DIR}/Snowflake.Data.Tests"
 RESULTS_BASE="rockylinux9_${net_version}_${snowflake_cloud_env}_results"
-REPORTER=${TEST_REPORTER/\%s/$RESULTS_BASE}
+ARGS=${TEST_ARGS/\%s/$RESULTS_BASE}
 dotnet-coverage collect \
-    "dotnet test --framework ${net_version} --no-build --verbosity detailed ${REPORTER}" \
+    "${TEST_RUNNER} --framework ${net_version} ${ARGS}" \
     --output "rockylinux9_${net_version}_${snowflake_cloud_env}_coverage.xml" \
     --output-format cobertura \
     --settings coverage.config
