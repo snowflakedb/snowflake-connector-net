@@ -10,6 +10,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
+    [Collection(SequentialCollection.SequentialCollectionName)]
     public class CrlCacheManagerTest
     {
         public CrlCacheManagerTest()

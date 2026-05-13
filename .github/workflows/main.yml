@@ -39,43 +39,43 @@ jobs:
         include:
           - dotnet: net6.0
             sdk: '6.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net6.0'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net7.0'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net8.0'
+            test_args: '--no-build'
           - dotnet: net9.0
             sdk: '9.0.x'
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net9.0'
+            test_args: '--no-build'
           - dotnet: net10.0
             sdk: '10.0.x'
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net10.0'
+            test_args: '--no-build'
           - dotnet: net462
             sdk: '6.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net462'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net471
             sdk: '6.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net471'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net472
             sdk: '6.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net472'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net48
             sdk: '6.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net48'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net481
             sdk: '6.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net481'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
     steps:
       - name: Checkout code
@@ -123,7 +123,7 @@ jobs:
           RESULTS_BASE="windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
           ARGS='${{ matrix.test_args }}'
           ARGS=${ARGS/\%s/$RESULTS_BASE}
-          dotnet-coverage collect "${{ matrix.test_runner }} --framework ${{ matrix.dotnet }} ${ARGS}" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet-coverage collect "${{ matrix.test_runner }} ${ARGS}" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -161,24 +161,24 @@ jobs:
         include:
           - dotnet: net6.0
             sdk: '6.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net6.0'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net7.0'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net8.0'
+            test_args: '--no-build'
           - dotnet: net9.0
             sdk: '9.0.x'
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net9.0'
+            test_args: '--no-build'
           - dotnet: net10.0
             sdk: '10.0.x'
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net10.0'
+            test_args: '--no-build'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -222,7 +222,7 @@ jobs:
           RESULTS_BASE="linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
           ARGS='${{ matrix.test_args }}'
           ARGS=${ARGS/\%s/$RESULTS_BASE}
-          dotnet-coverage collect "${{ matrix.test_runner }} --framework ${{ matrix.dotnet }} ${ARGS}" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet-coverage collect "${{ matrix.test_runner }} ${ARGS}" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -260,24 +260,24 @@ jobs:
         include:
           - dotnet: net6.0
             sdk: '6.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net6.0'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net7.0'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net8.0'
+            test_args: '--no-build'
           - dotnet: net9.0
             sdk: '9.0.x'
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net9.0'
+            test_args: '--no-build'
           - dotnet: net10.0
             sdk: '10.0.x'
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net10.0'
+            test_args: '--no-build'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -321,7 +321,7 @@ jobs:
           RESULTS_BASE="macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
           ARGS='${{ matrix.test_args }}'
           ARGS=${ARGS/\%s/$RESULTS_BASE}
-          dotnet-coverage collect "${{ matrix.test_runner }} --framework ${{ matrix.dotnet }} ${ARGS}" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          dotnet-coverage collect "${{ matrix.test_runner }} ${ARGS}" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -358,20 +358,20 @@ jobs:
         cloud_env: ['AZURE', 'GCP', 'AWS']
         include:
           - dotnet: net6.0
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net6.0'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
-            test_runner: 'dotnet test'
+            test_runner: 'dotnet test --framework net7.0'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net8.0'
+            test_args: '--no-build'
           - dotnet: net9.0
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net9.0'
+            test_args: '--no-build'
           - dotnet: net10.0
-            test_runner: 'dotnet run'
-            test_args: '--no-build -- --report-trx --report-trx-filename %s.trx'
+            test_runner: 'dotnet run --framework net10.0'
+            test_args: '--no-build'
     steps:
       - uses: actions/checkout@v4
       - name: Build and Run Tests in Docker
