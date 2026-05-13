@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             Directory.GetFiles(logsDirectory)
-                .Where(filePath => filePath.StartsWith(Path.Combine(logsDirectory)))
+                .Where(filePath => filePath.StartsWith(Path.Combine(logsDirectory, "easy_logging_logs")))
                 .AsParallel()
                 .ForAll(filePath => File.Delete(filePath));
         }

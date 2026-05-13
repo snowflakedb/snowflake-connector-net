@@ -94,13 +94,7 @@
 
     <!-- TEMP !-->
     <ItemGroup>
-        <Compile Remove="AuthenticationTests\*"></Compile>
         <Compile Remove="IntegrationTests\*"></Compile>
-        <Compile Remove="PackageTests\*"></Compile>
-        <Compile Remove="IcebergTests\*"></Compile>
-        <Compile Remove="WIFTests\*"></Compile>
-        <Compile Remove="MiniCoreTest.cs"></Compile>
-        <Compile Remove="Util\DbConnectionExtensions.cs"></Compile>
-        <Compile Remove="SFBaseTest.cs"></Compile>
+        <Compile Include="IntegrationTests\IntegrationTestSetup.cs"></Compile>
     </ItemGroup>
 </Project>
