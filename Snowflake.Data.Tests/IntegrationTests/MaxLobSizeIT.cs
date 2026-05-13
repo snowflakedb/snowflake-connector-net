@@ -13,12 +13,31 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    class MaxLobSizeIT : SFBaseTest
+    public sealed class MaxLobSizeITFixture : IDisposable
+    {
+        internal string OutputDirectory;
+
+        public MaxLobSizeITFixture()
+        {
+            // Create temp output directory for downloaded files
+            OutputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(OutputDirectory);
+        }
+
+        public void Dispose()
+        {
+            // Delete temp output directory and downloaded files
+            Directory.Delete(OutputDirectory, true);
+        }
+    }
+
+    [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
+    class MaxLobSizeIT : SFBaseTest, IClassFixture<MaxLobSizeITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public MaxLobSizeIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private ResultFormat _resultFormat;
+        private readonly string _outputDirectory;
 
         //private const int MaxLobSize = (128 * 1024 * 1024); // new max LOB size
         private const int MaxLobSize = (16 * 1024 * 1024); // current max LOB size
@@ -26,7 +45,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private const int OriginSize = (MediumSize / 2);
         private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
 
-        private static string s_outputDirectory;
         private static readonly string[] s_colName = { "C1", "C2", "C3" };
         [ThreadStatic] private static string t_tableName;
         [ThreadStatic] private static string t_insertQuery;
@@ -38,19 +56,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [ThreadStatic] private static string t_outputFilePath;
         [ThreadStatic] private static List<string> t_filesToDelete;
         [ThreadStatic] private static string[] t_colData;
-        public static void OneTimeSetUp()
+
+        public MaxLobSizeIT(MaxLobSizeITFixture maxLobeFixture, SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
         {
-            // Create temp output directory for downloaded files
-            s_outputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            Directory.CreateDirectory(s_outputDirectory);
-        }
-        public static void OneTimeTearDown()
-        {
-            // Delete temp output directory and downloaded files
-            Directory.Delete(s_outputDirectory, true);
-        }
-        public void SetUp()
-        {
+            _fixture = fixture;
+            _outputDirectory = maxLobeFixture.OutputDirectory;
             // Base object's names on worker thread id
             var threadSuffix = Thread.CurrentThread.ManagedThreadId.ToString()?.Replace('#', '_');
 
@@ -74,7 +84,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
-        public void TearDown()
+
+        public void Dispose()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
@@ -95,6 +106,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
         }
+
         [IgnoreOnJenkinsTheory, MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
         public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
@@ -326,7 +338,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 writer.Write(data);
             }
 
-            t_outputFilePath = $@"{s_outputDirectory}/{t_fileName}";
+            t_outputFilePath = $@"{_outputDirectory}/{t_fileName}";
             t_filesToDelete.Add(t_inputFilePath);
             t_filesToDelete.Add(t_outputFilePath);
         }
@@ -385,7 +397,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var command = conn.CreateCommand())
             {
                 // arrange
-                command.CommandText = $"GET @%{t_tableName}/{t_fileName} file://{s_outputDirectory}";
+                command.CommandText = $"GET @%{t_tableName}/{t_fileName} file://{_outputDirectory}";
 
                 // act
                 var reader = command.ExecuteReader();

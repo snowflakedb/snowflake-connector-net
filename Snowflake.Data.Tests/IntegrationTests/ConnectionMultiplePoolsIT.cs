@@ -21,6 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
     }
 
+    [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
     public class ConnectionMultiplePoolsIT : SFBaseTest, IClassFixture<ConnectionMultiplePoolsITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;

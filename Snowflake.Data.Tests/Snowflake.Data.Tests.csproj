@@ -91,10 +91,4 @@
     </PropertyGroup>
 
     <Import Project="..\Snowflake.Data\build\Snowflake.Data.targets"/>
-
-    <!-- TEMP !-->
-    <ItemGroup>
-        <Compile Remove="IntegrationTests\*"></Compile>
-        <Compile Include="IntegrationTests\IntegrationTestSetup.cs"></Compile>
-    </ItemGroup>
 </Project>
