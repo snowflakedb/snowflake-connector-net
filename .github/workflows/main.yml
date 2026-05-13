@@ -111,7 +111,8 @@ jobs:
         run: |
           cd Snowflake.Data.Tests
           RESULTS_BASE="windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
-          REPORTER=$(printf '${{ matrix.test_reporter }}' "$RESULTS_BASE")
+          REPORTER='${{ matrix.test_reporter }}'
+          REPORTER=${REPORTER/\%s/$RESULTS_BASE}
           dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build ${REPORTER} --verbosity normal" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
@@ -204,7 +205,8 @@ jobs:
         run: |
           cd Snowflake.Data.Tests
           RESULTS_BASE="linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
-          REPORTER=$(printf '${{ matrix.test_reporter }}' "$RESULTS_BASE")
+          REPORTER='${{ matrix.test_reporter }}'
+          REPORTER=${REPORTER/\%s/$RESULTS_BASE}
           dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build ${REPORTER} --verbosity normal" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
@@ -297,7 +299,8 @@ jobs:
         run: |
           cd Snowflake.Data.Tests
           RESULTS_BASE="macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
-          REPORTER=$(printf '${{ matrix.test_reporter }}' "$RESULTS_BASE")
+          REPORTER='${{ matrix.test_reporter }}'
+          REPORTER=${REPORTER/\%s/$RESULTS_BASE}
           dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build ${REPORTER} --verbosity normal" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
