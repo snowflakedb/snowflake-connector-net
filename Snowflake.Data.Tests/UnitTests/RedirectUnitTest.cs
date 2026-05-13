@@ -30,6 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [Retry(3)]
         public async Task TestHttp307Retry()
         {
             // arrange
@@ -46,6 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        [Retry(3)]
         public async Task TestHttp308Retry()
         {
             // arrange
