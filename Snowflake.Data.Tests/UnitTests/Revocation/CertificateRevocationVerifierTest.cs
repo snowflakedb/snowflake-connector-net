@@ -250,7 +250,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Theory]
-        [InlineData(30)]
+        [InlineData(30, "ChainError")]
         [InlineData(3, "ChainUnrevoked")]
         public void TestSkipShortLivedCertificate(int offsetDays, string expectedResultString)
         {

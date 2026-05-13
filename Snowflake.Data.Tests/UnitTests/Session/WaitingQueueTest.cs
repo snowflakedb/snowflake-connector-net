@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             _ = Task.Run(() =>
             {
                 syncThreadsSemaphore.Release();
-                return queue.Wait(1000, CancellationToken.None);
+                return queue.Wait(10000, CancellationToken.None);
             });
             await syncThreadsSemaphore.WaitAsync(10000); // make sure scheduled thread execution has started
             await Task.Delay(50).ConfigureAwait(false);

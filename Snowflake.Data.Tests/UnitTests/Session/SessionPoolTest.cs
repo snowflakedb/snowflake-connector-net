@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Theory]
-        [InlineData("account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443", "somePassword", null, null, null)]
+        [InlineData("account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443", "somePassword", "someSecret", "someToken", " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
         [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
         [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key=SomePrivateKey;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
         [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;token=someToken;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]

@@ -472,7 +472,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Theory]
-        [InlineData(true)]
+        [InlineData(true, "True")]
         [InlineData(false, "False")]
         public void TestCSharpTypeValToSfTypeValBoolean(bool srcVal, string expectedVal)
         {

@@ -30,6 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
     }
 
+    [Collection(SequentialCollection.SequentialCollectionName)]
     public class ConnectionPoolManagerTest : IClassFixture<ConnectionPoolManagerTestFixture>
     {
         private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();

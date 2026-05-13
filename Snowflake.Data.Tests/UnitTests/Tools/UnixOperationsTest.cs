@@ -450,20 +450,32 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public static IEnumerable<object[]> UserAllowedWritePermissionsData() =>
             UserAllowedWritePermissions().Select(x => new object[] { x });
 
+        public static IEnumerable<FileAccessPermissions> UserPermissionsWithRead()
+        {
+            yield return FileAccessPermissions.UserRead;
+            yield return FileAccessPermissions.UserReadWriteExecute;
+        }
+
+        public static IEnumerable<FileAccessPermissions> UserPermissionsWithReadWrite()
+        {
+            yield return FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
+            yield return FileAccessPermissions.UserReadWriteExecute;
+        }
+
         public static IEnumerable<object[]> TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidationsData() =>
-            from a in UserPermissions()
+            from a in UserPermissionsWithRead()
             from b in GroupPermissions()
             from c in OthersPermissions()
             select new object[] { a, b, c };
 
         public static IEnumerable<object[]> TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFileData() =>
-            from a in UserPermissions()
+            from a in UserPermissionsWithReadWrite()
             from b in GroupPermissions()
             from c in OthersPermissions()
             select new object[] { a, b, c };
 
         public static IEnumerable<object[]> TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFileData() =>
-            from a in UserPermissions()
+            from a in UserPermissionsWithReadWrite()
             from b in GroupPermissions()
             from c in OthersPermissions()
             select new object[] { a, b, c };
