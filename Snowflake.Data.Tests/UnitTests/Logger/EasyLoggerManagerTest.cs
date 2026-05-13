@@ -32,7 +32,6 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
     [Collection(SequentialCollection.SequentialCollectionName)]
     public sealed class EasyLoggerManagerTest : IClassFixture<EasyLoggerManagerTestFixture>, IDisposable
     {
-
         private const string InfoMessage = "Easy logging Info message";
         private const string DebugMessage = "Easy logging Debug message";
         private const string WarnMessage = "Easy logging Warn message";
@@ -95,7 +94,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         }
 
         [Fact]
-        public static void TestThatLogsToProperFileWithProperLogLevelOnly()
+        public void TestThatLogsToProperFileWithProperLogLevelOnly()
         {
             // arrange
             var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();

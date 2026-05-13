@@ -28,12 +28,6 @@ using TaskOrValueTask = System.Threading.Tasks.Task;
 
 namespace Snowflake.Data.Tests
 {
-    [CollectionDefinition(SequentialCollectionName, DisableParallelization = true)]
-    public class SequentialCollection
-    {
-        public const string SequentialCollectionName = "Sequential";
-    }
-
     [CollectionDefinition(SequentialIntegrationCollectionName, DisableParallelization = true)]
     public class SequentialIntegrationCollection : ICollectionFixture<SequentialIntegrationFixture>
     {

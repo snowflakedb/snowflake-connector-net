@@ -6,7 +6,6 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [Collection(SequentialCollection.SequentialCollectionName)]
     public sealed class SFLoggerPairTestFixture : IDisposable
     {
         public SFLoggerPairTestFixture()
@@ -22,6 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
     }
 
+    [Collection(SequentialCollection.SequentialCollectionName)]
     public class SFLoggerPairTest : IClassFixture<SFLoggerPairTestFixture>, IDisposable
     {
         private readonly SFLogger _loggerPair;

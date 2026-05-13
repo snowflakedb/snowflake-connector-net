@@ -239,7 +239,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
-            var plainTextFilePath = Path.Combine(Path.GetTempPath());
+            var plainTextFilePath = Path.Combine(Path.GetTempPath(), "plaintext.txt");
             var encryptedFilePath = Path.Combine(Path.GetTempPath(), "encrypted.txt");
             try
             {

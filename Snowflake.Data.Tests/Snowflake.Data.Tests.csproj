@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0'">
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net471' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net482' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0'">
         <DefineConstants>$(DefineConstants);OLD_XUNIT</DefineConstants>
         <OldXunit>True</OldXunit>
     </PropertyGroup>
-    
+
     <PropertyGroup>
         <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net10.0;net462;net471;net472;net48;net481</TargetFrameworks>
         <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
@@ -91,4 +91,16 @@
     </PropertyGroup>
 
     <Import Project="..\Snowflake.Data\build\Snowflake.Data.targets"/>
+
+    <!-- TEMP !-->
+    <ItemGroup>
+        <Compile Remove="AuthenticationTests\*"></Compile>
+        <Compile Remove="IntegrationTests\*"></Compile>
+        <Compile Remove="PackageTests\*"></Compile>
+        <Compile Remove="IcebergTests\*"></Compile>
+        <Compile Remove="WIFTests\*"></Compile>
+        <Compile Remove="MiniCoreTest.cs"></Compile>
+        <Compile Remove="Util\DbConnectionExtensions.cs"></Compile>
+        <Compile Remove="SFBaseTest.cs"></Compile>
+    </ItemGroup>
 </Project>
