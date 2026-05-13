@@ -66,8 +66,10 @@ popd
 # Run tests from Snowflake.Data.Tests directory
 echo "[INFO] Running tests for ${net_version}"
 pushd "${CONNECTOR_DIR}/Snowflake.Data.Tests"
+RESULTS_BASE="rockylinux9_${net_version}_${snowflake_cloud_env}_results"
+REPORTER=$(printf "${TEST_REPORTER}" "$RESULTS_BASE")
 dotnet-coverage collect \
-    "dotnet test --framework ${net_version} --no-build --logger \"junit;LogFilePath=rockylinux9_${net_version}_${snowflake_cloud_env}_results.junit.xml\" --verbosity normal" \
+    "dotnet test --framework ${net_version} --no-build ${REPORTER} --verbosity normal" \
     --output "rockylinux9_${net_version}_${snowflake_cloud_env}_coverage.xml" \
     --output-format cobertura \
     --settings coverage.config

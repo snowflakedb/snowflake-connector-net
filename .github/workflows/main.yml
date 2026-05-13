@@ -39,24 +39,34 @@ jobs:
         include:
           - dotnet: net6.0
             sdk: '6.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
           - dotnet: net9.0
             sdk: '9.0.x'
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
           - dotnet: net10.0
             sdk: '10.0.x'
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
           - dotnet: net462
             sdk: '6.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net471
             sdk: '6.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net472
             sdk: '6.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net48
             sdk: '6.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net481
             sdk: '6.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -97,9 +107,12 @@ jobs:
           dotnet restore
           dotnet build -f ${{ matrix.dotnet }} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
       - name: Run Tests
+        shell: bash
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml  --verbosity normal" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          RESULTS_BASE="windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
+          REPORTER=$(printf '${{ matrix.test_reporter }}' "$RESULTS_BASE")
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build ${REPORTER} --verbosity normal" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -137,14 +150,19 @@ jobs:
         include:
           - dotnet: net6.0
             sdk: '6.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
           - dotnet: net9.0
             sdk: '9.0.x'
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
           - dotnet: net10.0
             sdk: '10.0.x'
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -185,7 +203,9 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml  --verbosity normal" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          RESULTS_BASE="linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
+          REPORTER=$(printf '${{ matrix.test_reporter }}' "$RESULTS_BASE")
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build ${REPORTER} --verbosity normal" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -223,14 +243,19 @@ jobs:
         include:
           - dotnet: net6.0
             sdk: '6.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
           - dotnet: net9.0
             sdk: '9.0.x'
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
           - dotnet: net10.0
             sdk: '10.0.x'
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -271,7 +296,9 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml  --verbosity normal" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          RESULTS_BASE="macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
+          REPORTER=$(printf '${{ matrix.test_reporter }}' "$RESULTS_BASE")
+          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build ${REPORTER} --verbosity normal" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -306,6 +333,17 @@ jobs:
       matrix:
         dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net10.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net7.0
+            test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net8.0
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
+          - dotnet: net9.0
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
+          - dotnet: net10.0
+            test_reporter: '--report-trx --report-trx-filename %s.trx'
     steps:
       - uses: actions/checkout@v4
       - name: Build and Run Tests in Docker
@@ -315,6 +353,7 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
           DOTNET_COVERAGE_VERSION: "17.8.4"
+          TEST_REPORTER: ${{ matrix.test_reporter }}
         shell: bash
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
