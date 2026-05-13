@@ -1425,6 +1425,43 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
+        public void TestGetVariant()
+        {
+            using (var conn = CreateAndOpenConnection())
+            {
+                CreateOrReplaceTable(conn, TableName, new[] { "cola VARIANT" });
+
+                var cmd = conn.CreateCommand();
+                var insertCommand = $"insert into {TableName} (cola) select parse_json( (?) )";
+                cmd.CommandText = insertCommand;
+
+                var val = "    {\"FieldB\":21,\"FieldA\":37}   ";
+                var expectedVal = "{\n  \"FieldA\": 37,\n  \"FieldB\": 21\n}";
+
+                var p1 = new SnowflakeDbParameter("1", SFDataType.TEXT)
+                {
+                    Value = val
+                };
+                cmd.Parameters.Add(p1);
+
+                var count = cmd.ExecuteNonQuery();
+                Assert.AreEqual(1, count);
+
+                cmd.CommandText = $"select * from {TableName}";
+                var reader = cmd.ExecuteReader();
+
+                ValidateResultFormat(reader);
+
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual(expectedVal, reader.GetString(0));
+
+                reader.Close();
+
+                CloseConnection(conn);
+            }
+        }
+
+        [Test]
         public void TestResultSetMetadata()
         {
             using (var conn = CreateAndOpenConnection())
