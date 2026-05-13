@@ -114,8 +114,9 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.Equal(1, logLines.Count(s => s.Contains(ErrorMessage)));
 
             // arrange
-            File.Delete(FindLogFilePath(_directoryLogPath.Value));
+            var oldLogFile = FindLogFilePath(_directoryLogPath.Value);
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, _directoryLogPath.Value);
+            File.Delete(oldLogFile);
 
             // act
             logger.Debug(DebugMessage);
