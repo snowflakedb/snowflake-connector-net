@@ -69,7 +69,7 @@ pushd "${CONNECTOR_DIR}/Snowflake.Data.Tests"
 RESULTS_BASE="rockylinux9_${net_version}_${snowflake_cloud_env}_results"
 REPORTER=${TEST_REPORTER/\%s/$RESULTS_BASE}
 dotnet-coverage collect \
-    "dotnet test --framework ${net_version} --no-build ${REPORTER} --verbosity normal" \
+    "dotnet test --framework ${net_version} --no-build --verbosity normal ${REPORTER}" \
     --output "rockylinux9_${net_version}_${snowflake_cloud_env}_coverage.xml" \
     --output-format cobertura \
     --settings coverage.config
