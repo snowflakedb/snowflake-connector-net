@@ -3,10 +3,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Core.Session;
-using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
+    [Collection(SequentialCollection.SequentialCollectionName)]
     public class WaitingQueueTest
     {
         private static readonly int s_timeMeasurementLeftToleranceInMs = Stopwatch.IsHighResolution ? 1 : 20; // DateTime precision is ~10ms, safety coefficient = x2

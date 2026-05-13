@@ -151,7 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             for (int i = 0; i < 5; i++)
             {
                 logger.Debug(DebugMessage);
-                await Task.Delay(1000).ConfigureAwait(false);
+                await Task.Delay(1000);
             }
             var backupLogs = Directory.GetFiles(_directoryLogPath.Value, $"{logFileName}.*.bak");
 

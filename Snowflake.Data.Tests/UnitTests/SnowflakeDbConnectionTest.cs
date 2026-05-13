@@ -12,6 +12,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
+    [Collection(SequentialCollection.SequentialCollectionName)]
     public class SnowflakeDbConnectionTest
     {
         [Fact]
