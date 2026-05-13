@@ -80,6 +80,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         {
             _fixture = fixture;
             _resultFormat = resultFormat;
+            fixture.SetTestEnvironmentFixture(envFixture);
         }
 
         [Fact(Skip = "Not a scope for CICD")]
