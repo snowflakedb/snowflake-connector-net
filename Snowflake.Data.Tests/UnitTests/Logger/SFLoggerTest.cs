@@ -17,6 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
     }
 
+    [Collection(SequentialCollection.SequentialCollectionName)]
     public class SFLoggerTest : IClassFixture<SFLoggerTestFixture>
     {
         private readonly SFLogger _logger;
