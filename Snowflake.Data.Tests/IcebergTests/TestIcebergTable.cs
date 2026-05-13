@@ -80,7 +80,6 @@ namespace Snowflake.Data.Tests.IcebergTests
         {
             _fixture = fixture;
             _resultFormat = resultFormat;
-            fixture.SetTestEnvironmentFixture(envFixture);
         }
 
         [Fact(Skip = "Not a scope for CICD")]
@@ -112,7 +111,6 @@ namespace Snowflake.Data.Tests.IcebergTests
                 Assert.Equal(1, rowsRead);
             }
         }
-
 
         [Fact(Skip = "Not a scope for CICD tests")]
         public void TestInsertWithValueBinding()

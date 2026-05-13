@@ -237,7 +237,7 @@ namespace Snowflake.Data.Tests
     {
         protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
         {
-            fixture.SetTestEnvironmentFixture(envFixture);
+            fixture.InitFixture(envFixture);
         }
     }
 
@@ -262,6 +262,7 @@ namespace Snowflake.Data.Tests
         private List<string> _tablesToRemove;
 
         protected TestEnvironmentFixture _envFixture;
+        private bool _anyTestStarted;
 
         public SFBaseTestAsyncFixture()
         {
@@ -270,8 +271,9 @@ namespace Snowflake.Data.Tests
             _tablesToRemove = new List<string>();
         }
 
-        public void SetTestEnvironmentFixture(TestEnvironmentFixture fixture)
+        public void InitFixture(TestEnvironmentFixture fixture)
         {
+            _anyTestStarted = true;
             _envFixture = fixture;
             testConfig = fixture.TestConfig;
         }
@@ -280,9 +282,12 @@ namespace Snowflake.Data.Tests
 
         public virtual TaskOrValueTask DisposeAsync()
         {
-            _stopwatch.Stop();
-            var testName = GetType().FullName + "." + TestName;
-            _envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
+            if (_anyTestStarted)
+            {
+                _stopwatch.Stop();
+                var testName = GetType().FullName + "." + TestName;
+                _envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
+            }
             RemoveTables();
             return TaskOrValueTask.CompletedTask;
         }
