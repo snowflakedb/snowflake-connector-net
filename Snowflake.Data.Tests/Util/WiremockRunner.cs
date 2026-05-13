@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
@@ -32,14 +34,16 @@ namespace Snowflake.Data.Tests.Util
         {
             var runner = new WiremockRunner();
             const string Localhost = "127.0.0.1";
+            var httpPort = FindFreePort();
+            var httpsPort = FindFreePort();
             runner._server = WireMockServer.Start(new WireMockServerSettings
             {
-                Urls = [$"http://{Localhost}:0", $"https://{Localhost}:0"],
+                Urls = [$"http://{Localhost}:{httpPort}", $"https://{Localhost}:{httpsPort}"],
                 StartAdminInterface = true
             });
             s_logger.Debug($"WireMock started at {runner.Url} and {runner.SslUrl}.");
 
-            await WaitForSslReadyAsync(runner.SslUrl);
+           await WaitForSslReadyAsync(runner.SslUrl);
 
             if (mappingFiles == null)
                 return runner;
@@ -220,5 +224,13 @@ namespace Snowflake.Data.Tests.Util
             throw new InvalidOperationException($"WireMock SSL endpoint did not become ready: {sslUrl}");
         }
 
+        private static int FindFreePort()
+        {
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+            return port;
+        }
     }
 }
