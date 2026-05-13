@@ -8,6 +8,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
+    [Collection(SequentialCollection.SequentialCollectionName)]
     public class PlatformDetectionTest : IDisposable
     {
         private const string LambdaTaskRoot = "LAMBDA_TASK_ROOT";
@@ -362,7 +363,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             Assert.Equal(false, await PlatformDetection.DetectGcpIdentityAsync(mockHttp.ToHttpClient()));
         }
-    
+
         public void Dispose()
         {
             TearDown();

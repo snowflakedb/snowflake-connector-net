@@ -113,16 +113,15 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.Equal(1, logLines.Count(s => s.Contains(WarnMessage)));
             Assert.Equal(1, logLines.Count(s => s.Contains(ErrorMessage)));
 
-            // arrange
-            var oldLogFile = FindLogFilePath(_directoryLogPath.Value);
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, _directoryLogPath.Value);
-            File.Delete(oldLogFile);
+            // arrange - use a fresh directory to avoid race with in-flight log calls to the old appender
+            var secondDirectoryLogPath = RandomLogsDirectoryPath();
+            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, secondDirectoryLogPath);
 
             // act
             logger.Debug(DebugMessage);
 
             // assert
-            logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
+            logLines = File.ReadLines(FindLogFilePath(secondDirectoryLogPath));
             Assert.Equal(1, logLines.Count(s => s.Contains(DebugMessage)));
         }
 
