@@ -13,10 +13,10 @@ namespace Snowflake.Data.Tests.Util.WiremockModels
         [JsonProperty("scenarioName")]
         public string ScenarioName { get; set; }
 
-        [JsonProperty("requiredScenarioState")]
-        public string RequiredScenarioState { get; set; }
+        [JsonProperty("whenStateIs")]
+        public string WhenStateIs { get; set; }
 
-        [JsonProperty("newScenarioState")]
-        public string NewScenarioState { get; set; }
+        [JsonProperty("setStateTo")]
+        public string SetStateTo { get; set; }
     }
 }

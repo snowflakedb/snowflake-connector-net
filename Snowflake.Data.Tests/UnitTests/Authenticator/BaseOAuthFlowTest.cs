@@ -33,13 +33,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         protected const string ClientSecret = "123";
 
         [SetUp]
-        public void BaseBeforeAll()
+        public void SetUp()
         {
             Runner = WiremockRunner.NewWiremock();
         }
 
         [TearDown]
-        public void BaseAfterAll()
+        public void TearDown()
         {
             Runner.Stop();
         }

@@ -19,9 +19,15 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         );
 
         [SetUp]
-        public void BeforeEach()
+        public void SetUp()
         {
             _runner = WiremockRunner.NewWiremock();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            _runner.Dispose();
         }
 
         [Test]

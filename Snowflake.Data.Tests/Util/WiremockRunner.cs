@@ -72,10 +72,11 @@ namespace Snowflake.Data.Tests.Util
             if (mapping.ScenarioName != null)
             {
                 var builder = _server.Given(request).InScenario(mapping.ScenarioName);
-                if (mapping.RequiredScenarioState != null)
-                    builder = builder.WhenStateIs(mapping.RequiredScenarioState);
-                if (mapping.NewScenarioState != null)
-                    builder.WillSetStateTo(mapping.NewScenarioState);
+                if (mapping.WhenStateIs != null)
+                    builder = builder.WhenStateIs(mapping.WhenStateIs);
+                if (mapping.SetStateTo != null)
+                    builder.WillSetStateTo(mapping.SetStateTo);
+
                 builder.RespondWith(response);
             }
             else
