@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Newtonsoft.Json;
@@ -37,6 +38,15 @@ public class TestEnvironmentFixture : IDisposable
 
         TestConfig = ReadTestConfig();
         _testPerformance = new ConcurrentDictionary<string, TimeSpan>();
+
+#if NETFRAMEWORK
+            log4net.GlobalContext.Properties["framework"] = "net471";
+            log4net.Config.XmlConfigurator.Configure();
+#else
+        log4net.GlobalContext.Properties["framework"] = "net10.0";
+        var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
+        log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
+#endif
 
         // A lot of blocking code + async mixup does not play along well with standard thread pool allocation algo
         ThreadPool.SetMinThreads(100, 100);

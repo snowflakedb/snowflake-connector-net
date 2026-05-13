@@ -7,7 +7,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
     {
         protected ISnowflakeCredentialManager _credentialManager;
 
-        [Fact]
         public virtual void TestSavingAndRemovingCredentials()
         {
             // arrange
@@ -27,7 +26,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
-        [Fact]
         public virtual void TestSavingCredentialsForAnExistingKey()
         {
             // arrange
@@ -55,7 +53,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
         }
 
-        [Fact]
         public virtual void TestRemovingCredentialsForKeyThatDoesNotExist()
         {
             // arrange
@@ -68,7 +65,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
-        [Fact]
         public virtual void TestGetCredentialsForProperKey()
         {
             // arrange
@@ -86,7 +82,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.Equal(token, result);
         }
 
-        [Fact]
         public virtual void TestGetCredentialsForTokenWithManyCharacters()
         {
             // arrange
@@ -106,7 +101,6 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
-        [Fact]
         public virtual void TestGetCredentialsForCredentialsThatDoesNotExist()
         {
             // arrange
