@@ -45,13 +45,13 @@ jobs:
             test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
           - dotnet: net9.0
             sdk: '9.0.x'
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
           - dotnet: net10.0
             sdk: '10.0.x'
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
           - dotnet: net462
             sdk: '6.0.x'
             test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
@@ -157,13 +157,13 @@ jobs:
             test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
           - dotnet: net9.0
             sdk: '9.0.x'
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
           - dotnet: net10.0
             sdk: '10.0.x'
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -251,13 +251,13 @@ jobs:
             test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
           - dotnet: net9.0
             sdk: '9.0.x'
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
           - dotnet: net10.0
             sdk: '10.0.x'
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -342,11 +342,11 @@ jobs:
           - dotnet: net7.0
             test_reporter: '--logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
           - dotnet: net9.0
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
           - dotnet: net10.0
-            test_reporter: '-- --report-trx --report-trx-filename %s.trx'
+            test_reporter: '--logger trx;LogFileName=%s.trx'
     steps:
       - uses: actions/checkout@v4
       - name: Build and Run Tests in Docker
