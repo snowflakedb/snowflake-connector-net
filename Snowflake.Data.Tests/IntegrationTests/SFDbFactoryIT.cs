@@ -5,7 +5,7 @@ using System.Data.Common;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    sealed class SFDbFactoryIT : SFBaseTest, IDisposable
+    sealed class SFDbFactoryIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         DbProviderFactory _factory;

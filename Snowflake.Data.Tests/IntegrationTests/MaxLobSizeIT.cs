@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     }
 
     [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
-    class MaxLobSizeIT : SFBaseTest, IClassFixture<MaxLobSizeITFixture>, IDisposable
+    class MaxLobSizeIT : SFBaseTestAsync, IClassFixture<MaxLobSizeITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
 

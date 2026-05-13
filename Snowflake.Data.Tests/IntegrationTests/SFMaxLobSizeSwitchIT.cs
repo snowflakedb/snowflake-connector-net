@@ -4,7 +4,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class SFMaxLobSizeSwitchIT : SFBaseTest
+    public class SFMaxLobSizeSwitchIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFMaxLobSizeSwitchIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }

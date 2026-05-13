@@ -519,7 +519,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
     }
-    class SFDbCommandITSlow : SFBaseTest
+    class SFDbCommandITSlow : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFDbCommandITSlow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
@@ -564,7 +564,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
     }
-    class SFDbCommandIT : SFBaseTest
+    class SFDbCommandIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFDbCommandIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }

@@ -4,7 +4,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public abstract class StructuredTypesIT : SFBaseTest
+    public abstract class StructuredTypesIT : SFBaseTestAsync
     {
         protected StructuredTypesIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { }
 

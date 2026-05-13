@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
     }
 
-    public class ConnectionPoolChangedSessionIT : SFBaseTest, IClassFixture<ConnectionPoolChangedSessionITFixture>, IDisposable
+    public class ConnectionPoolChangedSessionIT : SFBaseTestAsync, IClassFixture<ConnectionPoolChangedSessionITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ConnectionPoolChangedSessionITFixture classFixture) : base(fixture, envFixture)

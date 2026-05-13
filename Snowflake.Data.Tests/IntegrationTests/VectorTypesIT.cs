@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public VectorTypesITArrow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
     }
 
-    public abstract class VectorTypesIT : SFBaseTest
+    public abstract class VectorTypesIT : SFBaseTestAsync
     {
         private readonly ResultFormat _resultFormat;
 

@@ -4,7 +4,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Client;
     using System.Data;
     using System.Runtime.InteropServices;
-    sealed class SFDbAdaptorIT : SFBaseTest
+    sealed class SFDbAdaptorIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         private IDbDataAdapter _adapter;

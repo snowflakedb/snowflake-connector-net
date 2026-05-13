@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     }
 
     [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
-    public class ConnectionSinglePoolCacheIT : SFBaseTest, IClassFixture<ConnectionSinglePoolCacheITFixture>, IDisposable
+    public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IClassFixture<ConnectionSinglePoolCacheITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();

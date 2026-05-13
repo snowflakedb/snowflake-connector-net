@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public SFMultiStatementsITArrow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
     }
 
-    public abstract class SFMultiStatementsIT : SFBaseTest
+    public abstract class SFMultiStatementsIT : SFBaseTestAsync
     {
         private readonly ResultFormat _resultFormat;
 

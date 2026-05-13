@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public SFDbDataReaderGetEnumeratorITArrow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
     }
 
-    public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTest
+    public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTestAsync
     {
 
         private readonly ResultFormat _resultFormat;

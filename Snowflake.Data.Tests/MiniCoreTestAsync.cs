@@ -9,9 +9,9 @@ using Snowflake.Data.Tests.IntegrationTests;
 namespace Snowflake.Data.Tests
 {
     [Trait("Category", "MiniCore")]
-    public class MiniCoreTest : SFBaseTest, IDisposable{
+    public class MiniCoreTestAsync : SFBaseTestAsync, IDisposable{
         private readonly SFBaseTestAsyncFixture _fixture;
-        public MiniCoreTest(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public MiniCoreTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private bool _originalMinicoreState;
         public void SetUp()

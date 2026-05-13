@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
     }
 
-    internal class ConnectionPoolCommonIT : SFBaseTest, IClassFixture<ConnectionPoolCommonITFixture>, IDisposable
+    internal class ConnectionPoolCommonIT : SFBaseTestAsync, IClassFixture<ConnectionPoolCommonITFixture>, IDisposable
     {
         private readonly ConnectionPoolType _connectionPoolTypeUnderTest;
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();

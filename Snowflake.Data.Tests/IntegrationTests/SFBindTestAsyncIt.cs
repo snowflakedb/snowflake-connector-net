@@ -16,12 +16,12 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    class SFBindTestIT : SFBaseTest
+    class SFBindTestAsyncIt : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFBindTestIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFBindTestAsyncIt(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestAsyncIt>();
 
         [Fact]
         public void TestArrayBind()

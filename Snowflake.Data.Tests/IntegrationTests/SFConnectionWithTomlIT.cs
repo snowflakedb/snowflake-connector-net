@@ -13,7 +13,7 @@ using Tomlyn.Model;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    sealed class SFConnectionWithTomlIT : SFBaseTest, IDisposable
+    sealed class SFConnectionWithTomlIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();

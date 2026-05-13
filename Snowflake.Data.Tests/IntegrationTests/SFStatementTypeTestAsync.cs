@@ -4,10 +4,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Data;
     using Snowflake.Data.Client;
     using System.Data.Common;
-    class SFStatementTypeTest : SFBaseTest
+    class SFStatementTypeTestAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFStatementTypeTest(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFStatementTypeTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
         public void TestCallStatement()

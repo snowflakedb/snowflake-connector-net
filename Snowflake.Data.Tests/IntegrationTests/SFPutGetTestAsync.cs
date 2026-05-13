@@ -16,10 +16,10 @@ using System.Threading;
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.FileTransfer;
-    class SFPutGetTest : SFBaseTest
+    class SFPutGetTestAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFPutGetTest(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFPutGetTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         private const int NumberOfRows = 4;
         private static readonly string[] s_colName = { "C1", "C2", "C3" };

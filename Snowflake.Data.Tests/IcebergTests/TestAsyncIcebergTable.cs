@@ -13,17 +13,17 @@ using static Snowflake.Data.Tests.Util.TestData;
 
 namespace Snowflake.Data.Tests.IcebergTests
 {
-    public sealed class TestIcebergTableJson : TestIcebergTable
+    public sealed class TestAsyncIcebergTableJson : TestAsyncIcebergTable
     {
-        public TestIcebergTableJson(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
+        public TestAsyncIcebergTableJson(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
     }
 
-    public sealed class TestIcebergTableArrow : TestIcebergTable
+    public sealed class TestAsyncIcebergTableArrow : TestAsyncIcebergTable
     {
-        public TestIcebergTableArrow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
+        public TestAsyncIcebergTableArrow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
     }
 
-    public abstract class TestIcebergTable : SFBaseTest
+    public abstract class TestAsyncIcebergTable : SFBaseTestAsync
     {
         private const string TableNameIceberg = "DOTNET_TEST_DATA_IB";
         private const string TableNameHybrid = "DOTNET_TEST_DATA_HY";
@@ -76,7 +76,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         private const string FormatYmdHmsfZ = "yyyy-MM-dd HH:mm:ss.fffffff zzz";
 
         private readonly SFBaseTestAsyncFixture _fixture;
-        public TestIcebergTable(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
+        public TestAsyncIcebergTable(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
         {
             _fixture = fixture;
             _resultFormat = resultFormat;

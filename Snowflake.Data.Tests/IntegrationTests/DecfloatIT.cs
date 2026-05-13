@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     /// DECFLOAT values are returned as strings to preserve full precision.
     /// Arrow format uses scientific notation; JSON format uses backend's format.
     /// </summary>
-    public abstract class DecfloatIT : SFBaseTest
+    public abstract class DecfloatIT : SFBaseTestAsync
     {
         private readonly ResultFormat _resultFormat;
 

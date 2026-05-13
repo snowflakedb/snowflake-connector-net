@@ -7,7 +7,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class FileUploadDownloadLargeFilesIT : SFBaseTest
+    public class FileUploadDownloadLargeFilesIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public FileUploadDownloadLargeFilesIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }

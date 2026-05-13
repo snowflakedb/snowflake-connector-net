@@ -10,7 +10,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public class CertificateRevocationIT : SFBaseTest
+    public class CertificateRevocationIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public CertificateRevocationIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }

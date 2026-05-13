@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     }
 
     [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
-    public class ConnectionMultiplePoolsIT : SFBaseTest, IClassFixture<ConnectionMultiplePoolsITFixture>, IDisposable
+    public class ConnectionMultiplePoolsIT : SFBaseTestAsync, IClassFixture<ConnectionMultiplePoolsITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();

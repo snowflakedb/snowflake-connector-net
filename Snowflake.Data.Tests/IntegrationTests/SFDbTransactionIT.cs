@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using System.Threading.Tasks;
-    class SFDbTransactionIT : SFBaseTest
+    class SFDbTransactionIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFDbTransactionIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
