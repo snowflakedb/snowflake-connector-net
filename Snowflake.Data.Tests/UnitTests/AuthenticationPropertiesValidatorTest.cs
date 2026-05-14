@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests
     {
         private const string _necessaryNonAuthProperties = "account=a;";
 
-        [Theory]
+        [SFTheory]
         [InlineData("authenticator=snowflake;user=test;password=test", null)]
         [InlineData("authenticator=Snowflake;user=test", "test")]
         [InlineData("authenticator=ExternalBrowser", null)]
@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFSessionProperties.ParseConnectionString(_necessaryNonAuthProperties + connectionString, propertiesContext);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("authenticator=snowflake;", null, SFError.MISSING_CONNECTION_PROPERTY, "Error: Required property PASSWORD is not provided.")]
         [InlineData("authenticator=snowflake;", "test", SFError.MISSING_CONNECTION_PROPERTY, "Error: Required property USER is not provided")]
         [InlineData("authenticator=snowflake;user=;password=", null, SFError.MISSING_CONNECTION_PROPERTY, "Error: Required property PASSWORD is not provided.")]

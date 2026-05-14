@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFDbCommandITAsync(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
-        [Fact]
+        [SFFact]
         public async Task TestExecAsyncAPI()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExecAsyncAPIParallel()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCancelExecuteAsync()
         {
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExecuteAsyncWithMaxRetryReached()
         {
             var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
@@ -171,7 +171,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAsyncExecQueryAsync()
         {
             string queryId;
@@ -209,7 +209,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExecuteNormalQueryWhileAsyncExecQueryIsRunningAsync()
         {
             string queryId;
@@ -268,7 +268,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAsyncExecCancelWhileGettingResultsAsync()
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -302,7 +302,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAsyncExecCancelAbortsQueryOnServer()
         {
             string queryId;
@@ -355,7 +355,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestFailedAsyncExecQueryThrowsErrorAsync()
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -395,7 +395,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetStatusOfInvalidQueryIdAsync()
         {
             string fakeQueryId = "fakeQueryId";
@@ -419,7 +419,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetResultsOfInvalidQueryIdAsync()
         {
             string fakeQueryId = "fakeQueryId";
@@ -443,7 +443,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetStatusOfUnknownQueryIdAsync()
         {
             string unknownQueryId = "ba321edc-1abc-123e-987f-1234a56b789c";
@@ -490,7 +490,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetResultsOfUnknownQueryIdAsyncWithConfiguredRetry()
         {
             var queryResultsRetryCount = 3;
@@ -524,7 +524,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFDbCommandITSlow(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
-        [Fact]
+        [SFFact]
         public async Task TestLongRunningQuery()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -569,7 +569,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFDbCommandIT(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
-        [Fact]
+        [SFFact]
         public async Task TestSimpleCommand()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -632,7 +632,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSimpleLargeResultSet()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -658,7 +658,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestUseV3ResultParser()
         {
             var connectionString = _fixture.ConnectionString + "poolingEnabled=false";
@@ -682,7 +682,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestUseV3ChunkDownloader()
         {
             var connectionString = _fixture.ConnectionString + "poolingEnabled=false";
@@ -706,7 +706,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(1)]
         [InlineData(2)]
         [InlineData(4)]
@@ -736,7 +736,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDataSourceError()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -762,7 +762,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCancelQuery()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -853,7 +853,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestTransaction()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -907,7 +907,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestRowsAffected()
         {
             String[] testCommands =
@@ -945,7 +945,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExecuteScalarNull()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -964,7 +964,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExecuteWithMaxRetryReached()
         {
             var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
@@ -1001,7 +1001,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCreateCommandBeforeOpeningConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1017,7 +1017,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestRowsAffectedUnload()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1050,7 +1050,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void testPutArrayBindAsync()
         {
             ArrayBindTest(_fixture.ConnectionString + "poolingEnabled=false", _fixture.TableName, 7500);
@@ -1190,7 +1190,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutArrayBindAsyncMultiThreading()
         {
             var t1TableName = _fixture.TableName + 1;
@@ -1229,7 +1229,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             ArrayBindTest(connstr, tableName, 25000);
         }
 
-        [Fact]
+        [SFFact]
         public async Task testExecuteScalarAsyncSelect()
         {
             CancellationTokenSource externalCancel = new CancellationTokenSource();
@@ -1268,9 +1268,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
-        [IgnoreOnEnvIs("snowflake_cloud_env",
-                       new string[] { "AWS", "AZURE" })]
+        [SFFact(SkipCondition.SkipOnCloudAWS | SkipCondition.SkipOnCloudAzure)]
         public async Task testExecuteLargeQueryWithGcsDownscopedToken()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1289,7 +1287,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetQueryId()
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -1375,7 +1373,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAsyncExecQuery()
         {
             string queryId;
@@ -1412,7 +1410,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExecuteNormalQueryWhileAsyncExecQueryIsRunning()
         {
             string queryId;
@@ -1469,7 +1467,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestFailedAsyncExecQueryThrowsError()
         {
             string queryId;
@@ -1508,7 +1506,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAsyncExecQueryPutGetThrowsNotImplemented()
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -1541,7 +1539,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetStatusOfInvalidQueryId()
         {
             string fakeQueryId = "fakeQueryId";
@@ -1564,7 +1562,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetResultsOfInvalidQueryId()
         {
             string fakeQueryId = "fakeQueryId";
@@ -1587,7 +1585,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetStatusOfUnknownQueryId()
         {
             string unknownQueryId = "ab123cde-1cba-789a-987f-1234a56b789c";
@@ -1633,7 +1631,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetResultsOfUnknownQueryIdWithConfiguredRetry()
         {
             var queryResultsRetryCount = 3;
@@ -1662,7 +1660,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSetQueryTagOverridesConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1682,7 +1680,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCommandWithCommentEmbedded()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
@@ -1698,7 +1696,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCommandWithCommentEmbeddedAsync()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
@@ -1714,7 +1712,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExecuteNonQueryReturnsCorrectRowCountForUploadWithMultipleFiles()
         {
             const int NumberOfFiles = 5;
@@ -1758,7 +1756,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExecuteNonQueryAsyncReturnsCorrectRowCountForUploadWithMultipleFiles()
         {
             const int NumberOfFiles = 5;

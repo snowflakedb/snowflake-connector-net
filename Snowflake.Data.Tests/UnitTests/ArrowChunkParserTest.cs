@@ -1,6 +1,7 @@
 using System.Linq;
 using Apache.Arrow;
 using Apache.Arrow.Ipc;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -14,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Threading.Tasks;
     class ArrowChunkParserTest
     {
-        [Theory]
+        [SFTheory]
         [InlineData(1)]
         [InlineData(2)]
         [InlineData(4)]

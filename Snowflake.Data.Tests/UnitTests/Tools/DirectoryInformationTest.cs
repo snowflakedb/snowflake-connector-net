@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     public class DirectoryInformationTest
     {
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(OldCreatingDatesTestCases))]
         public void TestIsCreatedEarlierThanSeconds(DateTime? createdDate, DateTime utcNow)
         {
@@ -21,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(true, result);
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(NewCreatingDatesTestCases))]
         public void TestIsNotCreatedEarlierThanSeconds(bool dirExists, DateTime? createdDate, DateTime utcNow)
         {

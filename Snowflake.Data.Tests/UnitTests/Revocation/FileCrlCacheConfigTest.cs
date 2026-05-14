@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
     public class FileCrlCacheConfigTest
     {
-        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestConfigForWindows()
         {
             // arrange
@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestConfigForMacOrLinux()
         {
             // arrange

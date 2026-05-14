@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutFileAsteriskWildcard()
         {
             var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutFileAsteriskWildcardWithExtension()
         {
             var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
@@ -166,7 +166,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutFileQuestionMarkWildcard()
         {
             var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutFileRelativePathWithoutDirectory()
         {
             // Set the PUT query variables
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("GET")]
         [InlineData("PUT")]
         public async Task TestPutGetOnClosedConnectionThrowsWithoutQueryId(string command)
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetNonExistentFileReturnsFalseAndDoesNotThrow()
         {
             t_inputFilePath = "non_existent_file.csv";
@@ -247,7 +247,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutNonExistentFileThrowsWithQueryId()
         {
             t_inputFilePath = "non_existent_file.csv";
@@ -264,7 +264,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutFileProvidesQueryIdOnFailure()
         {
             // Arrange
@@ -286,7 +286,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutFileWithSyntaxErrorProvidesQueryIdOnFailure()
         {
             // Arrange
@@ -309,7 +309,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutFileProvidesQueryIdOnSuccess()
         {
             // Arrange
@@ -331,7 +331,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutFileRelativePathWithDirectory()
         {
             var guid = Guid.NewGuid();
@@ -352,7 +352,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutFileRelativePathAsteriskWildcard()
         {
             var relativePath = $"{Guid.NewGuid()}";
@@ -375,10 +375,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact(SkipCondition.SkipOnCloudGCP)]
         // presigned url is enabled on CI so we need to disable the test
         // it should be enabled when downscoped credential is the default option
-        [IgnoreOnEnvIs("snowflake_cloud_env", new[] { "GCP" })]
         public async Task TestPutFileWithoutOverwriteFlagSkipsSecondUpload()
         {
             // Set the PUT query variables
@@ -396,7 +395,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutFileWithOverwriteFlagRunsSecondUpload()
         {
             var overwriteAttribute = "OVERWRITE=TRUE";
@@ -416,7 +415,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutDirectoryAsteriskWildcard()
         {
             // Prepare the data files to be copied
@@ -444,7 +443,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutDirectoryQuestionMarkWildcard()
         {
             // Prepare the data files to be copied
@@ -472,7 +471,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutDirectoryMixedWildcard()
         {
             // Prepare the data files to be copied
@@ -536,8 +535,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         // Test small file upload/download with GCS_USE_DOWNSCOPED_CREDENTIAL set to true
-        [Theory, MemberData(nameof(PutGetGcsDownscopedCredentialTestCases))]
-        [IgnoreOnEnvIs("snowflake_cloud_env", new[] { "AWS", "AZURE" })]
+        [SFTheory(SkipCondition.SkipOnCloudAWS | SkipCondition.SkipOnCloudAzure), MemberData(nameof(PutGetGcsDownscopedCredentialTestCases))]
         public async Task TestPutGetGcsDownscopedCredential(
             StageType stageType,
             string stagePath)

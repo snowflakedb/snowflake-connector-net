@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 t_environmentOperations.Object);
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatThrowsErrorWhenLogPathAndHomeDirectoryIsNotSet()
         {
             // arrange
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.NotEmpty(thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatThrowsErrorWhenLogPathIsNotSetAndHomeDirectoryThrowsAnException()
         {
             // arrange
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
 
-        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute)]
@@ -171,7 +171,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains("Too broad access permissions for logs directory", thrown.Message);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatSucceedsWhenLogDirectoryHasExactly700Permissions()
         {
             // arrange
@@ -190,7 +190,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestFailIfDirectoryCreationFails()
         {
             // arrange
@@ -211,7 +211,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains("Failed to create logs directory", thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatConfiguresEasyLoggingOnlyOnceWhenInitializedWithConfigPath()
         {
             // arrange
@@ -252,7 +252,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager.VerifyNoOtherCalls();
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatConfiguresEasyLoggingOnlyOnceForInitializationsWithoutConfigPath()
         {
             // arrange
@@ -280,7 +280,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatReconfiguresEasyLoggingWithConfigPathIfNotGivenForTheFirstTime()
         {
             // arrange
@@ -317,7 +317,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager.VerifyNoOtherCalls();
         }
 
-        [Fact]
+        [SFFact]
         public void TestConfigureStdout()
         {
             // arrange
@@ -332,7 +332,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, "STDOUT"), Times.Once);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestSettingLogPermissionValue()
         {
             // arrange

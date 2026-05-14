@@ -9,6 +9,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Util;
 using Tomlyn;
 using Tomlyn.Model;
 
@@ -36,7 +37,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestLocalDefaultConnectStringReadFromToml()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
@@ -55,7 +56,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestThrowExceptionIfTomlNotFoundWithOtherConnectionString()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
@@ -76,7 +77,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestThrowExceptionIfTomlFromNotFoundFromDbConnection()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);

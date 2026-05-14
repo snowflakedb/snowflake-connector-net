@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(true, false)]
         [InlineData(false, true)]
         [InlineData(true, true)]
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
 
-        [Fact]
+        [SFFact]
         public void TestGetReturnsNullForMissingEntry()
         {
             // arrange
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Null(result);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestScheduledCleanupRemovesExpiredEntries()
         {
             // arrange
@@ -135,7 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl2));
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestScheduledCleanupRemovesStaleEntries()
         {
             // arrange
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl2));
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCleanupKeepsValidEntries()
         {
             // arrange
@@ -203,7 +203,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl1));
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetPromotesFromFileCacheToMemoryCache()
         {
             // arrange

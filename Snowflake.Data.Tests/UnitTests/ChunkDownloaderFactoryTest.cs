@@ -1,4 +1,5 @@
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -46,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return new SFResultSet(responseData, new SFStatement(session), token);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(1)]
         [InlineData(2)]
         [InlineData(3)]

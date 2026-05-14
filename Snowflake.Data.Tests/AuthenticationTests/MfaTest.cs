@@ -7,7 +7,7 @@ namespace Snowflake.Data.AuthenticationTests
 {
     public class MfaTest
     {
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingMfaSuccessful()
         {
             var parameters = AuthConnectionString.GetMfaConnectionString();

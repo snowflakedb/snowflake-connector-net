@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _previousPoolConfig.Reset();
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAddToPoolOnOpenAsync()
         {
             // arrange
@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestFailForInvalidConnectionAsync()
         {
             // arrange
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Contains("Required property ACCOUNT is not provided", thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectionPoolWithInvalidOpenAsync()
         {
             // make the connection string unique so it won't pick up connection
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestMinPoolSizeAsync()
         {
             // arrange
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPreventConnectionFromReturningToPool()
         {
             // arrange
@@ -151,7 +151,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestReleaseConnectionWhenRollbackFailsAsync()
         {
             // arrange
@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object);
             connection.ConnectionString = connectionString;
             await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            connection.BeginTransaction(); // not using async version because it is not available on .net framework
+            await connection.BeginTransactionAsync();
             Assert.Equal(true, connection.HasActiveExplicitTransaction());
 
             // act

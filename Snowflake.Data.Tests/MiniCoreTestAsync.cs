@@ -6,6 +6,7 @@ using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.MiniCore;
 using Snowflake.Data.Tests.IntegrationTests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests
 {
@@ -34,7 +35,7 @@ namespace Snowflake.Data.Tests
                 await Task.Delay(10);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestMinicoreLoadsAndTelemetryIsCorrect()
         {
             await WaitForMiniCoreToLoad();
@@ -48,7 +49,7 @@ namespace Snowflake.Data.Tests
             Assert.Null(clientEnv.minicoreLoadError);
         }
 
-        [Fact]
+        [SFFact]
         public void TestMinicoreIsDisabledInTelemetry()
         {
             SFEnvironment.MinicoreDisabled = true;
@@ -59,7 +60,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(SfMiniCore.DISABLED_MESSAGE, clientEnv.minicoreLoadError);
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetExpectedLibraryNameReturnsCorrectName()
         {
             var name = SfMiniCore.GetExpectedLibraryName();

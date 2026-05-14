@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.PackageTests
 {
     public sealed class LibcDetectorIT
     {
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
+        [SFFact(SkipCondition.SkipOnLinux)]
         public void TestDetectReturnsNotApplicableOnNonLinux()
         {
             // Act
@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.PackageTests
             Assert.Null(version);
         }
 
-        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
+        [SFFact(SkipCondition.RunOnlyOnLinux)]
         public void TestDetectReturnsKnownFamilyOnLinux()
         {
             // Act
@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.PackageTests
             Assert.NotEqual(LibcFamily.NotApplicable, family);
         }
 
-        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
+        [SFFact(SkipCondition.RunOnlyOnLinux)]
         public void TestDetectReturnsVersionStringOnLinuxGlibc()
         {
             // Act
@@ -44,14 +44,14 @@ namespace Snowflake.Data.Tests.PackageTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestTryGetGlibcVersionDoesNotThrow()
         {
             // Act — must not throw on any platform
             LibcDetector.TryGetGlibcVersion(out _);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
+        [SFFact(SkipCondition.SkipOnLinux)]
         public void TestTryGetGlibcVersionReturnsFalseOnNonLinux()
         {
             // Act
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.PackageTests
             Assert.Null(version);
         }
 
-        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Linux)]
+        [SFFact(SkipCondition.RunOnlyOnLinux)]
         public void TestTryGetGlibcVersionReturnsTrueOnLinuxGlibc()
         {
             // Act

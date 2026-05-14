@@ -1,11 +1,12 @@
 using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     public class SecureStringHelperTest
     {
-        [Fact]
+        [SFFact]
         public void TestConvertPassword()
         {
             // arrange

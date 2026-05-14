@@ -1,4 +1,5 @@
 using System;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -76,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _cancellationToken = new CancellationToken();
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractBucketNameAndPath()
         {
             // Arrange
@@ -93,7 +94,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(bucketAndKey[1], location.key);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
@@ -132,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
@@ -184,7 +185,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
@@ -230,7 +231,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
@@ -287,7 +288,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
@@ -337,7 +338,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
@@ -386,7 +387,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Fact]
+        [SFFact]
         public void TestEncryptionMetadataReadingIsCaseInsensitive()
         {
             // arrange
@@ -418,7 +419,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("description", fileHeader.encryptionMetadata.matDesc);
         }
 
-        [Fact]
+        [SFFact]
         public void TestEncryptionMetadataReadingSucceedsWithoutSfcDigest()
         {
             // arrange
@@ -449,7 +450,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("description", fileHeader.encryptionMetadata.matDesc);
         }
 
-        [Fact]
+        [SFFact]
         public void TestHandleFileHeaderResponseDoesNotOverwriteResultStatus()
         {
             // arrange - simulate the download path: status is already set to DOWNLOADED before GetFileHeader is called
@@ -478,7 +479,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(ResultStatus.DOWNLOADED.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Fact]
+        [SFFact]
         public void TestEncryptionMetadataReadingFailsWhenMandatoryPropertyIsMissing()
         {
             // arrange

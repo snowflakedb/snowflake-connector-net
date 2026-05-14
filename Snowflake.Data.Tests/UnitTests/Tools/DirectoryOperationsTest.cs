@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
         }
 
-        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestDirectoryIsSafeOnWindows()
         {
             // arrange
@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(_directoryOperations.IsDirectorySafe(absoluteFilePath));
         }
 
-        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [MemberData(nameof(InsecurePermissionsData))]
         public void TestDirectoryIsNotSafeOnNotWindowsWhenPermissionsAreTooBroad(
             FileAccessPermissions permissions)
@@ -63,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(_directoryOperations.IsDirectorySafe(_dirAbsolutePath));
         }
 
-        [Fact]
+        [SFFact]
         public void TestShouldCreateDirectoryWithSafePermissions()
         {
             // act
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(_directoryOperations.IsDirectorySafe(_dirAbsolutePath));
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestOwnerIsCurrentUser()
         {
             // arrange
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(dirOps.IsDirectoryOwnedByCurrentUser(_dirAbsolutePath));
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(dirOps.IsDirectoryOwnedByCurrentUser(_dirAbsolutePath));
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestDirectoryIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange

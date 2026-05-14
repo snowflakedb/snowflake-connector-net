@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Mock;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -12,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
         private const string ConnectionString = "account=test;user=test;password=test;poolingEnabled=false";
         private static readonly string ValidQueryId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
-        [Fact]
+        [SFFact]
         public async Task TestCancellationSendsAbortRequestForPreCancelledToken()
         {
             // Arrange
@@ -35,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCancellationSendsAbortRequestDuringPollingAsync()
         {
             // Arrange: simulates the repro scenario where a query is running (status=RUNNING)
@@ -69,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCancellationSendsAbortRequestSync()
         {
             // Arrange
@@ -92,7 +93,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCancellationSendsAbortRequestDuringPollingSync()
         {
             // Arrange: sync polling where the token is cancelled after the first status check
@@ -116,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAbortQueryFailureDoesNotSuppressCancellationException()
         {
             // Arrange: cancel request itself throws, but OperationCanceledException should still propagate
@@ -136,7 +137,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 "Cancel request should not have succeeded since the mock was configured to throw");
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAbortQueryFailureDoesNotSuppressCancellationExceptionSync()
         {
             // Arrange: same as above but for the sync (isAsync=false) path
@@ -156,7 +157,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 "Cancel request should not have succeeded since the mock was configured to throw");
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPollingCompletesWhenQueryFinishes()
         {
             var mockRequester = new MockRestRequesterForQueryCancellation();
@@ -173,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 "No cancel request should be sent when query completes normally");
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPollingCompletesWhenQueryFinishesSync()
         {
             var mockRequester = new MockRestRequesterForQueryCancellation();
@@ -191,7 +192,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 "No cancel request should be sent when query completes normally");
         }
 
-        [Fact]
+        [SFFact]
         public void TestNoCancelRequestWhenNotCancelled()
         {
             var mockRequester = new MockRestRequesterForQueryCancellation();

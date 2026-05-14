@@ -1,6 +1,7 @@
 using System;
 using Xunit;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -8,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests
     {
         private readonly SFBindUploader _bindUploader = new SFBindUploader(null, "test");
 
-        [Theory]
+        [SFTheory]
         [InlineData(SFDataType.DATE, "0", "1/1/1970")]
         [InlineData(SFDataType.DATE, "73785600000", "5/4/1972")]
         [InlineData(SFDataType.DATE, "1709164800000", "2/29/2024")]
@@ -24,7 +25,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(dateExpected, dateActual);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(SFDataType.TIME, "0", "00:00:00.000000")]
         [InlineData(SFDataType.TIME, "100000000", "00:00:00.100000")]
         [InlineData(SFDataType.TIME, "1000000000", "00:00:01.000000")]
@@ -42,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(timeExpected, timeActual);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(SFDataType.TIMESTAMP_LTZ, "0", "1970-01-01T00:00:00.0000000+00:00")]
         [InlineData(SFDataType.TIMESTAMP_LTZ, "39600000000000", "1970-01-01T12:00:00.0000000+01:00")]
         [InlineData(SFDataType.TIMESTAMP_LTZ, "1341136800000000000", "2012-07-01T12:00:00.0000000+02:00")]
@@ -62,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(timestampExpected.ToLocalTime(), timestampActual);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(SFDataType.TIMESTAMP_TZ, "0 1440", "1970-01-01 00:00:00.000000 +00:00")]
         [InlineData(SFDataType.TIMESTAMP_TZ, "1341136800000000000 1560", "2012-07-01 12:00:00.000000 +02:00")]
         [InlineData(SFDataType.TIMESTAMP_TZ, "352245599987654000 1560", "1981-02-28 23:59:59.987654 +02:00")]
@@ -80,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(timestampExpected, timestampActual);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(SFDataType.TIMESTAMP_NTZ, "0", "1970-01-01 00:00:00.000000")]
         [InlineData(SFDataType.TIMESTAMP_NTZ, "1341144000000000000", "2012-07-01 12:00:00.000000")]
         [InlineData(SFDataType.TIMESTAMP_NTZ, "352252799987654000", "1981-02-28 23:59:59.987654")]
@@ -98,7 +99,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(timestampExpected, timestampActual);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(SFDataType.TEXT, "", "\"\"")]
         [InlineData(SFDataType.TEXT, "\"", "\"\"\"\"")]
         [InlineData(SFDataType.TEXT, "\n", "\"\n\"")]

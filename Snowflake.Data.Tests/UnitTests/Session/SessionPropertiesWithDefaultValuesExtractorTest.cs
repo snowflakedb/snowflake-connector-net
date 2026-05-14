@@ -2,12 +2,13 @@ using System;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     public class SessionPropertiesWithDefaultValuesExtractorTest
     {
-        [Fact]
+        [SFFact]
         public void TestReturnExtractedValue()
         {
             // arrange
@@ -26,7 +27,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(15, value);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public void TestReturnDefaultValueWhenValueIsMissing(
@@ -49,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(defaultValue, value);
         }
 
-        [Fact]
+        [SFFact]
         public void TestReturnDefaultValueWhenPreValidationFails()
         {
             // arrange
@@ -69,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(defaultValue, value);
         }
 
-        [Fact]
+        [SFFact]
         public void TestFailForPropertyWithInvalidDefaultValue()
         {
             // arrange
@@ -87,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains("Invalid default value of CONNECTION_TIMEOUT", thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public void TestReturnDefaultValueForNullProperty()
         {
             // arrange
@@ -107,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(defaultValue, value);
         }
 
-        [Fact]
+        [SFFact]
         public void TestReturnDefaultValueWhenPostValidationFails()
         {
             // arrange
@@ -127,7 +128,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(defaultValue, value);
         }
 
-        [Fact]
+        [SFFact]
         public void TestReturnDefaultValueWhenExtractFails()
         {
             // arrange
@@ -147,7 +148,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(defaultValue, value);
         }
 
-        [Fact]
+        [SFFact]
         public void TestFailWhenPreValidationFails()
         {
             // arrange
@@ -167,7 +168,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains("Invalid value of parameter CONNECTION_TIMEOUT", thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public void TestFailWhenPostValidationFails()
         {
             // arrange
@@ -188,7 +189,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains("Invalid value of parameter CONNECTION_TIMEOUT", thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public void TestFailWhenExtractFails()
         {
             // arrange

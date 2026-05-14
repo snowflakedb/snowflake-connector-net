@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestEnableEasyLogging()
         {
             // arrange
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestFailToEnableEasyLoggingForWrongConfiguration()
         {
             // arrange
@@ -107,7 +107,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public async Task TestReCreateEasyLoggingUnixLogFileWithCustomisedPermissions()
         {
             // arrange
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public async Task TestReCreateEasyLoggingWindowsLogFileIgnoringCustomisedPermissions()
         {
             // arrange
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public async Task TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
         {
             // arrange
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public async Task TestFailToEnableEasyLoggingWhenLogDirectoryNotAccessible()
         {
             // arrange
@@ -212,7 +212,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public async Task TestFailToEnableEasyLoggingWhenPathIsAccessibleForGroup()
         {
             // arrange

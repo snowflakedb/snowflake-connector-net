@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFReusableChunkTestAsync(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
-        [Fact]
+        [SFFact]
         public async Task TestDelCharPr431()
         {
             const int TestRowCount = 10000;
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestParseJson()
         {
             var previous = ChunkParserFactory.Instance;
@@ -136,7 +136,7 @@ select parse_json('{{
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestChunkRetry()
         {
             const int RetryFailureCount = 6;
@@ -195,7 +195,7 @@ select parse_json('{{
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
         {
             const int ExcessiveRetryCount = 8;

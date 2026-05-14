@@ -4,6 +4,7 @@ using Xunit;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -38,7 +39,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _connection.Close();
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSimpleDbFactory()
         {
             // set commnad's connection object
@@ -50,7 +51,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(1, res);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDbFactoryWithParameter()
         {
             int expectedIntValue = 1;
@@ -70,7 +71,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(expectedIntValue, result);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDbFactoryWithConnectionStringBuilder()
         {
             DbConnectionStringBuilder builder = _factory.CreateConnectionStringBuilder();
@@ -88,7 +89,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(1, result);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDbFactoryWithCommandBuilderAndAdapter()
         {
             // set command's connection object

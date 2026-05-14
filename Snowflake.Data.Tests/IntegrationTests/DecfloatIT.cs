@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -69,7 +70,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return decimal.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectDecfloatLiteral()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -101,7 +102,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDecfloatHighPrecision()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -128,7 +129,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDecfloatNull()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -153,7 +154,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDecfloatNegative()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -180,7 +181,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDecfloatZero()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -207,7 +208,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDecfloatLargePositiveExponent()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -234,7 +235,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDecfloatSmallNegativeExponent()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -261,7 +262,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDecfloatInTable()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -298,7 +299,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDecfloatMultipleColumns()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -334,7 +335,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDecfloatWithCurrentDriverVersion()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -368,7 +369,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDecfloatWithOlderDriverVersion()
         {
             // Get original version

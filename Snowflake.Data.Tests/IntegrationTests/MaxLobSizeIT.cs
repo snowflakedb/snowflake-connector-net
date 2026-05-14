@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [IgnoreOnJenkinsTheory, MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
+        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
         public async Task TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
             // arrange
@@ -127,12 +127,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken);
                 using (var command = conn.CreateCommand())
                 {
                     // act
                     command.CommandText = $"SELECT RANDSTR({size}, 124)";
-                    string row = (string)command.ExecuteScalar();
+                    string row = (string)await command.ExecuteScalarAsync(CancellationToken);
 
                     // assert
                     Assert.Equal(size, row.Length);
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [IgnoreOnJenkinsTheory, MemberData(nameof(LiteralInsertTestCases))]
+        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(LiteralInsertTestCases))]
         public async Task TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [IgnoreOnJenkinsTheory, MemberData(nameof(PositionalInsertTestCases))]
+        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PositionalInsertTestCases))]
         public async Task TestPositionalInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [IgnoreOnJenkinsTheory, MemberData(nameof(NamedInsertTestCases))]
+        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(NamedInsertTestCases))]
         public async Task TestNamedInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
@@ -279,7 +279,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [IgnoreOnJenkinsTheory, MemberData(nameof(PutGetCommandTestCases))]
+        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PutGetCommandTestCases))]
         public async Task TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange

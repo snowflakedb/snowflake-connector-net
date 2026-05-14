@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _nativeArrow = nativeArrow;
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDataTableLoadOnStructuredMap()
         {
             if (_resultFormat != ResultFormat.JSON)
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectMap()
         {
             // arrange
@@ -111,7 +111,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectMapWithIntegerKeys()
         {
             // arrange
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectMapWithLongKeys()
         {
             // arrange
@@ -167,7 +167,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectMapOfObjects()
         {
             // arrange
@@ -197,7 +197,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectMapOfArrays()
         {
             // arrange
@@ -223,7 +223,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectMapOfLists()
         {
             // arrange
@@ -249,7 +249,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectMapOfMaps()
         {
             // arrange
@@ -276,7 +276,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(@"OBJECT_CONSTRUCT('x', OBJECT_CONSTRUCT('a', 'b'))::MAP(VARCHAR,OBJECT)", "{\"a\": \"b\"}")]
         [InlineData(@"OBJECT_CONSTRUCT('x', ARRAY_CONSTRUCT('a', 'b'))::MAP(VARCHAR,ARRAY)", "[\"a\", \"b\"]")]
         [InlineData(@"OBJECT_CONSTRUCT('x', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::MAP(VARCHAR,VARIANT)", "{\"a\": \"b\"}")]
@@ -304,7 +304,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectNullMap()
         {
             // arrange
@@ -328,7 +328,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestThrowExceptionForInvalidMap()
         {
             // arrange
@@ -354,7 +354,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestThrowExceptionForInvalidMapElement()
         {
             // arrange

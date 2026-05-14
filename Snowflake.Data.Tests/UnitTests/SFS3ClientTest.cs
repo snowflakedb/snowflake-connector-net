@@ -12,6 +12,7 @@ using System.Threading;
 using System.IO;
 using Moq;
 using Amazon.S3.Model;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -96,7 +97,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _cancellationToken = new CancellationToken();
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractBucketNameAndPath()
         {
             // Arrange
@@ -114,7 +115,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(bucketAndKey[1], location.key);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
         [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [InlineData(SFS3Client.NO_SUCH_KEY, ResultStatus.NOT_FOUND_FILE)]
@@ -136,7 +137,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
         [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [InlineData(SFS3Client.NO_SUCH_KEY, ResultStatus.NOT_FOUND_FILE)]
@@ -176,7 +177,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
         [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [InlineData(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
@@ -203,7 +204,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForUploadFileTests(expectedResultStatus);
         }
 
-        [Fact]
+        [SFFact]
         public void TestAppendHttpsToEndpoint()
         {
             // Arrange
@@ -218,7 +219,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedEndpoint, amazonS3Client.ServiceURL);
         }
 
-        [Fact]
+        [SFFact]
         public void TestAppendHttpsToEndpointWithBrackets()
         {
             // Arrange
@@ -233,7 +234,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedEndpoint, amazonS3Client.ServiceURL);
         }
 
-        [Fact]
+        [SFFact]
         public void TestServiceUrlIsSetWhenEndpointAndRegionAreProvided()
         {
             // Arrange
@@ -250,7 +251,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(amazonS3Client.RegionEndpoint);
         }
 
-        [Fact]
+        [SFFact]
         public void TestRegionEndpointIsSetWhenOnlyRegionIsProvided()
         {
             // Arrange
@@ -266,7 +267,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(amazonS3Client.ServiceURL);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
         [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [InlineData(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
@@ -304,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(MockS3Client.AwsStatusOk, ResultStatus.DOWNLOADED)]
         [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [InlineData(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
@@ -325,7 +326,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForDownloadFileTests(expectedResultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(MockS3Client.AwsStatusOk, ResultStatus.DOWNLOADED)]
         [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
         [InlineData(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
@@ -346,7 +347,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForDownloadFileTests(expectedResultStatus);
         }
 
-        [Fact]
+        [SFFact]
         public void TestEncryptionMetadataReadingIsCaseInsensitive()
         {
             // arrange
@@ -369,7 +370,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("description", fileHeader.encryptionMetadata.matDesc);
         }
 
-        [Fact]
+        [SFFact]
         public void TestReadingMetadataSucceedsWithoutSfcDigest()
         {
             // arrange

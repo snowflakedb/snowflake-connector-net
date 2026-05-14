@@ -2,12 +2,13 @@ using System.IO;
 using Xunit;
 using Moq;
 using Snowflake.Data.Core.FileTransfer;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
     public class StreamPairTest
     {
-        [Fact]
+        [SFFact]
         public void TestCloseBothStreams()
         {
             // arrange
@@ -22,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockedHelperStream.Verify(stream => stream.Close());
         }
 
-        [Fact]
+        [SFFact]
         public void TestCloseMainStreamOnlyWhenHelperStreamNotGiven()
         {
             // arrange

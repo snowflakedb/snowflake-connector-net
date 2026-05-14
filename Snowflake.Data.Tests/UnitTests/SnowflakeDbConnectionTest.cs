@@ -9,6 +9,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -18,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests
     [Collection(nameof(SnowflakeDbConnectionTestFixture))]
     public class SnowflakeDbConnectionTest
     {
-        [Fact]
+        [SFFact]
         public void TestFillConnectionStringFromTomlConfig()
         {
             // Arrange
@@ -40,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestTomlConfigurationDoesNotOverrideExistingConnectionString()
         {
             // Arrange
@@ -62,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestUseConfigurationProvidedOutsideOfConnectionString()
         {
             // arrange
@@ -111,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestUseConfigurationProvidedOutsideOfConnectionStringAsync()
         {
             // arrange

@@ -4,6 +4,7 @@ using Snowflake.Data.Core;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -15,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
         const int MaxRetryCount = 15;
         const int MaxRetryTimeout = 400;
 
-        [Fact]
+        [SFFact]
         public void TestSsoTokenUrlMismatch()
         {
             try
@@ -37,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestMissingPostbackUrl()
         {
             try
@@ -61,7 +62,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestWrongPostbackUrl()
         {
             try
@@ -84,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestCorrectPostbackUrl()
         {
             try
@@ -106,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestCorrectPostbackUrlAsync()
         {
             try
@@ -129,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestDoesNotThrowErrorForWrongPostbackUrlWhenCheckIsDisabled()
         {
             try
@@ -151,7 +152,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestDoesNotThrowErrorForWrongPostbackUrlWhenCheckIsDisabledAsync()
         {
             try
@@ -174,7 +175,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestLoginRequestToString()
         {
             // Arrange
@@ -212,7 +213,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 loginRequest.ToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestAuthenticatorRequestToString()
         {
             // Arrange

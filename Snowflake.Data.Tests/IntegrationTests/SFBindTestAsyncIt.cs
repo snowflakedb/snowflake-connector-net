@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestAsyncIt>();
 
-        [Fact]
+        [SFFact]
         public async Task TestArrayBind()
         {
 
@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(NullTestCases))]
         public async Task TestBindNullValue(object nullValue)
         {
@@ -207,7 +207,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public static IEnumerable<object?[]> NullTestCases() =>
             new[] { new object?[] { DBNull.Value }, new object?[] { null } };
 
-        [Fact]
+        [SFFact]
         public async Task TestBindValue()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
@@ -359,7 +359,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestBindValueWithSFDataType()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
@@ -480,7 +480,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestParameterCollection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -536,7 +536,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutArrayBind()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -666,7 +666,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
         {
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
@@ -739,7 +739,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPutArrayIntegerBind()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -781,7 +781,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExplicitDbTypeAssignmentForSimpleValue()
         {
 
@@ -813,7 +813,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExplicitDbTypeAssignmentForArrayValue()
         {
 
@@ -852,7 +852,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private const string FormatYmdHmsZ = "yyyy/MM/dd HH\\:mm\\:ss zzz";
 
         // STANDARD Tables
-        [Theory]
+        [SFTheory]
         [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
         [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
         [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]

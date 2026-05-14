@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Converter;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
     public class StructuredTypesTest
     {
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(TimeConversionCases))]
         public void TestTimeConversions(string value, string sfTypeString, object expected)
         {
@@ -60,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests
             yield return new object[] { "0001-01-01 00:00:00.123456 -13:00", SFDataType.TIMESTAMP_LTZ.ToString(), DateTime.Parse("0001-01-01 13:00:00.123456").ToLocalTime() };
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(TimeConversionWithNamedTimezoneCases))]
         public void TestTimeConversionsWithNamedTimezone(string value, string sfTypeString, string tzName, object expected)
         {
@@ -139,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
         }
 
-        [Fact]
+        [SFFact]
         public void TestTimeConverterThrowsWhenSessionTimezoneIsNull()
         {
             var timeConverter = new TimeConverter();
@@ -150,7 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Contains("Session timezone is required", ex.Message);
         }
 
-        [Fact]
+        [SFFact]
         public void TestTimeConverterLtzReturnsStringWhenTargetIsString()
         {
             var timeConverter = new TimeConverter();

@@ -3,6 +3,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using Moq;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
@@ -10,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     {
         private const string Token = "abc";
 
-        [Theory]
+        [SFTheory]
         [InlineData("testUser", true, true)]
         [InlineData("", true, false)]
         [InlineData(null, true, false)]
@@ -30,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(expectedIsAvailable, isAvailable);
         }
 
-        [Fact]
+        [SFFact]
         public void TestCacheDisabledCacheIsNotAvailable()
         {
             // arrange
@@ -43,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(false, isAvailable);
         }
 
-        [Fact]
+        [SFFact]
         public void TestNoInteractionWithCacheWhenNotAvailable()
         {
             // arrange
@@ -63,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             credentialManager.VerifyNoOtherCalls();
         }
 
-        [Fact]
+        [SFFact]
         public void TestOperationsDontFailForDisabledCache()
         {
             // arrange
@@ -78,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             cacheKeys.RemoveRefreshToken();
         }
 
-        [Fact]
+        [SFFact]
         public void TestUseCacheForAccessToken()
         {
             // arrange
@@ -94,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(string.Empty, cacheKeys.GetAccessToken());
         }
 
-        [Fact]
+        [SFFact]
         public void TestUseCacheForRefreshToken()
         {
             // arrange

@@ -1,3 +1,5 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     using Xunit;
@@ -19,7 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _command = new SnowflakeDbCommand();
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCreatingDataAdapterWithSelectCommand()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";
@@ -28,7 +30,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(_command.CommandText, _adapter.SelectCommand.CommandText);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCreatingDataAdapterWithSelectCommandTextAndConnection()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";
@@ -39,7 +41,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(conn, _adapter.SelectCommand.Connection);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectStatement()
         {
             DataSet ds = new DataSet("ds");
@@ -63,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDataAdapterSetDeleteCommand()
         {
             _command.CommandText = "delete from table";
@@ -73,7 +75,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(_command.CommandText, _adapter.DeleteCommand.CommandText);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDataAdapterSetInsertCommand()
         {
             _command.CommandText = "insert into table values (1, 2, 3)";
@@ -83,7 +85,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(_command.CommandText, _adapter.InsertCommand.CommandText);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDataAdapterSetSelectCommand()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";
@@ -93,7 +95,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(_command.CommandText, _adapter.SelectCommand.CommandText);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDataAdapterSetUpdateCommand()
         {
             _command.CommandText = "update table set col = 1 where col = 0";

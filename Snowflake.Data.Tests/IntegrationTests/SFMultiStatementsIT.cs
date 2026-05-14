@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _resultFormat = resultFormat;
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectWithoutBinding()
         {
             var testDate = "2020-03-11 12:34:56 +0000";
@@ -100,7 +100,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectAsync()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectWithBinding()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -195,7 +195,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestMixedQueryTypeWithBinding()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -300,7 +300,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestWithExecuteNonQuery()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -369,7 +369,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestWithAllQueryTypes()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -470,7 +470,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestWithMultipleStatementSetting()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -558,7 +558,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestResultSetReturnedForAllQueryTypes()
         {
             using (DbConnection conn = new SnowflakeDbConnection())

@@ -1,6 +1,7 @@
 using Moq;
 using Xunit;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
@@ -9,7 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private const string FilePathFromConnectionString = "/Users/dotnet/config.json";
         private const string FilePathToUse = "/home/config.json";
 
-        [Fact]
+        [SFFact]
         public void TestThatProvidesConfiguration()
         {
             // arrange
@@ -31,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Same(config, result);
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatReturnsNullWhenNoConfigurationFound()
         {
             // arrange

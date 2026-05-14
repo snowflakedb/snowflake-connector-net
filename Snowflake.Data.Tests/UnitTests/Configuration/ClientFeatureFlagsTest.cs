@@ -5,12 +5,13 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
     public class ClientFeatureFlagsTest
     {
-        [Theory]
+        [SFTheory]
         [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "true", true)]
         [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "TRUE", true)]
         [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "false", false)]
@@ -33,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(expectedValue, clientFeatures.IsEnabledExperimentalAuthentication);
         }
 
-        [Fact]
+        [SFFact]
         public void TestDisabledExperimentalAuthenticationWhenCouldNotReadEnvVariable()
         {
             // arrange
@@ -49,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.False(clientFeatures.IsEnabledExperimentalAuthentication);
         }
 
-        [Fact]
+        [SFFact]
         public void TestFailForDisabledAuthentication()
         {
             // arrange

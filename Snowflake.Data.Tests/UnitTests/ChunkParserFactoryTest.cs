@@ -1,3 +1,5 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Xunit;
@@ -18,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(1)]
         [InlineData(2)]
         [InlineData(3)]

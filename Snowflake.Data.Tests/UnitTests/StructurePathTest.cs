@@ -1,11 +1,12 @@
 using Xunit;
 using Snowflake.Data.Core.Converter;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
     public class StructurePathTest
     {
-        [Fact]
+        [SFFact]
         public void TestRootPath()
         {
             // act
@@ -15,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("$", value);
         }
 
-        [Fact]
+        [SFFact]
         public void TestAddPropertyIndex()
         {
             // arrange
@@ -28,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("$[2]", value.ToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestAddPropertyIndexToComplexPath()
         {
             // arrange
@@ -41,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("$[2][1]", value.ToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestAddArrayIndex()
         {
             // arrange
@@ -54,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("$[2]", value.ToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestAddArrayIndexToComplexPath()
         {
             // arrange
@@ -67,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("$[2][1]", value.ToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestAddMapIndex()
         {
             // arrange
@@ -80,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("$[2]", value.ToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestAddMapIndexToComplexPath()
         {
             // arrange

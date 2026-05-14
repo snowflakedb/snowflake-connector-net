@@ -2,12 +2,13 @@ using System.Diagnostics;
 using System.Threading;
 using Xunit;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     public class NonWaitingQueueTest
     {
-        [Fact]
+        [SFFact]
         public void TestWaitDoesNotHangAndReturnsFalse()
         {
             // arrange
@@ -24,7 +25,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.True(watch.ElapsedMilliseconds <= 50);
         }
 
-        [Fact]
+        [SFFact]
         public void TestNoOneIsWaiting()
         {
             // arrange
@@ -38,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.False(isAnyoneWaiting);
         }
 
-        [Fact]
+        [SFFact]
         public void TestWaitingDisabled()
         {
             // arrange
@@ -51,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.False(isWaitingEnabled);
         }
 
-        [Fact]
+        [SFFact]
         public void TestReset()
         {
             // arrange

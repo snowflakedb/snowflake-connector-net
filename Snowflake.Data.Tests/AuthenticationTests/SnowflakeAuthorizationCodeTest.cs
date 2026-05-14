@@ -15,7 +15,7 @@ namespace Snowflake.Data.AuthenticationTests
         private string _password;
 
 
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void SetUp()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -28,7 +28,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeSuccessful()
 
         {
@@ -40,7 +40,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -57,7 +57,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token.");
         }
 
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -76,7 +76,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
         }
 
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeTimeout()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -89,7 +89,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
 
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWithTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -120,7 +120,7 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWithoutTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

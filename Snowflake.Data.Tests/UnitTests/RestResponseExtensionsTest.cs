@@ -1,26 +1,27 @@
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Extensions;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
     public sealed class RestResponseExtensionsTest
     {
-        [Fact]
+        [SFFact]
         public void TestRequestInProgressReturnsTrueForQueryInProgress()
         {
             var response = new NullDataResponse { code = 333333 };
             Assert.True(response.IsQueryInProgress());
         }
 
-        [Fact]
+        [SFFact]
         public void TestRequestInProgressReturnsTrueForQueryInProgressAsync()
         {
             var response = new NullDataResponse { code = 333334 };
             Assert.True(response.IsQueryInProgress());
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(0)]
         [InlineData(200000)]
         [InlineData(390112)]
@@ -33,14 +34,14 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(response.IsQueryInProgress());
         }
 
-        [Fact]
+        [SFFact]
         public void TestSessionExpiredReturnsTrueForExpiredCode()
         {
             var response = new NullDataResponse { code = 390112 };
             Assert.True(response.IsSessionExpired());
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(0)]
         [InlineData(200000)]
         [InlineData(333333)]
@@ -54,14 +55,14 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(response.IsSessionExpired());
         }
 
-        [Fact]
+        [SFFact]
         public void TestSessionNoLongerExistsReturnsTrueForNoLongerExistsCode()
         {
             var response = new NullDataResponse { code = 390111 };
             Assert.True(response.IsSessionGone());
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(0)]
         [InlineData(200000)]
         [InlineData(333333)]

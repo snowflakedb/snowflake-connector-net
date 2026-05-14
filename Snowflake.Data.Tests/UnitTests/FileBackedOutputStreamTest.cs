@@ -2,6 +2,7 @@ using System.IO;
 using System.Text;
 using Xunit;
 using Snowflake.Data.Core.FileTransfer;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests
 {
@@ -11,7 +12,7 @@ namespace Snowflake.Data.Tests
         private const int MaxBytesInMemory = 50;
         private static readonly string s_longText = RandomJsonGenerator.GenerateRandomJsonString(5);
 
-        [Fact]
+        [SFFact]
         public void TestThatSwitchesFromMemoryToFileOnGivenThresholdAndAllowsToReadAll()
         {
             // expect
@@ -49,7 +50,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(ShortText + s_longText, allTextFromStream);
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatAfterDisposeNoTemporaryFileExists()
         {
             // expect

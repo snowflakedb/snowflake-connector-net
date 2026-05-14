@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _fixture.Runner.ResetMapping();
         }
 
-        [Fact]
+        [SFFact]
         public void TestSuccessfulClientCredentialsFlow()
         {
             // arrange
@@ -63,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSuccessfulClientCredentialsFlowAsync()
         {
             // arrange
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Fact]
+        [SFFact]
         public void TestSuccessfulFlowWithoutRefreshToken()
         {
             // arrange
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSuccessfulFlowWithoutRefreshTokenAsync()
         {
             // arrange
@@ -111,7 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Fact]
+        [SFFact]
         public void TestSuccessfulAuthorizationCodeFlowWithClientSecretProvidedExternally()
         {
             // arrange
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Fact]
+        [SFFact]
         public void TestTokenRequestError()
         {
             // arrange
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)", thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestTokenRequestErrorAsync()
         {
             // arrange

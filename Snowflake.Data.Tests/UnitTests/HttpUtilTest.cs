@@ -10,12 +10,13 @@ using System.Security.Authentication;
 using Moq;
 using Moq.Protected;
 using Snowflake.Data.Core.Extensions;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
     class HttpUtilTest
     {
-        [Fact]
+        [SFFact]
         public async Task TestNonRetryableHttpExceptionThrowsError()
         {
             var request = new HttpRequestMessage(HttpMethod.Post, new Uri("https://authenticationexceptiontest.com/"));
@@ -49,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         // Parameters: status code, force retry on 404, expected retryable value
         [InlineData(HttpStatusCode.OK, false, false)]
         [InlineData(HttpStatusCode.BadRequest, false, false)]
@@ -80,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("https://test.snowflakecomputing.com/session/authenticator-request", true)]
         [InlineData("https://test.snowflakecomputing.com/session/token-request", true)]
         [InlineData("https://test.snowflakecomputing.com/queries/v1/query-request", false)]
-        [Theory]
+        [SFTheory]
         public void TestIsLoginUrl(string requestUrl, bool expectedIsLoginEndpoint)
         {
             // given
@@ -98,7 +99,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("https://test.snowflakecomputing.com/session/v1/login-request", false)]
         [InlineData("https://test.snowflakecomputing.com/session/authenticator-request", false)]
         [InlineData("https://test.snowflakecomputing.com/session/token-request", false)]
-        [Theory]
+        [SFTheory]
         public void TestIsOktaSSORequest(string requestUrl, bool expectedIsOktaSSORequest)
         {
             // given
@@ -118,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData(32)]
         [InlineData(64)]
         [InlineData(128)]
-        [Theory]
+        [SFTheory]
         public void TestGetJitter(int seconds)
         {
             // given
@@ -136,7 +137,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestCreateHttpClientHandlerWithProxy()
         {
             // arrange
@@ -160,7 +161,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.NotNull(handler.Proxy);
         }
 
-        [Fact]
+        [SFFact]
         public void TestCreateHttpClientHandlerWithoutProxy()
         {
             // arrange
@@ -183,7 +184,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(handler.UseProxy);
             Assert.Null(handler.Proxy);
         }
-        [Fact]
+        [SFFact]
         public void TestDefaultConnectionLimitIsNotChangedWhenOver50()
         {
             // arrange
@@ -204,7 +205,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 ServicePointManager.DefaultConnectionLimit = originalLimit;
             }
         }
-        [Fact]
+        [SFFact]
         public void TestDefaultConnectionLimitIsChangedToDefaultWhenUnder50()
         {
             // arrange

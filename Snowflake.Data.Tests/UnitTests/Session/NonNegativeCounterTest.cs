@@ -1,11 +1,12 @@
 using Xunit;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     public class NonNegativeCounterTest
     {
-        [Fact]
+        [SFFact]
         public void TestInitialZero()
         {
             // arrange
@@ -18,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, count);
         }
 
-        [Fact]
+        [SFFact]
         public void TestIncrease()
         {
             // arrange
@@ -38,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
 
-        [Fact]
+        [SFFact]
         public void TestDecrease()
         {
             // arrange
@@ -59,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, counter.Count());
         }
 
-        [Fact]
+        [SFFact]
         public void TestDecreaseDoesNotGoBelowZero()
         {
             // arrange
@@ -72,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, counter.Count());
         }
 
-        [Fact]
+        [SFFact]
         public void TestReset()
         {
             // arrange

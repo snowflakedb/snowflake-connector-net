@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         private const long AnotherUserId = 6;
         static readonly string s_directoryFullName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
-        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [InlineData(FileAccessPermissions.UserWrite)]
         [InlineData(FileAccessPermissions.UserRead)]
         [InlineData(FileAccessPermissions.UserExecute)]
@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isSafe);
         }
 
-        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
         public void TestUnsafePermissions(FileAccessPermissions unsecurePermissions)
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isSafe);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestSafeExactlyDirectory()
         {
             // arrange
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isSafe);
         }
 
-        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [InlineData(FileAccessPermissions.UserRead)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isSafe);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestOwnedByOthers()
         {
             // arrange

@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     public class OsReleaseReaderTest
     {
-        [Fact]
+        [SFFact]
         public void TestParseFullOsRelease()
         {
             // arrange
@@ -39,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result.ContainsKey("LOGO"));
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseUbuntuOsRelease()
         {
             // arrange
@@ -67,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result.ContainsKey("ID_LIKE"));
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseAllAllowedKeys()
         {
             // arrange
@@ -96,7 +97,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal("1.0", result["VERSION_ID"]);
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseEmptyContent()
         {
             // act
@@ -107,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(0, result.Count);
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseNullContent()
         {
             // act
@@ -118,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(0, result.Count);
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseIgnoresComments()
         {
             // arrange
@@ -137,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal("test", result["ID"]);
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseIgnoresEmptyLines()
         {
             // arrange
@@ -157,7 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal("test", result["ID"]);
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseIgnoresLowercaseKeys()
         {
             // arrange
@@ -173,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal("Valid", result["NAME"]);
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseQuotedAndUnquotedValues()
         {
             // arrange
@@ -194,7 +195,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal("rolling", result["BUILD_ID"]);
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseEmptyQuotedValue()
         {
             // arrange
@@ -208,7 +209,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal("", result["NAME"]);
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseOnlyDisallowedKeys()
         {
             // arrange
@@ -226,7 +227,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(0, result.Count);
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseIgnoresPartiallyMatchingKeys()
         {
             // arrange
@@ -267,7 +268,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result.ContainsKey("PRETTY_NAMES"));
         }
 
-        [Fact]
+        [SFFact]
         public void TestParseHandlesCarriageReturnLineFeed()
         {
             // arrange

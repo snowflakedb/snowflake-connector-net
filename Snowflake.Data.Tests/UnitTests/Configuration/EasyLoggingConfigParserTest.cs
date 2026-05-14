@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(null)]
         [InlineData("640")]
         public void TestThatParsesConfigFile(string logFileUnixPermissions)
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatThrowsExceptionForInvalidPermissionValue()
         {
             // arrange
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Contains($"Parsing easy logging configuration failed", thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatThrowsExceptionForIncorrectPermissionValueType()
         {
             // arrange
@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Null(config.CommonProps.LogPath);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(null)]
         [InlineData("")]
         public void TestThatReturnsNullWhenNothingToParse(string noFilePath)
@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Null(config);
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatFailsWhenTheFileDoesNotExist()
         {
             // arrange
@@ -170,7 +170,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.NotEmpty(thrown.Message);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
         {
             // arrange
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.NotEmpty(thrown.Message);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatConfigFileIsNotUsedIfUserDoesNotOwnConfigFile()
         {
             // arrange
@@ -219,7 +219,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.NotEmpty(thrown.Message);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatConfigFileIsNotUsedIfGroupDoesNotOwnConfigFile()
         {
             // arrange

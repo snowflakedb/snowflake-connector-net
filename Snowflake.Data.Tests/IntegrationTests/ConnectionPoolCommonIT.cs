@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _previousPoolConfig.Reset();
         }
 
-        [Fact]
+        [SFFact]
         public void TestConnectionPoolMultiThreading()
         {
             Thread t1 = new Thread(() => ThreadProcess1(_fixture.ConnectionString));
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await conn1.CloseAsync(CancellationToken.None);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectionPoolWithDispose()
         {
             if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestFailWhenPreventingFromReturningToPoolNotOpenedConnection()
         {
             // arrange
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Contains("Session not yet created for this connection. Unable to prevent the session from pooling", thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestRollbackTransactionOnPooledWhenExceptionOccurred()
         {
             var connectionString = SetPoolWithOneElement();
@@ -177,7 +177,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestTransactionStatusNotTrackedForNonExplicitTransactionCalls()
         {
             var connectionString = SetPoolWithOneElement();
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestRollbackTransactionOnPooledWhenConnectionClose()
         {
             var connectionString = SetPoolWithOneElement();

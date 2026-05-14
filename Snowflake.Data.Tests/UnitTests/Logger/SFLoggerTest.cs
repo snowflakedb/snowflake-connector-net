@@ -2,6 +2,7 @@ using System;
 using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -33,13 +34,13 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
         }
 
-        [Fact]
+        [SFFact]
         public void TestUsingSFLogger()
         {
             Assert.IsType<SFLoggerImpl>(_logger);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public void TestIsDebugEnabled(
@@ -58,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Debug("debug log message", new Exception("test exception"));
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public void TestIsInfoEnabled(
@@ -77,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Info("info log message", new Exception("test exception"));
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public void TestIsWarnEnabled(
@@ -96,7 +97,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Warn("warn log message", new Exception("test exception"));
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public void TestIsErrorEnabled(
@@ -115,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Error("error log message", new Exception("test exception"));
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false, 0)] // OFF
         [InlineData(false, 1)] // TRACE
         [InlineData(false, 2)] // DEBUG

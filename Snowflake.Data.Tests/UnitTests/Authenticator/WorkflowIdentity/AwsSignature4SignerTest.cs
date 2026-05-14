@@ -5,6 +5,7 @@ using System.Net.Http;
 using Amazon.Runtime;
 using Xunit;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
 {
@@ -20,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
         private const string ExpectedSignature = "3fa477a5d4df0381fa0d303cc944723b20e6fff8e1917602a19f4dc67c18df17"; // pragma: allowlist secret
         private static readonly string s_expectedAuthorization = $"AWS4-HMAC-SHA256 Credential={AwsAccessKey}/20250612/eu-west-1/sts/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token;x-snowflake-audience, Signature={ExpectedSignature}";
 
-        [Fact]
+        [SFFact]
         public void TestRequestSigning()
         {
             // arrange

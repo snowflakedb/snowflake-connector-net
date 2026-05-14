@@ -1,3 +1,5 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Xunit;
@@ -135,7 +137,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Do nothing;
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(SFRemoteStorageUtil.LOCAL_FS)]
         [InlineData(SFRemoteStorageUtil.S3_FS)]
         [InlineData(SFRemoteStorageUtil.AZURE_FS)]
@@ -172,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false, false)]
         [InlineData(false, true)]
         [InlineData(true, false)]
@@ -245,7 +247,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _client.SetCustomWebRequest(mockWebRequest.Object);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
         public void TestUploadOneFileWithRetry(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
         {
@@ -259,7 +261,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
         public async Task TestUploadOneFileAsyncWithRetry(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
         {
@@ -273,7 +275,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, null, ResultStatus.SKIPPED)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
@@ -294,7 +296,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, null, ResultStatus.SKIPPED)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
@@ -315,7 +317,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
@@ -332,7 +334,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
@@ -350,7 +352,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.NotFound, null, ResultStatus.ERROR)]
         public void TestUploadOneFileThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
         {
@@ -365,7 +367,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.NotFound, null, ResultStatus.ERROR)]
         public async Task TestUploadOneFileAsyncThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
         {
@@ -405,7 +407,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _client.SetCustomWebRequest(mockWebRequest.Object);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         public void TestDownloadOneFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
@@ -425,7 +427,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         public async Task TestDownloadOneFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
@@ -445,7 +447,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [InlineData(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [InlineData(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
@@ -462,7 +464,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
         [InlineData(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
         [InlineData(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
@@ -479,7 +481,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.NotFound)]
         public void TestDownloadOneFileThrowsForUnknownErrors(HttpStatusCode httpStatusCode)
         {
@@ -494,7 +496,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(_fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.NotFound)]
         public async Task TestDownloadOneFileAsyncThrowsForUnknownErrors(HttpStatusCode httpStatusCode)
         {
@@ -528,7 +530,7 @@ namespace Snowflake.Data.Tests.UnitTests
             MockRemoteStorageClient.SetEncryptionData(streamPair.MainStream, encryptionMetadata.iv, encryptionMetadata.key);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         public void TestDownloadOneFileWithEncryptionMaterial(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
@@ -545,7 +547,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         public async Task TestDownloadOneFileAsyncWithEncryptionMaterial(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {

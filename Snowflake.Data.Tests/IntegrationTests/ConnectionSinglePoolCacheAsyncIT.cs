@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Fact]
+        [SFFact]
         public async Task TestPutConnectionToPoolOnCloseAsync()
         {
             // arrange
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDoNotPutInvalidConnectionToPoolAsync()
         {
             // arrange
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectionPoolWithInvalidOpenAsync()
         {
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);

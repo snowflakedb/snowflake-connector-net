@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
-        [Fact]
+        [SFFact]
         public async Task TestBasicConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestApplicationName()
         {
             string[] validApplicationNames = { "test1234", "test_1234", "test-1234", "test.1234" };
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [RunOnlyOnCIFact]
+        [SFFact(SkipCondition.RunOnlyOnCI)]
         public async Task TestApplicationPathIsSentDuringAuthentication()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestIncorrectUserOrPasswordBasicConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -165,7 +165,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(true)]
         [InlineData(false)]
         public async Task TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
         {
             for (int i = 0; i < 2; ++i)
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectString()
         {
             var schemaName = "dlSchema_" + Guid.NewGuid().ToString().Replace("-", "_");
@@ -322,7 +322,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectViaSecureString()
         {
             String[] connEntries = _fixture.ConnectionString.Split(';');
@@ -357,7 +357,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -394,7 +394,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestLoginWithMaxRetryReached()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -427,7 +427,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -465,7 +465,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDefaultLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -500,7 +500,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectionFailFastForNonRetried404OnLogin()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -531,7 +531,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestEnableLoginRetryOn404()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -560,7 +560,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestValidateDefaultParameters()
         {
             string connectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
@@ -599,7 +599,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestInvalidConnectionString()
         {
             string[] invalidStrings = {
@@ -630,7 +630,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestUnknownConnectionProperty()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -644,9 +644,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
-        [IgnoreOnEnvIs("snowflake_cloud_env",
-                       new string[] { "AZURE", "GCP" })]
+        [SFFact(SkipCondition.SkipOnCloudAzure | SkipCondition.SkipOnCloudGCP)]
         public async Task TestSwitchDb()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -672,7 +670,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectWithoutHost()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -690,7 +688,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectWithDifferentRole()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -736,7 +734,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         // Test that when a connection is disposed, a close would send out and unfinished transaction would be roll back.
-        [Fact]
+        [SFFact]
         public async Task TestConnectionDispose()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
@@ -763,7 +761,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestUnknownAuthenticator()
         {
             string[] wrongAuthenticators = new string[]
@@ -807,7 +805,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestOktaConnectionUntilMaxTimeout()
         {
             var expectedMaxRetryCount = 15;
@@ -1324,7 +1322,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestInValidOAuthTokenConnection()
         {
             try
@@ -1564,7 +1562,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestInvalidProxySettingFromConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1587,7 +1585,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("*")]
         [InlineData("*{0}*")]
         [InlineData("^*{0}*")]
@@ -1615,7 +1613,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("invalid{0}")]
         [InlineData("*invalid{0}*")]
         [InlineData("^invalid{0}$")]
@@ -1641,7 +1639,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestUseProxyFalseWithInvalidProxyConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1653,7 +1651,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestInvalidProxySettingWithByPassListFromConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1843,7 +1841,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestKeepAlive()
         {
             // create 100 connections, one per second
@@ -1884,7 +1882,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
 
-        [Fact]
+        [SFFact]
         public async Task TestCancelLoginBeforeTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1923,7 +1921,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAsyncLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1958,7 +1956,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1994,7 +1992,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAsyncDefaultLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -2027,7 +2025,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestAsyncConnectionFailFastForNonRetried404OnLogin()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -2061,7 +2059,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCloseAsyncWithCancellation()
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
@@ -2097,7 +2095,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 #if NETCOREAPP3_0_OR_GREATER
-        [Fact]
+        [SFFact]
         public async Task TestCloseAsync()
         {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
@@ -2133,7 +2131,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 #endif
 
-        [Fact]
+        [SFFact]
         public async Task TestCloseAsyncFailure()
         {
             using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
@@ -2163,7 +2161,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestExplicitTransactionOperationsTracked()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
@@ -2185,7 +2183,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Fact]
+        [SFFact]
         public async Task TestAsyncOktaConnectionUntilMaxTimeout()
         {
             var expectedMaxRetryCount = 15;
@@ -2247,7 +2245,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectStringWithQueryTag()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -2265,7 +2263,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestUseMultiplePoolsConnectionPoolByDefault()
         {
             // act
@@ -2275,7 +2273,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(ConnectionPoolType.MultipleConnectionPool, poolVersion);
         }
 
-        [Fact]
+        [SFFact]
         // to enroll to mfa authentication edit your user profile
         public async Task TestMFATokenCachingWithPasscodeFromConnectionString()
         {
@@ -2297,7 +2295,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         // to enroll to mfa authentication edit your user profile
         public async Task TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
         {
@@ -2321,7 +2319,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("connection_timeout=5;")]
         [InlineData("")]
         public async Task TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost(string extraParameters)
@@ -2342,7 +2340,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestOpenAsyncThrowExceptionWhenOperationIsCancelled()
         {
             // arrange
@@ -2397,7 +2395,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCloseSessionWhenGarbageCollectorFinalizesConnection()
         {
             // arrange
@@ -2421,7 +2419,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return connection.SfSession;
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestHangingCloseIsNotBlocking()
         {
             // arrange

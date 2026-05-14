@@ -29,13 +29,13 @@ namespace Snowflake.Data.Tests.UnitTests
             PrepareTestCase(SFDataType.FIXED, 0, Enumerable.Range(1, RowCount).ToArray());
         }
 
-        [Fact]
+        [SFFact]
         public void TestResultFormatIsArrow()
         {
             Assert.Equal(ResultFormat.ARROW, _arrowResultSet.ResultFormat);
         }
 
-        [Fact]
+        [SFFact]
         public void TestNextReturnsFalseIfNoData()
         {
             var responseData = PrepareResponseData(_recordBatch, SFDataType.FIXED, 0);
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(arrowResultSet.Next());
         }
 
-        [Fact]
+        [SFFact]
         public void TestNextReturnsTrueUntilRowsExist()
         {
             for (var i = 0; i < RowCount; ++i)
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(_arrowResultSet.Next());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestNextAsyncReturnsTrueUntilRowsExist()
         {
             for (var i = 0; i < RowCount; ++i)
@@ -68,25 +68,25 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(await _arrowResultSet.NextAsync());
         }
 
-        [Fact]
+        [SFFact]
         public void TestNextResultReturnsFalse()
         {
             Assert.False(_arrowResultSet.NextResult());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestNextResultAsyncReturnsFalse()
         {
             Assert.False(await _arrowResultSet.NextResultAsync(CancellationToken.None));
         }
 
-        [Fact]
+        [SFFact]
         public void TestHasRowsReturnsTrueIfRowExists()
         {
             Assert.True(_arrowResultSet.HasRows());
         }
 
-        [Fact]
+        [SFFact]
         public void TestHasRowsReturnsFalseIfNoRows()
         {
             PrepareTestCase(SFDataType.FIXED, 0, new sbyte[] { });
@@ -94,20 +94,20 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(_arrowResultSet.HasRows());
         }
 
-        [Fact]
+        [SFFact]
         public void TestRewindReturnsFalseBeforeFirstRow()
         {
             Assert.False(_arrowResultSet.Rewind());
         }
 
-        [Fact]
+        [SFFact]
         public void TestRewindReturnsFalseForFirstRow()
         {
             _arrowResultSet.Next(); // move to first row
             Assert.False(_arrowResultSet.Rewind());
         }
 
-        [Fact]
+        [SFFact]
         public void TestRewindReturnsTrueForSecondRowAndMovesToFirstRow()
         {
             _arrowResultSet.Next(); // move to first row
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(_arrowResultSet.Rewind());
         }
 
-        [Fact]
+        [SFFact]
         public void TestRewindReturnsTrueForThirdRowAndMovesToFirstRow()
         {
             _arrowResultSet.Next(); // move to first row
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(_arrowResultSet.Rewind());
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetValueReturnsNull()
         {
             var responseData = PrepareResponseData(ArrowResultChunkTest.RecordBatchWithNullValue, SFDataType.FIXED, 0);
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(DBNull.Value, arrowResultSet.GetValue(0));
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetDecimal()
         {
             var testValues = new decimal[] { 0, 100, -100, Decimal.MaxValue, Decimal.MinValue };
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetNumber(testValues);
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetNumber64()
         {
             var testValues = new long[] { 0, 100, -100, Int64.MaxValue, Int64.MinValue };
@@ -156,7 +156,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetNumber(testValues);
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetNumber32()
         {
             var testValues = new int[] { 0, 100, -100, Int32.MaxValue, Int32.MinValue };
@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetNumber(testValues);
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetNumber16()
         {
             var testValues = new short[] { 0, 100, -100, Int16.MaxValue, Int16.MinValue };
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetNumber(testValues);
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetNumber8()
         {
             var testValues = new sbyte[] { 0, 127, -128 };
@@ -219,7 +219,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetBoolean()
         {
             var testValues = new bool[] { true, false };
@@ -234,7 +234,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetReal()
         {
             var testValues = new double[] { 0, Double.MinValue, Double.MaxValue };
@@ -249,7 +249,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetText()
         {
             var testValues = new string[]
@@ -268,7 +268,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetTextWithOneChar()
         {
             char[] testValues;
@@ -293,7 +293,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetArray()
         {
             var testValues = new string[]
@@ -316,7 +316,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetBinary()
         {
             var testValues = new byte[][]
@@ -338,7 +338,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetDate()
         {
             var testValues = new DateTime[]
@@ -358,7 +358,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetTime()
         {
             var testValues = new DateTime[]
@@ -382,7 +382,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetTimestampTz()
         {
             var testValues = new DateTimeOffset[]
@@ -408,7 +408,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetTimestampLtz()
         {
             var testValues = new DateTimeOffset[]
@@ -431,7 +431,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetTimestampNtz()
         {
             var testValues = new DateTime[]
@@ -455,7 +455,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestThrowsExceptionForResultSetWithUnknownSFDataType()
         {
             const string UnknownDataType = "FAKE_TYPE";
@@ -475,7 +475,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(exception.Message.Contains($"Unknown column type: {UnknownDataType}"));
         }
 
-        [Fact]
+        [SFFact]
         public void TestThrowsExceptionForResultSetWithUnknownNativeType()
         {
             QueryExecResponseData responseData = new QueryExecResponseData()

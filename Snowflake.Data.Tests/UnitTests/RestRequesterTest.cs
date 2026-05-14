@@ -7,12 +7,13 @@ using Moq;
 using Moq.Protected;
 using Xunit;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
     public class RestRequesterTest
     {
-        [Fact]
+        [SFFact]
         public void TestSendAsyncTags401OnException()
         {
             // arrange — real RestRequester with an HttpClient that returns 401
@@ -44,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(RestRequester.HasUnauthorizedStatusCode(caught));
         }
 
-        [Fact]
+        [SFFact]
         public void TestSendAsyncTags403OnException()
         {
             // arrange
@@ -76,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(RestRequester.HasUnauthorizedStatusCode(caught));
         }
 
-        [Fact]
+        [SFFact]
         public void TestSendAsyncDoesNotTagOnSuccess()
         {
             // arrange
@@ -99,13 +100,13 @@ namespace Snowflake.Data.Tests.UnitTests
             restRequester.Get<string>(request);
         }
 
-        [Fact]
+        [SFFact]
         public void TestHasUnauthorizedStatusCodeReturnsFalseForNull()
         {
             Assert.False(RestRequester.HasUnauthorizedStatusCode(null));
         }
 
-        [Fact]
+        [SFFact]
         public void TestHasUnauthorizedStatusCodeReturnsFalseForPlainException()
         {
             Assert.False(RestRequester.HasUnauthorizedStatusCode(new Exception("no http info")));

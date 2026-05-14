@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _fixture.Runner.ResetMapping();
         }
 
-        [Fact]
+        [SFFact]
         public void TestSuccessfulAwsAuthorization()
         {
             // arrange
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSuccessfulAwsAuthorizationAsync()
         {
             // arrange
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Fact]
+        [SFFact]
         public void TestSuccessfulAwsAttestation()
         {
             // arrange

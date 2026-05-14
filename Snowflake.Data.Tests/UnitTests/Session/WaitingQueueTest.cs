@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
@@ -14,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     {
         private static readonly int s_timeMeasurementLeftToleranceInMs = Stopwatch.IsHighResolution ? 1 : 20; // DateTime precision is ~10ms, safety coefficient = x2
 
-        [Fact]
+        [SFFact]
         public void TestWaitForTheResourceUntilTimeout()
         {
             // arrange
@@ -31,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
-        [Fact]
+        [SFFact]
         public void TestWaitForTheResourceUntilCancellation()
         {
             // arrange
@@ -49,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
-        [Fact]
+        [SFFact]
         public void TestWaitUntilResourceAvailable()
         {
             // arrange
@@ -71,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
-        [Fact]
+        [SFFact]
         public void TestWaitingEnabled()
         {
             // arrange
@@ -84,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.True(isWaitingEnabled);
         }
 
-        [Fact]
+        [SFFact]
         public void TestNoOneIsWaiting()
         {
             // arrange
@@ -97,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.False(isAnyoneWaiting);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSomeoneIsWaiting()
         {
             // arrange
@@ -118,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.True(isAnyoneWaiting);
         }
 
-        [Fact]
+        [SFFact]
         public void TestReturnUnsuccessfulOnResetWhileWaiting()
         {
             // arrange

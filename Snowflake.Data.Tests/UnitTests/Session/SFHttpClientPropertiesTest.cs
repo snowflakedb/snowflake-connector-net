@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 {
     public class SFHttpClientPropertiesTest
     {
-        [Theory]
+        [SFTheory]
         [InlineData(false, false, false)]
         [InlineData(false, false, true)]
         [InlineData(false, true, false)]
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(clientStoreTemporaryCredential, parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(1)]
         [InlineData(10)]
         [InlineData(100)]
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(expectedConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
-        [Fact]
+        [SFFact]
         public void TestSettingConnectionLimitPropertyToLessThan1()
         {
             // arrange
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
-        [Fact]
+        [SFFact]
         public void TestSettingConnectionLimitPropertyToGreaterThanMaxConnectionLimit()
         {
             // arrange
@@ -106,7 +106,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
-        [Fact]
+        [SFFact]
         public void TestSettingConnectionLimitPropertyToNoValue()
         {
             // arrange
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("abc")]
         [InlineData("1.5")]
         [InlineData("true")]
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.True(thrown.Message.Contains(expectedErrorMessage));
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(100)]
         [InlineData(20971520)]
         public void TestValidCrlDownloadMaxSize(long validMaxSize)
@@ -158,7 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(validMaxSize, config.CrlDownloadMaxSize);
         }
 
-        [Fact]
+        [SFFact]
         public void TestBuildHttpClientConfig()
         {
             // arrange
@@ -182,7 +182,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(properties.maxHttpRetries, config.MaxHttpRetries);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("enabled", true, false)]
         [InlineData("disabled", false, false)]
         [InlineData("advisory", true, false)]
@@ -231,7 +231,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("account=test;user=test;password=test;minTls=tls13;maxTls=tls13", "tls13", "tls13")]
         [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", "tls12", "tls13")]
         [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls12", "tls12", "tls12")]
@@ -247,7 +247,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(extractedProperties._maxTlsProtocol, expectedMaxTls);
         }
 
-        [Fact]
+        [SFFact]
         public void TestSslPropertiesFailure()
         {
             // act & assert
@@ -255,7 +255,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.True(exception.Message.Contains("Connection string is invalid: Parameter MINTLS value cannot be higher than MAXTLS value."));
         }
 
-        [Fact]
+        [SFFact]
         public void TestSslInvalidPropertyFailure()
         {
             // act & assert

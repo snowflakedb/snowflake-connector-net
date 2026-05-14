@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.UnitTests
             .Append("Col_Int32", false, col => col.Int32(array => array.AppendNull()))
             .Build();
 
-        [Fact]
+        [SFFact]
         public void TestResultFormatIsArrow()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(ResultFormat.ARROW, chunk.ResultFormat);
         }
 
-        [Fact]
+        [SFFact]
         public void TestAddRecordBatchAddsBatchTwo()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
@@ -44,14 +44,14 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(2, chunk.RecordBatch.Count);
         }
 
-        [Fact]
+        [SFFact]
         public void TestNextReturnsFalseIfNoData()
         {
             var chunk = new ArrowResultChunk(0);
             Assert.False(chunk.Next());
         }
 
-        [Fact]
+        [SFFact]
         public void TestNextIteratesThroughAllRecordsOfOneBatch()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
@@ -63,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(chunk.Next());
         }
 
-        [Fact]
+        [SFFact]
         public void TestNextIteratesThroughAllRecordsOfTwoBatches()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
@@ -76,7 +76,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(chunk.Next());
         }
 
-        [Fact]
+        [SFFact]
         public void TestNextSkipsEmptyBatchesBetweenDataBatches()
         {
             // This test reproduces the production issue with an empty batch between two data batches
@@ -115,7 +115,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(chunk.Next());
         }
 
-        [Fact]
+        [SFFact]
         public void TestResetForRetryDoesNotClearBatchesExposingRetryBug()
         {
             // This test reproduces the retry bug where stale batches from a failed download
@@ -161,7 +161,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Contains("fresh2", values);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellThrowsDescriptiveErrorForInvalidColumnIndex()
         {
             var batch = new RecordBatch.Builder()
@@ -189,7 +189,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Contains("batch", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellThrowsDescriptiveErrorForInvalidRecordIndex()
         {
             var batch = new RecordBatch.Builder()
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(chunk.Next());
         }
 
-        [Fact]
+        [SFFact]
         public void TestRewindIteratesThroughAllRecordsOfBatchOne()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
@@ -223,7 +223,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(chunk.Rewind());
         }
 
-        [Fact]
+        [SFFact]
         public void TestRewindIteratesThroughAllRecordsOfTwoBatches()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
@@ -239,7 +239,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(chunk.Rewind());
         }
 
-        [Fact]
+        [SFFact]
         public void TestResetClearsChunkData()
         {
             ExecResponseChunk chunkInfo = new ExecResponseChunk()
@@ -257,7 +257,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(chunkInfo.rowCount, chunk.RowCount);
         }
 
-        [Fact]
+        [SFFact]
         public void TestRowCountReturnsNumberOfRows()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
@@ -265,7 +265,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(RowCountBatchOne, chunk.RowCount);
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetChunkIndexReturnsFirstChunk()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
@@ -273,7 +273,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(-1, chunk.ChunkIndex);
         }
 
-        [Fact]
+        [SFFact]
         public void TestUnusedExtractCellThrowsNotSupportedException()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
@@ -285,7 +285,7 @@ namespace Snowflake.Data.Tests.UnitTests
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsNull()
         {
             var cases = new Dictionary<ArrowResultChunk, SFDataType>
@@ -318,7 +318,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellThrowsExceptionForNoneType()
         {
             var chunk = new ArrowResultChunk(_recordBatchOne);
@@ -327,7 +327,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<NotSupportedException>(() => chunk.ExtractCell(0, SFDataType.None, 0, TimeZoneInfo.Utc));
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsDecimal()
         {
             var testValues = new decimal[] { 0, 100, -100, Decimal.MaxValue, Decimal.MinValue };
@@ -339,7 +339,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsNumber64()
         {
             var testValues = new long[] { 0, 100, -100, Int64.MaxValue, Int64.MinValue };
@@ -351,7 +351,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(20)]
         [InlineData(28)]
         public void TestExtractCellReturnsDecimal128WithHighScale(int scale)
@@ -375,7 +375,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(10)]
         [InlineData(12)]
         [InlineData(18)]
@@ -396,7 +396,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsNumber32()
         {
             var testValues = new int[] { 0, 100, -100, Int32.MaxValue, Int32.MinValue };
@@ -408,7 +408,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsNumber16()
         {
             var testValues = new short[] { 0, 100, -100, Int16.MaxValue, Int16.MinValue };
@@ -420,7 +420,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsNumber8()
         {
             var testValues = new sbyte[] { 0, 127, -128 };
@@ -432,7 +432,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsBoolean()
         {
             var testValues = new bool[] { true, false };
@@ -442,7 +442,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestExtractCell(testValues, sfType, scale);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsReal()
         {
             var testValues = new double[] { 0, Double.MinValue, Double.MaxValue };
@@ -452,7 +452,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestExtractCell(testValues, sfType, scale);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsText()
         {
             var testValues = new string[]
@@ -466,7 +466,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestExtractCell(testValues, sfType, scale);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsArray()
         {
             var testValues = new string[]
@@ -480,7 +480,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestExtractCell(testValues, sfType, scale);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsBinary()
         {
             var testValues = new byte[][]
@@ -494,7 +494,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestExtractCell(testValues, sfType, scale);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsDate()
         {
             var testValues = new DateTime[]
@@ -509,7 +509,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestExtractCell(testValues, sfType, scale);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsTime()
         {
             var testValues = new DateTime[]
@@ -527,7 +527,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsTimestampTz()
         {
             var testValues = new DateTimeOffset[]
@@ -548,7 +548,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsTimestampLtz()
         {
             var testValues = new DateTimeOffset[]
@@ -566,7 +566,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractCellReturnsTimestampNtz()
         {
             var testValues = new DateTime[]

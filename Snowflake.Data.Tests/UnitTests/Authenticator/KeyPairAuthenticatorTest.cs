@@ -1,11 +1,12 @@
 using Xunit;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
     public class KeyPairAuthenticatorTest
     {
-        [Theory]
+        [SFTheory]
         [InlineData("snowflake_jwt", true)]
         [InlineData("SNOWFLAKE_JWT", true)]
         [InlineData("username_password_mfa", false)]

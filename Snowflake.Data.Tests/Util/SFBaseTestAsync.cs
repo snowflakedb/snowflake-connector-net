@@ -21,8 +21,15 @@ namespace Snowflake.Data.Tests
     // todo tests all ITs call start end?
     public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>
     {
+        protected CancellationToken CancellationToken;
+
         protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture)
         {
+            #if NET8_0_OR_GREATER
+            CancellationToken = TestContext.Current.CancellationToken;
+#else
+            CancellationToken = CancellationToken.None;
+#endif
         }
     }
 

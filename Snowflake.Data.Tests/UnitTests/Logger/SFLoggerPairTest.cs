@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -42,14 +43,14 @@ namespace Snowflake.Data.Tests.UnitTests
             SFLoggerImpl.s_appenders.Remove(_testAppender);
         }
 
-        [Fact]
+        [SFFact]
         public void TestUsingSFLogger()
         {
             var loggerPair = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
             Assert.IsType<SFLoggerPair>(loggerPair);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public void TestIsDebugEnabled(
@@ -69,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests
             loggerPair.Debug("debug log message", new Exception("test exception"));
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public void TestIsInfoEnabled(
@@ -89,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests
             loggerPair.Info("info log message", new Exception("test exception"));
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public void TestIsWarnEnabled(
@@ -109,7 +110,7 @@ namespace Snowflake.Data.Tests.UnitTests
             loggerPair.Warn("warn log message", new Exception("test exception"));
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public void TestIsErrorEnabled(
@@ -136,7 +137,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return logger;
         }
 
-        [Fact]
+        [SFFact]
         public void TestMaskedExceptionWithSensitiveData()
         {
             // Arrange

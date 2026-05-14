@@ -4,12 +4,13 @@ using Moq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator.Browser;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser
 {
     public class WebBrowserStarterTest
     {
-        [Fact]
+        [SFFact]
         public void TestRunUrlInBrowser()
         {
             // arrange
@@ -25,7 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser
             runner.Verify(r => r.Run(uri), Times.Once);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("file:///home/user/index.html")]
         [InlineData("http://localhost:8001/endpoint!")]
         public void TestValidateUrl(string invalidUrl)

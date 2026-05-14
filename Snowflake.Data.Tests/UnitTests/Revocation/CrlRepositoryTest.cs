@@ -1,6 +1,7 @@
 using System;
 using Xunit;
 using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
@@ -16,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Environment.SetEnvironmentVariable("SF_CRL_CACHE_REMOVAL_DELAY", null);
         }
 
-        [Fact]
+        [SFFact]
         public void TestDefaultCleanupInterval()
         {
             // arrange & act
@@ -26,7 +27,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(TimeSpan.FromDays(7), cleanupInterval);
         }
 
-        [Fact]
+        [SFFact]
         public void TestCustomCleanupIntervalFromEnvironmentVariable()
         {
             // arrange
@@ -39,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(TimeSpan.FromDays(14), cleanupInterval);
         }
 
-        [Fact]
+        [SFFact]
         public void TestInvalidCleanupIntervalUsesDefault()
         {
             // arrange

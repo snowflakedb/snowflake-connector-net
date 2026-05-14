@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
     class SFSessionTimezoneTest
     {
-        [Fact]
+        [SFFact]
         public void TestGetSessionTimezoneReturnsLocalWhenFeatureDisabled()
         {
             var session = new SFSession(
@@ -20,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetSessionTimezoneFallsBackWhenTimezoneNotInParameterMap()
         {
             var session = new SFSession(
@@ -30,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetSessionTimezoneFallsBackOnUnknownTimezone()
         {
             var session = new SFSession(
@@ -42,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetSessionTimezoneCachesResult()
         {
             var session = new SFSession(
@@ -57,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Same(first, second);
         }
 
-        [Fact]
+        [SFFact]
         public void TestGetSessionTimezoneCacheInvalidatedOnParameterUpdate()
         {
             var session = new SFSession(
@@ -79,7 +80,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedTokyo, afterUpdate);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("America/Los_Angeles")]
         [InlineData("UTC")]
         [InlineData("Asia/Tokyo")]

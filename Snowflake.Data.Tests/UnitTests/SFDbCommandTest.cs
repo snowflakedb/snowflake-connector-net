@@ -1,3 +1,5 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Xunit;
@@ -14,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
             command = new SnowflakeDbCommand();
         }
 
-        [Fact]
+        [SFFact]
         public void TestCommandWithConnectionAndCommandText()
         {
             // Arrange
@@ -29,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(commandText, command.CommandText);
         }
 
-        [Fact]
+        [SFFact]
         public void TestCommandExecuteThrowsExceptionWhenCommandTextIsNotSet()
         {
             // Act
@@ -39,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.NotEmpty(thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public void TestCommandExecuteAsyncThrowsExceptionWhenCommandTextIsNotSet()
         {
             // Arrange
@@ -52,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(thrown.InnerException.Message, "Unable to execute command due to command text not being set");
         }
 
-        [Fact]
+        [SFFact]
         public void TestCommandPrepareShouldNotThrowsException()
         {
             command.Prepare();

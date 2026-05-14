@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatThrowsErrorWhenCacheFailToCreateCacheFile()
         {
             // arrange
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.Contains("Failed to create the JSON token cache file", thrown.Message);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatThrowsErrorWhenCacheFileCanBeAccessedByOthers()
         {
             // arrange
@@ -115,7 +115,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatJsonFileIsCheckedIfAlreadyExists()
         {
             // arrange
@@ -153,7 +153,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_fileOperations.Verify(f => f.Exists(s_customJsonPath), Times.Exactly(2));
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWritingIsUnavailableIfFailedToCreateDirLock()
         {
             // arrange
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_fileOperations.Verify(f => f.Write(s_customJsonPath, It.IsAny<string>(), It.IsAny<Action<UnixStream>>()), Times.Never);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestReadingIsUnavailableIfFailedToCreateDirLock()
         {
             // arrange
@@ -229,7 +229,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_fileOperations.Verify(f => f.ReadAllText(s_customJsonPath, It.IsAny<Action<UnixStream>>()), Times.Never);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestReadingAndWritingAreUnavailableIfDirLockExists()
         {
             // arrange
@@ -256,7 +256,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatDoesNotChangeCacheDirPermissionsWhenInsecure()
         {
             // arrange
@@ -285,7 +285,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestCreateDirectoryWithSecurePermissions()
         {
             // arrange
@@ -313,22 +313,22 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         private SFCredentialManagerFileImpl CreateFileCredentialManagerWithMockedEnvironmentalVariables() =>
             new(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, t_environmentOperations.Object);
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public override void TestSavingAndRemovingCredentials() => base.TestSavingAndRemovingCredentials();
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public override void TestSavingCredentialsForAnExistingKey() => base.TestSavingCredentialsForAnExistingKey();
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public override void TestRemovingCredentialsForKeyThatDoesNotExist() => base.TestRemovingCredentialsForKeyThatDoesNotExist();
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public override void TestGetCredentialsForProperKey() => base.TestGetCredentialsForProperKey();
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public override void TestGetCredentialsForTokenWithManyCharacters() => base.TestGetCredentialsForTokenWithManyCharacters();
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public override void TestGetCredentialsForCredentialsThatDoesNotExist() => base.TestGetCredentialsForCredentialsThatDoesNotExist();
     }
 }

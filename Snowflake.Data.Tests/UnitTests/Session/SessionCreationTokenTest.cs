@@ -1,6 +1,7 @@
 using System;
 using Xunit;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
@@ -8,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     {
         private static readonly TimeSpan s_timeout30Seconds = TimeSpan.FromSeconds(30);
 
-        [Fact]
+        [SFFact]
         public void TestTokenIsNotExpired()
         {
             // arrange
@@ -21,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.False(isExpired);
         }
 
-        [Fact]
+        [SFFact]
         public void TestTokenIsExpired()
         {
             // arrange

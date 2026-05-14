@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             finalWarehouseName = "warehouse changed"
         };
 
-        [Fact]
+        [SFFact]
         public async Task TestPoolDestroysConnectionWhenChangedSessionProperties()
         {
             var connectionString = _fixture.ConnectionString + "application=Destroy;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPoolingWhenSessionPropertiesUnchanged()
         {
             var connectionString = _fixture.ConnectionString + "application=NoSessionChanges;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(1, pool.GetCurrentPoolSize());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPoolingWhenConnectionPropertiesChangedForOriginalPoolMode()
         {
             var connectionString = _fixture.ConnectionString + "application=OriginalPoolMode;ChangedSession=OriginalPool;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection2.CloseAsync(CancellationToken.None);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPoolingWhenConnectionPropertiesChangedForDefaultPoolMode()
         {
             var connectionString = _fixture.ConnectionString + "application=DefaultPoolMode;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection2.CloseAsync(CancellationToken.None);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPoolDestroysAndRecreatesConnection()
         {
             var connectionString = _fixture.ConnectionString + "application=DestroyRecreateSession;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection2.CloseAsync(CancellationToken.None);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCompareSessionChangesCaseInsensitiveWhenUnquoted()
         {
             var connectionString = _fixture.ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
@@ -187,7 +187,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection2.CloseAsync(CancellationToken.None);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCompareSessionChangesCaseSensitiveWhenQuoted()
         {
             var connectionString = _fixture.ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";

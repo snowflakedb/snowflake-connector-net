@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _previousPoolConfig.Reset();
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestBasicConnectionPool()
         {
             var connectionString = _fixture.ConnectionString + "minPoolSize=0;maxPoolSize=1;poolingEnabled=true";
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(1, SnowflakeDbConnectionPool.GetPool(connectionString, null).GetCurrentPoolSize());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestReuseSessionInConnectionPool() // old name: TestConnectionPool
         {
             var connectionString = _fixture.ConnectionString + "minPoolSize=1;poolingEnabled=true";
@@ -80,7 +80,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(ConnectionState.Closed, conn2.State);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestReuseSessionInConnectionPoolReachingMaxConnections() // old name: TestConnectionPoolFull
         {
             var connectionString = _fixture.ConnectionString + "maxPoolSize=2;minPoolSize=1;poolingEnabled=true";
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(ConnectionState.Closed, conn4.State);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimit()
         {
             // arrange
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await conn2.CloseAsync(CancellationToken.None);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestWaitForTheIdleConnectionWhenExceedingMaxConnectionsLimitAsync()
         {
             // arrange
@@ -177,7 +177,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await conn2.CloseAsync(CancellationToken.None);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestWaitInAQueueForAnIdleSession()
         {
             // arrange
@@ -232,7 +232,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.InRange(lastConnectingEventsGroup[1].Duration, DMinConnectDuration - MeasurementTolerance, DMaxConnectDuration);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestBusyAndIdleConnectionsCountedInPoolSize()
         {
             // arrange
@@ -254,7 +254,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(1, pool.GetCurrentPoolSize());
         }
 
-        [Fact]
+        [SFFact]
         public void TestConnectionPoolNotPossibleToDisableForAllPools()
         {
             // act
@@ -264,7 +264,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.NotNull(thrown);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectionPoolDisable()
         {
             // arrange
@@ -287,7 +287,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestNewConnectionPoolClean()
         {
             var connectionString = _fixture.ConnectionString + "maxPoolSize=2;minPoolSize=1;poolingEnabled=true;";
@@ -321,7 +321,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(ConnectionState.Closed, conn3.State);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestConnectionPoolExpirationWorks()
         {
             // arrange
@@ -364,7 +364,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.True(conn5.SfSession.GetStartTime() > beforeSleepMillis);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestMinPoolSize()
         {
             // arrange
@@ -383,7 +383,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await connection.CloseAsync(CancellationToken.None);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestPreventConnectionFromReturningToPool()
         {
             // arrange
@@ -400,7 +400,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestReleaseConnectionWhenRollbackFails()
         {
             // arrange
@@ -445,7 +445,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return connection;
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public async Task TestReturningCancelledSessionsToThePool(bool cancelAsync)

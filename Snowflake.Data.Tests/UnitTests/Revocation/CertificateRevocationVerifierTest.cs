@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
     public class CertificateRevocationVerifierTest : RevocationTests
     {
-        [Theory]
+        [SFTheory]
         [InlineData("Enabled", false)]
         [InlineData("Advisory", true)]
         [InlineData("Disabled", true)]
@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(expectedResult, result);
         }
 
-        [Fact]
+        [SFFact]
         public void TestVerifyCertificateAsUnrevoked()
         {
             // arrange
@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(CertRevocationCheckResult.CertUnrevoked, result);
         }
 
-        [Fact]
+        [SFFact]
         public void TestVerifyCertificateAsErrorWhenCouldNotDownloadCrl()
         {
             // arrange
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
-        [Fact]
+        [SFFact]
         public void TestVerifyCertificateAsErrorWhenOneOfCrlsIsNotParsable()
         {
             // arrange
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
-        [Fact]
+        [SFFact]
         public void TestVerifyCertificateAsErrorWhenCrlExceedsMaxSize()
         {
             // arrange
@@ -161,7 +161,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
-        [Fact]
+        [SFFact]
         public void TestVerifyCertificateAsErrorWhenContentLengthHeaderExceedsMaxSize()
         {
             // arrange
@@ -197,7 +197,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
-        [Fact]
+        [SFFact]
         public void TestFailWhenCrlSignatureNotMatchingParentKey()
         {
             // arrange
@@ -220,7 +220,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(true)]
         [InlineData(false)]
         public void TestVerifyCrlSignatureForEllipticCurveCertificates(bool signCrlWithCaPrivateKey)
@@ -249,7 +249,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(signCrlWithCaPrivateKey, result);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(30, "ChainError")]
         [InlineData(3, "ChainUnrevoked")]
         public void TestSkipShortLivedCertificate(int offsetDays, string expectedResultString)
@@ -275,7 +275,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(expectedResult, result);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("2024-03-14 23:59:59Z", "2024-03-16 00:00:00Z", false)]
         [InlineData("2024-03-15 00:00:00Z", "2024-03-25 00:00:00Z", true)]
         [InlineData("2024-03-15 00:00:00Z", "2024-03-25 00:01:00Z", false)]
@@ -300,7 +300,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(expectedResult, isShortLived);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(true)]
         [InlineData(false)]
         public void TestVerifyIfIssuerMatchesTheCertificateIssuer(bool expectEquivalent)
@@ -323,7 +323,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(expectEquivalent, isEquivalent);
         }
 
-        [Fact]
+        [SFFact]
         public void AuthorityKeyIdentifierConsistentWhenCrlHasNoAkiExtension()
         {
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
@@ -346,7 +346,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.True(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
         }
 
-        [Fact]
+        [SFFact]
         public void AuthorityKeyIdentifierConsistentWhenAkiMatchesParentSki()
         {
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
@@ -372,7 +372,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.True(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
         }
 
-        [Fact]
+        [SFFact]
         public void AuthorityKeyIdentifierInconsistentWhenAkiDoesNotMatchParentSki()
         {
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
@@ -399,7 +399,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.False(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
         }
 
-        [Fact]
+        [SFFact]
         public void AuthorityKeyIdentifierConsistentWhenCrlHasAkiButParentHasNoSki()
         {
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
@@ -454,7 +454,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 .Throws(exceptionProvider);
         }
 
-        [Fact]
+        [SFFact]
         public void TestDownloadedCrlIsExpiredAndNoneValidExists()
         {
             // arrange
@@ -493,7 +493,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
-        [Fact]
+        [SFFact]
         public void TestDownloadedCrlIsExpiredButTheValidExists()
         {
             // arrange

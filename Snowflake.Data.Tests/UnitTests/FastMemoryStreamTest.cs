@@ -1,3 +1,5 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Xunit;
@@ -12,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _fastMemoryStream = new FastMemoryStream();
         }
 
-        [Fact]
+        [SFFact]
         public void TestDefaultValues()
         {
             // FastMemoryStream defaults to size of 0 and buffer of size 256
@@ -20,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(FastMemoryStream.DEFAULT_BUFFER_SIZE, _fastMemoryStream.GetBuffer().Length);
         }
 
-        [Fact]
+        [SFFact]
         public void TestWriteByte()
         {
             byte val = 32;
@@ -36,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(byteArr, _fastMemoryStream.GetBuffer());
         }
 
-        [Fact]
+        [SFFact]
         public void TestClear()
         {
             int bufferLength = _fastMemoryStream.GetBuffer().Length;
@@ -53,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(0, _fastMemoryStream.Length);
         }
 
-        [Fact]
+        [SFFact]
         public void TestBufferIsIncreasedWhenSizeIsLargerThanDefault()
         {
             byte val = 32;

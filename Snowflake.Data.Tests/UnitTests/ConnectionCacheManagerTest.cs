@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _connectionCacheManager.ClearAllPools();
         }
 
-        [Fact]
+        [SFFact]
         public void TestEnablePoolingRegardlessOfConnectionStringProperty()
         {
             // act

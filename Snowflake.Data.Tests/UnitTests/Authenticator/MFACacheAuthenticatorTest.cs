@@ -1,11 +1,12 @@
 using Xunit;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
     public class MFACacheAuthenticatorTest
     {
-        [Theory]
+        [SFTheory]
         [InlineData("username_password_mfa", true)]
         [InlineData("USERNAME_PASSWORD_MFA", true)]
         [InlineData("snowflake", false)]

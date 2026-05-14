@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Tests.Util;
 using Xunit;
 
 // Build NuGet, create a fresh consumer app, install the
@@ -37,7 +38,7 @@ namespace Snowflake.Data.Tests.PackageTests
             try { Directory.Delete(_tempDir, true); } catch { }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestMiniCoreLoadsFromNugetPackage()
         {
             // 1. Pack NuGet

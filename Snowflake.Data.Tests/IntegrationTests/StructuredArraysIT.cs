@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         public StructuredArraysITJsonManaged(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.JSON, false) { }
 
-        [Fact]
+        [SFFact]
         public async Task TestDataTableLoadOnStructuredArrayJsonFormat()
         {
             // arrange
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArray()
         {
             // arrange
@@ -110,7 +110,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfObjects()
         {
             // arrange
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfArrays()
         {
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
@@ -161,7 +161,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfMap()
         {
             // arrange
@@ -189,7 +189,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(@"ARRAY_CONSTRUCT(OBJECT_CONSTRUCT('a', 'b'))::ARRAY(OBJECT)", "{\"a\": \"b\"}")]
         [InlineData(@"ARRAY_CONSTRUCT(ARRAY_CONSTRUCT('a', 'b'))::ARRAY(ARRAY)", "[\"a\", \"b\"]")]
         [InlineData(@"ARRAY_CONSTRUCT(TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::ARRAY(VARIANT)", "{\"a\": \"b\"}")]
@@ -216,7 +216,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfIntegers()
         {
             // arrange
@@ -241,7 +241,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfLong()
         {
             // arrange
@@ -266,7 +266,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfFloats()
         {
             // arrange
@@ -291,7 +291,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfDoubles()
         {
             // arrange
@@ -316,7 +316,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfDoublesWithExponentNotation()
         {
             // arrange
@@ -341,7 +341,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfBooleans()
         {
             // arrange
@@ -366,7 +366,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfBinaries()
         {
             // arrange
@@ -392,7 +392,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectArrayOfDates()
         {
             // arrange
@@ -417,7 +417,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectStringArrayWithNulls()
         {
             // arrange
@@ -442,7 +442,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectIntArrayWithNulls()
         {
             // arrange
@@ -467,7 +467,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectNullArray()
         {
             // arrange
@@ -491,7 +491,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestThrowExceptionForInvalidArray()
         {
             // arrange
@@ -517,7 +517,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestThrowExceptionForInvalidArrayElement()
         {
             // arrange
@@ -546,7 +546,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestThrowExceptionForNextedInvalidElement()
         {
             // arrange

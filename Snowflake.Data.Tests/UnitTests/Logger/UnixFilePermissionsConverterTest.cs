@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 {
     public class UnixFilePermissionsConverterTest
     {
-        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [MemberData(nameof(TestConversionForAllPermissionCombinationsData))]
         public void TestConversionForAllPermissionCombinations(
             PermissionTestCase userTestCase,

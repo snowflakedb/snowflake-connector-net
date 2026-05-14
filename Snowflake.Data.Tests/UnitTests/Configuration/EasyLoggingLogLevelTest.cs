@@ -1,12 +1,13 @@
 using System;
 using Xunit;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
     class EasyLoggingLogLevelTest
     {
-        [Theory]
+        [SFTheory]
         [InlineData("OFF", EasyLoggingLogLevel.Off)]
         [InlineData("off", EasyLoggingLogLevel.Off)]
         [InlineData("iNfO", EasyLoggingLogLevel.Info)]
@@ -19,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(expectedLogLevel, logLevel);
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatFailsToParseLogLevelFromUnknownValue()
         {
             // act

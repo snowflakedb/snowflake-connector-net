@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         private static readonly CrlParser s_crlParser = new(TimeSpan.FromDays(10));
         private static readonly TimeSpan s_removalDelay = TimeSpan.FromDays(7);
 
-        [Fact]
+        [SFFact]
         public void TestGetAndSetCacheOperations()
         {
             // arrange
@@ -54,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestSetOverridesExistingFile()
         {
             // arrange
@@ -81,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestDontReadFromInsecureFile()
         {
             // arrange
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestSetSecurePermissionsWhenSavingCrlCache()
         {
             // arrange
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestWithMocksWindowsGetCrl()
         {
             // arrange
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Fact]
+        [SFFact]
         public void TestWithMocksWindowsGetCrlForNotExistingFile()
         {
             // arrange
@@ -195,7 +195,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Fact]
+        [SFFact]
         public void TestWithMocksWindowsGetCrlForReadingError()
         {
             // arrange
@@ -221,7 +221,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Fact]
+        [SFFact]
         public void TestWithMocksWindowsSaveCrl()
         {
             // arrange
@@ -244,7 +244,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Fact]
+        [SFFact]
         public void TestWithMocksWindowsSaveCrlError()
         {
             // arrange
@@ -270,7 +270,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestWithMocksWindowsSaveCrlWithDirectoryCreation()
         {
             // arrange
@@ -297,7 +297,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixGetCrl()
         {
             // arrange
@@ -326,7 +326,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             AssertCrlsAreEqual(crl, crlRead);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixGetCrlFailsForReadingError()
         {
             // arrange
@@ -351,7 +351,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Null(crlRead);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixSaveCrl()
         {
             // arrange
@@ -381,7 +381,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixSaveCrlWithDirectoryCreation()
         {
             // arrange
@@ -412,7 +412,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixSaveCrlShouldFixIncorrectPermissions()
         {
             // arrange
@@ -446,7 +446,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [TheorySkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [InlineData(1, 0, 0, 0)]
         [InlineData(0, 1, 0, 0)]
         [InlineData(0, 0, 1, 0)]

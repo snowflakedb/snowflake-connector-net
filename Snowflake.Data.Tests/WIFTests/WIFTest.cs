@@ -24,7 +24,7 @@ namespace Snowflake.Data.WIFTests
         private static readonly string s_expectedUsername = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_USERNAME");
         private static readonly string s_expectedUsernameImpersonation = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_USERNAME_IMPERSONATION");
 
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingWifWithDefinedProvider()
         {
             var connectionString = $"account={s_account};host={s_host};authenticator=WORKLOAD_IDENTITY;workload_identity_provider={s_provider};certRevocationCheckMode=enabled;";
@@ -35,7 +35,7 @@ namespace Snowflake.Data.WIFTests
             }
         }
 
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingWifWithImpersonation()
         {
             if (string.IsNullOrEmpty(s_impersonationPath))
@@ -60,7 +60,7 @@ namespace Snowflake.Data.WIFTests
             }
         }
 
-        [IgnoreOnCIFact]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingOidc()
         {
             if (!IsProviderGcp())

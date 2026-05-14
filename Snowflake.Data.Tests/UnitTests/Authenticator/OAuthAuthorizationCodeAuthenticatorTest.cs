@@ -7,6 +7,7 @@ using Snowflake.Data.Core.Authenticator.Browser;
 using Snowflake.Data.Core.Session;
 using Moq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
@@ -32,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_defaultRedirectUriWithSlash = s_defaultRedirectUri + "/";
         private const string CodeVerifier = "codeVerifierForAuthorizationCodeFlowMustBeALongString";
 
-        [Fact]
+        [SFFact]
         public void TestUseDefaultValues()
         {
             // arrange
@@ -62,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             listenerStarter.Verify(s => s.StartHttpListener(s_defaultRedirectUriWithSlash), Times.Once);
         }
 
-        [Fact]
+        [SFFact]
         public void TestFailWhenCannotFindFreeRandomPortForDefaultRedirectUri()
         {
             // arrange
@@ -82,7 +83,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Throws<HttpListenerException>(() => authenticator.StartListenerUpdatingRedirectUri(authorizationData.Request));
         }
 
-        [Fact]
+        [SFFact]
         public void TestUseCustomizedValues()
         {
             // arrange
@@ -111,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             listenerStarter.Verify(s => s.GetRandomUnusedPort(), Times.Never);
         }
 
-        [Fact]
+        [SFFact]
         public void TestBrowserShouldFailWithExceptionWithMaskedUrl()
         {
             // arrange

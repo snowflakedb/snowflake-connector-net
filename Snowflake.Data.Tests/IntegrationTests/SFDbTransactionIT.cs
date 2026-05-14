@@ -1,4 +1,5 @@
 using System.Threading;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -14,7 +15,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFDbTransactionIT(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
-        [Fact]
+        [SFFact]
         public async Task TestTransactionDbConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -32,7 +33,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestTransactionIsolationLevel()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -50,7 +51,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         // Test that when a transaction is disposed, rollback would be sent out
         public async Task TestTransactionDispose()
         {
@@ -77,7 +78,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         // Test SNOW-761136 unnecessary ROLLBACK
         public async Task TestTransactionRollback()
         {
@@ -128,7 +129,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await conn.CloseAsync(CancellationToken.None);
         }
 
-        [Fact]
+        [SFFact]
         // Test SNOW-761136 unnecessary ROLLBACK
         public async Task TestTransactionRollbackOn2Transactions()
         {
@@ -177,7 +178,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await conn.CloseAsync(CancellationToken.None);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestThrowsExceptionWhenBeginTransactionWithoutOpen()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))

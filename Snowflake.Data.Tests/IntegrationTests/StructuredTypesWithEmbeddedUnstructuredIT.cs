@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         // Connection string with HonorSessionTimezone enabled for tests that use session timezone
         private string ConnectionStringWithHonorSessionTimezone => _fixture.ConnectionString + "HonorSessionTimezone=true;";
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectAllUnstructuredTypesObject()
         {
             // arrange
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectAllUnstructuredTypesObjectIntoNullableFields()
         {
             // arrange
@@ -199,7 +199,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestSelectNullIntoUnstructuredTypesObject()
         {
             // arrange
@@ -285,7 +285,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(DateTimeConversionCases))]
         public async Task TestSelectDateTime(string dbValue, string dbType, DateTime? expectedRaw, DateTime expected)
         {
@@ -416,7 +416,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(DateTimeOffsetConversionCases))]
         public async Task TestSelectDateTimeOffset(string dbValue, string dbType, DateTime? expectedRaw, DateTimeOffset expected)
         {

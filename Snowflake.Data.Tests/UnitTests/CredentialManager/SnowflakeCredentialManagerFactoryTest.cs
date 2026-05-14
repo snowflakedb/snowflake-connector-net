@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
         }
 
-        [Fact]
+        [SFFact]
         public void TestUsingDefaultCredentialManager()
         {
             // arrange
@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestSettingCustomCredentialManager()
         {
             // arrange
@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.IsType<SFCredentialManagerInMemoryImpl>(credentialManager);
         }
 
-        [Fact]
+        [SFFact]
         public void TestUseMemoryImplCredentialManager()
         {
             // arrange
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.IsType<SFCredentialManagerInMemoryImpl>(credentialManager);
         }
 
-        [Fact]
+        [SFFact]
         public void TestThatThrowsErrorWhenTryingToSetCredentialManagerToNull()
         {
             // act and assert
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.Contains("Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method.", exception.Message);
         }
 
-        [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestUseWindowsCredentialManagerFailsOnUnix()
         {
             // act
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.Equal("Windows native credential manager implementation can be used only on Windows", thrown.Message);
         }
 
-        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestUseFileCredentialManagerFailsOnWindows()
         {
             // act
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // assert
             Assert.Equal("File credential manager implementation is not supported on Windows", thrown.Message);
         }
-    
+
         public void Dispose()
         {
             TearDown();

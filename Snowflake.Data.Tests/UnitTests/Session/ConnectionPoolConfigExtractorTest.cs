@@ -6,12 +6,13 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
     public class ConnectionPoolConfigExtractorTest
     {
-        [Fact]
+        [SFFact]
         public void TestExtractDefaultValues()
         {
             // arrange
@@ -30,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(SFSessionHttpClientProperties.DefaultPoolingEnabled, result.PoolingEnabled);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractMaxPoolSize()
         {
             // arrange
@@ -44,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(maxPoolSize, result.MaxPoolSize);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("wrong_value")]
         [InlineData("0")]
         [InlineData("-1")]
@@ -60,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains($"Invalid value of parameter {SFSessionProperty.MAXPOOLSIZE.ToString()}", thrown.Message);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("0", 0)]
         [InlineData("7", 7)]
         [InlineData("10", 10)]
@@ -76,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(expectedMinPoolSize, result.MinPoolSize);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("wrong_value")]
         [InlineData("-1")]
         public void TestExtractFailsForWrongValueOfMinPoolSize(string minPoolSize)
@@ -91,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains($"Invalid value of parameter {SFSessionProperty.MINPOOLSIZE.ToString()}", thrown.Message);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractFailsWhenMinPoolSizeGreaterThanMaxPoolSize()
         {
             // arrange
@@ -104,7 +105,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains("MinPoolSize cannot be greater than MaxPoolSize", thrown.Message);
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(CorrectTimeoutsWithZeroUnchanged))]
         public void TestExtractExpirationTimeout(TimeoutTestCase testCase)
         {
@@ -118,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(testCase.ExpectedTimeout, result.ExpirationTimeout);
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(IncorrectTimeouts))]
         public void TestExtractExpirationTimeoutFailsWhenWrongValue(string propertyValue)
         {
@@ -132,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains($"Invalid value of parameter {SFSessionProperty.EXPIRATIONTIMEOUT.ToString()}", thrown.Message);
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(PositiveTimeoutsAndZeroUnchanged))]
         public void TestExtractWaitingForIdleSessionTimeout(TimeoutTestCase testCase)
         {
@@ -146,7 +147,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(testCase.ExpectedTimeout, result.WaitingForIdleSessionTimeout);
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractWaitingForIdleSessionTimeoutFailsForInfiniteTimeout()
         {
             // arrange
@@ -159,7 +160,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains("Waiting for idle session timeout cannot be infinite", thrown.Message);
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(IncorrectTimeouts))]
         public void TestExtractWaitingForIdleSessionTimeoutFailsWhenWrongValue(string propertyValue)
         {
@@ -173,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains($"Invalid value of parameter {SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT.ToString()}", thrown.Message);
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(CorrectTimeoutsWithZeroAsInfinite))]
         public void TestExtractConnectionTimeout(TimeoutTestCase testCase)
         {
@@ -187,7 +188,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(testCase.ExpectedTimeout, result.ConnectionTimeout);
         }
 
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(IncorrectTimeouts))]
         public void TestExtractConnectionTimeoutFailsForWrongValue(string propertyValue)
         {
@@ -201,7 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains($"Invalid value of parameter {SFSessionProperty.CONNECTION_TIMEOUT.ToString()}", thrown.Message);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("true", true)]
         [InlineData("TRUE", true)]
         [InlineData("false", false)]
@@ -218,7 +219,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(poolingEnabled, result.PoolingEnabled);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("account=test;user=test;password=test;", true)]
         [InlineData("authenticator=externalbrowser;account=test;user=test;", false)]
         [InlineData("authenticator=externalbrowser;account=test;user=test;poolingEnabled=true;", true)]
@@ -240,7 +241,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(poolingEnabled, result.PoolingEnabled);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("wrong_value")]
         [InlineData("15")]
         public void TestExtractFailsForWrongValueOfPoolingEnabled(string propertyValue)
@@ -255,7 +256,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Contains($"Invalid value of parameter {SFSessionProperty.POOLINGENABLED.ToString()}", thrown.Message);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("OriginalPool", ChangedSessionBehavior.OriginalPool)]
         [InlineData("originalpool", ChangedSessionBehavior.OriginalPool)]
         [InlineData("ORIGINALPOOL", ChangedSessionBehavior.OriginalPool)]

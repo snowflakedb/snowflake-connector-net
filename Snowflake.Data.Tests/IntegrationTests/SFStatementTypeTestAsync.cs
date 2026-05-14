@@ -1,4 +1,5 @@
 using System.Threading;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -12,7 +13,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFStatementTypeTestAsync(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
-        [Fact]
+        [SFFact]
         public async Task TestCallStatement()
         {
             using (DbConnection conn = new SnowflakeDbConnection())

@@ -3,6 +3,7 @@ using System.Linq;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
@@ -10,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     {
         private SFSession _session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
 
-        [Fact]
+        [SFFact]
         public void TestNoBackgroundSessionsToCreateWhenInitialisedWithSession()
         {
             // arrange
@@ -22,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, backgroundCreationTokens.Count);
         }
 
-        [Fact]
+        [SFFact]
         public void TestReturnFirstCreationToken()
         {
             // arrange
@@ -39,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Same(tokens[0], token);
         }
 
-        [Fact]
+        [SFFact]
         public void TestReturnCreationTokensFromTheSecondOneForBackgroundExecution()
         {
             // arrange

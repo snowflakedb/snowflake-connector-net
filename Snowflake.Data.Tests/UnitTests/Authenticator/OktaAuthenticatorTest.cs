@@ -1,11 +1,12 @@
 using Xunit;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
     public class OktaAuthenticatorTest
     {
-        [Theory]
+        [SFTheory]
         [InlineData("https://xxxxxx.okta.com", true)]
         [InlineData("https://xxxxxx.oktapreview.com", true)]
         [InlineData("https://vanity.url/snowflake/okta", true)]

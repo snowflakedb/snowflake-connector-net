@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             return session;
         }
 
-        [Fact]
+        [SFFact]
         public void TestFailsAuthorizationWhenProviderIsNotGiven()
         {
             // arrange/act
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Required property WORKLOAD_IDENTITY_PROVIDER is not provided", exception?.Message);
         }
 
-        [Fact]
+        [SFFact]
         public void TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
         {
             // arrange: throws exception with "Not available" message

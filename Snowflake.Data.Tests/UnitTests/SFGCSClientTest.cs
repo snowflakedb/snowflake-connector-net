@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Snowflake.Data.Tests.Mock;
 using Moq;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -74,7 +75,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _cancellationToken = new CancellationToken();
         }
 
-        [Fact]
+        [SFFact]
         public void TestExtractBucketNameAndPath()
         {
             // Split LOCATION based on the first '/' character
@@ -86,7 +87,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(bucketAndKey[1], location.key);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(ResultStatus.UPLOADED)]
         [InlineData(ResultStatus.DOWNLOADED)]
         public void TestGetFileHeaderWhenFileHeaderAlreadyExists(ResultStatus expectedResultStatus)
@@ -107,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForGetFileHeaderWhenFileHeaderAlreadyExistsTests(expectedResultStatus, fileHeader);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(ResultStatus.UPLOADED)]
         [InlineData(ResultStatus.DOWNLOADED)]
         public async Task TestGetFileHeaderAsyncWhenFileHeaderAlreadyExists(ResultStatus expectedResultStatus)
@@ -138,7 +139,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
@@ -164,7 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
@@ -211,7 +212,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
@@ -243,7 +244,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForUploadFileTests(expectedResultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
@@ -286,7 +287,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
@@ -311,7 +312,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForDownloadFileTests(expectedResultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
@@ -336,7 +337,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForDownloadFileTests(expectedResultStatus);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("us-central1", null, null, "https://storage.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
         [InlineData("us-central1", "example.com", null, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
         [InlineData("us-central1", "https://example.com", null, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
@@ -367,7 +368,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedRequestUri, uri);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("mock-stage", null, false, true, "https://mock-stage.storage.googleapis.com/")]
         [InlineData("mock-stage/mock-id/mock-key", null, false, true, "https://mock-stage.storage.googleapis.com/mock-id/mock-key/")]
         [InlineData("mock-stage/mock-id/mock-key", null, true, true, "https://mock-stage.storage.googleapis.com/mock-id/mock-key/")]
@@ -398,7 +399,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedRequestUri, uri);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("some-header-name")]
         [InlineData("SOME-HEADER-NAME", "some-header-name")]
         public void TestGcsHeadersAreCaseInsensitiveForHttpResponseMessage(string headerNameToAdd, string headerNameToGet)
@@ -417,7 +418,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(HeaderValue, header.First());
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("some-header-name")]
         [InlineData("SOME-HEADER-NAME", "some-header-name")]
         public void TestGcsHeadersAreCaseInsensitiveForWebHeaderCollection(string headerNameToAdd, string headerNameToGet)
@@ -436,7 +437,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(HeaderValue, header.First());
         }
 
-        [Fact]
+        [SFFact]
         public void TestHandleGetFileHeaderResponseWithoutSfcDigest()
         {
             // arrange

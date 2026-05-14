@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
     public class CertificateCrlDistributionPointsExtractorTest
     {
-        [Theory]
+        [SFTheory]
         [MemberData(nameof(CrlsTestCases))]
         public void TestExtractCertificateDistributionPoints(CrlExtractionTestCase testCase)
         {

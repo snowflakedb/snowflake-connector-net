@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestRecordsAffected()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetNumber()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -126,7 +126,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("NUMBER(18,10)")]
         [InlineData("NUMBER(18,12)")]
         [InlineData("NUMBER(38,20)")]
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetDecfloatWithHighPrecision()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -183,7 +183,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetDouble()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -233,7 +233,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(null)]
         [InlineData("9999-12-31 00:00:00.0000000")]
         [InlineData("9999-12-30 00:00:00.0000000")]
@@ -245,7 +245,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await TestGetDateAndOrTimeAsync(inputTimeStr, null, SFDataType.DATE);
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestDateOutputFormat()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -278,7 +278,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(null, null)]
         [InlineData(null, 3)]
         [InlineData("9999-12-31 23:59:59.9999999", null)]
@@ -294,7 +294,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await TestGetDateAndOrTimeAsync(inputTimeStr, precision, SFDataType.TIME);
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("11:22:33.4455667")]
         [InlineData("23:59:59.9999999")]
         [InlineData("16:20:00.6666666")]
@@ -352,7 +352,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetTimeSpanError()
         {
             // Only Time data can be retrieved using GetTimeSpan, other type will fail
@@ -529,7 +529,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(null, null)]
         [InlineData(null, 3)]
         [InlineData("2100-12-31 23:59:59.9999999", null)]
@@ -550,7 +550,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Theory]
+        [SFTheory]
         [InlineData(0)]
         [InlineData(5)]
         [InlineData(-5)]
@@ -595,7 +595,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetTimestampLTZ()
         {
             using (var conn = await CreateAndOpenConnectionWithHonorSessionTimezoneAsync())
@@ -638,7 +638,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData(false)]
         [InlineData(true)]
         public async Task TestGetBoolean(bool value)
@@ -674,7 +674,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetByte()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -715,7 +715,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetBinary()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -857,7 +857,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetChar()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -888,7 +888,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetChars()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1032,7 +1032,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetDataTypeName()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1076,7 +1076,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetStream()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1153,7 +1153,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [Fact]
+        [SFFact]
         public async Task TestGetValueIndexOutOfBound()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1191,7 +1191,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestBasicDataReader()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1252,7 +1252,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestReadOutNullVal()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1288,7 +1288,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetGuid()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1332,7 +1332,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCopyCmdUpdateCount()
         {
             var stageName = _fixture.TestName;
@@ -1364,7 +1364,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestCopyCmdResultSet()
         {
             var stageName = _fixture.TestName;
@@ -1406,7 +1406,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestRetrieveSemiStructuredData()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1436,7 +1436,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestGetVariant()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1473,7 +1473,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestResultSetMetadata()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1545,7 +1545,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestHasRows()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1563,7 +1563,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestHasRowsMultiStatement()
         {
             using (var conn = await CreateAndOpenConnectionAsync())
@@ -1610,7 +1610,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("99")]                           // Int8
         [InlineData("9.9")]                          // Int8 + scale
         [InlineData("999")]                          // Int16
@@ -1662,7 +1662,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("2019-01-01 12:12:12.1234567 +0500", 7)]
         [InlineData("2019-01-01 12:12:12.1234567 -0500", 7)]
         [InlineData("2019-01-01 12:12:12.1234567 +1400", 7)]
@@ -1691,7 +1691,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("2019-01-01 12:12:12.1234567 +0200", 7, "2019-01-01 02:12:12.1234567 -08:00")]
         [InlineData("2019-01-01 12:12:12.1234567 +1400", 7, "2018-12-31 14:12:12.1234567 -08:00")]
         [InlineData("1900-01-15 00:00:00.0000000 +0000", 9, "1900-01-14 16:00:00.0000000 -08:00")]
@@ -1723,7 +1723,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("2019-01-01 12:12:12.1234567", 7)]
         [InlineData("0001-01-01 00:00:00.0000000", 9)]
         [InlineData("9999-12-31 23:59:59.9999999", 9)]
@@ -1749,7 +1749,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory]
+        [SFTheory]
         [InlineData("array")]
         [InlineData("object")]
         [InlineData("variant")]
@@ -1781,7 +1781,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestTimestampLtzHonorsSessionTimezone()
         {
             using (var conn = await CreateAndOpenConnectionWithHonorSessionTimezoneAsync())
@@ -1834,7 +1834,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestTimestampLtzWithMultipleSessionTimezones()
         {
             using (var conn = await CreateAndOpenConnectionWithHonorSessionTimezoneAsync())
@@ -1882,7 +1882,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestTimestampLtzUsesLocalTimezoneByDefault()
         {
             // Verifies that without HonorSessionTimezone, TIMESTAMP_LTZ uses the local machine

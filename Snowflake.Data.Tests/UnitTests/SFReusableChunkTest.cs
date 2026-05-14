@@ -1,4 +1,5 @@
 using System;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -11,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Threading.Tasks;
     class SFReusableChunkTest
     {
-        [Fact]
+        [SFFact]
         public void TestExtractCellWithRowParameterReadsAllRows()
         {
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
@@ -28,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 
-        [Fact]
+        [SFFact]
         public void TestSimpleChunk()
         {
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
@@ -45,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestChunkWithNull()
         {
             string data = "[ [null, \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
@@ -62,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestChunkWithDate()
         {
             string data = "[ [null, \"2019-08-21T11:58:00\", null],  [\"2\", null, \"fghi\"] ]";
@@ -79,7 +80,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestChunkWithEscape()
         {
             string data = "[ [\"\\\\åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
@@ -96,7 +97,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestChunkWithLongString()
         {
             string longstring = new string('å', 10 * 1000 * 1000);
@@ -114,7 +115,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(longstring, chunk.ExtractCell(2).SafeToString());
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestParserError1()
         {
             // Unterminated escape sequence
@@ -131,7 +132,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public async Task TestParserError2()
         {
             // Unterminated string
@@ -148,7 +149,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact]
+        [SFFact]
         public void TestParserWithTab()
         {
             // Unterminated string
@@ -160,7 +161,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("abc\t", chunk.ExtractCell(0).SafeToString());
         }
 
-        [Fact]
+        [SFFact]
         public void TestNextIteratesThroughAllRecords()
         {
             const int RowCount = 3;
@@ -174,7 +175,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(chunk.Next());
         }
 
-        [Fact]
+        [SFFact]
         public void TestRewindIteratesThroughAllRecords()
         {
             const int RowCount = 3;
@@ -194,7 +195,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(chunk.Rewind());
         }
 
-        [Fact]
+        [SFFact]
         public void TestResetClearsChunkData()
         {
             const int RowCount = 3;
@@ -218,7 +219,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(chunk.data.metaBlockCount > 0);
         }
 
-        [Fact]
+        [SFFact]
         public void TestClearRemovesAllChunkData()
         {
             const int RowCount = 3;

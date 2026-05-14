@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Xunit;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
@@ -9,7 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private readonly ChallengeProvider _challengeProvider = new();
         private readonly Regex _onlyDigitsOrNumbers = new(@"^[0-9a-zA-Z]+$");
 
-        [Fact]
+        [SFFact]
         public void TestGenerateState()
         {
             // act
@@ -20,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.True(_onlyDigitsOrNumbers.IsMatch(state));
         }
 
-        [Fact]
+        [SFFact]
         public void TestGenerateCodeVerifier()
         {
             // act

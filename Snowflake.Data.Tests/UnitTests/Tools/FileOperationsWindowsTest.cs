@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestReadAllTextOnWindows()
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, result);
         }
 
-        [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestFileIsSafeOnWindows()
         {
             // arrange
