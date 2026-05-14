@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // Delete temp output directory and downloaded files
                 Directory.Delete(OutputDirectory, true);
-                return TaskOrValueTask.CompletedTask;
+                return base.DisposeAsync();
             }
         }
     }
