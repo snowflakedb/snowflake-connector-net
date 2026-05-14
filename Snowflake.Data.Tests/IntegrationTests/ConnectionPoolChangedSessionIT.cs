@@ -12,33 +12,28 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [CollectionDefinition(nameof(ConnectionPoolChangedSessionCollection), DisableParallelization = true)]
     public sealed class ConnectionPoolChangedSessionCollection : ICollectionFixture<ConnectionPoolChangedSessionCollection.Fixture>
     {
-        public class Fixture
+        public sealed class Fixture : IDisposable
         {
+            private readonly PoolConfig _previousPoolConfigRestorer;
+
+            public Fixture()
+            {
+                _previousPoolConfigRestorer = new PoolConfig();
+                SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+            }
+
+            public void Dispose()
+            {
+                _previousPoolConfigRestorer.Reset();
+            }
         }
     }
 
     [Collection(nameof(ConnectionPoolChangedSessionCollection))]
-    public sealed class ConnectionPoolChangedSessionITFixture : IDisposable
-    {
-        private readonly PoolConfig _previousPoolConfigRestorer;
-
-        public ConnectionPoolChangedSessionITFixture()
-        {
-            _previousPoolConfigRestorer = new PoolConfig();
-            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
-        }
-
-        public void Dispose()
-        {
-            _previousPoolConfigRestorer.Reset();
-        }
-    }
-
-    [Collection(nameof(ConnectionPoolChangedSessionCollection))]
-    public class ConnectionPoolChangedSessionIT : SFBaseTestAsync, IClassFixture<ConnectionPoolChangedSessionITFixture>, IDisposable
+    public class ConnectionPoolChangedSessionIT : SFBaseTestAsync, ICollectionFixture<ConnectionPoolChangedSessionCollection.Fixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture, ConnectionPoolChangedSessionITFixture classFixture) : base(fixture)
+        public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture, ConnectionPoolChangedSessionCollection.Fixture classFixture) : base(fixture)
         {
             _fixture = fixture;
             SnowflakeDbConnectionPool.ClearAllPools();

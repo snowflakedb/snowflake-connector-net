@@ -10,7 +10,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [CollectionDefinition(nameof(ConnectionSinglePoolCacheAsyncCollection))]
+    [CollectionDefinition(nameof(ConnectionSinglePoolCacheAsyncCollection), DisableParallelization = true)]
     public sealed class ConnectionSinglePoolCacheAsyncCollection : ICollectionFixture<ConnectionSinglePoolCacheAsyncCollection.Fixture>
     {
         public class Fixture
