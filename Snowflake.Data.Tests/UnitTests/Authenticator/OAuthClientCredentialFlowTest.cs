@@ -13,31 +13,35 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public sealed class OAuthClientCredentialFlowFixture : IDisposable
+    [CollectionDefinition(nameof(OAuthClientCredentialFlowTestFixture), DisableParallelization = true)]
+    public sealed class OAuthClientCredentialFlowTestFixture : ICollectionFixture<OAuthClientCredentialFlowTestFixture.Fixture>
     {
-        internal readonly WiremockRunner Runner;
-
-        public OAuthClientCredentialFlowFixture()
+        public sealed class Fixture : IDisposable
         {
-            Runner = WiremockRunner.NewWiremock();
-        }
+            internal readonly WiremockRunner Runner;
 
-        public void Dispose()
-        {
-            Runner.Stop();
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest, IClassFixture<OAuthClientCredentialFlowFixture>
+    [Collection(nameof(OAuthClientCredentialFlowTestFixture))]
+    public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     {
-        private readonly OAuthClientCredentialFlowFixture _fixture;
+        private readonly OAuthClientCredentialFlowTestFixture.Fixture _fixture;
         private static readonly string s_oauthClientCredentialsMappingPath = Path.Combine(s_oauthMappingPath, "ClientCredentials");
         private static readonly string s_clientCredentialSuccessfulMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "successful_flow.json");
         private static readonly string s_tokenRequestErrorMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "token_request_error.json");
         private static readonly string s_tokenRequestNoRefreshTokenMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "successful_without_refresh_token.json");
 
-        public OAuthClientCredentialFlowTest(OAuthClientCredentialFlowFixture fixture)
+        public OAuthClientCredentialFlowTest(OAuthClientCredentialFlowTestFixture.Fixture fixture)
         {
             _fixture = fixture;
             _fixture.Runner.ResetMapping();

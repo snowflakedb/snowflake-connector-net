@@ -18,26 +18,30 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public sealed class OAuthAuthorizationCodeFlowFixture : IDisposable
+    [CollectionDefinition(nameof(OAuthAuthorizationCodeFlowTestFixture), DisableParallelization = true)]
+    public sealed class OAuthAuthorizationCodeFlowTestFixture : ICollectionFixture<OAuthAuthorizationCodeFlowTestFixture.Fixture>
     {
-        internal readonly WiremockRunner Runner;
-
-        public OAuthAuthorizationCodeFlowFixture()
+        public sealed class Fixture : IDisposable
         {
-            Runner = WiremockRunner.NewWiremock();
-        }
+            internal readonly WiremockRunner Runner;
 
-        public void Dispose()
-        {
-            SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
-            Runner.Stop();
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
+                Runner.Stop();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest, IClassFixture<OAuthAuthorizationCodeFlowFixture>
+    [Collection(nameof(OAuthAuthorizationCodeFlowTestFixture))]
+    public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
-        private readonly OAuthAuthorizationCodeFlowFixture _fixture;
+        private readonly OAuthAuthorizationCodeFlowTestFixture.Fixture _fixture;
         private static readonly string s_authorizationCodeSuccessfulMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow.json");
         private static readonly string s_authorizationCodeSuccessfulWithSingleUseRefreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow_with_single_use_refresh_token.json");
         private static readonly string s_authorizationCodeSuccessfulWithoutRefreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow_without_refresh_token.json");
@@ -46,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_badTokenRequestErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "token_request_error.json");
         private static readonly string s_externalAuthorizationUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/authorize";
 
-        public OAuthAuthorizationCodeFlowTest(OAuthAuthorizationCodeFlowFixture fixture)
+        public OAuthAuthorizationCodeFlowTest(OAuthAuthorizationCodeFlowTestFixture.Fixture fixture)
         {
             _fixture = fixture;
             SnowflakeCredentialManagerFactory.SetCredentialManager(new SFCredentialManagerInMemoryImpl());

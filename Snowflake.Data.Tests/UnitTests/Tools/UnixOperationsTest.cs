@@ -17,33 +17,37 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    public sealed class UnixOperationsTestFixture : IDisposable
+    [CollectionDefinition(nameof(UnixOperationsTestFixture), DisableParallelization = true)]
+    public sealed class UnixOperationsTestFixture : ICollectionFixture<UnixOperationsTestFixture.Fixture>
     {
-        public string WorkingDirectory { get; }
-        internal UnixOperations UnixOperations { get; }
-
-        public UnixOperationsTestFixture()
+        public sealed class Fixture : IDisposable
         {
-            WorkingDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            if (!Directory.Exists(WorkingDirectory))
+            public string WorkingDirectory { get; }
+            internal UnixOperations UnixOperations { get; }
+
+            public Fixture()
             {
-                Directory.CreateDirectory(WorkingDirectory);
+                WorkingDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                if (!Directory.Exists(WorkingDirectory))
+                {
+                    Directory.CreateDirectory(WorkingDirectory);
+                }
+                UnixOperations = new UnixOperations();
             }
-            UnixOperations = new UnixOperations();
-        }
 
-        public void Dispose()
-        {
-            Directory.Delete(WorkingDirectory, true);
+            public void Dispose()
+            {
+                Directory.Delete(WorkingDirectory, true);
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public class UnixOperationsTest : IClassFixture<UnixOperationsTestFixture>
+    [Collection(nameof(UnixOperationsTestFixture))]
+    public class UnixOperationsTest
     {
-        private readonly UnixOperationsTestFixture _fixture;
+        private readonly UnixOperationsTestFixture.Fixture _fixture;
 
-        public UnixOperationsTest(UnixOperationsTestFixture fixture)
+        public UnixOperationsTest(UnixOperationsTestFixture.Fixture fixture)
         {
             _fixture = fixture;
         }

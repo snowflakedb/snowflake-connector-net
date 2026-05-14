@@ -11,33 +11,16 @@ using Xunit;
 
 namespace Snowflake.Data.Tests;
 
-[CollectionDefinition(TestEnvironmentCollectionName)]
-public class TestEnvironmentCollection : ICollectionFixture<TestEnvironmentFixture>
+public static class TestEnvironment
 {
-    public const string TestEnvironmentCollectionName = "TestEnvironment";
-}
+    public static TestConfig TestConfig { get; private set; }
 
-/// <summary>
-/// Reads configuration and records performance
-/// </summary>
-public class TestEnvironmentFixture : IDisposable
-{
-    public TestConfig TestConfig { get; private set; }
-
-    private readonly ConcurrentDictionary<string, TimeSpan> _testPerformance;
-
-    public void RecordTestPerformance(string name, TimeSpan time)
-    {
-        _testPerformance.AddOrUpdate(name, time, (_, _) => time);
-    }
-
-    protected TestEnvironmentFixture()
+    static TestEnvironment()
     {
         var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
         Assert.True(cloud is null or "AWS" or "AZURE" or "GCP", $"{cloud} is not supported. Specify AWS, AZURE or GCP as cloud environment");
 
         TestConfig = ReadTestConfig();
-        _testPerformance = new ConcurrentDictionary<string, TimeSpan>();
 
 #if NETFRAMEWORK
             log4net.GlobalContext.Properties["framework"] = "net471";
@@ -52,10 +35,6 @@ public class TestEnvironmentFixture : IDisposable
         ThreadPool.SetMinThreads(100, 100);
     }
 
-    public void Dispose()
-    {
-        CreateTestTimeArtifact();
-    }
 
     private static TestConfig ReadTestConfig()
     {
@@ -128,41 +107,76 @@ public class TestEnvironmentFixture : IDisposable
         throw new Exception("Failed to load test configuration");
     }
 
-    private void CreateTestTimeArtifact()
-    {
-        if (_testPerformance == null || _testPerformance.Count == 0)
-            return;
-
-        var performance = string.Join("\n", _testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}"));
-        var resultText = $"test;time_in_ms\n{performance}";
-
-        var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
-        var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-
-        var separator = Path.DirectorySeparatorChar;
-
-        // We have to go up 3 times as the working directory path looks as follows:
-        // Snowflake.Data.Tests/bin/debug/{.net_version}/
-        File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
-    }
-
-    private static string GetOs()
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return "windows";
-        }
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            return "linux";
-        }
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            return "macos";
-        }
-
-        return "unknown";
-    }
 }
+
+
+// TODO test time artifacts
+
+// [CollectionDefinition(TestEnvironmentCollectionName)]
+// public class TestEnvironmentCollection : ICollectionFixture<TestEnvironmentFixture>
+// {
+//     public const string TestEnvironmentCollectionName = "TestEnvironment";
+// }
+
+//
+// /// <summary>
+// /// Reads configuration and records performance
+// /// </summary>
+// public class TestEnvironmentFixture : IDisposable
+// {
+//
+//     private readonly ConcurrentDictionary<string, TimeSpan> _testPerformance;
+//
+//     public void RecordTestPerformance(string name, TimeSpan time)
+//     {
+//         _testPerformance.AddOrUpdate(name, time, (_, _) => time);
+//     }
+//
+//     protected TestEnvironmentFixture()
+//     {
+//
+//     }
+//
+//     public void Dispose()
+//     {
+//         CreateTestTimeArtifact();
+//     }
+//
+//     private void CreateTestTimeArtifact()
+//     {
+//         if (_testPerformance == null || _testPerformance.Count == 0)
+//             return;
+//
+//         var performance = string.Join("\n", _testPerformance.Select(test => $"{test.Key};{Math.Round(test.Value.TotalMilliseconds, 0)}"));
+//         var resultText = $"test;time_in_ms\n{performance}";
+//
+//         var dotnetVersion = Environment.GetEnvironmentVariable("net_version");
+//         var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+//
+//         var separator = Path.DirectorySeparatorChar;
+//
+//         // We have to go up 3 times as the working directory path looks as follows:
+//         // Snowflake.Data.Tests/bin/debug/{.net_version}/
+//         File.WriteAllText($"..{separator}..{separator}..{separator}{GetOs()}_{dotnetVersion}_{cloudEnv}_performance.csv", resultText);
+//     }
+//
+//     private static string GetOs()
+//     {
+//         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+//         {
+//             return "windows";
+//         }
+//
+//         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+//         {
+//             return "linux";
+//         }
+//
+//         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+//         {
+//             return "macos";
+//         }
+//
+//         return "unknown";
+//     }
+// }

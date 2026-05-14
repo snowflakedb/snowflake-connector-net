@@ -12,25 +12,29 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public sealed class ProgrammaticAccessTokenAuthenticationFixture : IDisposable
+    [CollectionDefinition(nameof(ProgrammaticAccessTokenAuthenticationTestFixture), DisableParallelization = true)]
+    public sealed class ProgrammaticAccessTokenAuthenticationTestFixture : ICollectionFixture<ProgrammaticAccessTokenAuthenticationTestFixture.Fixture>
     {
-        internal readonly WiremockRunner Runner;
-
-        public ProgrammaticAccessTokenAuthenticationFixture()
+        public sealed class Fixture : IDisposable
         {
-            Runner = WiremockRunner.NewWiremock();
-        }
+            internal readonly WiremockRunner Runner;
 
-        public void Dispose()
-        {
-            Runner.Stop();
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public class ProgrammaticAccessTokenAuthenticationTest : IClassFixture<ProgrammaticAccessTokenAuthenticationFixture>
+    [Collection(nameof(ProgrammaticAccessTokenAuthenticationTestFixture))]
+    public class ProgrammaticAccessTokenAuthenticationTest
     {
-        private readonly ProgrammaticAccessTokenAuthenticationFixture _fixture;
+        private readonly ProgrammaticAccessTokenAuthenticationTestFixture.Fixture _fixture;
         private static readonly string s_patMappingPath = Path.Combine("wiremock", "PAT");
         private static readonly string s_successfulPatFlowMappingPath = Path.Combine(s_patMappingPath, "successful_flow.json");
         private static readonly string s_invalidPatFlowMappingPath = Path.Combine(s_patMappingPath, "invalid_pat_token.json");
@@ -42,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string Account = "MOCK_ACCOUNT_NAME";
         private const string Token = "MOCK_TOKEN";
 
-        public ProgrammaticAccessTokenAuthenticationTest(ProgrammaticAccessTokenAuthenticationFixture fixture)
+        public ProgrammaticAccessTokenAuthenticationTest(ProgrammaticAccessTokenAuthenticationTestFixture.Fixture fixture)
         {
             _fixture = fixture;
             _fixture.Runner.ResetMapping();

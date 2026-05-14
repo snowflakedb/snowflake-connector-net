@@ -10,27 +10,31 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public sealed class WorkflowIdentityFederationAuthenticatorOidcFixture : IDisposable
+    [CollectionDefinition(nameof(WorkflowIdentityFederationAuthenticatorOidcTestFixture), DisableParallelization = true)]
+    public sealed class WorkflowIdentityFederationAuthenticatorOidcTestFixture : ICollectionFixture<WorkflowIdentityFederationAuthenticatorOidcTestFixture.Fixture>
     {
-        internal readonly WiremockRunner Runner;
-
-        public WorkflowIdentityFederationAuthenticatorOidcFixture()
+        public sealed class Fixture : IDisposable
         {
-            Runner = WiremockRunner.NewWiremock();
-        }
+            internal readonly WiremockRunner Runner;
 
-        public void Dispose()
-        {
-            Runner.Stop();
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public sealed class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadIdentityFederationAuthenticatorTest, IClassFixture<WorkflowIdentityFederationAuthenticatorOidcFixture>
+    [Collection(nameof(WorkflowIdentityFederationAuthenticatorOidcTestFixture))]
+    public sealed class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadIdentityFederationAuthenticatorTest
     {
-        private readonly WorkflowIdentityFederationAuthenticatorOidcFixture _fixture;
+        private readonly WorkflowIdentityFederationAuthenticatorOidcTestFixture.Fixture _fixture;
 
-        public WorkflowIdentityFederationAuthenticatorOidcTest(WorkflowIdentityFederationAuthenticatorOidcFixture fixture)
+        public WorkflowIdentityFederationAuthenticatorOidcTest(WorkflowIdentityFederationAuthenticatorOidcTestFixture.Fixture fixture)
         {
             _fixture = fixture;
             _fixture.Runner.ResetMapping();

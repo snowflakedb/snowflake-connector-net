@@ -6,7 +6,10 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [Collection(SequentialCollection.SequentialCollectionName)]
+    [CollectionDefinition(nameof(WaitingQueueTestFixture), DisableParallelization = true)]
+    public sealed class WaitingQueueTestFixture { }
+
+    [Collection(nameof(WaitingQueueTestFixture))]
     public class WaitingQueueTest
     {
         private static readonly int s_timeMeasurementLeftToleranceInMs = Stopwatch.IsHighResolution ? 1 : 20; // DateTime precision is ~10ms, safety coefficient = x2

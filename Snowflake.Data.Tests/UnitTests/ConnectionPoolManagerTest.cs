@@ -12,26 +12,30 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    public sealed class ConnectionPoolManagerTestFixture : IDisposable
+    [CollectionDefinition(nameof(ConnectionPoolManagerTestFixture), DisableParallelization = true)]
+    public sealed class ConnectionPoolManagerTestFixture : ICollectionFixture<ConnectionPoolManagerTestFixture.Fixture>
     {
-        private readonly PoolConfig _poolConfig;
-
-        public ConnectionPoolManagerTestFixture()
+        public sealed class Fixture : IDisposable
         {
-            _poolConfig = new PoolConfig();
-            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
-            SessionPool.SessionFactory = new MockSessionFactory();
-        }
+            private readonly PoolConfig _poolConfig;
 
-        public void Dispose()
-        {
-            _poolConfig.Reset();
-            SessionPool.SessionFactory = new SessionFactory();
+            public Fixture()
+            {
+                _poolConfig = new PoolConfig();
+                SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+                SessionPool.SessionFactory = new MockSessionFactory();
+            }
+
+            public void Dispose()
+            {
+                _poolConfig.Reset();
+                SessionPool.SessionFactory = new SessionFactory();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public class ConnectionPoolManagerTest : IClassFixture<ConnectionPoolManagerTestFixture>
+    [Collection(nameof(ConnectionPoolManagerTestFixture))]
+    public class ConnectionPoolManagerTest
     {
         private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();
         private const string ConnectionString1 = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=1;";
@@ -39,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests
         private const string ConnectionStringWithoutPassword = "db=D3;warehouse=W3;account=A3;user=U3;role=R3;minPoolSize=1;";
         private readonly SecureString _password3 = SecureStringHelper.Encode("P3");
 
-        public ConnectionPoolManagerTest(ConnectionPoolManagerTestFixture fixture)
+        public ConnectionPoolManagerTest(ConnectionPoolManagerTestFixture.Fixture fixture)
         {
             _connectionPoolManager.ClearAllPools();
         }

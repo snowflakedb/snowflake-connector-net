@@ -11,26 +11,30 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    public sealed class EasyLoggerManagerTestFixture : IDisposable
+    [CollectionDefinition(nameof(EasyLoggerManagerTestFixture), DisableParallelization = true)]
+    public sealed class EasyLoggerManagerTestFixture : ICollectionFixture<EasyLoggerManagerTestFixture.Fixture>
     {
-        public void Dispose()
+        public sealed class Fixture : IDisposable
         {
-            EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
-            RemoveEasyLoggingLogFiles();
-        }
+            public void Dispose()
+            {
+                EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
+                RemoveEasyLoggingLogFiles();
+            }
 
-        private static void RemoveEasyLoggingLogFiles()
-        {
-            var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            Directory.GetFiles(logsDirectory)
-                .Where(filePath => filePath.StartsWith(Path.Combine(logsDirectory, "easy_logging_logs")))
-                .AsParallel()
-                .ForAll(filePath => File.Delete(filePath));
+            private static void RemoveEasyLoggingLogFiles()
+            {
+                var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                Directory.GetFiles(logsDirectory)
+                    .Where(filePath => filePath.StartsWith(Path.Combine(logsDirectory, "easy_logging_logs")))
+                    .AsParallel()
+                    .ForAll(filePath => File.Delete(filePath));
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public sealed class EasyLoggerManagerTest : IClassFixture<EasyLoggerManagerTestFixture>, IDisposable
+    [Collection(nameof(EasyLoggerManagerTestFixture))]
+    public sealed class EasyLoggerManagerTest : IDisposable
     {
         private const string InfoMessage = "Easy logging Info message";
         private const string DebugMessage = "Easy logging Debug message";

@@ -11,7 +11,10 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [Collection(SequentialCollection.SequentialCollectionName)]
+    [CollectionDefinition(nameof(CrlCacheManagerTestFixture), DisableParallelization = true)]
+    public sealed class CrlCacheManagerTestFixture { }
+
+    [Collection(nameof(CrlCacheManagerTestFixture))]
     public class CrlCacheManagerTest
     {
         public CrlCacheManagerTest()

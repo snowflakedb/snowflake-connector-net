@@ -4,7 +4,10 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [Collection(SequentialCollection.SequentialCollectionName)]
+    [CollectionDefinition(nameof(SnowflakeDbConnectionPoolTestFixture), DisableParallelization = true)]
+    public sealed class SnowflakeDbConnectionPoolTestFixture { }
+
+    [Collection(nameof(SnowflakeDbConnectionPoolTestFixture))]
     public class SnowflakeDbConnectionPoolTest
     {
         private readonly string _connectionString1 = "database=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;";

@@ -6,28 +6,32 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    public sealed class SFLoggerPairTestFixture : IDisposable
+    [CollectionDefinition(nameof(SFLoggerPairTestFixture), DisableParallelization = true)]
+    public sealed class SFLoggerPairTestFixture : ICollectionFixture<SFLoggerPairTestFixture.Fixture>
     {
-        public SFLoggerPairTestFixture()
+        public sealed class Fixture : IDisposable
         {
-            // Log level defaults to Warn on net6.0 builds in github actions
-            // Set the root level to Debug
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, "STDOUT");
-        }
+            public Fixture()
+            {
+                // Log level defaults to Warn on net6.0 builds in github actions
+                // Set the root level to Debug
+                EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, "STDOUT");
+            }
 
-        public void Dispose()
-        {
-            EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
+            public void Dispose()
+            {
+                EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public class SFLoggerPairTest : IClassFixture<SFLoggerPairTestFixture>, IDisposable
+    [Collection(nameof(SFLoggerPairTestFixture))]
+    public class SFLoggerPairTest : IDisposable
     {
         private readonly SFLogger _loggerPair;
         private readonly TestAppender _testAppender;
 
-        public SFLoggerPairTest(SFLoggerPairTestFixture fixture)
+        public SFLoggerPairTest(SFLoggerPairTestFixture.Fixture fixture)
         {
             _loggerPair = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
             _testAppender = new TestAppender();

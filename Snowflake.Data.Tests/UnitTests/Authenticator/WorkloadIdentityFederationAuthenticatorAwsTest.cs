@@ -15,23 +15,27 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public sealed class WorkloadIdentityFederationAuthenticatorAwsFixture : IDisposable
+    [CollectionDefinition(nameof(WorkloadIdentityFederationAuthenticatorAwsTestFixture), DisableParallelization = true)]
+    public sealed class WorkloadIdentityFederationAuthenticatorAwsTestFixture : ICollectionFixture<WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture>
     {
-        internal readonly WiremockRunner Runner;
-
-        public WorkloadIdentityFederationAuthenticatorAwsFixture()
+        public sealed class Fixture : IDisposable
         {
-            Runner = WiremockRunner.NewWiremock();
-        }
+            internal readonly WiremockRunner Runner;
 
-        public void Dispose()
-        {
-            Runner.Stop();
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIdentityFederationAuthenticatorTest, IClassFixture<WorkloadIdentityFederationAuthenticatorAwsFixture>
+    [Collection(nameof(WorkloadIdentityFederationAuthenticatorAwsTestFixture))]
+    public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private const string AwsRegion = "eu-west-1";
         private const string AwsAccessKey = "ABCDEFGHIJ12345KLMNO"; // pragma: allowlist secret
@@ -52,9 +56,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_awsRequestBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(s_awsRequest));
         internal static readonly DateTime s_utcNow = new(2025, 5, 27, 14, 20, 33, 11, new GregorianCalendar(), DateTimeKind.Utc);
 
-        private readonly WorkloadIdentityFederationAuthenticatorAwsFixture _fixture;
+        private readonly WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture _fixture;
 
-        public WorkloadIdentityFederationAuthenticatorAwsTest(WorkloadIdentityFederationAuthenticatorAwsFixture fixture)
+        public WorkloadIdentityFederationAuthenticatorAwsTest(WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture fixture)
         {
             _fixture = fixture;
             _fixture.Runner.ResetMapping();

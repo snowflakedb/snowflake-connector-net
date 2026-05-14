@@ -13,23 +13,27 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public sealed class WorkflowIdentityFederationAuthenticatorAzureFixture : IDisposable
+    [CollectionDefinition(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture), DisableParallelization = true)]
+    public sealed class WorkflowIdentityFederationAuthenticatorAzureTestFixture : ICollectionFixture<WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture>
     {
-        internal readonly WiremockRunner Runner;
-
-        public WorkflowIdentityFederationAuthenticatorAzureFixture()
+        public sealed class Fixture : IDisposable
         {
-            Runner = WiremockRunner.NewWiremock();
-        }
+            internal readonly WiremockRunner Runner;
 
-        public void Dispose()
-        {
-            Runner.Stop();
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadIdentityFederationAuthenticatorTest, IClassFixture<WorkflowIdentityFederationAuthenticatorAzureFixture>
+    [Collection(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture))]
+    public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private static readonly string s_wifAzureMappingPath = Path.Combine(s_wifMappingPath, "Azure");
         private static readonly string s_wifAzureBasicSuccessfulMapping = Path.Combine(s_wifAzureMappingPath, "successful_flow_basic.json");
@@ -49,9 +53,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_entraResourceReplacement = "%ENTRA_RESOURCE%";
         private static readonly string s_identityHeaderReplacement = "%IDENTITY_HEADER%";
 
-        private readonly WorkflowIdentityFederationAuthenticatorAzureFixture _fixture;
+        private readonly WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture _fixture;
 
-        public WorkflowIdentityFederationAuthenticatorAzureTest(WorkflowIdentityFederationAuthenticatorAzureFixture fixture)
+        public WorkflowIdentityFederationAuthenticatorAzureTest(WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture fixture)
         {
             _fixture = fixture;
             _fixture.Runner.ResetMapping();

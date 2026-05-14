@@ -11,34 +11,38 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core.Tools;
     using Snowflake.Data.Tests.Util;
 
-    public sealed class ConnectionPoolManagerMFATestFixture : IDisposable
+    [CollectionDefinition(nameof(ConnectionPoolManagerMFATestFixture), DisableParallelization = true)]
+    public sealed class ConnectionPoolManagerMFATestFixture : ICollectionFixture<ConnectionPoolManagerMFATestFixture.Fixture>
     {
-        private readonly PoolConfig _poolConfig;
-        internal MockLoginMFATokenCacheRestRequester RestRequester { get; }
-
-        public ConnectionPoolManagerMFATestFixture()
+        public sealed class Fixture : IDisposable
         {
-            _poolConfig = new PoolConfig();
-            RestRequester = new MockLoginMFATokenCacheRestRequester();
-            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
-            SessionPool.SessionFactory = new MockSessionFactoryMFA(RestRequester);
-        }
+            private readonly PoolConfig _poolConfig;
+            internal MockLoginMFATokenCacheRestRequester RestRequester { get; }
 
-        public void Dispose()
-        {
-            _poolConfig.Reset();
-            SessionPool.SessionFactory = new SessionFactory();
+            public Fixture()
+            {
+                _poolConfig = new PoolConfig();
+                RestRequester = new MockLoginMFATokenCacheRestRequester();
+                SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+                SessionPool.SessionFactory = new MockSessionFactoryMFA(RestRequester);
+            }
+
+            public void Dispose()
+            {
+                _poolConfig.Reset();
+                SessionPool.SessionFactory = new SessionFactory();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public class ConnectionPoolManagerMFATest : IClassFixture<ConnectionPoolManagerMFATestFixture>
+    [Collection(nameof(ConnectionPoolManagerMFATestFixture))]
+    public class ConnectionPoolManagerMFATest
     {
         private readonly ConnectionPoolManager _connectionPoolManager = new ConnectionPoolManager();
-        private readonly ConnectionPoolManagerMFATestFixture _fixture;
+        private readonly ConnectionPoolManagerMFATestFixture.Fixture _fixture;
         private const string ConnectionStringMFACache = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=2;passcode=12345;authenticator=username_password_mfa";
 
-        public ConnectionPoolManagerMFATest(ConnectionPoolManagerMFATestFixture fixture)
+        public ConnectionPoolManagerMFATest(ConnectionPoolManagerMFATestFixture.Fixture fixture)
         {
             _fixture = fixture;
             _connectionPoolManager.ClearAllPools();

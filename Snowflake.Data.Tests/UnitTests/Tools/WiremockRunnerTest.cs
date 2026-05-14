@@ -7,23 +7,27 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    public class WiremockRunnerFixture : IDisposable
+    [CollectionDefinition(nameof(WiremockRunnerTestFixture), DisableParallelization = true)]
+    public sealed class WiremockRunnerTestFixture : ICollectionFixture<WiremockRunnerTestFixture.Fixture>
     {
-        internal WiremockRunner _runner { get; set; }
-
-        public WiremockRunnerFixture()
+        public sealed class Fixture : IDisposable
         {
-            _runner = WiremockRunner.NewWiremock();
-        }
+            internal WiremockRunner _runner { get; set; }
 
-        public void Dispose()
-        {
-            _runner.Stop();
+            public Fixture()
+            {
+                _runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                _runner.Stop();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public class WiremockRunnerTest : IClassFixture<WiremockRunnerFixture>
+    [Collection(nameof(WiremockRunnerTestFixture))]
+    public class WiremockRunnerTest
     {
         private readonly HttpClient _httpClient = new(
             new HttpClientHandler
@@ -35,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
         private readonly WiremockRunner _runner;
 
-        public WiremockRunnerTest(WiremockRunnerFixture fixture)
+        public WiremockRunnerTest(WiremockRunnerTestFixture.Fixture fixture)
         {
             _runner = fixture._runner;
             _runner.ResetMapping();

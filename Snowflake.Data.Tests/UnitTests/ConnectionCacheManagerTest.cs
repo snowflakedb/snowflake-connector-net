@@ -6,31 +6,35 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public sealed class ConnectionCacheManagerTestFixture : IDisposable
+    [CollectionDefinition(nameof(ConnectionCacheManagerTestFixture), DisableParallelization = true)]
+    public sealed class ConnectionCacheManagerTestFixture : ICollectionFixture<ConnectionCacheManagerTestFixture.Fixture>
     {
-        private readonly PoolConfig _poolConfig;
-
-        public ConnectionCacheManagerTestFixture()
+        public sealed class Fixture : IDisposable
         {
-            _poolConfig = new PoolConfig();
-            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
-            SessionPool.SessionFactory = new MockSessionFactory();
-        }
+            private readonly PoolConfig _poolConfig;
 
-        public void Dispose()
-        {
-            _poolConfig.Reset();
-            SessionPool.SessionFactory = new SessionFactory();
+            public Fixture()
+            {
+                _poolConfig = new PoolConfig();
+                SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
+                SessionPool.SessionFactory = new MockSessionFactory();
+            }
+
+            public void Dispose()
+            {
+                _poolConfig.Reset();
+                SessionPool.SessionFactory = new SessionFactory();
+            }
         }
     }
 
-    public class ConnectionCacheManagerTest : IClassFixture<ConnectionCacheManagerTestFixture>
+    [Collection(nameof(ConnectionCacheManagerTestFixture))]
+    public class ConnectionCacheManagerTest
     {
         private readonly ConnectionCacheManager _connectionCacheManager = new ConnectionCacheManager();
         private const string ConnectionString = "db=D1;warehouse=W1;account=A1;user=U1;password=P1;role=R1;minPoolSize=1;";
 
-        public ConnectionCacheManagerTest(ConnectionCacheManagerTestFixture fixture)
+        public ConnectionCacheManagerTest(ConnectionCacheManagerTestFixture.Fixture fixture)
         {
             _connectionCacheManager.ClearAllPools();
         }

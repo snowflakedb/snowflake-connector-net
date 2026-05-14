@@ -1,5 +1,7 @@
 using System;
 using System.Data;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -12,26 +14,31 @@ using TaskOrValueTask = System.Threading.Tasks.Task;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [CollectionDefinition(IntegrationTestCollectionName)]
-    public class IntegrationTestCollection : ICollectionFixture<IntegrationTestFixture>
+    public static class IntegrationTestEnvironment
     {
-        public const string IntegrationTestCollectionName = "IntegrationTest";
-    }
+        private static volatile int s_integrationTestsTotal;
+        private static volatile int s_integrationTestsRun;
 
-    public class IntegrationTestFixture : TestEnvironmentFixture, IAsyncLifetime
-    {
-        public async TaskOrValueTask InitializeAsync()
+        static IntegrationTestEnvironment()
         {
-            await ModifySchemaAsync(TestConfig.schema, SchemaAction.Create);
+            s_integrationTestsRun = 0;
+            s_integrationTestsTotal = Assembly.GetExecutingAssembly()
+                .GetTypes()
+                .Where(x => x.IsAssignableTo(typeof(SFBaseTestAsync)))
+                .Count(x => !x.IsAbstract);
+
+            ModifySchemaAsync(TestEnvironment.TestConfig.schema, SchemaAction.Create).GetAwaiter().GetResult();
         }
 
-        public async TaskOrValueTask DisposeAsync()
+        public static void IntegrationTestRun()
         {
-            if (TestConfig == null)
-                return;
+            Interlocked.Increment(ref s_integrationTestsRun);
 
-            await ModifySchemaAsync(TestConfig.schema, SchemaAction.Drop);
-            Dispose();
+            if (s_integrationTestsRun == s_integrationTestsTotal)
+            {
+                // cleanup
+                ModifySchemaAsync(TestEnvironment.TestConfig.schema, SchemaAction.Drop).GetAwaiter().GetResult();
+            }
         }
 
         private enum SchemaAction
@@ -40,11 +47,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Drop
         }
 
-        private async Task ModifySchemaAsync(string schemaName, SchemaAction schemaAction)
+        private static async Task ModifySchemaAsync(string schemaName, SchemaAction schemaAction)
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = BuildConnectionString(TestConfig);
+                conn.ConnectionString = BuildConnectionString(TestEnvironment.TestConfig);
                 await ((SnowflakeDbConnection)conn).OpenAsync(CancellationToken.None);
                 var dbCommand = conn.CreateCommand();
 

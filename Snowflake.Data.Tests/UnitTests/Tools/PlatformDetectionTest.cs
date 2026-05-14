@@ -8,7 +8,10 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [Collection(SequentialCollection.SequentialCollectionName)]
+    [CollectionDefinition(nameof(PlatformDetectionTestFixture), DisableParallelization = true)]
+    public sealed class PlatformDetectionTestFixture { }
+
+    [Collection(nameof(PlatformDetectionTestFixture))]
     public class PlatformDetectionTest : IDisposable
     {
         private const string LambdaTaskRoot = "LAMBDA_TASK_ROOT";

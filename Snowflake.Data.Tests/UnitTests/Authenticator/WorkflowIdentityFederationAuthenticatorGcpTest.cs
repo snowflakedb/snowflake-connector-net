@@ -12,25 +12,29 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public class WorkflowIdentityFederationAuthenticatorGcpFixture : IDisposable
+    [CollectionDefinition(nameof(WorkflowIdentityFederationAuthenticatorGcpTestFixture), DisableParallelization = true)]
+    public sealed class WorkflowIdentityFederationAuthenticatorGcpTestFixture : ICollectionFixture<WorkflowIdentityFederationAuthenticatorGcpTestFixture.Fixture>
     {
-        internal readonly WiremockRunner Runner;
-
-        public WorkflowIdentityFederationAuthenticatorGcpFixture()
+        public sealed class Fixture : IDisposable
         {
-            Runner = WiremockRunner.NewWiremock();
-        }
+            internal readonly WiremockRunner Runner;
 
-        public void Dispose()
-        {
-            Runner.Stop();
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public class WorkflowIdentityFederationAuthenticatorGcpTest : WorkloadIdentityFederationAuthenticatorTest, IClassFixture<WorkflowIdentityFederationAuthenticatorGcpFixture>
+    [Collection(nameof(WorkflowIdentityFederationAuthenticatorGcpTestFixture))]
+    public class WorkflowIdentityFederationAuthenticatorGcpTest : WorkloadIdentityFederationAuthenticatorTest
     {
-        private readonly WorkflowIdentityFederationAuthenticatorGcpFixture _fixture;
+        private readonly WorkflowIdentityFederationAuthenticatorGcpTestFixture.Fixture _fixture;
         private static readonly string s_wifGcpMappingPath = Path.Combine(s_wifMappingPath, "GCP");
         private static readonly string s_wifGcpSuccessfulMappingPath = Path.Combine(s_wifGcpMappingPath, "successful_flow.json");
         private static readonly string s_wifGcpHttpErrorMappingPath = Path.Combine(s_wifGcpMappingPath, "http_error.json");
@@ -39,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string JWTGCPTokenWithoutSubject = "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImU2M2I5NzA1OTRiY2NmZTAxMDlkOTg4OWM2MDk3OWEwIn0.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJpYXQiOjE3NDM3NjEyMTMsImV4cCI6MTc0Mzc2NDgxMywiYXVkIjoid3d3LmV4YW1wbGUuY29tIn0.w0njdpfWFETVK8Ktq9GdvuKRQJjvhOplcSyvQ_zHHwBUSMapqO1bjEWBx5VhGkdECZIGS1VY7db_IOqT45yOMA"; // pragma: allowlist secret
         private const string JWTGCPUnparsableToken = "unparsable.token";
 
-        public WorkflowIdentityFederationAuthenticatorGcpTest(WorkflowIdentityFederationAuthenticatorGcpFixture fixture)
+        public WorkflowIdentityFederationAuthenticatorGcpTest(WorkflowIdentityFederationAuthenticatorGcpTestFixture.Fixture fixture)
         {
             _fixture = fixture;
             _fixture.Runner.ResetMapping();

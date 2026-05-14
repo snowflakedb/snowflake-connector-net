@@ -10,27 +10,31 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    public sealed class RedirectUnitTestFixture : IDisposable
+    [CollectionDefinition(nameof(RedirectUnitTestFixture), DisableParallelization = true)]
+    public sealed class RedirectUnitTestFixture : ICollectionFixture<RedirectUnitTestFixture.Fixture>
     {
-        internal WiremockRunner Runner { get; }
-
-        public RedirectUnitTestFixture()
+        public sealed class Fixture : IDisposable
         {
-            Runner = WiremockRunner.NewWiremock();
-        }
+            internal WiremockRunner Runner { get; }
 
-        public void Dispose()
-        {
-            Runner.Stop();
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public sealed class RedirectUnitTest : IClassFixture<RedirectUnitTestFixture>
+    [Collection(nameof(RedirectUnitTestFixture))]
+    public sealed class RedirectUnitTest
     {
-        private readonly RedirectUnitTestFixture _fixture;
+        private readonly RedirectUnitTestFixture.Fixture _fixture;
 
-        public RedirectUnitTest(RedirectUnitTestFixture fixture)
+        public RedirectUnitTest(RedirectUnitTestFixture.Fixture fixture)
         {
             _fixture = fixture;
             _fixture.Runner.ResetMapping();

@@ -5,24 +5,28 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    public sealed class SFLoggerTestFixture : IDisposable
+    [CollectionDefinition(nameof(SFLoggerTestFixture), DisableParallelization = true)]
+    public sealed class SFLoggerTestFixture : ICollectionFixture<SFLoggerTestFixture.Fixture>
     {
-        public SFLoggerTestFixture()
+        public sealed class Fixture : IDisposable
         {
-        }
+            public Fixture()
+            {
+            }
 
-        public void Dispose()
-        {
-            EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
+            public void Dispose()
+            {
+                EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
+            }
         }
     }
 
-    [Collection(SequentialCollection.SequentialCollectionName)]
-    public class SFLoggerTest : IClassFixture<SFLoggerTestFixture>
+    [Collection(nameof(SFLoggerTestFixture))]
+    public class SFLoggerTest
     {
         private readonly SFLogger _logger;
 
-        public SFLoggerTest(SFLoggerTestFixture fixture)
+        public SFLoggerTest(SFLoggerTestFixture.Fixture fixture)
         {
             // Per-test setup: reconfigure easy logging for each test
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, "STDOUT");

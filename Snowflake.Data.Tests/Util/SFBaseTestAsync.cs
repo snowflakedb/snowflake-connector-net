@@ -18,12 +18,12 @@ using TaskOrValueTask = System.Threading.Tasks.Task;
 
 namespace Snowflake.Data.Tests
 {
-    [Collection(IntegrationTestCollection.IntegrationTestCollectionName)]
     public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>
     {
-        protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
+        protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture)
         {
-            fixture.InitFixture(envFixture);
+            IntegrationTestEnvironment.IntegrationTestRun();
+            fixture.InitFixture();
         }
     }
 
@@ -44,7 +44,6 @@ namespace Snowflake.Data.Tests
 
         private readonly Stopwatch _stopwatch;
         private readonly List<string> _tablesToRemove;
-        private TestEnvironmentFixture _envFixture;
         private bool _anyTestStarted;
 
         public SFBaseTestAsyncFixture()
@@ -54,11 +53,10 @@ namespace Snowflake.Data.Tests
             _tablesToRemove = new List<string>();
         }
 
-        public void InitFixture(TestEnvironmentFixture fixture)
+        public void InitFixture()
         {
             _anyTestStarted = true;
-            _envFixture = fixture;
-            testConfig = fixture.TestConfig;
+            testConfig = TestEnvironment.TestConfig;
         }
 
         public virtual TaskOrValueTask InitializeAsync() => TaskOrValueTask.CompletedTask;
@@ -69,7 +67,8 @@ namespace Snowflake.Data.Tests
             {
                 _stopwatch.Stop();
                 var testName = GetType().FullName + "." + TestName;
-                _envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
+                // TODO
+                //_envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
             }
             RemoveTables();
             return TaskOrValueTask.CompletedTask;

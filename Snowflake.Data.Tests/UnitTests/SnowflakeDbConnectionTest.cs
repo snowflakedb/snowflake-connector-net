@@ -12,7 +12,10 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [Collection(SequentialCollection.SequentialCollectionName)]
+    [CollectionDefinition(nameof(SnowflakeDbConnectionTestFixture), DisableParallelization = true)]
+    public sealed class SnowflakeDbConnectionTestFixture { }
+
+    [Collection(nameof(SnowflakeDbConnectionTestFixture))]
     public class SnowflakeDbConnectionTest
     {
         [Fact]
