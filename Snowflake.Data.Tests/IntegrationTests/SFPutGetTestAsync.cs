@@ -31,12 +31,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static readonly AsyncLocal<string> t_schemaName = new ();
         private static readonly AsyncLocal<string> t_tableName = new ();
         private static readonly AsyncLocal<string> t_stageName = new ();
-        private static readonly AsyncLocal<string> t_stageNameSse = new ();
+        private static readonly AsyncLocal<string> t_stageNameSse = new (); // server side encryption without client side encryption
         private static readonly AsyncLocal<string> t_fileName = new ();
         private static readonly AsyncLocal<string> t_outputFileName = new ();
         private static AsyncLocal<string> t_inputFilePath = new ();
         private static AsyncLocal<string> t_outputFilePath = new ();
-        private static AsyncLocal<string> t_internalStagePath = new (); // server side encryption without client side encryption
+        private static AsyncLocal<string> t_internalStagePath = new ();
         private static AsyncLocal<StageType> t_stageType = new ();
         private static AsyncLocal<string> t_sourceCompressionType = new ();
         private static AsyncLocal<string> t_destCompressionType = new ();
