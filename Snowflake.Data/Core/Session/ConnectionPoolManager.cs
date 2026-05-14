@@ -52,11 +52,18 @@ namespace Snowflake.Data.Core.Session
         public void ClearAllPools()
         {
             s_logger.Debug("ConnectionPoolManager::ClearAllPools");
-            foreach (var sessionPool in _pools.Values)
+
+            SessionPool[] poolsToDestroy;
+            lock (s_poolsLock)
+            {
+                poolsToDestroy = _pools.Values.ToArray();
+                _pools.Clear();
+            }
+
+            foreach (var sessionPool in poolsToDestroy)
             {
                 sessionPool.DestroyPool();
             }
-            _pools.Clear();
         }
 
         public void SetMaxPoolSize(int maxPoolSize)
