@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestConnectionPoolWithInvalidOpenAsync()
+        public async Task TestConnectionPoolWithInvalidOpenAsync()
         {
             // make the connection string unique so it won't pick up connection
             // pooled by other test cases.
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 connection1.ConnectionString = connStr;
                 // this will not open a new session but get the invalid connection from pool
-                connection1.Open();
+                await connection1.OpenAsync();
                 // Now run query with connection1
                 var command = connection1.CreateCommand();
                 command.CommandText = "select 1, 2, 3";
@@ -126,7 +126,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
-            Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentPoolSize() == 3, TimeSpan.FromMilliseconds(1000));
+            await Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentPoolSize() == 3, TimeSpan.FromMilliseconds(1000));
             Assert.Equal(3, pool.GetCurrentPoolSize());
 
             // cleanup

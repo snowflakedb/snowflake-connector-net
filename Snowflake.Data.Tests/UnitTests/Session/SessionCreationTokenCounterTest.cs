@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
@@ -67,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [Fact]
-        public void TestCompleteCleansExpiredTokens()
+        public async Task TestCompleteCleansExpiredTokens()
         {
             // arrange
             var tokens = new SessionCreationTokenCounter(s_shortTime);
@@ -75,7 +76,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.NewToken(); // this token will be cleaned because of expiration
             Assert.Equal(2, tokens.Count());
             const int EpsilonMillis = 5;
-            Thread.Sleep((int)s_shortTime.TotalMilliseconds + EpsilonMillis);
+            await Task.Delay((int)s_shortTime.TotalMilliseconds + EpsilonMillis);
 
             // act
             tokens.RemoveToken(token);

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Snowflake.Data.Tests.Util
@@ -8,44 +9,44 @@ namespace Snowflake.Data.Tests.Util
         private readonly TimeSpan _maxDurationRegardedAsImmediately = TimeSpan.FromSeconds(1);
 
         [Fact]
-        public void TestReturnsImmediatelyWhenConditionIsMet()
+        public async Task TestReturnsImmediatelyWhenConditionIsMet()
         {
             // act
-            var millis = MillisecondsOfWaiting(() => true, TimeSpan.FromHours(1));
+            var millis = await MillisecondsOfWaiting(() => true, TimeSpan.FromHours(1));
 
             // assert
             Assert.True(millis <= _maxDurationRegardedAsImmediately.TotalMilliseconds);
         }
 
         [Fact]
-        public void TestReturnsImmediatelyOnZeroTimeout()
+        public async Task TestReturnsImmediatelyOnZeroTimeout()
         {
             // act
-            var millis = MillisecondsOfWaiting(() => false, TimeSpan.FromMilliseconds(0));
+            var millis = await MillisecondsOfWaiting(() => false, TimeSpan.FromMilliseconds(0));
 
             // assert
             Assert.True(millis <= _maxDurationRegardedAsImmediately.TotalMilliseconds);
         }
 
         [Fact]
-        public void TestReturnsOnTimeout()
+        public async Task TestReturnsOnTimeout()
         {
             // arrange
             var timeout = TimeSpan.FromSeconds(2);
 
             // act
-            var millis = MillisecondsOfWaiting(() => false, TimeSpan.FromSeconds(2));
+            var millis = await MillisecondsOfWaiting(() => false, TimeSpan.FromSeconds(2));
 
             // assert
             Assert.True(millis >= _maxDurationRegardedAsImmediately.TotalMilliseconds);
             Assert.True(millis <= timeout.TotalMilliseconds + _maxDurationRegardedAsImmediately.TotalMilliseconds);
         }
 
-        private long MillisecondsOfWaiting(Func<bool> condition, TimeSpan timeout)
+        private async Task<long> MillisecondsOfWaiting(Func<bool> condition, TimeSpan timeout)
         {
             var watch = new StopWatch();
             watch.Start();
-            Awaiter.WaitUntilConditionOrTimeout(condition, timeout);
+            await Awaiter.WaitUntilConditionOrTimeout(condition, timeout);
             watch.Stop();
             return watch.ElapsedMilliseconds;
         }

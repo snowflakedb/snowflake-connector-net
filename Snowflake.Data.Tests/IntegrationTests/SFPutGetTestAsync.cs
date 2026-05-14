@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.Common;
 using System.IO.Compression;
 using System.Text;
+using System.Threading.Tasks;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
@@ -10,13 +11,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     using Xunit;
     using System;
-using System.Threading;
+    using System.Threading;
     using System.IO;
     using System.Linq;
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.FileTransfer;
-    class SFPutGetTestAsync : SFBaseTestAsync
+
+    public class SFPutGetTestAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFPutGetTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
@@ -58,7 +60,7 @@ using System.Threading;
             // Delete temp output directory and downloaded files
             Directory.Delete(s_outputDirectory, true);
         }
-        public void SetUp()
+        public async Task SetUp()
         {
             // Base object's names on on worker thread id
             var threadSuffix = Thread.CurrentThread.ManagedThreadId.ToString()?.Replace('#', '_');
@@ -71,38 +73,38 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 using (var command = conn.CreateCommand())
                 {
                     // Create temp table
                     var columnNamesWithTypes = string.Join(",", s_colName.Select(col => col + " STRING"));
                     command.CommandText = $"CREATE OR REPLACE TABLE {t_schemaName}.{t_tableName} ({columnNamesWithTypes})";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
                     // Create temp stage
                     command.CommandText = $"CREATE OR REPLACE STAGE {t_schemaName}.{t_stageName}";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
                     // Create temp stage without client side encryption
                     command.CommandText = $"CREATE OR REPLACE STAGE {t_schemaName}.{t_stageNameSse} ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE')";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                 }
             }
         }
-        public void TearDown()
+        public async Task TearDown()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 using (var command = conn.CreateCommand())
                 {
                     // Drop temp stage
                     command.CommandText = $"DROP STAGE IF EXISTS {t_schemaName}.{t_stageName}";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
                     // Drop temp table
                     command.CommandText = $"DROP TABLE IF EXISTS {t_schemaName}.{t_tableName}";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                 }
             }
 
@@ -117,7 +119,7 @@ using System.Threading;
         }
 
         [Fact]
-        public void TestPutFileAsteriskWildcard()
+        public async Task TestPutFileAsteriskWildcard()
         {
             var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
             var files = new List<string> {
@@ -133,14 +135,14 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
 
         [Fact]
-        public void TestPutFileAsteriskWildcardWithExtension()
+        public async Task TestPutFileAsteriskWildcardWithExtension()
         {
             var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
             var files = new List<string> {
@@ -158,14 +160,14 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
 
         [Fact]
-        public void TestPutFileQuestionMarkWildcard()
+        public async Task TestPutFileQuestionMarkWildcard()
         {
             var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
             var files = new List<string> {
@@ -183,14 +185,14 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
 
         [Fact]
-        public void TestPutFileRelativePathWithoutDirectory()
+        public async Task TestPutFileRelativePathWithoutDirectory()
         {
             // Set the PUT query variables
             t_inputFilePath = $"{Guid.NewGuid()}_1.csv";
@@ -200,7 +202,7 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
@@ -209,7 +211,7 @@ using System.Threading;
         [Theory]
         [InlineData("GET")]
         [InlineData("PUT")]
-        public void TestPutGetOnClosedConnectionThrowsWithoutQueryId(string command)
+        public async Task TestPutGetOnClosedConnectionThrowsWithoutQueryId(string command)
         {
             t_inputFilePath = "unexisting_file.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
@@ -217,8 +219,8 @@ using System.Threading;
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                // conn.Open(); // intentionally closed
-                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => ProcessFile(command, conn));
+                // await conn.OpenAsync(); // intentionally closed
+                var snowflakeDbException = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await ProcessFileAsync(command, conn));
                 Assert.NotNull(snowflakeDbException);
                 Assert.Null(snowflakeDbException.QueryId);
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
@@ -226,7 +228,7 @@ using System.Threading;
         }
 
         [Fact]
-        public void TestGetNonExistentFileReturnsFalseAndDoesNotThrow()
+        public async Task TestGetNonExistentFileReturnsFalseAndDoesNotThrow()
         {
             t_inputFilePath = "non_existent_file.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
@@ -234,19 +236,19 @@ using System.Threading;
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 var sql = $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
                 using (var command = conn.CreateCommand())
                 {
                     command.CommandText = sql;
-                    var reader = command.ExecuteReader();
+                    var reader = await command.ExecuteReaderAsync();
                     Assert.Equal(false, reader.Read());
                 }
             }
         }
 
         [Fact]
-        public void TestPutNonExistentFileThrowsWithQueryId()
+        public async Task TestPutNonExistentFileThrowsWithQueryId()
         {
             t_inputFilePath = "non_existent_file.csv";
             t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
@@ -254,7 +256,7 @@ using System.Threading;
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
                 Assert.NotNull(snowflakeDbException);
                 Assert.NotNull(snowflakeDbException.QueryId);
@@ -263,7 +265,7 @@ using System.Threading;
         }
 
         [Fact]
-        public void TestPutFileProvidesQueryIdOnFailure()
+        public async Task TestPutFileProvidesQueryIdOnFailure()
         {
             // Arrange
             // Set the PUT query variables but do not create a file
@@ -273,7 +275,7 @@ using System.Threading;
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
                 var queryId = snowflakeDbException.QueryId;
 
@@ -285,7 +287,7 @@ using System.Threading;
         }
 
         [Fact]
-        public void TestPutFileWithSyntaxErrorProvidesQueryIdOnFailure()
+        public async Task TestPutFileWithSyntaxErrorProvidesQueryIdOnFailure()
         {
             // Arrange
             // Set the PUT query variables but do not create a file
@@ -295,7 +297,7 @@ using System.Threading;
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
                 var queryId = snowflakeDbException.QueryId;
 
@@ -308,7 +310,7 @@ using System.Threading;
         }
 
         [Fact]
-        public void TestPutFileProvidesQueryIdOnSuccess()
+        public async Task TestPutFileProvidesQueryIdOnSuccess()
         {
             // Arrange
             // Set the PUT query variables
@@ -319,7 +321,7 @@ using System.Threading;
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 var queryId = PutFile(conn);
 
                 // Assert
@@ -330,7 +332,7 @@ using System.Threading;
         }
 
         [Fact]
-        public void TestPutFileRelativePathWithDirectory()
+        public async Task TestPutFileRelativePathWithDirectory()
         {
             var guid = Guid.NewGuid();
             var relativePath = $"{guid}";
@@ -344,14 +346,14 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
         }
 
         [Fact]
-        public void TestPutFileRelativePathAsteriskWildcard()
+        public async Task TestPutFileRelativePathAsteriskWildcard()
         {
             var relativePath = $"{Guid.NewGuid()}";
             var files = new List<string> {
@@ -367,7 +369,7 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
@@ -377,7 +379,7 @@ using System.Threading;
         // presigned url is enabled on CI so we need to disable the test
         // it should be enabled when downscoped credential is the default option
         [IgnoreOnEnvIs("snowflake_cloud_env", new[] { "GCP" })]
-        public void TestPutFileWithoutOverwriteFlagSkipsSecondUpload()
+        public async Task TestPutFileWithoutOverwriteFlagSkipsSecondUpload()
         {
             // Set the PUT query variables
             t_inputFilePath = $"{Guid.NewGuid()}.csv";
@@ -387,7 +389,7 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn, expectedStatus: ResultStatus.UPLOADED);
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
                 PutFile(conn, expectedStatus: ResultStatus.SKIPPED);
@@ -395,7 +397,7 @@ using System.Threading;
         }
 
         [Fact]
-        public void TestPutFileWithOverwriteFlagRunsSecondUpload()
+        public async Task TestPutFileWithOverwriteFlagRunsSecondUpload()
         {
             var overwriteAttribute = "OVERWRITE=TRUE";
 
@@ -407,7 +409,7 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
                 PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
@@ -415,7 +417,7 @@ using System.Threading;
         }
 
         [Fact]
-        public void TestPutDirectoryAsteriskWildcard()
+        public async Task TestPutDirectoryAsteriskWildcard()
         {
             // Prepare the data files to be copied
             var guid = Guid.NewGuid();
@@ -436,14 +438,14 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
 
         [Fact]
-        public void TestPutDirectoryQuestionMarkWildcard()
+        public async Task TestPutDirectoryQuestionMarkWildcard()
         {
             // Prepare the data files to be copied
             var guid = Guid.NewGuid();
@@ -464,14 +466,14 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
 
         [Fact]
-        public void TestPutDirectoryMixedWildcard()
+        public async Task TestPutDirectoryMixedWildcard()
         {
             // Prepare the data files to be copied
             var guid = Guid.NewGuid();
@@ -492,78 +494,78 @@ using System.Threading;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
         }
 
         [Theory, MemberData(nameof(PutGetCommandTestCases))]
-        public void TestPutGetCommand(
+        public async Task TestPutGetCommand(
             string sourceFileCompressionType,
             StageType stageType,
             string stagePath,
             bool autoCompress)
         {
-            PrepareTest(sourceFileCompressionType, stageType, stagePath, autoCompress);
+            await PrepareTestAsync(sourceFileCompressionType, stageType, stagePath, autoCompress);
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
-                CopyIntoTable(conn);
-                GetFile(conn);
+                await CopyIntoTableAsync(conn);
+                await GetFileAsync(conn);
             }
         }
 
         [Theory, MemberData(nameof(PutGetCommandForNamedStageWithoutClientSideEncryptionTestCases))]
-        public void TestPutGetCommandForNamedStageWithoutClientSideEncryption(
+        public async Task TestPutGetCommandForNamedStageWithoutClientSideEncryption(
             string sourceFileCompressionType,
             string stagePath,
             bool autoCompress)
         {
-            PrepareTest(sourceFileCompressionType, StageType.NAMED, stagePath, autoCompress, false);
+            await PrepareTestAsync(sourceFileCompressionType, StageType.NAMED, stagePath, autoCompress, false);
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn);
-                CopyIntoTable(conn);
-                GetFile(conn);
+                await CopyIntoTableAsync(conn);
+                await GetFileAsync(conn);
             }
         }
 
         // Test small file upload/download with GCS_USE_DOWNSCOPED_CREDENTIAL set to true
         [Theory, MemberData(nameof(PutGetGcsDownscopedCredentialTestCases))]
         [IgnoreOnEnvIs("snowflake_cloud_env", new[] { "AWS", "AZURE" })]
-        public void TestPutGetGcsDownscopedCredential(
+        public async Task TestPutGetGcsDownscopedCredential(
             StageType stageType,
             string stagePath)
         {
-            PrepareTest(null, stageType, stagePath, false);
+            await PrepareTestAsync(null, stageType, stagePath, false);
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + ";GCS_USE_DOWNSCOPED_CREDENTIAL=true"))
             {
-                conn.Open();
+                await conn.OpenAsync();
 
                 PutFile(conn);
-                CopyIntoTable(conn);
-                GetFile(conn);
+                await CopyIntoTableAsync(conn);
+                await GetFileAsync(conn);
             }
         }
 
         [Theory, MemberData(nameof(PutGetFileWithSpaceAndSingleQuoteTestCases))]
-        public void TestPutGetFileWithSpaceAndSingleQuote(
+        public async Task TestPutGetFileWithSpaceAndSingleQuote(
             StageType stageType,
             string stagePath)
         {
-            PrepareTest(null, stageType, stagePath, false, true, true);
+            await PrepareTestAsync(null, stageType, stagePath, false, true, true);
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 PutFile(conn, "", ResultStatus.UPLOADED, true);
-                CopyIntoTable(conn, true);
-                GetFile(conn, true);
+                await CopyIntoTableAsync(conn, true);
+                await GetFileAsync(conn, true);
             }
         }
 
@@ -605,7 +607,7 @@ using System.Threading;
                     yield return new object[] { stageType, stagePath };
         }
 
-        private void PrepareTest(string sourceFileCompressionType, StageType stageType, string stagePath,
+        private async Task PrepareTestAsync(string sourceFileCompressionType, StageType stageType, string stagePath,
             bool autoCompress, bool clientEncryption = true, bool makeFilePathWithSpace = false)
         {
             t_stageType = stageType;
@@ -721,7 +723,7 @@ using System.Threading;
         }
 
         // COPY INTO - Copy data from the stage into temp table
-        private void CopyIntoTable(SnowflakeDbConnection conn, bool encloseInSingleQuotes = false)
+        private async Task CopyIntoTableAsync(SnowflakeDbConnection conn, bool encloseInSingleQuotes = false)
         {
             using (var command = conn.CreateCommand())
             {
@@ -737,11 +739,11 @@ using System.Threading;
                         break;
                 }
 
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
 
                 // Check contents are correct
                 command.CommandText = $"SELECT * FROM {t_schemaName}.{t_tableName}";
-                var reader = command.ExecuteReader();
+                var reader = await command.ExecuteReaderAsync();
                 while (reader.Read())
                 {
                     for (var i = 0; i < s_colData.Length; i++)
@@ -752,12 +754,12 @@ using System.Threading;
 
                 // Check row count is correct
                 command.CommandText = $"SELECT COUNT(*) FROM {t_schemaName}.{t_tableName}";
-                Assert.Equal(NumberOfRows, command.ExecuteScalar());
+                Assert.Equal(NumberOfRows, await command.ExecuteScalarAsync());
             }
         }
 
         // GET - Download from the stage into local directory
-        private void GetFile(DbConnection conn, bool encloseInSingleQuotes = false)
+        private async Task GetFileAsync(DbConnection conn, bool encloseInSingleQuotes = false)
         {
             using (var command = conn.CreateCommand())
             {
@@ -768,7 +770,7 @@ using System.Threading;
 
                 // Download file
                 command.CommandText = getQuery;
-                var reader = command.ExecuteReader();
+                var reader = await command.ExecuteReaderAsync();
                 Assert.True(reader.Read());
 
                 // Check file status
@@ -789,12 +791,12 @@ using System.Threading;
             }
         }
 
-        private void ProcessFile(String command, SnowflakeDbConnection connection)
+        private async Task ProcessFileAsync(String command, SnowflakeDbConnection connection)
         {
             switch (command)
             {
                 case "GET":
-                    GetFile(connection);
+                    await GetFileAsync(connection);
                     break;
                 case "PUT":
                     PutFile(connection);

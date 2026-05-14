@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 #if NET8_0_OR_GREATER
@@ -18,20 +19,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     public class IntegrationTestFixture : TestEnvironmentFixture, IAsyncLifetime
     {
-        public TaskOrValueTask InitializeAsync()
+        public async TaskOrValueTask InitializeAsync()
         {
-            ModifySchema(TestConfig.schema, SchemaAction.Create);
-            return TaskOrValueTask.CompletedTask;
+            await ModifySchemaAsync(TestConfig.schema, SchemaAction.Create);
         }
 
-        public TaskOrValueTask DisposeAsync()
+        public async TaskOrValueTask DisposeAsync()
         {
             if (TestConfig == null)
-                return TaskOrValueTask.CompletedTask;
+                return;
 
-            ModifySchema(TestConfig.schema, SchemaAction.Drop);
+            await ModifySchemaAsync(TestConfig.schema, SchemaAction.Drop);
             Dispose();
-            return TaskOrValueTask.CompletedTask;
         }
 
         private enum SchemaAction
@@ -40,12 +39,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Drop
         }
 
-        private void ModifySchema(string schemaName, SchemaAction schemaAction)
+        private async Task ModifySchemaAsync(string schemaName, SchemaAction schemaAction)
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = BuildConnectionString(TestConfig);
-                conn.Open();
+                await ((SnowflakeDbConnection)conn).OpenAsync();
                 var dbCommand = conn.CreateCommand();
 
                 switch (schemaAction)

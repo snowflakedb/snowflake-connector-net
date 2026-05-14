@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.MiniCore;
@@ -23,17 +24,17 @@ namespace Snowflake.Data.Tests
             SFEnvironment.MinicoreDisabled = _originalMinicoreState;
         }
 
-        private void WaitForMiniCoreToLoad()
+        private async Task WaitForMiniCoreToLoad()
         {
             SfMiniCore.StartLoading();
             for (int i = 0; i < 100 && !SfMiniCore.IsLoaded; i++)
-                Thread.Sleep(10);
+                await Task.Delay(10);
         }
 
         [Fact]
-        public void TestMinicoreLoadsAndTelemetryIsCorrect()
+        public async Task TestMinicoreLoadsAndTelemetryIsCorrect()
         {
-            WaitForMiniCoreToLoad();
+            await WaitForMiniCoreToLoad();
 
             var clientEnv = SFEnvironment.ClientEnv.CloneForSession();
             var loadError = SfMiniCore.GetLoadError();

@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Web;
 using Xunit;
 using Snowflake.Data.Core.Revocation;
@@ -93,7 +94,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Fact]
-        public void TestScheduledCleanupRemovesExpiredEntries()
+        public async Task TestScheduledCleanupRemovesExpiredEntries()
         {
             // arrange
             var manager = CrlCacheManager.Build(
@@ -124,7 +125,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl2));
 
             // act
-            Thread.Sleep(1500);
+            await Task.Delay(1500);
 
             // assert
             Assert.Null(manager.Get(CrlUrl1));
@@ -132,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Fact]
-        public void TestScheduledCleanupRemovesStaleEntries()
+        public async Task TestScheduledCleanupRemovesStaleEntries()
         {
             // arrange
             var manager = CrlCacheManager.Build(
@@ -163,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl2));
 
             // act
-            Thread.Sleep(1500);
+            await Task.Delay(1500);
 
             // assert
             Assert.Null(manager.Get(CrlUrl1));
@@ -171,7 +172,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Fact]
-        public void TestCleanupKeepsValidEntries()
+        public async Task TestCleanupKeepsValidEntries()
         {
             // arrange
             var manager = CrlCacheManager.Build(
@@ -193,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl1));
 
             // act
-            Thread.Sleep(1500);
+            await Task.Delay(1500);
 
             // assert
             Assert.NotNull(manager.Get(CrlUrl1));

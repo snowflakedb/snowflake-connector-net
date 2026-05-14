@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestConnectionPoolWithInvalidOpenAsync()
+        public async Task TestConnectionPoolWithInvalidOpenAsync()
         {
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
             // make the connection string unique so it won't pick up connection
@@ -94,7 +94,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 connection1.ConnectionString = connStr;
                 // this will not open a new session but get the invalid connection from pool
-                connection1.Open();
+                await connection1.OpenAsync();
                 // Now run query with connection1
                 var command = connection1.CreateCommand();
                 command.CommandText = "select 1, 2, 3";
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact(DisplayName = "test connection pooling with concurrent connection using async calls")]
-        public void TestConcurrentConnectionPoolingAsync()
+        public async Task TestConcurrentConnectionPoolingAsync()
         {
             // add test case name in connection string to make in unique for each test case
             string connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact(DisplayName = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
-        public void TestConcurrentConnectionPoolingDisposeAsync()
+        public async Task TestConcurrentConnectionPoolingDisposeAsync()
         {
             // add test case name in connection string to make in unique for each test case
             string connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync";

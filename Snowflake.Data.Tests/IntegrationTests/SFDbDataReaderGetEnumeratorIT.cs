@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Data;
 using System.Globalization;
 using System.Text;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -34,16 +35,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestGetEnumerator()
+        public async Task TestGetEnumerator()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                CreateAndPopulateTestTable(conn);
+                await CreateAndPopulateTestTableAsync(conn);
 
                 string selectCommandText = $"select * from {_fixture.TableName}";
-                IDbCommand selectCmd = conn.CreateCommand();
+                var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync() as DbDataReader;
 
                 var enumerator = reader.GetEnumerator();
                 Assert.True(enumerator.MoveNext());
@@ -56,63 +57,63 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 reader.Close();
 
-                DropTestTableAndCloseConnection(conn);
+                await DropTestTableAndCloseConnectionAsync(conn);
             }
         }
 
         [Fact]
-        public void TestGetEnumeratorShouldBeEmptyWhenNotRowsReturned()
+        public async Task TestGetEnumeratorShouldBeEmptyWhenNotRowsReturned()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                CreateAndPopulateTestTable(conn);
+                await CreateAndPopulateTestTableAsync(conn);
 
                 string selectCommandText = $"select * from {_fixture.TableName} WHERE cola > 10";
-                IDbCommand selectCmd = conn.CreateCommand();
+                var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync() as DbDataReader;
 
                 var enumerator = reader.GetEnumerator();
                 Assert.False(enumerator.MoveNext());
                 Assert.Null(enumerator.Current);
 
                 reader.Close();
-                DropTestTableAndCloseConnection(conn);
+                await DropTestTableAndCloseConnectionAsync(conn);
             }
         }
 
         [Fact]
-        public void TestGetEnumeratorWithCastMethod()
+        public async Task TestGetEnumeratorWithCastMethod()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                CreateAndPopulateTestTable(conn);
+                await CreateAndPopulateTestTableAsync(conn);
 
                 string selectCommandText = $"select * from {_fixture.TableName}";
-                IDbCommand selectCmd = conn.CreateCommand();
+                var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync() as DbDataReader;
 
                 var dataRecords = reader.Cast<DbDataRecord>().ToList();
                 Assert.Equal(3, dataRecords.Count);
 
                 reader.Close();
 
-                DropTestTableAndCloseConnection(conn);
+                await DropTestTableAndCloseConnectionAsync(conn);
             }
         }
 
         [Fact]
-        public void TestGetEnumeratorForEachShouldNotEnterWhenResultsIsEmpty()
+        public async Task TestGetEnumeratorForEachShouldNotEnterWhenResultsIsEmpty()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                CreateAndPopulateTestTable(conn);
+                await CreateAndPopulateTestTableAsync(conn);
 
                 string selectCommandText = $"select * from {_fixture.TableName} WHERE cola > 10";
-                IDbCommand selectCmd = conn.CreateCommand();
+                var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync() as DbDataReader;
 
                 foreach (var record in reader)
                 {
@@ -120,21 +121,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
 
                 reader.Close();
-                DropTestTableAndCloseConnection(conn);
+                await DropTestTableAndCloseConnectionAsync(conn);
             }
         }
 
         [Fact]
-        public void TestGetEnumeratorShouldThrowNonSupportedExceptionWhenReset()
+        public async Task TestGetEnumeratorShouldThrowNonSupportedExceptionWhenReset()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                CreateAndPopulateTestTable(conn);
+                await CreateAndPopulateTestTableAsync(conn);
 
                 string selectCommandText = $"select * from {_fixture.TableName}";
-                IDbCommand selectCmd = conn.CreateCommand();
+                var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync() as DbDataReader;
 
                 var enumerator = reader.GetEnumerator();
                 Assert.True(enumerator.MoveNext());
@@ -143,21 +144,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 reader.Close();
 
-                DropTestTableAndCloseConnection(conn);
+                await DropTestTableAndCloseConnectionAsync(conn);
             }
         }
 
-        private void DropTestTableAndCloseConnection(DbConnection conn)
+        private async Task DropTestTableAndCloseConnectionAsync(DbConnection conn)
         {
-            IDbCommand cmd = conn.CreateCommand();
+            var cmd = conn.CreateCommand();
             cmd.CommandText = $"drop table if exists {_fixture.TableName}";
-            var count = cmd.ExecuteNonQuery();
+            var count = await cmd.ExecuteNonQueryAsync();
             Assert.Equal(0, count);
 
-            CloseConnection(conn);
+            await CloseConnectionAsync(conn);
         }
 
-        private void CreateAndPopulateTestTable(DbConnection conn)
+        private async Task CreateAndPopulateTestTableAsync(DbConnection conn)
         {
             _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola NUMBER" });
 
@@ -165,21 +166,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             string insertCommand = $"insert into {_fixture.TableName} values (3),(5),(8)";
             cmd.CommandText = insertCommand;
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
 
-        private DbConnection CreateAndOpenConnection()
+        private async Task<DbConnection> CreateAndOpenConnectionAsync()
         {
             var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
-            conn.Open();
+            await conn.OpenAsync();
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
             return conn;
         }
 
-        private void CloseConnection(DbConnection conn)
+        private async Task CloseConnectionAsync(DbConnection conn)
         {
             SessionParameterAlterer.RestoreResultFormat(conn);
-            conn.Close();
+            await conn.CloseAsync();
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -70,95 +71,95 @@ namespace Snowflake.Data.Tests.IntegrationTests
         };
 
         [Fact]
-        public void TestPoolDestroysConnectionWhenChangedSessionProperties()
+        public async Task TestPoolDestroysConnectionWhenChangedSessionProperties()
         {
             var connectionString = _fixture.ConnectionString + "application=Destroy;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
+            await connection.OpenAsync();
             connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedDatabase());
-            connection.Close();
+            await connection.CloseAsync();
 
             Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
         [Fact]
-        public void TestPoolingWhenSessionPropertiesUnchanged()
+        public async Task TestPoolingWhenSessionPropertiesUnchanged()
         {
             var connectionString = _fixture.ConnectionString + "application=NoSessionChanges;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
-            connection.Close();
+            await connection.OpenAsync();
+            await connection.CloseAsync();
 
             Assert.Equal(1, pool.GetCurrentPoolSize());
         }
 
         [Fact]
-        public void TestPoolingWhenConnectionPropertiesChangedForOriginalPoolMode()
+        public async Task TestPoolingWhenConnectionPropertiesChangedForOriginalPoolMode()
         {
             var connectionString = _fixture.ConnectionString + "application=OriginalPoolMode;ChangedSession=OriginalPool;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
+            await connection.OpenAsync();
             connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedWarehouse());
             var sessionId = connection.SfSession.sessionId;
-            connection.Close();
+            await connection.CloseAsync();
 
             Assert.Equal(1, pool.GetCurrentPoolSize());
-            connection.Close();
+            await connection.CloseAsync();
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            connection2.Open();
+            await connection2.OpenAsync();
             Assert.Equal(sessionId, connection2.SfSession.sessionId);
-            connection2.Close();
+            await connection2.CloseAsync();
         }
 
         [Fact]
-        public void TestPoolingWhenConnectionPropertiesChangedForDefaultPoolMode()
+        public async Task TestPoolingWhenConnectionPropertiesChangedForDefaultPoolMode()
         {
             var connectionString = _fixture.ConnectionString + "application=DefaultPoolMode;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
+            await connection.OpenAsync();
             connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedRole());
             var sessionId = connection.SfSession.sessionId;
-            connection.Close();
+            await connection.CloseAsync();
 
             Assert.Equal(0, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            connection2.Open();
+            await connection2.OpenAsync();
             Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
-            connection2.Close();
+            await connection2.CloseAsync();
         }
 
         [Fact]
-        public void TestPoolDestroysAndRecreatesConnection()
+        public async Task TestPoolDestroysAndRecreatesConnection()
         {
             var connectionString = _fixture.ConnectionString + "application=DestroyRecreateSession;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
+            await connection.OpenAsync();
             var sessionId = connection.SfSession.sessionId;
             connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedSchema);
-            connection.Close();
+            await connection.CloseAsync();
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            connection2.Open();
+            await connection2.OpenAsync();
             Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
-            connection2.Close();
+            await connection2.CloseAsync();
         }
 
         [Fact]
-        public void TestCompareSessionChangesCaseInsensitiveWhenUnquoted()
+        public async Task TestCompareSessionChangesCaseInsensitiveWhenUnquoted()
         {
             var connectionString = _fixture.ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
@@ -171,22 +172,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
+            await connection.OpenAsync();
             var sessionId = connection.SfSession.sessionId;
             connection.SfSession.UpdateSessionProperties(responseData);
-            connection.Close();
+            await connection.CloseAsync();
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            connection2.Open();
+            await connection2.OpenAsync();
             Assert.Equal(sessionId, connection2.SfSession.sessionId);
-            connection2.Close();
+            await connection2.CloseAsync();
         }
 
         [Fact]
-        public void TestCompareSessionChangesCaseSensitiveWhenQuoted()
+        public async Task TestCompareSessionChangesCaseSensitiveWhenQuoted()
         {
             var connectionString = _fixture.ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
@@ -199,18 +200,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
+            await connection.OpenAsync();
             var sessionId = connection.SfSession.sessionId;
             connection.SfSession.UpdateSessionProperties(responseData);
-            connection.Close();
+            await connection.CloseAsync();
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            connection2.Open();
+            await connection2.OpenAsync();
             Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
-            connection2.Close();
+            await connection2.CloseAsync();
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Extensions;
@@ -16,7 +17,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public CertificateRevocationIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact(Skip = "Temporarily ignored"), IgnoreOnJenkinsFact]
-        public void TestCertificate()
+        public async Task TestCertificate()
         {
             // arrange
             var config = new HttpClientConfig(

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -32,7 +33,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     }
 
     [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
-    class MaxLobSizeIT : SFBaseTestAsync, IClassFixture<MaxLobSizeITFixture>, IDisposable
+    public class MaxLobSizeIT : SFBaseTestAsync, IClassFixture<MaxLobSizeITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
 
@@ -89,12 +90,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                conn.OpenAsync();
                 using (var command = conn.CreateCommand())
                 {
                     // Drop temp table
                     command.CommandText = $"DROP TABLE IF EXISTS {t_tableName}";
-                    command.ExecuteNonQuery();
+                    command.ExecuteNonQueryAsync();
                 }
             }
 
@@ -108,14 +109,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [IgnoreOnJenkinsTheory, MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
-        public void TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
+        public async Task TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
         {
             // arrange
             _resultFormat = resultFormat;
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
                 using (var command = conn.CreateCommand())
                 {
                     // act
@@ -130,7 +131,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
         [IgnoreOnJenkinsTheory, MemberData(nameof(LiteralInsertTestCases))]
-        public void TestLiteralInsert(ResultFormat resultFormat, int lobSize)
+        public async Task TestLiteralInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
             _resultFormat = resultFormat;
@@ -140,17 +141,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (var command = conn.CreateCommand())
                 {
                     // act
                     command.CommandText = $"{t_insertQuery} ('{c1}', '{c2}', '{c3}')";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
                     command.CommandText = t_selectQuery;
-                    var reader = command.ExecuteReader();
+                    var reader = await command.ExecuteReaderAsync();
 
                     // assert
                     Assert.True(reader.Read());
@@ -163,7 +164,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [IgnoreOnJenkinsTheory, MemberData(nameof(PositionalInsertTestCases))]
-        public void TestPositionalInsert(ResultFormat resultFormat, int lobSize)
+        public async Task TestPositionalInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
             _resultFormat = resultFormat;
@@ -173,8 +174,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (var command = conn.CreateCommand())
                 {
@@ -199,10 +200,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p3.Value = c3;
                     command.Parameters.Add(p3);
 
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
                     command.CommandText = t_selectQuery;
-                    var reader = command.ExecuteReader();
+                    var reader = await command.ExecuteReaderAsync();
 
                     // assert
                     Assert.True(reader.Read());
@@ -216,7 +217,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
         [IgnoreOnJenkinsTheory, MemberData(nameof(NamedInsertTestCases))]
-        public void TestNamedInsert(ResultFormat resultFormat, int lobSize)
+        public async Task TestNamedInsert(ResultFormat resultFormat, int lobSize)
         {
             // arrange
             _resultFormat = resultFormat;
@@ -226,8 +227,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (var command = conn.CreateCommand())
                 {
@@ -252,10 +253,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p3.Value = c3;
                     command.Parameters.Add(p3);
 
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
                     command.CommandText = t_selectQuery;
-                    var reader = command.ExecuteReader();
+                    var reader = await command.ExecuteReaderAsync();
 
                     // assert
                     Assert.True(reader.Read());
@@ -268,7 +269,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [IgnoreOnJenkinsTheory, MemberData(nameof(PutGetCommandTestCases))]
-        public void TestPutGetCommand(ResultFormat resultFormat, int lobSize)
+        public async Task TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange
             _resultFormat = resultFormat;
@@ -281,12 +282,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 PutFile(conn);
-                CopyIntoTable(conn);
-                GetFile(conn);
+                await CopyIntoTableAsync(conn);
+                await GetFileAsync(conn);
             }
         }
 
@@ -360,7 +361,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private void CopyIntoTable(SnowflakeDbConnection conn)
+        private async Task CopyIntoTableAsync(SnowflakeDbConnection conn)
         {
             using (var command = conn.CreateCommand())
             {
@@ -368,13 +369,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.CommandText = $"COPY INTO {t_tableName}";
 
                 // act
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
 
                 // arrange
                 command.CommandText = $"SELECT * FROM {t_tableName}";
 
                 // act
-                var reader = command.ExecuteReader();
+                var reader = await command.ExecuteReaderAsync();
 
                 // assert
                 Assert.True(reader.Read());
@@ -392,7 +393,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.True(t_colData[index] == actual, $"Expected strings to be equal. Expected: '{t_colData[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
         }
 
-        private void GetFile(DbConnection conn)
+        private async Task GetFileAsync(DbConnection conn)
         {
             using (var command = conn.CreateCommand())
             {
@@ -400,7 +401,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.CommandText = $"GET @%{t_tableName}/{t_fileName} file://{_outputDirectory}";
 
                 // act
-                var reader = command.ExecuteReader();
+                var reader = await command.ExecuteReaderAsync();
 
                 // assert
                 Assert.True(reader.Read());
@@ -417,19 +418,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private void AlterSessionSettings(SnowflakeDbConnection conn)
+        private async Task AlterSessionSettingsAsync(SnowflakeDbConnection conn)
         {
             using (var command = conn.CreateCommand())
             {
                 // Alter session result format
                 command.CommandText = $"ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = {_resultFormat}";
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
 
                 //// Alter session max lob
                 //command.CommandText = "ALTER SESSION SET FEATURE_INCREASED_MAX_LOB_SIZE_IN_MEMORY = 'ENABLED'";
-                //command.ExecuteNonQuery();
+                //await command.ExecuteNonQueryAsync();
                 //command.CommandText = "alter session set ALLOW_LARGE_LOBS_IN_EXTERNAL_SCAN = true";
-                //command.ExecuteNonQuery();
+                //await command.ExecuteNonQueryAsync();
             }
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Globalization;
 using System.Reflection;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -38,14 +39,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _resultFormat = resultFormat;
         }
 
-        private SnowflakeDbConnection CreateAndOpenConnection()
+        private async Task<SnowflakeDbConnection> CreateAndOpenConnectionAsync()
         {
             var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
-            conn.Open();
+            await conn.OpenAsync();
             return conn;
         }
 
-        private void SetResultFormat(IDbConnection conn)
+        private async Task SetResultFormat(IDbConnection conn)
         {
             using (var cmd = conn.CreateCommand())
             {
@@ -68,17 +69,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestSelectDecfloatLiteral()
+        public async Task TestSelectDecfloatLiteral()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                SetResultFormat(conn);
+                await SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT 123.456::DECFLOAT AS decfloat_value";
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         ValidateResultFormat(reader);
 
@@ -100,17 +101,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestDecfloatHighPrecision()
+        public async Task TestDecfloatHighPrecision()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                SetResultFormat(conn);
+                await SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT 1234567890.123456789::DECFLOAT AS high_precision";
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         ValidateResultFormat(reader);
 
@@ -127,17 +128,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestDecfloatNull()
+        public async Task TestDecfloatNull()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                SetResultFormat(conn);
+                await SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT NULL::DECFLOAT AS null_decfloat";
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         ValidateResultFormat(reader);
 
@@ -152,17 +153,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestDecfloatNegative()
+        public async Task TestDecfloatNegative()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                SetResultFormat(conn);
+                await SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT -987.654::DECFLOAT AS negative_value";
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         ValidateResultFormat(reader);
 
@@ -179,17 +180,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestDecfloatZero()
+        public async Task TestDecfloatZero()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                SetResultFormat(conn);
+                await SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT 0::DECFLOAT AS zero_value";
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         ValidateResultFormat(reader);
 
@@ -206,17 +207,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestDecfloatLargePositiveExponent()
+        public async Task TestDecfloatLargePositiveExponent()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                SetResultFormat(conn);
+                await SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT 1.23e10::DECFLOAT AS large_value";
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         ValidateResultFormat(reader);
 
@@ -233,17 +234,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestDecfloatSmallNegativeExponent()
+        public async Task TestDecfloatSmallNegativeExponent()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                SetResultFormat(conn);
+                await SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT 1.5e-3::DECFLOAT AS small_value";
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         ValidateResultFormat(reader);
 
@@ -260,22 +261,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestDecfloatInTable()
+        public async Task TestDecfloatInTable()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                SetResultFormat(conn);
+                await SetResultFormat(conn);
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "col_decfloat DECFLOAT" });
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = $"INSERT INTO {_fixture.TableName} VALUES (123.456), (-999.999), (NULL)";
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync();
 
                     cmd.CommandText = $"SELECT col_decfloat FROM {_fixture.TableName} ORDER BY col_decfloat NULLS LAST";
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         ValidateResultFormat(reader);
 
@@ -297,11 +298,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestDecfloatMultipleColumns()
+        public async Task TestDecfloatMultipleColumns()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                SetResultFormat(conn);
+                await SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -310,7 +311,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         2.2::DECFLOAT AS col2,
                         3.3::DECFLOAT AS col3";
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         ValidateResultFormat(reader);
 
@@ -333,17 +334,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestDecfloatWithCurrentDriverVersion()
+        public async Task TestDecfloatWithCurrentDriverVersion()
         {
-            using (var conn = CreateAndOpenConnection())
+            using (var conn = await CreateAndOpenConnectionAsync())
             {
-                SetResultFormat(conn);
+                await SetResultFormat(conn);
 
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT 123.456::DECFLOAT AS decfloat_value";
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         ValidateResultFormat(reader);
 
@@ -367,7 +368,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestDecfloatWithOlderDriverVersion()
+        public async Task TestDecfloatWithOlderDriverVersion()
         {
             // Get original version
             var versionProp = typeof(SFEnvironment).GetProperty("DriverVersion", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
@@ -379,15 +380,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 versionProp.SetValue(null, "4.0.0");
                 Console.WriteLine($"Driver version set to: {versionProp.GetValue(null)}");
 
-                using (var conn = CreateAndOpenConnection())
+                using (var conn = await CreateAndOpenConnectionAsync())
                 {
-                    SetResultFormat(conn);
+                    await SetResultFormat(conn);
 
                     using (var cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = "SELECT 123.456::DECFLOAT AS decfloat_value";
 
-                        using (var reader = cmd.ExecuteReader())
+                        using (var reader = await cmd.ExecuteReaderAsync())
                         {
                             ValidateResultFormat(reader);
 

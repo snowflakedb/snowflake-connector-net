@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Mono.Unix.Native;
 using Xunit;
 using Snowflake.Data.Client;
@@ -13,7 +14,7 @@ using Tomlyn.Model;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    sealed class SFConnectionWithTomlIT : SFBaseTestAsync, IDisposable
+    public sealed class SFConnectionWithTomlIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
@@ -36,7 +37,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestLocalDefaultConnectStringReadFromToml()
+        public async Task TestLocalDefaultConnectStringReadFromToml()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, s_workingDirectory);
@@ -44,7 +45,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
-                    conn.Open();
+                    await conn.OpenAsync();
                     Assert.Equal(ConnectionState.Open, conn.State);
                 }
             }
@@ -55,7 +56,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestThrowExceptionIfTomlNotFoundWithOtherConnectionString()
+        public async Task TestThrowExceptionIfTomlNotFoundWithOtherConnectionString()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
             var connectionName = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName);
@@ -65,7 +66,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
-                    Assert.Throws<SnowflakeDbException>(() => conn.Open());
+                    await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync());
                 }
             }
             finally
@@ -76,7 +77,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestThrowExceptionIfTomlFromNotFoundFromDbConnection()
+        public async Task TestThrowExceptionIfTomlFromNotFoundFromDbConnection()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, Path.Combine(s_workingDirectory, "InvalidFolder"));
@@ -84,7 +85,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
-                    Assert.Throws<SnowflakeDbException>(() => conn.Open());
+                    await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync());
                 }
             }
             finally

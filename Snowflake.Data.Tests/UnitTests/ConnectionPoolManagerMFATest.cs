@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using System;
@@ -44,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Fact]
-        public void TestPoolManagerReturnsSessionPoolForGivenConnectionStringUsingMFA()
+        public async Task TestPoolManagerReturnsSessionPoolForGivenConnectionStringUsingMFA()
         {
             // Arrange
             var testToken = "testToken1234";
@@ -62,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var session = _connectionPoolManager.GetSession(ConnectionStringMFACache, new SessionPropertiesContext());
 
             // Assert
-            Awaiter.WaitUntilConditionOrTimeout(() => _fixture.RestRequester.LoginRequests.Count == 2, TimeSpan.FromSeconds(15));
+            await Awaiter.WaitUntilConditionOrTimeout(() => _fixture.RestRequester.LoginRequests.Count == 2, TimeSpan.FromSeconds(15));
             Assert.Equal(2, _fixture.RestRequester.LoginRequests.Count);
             var loginRequest1 = _fixture.RestRequester.LoginRequests.Dequeue();
             Assert.Equal(string.Empty, loginRequest1.data.Token);

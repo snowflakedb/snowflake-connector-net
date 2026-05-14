@@ -3,6 +3,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Mono.Unix;
 using Mono.Unix.Native;
 using Xunit;
@@ -67,16 +68,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestEnableEasyLogging()
+        public async Task TestEnableEasyLogging()
         {
             // arrange
             var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", _classFixture.WorkingDirectory));
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
-                conn.Open();
+                await conn.OpenAsync();
 
                 // assert
                 Assert.True(EasyLoggerManager.HasEasyLoggingAppender());
@@ -84,16 +85,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestFailToEnableEasyLoggingForWrongConfiguration()
+        public async Task TestFailToEnableEasyLoggingForWrongConfiguration()
         {
             // arrange
             var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, "random config content");
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
-                var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+                var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync());
 
                 // assert
                 Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
@@ -102,16 +103,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
-        public void TestReCreateEasyLoggingUnixLogFileWithCustomisedPermissions()
+        public async Task TestReCreateEasyLoggingUnixLogFileWithCustomisedPermissions()
         {
             // arrange
             try
             {
                 var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", _classFixture.WorkingDirectory, "640"));
-                using (IDbConnection conn = new SnowflakeDbConnection())
+                using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
-                    conn.Open();
+                    await conn.OpenAsync();
                     var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
                     var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
                     var logFile = fileAppender.LogFilePath;
@@ -137,16 +138,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [FactRunOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
-        public void TestReCreateEasyLoggingWindowsLogFileIgnoringCustomisedPermissions()
+        public async Task TestReCreateEasyLoggingWindowsLogFileIgnoringCustomisedPermissions()
         {
             // arrange
             try
             {
                 var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", _classFixture.WorkingDirectory, "640"));
-                using (IDbConnection conn = new SnowflakeDbConnection())
+                using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
-                    conn.Open();
+                    await conn.OpenAsync();
                     var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
                     var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
                     var logFile = fileAppender.LogFilePath;
@@ -169,17 +170,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
-        public void TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
+        public async Task TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
         {
             // arrange
             var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", _classFixture.WorkingDirectory));
             Syscall.chmod(configFilePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IWGRP);
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
-                var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+                var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync());
 
                 // assert
                 Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
@@ -188,16 +189,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
-        public void TestFailToEnableEasyLoggingWhenLogDirectoryNotAccessible()
+        public async Task TestFailToEnableEasyLoggingWhenLogDirectoryNotAccessible()
         {
             // arrange
             var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", "/"));
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
-                var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+                var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync());
 
                 // assert
                 Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
@@ -207,7 +208,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [FactSkipOnPlatform(FactRunOnPlatformAttribute.KnownOSPlatform.Windows)]
-        public void TestFailToEnableEasyLoggingWhenPathIsAccessibleForGroup()
+        public async Task TestFailToEnableEasyLoggingWhenPathIsAccessibleForGroup()
         {
             // arrange
             var logDirectory = Path.Combine(_classFixture.WorkingDirectory, LogDirectoryName);
@@ -215,12 +216,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Syscall.chmod(logDirectory, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR | FilePermissions.S_IXUSR | FilePermissions.S_IRGRP);
 
             var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, Config("WARN", _classFixture.WorkingDirectory, "640"));
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
-                var thrown = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+                var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync());
 
                 // assert
                 Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);

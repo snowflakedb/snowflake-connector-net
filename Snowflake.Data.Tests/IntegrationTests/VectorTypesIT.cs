@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using System.Data.Common;
@@ -29,32 +30,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestSelectIntVectorFromTable()
+        public async Task TestSelectIntVectorFromTable()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = $"CREATE OR REPLACE TABLE {_fixture.TableName} (a VECTOR(INT, 3));";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                     command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [1,2,3]::VECTOR(INT,3);";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                     command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [4,5,6]::VECTOR(INT,3);";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                     command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [7,8,9]::VECTOR(INT,3);";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
                     command.CommandText = $"SELECT COUNT(*) FROM {_fixture.TableName};";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
                     Assert.Equal(3, reader.GetInt16(0));
 
                     command.CommandText = $"SELECT * FROM {_fixture.TableName};";
-                    reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
 
                     Assert.True(reader.Read());
                     Assert.Equal("[1,2,3]", reader.GetString(0));
@@ -78,38 +79,38 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(9, arr[2]);
 
                     command.CommandText = $"DROP TABLE IF EXISTS {_fixture.TableName};";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                 }
             }
         }
 
         [Fact]
-        public void TestSelectFloatVectorFromTable()
+        public async Task TestSelectFloatVectorFromTable()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = $"CREATE OR REPLACE TABLE {_fixture.TableName} (a VECTOR(FLOAT, 3));";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                     command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [1.1,2.2,3.3]::VECTOR(FLOAT,3);";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                     command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [4.4,5.5,6.6]::VECTOR(FLOAT,3);";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                     command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [7.7,8.8,9.9]::VECTOR(FLOAT,3);";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
                     command.CommandText = $"SELECT COUNT(*) FROM {_fixture.TableName};";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
                     Assert.Equal(3, reader.GetInt16(0));
 
                     command.CommandText = $"SELECT * FROM {_fixture.TableName};";
-                    reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
 
                     Assert.True(reader.Read());
                     Assert.Equal("[1.100000,2.200000,3.300000]", reader.GetString(0));
@@ -133,24 +134,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(9.9f, arr[2]);
 
                     command.CommandText = $"DROP TABLE IF EXISTS {_fixture.TableName};";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                 }
             }
         }
 
         [Fact]
-        public void TestSelectIntVector()
+        public async Task TestSelectIntVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT [1, 2, 3]::VECTOR(INT, 3) as vec;";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
 
                     Assert.True(reader.Read());
                     Assert.Equal("[1,2,3]", reader.GetString(0));
@@ -164,18 +165,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestSelectIntVectorWithMinAndMax32BitValues()
+        public async Task TestSelectIntVectorWithMinAndMax32BitValues()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = $"SELECT [{Int32.MinValue}, {Int32.MaxValue}]::VECTOR(INT, 2) as vec;";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
 
                     Assert.True(reader.Read());
                     Assert.Equal($"[{Int32.MinValue},{Int32.MaxValue}]", reader.GetString(0));
@@ -188,19 +189,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestThrowExceptionForInvalidValueForIntVector()
+        public async Task TestThrowExceptionForInvalidValueForIntVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT [1.1]::VECTOR(INT, 3) as vec;";
 
-                    var thrown = Assert.Throws<SnowflakeDbException>(() => command.ExecuteReader());
+                    var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await command.ExecuteReaderAsync());
 
                     Assert.Contains("Array-like value being cast to a vector has incorrect dimension", thrown.Message);
                 }
@@ -208,19 +209,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestThrowExceptionForInvalidIdentifierForIntVector()
+        public async Task TestThrowExceptionForInvalidIdentifierForIntVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT [A, B, C]::VECTOR(INT, 3) as vec;";
 
-                    var thrown = Assert.Throws<SnowflakeDbException>(() => command.ExecuteReader());
+                    var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await command.ExecuteReaderAsync());
 
                     Assert.Contains("invalid identifier", thrown.Message);
                 }
@@ -228,18 +229,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestSelectFloatVector()
+        public async Task TestSelectFloatVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT [1.1,2.22,3.333]::VECTOR(FLOAT, 3) as vec;";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
 
                     Assert.True(reader.Read());
                     Assert.Equal("[1.100000,2.220000,3.333000]", reader.GetString(0));
@@ -253,18 +254,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [IgnoreOnJenkinsFact]
-        public void TestSelectFloatVectorWithMinAndMaxFloatValues()
+        public async Task TestSelectFloatVectorWithMinAndMaxFloatValues()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = $"SELECT [{float.MinValue}, {float.MaxValue}]::VECTOR(FLOAT, 2) as vec;";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
 
                     Assert.True(reader.Read());
 
@@ -281,18 +282,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestSelectFloatVectorWithNoDecimals()
+        public async Task TestSelectFloatVectorWithNoDecimals()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT [1,2,3]::VECTOR(FLOAT, 3) as vec;";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
 
                     Assert.True(reader.Read());
                     Assert.Equal("[1.000000,2.000000,3.000000]", reader.GetString(0));
@@ -306,18 +307,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestSelectFloatVectorWithGreaterThanSixDigitPrecision()
+        public async Task TestSelectFloatVectorWithGreaterThanSixDigitPrecision()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT [1.123456789,2.123456789,3.123456789]::VECTOR(FLOAT, 3) as vec;";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
 
                     Assert.True(reader.Read());
                     Assert.Equal("[1.123457,2.123457,3.123457]", reader.GetString(0));
@@ -331,31 +332,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestThrowExceptionForInvalidIdentifierForFloatVector()
+        public async Task TestThrowExceptionForInvalidIdentifierForFloatVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
-                AlterSessionSettings(conn);
+                await conn.OpenAsync();
+                await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT [A, B, C]::VECTOR(FLOAT, 3) as vec;";
 
-                    var thrown = Assert.Throws<SnowflakeDbException>(() => command.ExecuteReader());
+                    var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await command.ExecuteReaderAsync());
 
                     Assert.Contains("invalid identifier", thrown.Message);
                 }
             }
         }
 
-        private void AlterSessionSettings(DbConnection conn)
+        private async Task AlterSessionSettingsAsync(DbConnection conn)
         {
             using (var command = conn.CreateCommand())
             {
                 command.CommandText = $"ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = {_resultFormat}";
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
             }
         }
     }

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
@@ -32,11 +33,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestThatUploadsAndDownloadsTheSameFile()
+        public async Task TestThatUploadsAndDownloadsTheSameFile()
         {
             // act
-            UploadFile(s_fullFileName, s_remoteFolderName);
-            DownloadFile(s_remoteFolderName, s_downloadFolderName, FileName);
+            await UploadFileAsync(s_fullFileName, s_remoteFolderName);
+            await DownloadFileAsync(s_remoteFolderName, s_downloadFolderName, FileName);
 
             // assert
             Assert.Equal(
@@ -44,7 +45,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 CalcualteMD5(s_fullDownloadedFileName));
 
             // cleanup
-            RemoveFilesFromServer(s_remoteFolderName);
+            await RemoveFilesFromServerAsync(s_remoteFolderName);
             RemoveLocalFile(s_fullDownloadedFileName);
         }
 
@@ -54,40 +55,40 @@ namespace Snowflake.Data.Tests.IntegrationTests
             RandomJsonGenerator.GenerateRandomJsonFile(fullFileName, 128 * 1024);
         }
 
-        private void UploadFile(string fullFileName, string remoteFolderName)
+        private async Task UploadFileAsync(string fullFileName, string remoteFolderName)
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + "FILE_TRANSFER_MEMORY_THRESHOLD=1048576;";
-                conn.Open();
+                await conn.OpenAsync();
                 var command = conn.CreateCommand();
                 command.CommandText = $"PUT file://{fullFileName} @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
             }
         }
 
-        private void DownloadFile(string remoteFolderName, string downloadFolderName, string fileName)
+        private async Task DownloadFileAsync(string remoteFolderName, string downloadFolderName, string fileName)
         {
             var filePattern = $"{remoteFolderName}/{fileName}";
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
                 var command = conn.CreateCommand();
                 command.CommandText = $"GET @~/{remoteFolderName} file://{downloadFolderName} PATTERN='{filePattern}'";
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
             }
         }
 
-        private void RemoveFilesFromServer(string remoteFolderName)
+        private async Task RemoveFilesFromServerAsync(string remoteFolderName)
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
                 var command = conn.CreateCommand();
                 command.CommandText = $"remove @~/{remoteFolderName};";
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
             }
         }
 

@@ -3,6 +3,7 @@
 using System;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
@@ -16,7 +17,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    class SFBindTestAsyncIt : SFBaseTestAsync
+    public class SFBindTestAsyncIt : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFBindTestAsyncIt(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
@@ -24,13 +25,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestAsyncIt>();
 
         [Fact]
-        public void TestArrayBind()
+        public async Task TestArrayBind()
         {
 
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -59,13 +60,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(3, count);
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
         [Theory]
         [MemberData(nameof(NullTestCases))]
-        public void TestBindNullValue(object nullValue)
+        public async Task TestBindNullValue(object nullValue)
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -206,7 +207,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             new[] { new object?[] { DBNull.Value }, new object?[] { null } };
 
         [Fact]
-        public void TestBindValue()
+        public async Task TestBindValue()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -358,7 +359,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestBindValueWithSFDataType()
+        public async Task TestBindValueWithSFDataType()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
@@ -479,12 +480,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestParameterCollection()
+        public async Task TestParameterCollection()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
@@ -530,17 +531,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(0, cmd.Parameters.Count);
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
         [Fact]
-        public void TestPutArrayBind()
+        public async Task TestPutArrayBind()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -660,21 +661,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.True(reader.Read());
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
         [Fact]
-        public void TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
+        public async Task TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
         {
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Auto
             };
 
-            using (IDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync();
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -733,17 +734,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.True(reader.Read());
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
         [Fact]
-        public void TestPutArrayIntegerBind()
+        public async Task TestPutArrayIntegerBind()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -775,18 +776,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.True(reader.Read());
                 }
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
         [Fact]
-        public void TestExplicitDbTypeAssignmentForSimpleValue()
+        public async Task TestExplicitDbTypeAssignmentForSimpleValue()
         {
 
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -807,18 +808,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(1, count);
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
         [Fact]
-        public void TestExplicitDbTypeAssignmentForArrayValue()
+        public async Task TestExplicitDbTypeAssignmentForArrayValue()
         {
 
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -839,7 +840,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(3, count);
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
@@ -897,7 +898,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
         [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
 
-        public void TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
+        public async Task TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
         {
             // Arrange
             string[] timestamps =
@@ -914,9 +915,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var bigBatchRowCount = bindingThreshold / 2;
             s_logger.Info(testCase);
 
-            using (IDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
             {
-                conn.Open();
+                await conn.OpenAsync();
 
                 conn.ExecuteNonQuery($"alter session set DOTNET_QUERY_RESULT_FORMAT = {resultFormat}");
                 if (!timeZone.IsNullOrEmpty()) // Driver ignores this setting and relies on local environment timezone

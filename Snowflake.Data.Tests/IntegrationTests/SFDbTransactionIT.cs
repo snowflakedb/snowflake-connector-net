@@ -7,19 +7,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using System.Threading.Tasks;
-    class SFDbTransactionIT : SFBaseTestAsync
+    public class SFDbTransactionIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public SFDbTransactionIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
         [Fact]
-        public void TestTransactionDbConnection()
+        public async Task TestTransactionDbConnection()
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 // Arrange
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
 
                 // Act
                 using (IDbTransaction t1 = conn.BeginTransaction())
@@ -31,13 +31,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestTransactionIsolationLevel()
+        public async Task TestTransactionIsolationLevel()
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 // Arrange
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
 
                 // Act
                 using (IDbTransaction t1 = conn.BeginTransaction())
@@ -50,16 +50,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Fact]
         // Test that when a transaction is disposed, rollback would be sent out
-        public void TestTransactionDispose()
+        public async Task TestTransactionDispose()
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                conn.Open();
+                await conn.OpenAsync();
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "c INT" });
 
-                using (IDbTransaction t1 = conn.BeginTransaction())
+                using (IDbTransaction t1 = await conn.BeginTransactionAsync())
                 {
                     IDbCommand t1c1 = conn.CreateCommand();
                     t1c1.Transaction = t1;
@@ -77,11 +77,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Fact]
         // Test SNOW-761136 unnecessary ROLLBACK
-        public void TestTransactionRollback()
+        public async Task TestTransactionRollback()
         {
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = _fixture.ConnectionString;
-            conn.Open();
+            await conn.OpenAsync();
 
             _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
             {
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 "a INTEGER"
             });
 
-            using (DbTransaction transaction = conn.BeginTransaction())
+            using (DbTransaction transaction = await conn.BeginTransactionAsync())
             {
                 IDbCommand t1c1 = conn.CreateCommand();
                 t1c1.Transaction = transaction;
@@ -123,16 +123,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             Assert.Equal(row, 4);
 
-            conn.Close();
+            await conn.CloseAsync();
         }
 
         [Fact]
         // Test SNOW-761136 unnecessary ROLLBACK
-        public void TestTransactionRollbackOn2Transactions()
+        public async Task TestTransactionRollbackOn2Transactions()
         {
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = _fixture.ConnectionString;
-            conn.Open();
+            await conn.OpenAsync();
 
             _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
             {
@@ -149,7 +149,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 t1c1.Transaction.Commit();
             }
 
-            using (DbTransaction transaction2 = conn.BeginTransaction())
+            using (DbTransaction transaction2 = await conn.BeginTransactionAsync())
             {
                 IDbCommand t2c2 = conn.CreateCommand();
                 t2c2.Transaction = transaction2;
@@ -172,11 +172,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             Assert.Equal(row, 3);
 
-            conn.Close();
+            await conn.CloseAsync();
         }
 
         [Fact]
-        public void TestThrowsExceptionWhenBeginTransactionWithoutOpen()
+        public async Task TestThrowsExceptionWhenBeginTransactionWithoutOpen()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {

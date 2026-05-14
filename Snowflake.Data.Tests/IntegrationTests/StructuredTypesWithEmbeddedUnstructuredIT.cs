@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -18,16 +19,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private string ConnectionStringWithHonorSessionTimezone => _fixture.ConnectionString + "HonorSessionTimezone=true;";
 
         [Fact]
-        public void TestSelectAllUnstructuredTypesObject()
+        public async Task TestSelectAllUnstructuredTypesObject()
         {
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
-                    var timeZone = GetTimeZone(connection);
+                    await EnableStructuredTypesAsync(connection);
+                    var timeZone = await GetTimeZoneAsync(connection);
                     var expectedOffset = timeZone.GetUtcOffset(DateTime.Parse("2024-07-11 14:20:05"));
                     var expectedOffsetString = ToOffsetString(expectedOffset);
                     var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT(
@@ -75,7 +76,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     ), '2024-07-11 14:20:05'::TIMESTAMP_LTZ";
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -108,16 +109,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestSelectAllUnstructuredTypesObjectIntoNullableFields()
+        public async Task TestSelectAllUnstructuredTypesObjectIntoNullableFields()
         {
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
-                    var timeZone = GetTimeZone(connection);
+                    await EnableStructuredTypesAsync(connection);
+                    var timeZone = await GetTimeZoneAsync(connection);
                     var expectedOffset = timeZone.GetUtcOffset(DateTime.Parse("2024-07-11 14:20:05"));
                     var expectedOffsetString = ToOffsetString(expectedOffset);
                     var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT(
@@ -165,7 +166,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )";
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -198,15 +199,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestSelectNullIntoUnstructuredTypesObject()
+        public async Task TestSelectNullIntoUnstructuredTypesObject()
         {
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection);
+                    await EnableStructuredTypesAsync(connection);
                     var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT_KEEP_NULL(
                         'StringValue', NULL,
                         'CharValue', NULL,
@@ -251,7 +252,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         SemiStructuredValue OBJECT
                     )";
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -285,23 +286,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Theory]
         [MemberData(nameof(DateTimeConversionCases))]
-        public void TestSelectDateTime(string dbValue, string dbType, DateTime? expectedRaw, DateTime expected)
+        public async Task TestSelectDateTime(string dbValue, string dbType, DateTime? expectedRaw, DateTime expected)
         {
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionStringWithHonorSessionTimezone))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
-                    EnableStructuredTypes(connection);
-                    SetTimePrecision(connection, 9);
+                    await EnableStructuredTypesAsync(connection);
+                    await SetTimePrecisionAsync(connection, 9);
                     var rawValueString = $"'{dbValue}'::{dbType}";
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act/assert
@@ -416,23 +417,23 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [Theory]
         [MemberData(nameof(DateTimeOffsetConversionCases))]
-        public void TestSelectDateTimeOffset(string dbValue, string dbType, DateTime? expectedRaw, DateTimeOffset expected)
+        public async Task TestSelectDateTimeOffset(string dbValue, string dbType, DateTime? expectedRaw, DateTimeOffset expected)
         {
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionStringWithHonorSessionTimezone))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
-                    EnableStructuredTypes(connection);
-                    SetTimePrecision(connection, 9);
+                    await EnableStructuredTypesAsync(connection);
+                    await SetTimePrecisionAsync(connection, 9);
                     var rawValueString = $"'{dbValue}'::{dbType}";
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act/assert
@@ -543,12 +544,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
         }
 
-        private TimeZoneInfo GetTimeZone(SnowflakeDbConnection connection)
+        private async Task<TimeZoneInfo> GetTimeZoneAsync(SnowflakeDbConnection connection)
         {
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "show parameters like 'timezone'";
-                var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                 Assert.True(reader.Read());
                 var timeZoneString = reader.GetString(1);
                 return TimeZoneInfoConverter.FindSystemTimeZoneById(timeZoneString);
@@ -565,7 +566,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 : "+" + offsetWithoutSeconds;
         }
 
-        private void SetTimePrecision(SnowflakeDbConnection connection, int precision)
+        private async Task SetTimePrecisionAsync(SnowflakeDbConnection connection, int precision)
         {
             using (var command = connection.CreateCommand())
             {

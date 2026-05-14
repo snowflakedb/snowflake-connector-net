@@ -1,11 +1,12 @@
 using System;
+using System.Threading.Tasks;
 using Xunit;
 using System.Data;
 using System.Data.Common;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    sealed class SFDbFactoryIT : SFBaseTestAsync, IDisposable
+    public sealed class SFDbFactoryIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         DbProviderFactory _factory;
@@ -37,19 +38,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Fact]
-        public void TestSimpleDbFactory()
+        public async Task TestSimpleDbFactory()
         {
             // set commnad's connection object
             _command.Connection = _connection;
             _command.CommandText = "select 1";
 
-            object res = _command.ExecuteScalar();
+            object res = await _command.ExecuteScalarAsync();
 
             Assert.Equal(1, res);
         }
 
         [Fact]
-        public void TestDbFactoryWithParameter()
+        public async Task TestDbFactoryWithParameter()
         {
             int expectedIntValue = 1;
 
@@ -63,31 +64,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _command.Connection = _connection;
             _command.CommandText = "select ?";
 
-            var result = _command.ExecuteScalar();
+            var result = await _command.ExecuteScalarAsync();
 
             Assert.Equal(expectedIntValue, result);
         }
 
         [Fact]
-        public void TestDbFactoryWithConnectionStringBuilder()
+        public async Task TestDbFactoryWithConnectionStringBuilder()
         {
             DbConnectionStringBuilder builder = _factory.CreateConnectionStringBuilder();
             builder.ConnectionString = _fixture.ConnectionString;
 
             _connection.ConnectionString = builder.ConnectionString;
-            _connection.Open();
+            await _connection.OpenAsync();
 
             // set command's connection object
             _command.Connection = _connection;
             _command.CommandText = "select 1";
 
-            var result = _command.ExecuteScalar();
+            var result = await _command.ExecuteScalarAsync();
 
             Assert.Equal(1, result);
         }
 
         [Fact]
-        public void TestDbFactoryWithCommandBuilderAndAdapter()
+        public async Task TestDbFactoryWithCommandBuilderAndAdapter()
         {
             // set command's connection object
             _command.Connection = _connection;
