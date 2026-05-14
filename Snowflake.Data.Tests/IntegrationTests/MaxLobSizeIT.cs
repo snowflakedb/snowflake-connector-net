@@ -296,7 +296,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
-                PutFile(conn);
+                await PutFile(conn);
                 await CopyIntoTableAsync(conn);
                 await GetFileAsync(conn);
             }
@@ -355,7 +355,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             t_filesToDelete.Value.Add(t_outputFilePath.Value);
         }
 
-        void PutFile(SnowflakeDbConnection conn)
+        async Task PutFile(SnowflakeDbConnection conn)
         {
             using (var command = conn.CreateCommand())
             {
@@ -366,7 +366,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = command.ExecuteReader();
 
                 // assert
-                Assert.True(reader.Read());
+                Assert.True(await reader.ReadAsync());
                 Assert.Equal(ResultStatus.UPLOADED.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
             }
@@ -389,7 +389,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = await command.ExecuteReaderAsync();
 
                 // assert
-                Assert.True(reader.Read());
+                Assert.True(await reader.ReadAsync());
                 AssertOnColData(reader, 0);
                 AssertOnColData(reader, 1);
                 AssertOnColData(reader, 2);
@@ -412,10 +412,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.CommandText = $"GET @%{t_tableName.Value}/{t_fileName.Value} file://{_outputDirectory}";
 
                 // act
-                var reader = await command.ExecuteReaderAsync();
+                var reader = command.ExecuteReader();
 
                 // assert
-                Assert.True(reader.Read());
+                Assert.True(await reader.ReadAsync());
                 Assert.Equal(ResultStatus.DOWNLOADED.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
 

@@ -19,6 +19,7 @@ using TaskOrValueTask = System.Threading.Tasks.Task;
 namespace Snowflake.Data.Tests
 {
     // todo tests all ITs call start end?
+    // TODO pass around cancellationtoken
     public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>
     {
         protected CancellationToken CancellationToken;
