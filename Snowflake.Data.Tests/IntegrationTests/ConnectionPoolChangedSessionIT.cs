@@ -9,6 +9,15 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
+    [CollectionDefinition(nameof(ConnectionPoolChangedSessionCollection), DisableParallelization = true)]
+    public sealed class ConnectionPoolChangedSessionCollection : ICollectionFixture<ConnectionPoolChangedSessionCollection.Fixture>
+    {
+        public class Fixture
+        {
+        }
+    }
+
+    [Collection(nameof(ConnectionPoolChangedSessionCollection))]
     public sealed class ConnectionPoolChangedSessionITFixture : IDisposable
     {
         private readonly PoolConfig _previousPoolConfigRestorer;
@@ -25,6 +34,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
     }
 
+    [Collection(nameof(ConnectionPoolChangedSessionCollection))]
     public class ConnectionPoolChangedSessionIT : SFBaseTestAsync, IClassFixture<ConnectionPoolChangedSessionITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;

@@ -6,11 +6,19 @@ using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
-using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
+    [CollectionDefinition(nameof(ConnectionSinglePoolCacheAsyncCollection))]
+    public sealed class ConnectionSinglePoolCacheAsyncCollection : ICollectionFixture<ConnectionSinglePoolCacheAsyncCollection.Fixture>
+    {
+        public class Fixture
+        {
+        }
+    }
+
+    [Collection(nameof(ConnectionSinglePoolCacheAsyncCollection))]
     public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;

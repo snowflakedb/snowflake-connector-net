@@ -45,14 +45,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connection = new SnowflakeDbConnection(_fixture.ConnectionString + "minPoolSize=1;poolingEnabled=true");
 
             // act
-            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await connection.OpenAsync(CancellationToken.None);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             // cleanup
-            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            await connection.CloseAsync(CancellationToken.None);
         }
 
         [SFFact]
@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // act
             try
             {
-                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+                await connection.OpenAsync(CancellationToken.None);
                 Assert.Fail("OpenAsync should fail for invalid connection string");
             }
             catch { }
@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.ConnectionString = _fixture.ConnectionString + "application=TestMinPoolSizeAsync;minPoolSize=3;poolingEnabled=true";
 
             // act
-            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await connection.OpenAsync(CancellationToken.None);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(3, pool.GetCurrentPoolSize());
 
             // cleanup
-            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            await connection.CloseAsync(CancellationToken.None);
         }
 
         [SFFact]
@@ -147,14 +147,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             var connectionString = _fixture.ConnectionString + "minPoolSize=0;poolingEnabled=true";
             var connection = new SnowflakeDbConnection(connectionString);
-            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await connection.OpenAsync(CancellationToken.None);
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             // act
             connection.PreventPooling();
-            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-
+            await connection.CloseAsync(CancellationToken.None);
             // assert
             Assert.Equal(0, pool.GetCurrentPoolSize());
         }
@@ -171,12 +170,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(0, pool.GetCurrentPoolSize());
             var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object);
             connection.ConnectionString = connectionString;
-            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await connection.OpenAsync(CancellationToken.None);
             await connection.BeginTransactionAsync();
             Assert.Equal(true, connection.HasActiveExplicitTransaction());
 
             // act
-            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            await connection.CloseAsync(CancellationToken.None);
 
             // assert
             Assert.Equal(0, pool.GetCurrentPoolSize());

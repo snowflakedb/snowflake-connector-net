@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.Equal(1, reader.GetInt32(0));
                 Assert.Equal(1, reader.GetInt16(0));
                 Assert.Equal(1, reader.GetByte(0));
-                Assert.Equal(1, reader.GetValue(0));
+                Assert.Equal(1L, reader.GetValue(0));
                 Assert.False(reader.Read());
 
                 Assert.True(reader.NextResult());
@@ -409,12 +409,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(-1, reader.RecordsAffected);
 
                     // result of create
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of explain
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     // server used to return query type of explain as select
                     // but now it could be a specific type of explain
@@ -422,37 +422,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                   (reader.RecordsAffected == -1));
 
                     // result of show
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of insert
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(1, reader.RecordsAffected);
 
                     // result of describe
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of list
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.False(reader.HasRows); // no files staged for table t1
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of remove
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.False(reader.HasRows); // no files staged for table t1
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of create
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of call
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     // The server behaivor is inconsistant for now, some of
                     // them returns procedure call as select while some of
@@ -461,12 +461,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                   (reader.RecordsAffected == -1));
 
                     // result of use
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
-                    Assert.False(reader.NextResult());
-                    reader.Close();
+                    Assert.False(await reader.NextResultAsync());
+                    await reader.CloseAsync();
                 }
 
                 await conn.CloseAsync();
