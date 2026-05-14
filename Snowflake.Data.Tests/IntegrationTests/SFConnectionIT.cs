@@ -230,6 +230,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestConnectString()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             var schemaName = "dlSchema_" + Guid.NewGuid().ToString().Replace("-", "_");
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = _fixture.ConnectionString;
@@ -245,10 +246,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = $"use schema \"{schemaName}\"";
                 cmd.ExecuteNonQuery();
                 //cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
-                cmd.CommandText = $"create table {_fixture.TableName} (col1 string, col2 int)";
+                cmd.CommandText = $"create table {tableName} (col1 string, col2 int)";
                 cmd.ExecuteNonQuery();
                 //cmd.CommandText = "insert into \"dlTest\".\"dlSchema\".test1 Values ('test 1', 1);";
-                cmd.CommandText = $"insert into {_fixture.TableName} Values ('test 1', 1);";
+                cmd.CommandText = $"insert into {tableName} Values ('test 1', 1);";
                 cmd.ExecuteNonQuery();
             }
 
@@ -273,7 +274,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await conn1.OpenAsync(CancellationToken.None);
                 using (IDbCommand cmd = conn1.CreateCommand())
                 {
-                    cmd.CommandText = $"SELECT count(*) FROM {_fixture.TableName}";
+                    cmd.CommandText = $"SELECT count(*) FROM {tableName}";
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.True(reader.Read());
                     Assert.Equal(1, reader.GetInt32(0));
@@ -738,14 +739,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestConnectionDispose()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 await conn.OpenAsync(CancellationToken.None);
-                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "c INT" });
+                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" });
                 var t1 = await conn.BeginTransactionAsync();
                 var t1c1 = conn.CreateCommand();
                 t1c1.Transaction = t1;
-                t1c1.CommandText = $"insert into {_fixture.TableName} values (1)";
+                t1c1.CommandText = $"insert into {tableName} values (1)";
                 await t1c1.ExecuteNonQueryAsync();
             }
 
@@ -756,7 +758,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None);
                 var command = conn.CreateCommand();
-                command.CommandText = $"SELECT * FROM {_fixture.TableName}";
+                command.CommandText = $"SELECT * FROM {tableName}";
                 IDataReader reader = await command.ExecuteReaderAsync();
                 Assert.False(reader.Read());
             }

@@ -33,6 +33,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestSelectIntVectorFromTable()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
@@ -41,21 +42,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (DbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = $"CREATE OR REPLACE TABLE {_fixture.TableName} (a VECTOR(INT, 3));";
+                    command.CommandText = $"CREATE OR REPLACE TABLE {tableName} (a VECTOR(INT, 3));";
                     await command.ExecuteNonQueryAsync();
-                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [1,2,3]::VECTOR(INT,3);";
+                    command.CommandText = $"INSERT INTO {tableName} SELECT [1,2,3]::VECTOR(INT,3);";
                     await command.ExecuteNonQueryAsync();
-                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [4,5,6]::VECTOR(INT,3);";
+                    command.CommandText = $"INSERT INTO {tableName} SELECT [4,5,6]::VECTOR(INT,3);";
                     await command.ExecuteNonQueryAsync();
-                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [7,8,9]::VECTOR(INT,3);";
+                    command.CommandText = $"INSERT INTO {tableName} SELECT [7,8,9]::VECTOR(INT,3);";
                     await command.ExecuteNonQueryAsync();
 
-                    command.CommandText = $"SELECT COUNT(*) FROM {_fixture.TableName};";
+                    command.CommandText = $"SELECT COUNT(*) FROM {tableName};";
                     var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
                     Assert.Equal(3, reader.GetInt16(0));
 
-                    command.CommandText = $"SELECT * FROM {_fixture.TableName};";
+                    command.CommandText = $"SELECT * FROM {tableName};";
                     reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
 
                     Assert.True(reader.Read());
@@ -79,7 +80,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(8, arr[1]);
                     Assert.Equal(9, arr[2]);
 
-                    command.CommandText = $"DROP TABLE IF EXISTS {_fixture.TableName};";
+                    command.CommandText = $"DROP TABLE IF EXISTS {tableName};";
                     await command.ExecuteNonQueryAsync();
                 }
             }
@@ -88,6 +89,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestSelectFloatVectorFromTable()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
@@ -96,21 +98,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (DbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = $"CREATE OR REPLACE TABLE {_fixture.TableName} (a VECTOR(FLOAT, 3));";
+                    command.CommandText = $"CREATE OR REPLACE TABLE {tableName} (a VECTOR(FLOAT, 3));";
                     await command.ExecuteNonQueryAsync();
-                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [1.1,2.2,3.3]::VECTOR(FLOAT,3);";
+                    command.CommandText = $"INSERT INTO {tableName} SELECT [1.1,2.2,3.3]::VECTOR(FLOAT,3);";
                     await command.ExecuteNonQueryAsync();
-                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [4.4,5.5,6.6]::VECTOR(FLOAT,3);";
+                    command.CommandText = $"INSERT INTO {tableName} SELECT [4.4,5.5,6.6]::VECTOR(FLOAT,3);";
                     await command.ExecuteNonQueryAsync();
-                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT [7.7,8.8,9.9]::VECTOR(FLOAT,3);";
+                    command.CommandText = $"INSERT INTO {tableName} SELECT [7.7,8.8,9.9]::VECTOR(FLOAT,3);";
                     await command.ExecuteNonQueryAsync();
 
-                    command.CommandText = $"SELECT COUNT(*) FROM {_fixture.TableName};";
+                    command.CommandText = $"SELECT COUNT(*) FROM {tableName};";
                     var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
                     Assert.Equal(3, reader.GetInt16(0));
 
-                    command.CommandText = $"SELECT * FROM {_fixture.TableName};";
+                    command.CommandText = $"SELECT * FROM {tableName};";
                     reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
 
                     Assert.True(reader.Read());
@@ -134,7 +136,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(8.8f, arr[1]);
                     Assert.Equal(9.9f, arr[2]);
 
-                    command.CommandText = $"DROP TABLE IF EXISTS {_fixture.TableName};";
+                    command.CommandText = $"DROP TABLE IF EXISTS {tableName};";
                     await command.ExecuteNonQueryAsync();
                 }
             }

@@ -546,15 +546,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [Fact(Skip = "This test case takes too much time so run it manually")]
         public async Task TestRowsAffectedOverflowInt()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
             {
                 await conn.OpenAsync(CancellationToken.None);
 
-                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "c1 NUMBER" });
+                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c1 NUMBER" });
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = $"INSERT INTO {_fixture.TableName} SELECT SEQ4() FROM TABLE(GENERATOR(ROWCOUNT=>2147484000))";
+                    command.CommandText = $"INSERT INTO {tableName} SELECT SEQ4() FROM TABLE(GENERATOR(ROWCOUNT=>2147484000))";
                     int affected = command.ExecuteNonQuery();
 
                     Assert.Equal(-1, affected);
@@ -855,6 +856,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestTransaction()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
@@ -863,7 +865,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 try
                 {
-                    conn.BeginTransaction(IsolationLevel.ReadUncommitted);
+                    await conn.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
                     Assert.Fail();
                 }
                 catch (SnowflakeDbException e)
@@ -871,16 +873,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(270009, e.ErrorCode);
                 }
 
-                IDbTransaction tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);
+                IDbTransaction tran = await conn.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
                 IDbCommand command = conn.CreateCommand();
                 command.Transaction = tran;
-                command.CommandText = $"create or replace table {_fixture.TableName}(cola string)";
+                command.CommandText = $"create or replace table {tableName}(cola string)";
                 command.ExecuteNonQuery();
                 command.Transaction.Commit();
-                _fixture.AddTableToRemoveList(_fixture.TableName);
+                _fixture.AddTableToRemoveList(tableName);
 
-                command.CommandText = $"show tables like '{_fixture.TableName}'";
+                command.CommandText = $"show tables like '{tableName}'";
                 IDataReader reader = command.ExecuteReader();
                 Assert.True(reader.Read());
                 Assert.False(reader.Read());
@@ -888,17 +890,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // start another transaction to test rollback
                 tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);
                 command.Transaction = tran;
-                command.CommandText = $"insert into {_fixture.TableName} values('test')";
+                command.CommandText = $"insert into {tableName} values('test')";
 
                 command.ExecuteNonQuery();
-                command.CommandText = $"select * from {_fixture.TableName}";
+                command.CommandText = $"select * from {tableName}";
                 reader = command.ExecuteReader();
                 Assert.True(reader.Read());
                 Assert.Equal("test", reader.GetString(0));
                 command.Transaction.Rollback();
 
                 // no value will be in table since it has been rollbacked
-                command.CommandText = $"select * from {_fixture.TableName}";
+                command.CommandText = $"select * from {tableName}";
                 reader = command.ExecuteReader();
                 Assert.False(reader.Read());
 
@@ -909,14 +911,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestRowsAffected()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             String[] testCommands =
             {
-                $"create or replace table {_fixture.TableName}(cola int, colb string)",
-                $"insert into {_fixture.TableName} values(1, 'a'),(2, 'b')",
-                $"merge into {_fixture.TableName} using (select 1 as cola, 'c' as colb) m on " +
-                $"{_fixture.TableName}.cola = m.cola when matched then update set {_fixture.TableName}.colb='update' " +
+                $"create or replace table {tableName}(cola int, colb string)",
+                $"insert into {tableName} values(1, 'a'),(2, 'b')",
+                $"merge into {tableName} using (select 1 as cola, 'c' as colb) m on " +
+                $"{tableName}.cola = m.cola when matched then update set {tableName}.colb='update' " +
                 "when not matched then insert (cola, colb) values (3, 'd')",
-                $"drop table if exists {_fixture.TableName}"
+                $"drop table if exists {tableName}"
             };
 
             int[] expectedResult =
@@ -1019,6 +1022,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestRowsAffectedUnload()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
@@ -1026,9 +1030,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
-                    _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "c1 NUMBER" });
+                    _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c1 NUMBER" });
 
-                    command.CommandText = $"insert into {_fixture.TableName} values(1), (2), (3), (4), (5), (6)";
+                    command.CommandText = $"insert into {tableName} values(1), (2), (3), (4), (5), (6)";
                     command.ExecuteNonQuery();
 
                     command.CommandText = "drop stage if exists my_unload_stage";
@@ -1037,7 +1041,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = "create stage if not exists my_unload_stage";
                     command.ExecuteNonQuery();
 
-                    command.CommandText = $"copy into @my_unload_stage/unload/ from {_fixture.TableName};";
+                    command.CommandText = $"copy into @my_unload_stage/unload/ from {tableName};";
                     int affected = command.ExecuteNonQuery();
 
                     Assert.Equal(6, affected);
@@ -1052,7 +1056,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public void testPutArrayBindAsync()
         {
-            ArrayBindTest(_fixture.ConnectionString + "poolingEnabled=false", _fixture.TableName, 7500);
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+            ArrayBindTest(_fixture.ConnectionString + "poolingEnabled=false", tableName, 7500);
         }
 
         private async Task ArrayBindTest(string connstr, string tableName, int size)
@@ -1192,8 +1197,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestPutArrayBindAsyncMultiThreading()
         {
-            var t1TableName = _fixture.TableName + 1;
-            var t2TableName = _fixture.TableName + 2;
+            var t1TableName = _fixture.TableNameBaseName + "1" + Guid.NewGuid().ToString("N");
+            var t2TableName = _fixture.TableNameBaseName + "2" + Guid.NewGuid().ToString("N");
 
             Thread t1 = new Thread(() => ThreadProcess1(_fixture.ConnectionString + "poolingEnabled=false", t1TableName));
             Thread t2 = new Thread(() => ThreadProcess2(_fixture.ConnectionString + "poolingEnabled=false", t2TableName));
@@ -1231,17 +1236,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task testExecuteScalarAsyncSelect()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             CancellationTokenSource externalCancel = new CancellationTokenSource();
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None);
 
-                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola INTEGER" });
+                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola INTEGER" });
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {_fixture.TableName} values (?)";
+                    string insertCommand = $"insert into {tableName} values (?)";
                     cmd.CommandText = insertCommand;
                     int total = 1000;
 
@@ -1257,7 +1263,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p1);
                     await cmd.ExecuteNonQueryAsync();
 
-                    cmd.CommandText = $"SELECT COUNT(*) FROM {_fixture.TableName}";
+                    cmd.CommandText = $"SELECT COUNT(*) FROM {tableName}";
                     var result = await cmd.ExecuteScalarAsync(externalCancel.Token);
 
                     Assert.Equal((long)total, result);
@@ -1713,6 +1719,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestExecuteNonQueryReturnsCorrectRowCountForUploadWithMultipleFiles()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             const int NumberOfFiles = 5;
             const int NumberOfRows = 3;
             const int ExpectedRowCount = NumberOfFiles * NumberOfRows;
@@ -1735,12 +1742,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             File.WriteAllText(Path.Combine(tempFolder, $"{GetType().Name}_{i}.csv"), data);
                         }
-                        _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "COL1 STRING" });
-                        cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{_fixture.TableName} AUTO_COMPRESS=FALSE";
+                        _fixture.CreateOrReplaceTable(conn, tableName, new[] { "COL1 STRING" });
+                        cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{tableName} AUTO_COMPRESS=FALSE";
                         var reader = cmd.ExecuteReader();
 
                         // Act
-                        cmd.CommandText = $"COPY INTO {_fixture.TableName} FROM @%{_fixture.TableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
+                        cmd.CommandText = $"COPY INTO {tableName} FROM @%{tableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
                         int actualRowCount = await cmd.ExecuteNonQueryAsync();
 
                         // Assert
@@ -1757,6 +1764,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestExecuteNonQueryAsyncReturnsCorrectRowCountForUploadWithMultipleFiles()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             const int NumberOfFiles = 5;
             const int NumberOfRows = 3;
             const int ExpectedRowCount = NumberOfFiles * NumberOfRows;
@@ -1779,12 +1787,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             File.WriteAllText(Path.Combine(tempFolder, $"{GetType().Name}_{i}.csv"), data);
                         }
-                        _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "COL1 STRING" });
-                        cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{_fixture.TableName} AUTO_COMPRESS=FALSE";
+                        _fixture.CreateOrReplaceTable(conn, tableName, new[] { "COL1 STRING" });
+                        cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{tableName} AUTO_COMPRESS=FALSE";
                         var reader = cmd.ExecuteReader();
 
                         // Act
-                        cmd.CommandText = $"COPY INTO {_fixture.TableName} FROM @%{_fixture.TableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
+                        cmd.CommandText = $"COPY INTO {tableName} FROM @%{tableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
                         int actualRowCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                         // Assert

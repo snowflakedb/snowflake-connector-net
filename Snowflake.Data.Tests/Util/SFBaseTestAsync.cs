@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringJwtContentFmt = ";authenticator=snowflake_jwt;user={0};private_key={1};";
 
         public string TestName => $"{GetType().Name}";
-        public string TableName => TestName; // todo naming
+        public string TableNameBaseName => TestName; // todo naming
 
         private readonly Stopwatch _stopwatch;
         private readonly ConcurrentStack<string> _tablesToRemove;

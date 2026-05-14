@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None);
 
-                var fixtureTableName = _fixture.TableName + Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
                 _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER",
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 dbConnection.ConnectionString = _fixture.ConnectionString;
                 dbConnection.Open();
-                var fixtureTableName = _fixture.TableName + Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
                 _fixture.CreateOrReplaceTable(dbConnection, fixtureTableName, new[]
                 {
                     "intData NUMBER",
@@ -217,7 +217,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 dbConnection.ConnectionString = _fixture.ConnectionString;
                 dbConnection.Open();
 
-                var fixtureTableName = _fixture.TableName + Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
                 _fixture.CreateOrReplaceTable(dbConnection, fixtureTableName, new[]
                 {
                     "intData NUMBER",
@@ -392,7 +392,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             };
                         }
 
-                        var fixtureTableName = _fixture.TableName + Guid.NewGuid().ToString("N");
+                        var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
                         _fixture.CreateOrReplaceTable(dbConnection, fixtureTableName, columns);
 
                         using (IDbCommand command = dbConnection.CreateCommand())
@@ -548,7 +548,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None);
 
-                var fixtureTableName = _fixture.TableName + System.Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName + System.Guid.NewGuid().ToString("N");
                 _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER",
@@ -683,7 +683,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 await conn.OpenAsync(CancellationToken.None);
 
-                var fixtureTableName = _fixture.TableName +  Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName +  Guid.NewGuid().ToString("N");
                 _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola REAL",
@@ -753,7 +753,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None);
 
-                var fixtureTableName = _fixture.TableName +  Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName +  Guid.NewGuid().ToString("N");
                 _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER"
@@ -797,7 +797,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None);
 
-                var fixtureTableName = _fixture.TableName + Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
                 _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER",
@@ -830,7 +830,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None);
 
-                var fixtureTableName = _fixture.TableName + Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
                 _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER",
@@ -946,7 +946,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     sql_values += ",?";
                 }
 
-                var fixtureTableName = _fixture.TableName + Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
                 _fixture.CreateOrReplaceTable(conn,
                     fixtureTableName,
                     tableType.TableDDLCreationPrefix(),
