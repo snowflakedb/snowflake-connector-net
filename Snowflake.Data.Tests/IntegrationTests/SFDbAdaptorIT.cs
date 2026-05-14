@@ -55,8 +55,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await conn.CloseAsync(CancellationToken.None);
             }
             Assert.Equal(ds.Tables[0].TableName, "Table");
-            Assert.Equal(ds.Tables[0].Rows[0].ItemArray[0], 1);
-            Assert.Equal(ds.Tables[0].Rows[0].ItemArray[1], 2);
+            Assert.Equal(ds.Tables[0].Rows[0].ItemArray[0], 1L);
+            Assert.Equal(ds.Tables[0].Rows[0].ItemArray[1], 2L);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {

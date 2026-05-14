@@ -12,6 +12,14 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
+    [CollectionDefinition(nameof(ConnectionMultiplePoolsAsyncITFixture), DisableParallelization = true)]
+    public sealed class ConnectionMultiplePoolsAsyncITFixture : ICollectionFixture<ConnectionMultiplePoolsAsyncITFixture.Fixture>
+    {
+        public sealed class Fixture
+        { }
+    }
+
+    [CollectionDefinition(nameof(ConnectionMultiplePoolsAsyncITFixture))]
     public sealed class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
@@ -78,7 +86,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.ConnectionString = connStr;
                 // call openAsync but do not wait and destroy it direct
                 // so the session is initialized with empty token
-                connection.OpenAsync(CancellationToken.None);
+                _ = connection.OpenAsync(CancellationToken.None);
             }
 
             // use the same connection string to make a new connection
@@ -94,9 +102,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 try
                 {
-                    using (var reader = command.ExecuteReader())
+                    using (var reader = await command.ExecuteReaderAsync())
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync())
                         {
                             for (int i = 0; i < reader.FieldCount; i++)
                             {

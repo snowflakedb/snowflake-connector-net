@@ -376,13 +376,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     await conn.OpenAsync(CancellationToken.None);
                     Assert.Fail();
                 }
-                catch (AggregateException e)
+                catch (SnowflakeDbException e)
                 {
-                    // Jitter can cause the request to reach max number of retries before reaching the timeout
-                    Assert.True(e.InnerException is TaskCanceledException ||
-                        SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
-                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    Assert.True(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode == e.ErrorCode);
                 }
+
                 stopwatch.Stop();
                 int delta = 15; // in case server time slower.
 

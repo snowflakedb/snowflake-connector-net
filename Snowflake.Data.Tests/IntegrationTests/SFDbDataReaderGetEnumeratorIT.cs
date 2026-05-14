@@ -118,14 +118,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 string selectCommandText = $"select * from {tableName} WHERE cola > 10";
                 var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = await selectCmd.ExecuteReaderAsync() as DbDataReader;
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync();
 
                 foreach (var record in reader)
                 {
                     Assert.Fail("Should not enter when results is empty");
                 }
 
-                reader.Close();
+                await reader.CloseAsync();
                 await DropTestTableAndCloseConnectionAsync(conn, tableName);
             }
         }

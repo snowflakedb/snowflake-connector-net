@@ -100,6 +100,7 @@ namespace Snowflake.Data.Tests
             }
         }
 
+        // TODO async
         public void CreateOrReplaceTable(IDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
         {
             CreateOrReplaceTable(conn, tableName, "", columns, additionalQueryStr);

@@ -125,7 +125,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.Equal(1, reader.GetInt32(0));
                 Assert.Equal(1, reader.GetInt16(0));
                 Assert.Equal(1, reader.GetByte(0));
-                Assert.Equal(1, reader.GetValue(0));
+                Assert.Equal(1L, reader.GetValue(0));
                 Assert.False(await reader.ReadAsync().ConfigureAwait(false));
 
                 Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
@@ -137,7 +137,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.False(await reader.NextResultAsync().ConfigureAwait(false));
                 Assert.False(await reader.ReadAsync().ConfigureAwait(false));
 
-                reader.Close();
+                await reader.CloseAsync();
                 await conn.CloseAsync();
             }
         }

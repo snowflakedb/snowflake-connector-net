@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
-                    await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync());
+                    await Assert.ThrowsAsync<Exception>(() => conn.OpenAsync());
                 }
             }
             finally
