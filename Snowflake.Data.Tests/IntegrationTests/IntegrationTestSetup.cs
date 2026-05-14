@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
@@ -44,7 +45,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = BuildConnectionString(TestConfig);
-                await ((SnowflakeDbConnection)conn).OpenAsync();
+                await ((SnowflakeDbConnection)conn).OpenAsync(CancellationToken.None);
                 var dbCommand = conn.CreateCommand();
 
                 switch (schemaAction)

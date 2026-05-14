@@ -4,6 +4,7 @@ using Snowflake.Data.Tests.Util;
 using Xunit;
 using System.Data;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 
@@ -22,7 +23,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 try
                 {
@@ -62,7 +63,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 finally
                 {
                     SessionParameterAlterer.RestoreResultFormat(conn);
-                    await conn.CloseAsync();
+                    await conn.CloseAsync(CancellationToken.None);
                 }
             }
         }
@@ -79,7 +80,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = _fixture.ConnectionString;
-                    await conn.OpenAsync();
+                    await conn.OpenAsync(CancellationToken.None);
 
                     SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
                     _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "src VARIANT" });
@@ -126,7 +127,7 @@ select parse_json('{{
                     Assert.Equal(500, rowCount);
 
                     SessionParameterAlterer.RestoreResultFormat(conn);
-                    await conn.CloseAsync();
+                    await conn.CloseAsync(CancellationToken.None);
                 }
             }
             finally
@@ -147,7 +148,7 @@ select parse_json('{{
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 try
                 {
@@ -189,7 +190,7 @@ select parse_json('{{
                 {
                     ChunkParserFactory.Instance = previous;
                     SessionParameterAlterer.RestoreResultFormat(conn);
-                    await conn.CloseAsync();
+                    await conn.CloseAsync(CancellationToken.None);
                 }
             }
         }
@@ -209,7 +210,7 @@ select parse_json('{{
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = _fixture.ConnectionString;
-                    await conn.OpenAsync();
+                    await conn.OpenAsync(CancellationToken.None);
 
                     try
                     {
@@ -249,7 +250,7 @@ select parse_json('{{
                     finally
                     {
                         SessionParameterAlterer.RestoreResultFormat(conn);
-                        await conn.CloseAsync();
+                        await conn.CloseAsync(CancellationToken.None);
                     }
                 }
             }

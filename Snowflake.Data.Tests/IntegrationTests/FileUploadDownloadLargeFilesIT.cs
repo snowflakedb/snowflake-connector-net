@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
@@ -60,7 +61,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + "FILE_TRANSFER_MEMORY_THRESHOLD=1048576;";
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 var command = conn.CreateCommand();
                 command.CommandText = $"PUT file://{fullFileName} @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
                 await command.ExecuteNonQueryAsync();
@@ -73,7 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 var command = conn.CreateCommand();
                 command.CommandText = $"GET @~/{remoteFolderName} file://{downloadFolderName} PATTERN='{filePattern}'";
                 await command.ExecuteNonQueryAsync();
@@ -85,7 +86,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 var command = conn.CreateCommand();
                 command.CommandText = $"remove @~/{remoteFolderName};";
                 await command.ExecuteNonQueryAsync();

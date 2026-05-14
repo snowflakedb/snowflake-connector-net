@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.ConnectionString = connStr;
                 // call openAsync but do not wait and destroy it direct
                 // so the session is initialized with empty token
-                connection.OpenAsync();
+                connection.OpenAsync(CancellationToken.None);
             }
 
             // use the same connection string to make a new connection
@@ -94,7 +94,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 connection1.ConnectionString = connStr;
                 // this will not open a new session but get the invalid connection from pool
-                await connection1.OpenAsync();
+                await connection1.OpenAsync(CancellationToken.None);
                 // Now run query with connection1
                 var command = connection1.CreateCommand();
                 command.CommandText = "select 1, 2, 3";
@@ -163,7 +163,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection(connectionString))
                 {
-                    await conn.OpenAsync().ConfigureAwait(false);
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                     using (DbCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = "select 1, 2, 3";
@@ -204,7 +204,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // intentionally not using await so the connection
                     // will be disposed with invalid underlying session
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                    conn.OpenAsync();
+                    conn.OpenAsync(CancellationToken.None);
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 }
 

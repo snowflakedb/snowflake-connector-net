@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.OpenAsync();
+                conn.OpenAsync(CancellationToken.None);
                 using (var command = conn.CreateCommand())
                 {
                     // Drop temp table
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 using (var command = conn.CreateCommand())
                 {
                     // act
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (var command = conn.CreateCommand())
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (var command = conn.CreateCommand())
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (var command = conn.CreateCommand())
@@ -282,7 +282,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 PutFile(conn);

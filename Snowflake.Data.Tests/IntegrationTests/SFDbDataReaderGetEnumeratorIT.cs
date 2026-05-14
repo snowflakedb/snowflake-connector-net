@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Data;
 using System.Globalization;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
@@ -172,7 +173,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private async Task<DbConnection> CreateAndOpenConnectionAsync()
         {
             var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
-            await conn.OpenAsync();
+            await conn.OpenAsync(CancellationToken.None);
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
             return conn;
         }

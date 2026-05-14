@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
@@ -24,7 +25,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection);
@@ -114,7 +115,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection);
@@ -204,7 +205,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection);
@@ -291,7 +292,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionStringWithHonorSessionTimezone))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
@@ -422,7 +423,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionStringWithHonorSessionTimezone))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";

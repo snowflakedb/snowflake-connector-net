@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connection = new SnowflakeDbConnection(_fixture.ConnectionString + "minPoolSize=1;poolingEnabled=true");
 
             // act
-            await connection.OpenAsync().ConfigureAwait(false);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // act
             try
             {
-                await connection.OpenAsync().ConfigureAwait(false);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Fail("OpenAsync should fail for invalid connection string");
             }
             catch { }
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.ConnectionString = connStr;
                 // call openAsync but do not wait and destroy it direct
                 // so the session is initialized with empty token
-                connection.OpenAsync();
+                connection.OpenAsync(CancellationToken.None);
             }
 
             // use the same connection string to make a new connection
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 connection1.ConnectionString = connStr;
                 // this will not open a new session but get the invalid connection from pool
-                await connection1.OpenAsync();
+                await connection1.OpenAsync(CancellationToken.None);
                 // Now run query with connection1
                 var command = connection1.CreateCommand();
                 command.CommandText = "select 1, 2, 3";
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.ConnectionString = _fixture.ConnectionString + "application=TestMinPoolSizeAsync;minPoolSize=3;poolingEnabled=true";
 
             // act
-            await connection.OpenAsync().ConfigureAwait(false);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             var connectionString = _fixture.ConnectionString + "minPoolSize=0;poolingEnabled=true";
             var connection = new SnowflakeDbConnection(connectionString);
-            await connection.OpenAsync().ConfigureAwait(false);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
@@ -163,7 +163,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(0, pool.GetCurrentPoolSize());
             var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object);
             connection.ConnectionString = connectionString;
-            await connection.OpenAsync().ConfigureAwait(false);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             connection.BeginTransaction(); // not using async version because it is not available on .net framework
             Assert.Equal(true, connection.HasActiveExplicitTransaction());
 

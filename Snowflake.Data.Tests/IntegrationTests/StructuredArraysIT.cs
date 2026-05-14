@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -23,7 +24,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -79,7 +80,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -115,7 +116,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -141,7 +142,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 // arrange
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -166,7 +167,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -197,7 +198,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -221,7 +222,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -246,7 +247,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -271,7 +272,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -296,7 +297,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -321,7 +322,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -346,7 +347,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -371,7 +372,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -397,7 +398,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -422,7 +423,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -447,7 +448,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -472,7 +473,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -496,7 +497,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -522,7 +523,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
@@ -551,7 +552,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);

@@ -4,6 +4,7 @@ using Snowflake.Data.Client;
 using System.Data.Common;
 using Snowflake.Data.Core;
 using System;
+using System.Threading;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -35,7 +36,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
@@ -90,7 +91,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
@@ -145,7 +146,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
@@ -170,7 +171,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
@@ -194,7 +195,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
@@ -214,7 +215,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
@@ -234,7 +235,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
@@ -259,7 +260,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
@@ -287,7 +288,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
@@ -312,7 +313,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())
@@ -337,7 +338,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 await AlterSessionSettingsAsync(conn);
 
                 using (DbCommand command = conn.CreateCommand())

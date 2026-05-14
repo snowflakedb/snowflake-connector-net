@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 using (var command = conn.CreateCommand())
                 {
                     // Create temp table
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 using (var command = conn.CreateCommand())
                 {
                     // Drop temp stage
@@ -135,7 +135,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
@@ -160,7 +160,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
@@ -185,7 +185,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
@@ -219,7 +219,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                // await conn.OpenAsync(); // intentionally closed
+                // await conn.OpenAsync(CancellationToken.None); // intentionally closed
                 var snowflakeDbException = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await ProcessFileAsync(command, conn));
                 Assert.NotNull(snowflakeDbException);
                 Assert.Null(snowflakeDbException.QueryId);
@@ -236,7 +236,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 var sql = $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
                 using (var command = conn.CreateCommand())
                 {
@@ -256,7 +256,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
                 Assert.NotNull(snowflakeDbException);
                 Assert.NotNull(snowflakeDbException.QueryId);
@@ -275,7 +275,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
                 var queryId = snowflakeDbException.QueryId;
 
@@ -297,7 +297,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
                 var queryId = snowflakeDbException.QueryId;
 
@@ -321,7 +321,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Act
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 var queryId = PutFile(conn);
 
                 // Assert
@@ -346,7 +346,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
@@ -369,7 +369,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
@@ -389,7 +389,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn, expectedStatus: ResultStatus.UPLOADED);
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
                 PutFile(conn, expectedStatus: ResultStatus.SKIPPED);
@@ -409,7 +409,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
                 PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
@@ -438,7 +438,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
@@ -466,7 +466,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
@@ -494,7 +494,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 VerifyFilesAreUploaded(conn, files, t_internalStagePath);
             }
@@ -511,7 +511,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 await CopyIntoTableAsync(conn);
                 await GetFileAsync(conn);
@@ -528,7 +528,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn);
                 await CopyIntoTableAsync(conn);
                 await GetFileAsync(conn);
@@ -546,7 +546,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + ";GCS_USE_DOWNSCOPED_CREDENTIAL=true"))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 PutFile(conn);
                 await CopyIntoTableAsync(conn);
@@ -562,7 +562,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await PrepareTestAsync(null, stageType, stagePath, false, true, true);
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
                 PutFile(conn, "", ResultStatus.UPLOADED, true);
                 await CopyIntoTableAsync(conn, true);
                 await GetFileAsync(conn, true);

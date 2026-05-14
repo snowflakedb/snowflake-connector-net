@@ -1,3 +1,5 @@
+using System.Threading;
+
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     using Xunit;
@@ -16,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 using (DbCommand command = conn.CreateCommand())
                 {

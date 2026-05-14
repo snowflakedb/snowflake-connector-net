@@ -19,16 +19,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
     }
 
-    public class SingleConnectionCacheConnectionPoolCommonIT : ConnectionPoolCommonIT
+    public class ConnectionPoolCommonSingleConnectionCacheIT : ConnectionPoolCommonIT
     {
-        public SingleConnectionCacheConnectionPoolCommonIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
+        public ConnectionPoolCommonSingleConnectionCacheIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
             : base(fixture, envFixture, ConnectionPoolType.SingleConnectionCache)
         { }
     }
 
-    public class MultipleConnectionPoolCommonIT : ConnectionPoolCommonIT
+    public class ConnctionPoolCommonMultipleConnectionIT : ConnectionPoolCommonIT
     {
-        public MultipleConnectionPoolCommonIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
+        public ConnctionPoolCommonMultipleConnectionIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
             : base(fixture, envFixture, ConnectionPoolType.MultipleConnectionPool)
         { }
     }
@@ -79,8 +79,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = connstr;
-            await conn1.OpenAsync();
-            await conn1.CloseAsync();
+            await conn1.OpenAsync(CancellationToken.None);
+            await conn1.CloseAsync(CancellationToken.None);
             await Task.Delay(1000);
             Assert.Equal(ConnectionState.Closed, conn1.State);
         }
@@ -89,14 +89,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = connstr;
-            await conn1.OpenAsync();
+            await conn1.OpenAsync(CancellationToken.None);
 
             await Task.Delay(1000);
             SFStatement statement = new SFStatement(conn1.SfSession);
             SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
             Assert.Equal(true, resultSet.Next());
             Assert.Equal("1", resultSet.GetString(0));
-            await conn1.CloseAsync();
+            await conn1.CloseAsync(CancellationToken.None);
         }
 
         [Fact]
@@ -108,8 +108,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             var conn1 = new SnowflakeDbConnection();
             conn1.ConnectionString = "bad connection string";
-            await Assert.ThrowsAsync<SnowflakeDbException>(() => conn1.OpenAsync());
-            await conn1.CloseAsync();
+            await Assert.ThrowsAsync<SnowflakeDbException>(() => conn1.OpenAsync(CancellationToken.None));
+            await conn1.CloseAsync(CancellationToken.None);
 
             Assert.Equal(ConnectionState.Closed, conn1.State);
             if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             object firstOpenedSessionId;
             using (var connection = new SnowflakeDbConnection(connectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 firstOpenedSessionId = connection.SfSession.sessionId;
                 await connection.BeginTransactionAsync();
                 Assert.Equal(true, connection.HasActiveExplicitTransaction());
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var connectionWithSessionReused = new SnowflakeDbConnection(connectionString))
             {
-                await connectionWithSessionReused.OpenAsync();
+                await connectionWithSessionReused.OpenAsync(CancellationToken.None);
 
                 Assert.Equal(firstOpenedSessionId, connectionWithSessionReused.SfSession.sessionId);
                 Assert.Equal(false, connectionWithSessionReused.HasActiveExplicitTransaction());
@@ -179,7 +179,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connectionString = SetPoolWithOneElement();
             using (var connection = new SnowflakeDbConnection(connectionString))
             {
-                await connection.OpenAsync();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "BEGIN"; // in general can be put as a part of a multi statement call and mixed with commit as well
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             string firstOpenedSessionId;
             using (var connection1 = new SnowflakeDbConnection(connectionString))
             {
-                await connection1.OpenAsync();
+                await connection1.OpenAsync(CancellationToken.None);
                 Assert.Equal(ExpectedPoolCountAfterOpen(), SnowflakeDbConnectionPool.GetCurrentPoolSize());
                 connection1.BeginTransaction();
                 Assert.Equal(true, connection1.HasActiveExplicitTransaction());
@@ -213,7 +213,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var connection2 = new SnowflakeDbConnection(connectionString))
             {
-                await connection2.OpenAsync();
+                await connection2.OpenAsync(CancellationToken.None);
                 Assert.Equal(ExpectedPoolCountAfterOpen(), SnowflakeDbConnectionPool.GetCurrentPoolSize());
                 Assert.Equal(false, connection2.HasActiveExplicitTransaction());
                 using (var command = connection2.CreateCommand())

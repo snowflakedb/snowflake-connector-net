@@ -13,6 +13,7 @@ using Snowflake.Data.Core;
 using System.Text;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Threading;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -31,7 +32,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -60,7 +61,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(3, count);
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync(CancellationToken.None);
             }
         }
 
@@ -485,7 +486,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 using (IDbCommand cmd = conn.CreateCommand())
                 {
@@ -531,7 +532,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(0, cmd.Parameters.Count);
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync(CancellationToken.None);
             }
         }
 
@@ -541,7 +542,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -661,7 +662,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.True(reader.Read());
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync(CancellationToken.None);
             }
         }
 
@@ -675,7 +676,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -734,7 +735,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.True(reader.Read());
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync(CancellationToken.None);
             }
         }
 
@@ -744,7 +745,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -776,7 +777,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     IDataReader reader = cmd.ExecuteReader();
                     Assert.True(reader.Read());
                 }
-                await conn.CloseAsync();
+                await conn.CloseAsync(CancellationToken.None);
             }
         }
 
@@ -787,7 +788,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -808,7 +809,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(1, count);
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync(CancellationToken.None);
             }
         }
 
@@ -819,7 +820,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
                 {
@@ -840,7 +841,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(3, count);
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync(CancellationToken.None);
             }
         }
 
@@ -917,7 +918,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
             {
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 conn.ExecuteNonQuery($"alter session set DOTNET_QUERY_RESULT_FORMAT = {resultFormat}");
                 if (!timeZone.IsNullOrEmpty()) // Driver ignores this setting and relies on local environment timezone

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Xunit;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -76,7 +77,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             builder.ConnectionString = _fixture.ConnectionString;
 
             _connection.ConnectionString = builder.ConnectionString;
-            await _connection.OpenAsync();
+            await _connection.OpenAsync(CancellationToken.None);
 
             // set command's connection object
             _command.Connection = _connection;

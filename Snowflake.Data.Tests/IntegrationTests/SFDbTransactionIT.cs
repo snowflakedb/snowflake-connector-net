@@ -1,3 +1,5 @@
+using System.Threading;
+
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     using System.Data;
@@ -19,7 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // Arrange
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 // Act
                 using (IDbTransaction t1 = conn.BeginTransaction())
@@ -37,7 +39,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // Arrange
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 // Act
                 using (IDbTransaction t1 = conn.BeginTransaction())
@@ -55,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "c INT" });
 
@@ -81,7 +83,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = _fixture.ConnectionString;
-            await conn.OpenAsync();
+            await conn.OpenAsync(CancellationToken.None);
 
             _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
             {
@@ -123,7 +125,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             Assert.Equal(row, 4);
 
-            await conn.CloseAsync();
+            await conn.CloseAsync(CancellationToken.None);
         }
 
         [Fact]
@@ -132,7 +134,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = _fixture.ConnectionString;
-            await conn.OpenAsync();
+            await conn.OpenAsync(CancellationToken.None);
 
             _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[]
             {
@@ -172,7 +174,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             Assert.Equal(row, 3);
 
-            await conn.CloseAsync();
+            await conn.CloseAsync(CancellationToken.None);
         }
 
         [Fact]

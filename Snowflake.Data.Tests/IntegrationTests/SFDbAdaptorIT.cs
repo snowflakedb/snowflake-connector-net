@@ -4,6 +4,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Client;
     using System.Data;
     using System.Runtime.InteropServices;
+    using System.Threading;
     using System.Threading.Tasks;
     public sealed class SFDbAdaptorIT : SFBaseTestAsync
     {
@@ -45,11 +46,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync(CancellationToken.None);
 
                 _adapter = new SnowflakeDbDataAdapter("select 1 as col1, 2 AS col2", conn);
                 _adapter.Fill(ds);
-                await conn.CloseAsync();
+                await conn.CloseAsync(CancellationToken.None);
             }
             Assert.Equal(ds.Tables[0].TableName, "Table");
             Assert.Equal(ds.Tables[0].Rows[0].ItemArray[0], 1);
