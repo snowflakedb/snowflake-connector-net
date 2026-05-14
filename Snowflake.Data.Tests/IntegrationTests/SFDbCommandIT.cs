@@ -152,8 +152,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     using (DbCommand command = conn.CreateCommand())
                     {
                         command.CommandText = "select 1;";
-                        Task<object> t = command.ExecuteScalarAsync();
-                        t.Wait();
+                        await command.ExecuteScalarAsync();
                     }
                     Assert.Fail();
                 }
@@ -246,7 +245,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var row = cmd.ExecuteScalar();
 
                 // Assert
-                Assert.Equal(1, row);
+                Assert.Equal((long)1, row);
             }
 
             // Get results of the async exec query
@@ -490,7 +489,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact] // TODO this is long and slows everything else, consider making some changes
         public async Task TestGetResultsOfUnknownQueryIdAsyncWithConfiguredRetry()
         {
             var queryResultsRetryCount = 3;
@@ -1259,10 +1258,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     await cmd.ExecuteNonQueryAsync();
 
                     cmd.CommandText = $"SELECT COUNT(*) FROM {_fixture.TableName}";
-                    Task<object> task = cmd.ExecuteScalarAsync(externalCancel.Token);
+                    var result = await cmd.ExecuteScalarAsync(externalCancel.Token);
 
-                    task.Wait();
-                    Assert.Equal(total, task.Result);
+                    Assert.Equal((long)total, result);
                 }
                 await conn.CloseAsync();
             }

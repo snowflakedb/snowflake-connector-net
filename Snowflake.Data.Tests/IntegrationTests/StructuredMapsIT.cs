@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestDataTableLoadOnStructuredMap()
         {
             if (_resultFormat != ResultFormat.JSON)
-                Skip.If(true, "skip test on arrow");
+                Skip.When(true, "skip test on arrow");
 
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))

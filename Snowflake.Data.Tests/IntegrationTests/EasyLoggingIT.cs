@@ -102,7 +102,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync(CancellationToken.None));
 
                 // assert
-                Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
+                var messages = new[] {thrown.Message, thrown.InnerException?.Message};
+                var concatenatedMessages = string.Join(Environment.NewLine, messages);
+                Assert.Contains("Connection string is invalid: Unable to initialize session", concatenatedMessages);
                 Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }

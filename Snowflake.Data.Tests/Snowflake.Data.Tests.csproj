@@ -51,7 +51,6 @@
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0"/>
         <PackageReference Include="xunit" Version="2.6.1"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1"/>
-        <PackageReference Include="Xunit.SkippableFact" Version="1.5.61"/>
     </ItemGroup>
     <ItemGroup Condition="'$(OldXunit)' != 'True'">
         <PackageReference Include="xunit.v3" Version="3.2.2"/>
