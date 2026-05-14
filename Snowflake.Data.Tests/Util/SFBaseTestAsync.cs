@@ -23,9 +23,7 @@ namespace Snowflake.Data.Tests
     {
         protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture)
         {
-
         }
-
     }
 
     public class SFBaseTestAsyncFixture : IAsyncLifetime
@@ -58,7 +56,7 @@ namespace Snowflake.Data.Tests
         {
             await IntegrationTestEnvironment.StartIntegrationTest();
             _anyTestStarted = true;
-            testConfig = TestEnvironment.TestConfig;
+            testConfig = TestConfigSingleton.TestConfig;
         }
 
         public virtual async TaskOrValueTask DisposeAsync()

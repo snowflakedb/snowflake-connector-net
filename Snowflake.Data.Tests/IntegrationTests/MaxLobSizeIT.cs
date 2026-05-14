@@ -12,12 +12,19 @@ using System.Linq;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
+using TaskOrValueTask = System.Threading.Tasks.
+#if NET8_0_OR_GREATER
+ValueTask;
+#else
+Task;
+#endif
+
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [CollectionDefinition(nameof(MaxLobSizeITTestFixture), DisableParallelization = true)]
     public sealed class MaxLobSizeITTestFixture : ICollectionFixture<MaxLobSizeITTestFixture.Fixture>
     {
-        public sealed class Fixture : IDisposable
+        public sealed class Fixture : SFBaseTestAsyncFixture
         {
             internal string OutputDirectory;
 
@@ -28,10 +35,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Directory.CreateDirectory(OutputDirectory);
             }
 
-            public void Dispose()
+            public override TaskOrValueTask DisposeAsync()
             {
                 // Delete temp output directory and downloaded files
                 Directory.Delete(OutputDirectory, true);
+                return TaskOrValueTask.CompletedTask;
             }
         }
     }
@@ -51,31 +59,30 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
 
         private static readonly string[] s_colName = { "C1", "C2", "C3" };
-        [ThreadStatic] private static string t_tableName;
-        [ThreadStatic] private static string t_insertQuery;
-        [ThreadStatic] private static string t_positionalBindingInsertQuery;
-        [ThreadStatic] private static string t_namedBindingInsertQuery;
-        [ThreadStatic] private static string t_selectQuery;
-        [ThreadStatic] private static string t_fileName;
-        [ThreadStatic] private static string t_inputFilePath;
-        [ThreadStatic] private static string t_outputFilePath;
-        [ThreadStatic] private static List<string> t_filesToDelete;
-        [ThreadStatic] private static string[] t_colData;
+        private static AsyncLocal<string> t_tableName = new ();
+        private static AsyncLocal<string> t_insertQuery = new ();
+        private static AsyncLocal<string> t_positionalBindingInsertQuery = new ();
+        private static AsyncLocal<string> t_namedBindingInsertQuery = new ();
+        private static AsyncLocal<string> t_selectQuery = new ();
+        private static AsyncLocal<string> t_fileName = new ();
+        private static AsyncLocal<string> t_inputFilePath = new ();
+        private static AsyncLocal<string> t_outputFilePath = new ();
+        private static AsyncLocal<List<string>> t_filesToDelete = new ();
+        private static AsyncLocal<string[]> t_colData = new ();
 
-        public MaxLobSizeIT(MaxLobSizeITTestFixture.Fixture maxLobeFixture, SFBaseTestAsyncFixture fixture) : base(fixture)
+        public MaxLobSizeIT(MaxLobSizeITTestFixture.Fixture maxLobeFixture) : base(maxLobeFixture)
         {
-            _fixture = fixture;
+            _fixture = maxLobeFixture;
             _outputDirectory = maxLobeFixture.OutputDirectory;
-            // Base object's names on worker thread id
-            var threadSuffix = Thread.CurrentThread.ManagedThreadId.ToString()?.Replace('#', '_');
+            var threadSuffix = Guid.NewGuid().ToString("N");
 
-            t_tableName = $"LOB_TABLE_{threadSuffix}";
-            var tableNameWithColumns = $"{t_tableName}({string.Join(", ", s_colName.Select(col => col))})";
-            t_insertQuery = $"INSERT INTO {tableNameWithColumns} VALUES ";
-            t_positionalBindingInsertQuery = $"INSERT INTO {tableNameWithColumns} VALUES (?, ?, ?)";
-            t_namedBindingInsertQuery = $"INSERT INTO {tableNameWithColumns} VALUES (:1, :2, :3)";
-            t_selectQuery = $"SELECT * FROM {t_tableName}";
-            t_filesToDelete = new List<string>();
+            t_tableName.Value = $"LOB_TABLE_{threadSuffix}";
+            var tableNameWithColumns = $"{t_tableName.Value}({string.Join(", ", s_colName.Select(col => col))})";
+            t_insertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES ";
+            t_positionalBindingInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES (?, ?, ?)";
+            t_namedBindingInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES (:1, :2, :3)";
+            t_selectQuery.Value = $"SELECT * FROM {t_tableName.Value}";
+            t_filesToDelete.Value = new List<string>();
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
@@ -84,7 +91,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     // Create temp table
                     var columnNamesWithTypes = $"{s_colName[0]} VARCHAR({MaxLobSize}), {s_colName[1]} VARCHAR({MaxLobSize}), {s_colName[2]} INT";
-                    command.CommandText = $"CREATE OR REPLACE TABLE {t_tableName} ({columnNamesWithTypes})";
+                    command.CommandText = $"CREATE OR REPLACE TABLE {t_tableName.Value} ({columnNamesWithTypes})";
                     command.ExecuteNonQuery();
                 }
             }
@@ -98,14 +105,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = conn.CreateCommand())
                 {
                     // Drop temp table
-                    command.CommandText = $"DROP TABLE IF EXISTS {t_tableName}";
+                    command.CommandText = $"DROP TABLE IF EXISTS {t_tableName.Value}";
                     command.ExecuteNonQueryAsync();
                 }
             }
 
             if (t_filesToDelete != null)
             {
-                foreach (var file in t_filesToDelete)
+                foreach (var file in t_filesToDelete.Value)
                 {
                     File.Delete(file);
                 }
@@ -151,10 +158,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = conn.CreateCommand())
                 {
                     // act
-                    command.CommandText = $"{t_insertQuery} ('{c1}', '{c2}', '{c3}')";
+                    command.CommandText = $"{t_insertQuery.Value} ('{c1}', '{c2}', '{c3}')";
                     await command.ExecuteNonQueryAsync();
 
-                    command.CommandText = t_selectQuery;
+                    command.CommandText = t_selectQuery.Value;
                     var reader = await command.ExecuteReaderAsync();
 
                     // assert
@@ -184,7 +191,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = conn.CreateCommand())
                 {
                     // act
-                    command.CommandText = $"{t_positionalBindingInsertQuery}";
+                    command.CommandText = $"{t_positionalBindingInsertQuery.Value}";
 
                     var p1 = command.CreateParameter();
                     p1.ParameterName = "1";
@@ -206,7 +213,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     await command.ExecuteNonQueryAsync();
 
-                    command.CommandText = t_selectQuery;
+                    command.CommandText = t_selectQuery.Value;
                     var reader = await command.ExecuteReaderAsync();
 
                     // assert
@@ -237,7 +244,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var command = conn.CreateCommand())
                 {
                     // act
-                    command.CommandText = $"{t_namedBindingInsertQuery}";
+                    command.CommandText = $"{t_namedBindingInsertQuery.Value}";
 
                     var p1 = command.CreateParameter();
                     p1.ParameterName = "1";
@@ -259,7 +266,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     await command.ExecuteNonQueryAsync();
 
-                    command.CommandText = t_selectQuery;
+                    command.CommandText = t_selectQuery.Value;
                     var reader = await command.ExecuteReaderAsync();
 
                     // assert
@@ -280,7 +287,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var c1 = GenerateRandomString(lobSize);
             var c2 = GenerateRandomString(lobSize);
             var c3 = new Random().Next(LobRandomRange);
-            t_colData = new string[] { c1, c2, c3.ToString() };
+            t_colData.Value = new string[] { c1, c2, c3.ToString() };
 
             PrepareTest();
 
@@ -333,19 +340,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         void PrepareTest()
         {
-            t_fileName = $"{Guid.NewGuid()}.csv";
-            t_inputFilePath = Path.GetTempPath() + t_fileName;
+            t_fileName.Value = $"{Guid.NewGuid()}.csv";
+            t_inputFilePath.Value = Path.GetTempPath() + t_fileName.Value;
 
-            var data = $"{t_colData[0]},{t_colData[1]},{t_colData[2]}";
-            using (var stream = FileOperations.Instance.Create(t_inputFilePath))
+            var data = $"{t_colData.Value[0]},{t_colData.Value[1]},{t_colData.Value[2]}";
+            using (var stream = FileOperations.Instance.Create(t_inputFilePath.Value))
             using (var writer = new StreamWriter(stream))
             {
                 writer.Write(data);
             }
 
-            t_outputFilePath = $@"{_outputDirectory}/{t_fileName}";
-            t_filesToDelete.Add(t_inputFilePath);
-            t_filesToDelete.Add(t_outputFilePath);
+            t_outputFilePath.Value = $@"{_outputDirectory}/{t_fileName.Value}";
+            t_filesToDelete.Value.Add(t_inputFilePath.Value);
+            t_filesToDelete.Value.Add(t_outputFilePath.Value);
         }
 
         void PutFile(SnowflakeDbConnection conn)
@@ -353,7 +360,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var command = conn.CreateCommand())
             {
                 // arrange
-                command.CommandText = $"PUT file://{t_inputFilePath} @%{t_tableName} AUTO_COMPRESS=FALSE";
+                command.CommandText = $"PUT file://{t_inputFilePath.Value} @%{t_tableName.Value} AUTO_COMPRESS=FALSE";
 
                 // act
                 var reader = command.ExecuteReader();
@@ -370,13 +377,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var command = conn.CreateCommand())
             {
                 // arrange
-                command.CommandText = $"COPY INTO {t_tableName}";
+                command.CommandText = $"COPY INTO {t_tableName.Value}";
 
                 // act
                 await command.ExecuteNonQueryAsync();
 
                 // arrange
-                command.CommandText = $"SELECT * FROM {t_tableName}";
+                command.CommandText = $"SELECT * FROM {t_tableName.Value}";
 
                 // act
                 var reader = await command.ExecuteReaderAsync();
@@ -393,8 +400,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static void AssertOnColData(DbDataReader reader, int index)
         {
             var actual = reader.GetString(index);
-            var substringLength = t_colData[index].Length > 20 ? 20 : t_colData[index].Length;
-            Assert.True(t_colData[index] == actual, $"Expected strings to be equal. Expected: '{t_colData[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
+            var substringLength = t_colData.Value[index].Length > 20 ? 20 : t_colData.Value[index].Length;
+            Assert.True(t_colData.Value[index] == actual, $"Expected strings to be equal. Expected: '{t_colData.Value[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
         }
 
         private async Task GetFileAsync(DbConnection conn)
@@ -402,7 +409,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var command = conn.CreateCommand())
             {
                 // arrange
-                command.CommandText = $"GET @%{t_tableName}/{t_fileName} file://{_outputDirectory}";
+                command.CommandText = $"GET @%{t_tableName.Value}/{t_fileName.Value} file://{_outputDirectory}";
 
                 // act
                 var reader = await command.ExecuteReaderAsync();
@@ -413,12 +420,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
 
                 // arrange
-                var content = File.ReadAllText(t_outputFilePath).Split(',');
+                var content = File.ReadAllText(t_outputFilePath.Value).Split(',');
 
                 // assert
-                Assert.Equal(t_colData[0], content[0]);
-                Assert.Equal(t_colData[1], content[1]);
-                Assert.Equal(t_colData[2], content[2]);
+                Assert.Equal(t_colData.Value[0], content[0]);
+                Assert.Equal(t_colData.Value[1], content[1]);
+                Assert.Equal(t_colData.Value[2], content[2]);
             }
         }
 

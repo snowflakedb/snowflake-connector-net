@@ -11,11 +11,11 @@ using Xunit;
 
 namespace Snowflake.Data.Tests;
 
-public static class TestEnvironment
+public static class TestConfigSingleton
 {
     public static TestConfig TestConfig { get; private set; }
 
-    static TestEnvironment()
+    static TestConfigSingleton()
     {
         var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
         Assert.True(cloud is null or "AWS" or "AZURE" or "GCP", $"{cloud} is not supported. Specify AWS, AZURE or GCP as cloud environment");
