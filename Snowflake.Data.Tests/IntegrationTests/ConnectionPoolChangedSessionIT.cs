@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class ConnectionPoolChangedSessionIT : SFBaseTestAsync, IClassFixture<ConnectionPoolChangedSessionITFixture>, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ConnectionPoolChangedSessionITFixture classFixture) : base(fixture, envFixture)
+        public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture, ConnectionPoolChangedSessionITFixture classFixture) : base(fixture)
         {
             _fixture = fixture;
             SnowflakeDbConnectionPool.ClearAllPools();

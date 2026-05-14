@@ -1,43 +1,54 @@
 using System;
 using System.Data;
-using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
-#if NET8_0_OR_GREATER
-using TaskOrValueTask = System.Threading.Tasks.ValueTask;
-#else
-using TaskOrValueTask = System.Threading.Tasks.Task;
-#endif
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     public static class IntegrationTestEnvironment
     {
-        private static volatile int s_integrationTestsTotal;
-        private static volatile int s_integrationTestsRun;
+        private static int s_integrationTestsRunning;
+        private static readonly SemaphoreSlim s_semaphoreSlim = new(1, 1);
 
         static IntegrationTestEnvironment()
         {
-            s_integrationTestsRun = 0;
-            s_integrationTestsTotal = Assembly.GetExecutingAssembly()
-                .GetTypes()
-                .Where(x => x.IsAssignableTo(typeof(SFBaseTestAsync)))
-                .Count(x => !x.IsAbstract);
-
-            ModifySchemaAsync(TestEnvironment.TestConfig.schema, SchemaAction.Create).GetAwaiter().GetResult();
+            s_integrationTestsRunning = 0;
         }
 
-        public static void IntegrationTestRun()
+        public static async Task StartIntegrationTest()
         {
-            Interlocked.Increment(ref s_integrationTestsRun);
+            await s_semaphoreSlim.WaitAsync();
 
-            if (s_integrationTestsRun == s_integrationTestsTotal)
+            try
             {
-                // cleanup
-                ModifySchemaAsync(TestEnvironment.TestConfig.schema, SchemaAction.Drop).GetAwaiter().GetResult();
+                if (s_integrationTestsRunning++ == 0)
+                {
+                    await ModifySchemaAsync(TestEnvironment.TestConfig.schema, SchemaAction.Create);
+                }
+            }
+            finally
+            {
+                s_semaphoreSlim.Release();
+            }
+        }
+
+        public static async Task EndIntegrationTest()
+        {
+            await s_semaphoreSlim.WaitAsync();
+
+            try
+            {
+                if (s_integrationTestsRunning-- == 0)
+                {
+                    // cleanup
+                    await ModifySchemaAsync(TestEnvironment.TestConfig.schema, SchemaAction.Drop);
+                }
+            }
+            finally
+            {
+                s_semaphoreSlim.Release();
             }
         }
 

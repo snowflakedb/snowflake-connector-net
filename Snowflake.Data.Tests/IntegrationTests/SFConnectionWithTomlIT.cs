@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
         private static string s_workingDirectory;
 
-        public SFConnectionWithTomlIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
+        public SFConnectionWithTomlIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _fixture = fixture;
             s_workingDirectory ??= Path.Combine(AppContext.BaseDirectory, "../../..", "toml_config_folder");

@@ -18,13 +18,14 @@ using TaskOrValueTask = System.Threading.Tasks.Task;
 
 namespace Snowflake.Data.Tests
 {
+    // todo tests all ITs call start end?
     public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>
     {
         protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture)
         {
-            IntegrationTestEnvironment.IntegrationTestRun();
-            fixture.InitFixture();
+
         }
+
     }
 
     public class SFBaseTestAsyncFixture : IAsyncLifetime
@@ -53,15 +54,14 @@ namespace Snowflake.Data.Tests
             _tablesToRemove = new List<string>();
         }
 
-        public void InitFixture()
+        public virtual async TaskOrValueTask InitializeAsync()
         {
+            await IntegrationTestEnvironment.StartIntegrationTest();
             _anyTestStarted = true;
             testConfig = TestEnvironment.TestConfig;
         }
 
-        public virtual TaskOrValueTask InitializeAsync() => TaskOrValueTask.CompletedTask;
-
-        public virtual TaskOrValueTask DisposeAsync()
+        public virtual async TaskOrValueTask DisposeAsync()
         {
             if (_anyTestStarted)
             {
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests
                 //_envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
             }
             RemoveTables();
-            return TaskOrValueTask.CompletedTask;
+            await IntegrationTestEnvironment.EndIntegrationTest();
         }
 
         private void RemoveTables()

@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public abstract class StructuredTypesIT : SFBaseTestAsync
     {
-        protected StructuredTypesIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { }
+        protected StructuredTypesIT(SFBaseTestAsyncFixture fixture) : base(fixture) { }
 
         protected async Task EnableStructuredTypesAsync(SnowflakeDbConnection connection, ResultFormat resultFormat = ResultFormat.JSON, bool nativeArrow = false)
         {

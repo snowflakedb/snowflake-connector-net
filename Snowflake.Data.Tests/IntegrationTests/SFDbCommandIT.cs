@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class SFDbCommandITAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbCommandITAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFDbCommandITAsync(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
         [Fact]
         public async Task TestExecAsyncAPI()
@@ -522,7 +522,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class SFDbCommandITSlow : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbCommandITSlow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFDbCommandITSlow(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
         [Fact]
         public async Task TestLongRunningQuery()
@@ -567,7 +567,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class SFDbCommandIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbCommandIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFDbCommandIT(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
         [Fact]
         public async Task TestSimpleCommand()

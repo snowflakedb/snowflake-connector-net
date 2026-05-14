@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly SFBaseTestAsyncFixture _fixture;
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
-        public ConnectionMultiplePoolsIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ConnectionMultiplePoolsITTestFixture.Fixture classFixture) : base(fixture, envFixture)
+        public ConnectionMultiplePoolsIT(SFBaseTestAsyncFixture fixture, ConnectionMultiplePoolsITTestFixture.Fixture classFixture) : base(fixture)
         {
             _fixture = fixture;
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);

@@ -25,15 +25,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     public class ConnectionPoolCommonSingleConnectionCacheIT : ConnectionPoolCommonIT
     {
-        public ConnectionPoolCommonSingleConnectionCacheIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
-            : base(fixture, envFixture, ConnectionPoolType.SingleConnectionCache)
+        public ConnectionPoolCommonSingleConnectionCacheIT(SFBaseTestAsyncFixture fixture)
+            : base(fixture, ConnectionPoolType.SingleConnectionCache)
         { }
     }
 
     public class ConnctionPoolCommonMultipleConnectionIT : ConnectionPoolCommonIT
     {
-        public ConnctionPoolCommonMultipleConnectionIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture)
-            : base(fixture, envFixture, ConnectionPoolType.MultipleConnectionPool)
+        public ConnctionPoolCommonMultipleConnectionIT(SFBaseTestAsyncFixture fixture)
+            : base(fixture, ConnectionPoolType.MultipleConnectionPool)
         { }
     }
 
@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private readonly SFBaseTestAsyncFixture _fixture;
 
-        internal ConnectionPoolCommonIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ConnectionPoolType connectionPoolTypeUnderTest) : base(fixture, envFixture)
+        internal ConnectionPoolCommonIT(SFBaseTestAsyncFixture fixture, ConnectionPoolType connectionPoolTypeUnderTest) : base(fixture)
         {
             _fixture = fixture;
             _connectionPoolTypeUnderTest = connectionPoolTypeUnderTest;

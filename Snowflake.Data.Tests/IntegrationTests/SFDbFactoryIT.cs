@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         DbCommand _command;
         DbConnection _connection;
 
-        public SFDbFactoryIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
+        public SFDbFactoryIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _fixture = fixture;
 #if NETFRAMEWORK

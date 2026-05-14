@@ -15,12 +15,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public sealed class SFDbDataReaderITJson : SFDbDataReaderIT
     {
-        public SFDbDataReaderITJson(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
+        public SFDbDataReaderITJson(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.JSON) { }
     }
 
     public sealed class SFDbDataReaderITArrow : SFDbDataReaderIT
     {
-        public SFDbDataReaderITArrow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
+        public SFDbDataReaderITArrow(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.ARROW) { }
     }
 
     public abstract class SFDbDataReaderIT : SFBaseTestAsync
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly ResultFormat _resultFormat;
 
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFDbDataReaderIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
+        public SFDbDataReaderIT(SFBaseTestAsyncFixture fixture, ResultFormat resultFormat) : base(fixture)
         {
             _fixture = fixture;
             _resultFormat = resultFormat;

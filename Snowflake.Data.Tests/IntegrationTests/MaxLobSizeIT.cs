@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [ThreadStatic] private static List<string> t_filesToDelete;
         [ThreadStatic] private static string[] t_colData;
 
-        public MaxLobSizeIT(MaxLobSizeITTestFixture.Fixture maxLobeFixture, SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
+        public MaxLobSizeIT(MaxLobSizeITTestFixture.Fixture maxLobeFixture, SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _fixture = fixture;
             _outputDirectory = maxLobeFixture.OutputDirectory;

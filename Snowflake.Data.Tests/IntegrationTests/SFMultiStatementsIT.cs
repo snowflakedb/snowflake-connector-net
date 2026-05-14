@@ -12,12 +12,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public sealed class SFMultiStatementsITJson : SFMultiStatementsIT
     {
-        public SFMultiStatementsITJson(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
+        public SFMultiStatementsITJson(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.JSON) { }
     }
 
     public sealed class SFMultiStatementsITArrow : SFMultiStatementsIT
     {
-        public SFMultiStatementsITArrow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
+        public SFMultiStatementsITArrow(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.ARROW) { }
     }
 
     public abstract class SFMultiStatementsIT : SFBaseTestAsync
@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly ResultFormat _resultFormat;
 
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFMultiStatementsIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
+        public SFMultiStatementsIT(SFBaseTestAsyncFixture fixture, ResultFormat resultFormat) : base(fixture)
         {
             _fixture = fixture;
             _resultFormat = resultFormat;

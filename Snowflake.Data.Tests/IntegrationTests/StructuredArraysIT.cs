@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public sealed class StructuredArraysITJsonManaged : StructuredArraysIT
     {
-        public StructuredArraysITJsonManaged(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON, false) { }
+        public StructuredArraysITJsonManaged(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.JSON, false) { }
 
         [Fact]
         public async Task TestDataTableLoadOnStructuredArrayJsonFormat()
@@ -52,12 +52,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     public sealed class StructuredArraysITArrowManaged : StructuredArraysIT
     {
-        public StructuredArraysITArrowManaged(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, false) { }
+        public StructuredArraysITArrowManaged(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.ARROW, false) { }
     }
 
     public sealed class StructuredArraysITArrowNative : StructuredArraysIT
     {
-        public StructuredArraysITArrowNative(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW, true) { }
+        public StructuredArraysITArrowNative(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.ARROW, true) { }
     }
 
     public abstract class StructuredArraysIT : StructuredTypesIT
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         protected readonly bool _nativeArrow;
 
         protected readonly SFBaseTestAsyncFixture _fixture;
-        public StructuredArraysIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat, bool nativeArrow) : base(fixture, envFixture)
+        public StructuredArraysIT(SFBaseTestAsyncFixture fixture, ResultFormat resultFormat, bool nativeArrow) : base(fixture)
         {
             _fixture = fixture;
             _resultFormat = resultFormat;

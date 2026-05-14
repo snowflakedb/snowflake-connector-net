@@ -11,12 +11,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     public sealed class VectorTypesITJson : VectorTypesIT
     {
-        public VectorTypesITJson(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.JSON) { }
+        public VectorTypesITJson(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.JSON) { }
     }
 
     public sealed class VectorTypesITArrow : VectorTypesIT
     {
-        public VectorTypesITArrow(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture, ResultFormat.ARROW) { }
+        public VectorTypesITArrow(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.ARROW) { }
     }
 
     public abstract class VectorTypesIT : SFBaseTestAsync
@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private readonly ResultFormat _resultFormat;
 
         private readonly SFBaseTestAsyncFixture _fixture;
-        public VectorTypesIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ResultFormat resultFormat) : base(fixture, envFixture)
+        public VectorTypesIT(SFBaseTestAsyncFixture fixture, ResultFormat resultFormat) : base(fixture)
         {
             _fixture = fixture;
             _resultFormat = resultFormat;

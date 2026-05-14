@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class SFReusableChunkTestAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFReusableChunkTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFReusableChunkTestAsync(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
         [Fact]
         public async Task TestDelCharPr431()

@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private IDbDataAdapter _adapter;
         private SnowflakeDbCommand _command;
 
-        public SFDbAdaptorIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
+        public SFDbAdaptorIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _fixture = fixture;
             _adapter = new SnowflakeDbDataAdapter();

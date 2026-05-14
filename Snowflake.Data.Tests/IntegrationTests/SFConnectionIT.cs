@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class SFConnectionIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFConnectionIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFConnectionIT(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
@@ -1879,7 +1879,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class SFConnectionITAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFConnectionITAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFConnectionITAsync(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
         private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 

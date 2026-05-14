@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class SFMaxLobSizeSwitchIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFMaxLobSizeSwitchIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFMaxLobSizeSwitchIT(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
         private const string SqlSelectLargeString = "select randstr(20000000, random()) as large_str";
 

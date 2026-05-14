@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     public class SFPutGetTestAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public SFPutGetTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
+        public SFPutGetTestAsync(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
         private const int NumberOfRows = 4;
         private static readonly string[] s_colName = { "C1", "C2", "C3" };

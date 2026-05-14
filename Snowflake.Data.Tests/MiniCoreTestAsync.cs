@@ -10,16 +10,19 @@ using Snowflake.Data.Tests.IntegrationTests;
 namespace Snowflake.Data.Tests
 {
     [Trait("Category", "MiniCore")]
-    public class MiniCoreTestAsync : SFBaseTestAsync, IDisposable{
+    public class MiniCoreTestAsync : SFBaseTestAsync, IDisposable
+    {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public MiniCoreTestAsync(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture) { _fixture = fixture; }
 
-        private bool _originalMinicoreState;
-        public void SetUp()
+        public MiniCoreTestAsync(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _originalMinicoreState = SFEnvironment.MinicoreDisabled;
+            _fixture = fixture;
         }
-        public void TearDown()
+
+        private readonly bool _originalMinicoreState;
+
+        public void Dispose()
         {
             SFEnvironment.MinicoreDisabled = _originalMinicoreState;
         }
@@ -69,12 +72,6 @@ namespace Snowflake.Data.Tests
                 Assert.Equal("libsf_mini_core.dylib", name);
             else
                 Assert.Equal("libsf_mini_core.so", name);
-        }
-
-
-        public void Dispose()
-        {
-            TearDown();
         }
 }
 }
