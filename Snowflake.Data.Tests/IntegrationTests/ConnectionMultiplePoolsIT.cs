@@ -13,21 +13,25 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public sealed class ConnectionMultiplePoolsITFixture : IDisposable
+    [CollectionDefinition(nameof(ConnectionMultiplePoolsITTestFixture), DisableParallelization = true)]
+    public sealed class ConnectionMultiplePoolsITTestFixture : ICollectionFixture<ConnectionMultiplePoolsITTestFixture.Fixture>
     {
-        public void Dispose()
+        public sealed class Fixture : IDisposable
         {
-            SnowflakeDbConnectionPool.ClearAllPools();
+            public void Dispose()
+            {
+                SnowflakeDbConnectionPool.ClearAllPools();
+            }
         }
     }
 
-    [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
-    public class ConnectionMultiplePoolsIT : SFBaseTestAsync, IClassFixture<ConnectionMultiplePoolsITFixture>, IDisposable
+    [Collection(nameof(ConnectionMultiplePoolsITTestFixture))]
+    public class ConnectionMultiplePoolsIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
-        public ConnectionMultiplePoolsIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ConnectionMultiplePoolsITFixture classFixture) : base(fixture, envFixture)
+        public ConnectionMultiplePoolsIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ConnectionMultiplePoolsITTestFixture.Fixture classFixture) : base(fixture, envFixture)
         {
             _fixture = fixture;
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);

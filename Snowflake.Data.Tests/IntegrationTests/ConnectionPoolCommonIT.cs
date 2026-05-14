@@ -11,11 +11,15 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public sealed class ConnectionPoolCommonITFixture : IDisposable
+    [CollectionDefinition(nameof(ConnectionPoolCommonITTestFixture), DisableParallelization = true)]
+    public sealed class ConnectionPoolCommonITTestFixture : ICollectionFixture<ConnectionPoolCommonITTestFixture.Fixture>
     {
-        public void Dispose()
+        public sealed class Fixture : IDisposable
         {
-            SnowflakeDbConnectionPool.ClearAllPools();
+            public void Dispose()
+            {
+                SnowflakeDbConnectionPool.ClearAllPools();
+            }
         }
     }
 
@@ -33,8 +37,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         { }
     }
 
-    [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
-    public abstract class ConnectionPoolCommonIT : SFBaseTestAsync, IClassFixture<ConnectionPoolCommonITFixture>, IDisposable
+    [Collection(nameof(ConnectionPoolCommonITTestFixture))]
+    public abstract class ConnectionPoolCommonIT : SFBaseTestAsync, IDisposable
     {
         private readonly ConnectionPoolType _connectionPoolTypeUnderTest;
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();

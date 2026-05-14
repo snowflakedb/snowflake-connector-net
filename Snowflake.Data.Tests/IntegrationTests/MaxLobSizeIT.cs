@@ -14,26 +14,30 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public sealed class MaxLobSizeITFixture : IDisposable
+    [CollectionDefinition(nameof(MaxLobSizeITTestFixture), DisableParallelization = true)]
+    public sealed class MaxLobSizeITTestFixture : ICollectionFixture<MaxLobSizeITTestFixture.Fixture>
     {
-        internal string OutputDirectory;
-
-        public MaxLobSizeITFixture()
+        public sealed class Fixture : IDisposable
         {
-            // Create temp output directory for downloaded files
-            OutputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            Directory.CreateDirectory(OutputDirectory);
-        }
+            internal string OutputDirectory;
 
-        public void Dispose()
-        {
-            // Delete temp output directory and downloaded files
-            Directory.Delete(OutputDirectory, true);
+            public Fixture()
+            {
+                // Create temp output directory for downloaded files
+                OutputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                Directory.CreateDirectory(OutputDirectory);
+            }
+
+            public void Dispose()
+            {
+                // Delete temp output directory and downloaded files
+                Directory.Delete(OutputDirectory, true);
+            }
         }
     }
 
-    [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
-    public class MaxLobSizeIT : SFBaseTestAsync, IClassFixture<MaxLobSizeITFixture>, IDisposable
+    [Collection(nameof(MaxLobSizeITTestFixture))]
+    public class MaxLobSizeIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
 
@@ -58,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [ThreadStatic] private static List<string> t_filesToDelete;
         [ThreadStatic] private static string[] t_colData;
 
-        public MaxLobSizeIT(MaxLobSizeITFixture maxLobeFixture, SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
+        public MaxLobSizeIT(MaxLobSizeITTestFixture.Fixture maxLobeFixture, SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture) : base(fixture, envFixture)
         {
             _fixture = fixture;
             _outputDirectory = maxLobeFixture.OutputDirectory;

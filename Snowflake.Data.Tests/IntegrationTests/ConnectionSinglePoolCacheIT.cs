@@ -12,21 +12,25 @@ using Moq;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public sealed class ConnectionSinglePoolCacheITFixture : IDisposable
+    [CollectionDefinition(nameof(ConnectionSinglePoolCacheITTestFixture), DisableParallelization = true)]
+    public sealed class ConnectionSinglePoolCacheITTestFixture : ICollectionFixture<ConnectionSinglePoolCacheITTestFixture.Fixture>
     {
-        public void Dispose()
+        public sealed class Fixture : IDisposable
         {
-            SnowflakeDbConnectionPool.ClearAllPools();
+            public void Dispose()
+            {
+                SnowflakeDbConnectionPool.ClearAllPools();
+            }
         }
     }
 
-    [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
-    public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IClassFixture<ConnectionSinglePoolCacheITFixture>, IDisposable
+    [Collection(nameof(ConnectionSinglePoolCacheITTestFixture))]
+    public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
-        public ConnectionSinglePoolCacheIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ConnectionSinglePoolCacheITFixture classFixture) : base(fixture, envFixture)
+        public ConnectionSinglePoolCacheIT(SFBaseTestAsyncFixture fixture, IntegrationTestFixture envFixture, ConnectionSinglePoolCacheITTestFixture.Fixture classFixture) : base(fixture, envFixture)
         {
             _fixture = fixture;
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);

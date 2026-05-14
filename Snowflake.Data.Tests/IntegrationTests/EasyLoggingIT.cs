@@ -18,33 +18,37 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    public sealed class EasyLoggingITFixture : IDisposable
+    [CollectionDefinition(nameof(EasyLoggingITTestFixture), DisableParallelization = true)]
+    public sealed class EasyLoggingITTestFixture : ICollectionFixture<EasyLoggingITTestFixture.Fixture>
     {
-        public readonly string WorkingDirectory = Path.Combine(Path.GetTempPath(), $"easy_logging_test_configs_{Path.GetRandomFileName()}");
-
-        public EasyLoggingITFixture()
+        public sealed class Fixture : IDisposable
         {
-            if (!Directory.Exists(WorkingDirectory))
+            public readonly string WorkingDirectory = Path.Combine(Path.GetTempPath(), $"easy_logging_test_configs_{Path.GetRandomFileName()}");
+
+            public Fixture()
             {
-                Directory.CreateDirectory(WorkingDirectory);
+                if (!Directory.Exists(WorkingDirectory))
+                {
+                    Directory.CreateDirectory(WorkingDirectory);
+                }
             }
-        }
 
-        public void Dispose()
-        {
-            EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
-            Directory.Delete(WorkingDirectory, true);
+            public void Dispose()
+            {
+                EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
+                Directory.Delete(WorkingDirectory, true);
+            }
         }
     }
 
-    [Collection(SequentialIntegrationCollection.SequentialIntegrationCollectionName)]
-    public class EasyLoggingIT : SFBaseTestAsync, IClassFixture<EasyLoggingITFixture>, IDisposable
+    [Collection(nameof(EasyLoggingITTestFixture))]
+    public class EasyLoggingIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        private readonly EasyLoggingITFixture _classFixture;
+        private readonly EasyLoggingITTestFixture.Fixture _classFixture;
         private const string LogDirectoryName = "dotnet";
 
-        public EasyLoggingIT(SFBaseTestAsyncFixture fixture, SequentialIntegrationFixture envFixture, EasyLoggingITFixture classFixture) : base(fixture, envFixture)
+        public EasyLoggingIT(SFBaseTestAsyncFixture fixture, SequentialIntegrationFixture envFixture, EasyLoggingITTestFixture.Fixture classFixture) : base(fixture, envFixture)
         {
             _fixture = fixture;
             _classFixture = classFixture;
