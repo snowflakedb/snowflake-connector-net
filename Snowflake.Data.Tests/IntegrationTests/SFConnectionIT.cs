@@ -587,7 +587,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.Equal(390201, e.ErrorCode);
+                    var aggregateEx = (AggregateException)((AggregateException)e.InnerException).InnerExceptions[0];
+                    Assert.Equal(390201, ((SnowflakeDbException)aggregateEx.InnerExceptions[0]).ErrorCode);
                 }
             }
 
@@ -741,7 +742,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 await conn.OpenAsync(CancellationToken.None);
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "c INT" });
-                var t1 = conn.BeginTransaction();
+                var t1 = await conn.BeginTransactionAsync();
                 var t1c1 = conn.CreateCommand();
                 t1c1.Transaction = t1;
                 t1c1.CommandText = $"insert into {_fixture.TableName} values (1)";
@@ -756,7 +757,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await conn.OpenAsync(CancellationToken.None);
                 var command = conn.CreateCommand();
                 command.CommandText = $"SELECT * FROM {_fixture.TableName}";
-                IDataReader reader = command.ExecuteReader();
+                IDataReader reader = await command.ExecuteReaderAsync();
                 Assert.False(reader.Read());
             }
         }

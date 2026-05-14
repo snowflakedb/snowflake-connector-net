@@ -5,7 +5,7 @@ using Xunit;
 namespace Snowflake.Data.Tests.Util;
 
 #if !NET8_0_OR_GREATER
-[Xunit.Sdk.XunitTestCaseDiscoverer("Snowflake.Data.Tests.Util.Discoverer", "Snowflake.Data.Tests")]
+[Xunit.Sdk.XunitTestCaseDiscoverer("Snowflake.Data.Tests.Util.XunitTestCaseDiscoverer", "Snowflake.Data.Tests")]
 #endif
 public sealed class SFFactAttribute : FactAttribute
 {

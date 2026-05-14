@@ -1335,7 +1335,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestCopyCmdUpdateCount()
         {
-            var stageName = _fixture.TestName;
+            var stageName = _fixture.TestName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola STRING" });
@@ -1367,7 +1367,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestCopyCmdResultSet()
         {
-            var stageName = _fixture.TestName;
+            var stageName = _fixture.TestName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
                 _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "cola STRING" });

@@ -269,14 +269,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 await SetResultFormat(conn);
 
-                _fixture.CreateOrReplaceTable(conn, _fixture.TableName, new[] { "col_decfloat DECFLOAT" });
+                var fixtureTableName = _fixture.TableName + Guid.NewGuid().ToString("N");
+                _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[] { "col_decfloat DECFLOAT" });
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"INSERT INTO {_fixture.TableName} VALUES (123.456), (-999.999), (NULL)";
+                    cmd.CommandText = $"INSERT INTO {fixtureTableName} VALUES (123.456), (-999.999), (NULL)";
                     await cmd.ExecuteNonQueryAsync();
 
-                    cmd.CommandText = $"SELECT col_decfloat FROM {_fixture.TableName} ORDER BY col_decfloat NULLS LAST";
+                    cmd.CommandText = $"SELECT col_decfloat FROM {fixtureTableName} ORDER BY col_decfloat NULLS LAST";
 
                     using (var reader = await cmd.ExecuteReaderAsync())
                     {
@@ -284,16 +285,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         Assert.Equal("DECFLOAT", reader.GetDataTypeName(0));
 
-                        Assert.True(reader.Read());
+                        Assert.True(await reader.ReadAsync());
                         Assert.Equal(-999.999m, ParseDecfloatValue((string)reader.GetValue(0)));
 
-                        Assert.True(reader.Read());
+                        Assert.True(await reader.ReadAsync());
                         Assert.Equal(123.456m, ParseDecfloatValue((string)reader.GetValue(0)));
 
-                        Assert.True(reader.Read());
+                        Assert.True(await reader.ReadAsync());
                         Assert.True(reader.IsDBNull(0));
 
-                        Assert.False(reader.Read());
+                        Assert.False(await reader.ReadAsync());
                     }
                 }
             }

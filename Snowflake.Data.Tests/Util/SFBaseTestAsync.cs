@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.IntegrationTests;
@@ -45,19 +47,18 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringJwtAuthFmt = ";authenticator=snowflake_jwt;user={0};private_key_file={1};";
         private const string ConnectionStringJwtContentFmt = ";authenticator=snowflake_jwt;user={0};private_key={1};";
 
-        public virtual string TestName => $"{GetType().Name}_{Thread.CurrentThread.ManagedThreadId}";
-        private string TestNameWithWorker => TestName;
-        public string TableName => TestNameWithWorker;
+        public string TestName => $"{GetType().Name}";
+        public string TableName => TestName; // todo naming
 
         private readonly Stopwatch _stopwatch;
-        private readonly List<string> _tablesToRemove;
+        private readonly ConcurrentStack<string> _tablesToRemove;
         private bool _anyTestStarted;
 
         public SFBaseTestAsyncFixture()
         {
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
-            _tablesToRemove = new List<string>();
+            _tablesToRemove = new ConcurrentStack<string>();
         }
 
         public virtual async TaskOrValueTask InitializeAsync()
@@ -76,11 +77,11 @@ namespace Snowflake.Data.Tests
                 // TODO
                 //_envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
             }
-            RemoveTables();
+            await RemoveTables();
             await IntegrationTestEnvironment.EndIntegrationTest();
         }
 
-        private void RemoveTables()
+        private async Task RemoveTables()
         {
             if (_tablesToRemove.Count == 0)
                 return;
@@ -94,7 +95,7 @@ namespace Snowflake.Data.Tests
                 foreach (var table in _tablesToRemove)
                 {
                     cmd.CommandText = $"DROP TABLE IF EXISTS {table}";
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync();
                 }
             }
         }
@@ -113,12 +114,12 @@ namespace Snowflake.Data.Tests
             s_logger.Debug(cmd.CommandText);
             cmd.ExecuteNonQuery();
 
-            _tablesToRemove.Add(tableName);
+            _tablesToRemove.Push(tableName);
         }
 
         public void AddTableToRemoveList(string tableName)
         {
-            _tablesToRemove.Add(tableName);
+            _tablesToRemove.Push(tableName);
         }
 
         public string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
