@@ -2,22 +2,24 @@ using System;
 using Xunit;
 using Serilog;
 using Serilog.Extensions.Logging;
-using Snowflake.Data.Client;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
     [CollectionDefinition(nameof(SerilogTestCollection), DisableParallelization = true)]
     public sealed class SerilogTestCollection : ICollectionFixture<SerilogTestFixture> { }
 
-    public sealed class SerilogTestFixture : IDisposable
+    public sealed class SerilogTestFixture
+    { }
+
+    [Collection(nameof(SerilogTestCollection))]
+    public sealed class SerilogTest : LoggerTest, IClassFixture<SerilogTestFixture>
     {
         private const string SerilogFileName = "test_serilog.log";
 
-        public readonly ILogger _customLogger;
-
-        public SerilogTestFixture()
+        public SerilogTest()
         {
+            _logFile = "test_serilog.log";
+
             var loggerSerilog = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
                 .WriteTo.File(SerilogFileName, flushToDiskInterval: TimeSpan.Zero)
@@ -26,19 +28,10 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             _customLogger = new SerilogLoggerFactory(loggerSerilog).CreateLogger("SerilogTest");
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             Serilog.Log.CloseAndFlush();
-        }
-    }
-
-    [Collection(nameof(SerilogTestCollection))]
-    public sealed class SerilogTest : LoggerTest, IClassFixture<SerilogTestFixture>
-    {
-        public SerilogTest(SerilogTestFixture fixture)
-        {
-            _customLogger = fixture._customLogger;
-            _logFile = "test_serilog.log";
+            base.Dispose();
         }
     }
 }

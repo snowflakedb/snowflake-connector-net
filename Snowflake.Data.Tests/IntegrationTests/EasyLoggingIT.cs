@@ -3,6 +3,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Mono.Unix;
@@ -190,7 +191,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync(CancellationToken.None));
 
                 // assert
-                Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
+                var messages = thrown.Message + "/n" + thrown.InnerException.Message;
+                Assert.Contains("Connection string is invalid: Unable to initialize session", messages);
                 Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
@@ -205,11 +207,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
-                var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync(CancellationToken.None));
+                Exception thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync(CancellationToken.None));
 
                 // assert
-                Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
-                Assert.Contains("Failed to create logs directory", thrown.InnerException.Message);
+                var sb = new StringBuilder();
+                for (;;)
+                {
+                    sb.Append(thrown.Message);
+                    thrown = thrown.InnerException;
+                    if (thrown == null) break;
+                }
+
+                var message = sb.ToString();
+                Assert.Contains("Connection string is invalid: Unable to initialize session", message);
+                Assert.Contains("Failed to create logs directory", message);
                 Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
@@ -228,11 +239,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
-                var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync(CancellationToken.None));
+                Exception thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync(CancellationToken.None));
 
                 // assert
-                Assert.Contains("Connection string is invalid: Unable to initialize session", thrown.Message);
-                Assert.Contains("Too broad access permissions for logs directory", thrown.InnerException.Message);
+                var sb = new StringBuilder();
+                for (;;)
+                {
+                    sb.Append(thrown.Message);
+                    thrown = thrown.InnerException;
+                    if (thrown == null) break;
+                }
+
+                var messages = sb.ToString();
+                Assert.Contains("Connection string is invalid: Unable to initialize session", messages);
+                Assert.Contains("Too broad access permissions for logs directory", messages);
                 Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }

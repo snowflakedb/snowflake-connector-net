@@ -444,7 +444,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var headers = new WebHeaderCollection();
-            headers.Add("content-length");
+            headers.Add("content-length", "123");
             var stageInfo = new PutGetStageInfo() { stageCredentials = new Dictionary<string, string>() };
             var client = new SFGCSClient(stageInfo);
             var response = new Mock<HttpWebResponse>();

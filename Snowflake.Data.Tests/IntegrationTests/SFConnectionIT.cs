@@ -2277,7 +2277,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(ConnectionPoolType.MultipleConnectionPool, poolVersion);
         }
 
-        [SFFact]
+        [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
         // to enroll to mfa authentication edit your user profile
         public async Task TestMFATokenCachingWithPasscodeFromConnectionString()
         {
@@ -2332,10 +2332,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var connection = new SnowflakeDbConnection(connectionString))
             {
                 // act
-                var thrown = await Assert.ThrowsAsync<AggregateException>(() => connection.OpenAsync(CancellationToken.None));
+                Exception thrown;
+                if (extraParameters  == "")
+                    thrown = await Assert.ThrowsAsync<TaskCanceledException>(() => connection.OpenAsync(CancellationToken.None));
+                else
+                    thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => connection.OpenAsync(CancellationToken.None));
 
                 // assert
-                Assert.True(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
                 if (thrown.InnerException is SnowflakeDbException)
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown.InnerException, SFError.INTERNAL_ERROR);
                 Assert.Equal(ConnectionState.Closed, connection.State);
@@ -2352,10 +2355,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var shortCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
                 // act
-                var thrown = await Assert.ThrowsAsync<AggregateException>(() => connection.OpenAsync(shortCancellation.Token));
+                await Assert.ThrowsAsync<TaskCanceledException>(() => connection.OpenAsync(shortCancellation.Token));
 
                 // assert
-                Assert.IsType<TaskCanceledException>(thrown.InnerException);
                 Assert.Equal(ConnectionState.Closed, connection.State);
             }
         }

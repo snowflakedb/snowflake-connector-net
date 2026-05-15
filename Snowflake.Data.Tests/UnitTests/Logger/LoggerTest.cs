@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         protected ILogger _logger;
         protected string _logFile;
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             // Return to default setting
             SnowflakeDbLoggerConfig.ResetCustomLogger();
