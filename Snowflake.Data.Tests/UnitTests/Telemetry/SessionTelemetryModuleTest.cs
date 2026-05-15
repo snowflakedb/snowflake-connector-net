@@ -452,13 +452,13 @@ internal sealed class SessionTelemetryModuleTest
             module.OnActivityStoppedImpl(activity);
         });
 
-        await Task.Delay(timerSpan*2).ConfigureAwait(false);
+        await Task.Delay((int)timerSpan.TotalMilliseconds * 2).ConfigureAwait(false);
         Assert.That(logsSent, Is.EqualTo(bufferSize-1));
 
         var activity = new Activity($"whatever {bufferSize}");
         activity.Start();
         module.OnActivityStoppedImpl(activity);
-        await Task.Delay(timerSpan*2).ConfigureAwait(false);
+        await Task.Delay((int)timerSpan.TotalMilliseconds * 2).ConfigureAwait(false);
 
         Assert.That(logsSent, Is.EqualTo(bufferSize));
     }

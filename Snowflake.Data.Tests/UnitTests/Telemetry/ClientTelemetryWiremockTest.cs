@@ -97,7 +97,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
                 case "ExecuteReaderAsync": (await cmd.ExecuteReaderAsync()).Dispose(); break;
             }
 
-            await conn.CloseAsync();
+            await conn.CloseAsync(CancellationToken.None);
 
             var logs = GetTelemetryLogs();
             var matching = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName && l.StatusCode == "OK").ToList();
