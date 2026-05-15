@@ -335,7 +335,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _client.DownloadFile(_fileMetadata, t_downloadFileName, Parallel);
 
             // Assert
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
 
@@ -385,7 +385,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await _client.DownloadFileAsync(_fileMetadata, t_downloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 
             // Assert
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         [SFFact]

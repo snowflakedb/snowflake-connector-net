@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(MockGCSClient.GcsIV, fileHeader.encryptionMetadata.iv);
             Assert.Equal(MockGCSClient.GcsKey, fileHeader.encryptionMetadata.key);
             Assert.Equal(MockGCSClient.GcsMatdesc, fileHeader.encryptionMetadata.matDesc);
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         [SFTheory]

@@ -6,10 +6,11 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
+    // TODO handle these global state thingies
     public class NlogTest : LoggerTest
     {
         private const string NlogFileName = "test_nlog.log";
-        public void SetUp()
+        public NlogTest()
         {
             Environment.SetEnvironmentVariable("TEST_NLOG_FILE_NAME", NlogFileName);
             var factory = LoggerFactory.Create(

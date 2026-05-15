@@ -5,10 +5,11 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
+    // TODO handle these global state thingies
     public class Log4NetTest : LoggerTest
     {
         private const string Log4NetFileName = "test_log4net.log";
-        public void SetUp()
+        public Log4NetTest()
         {
             Environment.SetEnvironmentVariable("TEST_LOG4NET_FILE_NAME", Log4NetFileName);
             var factory = LoggerFactory.Create(

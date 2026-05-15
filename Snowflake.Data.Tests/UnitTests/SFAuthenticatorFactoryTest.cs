@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [SFFact]
         public void TestGetAuthenticatorOAuth()
         {
-            _authenticator = GetAuthenticator(OAuthAuthenticator.AUTH_NAME);
+            _authenticator = GetAuthenticator(OAuthAuthenticator.AUTH_NAME, "token=xxxx");
             Assert.IsType<OAuthAuthenticator>(_authenticator);
         }
 

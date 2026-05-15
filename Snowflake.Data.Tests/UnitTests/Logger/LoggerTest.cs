@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         public void TestResetCustomLogger()
         {
             SnowflakeDbLoggerConfig.ResetCustomLogger();
-            Assert.IsType<ILogger>(SFLoggerFactory.s_customLogger);
+            Assert.IsAssignableFrom<ILogger>(SFLoggerFactory.s_customLogger);
         }
 
         [SFFact]
