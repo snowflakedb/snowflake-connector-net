@@ -808,6 +808,6 @@ namespace Snowflake.Data.Core
 
         internal virtual bool IsInvalidatedForPooling() => _invalidatedForPooling;
 
-        internal virtual bool IsClientTelemetryEnabled() => _isClientTelemetryEnabled;
+        internal virtual bool IsClientTelemetryEnabled() => !string.IsNullOrEmpty(sessionId) && _isClientTelemetryEnabled;
     }
 }

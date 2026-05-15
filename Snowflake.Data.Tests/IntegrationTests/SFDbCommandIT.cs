@@ -1686,7 +1686,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 case "ExecuteNonQueryAsync": await cmd.ExecuteNonQueryAsync(); break;
                 case "ExecuteScalarAsync": await cmd.ExecuteScalarAsync(); break;
-                case "ExecuteReaderAsync": (await cmd.ExecuteReaderAsync()).Dispose(); break;
+                case "ExecuteReaderAsync": (await cmd.ExecuteReaderAsync().ConfigureAwait(false)).Dispose(); break;
             }
 
             // Assert
@@ -1727,7 +1727,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             switch (method)
             {
                 case "ExecuteInAsyncMode": cmd.ExecuteInAsyncMode(); break;
-                case "ExecuteAsyncInAsyncMode": await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None); break;
+                case "ExecuteAsyncInAsyncMode": await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false); break;
                 default: throw new ArgumentException(method);
             }
 
@@ -1776,8 +1776,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         activity1Nested.SetException(new AbandonedMutexException("AAAMutex Yellow Pages"));
                     }
                     activity1.SetSuccess();
-                };
-            };
+                }
+                ;
+            }
+            ;
 
             // Act
             await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);

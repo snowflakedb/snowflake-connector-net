@@ -78,17 +78,17 @@ namespace Snowflake.Data.Log
          * The characters are special character group element.
          * To match them in a character group, they must be escaped.
          */
-        private static readonly Regex s_awsKeyPattern = new (@"(aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:=]\s*)'([^']+)'", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex s_awsTokenPattern = new (@"(accessToken|tempToken|keySecret)\""\s*:\s*\""([a-z0-9/+]{32,}={0,2})\""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex s_awsServerSidePattern = new (@"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9/_\-+:=])+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex s_sasTokenPattern = new (@"(sig|signature|AWSAccessKeyId|password|passcode)=([a-z0-9%/+]{16,})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex s_privateKeyPattern = new (@"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----", RegexOptions.IgnoreCase | RegexOptions.Multiline); // pragma: allowlist secret
-        private static readonly Regex s_privateKeyDataPattern = new (@"""privateKeyData"": ""([a-z0-9/+=\n]{10,})""", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
-        private static readonly Regex s_privateKeyPropertyPrefixPattern = new (@"(private_key\s*=)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex s_connectionTokenPattern = new (@"(token|assertion content)(['""\s:=]+)([a-z0-9=/_\-+:]{8,})", RegexOptions.IgnoreCase  | RegexOptions.Compiled);
-        private static readonly Regex s_tokenPropertyPattern = new (@"(token)(\s*=)(.*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex s_passwordPattern = new (@"(password|passcode|client_?secret|pwd|proxypassword|private_key_pwd)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex s_passwordPropertyPattern = new (@"(password|passcode|oauthclientsecret|proxypassword|private_key_pwd)(\s*=)(.*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_awsKeyPattern = new(@"(aws_key_id|aws_secret_key|access_key_id|secret_access_key)('|"")?(\s*[:=]\s*)'([^']+)'", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_awsTokenPattern = new(@"(accessToken|tempToken|keySecret)\""\s*:\s*\""([a-z0-9/+]{32,}={0,2})\""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_awsServerSidePattern = new(@"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9/_\-+:=])+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_sasTokenPattern = new(@"(sig|signature|AWSAccessKeyId|password|passcode)=([a-z0-9%/+]{16,})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_privateKeyPattern = new(@"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----", RegexOptions.IgnoreCase | RegexOptions.Multiline); // pragma: allowlist secret
+        private static readonly Regex s_privateKeyDataPattern = new(@"""privateKeyData"": ""([a-z0-9/+=\n]{10,})""", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
+        private static readonly Regex s_privateKeyPropertyPrefixPattern = new(@"(private_key\s*=)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_connectionTokenPattern = new(@"(token|assertion content)(['""\s:=]+)([a-z0-9=/_\-+:]{8,})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_tokenPropertyPattern = new(@"(token)(\s*=)(.*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_passwordPattern = new(@"(password|passcode|client_?secret|pwd|proxypassword|private_key_pwd)(['""\s:=]+)([a-z0-9!""#$%&'\()*+,-./:;<=>?@\[\]\^_`{|}~]{6,})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_passwordPropertyPattern = new(@"(password|passcode|oauthclientsecret|proxypassword|private_key_pwd)(\s*=)(.*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static readonly Func<string, string>[] s_maskFunctions = {
             MaskAWSServerSide,

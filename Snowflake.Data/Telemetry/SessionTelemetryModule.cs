@@ -220,7 +220,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
     {
         var timestamp = new DateTimeOffset(activity.StartTimeUtc);
         var events = activity.Events;
-        events = events.Any() ? events : [new (activity.DisplayName, timestamp)];
+        events = events.Any() ? events : [new(activity.DisplayName, timestamp)];
         foreach (var @event in events)
         {
             var message = new Dictionary<string, string>
@@ -257,7 +257,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
             message[TelemetryField.StatusCode] = statusTag?.ToString() ?? "UNSET";
 #endif
 
-             yield return new TelemetryData(message, @event.Timestamp.ToUnixTimeMilliseconds());
+            yield return new TelemetryData(message, @event.Timestamp.ToUnixTimeMilliseconds());
         }
     }
 

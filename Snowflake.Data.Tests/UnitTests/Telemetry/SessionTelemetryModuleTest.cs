@@ -252,7 +252,7 @@ internal sealed class SessionTelemetryModuleTest
         var expectedToken1 = "test-token";
         _mockRestRequester.Verify(x => x.PostAsync<NullDataResponse>(It.Is<IRestRequest>(y => ((SFRestRequest)y).authorizationToken == $"Snowflake Token=\"{expectedToken1}\""), It.IsAny<CancellationToken>()), Times.Once);
 
-        var newToken  = "new-token";
+        var newToken = "new-token";
         module.UpdateToken(newToken);
         var activity2 = new Activity("whatever 2");
         activity2.Start();
@@ -289,7 +289,7 @@ internal sealed class SessionTelemetryModuleTest
 
     [TestCase(1)]
     [TestCase(3)]
-    public void TestSyncFlushOnDisposeDisablesTelemetryOnNonSuccessResponse(int  disposeCalls)
+    public void TestSyncFlushOnDisposeDisablesTelemetryOnNonSuccessResponse(int disposeCalls)
     {
         // Arrange
         var session = CreateSession();
@@ -453,7 +453,7 @@ internal sealed class SessionTelemetryModuleTest
         });
 
         await Task.Delay((int)timerSpan.TotalMilliseconds * 2).ConfigureAwait(false);
-        Assert.That(logsSent, Is.EqualTo(bufferSize-1));
+        Assert.That(logsSent, Is.EqualTo(bufferSize - 1));
 
         var activity = new Activity($"whatever {bufferSize}");
         activity.Start();

@@ -16,8 +16,8 @@ public static class ActivityStarter
     internal const string ActivitySourceName = "Snowflake_dotnet_activity";
     internal const string ClientDefinedTelemetrySourceName = "Client_custom_activity";
 
-    private static readonly ActivitySource s_internalActivitySource = new (ActivitySourceName, SFEnvironment.DriverVersion);
-    private static readonly ActivitySource s_customActivitySource = new (ClientDefinedTelemetrySourceName, SFEnvironment.DriverVersion);
+    private static readonly ActivitySource s_internalActivitySource = new(ActivitySourceName, SFEnvironment.DriverVersion);
+    private static readonly ActivitySource s_customActivitySource = new(ClientDefinedTelemetrySourceName, SFEnvironment.DriverVersion);
 
     /// <summary>
     /// Starts a client-side <see cref="Activity"/> using the custom activity source,
