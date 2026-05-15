@@ -7,34 +7,33 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    // TODO handle these global state thingies
+    [CollectionDefinition(nameof(SerilogTestCollection), DisableParallelization = true)]
+    public sealed class SerilogTestCollection : ICollectionFixture<SerilogTestFixture> { }
+
     public sealed class SerilogTestFixture : IDisposable
     {
         private const string SerilogFileName = "test_serilog.log";
 
         public readonly ILogger _customLogger;
-        private readonly object _logFile;
 
         public SerilogTestFixture()
         {
             var loggerSerilog = new LoggerConfiguration()
-                //.ReadFrom.Xml("TestSerilog.Config")
                 .MinimumLevel.Verbose()
-                .WriteTo.File(SerilogFileName)
+                .WriteTo.File(SerilogFileName, flushToDiskInterval: TimeSpan.Zero)
                 .CreateLogger();
 
             _customLogger = new SerilogLoggerFactory(loggerSerilog).CreateLogger("SerilogTest");
-            SnowflakeDbLoggerConfig.SetCustomLogger(_customLogger);
-            _logFile = SerilogFileName;
         }
 
         public void Dispose()
         {
-            // TODO release managed resources here
+            Serilog.Log.CloseAndFlush();
         }
     }
 
-    public class SerilogTest : LoggerTest, IClassFixture<SerilogTestFixture>
+    [Collection(nameof(SerilogTestCollection))]
+    public sealed class SerilogTest : LoggerTest, IClassFixture<SerilogTestFixture>
     {
         public SerilogTest(SerilogTestFixture fixture)
         {

@@ -5,8 +5,11 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    // TODO handle these global state thingies
-    public class Log4NetTest : LoggerTest
+    [CollectionDefinition(nameof(Log4NetTestCollection), DisableParallelization = true)]
+    public sealed class Log4NetTestCollection : ICollectionFixture<Log4NetTestCollection> { }
+
+    [Collection(nameof(Log4NetTestCollection))]
+    public sealed class Log4NetTest : LoggerTest
     {
         private const string Log4NetFileName = "test_log4net.log";
         public Log4NetTest()
