@@ -195,7 +195,9 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
     private void DisableTelemetry()
     {
         _isServiceAvailable = false;
-        _flushTimer.Change(Timeout.Infinite, Timeout.Infinite);
+
+        if (!IsDisposed())
+            _flushTimer.Change(Timeout.Infinite, Timeout.Infinite);
     }
 
     private void FlushTimerCallback()
@@ -253,7 +255,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
             _ => "UNSET"
         };
 #else
-            var statusTag = activity.GetTagItem("otel.status_code");
+            var statusTag = activity.GetTagItem(TelemetryTags.StatusCode);
             message[TelemetryField.StatusCode] = statusTag?.ToString() ?? "UNSET";
 #endif
 
