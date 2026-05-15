@@ -53,14 +53,11 @@ namespace Snowflake.Data.Tests
         public string TestName => $"{GetType().Name}";
         public string TableNameBaseName => TestName; // todo naming
 
-        private readonly Stopwatch _stopwatch;
         private readonly ConcurrentStack<string> _tablesToRemove;
         private bool _anyTestStarted;
 
         public SFBaseTestAsyncFixture()
         {
-            _stopwatch = new Stopwatch();
-            _stopwatch.Start();
             _tablesToRemove = new ConcurrentStack<string>();
         }
 
@@ -73,13 +70,8 @@ namespace Snowflake.Data.Tests
 
         public virtual async TaskOrValueTask DisposeAsync()
         {
-            if (_anyTestStarted)
-            {
-                _stopwatch.Stop();
-                var testName = GetType().FullName + "." + TestName;
                 // TODO
                 //_envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
-            }
             await RemoveTables();
             await IntegrationTestEnvironment.EndIntegrationTest();
         }

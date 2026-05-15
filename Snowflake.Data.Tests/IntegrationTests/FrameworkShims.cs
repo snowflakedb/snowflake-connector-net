@@ -14,5 +14,11 @@ public static class FrameworkShims
         connection.Close();
         return Task.CompletedTask;
     }
+
+    public static Task CloseAsync(this DbDataReader reader)
+    {
+        reader.Close();
+        return Task.CompletedTask;
+    }
 }
 #endif

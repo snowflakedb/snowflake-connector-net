@@ -11,10 +11,19 @@ public static class IntegrationTestEnvironment
 {
     private static int s_integrationTestsRunning;
     private static readonly SemaphoreSlim s_semaphoreSlim = new(1, 1);
+    private static readonly CancellationTokenSource s_cts = new();
 
     static IntegrationTestEnvironment()
     {
         s_integrationTestsRunning = 0;
+        s_cts.CancelAfter(TimeSpan.FromHours(1));
+        s_cts.Token.Register(TerminateTestRun);
+    }
+
+    private static void TerminateTestRun()
+    {
+        Console.WriteLine(@"Terminating test run, as it's unlikely it can recover.");
+        Environment.Exit(-1);
     }
 
     public static async Task StartIntegrationTest()

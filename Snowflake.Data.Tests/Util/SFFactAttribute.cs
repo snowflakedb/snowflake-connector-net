@@ -2,10 +2,18 @@ using System;
 using System.Runtime.InteropServices;
 using Xunit;
 
+#if NET8_0_OR_GREATER
+using Xunit.v3;
+#else
+using Xunit.Sdk;
+#endif
+
 namespace Snowflake.Data.Tests.Util;
 
-#if !NET8_0_OR_GREATER
-[Xunit.Sdk.XunitTestCaseDiscoverer($"Snowflake.Data.Tests.Util.{nameof(XunitTestCaseDiscoverer)}", "Snowflake.Data.Tests")]
+#if NET8_0_OR_GREATER
+[XunitTestCaseDiscoverer(typeof(XunitTestCaseDiscoverer))]
+#else
+[XunitTestCaseDiscoverer($"Snowflake.Data.Tests.Util.{nameof(XunitTestCaseDiscoverer)}", "Snowflake.Data.Tests")]
 #endif
 public sealed class SFFactAttribute : FactAttribute
 {
