@@ -187,7 +187,7 @@ namespace Snowflake.Data.Core.FileTransfer
             byte[] header = new byte[MAX_MAGIC_BYTES];
             using (FileStream fs = File.OpenRead(filePath))
             {
-                fs.ReadExactly(header);
+                fs.Read(header, 0, header.Length);
             }
 
             foreach (SFFileCompressionType compType in compressionTypes)
