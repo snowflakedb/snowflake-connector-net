@@ -321,13 +321,13 @@ namespace Snowflake.Data.Client
                 ConnectionString = _tomlConnectionBuilder.GetConnectionStringFromToml();
         }
 
-        public override async Task OpenAsync(CancellationToken cancellationToken)
+        public override Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Connection Async.");
             if (_connectionState != ConnectionState.Closed)
             {
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
-                return;
+                return Task.CompletedTask;
             }
             OnSessionConnecting();
             FillConnectionStringFromTomlConfigIfNotSet();
@@ -339,30 +339,36 @@ namespace Snowflake.Data.Client
                 Token = Token
             };
 
-            try
-            {
-                SfSession = await SnowflakeDbConnectionPool.GetSessionAsync(ConnectionString, sessionContext, cancellationToken).ConfigureAwait(false);
-                // Only continue if the session was opened successfully
-                logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
-                OnSessionEstablished();
-            }
-            catch (OperationCanceledException)
-            {
-                _connectionState = ConnectionState.Closed;
-                logger.Debug("Connection canceled");
-                throw new TaskCanceledException("Connecting was cancelled");
-            }
-            catch (Exception sfSessionEx)
-            {
-                // Exception from SfSession.OpenAsync
-                _connectionState = ConnectionState.Closed;
-                logger.Error("Unable to connect", sfSessionEx);
-                throw new SnowflakeDbException(
-                    sfSessionEx,
-                    SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                    SFError.INTERNAL_ERROR,
-                    "Unable to connect");
-            }
+            return SnowflakeDbConnectionPool
+                .GetSessionAsync(ConnectionString, sessionContext, cancellationToken)
+                .ContinueWith(previousTask =>
+                {
+                    if (previousTask.IsFaulted)
+                    {
+                        // Exception from SfSession.OpenAsync
+                        Exception sfSessionEx = previousTask.Exception;
+                        _connectionState = ConnectionState.Closed;
+                        logger.Error("Unable to connect", sfSessionEx);
+                        throw new SnowflakeDbException(
+                            sfSessionEx,
+                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                            SFError.INTERNAL_ERROR,
+                            "Unable to connect");
+                    }
+                    else if (previousTask.IsCanceled)
+                    {
+                        _connectionState = ConnectionState.Closed;
+                        logger.Debug("Connection canceled");
+                        throw new TaskCanceledException("Connecting was cancelled");
+                    }
+                    else
+                    {
+                        // Only continue if the session was opened successfully
+                        SfSession = previousTask.Result;
+                        logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
+                        OnSessionEstablished();
+                    }
+                }, TaskContinuationOptions.None); // this continuation should be executed always (even if the whole operation was canceled) because it sets the proper state of the connection
         }
 
         public Mutex GetArrayBindingMutex()
