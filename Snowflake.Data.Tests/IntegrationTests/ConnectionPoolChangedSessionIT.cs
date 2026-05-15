@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     }
 
     [Collection(nameof(ConnectionPoolChangedSessionCollection))]
-    public class ConnectionPoolChangedSessionIT : SFBaseTestAsync, ICollectionFixture<ConnectionPoolChangedSessionCollection.Fixture>, IDisposable
+    public class ConnectionPoolChangedSessionIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture, ConnectionPoolChangedSessionCollection.Fixture classFixture) : base(fixture)

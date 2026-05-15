@@ -1,3 +1,4 @@
+using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
@@ -19,6 +20,12 @@ public static class FrameworkShims
     {
         reader.Close();
         return Task.CompletedTask;
+    }
+
+    public static Task<DbTransaction> BeginTransactionAsync(this DbConnection connection, IsolationLevel isolationLevel)
+    {
+        var result = connection.BeginTransaction(isolationLevel);
+        return Task.FromResult(result);
     }
 }
 #endif

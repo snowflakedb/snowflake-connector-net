@@ -25,6 +25,22 @@ public sealed class XunitTestCaseDiscoverer : IXunitTestCaseDiscoverer
     }
 }
 
+public sealed class XunitTheoryDiscoverer : IXunitTestCaseDiscoverer
+{
+    private readonly TheoryDiscoverer _decorated;
+
+    public XunitTheoryDiscoverer()
+    {
+        _decorated = new TheoryDiscoverer();
+    }
+
+    public async ValueTask<IReadOnlyCollection<IXunitTestCase>> Discover(ITestFrameworkDiscoveryOptions discoveryOptions, IXunitTestMethod testMethod, IFactAttribute factAttribute)
+    {
+        var cases = await _decorated.Discover(discoveryOptions, testMethod, factAttribute);
+        return cases.Select(x => new XunitTestCaseDecorator(x)).ToList();
+    }
+}
+
 #else
 using Xunit.Abstractions;
 
@@ -35,6 +51,19 @@ public sealed class XunitTestCaseDiscoverer : IXunitTestCaseDiscoverer
     public XunitTestCaseDiscoverer(IMessageSink diagnosticMessageSink)
     {
         _decorated = new FactDiscoverer(diagnosticMessageSink);
+    }
+
+    public IEnumerable<IXunitTestCase> Discover(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo factAttribute) =>
+        _decorated.Discover(discoveryOptions, testMethod, factAttribute).Select(x => new XunitTestCaseDecorator(x));
+}
+
+public sealed class XunitTheoryDiscoverer : IXunitTestCaseDiscoverer
+{
+    private readonly TheoryDiscoverer _decorated;
+
+    public XunitTheoryDiscoverer(IMessageSink diagnosticMessageSink)
+    {
+        _decorated = new TheoryDiscoverer(diagnosticMessageSink);
     }
 
     public IEnumerable<IXunitTestCase> Discover(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo factAttribute) =>

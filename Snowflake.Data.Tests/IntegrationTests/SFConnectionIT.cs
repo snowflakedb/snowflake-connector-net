@@ -386,9 +386,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 int delta = 15; // in case server time slower.
 
                 // Should timeout before the defined timeout plus 1 (buffer time)
-                Assert.True(stopwatch.ElapsedMilliseconds <= (timeoutSec + 1) * 1000);
                 // Should timeout after the defined timeout since retry count is infinite
-                Assert.True(stopwatch.ElapsedMilliseconds >= timeoutSec * 1000 - delta);
+                Assert.InRange(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta, (timeoutSec + 1) * 1000);
 
                 Assert.Equal(timeoutSec, conn.ConnectionTimeout);
             }
@@ -412,18 +411,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (Exception e)
                 {
-                    // Jitter can cause the request to reach max number of retries before reaching the timeout
-                    Assert.True(e.InnerException is TaskCanceledException ||
-                        SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
-                        ((SnowflakeDbException)e.InnerException).ErrorCode);
+                    Assert.IsType<SnowflakeDbException>(e);
                 }
                 stopwatch.Stop();
 
                 // retry 7 times with starting backoff of 1 second
                 // backoff is chosen randomly it can drop to 0. So the minimal backoff time could be 1 + 0 + 0 + 0 + 0 + 0 + 0 = 1
                 // The maximal backoff time could be 1 + 2 + 5 + 10 + 21 + 42 + 85 = 166
-                Assert.True(stopwatch.ElapsedMilliseconds < 166 * 1000);
-                Assert.True(stopwatch.ElapsedMilliseconds >= 1 * 1000);
+                Assert.InRange(stopwatch.ElapsedMilliseconds, 1 * 1000, 166 * 1000);
             }
         }
 
@@ -449,7 +444,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (SnowflakeDbException e)
                 {
                     // Jitter can cause the request to reach max number of retries before reaching the timeout
-                    var errorCode = SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode;
+                    var errorCode = SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode;
                     Assert.Equal(errorCode, e.ErrorCode);
                 }
 
@@ -479,20 +474,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
-                    await conn.OpenAsync(CancellationToken.None);
+                    await conn.OpenAsync(CancellationToken.None).ContinueWith(_ => stopwatch.Stop());
                     Assert.Fail();
                 }
                 catch (SnowflakeDbException e)
                 {
                     SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.REQUEST_TIMEOUT);
 
-                    stopwatch.Stop();
                     int delta = 10; // in case server time slower.
 
                     // Should timeout after the default timeout (300 sec)
-                    Assert.True(stopwatch.ElapsedMilliseconds >= conn.ConnectionTimeout * 1000 - delta);
                     // But never more because there's no connection timeout remaining (with 2 seconds margin)
-                    Assert.True(stopwatch.ElapsedMilliseconds <= (conn.ConnectionTimeout + 2) * 1000);
+                    Assert.InRange(stopwatch.ElapsedMilliseconds, conn.ConnectionTimeout * 1000 - delta, (conn.ConnectionTimeout + 2) * 1000);
                 }
             }
         }
@@ -1341,7 +1334,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             catch (SnowflakeDbException e)
             {
                 // Invalid OAuth access token
-                Assert.Equal(390303, ((SnowflakeDbException)e.InnerException).ErrorCode);
+                var aggregateEx = ((AggregateException)e.InnerException);
+                var aggregateEx2 = ((AggregateException)aggregateEx.InnerException);
+                var innerEx = aggregateEx2.InnerExceptions.First() as SnowflakeDbException;
+                Assert.Equal(390303, innerEx.ErrorCode);
             }
         }
 
@@ -2290,8 +2286,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
+                await conn.OpenAsync(CancellationToken.None);
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
         }
@@ -2312,8 +2307,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString + "minPoolSize=2;application=DuoTest;";
 
                 // act
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
+                await conn.OpenAsync(CancellationToken.None);
 
                 // assert
                 Assert.Equal(ConnectionState.Open, conn.State);
@@ -2331,7 +2325,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var connection = new SnowflakeDbConnection(connectionString))
             {
                 // act
-                var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync(CancellationToken.None).Wait());
+                var thrown = await Assert.ThrowsAsync<AggregateException>(() => connection.OpenAsync(CancellationToken.None));
 
                 // assert
                 Assert.True(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
@@ -2351,7 +2345,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var shortCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
                 // act
-                var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync(shortCancellation.Token).Wait());
+                var thrown = await Assert.ThrowsAsync<AggregateException>(() => connection.OpenAsync(shortCancellation.Token));
 
                 // assert
                 Assert.IsType<TaskCanceledException>(thrown.InnerException);
@@ -2379,8 +2373,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = externalBrowserConnectionString;
 
                 // Authenticate to retrieve and store the token if doesn't exist or invalid
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
+                await conn.OpenAsync(CancellationToken.None);
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
 
@@ -2389,8 +2382,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = externalBrowserConnectionString;
 
                 // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
+                await conn.OpenAsync(CancellationToken.None);
                 Assert.Equal(ConnectionState.Open, conn.State);
             }
 

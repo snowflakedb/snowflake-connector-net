@@ -24,7 +24,11 @@ public sealed class SFFactAttribute : FactAttribute
     }
 }
 
-
+#if NET8_0_OR_GREATER
+[XunitTestCaseDiscoverer(typeof(XunitTheoryDiscoverer))]
+#else
+[XunitTestCaseDiscoverer($"Snowflake.Data.Tests.Util.{nameof(XunitTheoryDiscoverer)}", "Snowflake.Data.Tests")]
+#endif
 public sealed class SFTheoryAttribute : TheoryAttribute
 {
     public SFTheoryAttribute(SkipCondition skip = SkipCondition.None)
