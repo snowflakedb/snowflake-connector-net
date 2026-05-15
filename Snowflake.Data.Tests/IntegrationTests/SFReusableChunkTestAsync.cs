@@ -10,6 +10,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
+    // TODO flaky investigate
     public class SFReusableChunkTestAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
@@ -120,7 +121,7 @@ select parse_json('{{
                     rowCount = 0;
                     using (var reader = await cmd.ExecuteReaderAsync())
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync())
                         {
                             Newtonsoft.Json.JsonConvert.DeserializeObject(reader[0].ToString());
                             rowCount++;
@@ -173,7 +174,7 @@ select parse_json('{{
                     rowCount = 0;
                     using (var reader = await cmd.ExecuteReaderAsync())
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync())
                         {
                             var obj = new object[reader.FieldCount];
                             reader.GetValues(obj);

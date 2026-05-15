@@ -6,6 +6,7 @@ namespace Snowflake.Data.Tests.Util
 {
     class SessionParameterAlterer
     {
+        // todo async
         public static void SetResultFormat(IDbConnection conn, ResultFormat resultFormat)
         {
             IDbCommand cmd = conn.CreateCommand();

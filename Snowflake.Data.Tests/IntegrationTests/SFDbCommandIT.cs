@@ -158,7 +158,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (Exception e)
                 {
-                    Assert.IsType<TaskCanceledException>(e.InnerException);
+                    Assert.IsType<TimeoutException>(e.InnerException);
                 }
                 stopwatch.Stop();
 
@@ -1450,7 +1450,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var row = cmd.ExecuteScalar();
 
                 // Assert
-                Assert.Equal(1, row);
+                Assert.Equal(1L, row);
             }
 
             // Get results of the async exec query
@@ -1460,7 +1460,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
 
                 // Assert
-                Assert.True(reader.Read());
+                Assert.True(await reader.ReadAsync());
                 Assert.Equal($"waited {expectedWaitTime} seconds", reader.GetString(0));
                 Assert.Equal(QueryStatus.Success, cmd.GetQueryStatus(queryId));
             }
