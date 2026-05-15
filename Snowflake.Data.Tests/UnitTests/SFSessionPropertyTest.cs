@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=0;")]
+        [InlineData("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=0;", "Error: Invalid parameter value 0 for FILE_TRANSFER_MEMORY_THRESHOLD")]
         [InlineData("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=xyz;", "Error: Invalid parameter value xyz for FILE_TRANSFER_MEMORY_THRESHOLD")]
         [InlineData("ACCOUNT=testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value testaccount? for ACCOUNT")]
         [InlineData("ACCOUNT=complicated.long.testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value complicated.long.testaccount? for ACCOUNT")]
@@ -316,7 +316,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData("account.snowflakecomputing.cn")]
+        [InlineData("account.snowflakecomputing.cn", "Connecting to CHINA Snowflake domain")]
         [InlineData("account.snowflakecomputing.com", "Connecting to GLOBAL Snowflake domain")]
         public void TestResolveConnectionArea(string host, string expectedMessage)
         {
@@ -488,7 +488,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
 
         [SFTheory]
-        [InlineData("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientSecret=def;")]
+        [InlineData("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientSecret=def;", "Required property OAUTHCLIENTID is not provided")]
         [InlineData("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;", "Required property OAUTHCLIENTSECRET is not provided")]
         [InlineData("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;", "Required property OAUTHSCOPE or ROLE is not provided")]
         [InlineData("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthScope=ghi;oauthAuthorizationUrl=https://okta.com/authorize", "Required property OAUTHTOKENREQUESTURL is not provided")]
@@ -625,7 +625,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData("AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER=testUser;")]
+        [InlineData("AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER=testUser;", "Required property TOKEN is not provided.")]
         public void TestInvalidProgrammaticAccessTokenParameters(string connectionString, string expectedErrorMessage)
         {
             // act
@@ -681,7 +681,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=unknown;")]
+        [InlineData("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=unknown;", "Parameter CRLDOWNLOADMAXSIZE should be greater than 0.")]
         [InlineData("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlDiskCaching=unknown;", "Parameter ENABLECRLDISKCACHING should have a boolean value.")]
         [InlineData("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlInMemoryCaching=unknown;", "Parameter ENABLECRLINMEMORYCACHING should have a boolean value.")]
         [InlineData("ACCOUNT=test;USER=testUser;password=testPassword;allowCertificatesWithoutCrlUrl=unknown;", "Parameter ALLOWCERTIFICATESWITHOUTCRLURL should have a boolean value.")]

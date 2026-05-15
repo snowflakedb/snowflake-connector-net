@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.Util;
 using System.Threading.Tasks;
 using Xunit.v3;
 
-// TODO theories, polish
+// TODO polish
 public sealed class XunitTestCaseDiscoverer : IXunitTestCaseDiscoverer
 {
     private readonly FactDiscoverer _decorated;

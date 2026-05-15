@@ -333,7 +333,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         [SFTheory]
@@ -350,7 +350,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
 
@@ -366,7 +366,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.Matches($"Unknown Error in uploading a file: .*", ex.Message);
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         [SFTheory]
@@ -381,7 +381,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.Matches($"Unknown Error in uploading a file: .*", ex.Message);
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         private void SetUpMockClientForDownload(HttpStatusCode statusCode, bool isAsync)
@@ -466,7 +466,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         [SFTheory]
@@ -483,7 +483,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         [SFTheory]
@@ -549,7 +549,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             string text = await ReadDownloadFileAsync();
             Assert.Equal(MockRemoteStorageClient.FileContent, text);
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         [SFTheory]

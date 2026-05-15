@@ -1354,7 +1354,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestCopyCmdUpdateCount()
         {
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-            var stageName = _fixture.TestName + Guid.NewGuid().ToString("N");
+            var stageName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
                 _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola STRING" });
@@ -1387,7 +1387,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestCopyCmdResultSet()
         {
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-            var stageName = _fixture.TestName + Guid.NewGuid().ToString("N");
+            var stageName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
                 _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola STRING" });

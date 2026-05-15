@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
@@ -36,6 +37,8 @@ namespace Snowflake.Data.Tests
 #else
             CancellationToken = CancellationToken.None;
 #endif
+
+            fixture.SetClassName(this);
         }
     }
 
@@ -49,16 +52,23 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         private const string ConnectionStringJwtAuthFmt = ";authenticator=snowflake_jwt;user={0};private_key_file={1};";
         private const string ConnectionStringJwtContentFmt = ";authenticator=snowflake_jwt;user={0};private_key={1};";
-
-        public string TestName => $"{GetType().Name}";
-        public string TableNameBaseName => TestName; // todo naming
-
+        private const string UninitializedClassName = "UNINITIALIZED";
         private readonly ConcurrentStack<string> _tablesToRemove;
         private bool _anyTestStarted;
+        private Stopwatch _stopwatch;
+        private string _className = UninitializedClassName;
+
+        public string TableNameBaseName => _className; // todo naming
 
         public SFBaseTestAsyncFixture()
         {
             _tablesToRemove = new ConcurrentStack<string>();
+        }
+
+        public void SetClassName(SFBaseTestAsync test)
+        {
+            if (_className == UninitializedClassName)
+                _className = test.GetType().Name;
         }
 
         public virtual async TaskOrValueTask InitializeAsync()
@@ -66,10 +76,25 @@ namespace Snowflake.Data.Tests
             await IntegrationTestEnvironment.StartIntegrationTest();
             _anyTestStarted = true;
             testConfig = TestConfigSingleton.TestConfig;
+            _stopwatch = new Stopwatch();
+            _stopwatch.Start();
         }
 
         public virtual async TaskOrValueTask DisposeAsync()
         {
+            _stopwatch.Stop();
+            var now = DateTimeOffset.UtcNow;
+            var startedAt = now.Subtract(_stopwatch.Elapsed);
+
+            Console.WriteLine("------------- VISIBLY OBSERVABLE VISIBLY BETTER ----------------------");
+            _ = Enumerable.Range(1, 40).Select(x =>
+            {
+                Console.WriteLine(" ----------------------------------------------");
+                return 0;
+            }).ToArray();
+            Console.WriteLine($"Fixture: {TableNameBaseName} took {_stopwatch.Elapsed:c}.");
+            Console.WriteLine($"Fixture: {TableNameBaseName} started at {startedAt:T}, ended at {now:T}.");
+
                 // TODO
                 //_envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
             await RemoveTables();
