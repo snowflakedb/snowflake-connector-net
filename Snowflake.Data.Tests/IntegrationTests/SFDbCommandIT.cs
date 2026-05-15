@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert that cancel is not triggered by timeout, but external cancellation
                     Assert.IsTrue(externalCancel.IsCancellationRequested);
                 }
-                await Task.Delay(2000);
+                await Task.Delay(2000).ConfigureAwait(false);
                 conn.Close();
             }
         }
@@ -1665,7 +1665,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using var conn = new SnowflakeDbConnection();
             conn.ConnectionString = $"{ConnectionString.Replace($"CLIENT_TELEMETRY_ENABLED={false}", $"CLIENT_TELEMETRY_ENABLED={true}")}poolingEnabled=false";
-            await conn.OpenAsync();
+            await conn.OpenAsync().ConfigureAwait(false);
 
             var capturedActivities = new List<Activity>();
             using var listener = new ActivityListener();
@@ -1684,8 +1684,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // Act
             switch (method)
             {
-                case "ExecuteNonQueryAsync": await cmd.ExecuteNonQueryAsync(); break;
-                case "ExecuteScalarAsync": await cmd.ExecuteScalarAsync(); break;
+                case "ExecuteNonQueryAsync": await cmd.ExecuteNonQueryAsync().ConfigureAwait(false); break;
+                case "ExecuteScalarAsync": await cmd.ExecuteScalarAsync().ConfigureAwait(false); break;
                 case "ExecuteReaderAsync": (await cmd.ExecuteReaderAsync().ConfigureAwait(false)).Dispose(); break;
             }
 

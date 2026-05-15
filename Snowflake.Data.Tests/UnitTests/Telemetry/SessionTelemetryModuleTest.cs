@@ -47,6 +47,7 @@ internal sealed class SessionTelemetryModuleTest
         activity.Start();
         module.OnActivityStoppedImpl(activity);
         Assert.AreEqual(1, ((ISessionTelemetryModule)module).CurrentBufferSize);
+        GC.KeepAlive(module);
 
         // Act - double dispose should not throw
         Assert.DoesNotThrow(() =>

@@ -62,32 +62,19 @@ internal static class SnowflakeTelemetryModule
         }
     }
 
+
     internal static void Unregister(string sessionId)
     {
-        s_logger.Debug($"Unregistering session with id: {sessionId} from client telemetry module.");
-        SessionTelemetryModule module;
-        lock (s_lock)
-        {
-            if (!s_sessions.TryGetValue(sessionId, out module))
-                return;
-
-            s_sessions.Remove(sessionId);
-        }
+        if (!TryRemoveSessionModule(sessionId, out var module))
+            return;
 
         module.Dispose();
     }
 
     internal static async Task UnregisterAsync(string sessionId, CancellationToken cancellationToken)
     {
-        s_logger.Debug($"Unregistering session with id: {sessionId} from client telemetry module.");
-        SessionTelemetryModule module;
-        lock (s_lock)
-        {
-            if (!s_sessions.TryGetValue(sessionId, out module))
-                return;
-
-            s_sessions.Remove(sessionId);
-        }
+        if (!TryRemoveSessionModule(sessionId, out var module))
+            return;
 
         await module.FlushAsync(cancellationToken).ConfigureAwait(false);
         module.Dispose();
@@ -104,6 +91,27 @@ internal static class SnowflakeTelemetryModule
         }
 
         module = concreteModule;
+        return true;
+    }
+
+    private static bool TryRemoveSessionModule(string sessionId, out SessionTelemetryModule module)
+    {
+        module = null;
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            s_logger.Warn("Tried to unregister session without providing any id!");
+            return false;
+        }
+
+        s_logger.Debug($"Unregistering session with id: {sessionId} from client telemetry module.");
+        lock (s_lock)
+        {
+            if (!s_sessions.TryGetValue(sessionId, out module))
+                return false;
+
+            s_sessions.Remove(sessionId);
+        }
+
         return true;
     }
 
