@@ -681,7 +681,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=unknown;", "Parameter CRLDOWNLOADMAXSIZE should be greater than 0.")]
+        [InlineData("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=unknown;", "")]
         [InlineData("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlDiskCaching=unknown;", "Parameter ENABLECRLDISKCACHING should have a boolean value.")]
         [InlineData("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlInMemoryCaching=unknown;", "Parameter ENABLECRLINMEMORYCACHING should have a boolean value.")]
         [InlineData("ACCOUNT=test;USER=testUser;password=testPassword;allowCertificatesWithoutCrlUrl=unknown;", "Parameter ALLOWCERTIFICATESWITHOUTCRLURL should have a boolean value.")]

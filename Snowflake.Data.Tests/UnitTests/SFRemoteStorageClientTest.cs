@@ -258,7 +258,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFRemoteStorageUtil.UploadOneFileWithRetry(_fileMetadata);
 
             // Assert
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         [SFTheory]
@@ -272,7 +272,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await SFRemoteStorageUtil.UploadOneFileWithRetryAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
             // Assert
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         [SFTheory]
@@ -566,7 +566,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             string text = await ReadDownloadFileAsync();
             Assert.Equal(MockRemoteStorageClient.FileContent, text);
-            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         private async Task<string> ReadDownloadFileAsync()

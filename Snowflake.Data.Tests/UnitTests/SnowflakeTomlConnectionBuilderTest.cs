@@ -146,7 +146,7 @@ password = ""otherpassword""";
 
 
         [SFTheory]
-        [InlineData("database = \"mydb\"")]
+        [InlineData("database = \"mydb\"", "DB=mydb;")]
         public void TestConnectionMapPropertiesFromTomlKeyValues(string tomlKeyValue, string connectionStringValue)
         {
             // Arrange

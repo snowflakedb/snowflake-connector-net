@@ -93,7 +93,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetFileHeaderWhenFileHeaderAlreadyExists(int expectedResultStatus)
         {
             // Setup file metadata
-            _fileMetadata.resultStatus = expectedResultStatus.ToString();
+            _fileMetadata.resultStatus = ((ResultStatus)expectedResultStatus).ToString();
             _fileMetadata.sha256Digest = MockGCSClient.SFCDigest;
             _fileMetadata.srcFileSize = MockGCSClient.ContentLength;
             _fileMetadata.encryptionMetadata = new SFEncryptionMetadata()
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestGetFileHeaderAsyncWhenFileHeaderAlreadyExists(int expectedResultStatus)
         {
             // Setup file metadata
-            _fileMetadata.resultStatus = expectedResultStatus.ToString();
+            _fileMetadata.resultStatus = ((ResultStatus)expectedResultStatus).ToString();
             _fileMetadata.sha256Digest = MockGCSClient.SFCDigest;
             _fileMetadata.srcFileSize = MockGCSClient.ContentLength;
             _fileMetadata.encryptionMetadata = new SFEncryptionMetadata()
@@ -402,7 +402,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData("some-header-name")]
+        [InlineData("some-header-name", "SOME-HEADER-NAME")]
         [InlineData("SOME-HEADER-NAME", "some-header-name")]
         public void TestGcsHeadersAreCaseInsensitiveForHttpResponseMessage(string headerNameToAdd, string headerNameToGet)
         {
@@ -421,7 +421,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData("some-header-name")]
+        [InlineData("some-header-name", "SOME-HEADER-NAME")]
         [InlineData("SOME-HEADER-NAME", "some-header-name")]
         public void TestGcsHeadersAreCaseInsensitiveForWebHeaderCollection(string headerNameToAdd, string headerNameToGet)
         {
