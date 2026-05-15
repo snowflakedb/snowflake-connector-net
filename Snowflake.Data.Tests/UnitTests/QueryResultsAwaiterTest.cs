@@ -8,7 +8,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class QueryResultsAwaiterTest
+    public class QueryResultsAwaiterTest
     {
         private const string ConnectionString = "account=test;user=test;password=test;poolingEnabled=false";
         private static readonly string ValidQueryId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";

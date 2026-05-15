@@ -5,7 +5,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    class SerilogTest : LoggerTest
+    public class SerilogTest : LoggerTest
     {
         private const string SerilogFileName = "test_serilog.log";
         public void SetUp()

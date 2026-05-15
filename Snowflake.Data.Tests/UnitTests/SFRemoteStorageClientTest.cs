@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Text;
     using System.Net;
     using Moq;
-    sealed class SFRemoteStorageClientTest: IDisposable
+    public sealed class SFRemoteStorageClientTest: IDisposable
     {
         private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
         // Mock data for file metadata
@@ -248,8 +248,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        public void TestUploadOneFileWithRetry(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, 1)]
+        public void TestUploadOneFileWithRetry(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, NotAsync);
@@ -262,8 +262,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        public async Task TestUploadOneFileAsyncWithRetry(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, 1)]
+        public async Task TestUploadOneFileAsyncWithRetry(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
@@ -276,13 +276,14 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.OK, null, ResultStatus.SKIPPED)]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        public void TestUploadOneFile(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.OK, null, 4)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, 1)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, 6)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, 5)]
+        public void TestUploadOneFile(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatusInt)
         {
             // Arrange
+            var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, NotAsync);
 
             // Act
@@ -297,13 +298,14 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.OK, null, ResultStatus.SKIPPED)]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        public async Task TestUploadOneFileAsync(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.OK, null, 4)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, 1)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, 6)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, 5)]
+        public async Task TestUploadOneFileAsync(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatusInt)
         {
             // Arrange
+            var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
 
             // Act
@@ -318,10 +320,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public void TestUploadOneFileThrowsForRetryErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, 8)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, 8)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.ServiceUnavailable, 8)]
+        public void TestUploadOneFileThrowsForRetryErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, NotAsync);
@@ -335,10 +337,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public async Task TestUploadOneFileAsyncThrowsForRetryErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, 8)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, 8)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.ServiceUnavailable, 8)]
+        public async Task TestUploadOneFileAsyncThrowsForRetryErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
@@ -353,8 +355,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
 
         [SFTheory]
-        [InlineData(HttpStatusCode.NotFound, null, ResultStatus.ERROR)]
-        public void TestUploadOneFileThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.NotFound, null, 0)]
+        public void TestUploadOneFileThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, NotAsync);
@@ -368,8 +370,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.NotFound, null, ResultStatus.ERROR)]
-        public async Task TestUploadOneFileAsyncThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.NotFound, null, 0)]
+        public async Task TestUploadOneFileAsyncThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
@@ -408,11 +410,12 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
-        [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        public void TestDownloadOneFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.OK, 2)]
+        [InlineData(HttpStatusCode.Unauthorized, 5)]
+        public void TestDownloadOneFile(HttpStatusCode httpStatusCode, int expectedResultStatusInt)
         {
             // Arrange
+            var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
             SetUpMockClientForDownload(httpStatusCode, NotAsync);
 
             // Act
@@ -428,11 +431,12 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
-        [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        public async Task TestDownloadOneFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.OK, 2)]
+        [InlineData(HttpStatusCode.Unauthorized, 5)]
+        public async Task TestDownloadOneFileAsync(HttpStatusCode httpStatusCode, int expectedResultStatusInt)
         {
             // Arrange
+            var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
             SetUpMockClientForDownload(httpStatusCode, IsAsync);
 
             // Act
@@ -441,17 +445,17 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
-                string text = File.ReadAllText(t_downloadFileName);
+                string text = await File.ReadAllTextAsync(t_downloadFileName, _cancellationToken);
                 Assert.Equal(MockRemoteStorageClient.FileContent, text);
             }
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [InlineData(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [InlineData(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public void TestDownloadOneFileThrowsForRetryErrors(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.Forbidden, 8)]
+        [InlineData(HttpStatusCode.InternalServerError, 8)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, 8)]
+        public void TestDownloadOneFileThrowsForRetryErrors(HttpStatusCode httpStatusCode, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForDownload(httpStatusCode, NotAsync);
@@ -465,10 +469,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [InlineData(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [InlineData(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public async Task TestDownloadOneFileAsyncThrowsForRetryErrors(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.Forbidden, 8)]
+        [InlineData(HttpStatusCode.InternalServerError, 8)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, 8)]
+        public async Task TestDownloadOneFileAsyncThrowsForRetryErrors(HttpStatusCode httpStatusCode, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForDownload(httpStatusCode, IsAsync);
@@ -531,8 +535,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
-        public void TestDownloadOneFileWithEncryptionMaterial(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.OK, 2)]
+        public void TestDownloadOneFileWithEncryptionMaterial(HttpStatusCode httpStatusCode, int expectedResultStatus)
         {
             // Arrange
             SetUpMockEncryptedFileForDownload();
@@ -548,8 +552,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
-        public async Task TestDownloadOneFileAsyncWithEncryptionMaterial(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [InlineData(HttpStatusCode.OK, 2)]
+        public async Task TestDownloadOneFileAsyncWithEncryptionMaterial(HttpStatusCode httpStatusCode, int expectedResultStatus)
         {
             // Arrange
             SetUpMockEncryptedFileForDownload();

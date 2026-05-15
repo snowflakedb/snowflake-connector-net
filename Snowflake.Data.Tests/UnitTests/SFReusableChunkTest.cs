@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using Snowflake.Data.Client;
     using System.Threading.Tasks;
-    class SFReusableChunkTest
+    public class SFReusableChunkTest
     {
         [SFFact]
         public void TestExtractCellWithRowParameterReadsAllRows()

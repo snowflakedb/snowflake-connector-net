@@ -5,7 +5,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class SFBindUploaderTest
+    public class SFBindUploaderTest
     {
         private readonly SFBindUploader _bindUploader = new SFBindUploader(null, "test");
 

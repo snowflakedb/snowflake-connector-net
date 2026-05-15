@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Xunit;
     using Core.Tools;
     using Snowflake.Data.Core;
-    class TomlConnectionBuilderTest
+    public class TomlConnectionBuilderTest
     {
         private const string BasicTomlConfig = @"
 [default]

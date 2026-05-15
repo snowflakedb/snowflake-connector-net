@@ -14,7 +14,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class HttpUtilTest
+    public class HttpUtilTest
     {
         [SFFact]
         public async Task TestNonRetryableHttpExceptionThrowsError()

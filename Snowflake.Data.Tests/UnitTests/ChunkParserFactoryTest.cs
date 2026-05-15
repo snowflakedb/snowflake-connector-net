@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Security;
     using System.Text;
     using System.Threading;
-    sealed class ChunkParserFactoryTest : IDisposable
+    public sealed class ChunkParserFactoryTest : IDisposable
     {
         int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
 

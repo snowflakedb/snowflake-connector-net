@@ -17,7 +17,7 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.UnitTests
 {
 
-    class SFSessionPropertyTest
+    public class SFSessionPropertyTest
     {
         private const string DifferentHostsWarning = "Properties OAUTHAUTHORIZATIONURL and OAUTHTOKENREQUESTURL are configured for a different host";
 
@@ -266,11 +266,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData("DB", SFSessionProperty.DB, "\"testdb\"")]
-        [InlineData("SCHEMA", SFSessionProperty.SCHEMA, "\"quotedSchema\"")]
-        [InlineData("ROLE", SFSessionProperty.ROLE, "\"userrole\"")]
-        [InlineData("WAREHOUSE", SFSessionProperty.WAREHOUSE, "\"warehouse  test\"")]
-        public void TestValidateSupportEscapedQuotesValuesForObjectProperties(string propertyName, SFSessionProperty sessionProperty, string value)
+        [InlineData("DB", 1, "\"testdb\"")]
+        [InlineData("SCHEMA", 6, "\"quotedSchema\"")]
+        [InlineData("ROLE", 5, "\"userrole\"")]
+        [InlineData("WAREHOUSE", 9, "\"warehouse  test\"")]
+        public void TestValidateSupportEscapedQuotesValuesForObjectProperties(string propertyName, int sessionProperty, string value)
         {
             // arrange
             var connectionString = $"ACCOUNT=test;{propertyName}={value};USER=test;PASSWORD=test;";
@@ -279,16 +279,16 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.Equal(value, properties[sessionProperty]);
+            Assert.Equal(value, properties[(SFSessionProperty)sessionProperty]);
         }
 
         [SFTheory]
-        [InlineData("DB", SFSessionProperty.DB, "testdb", "testdb")]
-        [InlineData("DB", SFSessionProperty.DB, "\"testdb\"", "\"testdb\"")]
-        [InlineData("DB", SFSessionProperty.DB, "\"\"\"testDB\"\"\"", "\"\"testDB\"\"")]
-        [InlineData("DB", SFSessionProperty.DB, "\"\"\"test\"\"DB\"\"\"", "\"\"test\"DB\"\"")]
-        [InlineData("SCHEMA", SFSessionProperty.SCHEMA, "\"quoted\"\"Schema\"", "\"quoted\"Schema\"")]
-        public void TestValidateSupportEscapedQuotesInsideValuesForObjectProperties(string propertyName, SFSessionProperty sessionProperty, string value, string expectedValue)
+        [InlineData("DB", 1, "testdb", "testdb")]
+        [InlineData("DB", 1, "\"testdb\"", "\"testdb\"")]
+        [InlineData("DB", 1, "\"\"\"testDB\"\"\"", "\"\"testDB\"\"")]
+        [InlineData("DB", 1, "\"\"\"test\"\"DB\"\"\"", "\"\"test\"DB\"\"")]
+        [InlineData("SCHEMA", 6, "\"quoted\"\"Schema\"", "\"quoted\"Schema\"")]
+        public void TestValidateSupportEscapedQuotesInsideValuesForObjectProperties(string propertyName, int sessionProperty, string value, string expectedValue)
         {
             // arrange
             var connectionString = $"ACCOUNT=test;{propertyName}={value};USER=test;PASSWORD=test;";
@@ -297,7 +297,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.Equal(expectedValue, properties[sessionProperty]);
+            Assert.Equal(expectedValue, properties[(SFSessionProperty)sessionProperty]);
         }
 
         [SFTheory]
@@ -1224,11 +1224,11 @@ namespace Snowflake.Data.Tests.UnitTests
             return defaultNonWindowsValue ?? defaultValue;
         }
 
-        internal class TestCase
+        public class TestCase
         {
             public string ConnectionString { get; set; }
             public SecureString SecurePassword { get; set; }
-            public SFSessionProperties ExpectedProperties { get; set; }
+            internal SFSessionProperties ExpectedProperties { get; set; }
         }
     }
 }

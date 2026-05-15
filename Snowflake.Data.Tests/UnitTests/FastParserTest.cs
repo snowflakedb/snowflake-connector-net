@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using System;
     using System.Text;
-    sealed class FastParserTest : IDisposable
+    public sealed class FastParserTest : IDisposable
     {
         byte[] _byte;
 

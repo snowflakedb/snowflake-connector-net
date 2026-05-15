@@ -5,19 +5,19 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    class EasyLoggingLogLevelTest
+    public class EasyLoggingLogLevelTest
     {
         [SFTheory]
-        [InlineData("OFF", EasyLoggingLogLevel.Off)]
-        [InlineData("off", EasyLoggingLogLevel.Off)]
-        [InlineData("iNfO", EasyLoggingLogLevel.Info)]
-        public void TestThatGetsLogLevelValueIgnoringLetterCase(string loglevelString, EasyLoggingLogLevel expectedLogLevel)
+        [InlineData("OFF", 0)]
+        [InlineData("off", 0)]
+        [InlineData("iNfO", 3)]
+        public void TestThatGetsLogLevelValueIgnoringLetterCase(string loglevelString, int expectedLogLevel)
         {
             // act
             var logLevel = EasyLoggingLogLevelExtensions.From(loglevelString);
 
             // assert
-            Assert.Equal(expectedLogLevel, logLevel);
+            Assert.Equal((EasyLoggingLogLevel)expectedLogLevel, logLevel);
         }
 
         [SFFact]

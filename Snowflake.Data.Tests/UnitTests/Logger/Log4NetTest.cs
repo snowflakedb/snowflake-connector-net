@@ -5,7 +5,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    class Log4NetTest : LoggerTest
+    public class Log4NetTest : LoggerTest
     {
         private const string Log4NetFileName = "test_log4net.log";
         public void SetUp()

@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.Authenticator;
-    class SFAuthenticatorFactoryTest
+    public class SFAuthenticatorFactoryTest
     {
         IAuthenticator _authenticator;
 

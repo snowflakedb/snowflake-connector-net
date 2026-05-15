@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    sealed class ConcatenatedStreamTest
+    public sealed class ConcatenatedStreamTest
     {
         Stream _concatStream;
 

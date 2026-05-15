@@ -7,7 +7,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    sealed class SecretDetectorTest
+    public sealed class SecretDetectorTest
     {
         SecretDetector.Mask mask;
 

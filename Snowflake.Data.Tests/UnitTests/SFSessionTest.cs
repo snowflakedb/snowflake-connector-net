@@ -13,7 +13,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class SFSessionTest
+    public class SFSessionTest
     {
         // Mock test for session gone
         [SFFact]

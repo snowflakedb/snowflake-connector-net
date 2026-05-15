@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
-    sealed class SFDbParameterCollectionTest
+    public sealed class SFDbParameterCollectionTest
     {
         SnowflakeDbParameterCollection _parameterCollection;
         const int PARAM_COUNT = 10;

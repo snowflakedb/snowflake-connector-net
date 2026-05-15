@@ -7,7 +7,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    class SFSessionTimezoneTest
+    public class SFSessionTimezoneTest
     {
         [SFFact]
         public void TestGetSessionTimezoneReturnsLocalWhenFeatureDisabled()

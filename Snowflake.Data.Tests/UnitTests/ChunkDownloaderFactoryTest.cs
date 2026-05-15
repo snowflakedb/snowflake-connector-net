@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.Collections.Generic;
     using System.Threading;
-    sealed class ChunkDownloaderFactoryTest : IDisposable
+    public sealed class ChunkDownloaderFactoryTest : IDisposable
     {
         int ChunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
 

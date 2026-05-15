@@ -5,7 +5,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Xunit;
     using Snowflake.Data.Core;
     using System.Linq;
-    sealed class FastMemoryStreamTest
+    public sealed class FastMemoryStreamTest
     {
         FastMemoryStream _fastMemoryStream;
 

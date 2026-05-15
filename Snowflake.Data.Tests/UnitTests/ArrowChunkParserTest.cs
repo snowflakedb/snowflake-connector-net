@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
-    class ArrowChunkParserTest
+    public class ArrowChunkParserTest
     {
         [SFTheory]
         [InlineData(1)]

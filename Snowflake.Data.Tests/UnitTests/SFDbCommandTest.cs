@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    sealed class SFDbCommandTest
+    public sealed class SFDbCommandTest
     {
         SnowflakeDbCommand command;
 

@@ -6,7 +6,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    class NlogTest : LoggerTest
+    public class NlogTest : LoggerTest
     {
         private const string NlogFileName = "test_nlog.log";
         public void SetUp()

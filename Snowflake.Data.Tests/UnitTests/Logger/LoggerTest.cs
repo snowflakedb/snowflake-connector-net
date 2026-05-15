@@ -9,7 +9,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    abstract class LoggerTest : IDisposable
+    public abstract class LoggerTest : IDisposable
     {
         private const string InfoMessage = "Info message";
         private const string DebugMessage = "Debug message";

@@ -17,7 +17,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    sealed class SFExternalBrowserTest
+    public sealed class SFExternalBrowserTest
     {
         [ThreadStatic]
         private static Mock<IWebBrowserRunner> t_browserRunner;

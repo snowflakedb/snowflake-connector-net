@@ -15,7 +15,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    sealed class ArrowResultSetTest
+    public sealed class ArrowResultSetTest
     {
         private const int RowCount = 10;
         private const int ColumnIndex = 0;

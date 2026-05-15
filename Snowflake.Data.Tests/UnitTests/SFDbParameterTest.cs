@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests
     using System.Data;
     using System.Linq;
     using System.Text;
-    class SFDbParameterTest
+    public class SFDbParameterTest
     {
         SnowflakeDbParameter _parameter;
 
