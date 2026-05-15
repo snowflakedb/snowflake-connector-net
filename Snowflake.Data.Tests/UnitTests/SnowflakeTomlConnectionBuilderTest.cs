@@ -473,7 +473,7 @@ authenticator = ""oauth""");
         }
 
         [SFTheory]
-        [InlineData("\\\"password;default\\\"")]
+        [InlineData("\\\"password;default\\\"", "password;default")]
         [InlineData("\\\"\\\"\\\"password;default\\\"", "\"password;default")]
         [InlineData("p\\\"assworddefault", "p\"assworddefault")]
         [InlineData("password\\\"default", "password\"default")]

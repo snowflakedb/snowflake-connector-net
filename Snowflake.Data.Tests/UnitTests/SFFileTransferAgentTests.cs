@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.IO;
     using System.Text;
     using System;
-    public class SFFileTransferAgentTest
+    public class SFFileTransferAgentTest : IDisposable
     {
         // Mock data for file metadata
         [ThreadStatic] private static string t_locationStage;
@@ -67,6 +67,17 @@ namespace Snowflake.Data.Tests.UnitTests
         // Mock file paths
         static readonly string s_filePathWithoutSpaces = Path.Combine("C:\\Users\\Test\\", "folder_without_space", "*.*");
         static readonly string s_filePathWithSpaces = Path.Combine("C:\\Users\\Test\\", "folder with space", "*.*");
+
+        public SFFileTransferAgentTest()
+        {
+            BeforeEachTest();
+        }
+
+        public void Dispose()
+        {
+            AfterEachTest();
+        }
+
         public void BeforeEachTest()
         {
             // Base object's names on worker thread id

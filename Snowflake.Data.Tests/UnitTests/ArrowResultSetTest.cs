@@ -180,7 +180,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetNumber(testValues);
         }
 
-        private void TestGetNumber(IEnumerable testValues)
+        private void TestGetNumber<T>(IEnumerable<T> testValues)
         {
             for (var scale = 0; scale <= 9; ++scale)
             {
@@ -190,13 +190,17 @@ namespace Snowflake.Data.Tests.UnitTests
                 {
                     _arrowResultSet.Next();
 
+                    var isLong = typeof(T) != typeof(decimal) && scale == 0;
                     var expectedValue = Convert.ToDecimal(testValue) / (decimal)Math.Pow(10, scale);
-                    Assert.Equal(expectedValue, _arrowResultSet.GetValue(ColumnIndex));
+
+                    if (!isLong)
+                        Assert.Equal(expectedValue, _arrowResultSet.GetValue(ColumnIndex));
+
                     Assert.Equal(expectedValue, _arrowResultSet.GetDecimal(ColumnIndex));
                     Assert.Equal((double)expectedValue, _arrowResultSet.GetDouble(ColumnIndex));
                     Assert.Equal((float)expectedValue, _arrowResultSet.GetFloat(ColumnIndex));
 
-                    if (expectedValue >= Int64.MinValue && expectedValue <= Int64.MaxValue)
+                    if (isLong)
                     {
                         // get integer value
                         long expectedInteger = (long)expectedValue;
@@ -214,6 +218,9 @@ namespace Snowflake.Data.Tests.UnitTests
                             Assert.Equal(expectedInteger, _arrowResultSet.GetByte(ColumnIndex));
                         else
                             Assert.Throws<OverflowException>(() => _arrowResultSet.GetByte(ColumnIndex));
+
+                        if (scale == 0)
+                            Assert.Equal(expectedInteger, _arrowResultSet.GetValue(ColumnIndex));
                     }
                 }
             }

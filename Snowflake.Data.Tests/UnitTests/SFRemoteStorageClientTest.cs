@@ -412,7 +412,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [SFTheory]
         [InlineData(HttpStatusCode.OK, 2)]
         [InlineData(HttpStatusCode.Unauthorized, 5)]
-        public void TestDownloadOneFile(HttpStatusCode httpStatusCode, int expectedResultStatusInt)
+        public async Task TestDownloadOneFile(HttpStatusCode httpStatusCode, int expectedResultStatusInt)
         {
             // Arrange
             var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
@@ -424,7 +424,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
-                string text = File.ReadAllText(t_downloadFileName);
+                string text = await ReadDownloadFileAsync();
                 Assert.Equal(MockRemoteStorageClient.FileContent, text);
             }
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
@@ -445,11 +445,12 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
-                string text = await File.ReadAllTextAsync(t_downloadFileName, _cancellationToken);
+                var text = await ReadDownloadFileAsync();
                 Assert.Equal(MockRemoteStorageClient.FileContent, text);
             }
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
+
 
         [SFTheory]
         [InlineData(HttpStatusCode.Forbidden, 8)]
@@ -536,7 +537,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         [SFTheory]
         [InlineData(HttpStatusCode.OK, 2)]
-        public void TestDownloadOneFileWithEncryptionMaterial(HttpStatusCode httpStatusCode, int expectedResultStatus)
+        public async Task TestDownloadOneFileWithEncryptionMaterial(HttpStatusCode httpStatusCode, int expectedResultStatus)
         {
             // Arrange
             SetUpMockEncryptedFileForDownload();
@@ -546,7 +547,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFRemoteStorageUtil.DownloadOneFile(_fileMetadata);
 
             // Assert
-            string text = File.ReadAllText(t_downloadFileName);
+            string text = await ReadDownloadFileAsync();
             Assert.Equal(MockRemoteStorageClient.FileContent, text);
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
@@ -563,9 +564,20 @@ namespace Snowflake.Data.Tests.UnitTests
             await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
             // Assert
-            string text = File.ReadAllText(t_downloadFileName);
+            string text = await ReadDownloadFileAsync();
             Assert.Equal(MockRemoteStorageClient.FileContent, text);
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+        }
+
+        private async Task<string> ReadDownloadFileAsync()
+        {
+            #if NETFRAMEWORK
+            var result = File.ReadAllText(t_downloadFileName);
+            return result;
+            #else
+            var text = await File.ReadAllTextAsync(t_downloadFileName, _cancellationToken);
+            return text;
+            #endif
         }
     }
 }
