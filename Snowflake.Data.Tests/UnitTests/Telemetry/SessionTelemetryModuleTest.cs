@@ -78,7 +78,10 @@ internal sealed class SessionTelemetryModuleTest
         var activity = new Activity("TestOp");
         activity.Start();
         if (status.HasValue)
+        {
             activity.SetStatus(status.Value);
+            activity.SetTag(TelemetryTags.StatusCode, expectedStatus);
+        }
         if (event1 != null)
             activity.AddEvent(new ActivityEvent(event1));
         if (event2 != null)
