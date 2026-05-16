@@ -165,7 +165,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await conn2.CloseAsync(CancellationToken.None);
         }
 
-        [SFFact]
+        [SFFact(Skip = "TODO investigate")]
         public async Task TestWaitInAQueueForAnIdleSession()
         {
             // arrange

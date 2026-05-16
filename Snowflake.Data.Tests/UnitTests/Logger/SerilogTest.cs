@@ -15,22 +15,23 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
     public sealed class SerilogTest : LoggerTest, IClassFixture<SerilogTestFixture>
     {
         private const string SerilogFileName = "test_serilog.log";
+        private readonly Serilog.Core.Logger _serilogLogger;
 
         public SerilogTest()
         {
-            _logFile = "test_serilog.log";
+            _logFile = SerilogFileName;
 
-            var loggerSerilog = new LoggerConfiguration()
+            _serilogLogger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
                 .WriteTo.File(SerilogFileName, flushToDiskInterval: TimeSpan.Zero)
                 .CreateLogger();
 
-            _customLogger = new SerilogLoggerFactory(loggerSerilog).CreateLogger("SerilogTest");
+            _customLogger = new SerilogLoggerFactory(_serilogLogger).CreateLogger("SerilogTest");
         }
 
         public override void Dispose()
         {
-            Serilog.Log.CloseAndFlush();
+            _serilogLogger.Dispose(); // Release the file handle before base.Dispose() deletes the file
             base.Dispose();
         }
     }
