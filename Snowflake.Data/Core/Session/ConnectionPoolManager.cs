@@ -193,5 +193,7 @@ namespace Snowflake.Data.Core.Session
                 : ";token=;";
             return connectionString + passwordPart + clientSecretPart + tokenPart;
         }
+
+        public ConnectionPoolType Type => ConnectionPoolType.MultipleConnectionPool;
     }
 }

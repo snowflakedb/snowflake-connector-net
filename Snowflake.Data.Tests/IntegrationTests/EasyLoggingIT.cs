@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -47,17 +48,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         private readonly SFBaseTestAsyncFixture _fixture;
         private readonly EasyLoggingITTestFixture.Fixture _classFixture;
+        private readonly List<SFAppender> _appendersPriorToTest;
         private const string LogDirectoryName = "dotnet";
 
         public EasyLoggingIT(SFBaseTestAsyncFixture fixture, EasyLoggingITTestFixture.Fixture classFixture) : base(fixture)
         {
             _fixture = fixture;
             _classFixture = classFixture;
+
+            _appendersPriorToTest = SFLoggerImpl.s_appenders.ToList();
         }
 
         public void Dispose()
         {
             EasyLoggingStarter.Instance.Reset(EasyLoggingLogLevel.Off);
+            SFLoggerImpl.s_appenders = _appendersPriorToTest;
 
             var logDirectory = Path.Combine(_classFixture.WorkingDirectory, LogDirectoryName);
             if (Directory.Exists(logDirectory))

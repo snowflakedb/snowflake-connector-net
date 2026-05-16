@@ -86,15 +86,6 @@ namespace Snowflake.Data.Tests
             var now = DateTimeOffset.UtcNow;
             var startedAt = now.Subtract(_stopwatch.Elapsed);
 
-            Console.WriteLine("------------- VISIBLY OBSERVABLE VISIBLY BETTER ----------------------");
-            _ = Enumerable.Range(1, 40).Select(x =>
-            {
-                Console.WriteLine(" ----------------------------------------------");
-                return 0;
-            }).ToArray();
-            Console.WriteLine($"Fixture: {TableNameBaseName} took {_stopwatch.Elapsed:c}.");
-            Console.WriteLine($"Fixture: {TableNameBaseName} started at {startedAt:T}, ended at {now:T}.");
-
                 // TODO
                 //_envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
             await RemoveTables();

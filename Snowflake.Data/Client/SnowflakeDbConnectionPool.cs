@@ -144,18 +144,7 @@ namespace Snowflake.Data.Client
             SetConnectionPoolVersion(requestedPoolType, true);
         }
 
-        internal static ConnectionPoolType GetConnectionPoolVersion()
-        {
-            if (ConnectionManager != null)
-            {
-                switch (ConnectionManager)
-                {
-                    case ConnectionCacheManager _: return ConnectionPoolType.SingleConnectionCache;
-                    case ConnectionPoolManager _: return ConnectionPoolType.MultipleConnectionPool;
-                }
-            }
-            return DefaultConnectionPoolType;
-        }
+        internal static ConnectionPoolType GetConnectionPoolVersion() => ConnectionManager?.Type ?? DefaultConnectionPoolType;
 
         internal static IConnectionManager ReplaceConnectionManager(IConnectionManager connectionManager)
         {

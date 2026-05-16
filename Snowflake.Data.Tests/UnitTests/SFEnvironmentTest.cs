@@ -57,13 +57,13 @@ namespace Snowflake.Data.Tests.UnitTests
 #if NETFRAMEWORK
             Assert.True(
                 lowerPath.Contains("snowflake.data.tests") &&
-                (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")));
+                (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")), $"Application path should contain 'snowflake.data.tests', 'bin' and end with .dll or .exe. Got: {applicationPath}");
 #else
             Assert.True(
                 lowerPath.Contains("snowflake.data.tests") &&
                 lowerPath.Contains("bin") &&
                 (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
-                $"Application path should contain 'snowflake.data.tests', 'bin', 'testhost' and end with .dll or .exe. Got: {applicationPath}");
+                $"Application path should contain 'snowflake.data.tests', 'bin' and end with .dll or .exe. Got: {applicationPath}");
 #endif
         }
 

@@ -43,7 +43,7 @@ namespace Snowflake.Data.Log
             {
                 SFLoggerImpl.SetLevel(sfLoggerLevel);
                 if (easyLoggingLogLevel == EasyLoggingLogLevel.Off)
-                    RemoveOtherEasyLoggingAppenders(null);
+                    RemoveOtherEasyLoggingAppenders(null); // TODO what does this remove??
             }
         }
 

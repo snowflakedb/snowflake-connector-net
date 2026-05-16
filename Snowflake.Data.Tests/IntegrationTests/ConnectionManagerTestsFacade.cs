@@ -101,6 +101,8 @@ internal class ConnectionManagerTestsFacade : IConnectionManager
         return this;
     }
 
+    public ConnectionPoolType Type => ConnectionManagerImplementation.Type;
+
     // TODO tests
     public sealed class SFConnectionManagerTestsException : Exception
     {

@@ -28,5 +28,7 @@ namespace Snowflake.Data.Core.Session
             ClearAllPools();
             return ConnectionManagerFactory.Singleton.CreateConnectionManager(requestedPoolType);
         }
+
+        public ConnectionPoolType Type => ConnectionPoolType.SingleConnectionCache;
     }
 }
