@@ -11,18 +11,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [CollectionDefinition(nameof(ConnectionPoolCommonITTestFixture), DisableParallelization = true)]
-    public sealed class ConnectionPoolCommonITTestFixture : ICollectionFixture<ConnectionPoolCommonITTestFixture.Fixture>
-    {
-        public sealed class Fixture : IDisposable
-        {
-            public void Dispose()
-            {
-                SnowflakeDbConnectionPool.ClearAllPools();
-            }
-        }
-    }
-
     public class ConnectionPoolCommonSingleConnectionCacheIT : ConnectionPoolCommonIT
     {
         public ConnectionPoolCommonSingleConnectionCacheIT(SFBaseTestAsyncFixture fixture)
@@ -37,20 +25,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         { }
     }
 
-    [Collection(nameof(ConnectionPoolCommonITTestFixture))]
     public abstract class ConnectionPoolCommonIT : SFBaseTestAsync, IDisposable
     {
         private readonly ConnectionPoolType _connectionPoolTypeUnderTest;
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
-        private readonly PoolConfig _previousPoolConfig;
-
         private readonly SFBaseTestAsyncFixture _fixture;
 
         internal ConnectionPoolCommonIT(SFBaseTestAsyncFixture fixture, ConnectionPoolType connectionPoolTypeUnderTest) : base(fixture)
         {
             _fixture = fixture;
             _connectionPoolTypeUnderTest = connectionPoolTypeUnderTest;
-            _previousPoolConfig = new PoolConfig();
+            ConnectionManagerTestsFacade.RegisterDedicatedContext(this, connectionPoolTypeUnderTest);
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(_connectionPoolTypeUnderTest);
             SnowflakeDbConnectionPool.ClearAllPools();
             if (_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache)
@@ -63,7 +48,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         public void Dispose()
         {
-            _previousPoolConfig.Reset();
+            ConnectionManagerTestsFacade.UnregisterDedicatedContext(this);
+            // _previousPoolConfig.Reset();
         }
 
         [SFFact]

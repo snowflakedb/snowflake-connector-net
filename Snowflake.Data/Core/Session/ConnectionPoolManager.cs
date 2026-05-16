@@ -14,11 +14,19 @@ namespace Snowflake.Data.Core.Session
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
         private static readonly Object s_poolsLock = new Object();
-        private static readonly Exception s_operationNotAvailable = new Exception("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool");
+        private static readonly Exception s_operationNotAvailable = new("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool");
         private readonly Dictionary<string, SessionPool> _pools;
+        private readonly SessionPoolFactory _sessionPoolFactory;
+        private readonly IConnectionManagerFactory _connectionManagerFactory;
 
-        internal ConnectionPoolManager()
+        internal ConnectionPoolManager() : this(DefaultSessionPoolFactory, ConnectionManagerFactory.Singleton)
         {
+        }
+
+        internal ConnectionPoolManager(SessionPoolFactory sessionPoolFactory, IConnectionManagerFactory connectionManagerFactory)
+        {
+            _sessionPoolFactory = sessionPoolFactory;
+            _connectionManagerFactory = connectionManagerFactory;
             lock (s_poolsLock)
             {
                 _pools = new Dictionary<string, SessionPool>();
@@ -149,16 +157,27 @@ namespace Snowflake.Data.Core.Session
                     return poolCreatedWhileWaitingOnLock;
                 }
                 s_logger.Info($"Creating new pool");
-                var pool = SessionPool.CreateSessionPool(connectionString, password, oauthClientSecret, token);
+                var pool = _sessionPoolFactory(connectionString, password, oauthClientSecret, token);
                 _pools.Add(poolKey, pool);
                 return pool;
             }
         }
 
+        private static SessionPool DefaultSessionPoolFactory(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token) =>
+            SessionPool.CreateSessionPool(connectionString, password, oauthClientSecret, token);
+
+        internal delegate SessionPool SessionPoolFactory(string connectionString, SecureString password, SecureString clientSecret, SecureString token);
+
         public SessionPool GetPool(string connectionString)
         {
             s_logger.Debug("ConnectionPoolManager::GetPool with connection string");
             return GetPool(connectionString, new SessionPropertiesContext());
+        }
+
+        public IConnectionManager Recycle(ConnectionPoolType requestedPoolType)
+        {
+            ClearAllPools();
+            return _connectionManagerFactory.CreateConnectionManager(requestedPoolType);
         }
 
         private string GetPoolKey(string connectionString, SecureString password, SecureString clientSecret, SecureString token)

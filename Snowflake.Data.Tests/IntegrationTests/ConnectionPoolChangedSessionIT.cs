@@ -9,39 +9,21 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [CollectionDefinition(nameof(ConnectionPoolChangedSessionCollection), DisableParallelization = true)]
-    public sealed class ConnectionPoolChangedSessionCollection : ICollectionFixture<ConnectionPoolChangedSessionCollection.Fixture>
-    {
-        public sealed class Fixture : IDisposable
-        {
-            private readonly PoolConfig _previousPoolConfigRestorer;
-
-            public Fixture()
-            {
-                _previousPoolConfigRestorer = new PoolConfig();
-                SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
-            }
-
-            public void Dispose()
-            {
-                _previousPoolConfigRestorer.Reset();
-            }
-        }
-    }
-
-    [Collection(nameof(ConnectionPoolChangedSessionCollection))]
     public class ConnectionPoolChangedSessionIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture, ConnectionPoolChangedSessionCollection.Fixture classFixture) : base(fixture)
+        public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _fixture = fixture;
+            ConnectionManagerTestsFacade.RegisterDedicatedContext(this, ConnectionPoolType.MultipleConnectionPool);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         public void Dispose()
         {
             SnowflakeDbConnectionPool.ClearAllPools();
+            ConnectionManagerTestsFacade.UnregisterDedicatedContext(this);
         }
 
         private QueryExecResponseData _queryExecResponseChangedRole() => new()

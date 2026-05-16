@@ -15,10 +15,13 @@ namespace Snowflake.Data.Tests.Util;
 #else
 [XunitTestCaseDiscoverer($"Snowflake.Data.Tests.Util.{nameof(XunitTestCaseDiscoverer)}", "Snowflake.Data.Tests")]
 #endif
-public sealed class SFFactAttribute : FactAttribute
+public sealed class SFFactAttribute : FactAttribute, ISFDedicatedSessionPoolConfig
 {
-    public SFFactAttribute(SkipCondition skip = SkipCondition.None)
+    public bool DedicatedSessionPool { get; }
+
+    public SFFactAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false)
     {
+        DedicatedSessionPool = dedicatedSessionPool;
         Skip = SkipConditionEvaluator.Evaluate(skip);
         Timeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
     }
@@ -29,13 +32,21 @@ public sealed class SFFactAttribute : FactAttribute
 #else
 [XunitTestCaseDiscoverer($"Snowflake.Data.Tests.Util.{nameof(XunitTheoryDiscoverer)}", "Snowflake.Data.Tests")]
 #endif
-public sealed class SFTheoryAttribute : TheoryAttribute
+public sealed class SFTheoryAttribute : TheoryAttribute, ISFDedicatedSessionPoolConfig
 {
-    public SFTheoryAttribute(SkipCondition skip = SkipCondition.None)
+    public bool DedicatedSessionPool { get; }
+
+    public SFTheoryAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false)
     {
+        DedicatedSessionPool = dedicatedSessionPool;
         Skip = SkipConditionEvaluator.Evaluate(skip);
         Timeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
     }
+}
+
+public interface ISFDedicatedSessionPoolConfig
+{
+    public bool DedicatedSessionPool { get; }
 }
 
 

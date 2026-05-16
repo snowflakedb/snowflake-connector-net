@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core.Session
 {
@@ -21,5 +22,11 @@ namespace Snowflake.Data.Core.Session
         public bool GetPooling() => _sessionPool.GetPooling();
         public SessionPool GetPool(string connectionString) => _sessionPool;
         public SessionPool GetPool(string connectionString, SessionPropertiesContext sessionContext) => _sessionPool;
+
+        public IConnectionManager Recycle(ConnectionPoolType requestedPoolType)
+        {
+            ClearAllPools();
+            return ConnectionManagerFactory.Singleton.CreateConnectionManager(requestedPoolType);
+        }
     }
 }

@@ -4,26 +4,45 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.IntegrationTests;
 
-public static class IntegrationTestEnvironment
+public static class TestEnvironment
 {
-    private static int s_integrationTestsRunning;
-    private static readonly SemaphoreSlim s_semaphoreSlim = new(1, 1);
     private static readonly CancellationTokenSource s_cts = new();
+    private static volatile int s_initState = 0;
 
-    static IntegrationTestEnvironment()
+    static TestEnvironment()
     {
-        s_integrationTestsRunning = 0;
         s_cts.CancelAfter(TimeSpan.FromHours(1));
         s_cts.Token.Register(TerminateTestRun);
+
+        ConnectionManagerTestsFacade.Init();
+    }
+
+    public static void Init()
+    {
+        if (Interlocked.Exchange(ref s_initState, 1) == 0)
+            Console.Write(@"Test environment initialized.");
     }
 
     private static void TerminateTestRun()
     {
         Console.WriteLine(@"Terminating test run, as it's unlikely it can recover.");
         Environment.Exit(-1);
+    }
+}
+
+public static class IntegrationTestEnvironment
+{
+    private static int s_integrationTestsRunning;
+    private static readonly SemaphoreSlim s_semaphoreSlim = new(1, 1);
+
+    static IntegrationTestEnvironment()
+    {
+        s_integrationTestsRunning = 0;
+        TestEnvironment.Init();
     }
 
     public static async Task StartIntegrationTest()

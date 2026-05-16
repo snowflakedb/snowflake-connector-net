@@ -10,30 +10,21 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [CollectionDefinition(nameof(ConnectionSinglePoolCacheAsyncCollection), DisableParallelization = true)]
-    public sealed class ConnectionSinglePoolCacheAsyncCollection : ICollectionFixture<ConnectionSinglePoolCacheAsyncCollection.Fixture>
-    {
-        public class Fixture
-        {
-        }
-    }
-
-    [Collection(nameof(ConnectionSinglePoolCacheAsyncCollection))]
     public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
         public ConnectionSinglePoolCacheAsyncIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _fixture = fixture;
+            ConnectionManagerTestsFacade.RegisterDedicatedContext(this, ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         public void Dispose()
         {
-            _previousPoolConfig.Reset();
+            ConnectionManagerTestsFacade.UnregisterDedicatedContext(this);
         }
 
 

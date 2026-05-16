@@ -135,17 +135,7 @@ namespace Snowflake.Data.Client
                 if (s_connectionManager != null && !force)
                     return;
                 Diagnostics.LogDiagnostics();
-                s_connectionManager?.ClearAllPools();
-                if (requestedPoolType == ConnectionPoolType.MultipleConnectionPool)
-                {
-                    s_connectionManager = new ConnectionPoolManager();
-                    s_logger.Info("SnowflakeDbConnectionPool - multiple connection pools enabled");
-                }
-                if (requestedPoolType == ConnectionPoolType.SingleConnectionCache)
-                {
-                    s_connectionManager = new ConnectionCacheManager();
-                    s_logger.Warn("SnowflakeDbConnectionPool - connection cache enabled");
-                }
+                s_connectionManager = s_connectionManager?.Recycle(requestedPoolType) ?? ConnectionManagerFactory.Singleton.CreateConnectionManager(requestedPoolType);
             }
         }
 

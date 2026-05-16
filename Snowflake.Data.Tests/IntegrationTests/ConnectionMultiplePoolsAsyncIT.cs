@@ -6,36 +6,26 @@ using Moq;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
-using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [CollectionDefinition(nameof(ConnectionMultiplePoolsAsyncITFixture), DisableParallelization = true)]
-    public sealed class ConnectionMultiplePoolsAsyncITFixture : ICollectionFixture<ConnectionMultiplePoolsAsyncITFixture.Fixture>
-    {
-        public sealed class Fixture
-        { }
-    }
-
-    [CollectionDefinition(nameof(ConnectionMultiplePoolsAsyncITFixture))]
     public sealed class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        private readonly PoolConfig _previousPoolConfig = new PoolConfig();
-        private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
         public ConnectionMultiplePoolsAsyncIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _fixture = fixture;
+            ConnectionManagerTestsFacade.RegisterDedicatedContext(this, ConnectionPoolType.MultipleConnectionPool);
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
 
         public void Dispose()
         {
-            _previousPoolConfig.Reset();
+            ConnectionManagerTestsFacade.UnregisterDedicatedContext(this);
         }
 
         [SFFact]

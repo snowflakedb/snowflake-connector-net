@@ -12,27 +12,14 @@ using Moq;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [CollectionDefinition(nameof(ConnectionSinglePoolCacheITTestFixture), DisableParallelization = true)]
-    public sealed class ConnectionSinglePoolCacheITTestFixture : ICollectionFixture<ConnectionSinglePoolCacheITTestFixture.Fixture>
-    {
-        public sealed class Fixture : IDisposable
-        {
-            public void Dispose()
-            {
-                SnowflakeDbConnectionPool.ClearAllPools();
-            }
-        }
-    }
-
-    [Collection(nameof(ConnectionSinglePoolCacheITTestFixture))]
     public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
     {
         private readonly SFBaseTestAsyncFixture _fixture;
-        private readonly PoolConfig _previousPoolConfig = new PoolConfig();
 
-        public ConnectionSinglePoolCacheIT(SFBaseTestAsyncFixture fixture, ConnectionSinglePoolCacheITTestFixture.Fixture classFixture) : base(fixture)
+        public ConnectionSinglePoolCacheIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _fixture = fixture;
+            ConnectionManagerTestsFacade.RegisterDedicatedContext(this, ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ClearAllPools();
             SnowflakeDbConnectionPool.SetPooling(true);
@@ -40,7 +27,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         public void Dispose()
         {
-            _previousPoolConfig.Reset();
+                SnowflakeDbConnectionPool.ClearAllPools();
+                ConnectionManagerTestsFacade.UnregisterDedicatedContext(this);
         }
 
         [SFFact]

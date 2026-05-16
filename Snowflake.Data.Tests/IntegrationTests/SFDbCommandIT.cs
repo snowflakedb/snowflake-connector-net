@@ -154,7 +154,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         command.CommandText = "select 1;";
                         await command.ExecuteScalarAsync();
                     }
+
                     Assert.Fail();
+                }
+                catch (TimeoutException)
+                {
+                    // we're good
                 }
                 catch (Exception e)
                 {
