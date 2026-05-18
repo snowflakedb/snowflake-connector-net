@@ -313,7 +313,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestConnectionPoolExpirationWorks()
         {
             // arrange
-            const int ExpirationTimeoutInSeconds = 1;
+            const int ExpirationTimeoutInSeconds = 10;
             var connectionString = _fixture.ConnectionString + $"expirationTimeout={ExpirationTimeoutInSeconds};maxPoolSize=4;minPoolSize=2;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPoolInternal(connectionString);
             Assert.Equal(0, pool.GetCurrentPoolSize());

@@ -458,7 +458,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Should timeout before the defined timeout plus 1 (buffer time)
                 // Should timeout after the defined timeout since retry count is infinite
-                Assert.InRange(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta, retryTimeout * 1000 - delta);
+                Assert.InRange(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta, (retryTimeout + 1) * 1000);
 
                 Assert.Equal(retryTimeout, conn.ConnectionTimeout);
             }
