@@ -89,7 +89,7 @@ namespace Snowflake.Data.Core
                 s_logger.Warn($"JSON deserialization failed for {method}, retrying request. Error: {ex.Message}.", ex);
             }
 
-            // in rare instances server may return invalid response body (e.g. truncated one), whilst returning 2XX response. Those are mostly transient.
+            // in rare instances server may return invalid response body (e.g. truncated one), whilst returning 2XX response. Those are mostly transient. See SNOW-3422038 for further details.
             using var retryResponse = await SendAsync(method, request, cancellationToken).ConfigureAwait(false);
             return await DeserializeResponseAsync<T>(retryResponse, cancellationToken).ConfigureAwait(false);
         }
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Core
 
         private static async Task<T> DeserializeResponseAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken)
         {
-            #if NET5_0_OR_GREATER
+            #if NET6_0_OR_GREATER
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             using var streamReader = new StreamReader(stream);
             await using var jsonReader = new JsonTextReader(streamReader);

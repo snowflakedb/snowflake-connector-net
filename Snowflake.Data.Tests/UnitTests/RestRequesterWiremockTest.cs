@@ -81,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private string BuildConnectionString()
         {
-            var uri = new Uri(_runner.Url);
+            var uri = new Uri(_runner.WiremockBaseHttpsUrl);
             return new StringBuilder()
                 .Append("account=")
                 .Append("testaccount")
