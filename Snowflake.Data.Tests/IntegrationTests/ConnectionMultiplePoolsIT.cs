@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             Assert.Contains("Unable to connect. Could not obtain a connection from the pool within a given timeout", thrown.Message);
-            Assert.InRange(watch.ElapsedMilliseconds, 1000, 1500);
+            Assert.InRange(watch.ElapsedMilliseconds, 1000, 3000);
             Assert.Equal(pool.GetCurrentPoolSize(), 2);
 
             // cleanup

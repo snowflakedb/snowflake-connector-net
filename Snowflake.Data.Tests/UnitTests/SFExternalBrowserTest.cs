@@ -17,6 +17,13 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
+    [CollectionDefinition(nameof(SFExternalBrowserTestCollection), DisableParallelization = true)]
+    public sealed class SFExternalBrowserTestCollection : ICollectionFixture<SFExternalBrowserTest>
+    {
+
+    }
+
+    [Collection(nameof(SFExternalBrowserTestCollection))]
     public sealed class SFExternalBrowserTest
     {
         private readonly Mock<IWebBrowserRunner> t_browserRunner;
@@ -28,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner = new Mock<IWebBrowserRunner>();
         }
 
-        [SFFact(SkipCondition.SkipOnWindows)] // TODO investigate
+        [SFFact]
         public void TestDefaultAuthentication()
         {
             t_browserRunner
@@ -51,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner.VerifyNoOtherCalls();
         }
 
-        [SFFact(SkipCondition.SkipOnWindows)] // TODO investigate
+        [SFFact]
         public void TestConsoleLogin()
         {
             t_browserRunner
@@ -126,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        [SFFact(SkipCondition.SkipOnWindows)] // TODO investigate
+        [SFFact]
         public void TestThatTokenIsNotStoredWhenCacheIsDisabled()
         {
             t_browserRunner
@@ -304,7 +311,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SFError.BROWSER_RESPONSE_INVALID_PREFIX.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
-        [SFFact(SkipCondition.SkipOnWindows)] // TODO investigate
+        [SFFact]
         public void TestDefaultAuthenticationAsync()
         {
             t_browserRunner
@@ -328,7 +335,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner.VerifyNoOtherCalls();
         }
 
-        [SFFact(SkipCondition.SkipOnWindows)] // TODO investigate
+        [SFFact]
         public void TestConsoleLoginAsync()
         {
             t_browserRunner
