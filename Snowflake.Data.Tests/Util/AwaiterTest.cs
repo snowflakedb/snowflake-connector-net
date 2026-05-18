@@ -38,8 +38,7 @@ namespace Snowflake.Data.Tests.Util
             var millis = await MillisecondsOfWaiting(() => false, TimeSpan.FromSeconds(2));
 
             // assert
-            Assert.True(millis >= _maxDurationRegardedAsImmediately.TotalMilliseconds);
-            Assert.True(millis <= timeout.TotalMilliseconds + _maxDurationRegardedAsImmediately.TotalMilliseconds);
+            Assert.InRange(millis, _maxDurationRegardedAsImmediately.TotalMilliseconds, timeout.TotalMilliseconds + _maxDurationRegardedAsImmediately.TotalMilliseconds);
         }
 
         private async Task<long> MillisecondsOfWaiting(Func<bool> condition, TimeSpan timeout)
