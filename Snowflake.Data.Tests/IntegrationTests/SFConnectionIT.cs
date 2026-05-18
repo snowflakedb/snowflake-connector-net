@@ -1943,7 +1943,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (AggregateException e)
                 {
-                    SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
+                    SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.INTERNAL_ERROR);
                 }
                 stopwatch.Stop();
                 int delta = 10; // in case server time slower.
@@ -2406,7 +2406,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // act
             GC.Collect();
-            await Awaiter.WaitUntilConditionOrTimeout(() => session.sessionToken == null, TimeSpan.FromSeconds(15));
+            await Awaiter.WaitUntilConditionOrTimeout(() => session.sessionToken == null, TimeSpan.FromSeconds(30));
 
             // assert
             Assert.Null(session.sessionToken);

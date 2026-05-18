@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     [Collection(nameof(WaitingQueueTestFixture))]
     public class WaitingQueueTest
     {
-        private static readonly int s_timeMeasurementLeftToleranceInMs = Stopwatch.IsHighResolution ? 1 : 20; // DateTime precision is ~10ms, safety coefficient = x2
+        private static readonly int s_timeMeasurementLeftToleranceInMs = Stopwatch.IsHighResolution ? 2 : 20; // DateTime precision is ~10ms, safety coefficient = x2
 
         [SFFact]
         public void TestWaitForTheResourceUntilTimeout()

@@ -1,16 +1,21 @@
+using System;
+using System.IO;
+using System.Text;
+using Snowflake.Data.Configuration;
+using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using Xunit;
-    using Snowflake.Data.Configuration;
-    using Snowflake.Data.Core;
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Security;
-    using System.Text;
-    using System.Threading;
+
+    [CollectionDefinition(nameof(ChunkParserFactoryTestCollection), DisableParallelization = true)]
+    public sealed class ChunkParserFactoryTestCollection : ICollectionFixture<ChunkParserFactory>
+    {
+
+    }
+
+    [Collection(nameof(ChunkParserFactoryTestCollection))]
     public sealed class ChunkParserFactoryTest : IDisposable
     {
         int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();

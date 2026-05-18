@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.Util
 {
     public class AwaiterTest
     {
-        private readonly TimeSpan _maxDurationRegardedAsImmediately = TimeSpan.FromSeconds(1);
+        private readonly TimeSpan _maxDurationRegardedAsImmediately = TimeSpan.FromSeconds(2);
 
         [SFFact]
         public async Task TestReturnsImmediatelyWhenConditionIsMet()

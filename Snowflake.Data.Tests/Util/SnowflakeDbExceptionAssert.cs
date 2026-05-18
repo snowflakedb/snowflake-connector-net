@@ -30,6 +30,14 @@ namespace Snowflake.Data.Tests.Util
             }
         }
 
+        public static void HasErrorCodeInExceptionChain(Exception exception, SFError sfError)
+        {
+            var exceptions = CollectExceptions(exception);
+            var errorCode = sfError.GetAttribute<SFErrorAttr>().errorCode;
+            var anyMatching = exceptions.OfType<SnowflakeDbException>().Any(e => e.ErrorCode == errorCode);
+            Assert.True(anyMatching);
+        }
+
         public static void HasHttpErrorCodeInExceptionChain(Exception exception, HttpStatusCode expected)
         {
             var exceptions = CollectExceptions(exception);

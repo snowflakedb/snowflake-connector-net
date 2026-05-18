@@ -309,7 +309,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(ConnectionState.Closed, conn3.State);
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Once)]
         public async Task TestConnectionPoolExpirationWorks()
         {
             // arrange

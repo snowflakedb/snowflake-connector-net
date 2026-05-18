@@ -18,18 +18,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public SFDbFactoryIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _fixture = fixture;
-#if NETFRAMEWORK
-            _factory = DbProviderFactories.GetFactory("Snowflake.Data");
-#else
-            // In .NET Standard, DbProviderFactories is gone.
-            // Reference https://weblog.west-wind.com/posts/2017/Nov/27/Working-around-the-lack-of-dynamic-DbProviderFactory-loading-in-NET-Core
-            // for more details
             _factory = Snowflake.Data.Client.SnowflakeDbFactory.Instance;
-#endif
-
             _command = _factory.CreateCommand();
             _connection = _factory.CreateConnection();
-
             _connection.ConnectionString = _fixture.ConnectionString;
             _connection.Open();
         }
