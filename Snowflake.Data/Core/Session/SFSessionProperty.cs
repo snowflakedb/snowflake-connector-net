@@ -154,6 +154,8 @@ namespace Snowflake.Data.Core
         MAXTLS,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         HONORSESSIONTIMEZONE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        ALLOW_NUMBER_OVERFLOW_AS_STRING,
     }
 
     class SFSessionPropertyAttr : Attribute

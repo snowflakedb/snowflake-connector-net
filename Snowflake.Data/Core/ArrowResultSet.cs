@@ -169,60 +169,82 @@ namespace Snowflake.Data.Core
 
         internal override object GetValue(int ordinal)
         {
-            var value = GetObjectInternal(ordinal);
+            object value;
+            try
+            {
+                value = GetObjectInternal(ordinal);
+            }
+            catch (OverflowException)
+                when (sfResultSetMetaData.GetColumnTypeByIndex(ordinal) == SFDataType.FIXED
+                      && sfStatement.SfSession.IsAllowNumberOverflowAsStringEnabled())
+            {
+                // Decimal128Array.GetValue() overflowed System.Decimal — the raw value
+                // exceeds decimal's ~7.9e28 range.
+                var scale = (int)sfResultSetMetaData.GetScaleByIndex(ordinal);
+                return ((ArrowResultChunk)_currentChunk).ExtractDecimal128CellAsString(ordinal, scale);
+            }
+
             if (value == DBNull.Value)
             {
                 return value;
             }
 
             object obj;
-            checked
+            try
             {
-                switch (value)
+                checked
                 {
-                    case decimal ret:
-                        obj = ret;
-                        break;
-                    case long ret:
-                        obj = ret;
-                        break;
-                    case int ret:
-                        obj = (long)ret;
-                        break;
-                    case short ret:
-                        obj = (long)ret;
-                        break;
-                    case sbyte ret:
-                        obj = (long)ret;
-                        break;
-                    case string ret:
-                        obj = ret;
-                        break;
-                    case bool ret:
-                        obj = ret;
-                        break;
-                    case DateTime ret:
-                        obj = ret;
-                        break;
-                    case DateTimeOffset ret:
-                        obj = ret;
-                        break;
-                    case Dictionary<string, object> ret:
-                        obj = ret;
-                        break;
-                    case Dictionary<object, object> ret:
-                        obj = ret;
-                        break;
-                    case List<object> ret:
-                        obj = ret;
-                        break;
-                    default:
-                        {
-                            var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
-                            obj = Convert.ChangeType(value, dstType);
+                    switch (value)
+                    {
+                        case decimal ret:
+                            obj = ret;
                             break;
-                        }
+                        case long ret:
+                            obj = ret;
+                            break;
+                        case int ret:
+                            obj = (long)ret;
+                            break;
+                        case short ret:
+                            obj = (long)ret;
+                            break;
+                        case sbyte ret:
+                            obj = (long)ret;
+                            break;
+                        case string ret:
+                            obj = ret;
+                            break;
+                        case bool ret:
+                            obj = ret;
+                            break;
+                        case DateTime ret:
+                            obj = ret;
+                            break;
+                        case DateTimeOffset ret:
+                            obj = ret;
+                            break;
+                        case Dictionary<string, object> ret:
+                            obj = ret;
+                            break;
+                        case Dictionary<object, object> ret:
+                            obj = ret;
+                            break;
+                        case List<object> ret:
+                            obj = ret;
+                            break;
+                        default:
+                            {
+                                var dstType = sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
+                                obj = Convert.ChangeType(value, dstType);
+                                break;
+                            }
+                    }
                 }
+            }
+            catch (OverflowException) when (sfStatement.SfSession.IsAllowNumberOverflowAsStringEnabled())
+            {
+                // A checked cast inside the switch overflowed (e.g. decimal → long).
+                return value.ToString();
             }
 
             return obj;
@@ -397,7 +419,20 @@ namespace Snowflake.Data.Core
 
         internal override string GetString(int ordinal)
         {
-            var value = GetObjectInternal(ordinal);
+            object value;
+            try
+            {
+                value = GetObjectInternal(ordinal);
+            }
+            catch (OverflowException)
+                when (sfResultSetMetaData.GetColumnTypeByIndex(ordinal) == SFDataType.FIXED)
+            {
+                // Decimal128Array.GetValue() overflowed — extract raw bytes as string.
+                // GetString must never throw for any representable number.
+                var scale = (int)sfResultSetMetaData.GetScaleByIndex(ordinal);
+                return ((ArrowResultChunk)_currentChunk).ExtractDecimal128CellAsString(ordinal, scale);
+            }
+
             if (value == DBNull.Value)
                 return null;
 

@@ -102,6 +102,8 @@ namespace Snowflake.Data.Core
 
         private bool _honorSessionTimezone = false;
 
+        private readonly bool _allowNumberOverflowAsStringEnabled = false;
+
         private volatile TimeZoneInfo _cachedSessionTimezone;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
@@ -202,6 +204,7 @@ namespace Snowflake.Data.Core
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
             _honorSessionTimezone = bool.Parse(properties[SFSessionProperty.HONORSESSIONTIMEZONE]);
+            _allowNumberOverflowAsStringEnabled = bool.Parse(properties[SFSessionProperty.ALLOW_NUMBER_OVERFLOW_AS_STRING]);
             properties.TryGetValue(SFSessionProperty.USER, out _user);
             ValidateApplicationName(properties);
             try
@@ -580,6 +583,8 @@ namespace Snowflake.Data.Core
             _cachedSessionTimezone = resolved;
             return resolved;
         }
+
+        internal bool IsAllowNumberOverflowAsStringEnabled() => _allowNumberOverflowAsStringEnabled;
 
         private TimeZoneInfo ResolveSessionTimezone()
         {

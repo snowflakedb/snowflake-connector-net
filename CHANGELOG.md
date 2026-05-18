@@ -1,6 +1,8 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- v5.7.0
+    - Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
 - v5.6.0
     - Added .NET 10 support. Changed LangVersion to C#13.
     - Added `DbType.AnsiStringFixedLength` to the set of types mapped to Snowflake `TEXT`, matching existing support for `AnsiString`, `String`, and `StringFixedLength`.

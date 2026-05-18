@@ -13,6 +13,23 @@ namespace Snowflake.Data.Core
         TIMESTAMP_TZ, OBJECT, BINARY, TIME, BOOLEAN, ARRAY, MAP, VECTOR, DECFLOAT
     }
 
+
+    internal readonly record struct ConversionContext
+    {
+        public ConversionContext(SFDataType srcType, Type destType, TimeZoneInfo sessionTimezone = null, bool allowNumberOverflowAsString = false)
+        {
+            SrcType = srcType;
+            DestType = destType;
+            SessionTimezone = sessionTimezone;
+            AllowNumberOverflowAsString = allowNumberOverflowAsString;
+        }
+
+        public bool AllowNumberOverflowAsString { get; }
+        public SFDataType SrcType { get; }
+        public Type DestType { get; }
+        public TimeZoneInfo SessionTimezone { get; }
+    }
+
     static class SFDataConverter
     {
         internal static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -41,10 +58,14 @@ namespace Snowflake.Data.Core
             [typeof(object)] = DbType.Object
         };
 
-        internal static object ConvertToCSharpVal(UTF8Buffer srcVal, SFDataType srcType, Type destType, TimeZoneInfo sessionTimezone = null)
+        internal static object ConvertToCSharpVal(UTF8Buffer srcVal, ConversionContext context)
         {
             if (srcVal == null)
                 return DBNull.Value;
+
+            var srcType = context.SrcType;
+            var destType = context.DestType;
+            var sessionTimezone = context.SessionTimezone;
 
             try
             {
@@ -122,9 +143,9 @@ namespace Snowflake.Data.Core
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, "Invalid destination type.");
                 }
             }
-            catch (OverflowException e)
+            catch (OverflowException) when (context.AllowNumberOverflowAsString)
             {
-                throw new OverflowException($"Error converting '{srcVal} to {destType.Name}'. Use GetString() to handle very large values", e);
+                return srcVal.ToString();
             }
         }
 
