@@ -112,7 +112,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var messages = new[] {thrown.Message, thrown.InnerException?.Message};
                 var concatenatedMessages = string.Join(Environment.NewLine, messages);
                 Assert.Contains("Connection string is invalid: Unable to initialize session", concatenatedMessages);
-                Assert.Equal(_appendersPriorToTest.Count, SFLoggerImpl.s_appenders.Count);
+                Assert.Empty(SFLoggerImpl.s_appenders);
             }
         }
 

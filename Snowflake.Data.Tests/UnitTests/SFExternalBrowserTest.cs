@@ -50,8 +50,8 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ProofKey = "mockProofKey",
             };
-            var account = $"test{Guid.NewGuid():N}";
-            var sfSession = new SFSession($"account={account};user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
+            var user = $"test{Guid.NewGuid():N}";
+            var sfSession = new SFSession($"account=test;user={user};password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
             SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             sfSession.Open();
 
@@ -76,8 +76,8 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ProofKey = "mockProofKey",
             };
-            var account = $"test{Guid.NewGuid():N}";
-            var sfSession = new SFSession($"disable_console_login=false;account={account};user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
+            var user = $"test{Guid.NewGuid():N}";
+            var sfSession = new SFSession($"disable_console_login=false;account=test;user={user};password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
             SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             sfSession.Open();
             Assert.False(sfSession._disableConsoleLogin);
@@ -328,8 +328,8 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ProofKey = "mockProofKey",
             };
-            var account = $"test{Guid.NewGuid():N}";
-            var sfSession = new SFSession($"account={account};user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
+            var user = $"test{Guid.NewGuid():N}";
+            var sfSession = new SFSession($"account=test;user={user};password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
             SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
@@ -355,8 +355,8 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ProofKey = "mockProofKey",
             };
-            var account = $"test{Guid.NewGuid():N}";
-            var sfSession = new SFSession($"disable_console_login=false;account={account};user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
+            var user = $"test{Guid.NewGuid():N}";
+            var sfSession = new SFSession($"disable_console_login=false;account=test;user={user};password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
             SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
