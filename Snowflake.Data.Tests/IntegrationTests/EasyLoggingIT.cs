@@ -199,7 +199,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // assert
                 var messages = thrown.Message + "/n" + thrown.InnerException.Message;
                 Assert.Contains("Connection string is invalid: Unable to initialize session", messages);
-                Assert.Equal(_appendersPriorToTest.Count, SFLoggerImpl.s_appenders.Count);
+                Assert.Empty(SFLoggerImpl.s_appenders);
             }
         }
 
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var message = sb.ToString();
                 Assert.Contains("Connection string is invalid: Unable to initialize session", message);
                 Assert.Contains("Failed to create logs directory", message);
-                Assert.Equal(_appendersPriorToTest.Count, SFLoggerImpl.s_appenders.Count);
+                Assert.Empty(SFLoggerImpl.s_appenders);
             }
         }
 
@@ -259,7 +259,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var messages = sb.ToString();
                 Assert.Contains("Connection string is invalid: Unable to initialize session", messages);
                 Assert.Contains("Too broad access permissions for logs directory", messages);
-                Assert.Equal(_appendersPriorToTest.Count, SFLoggerImpl.s_appenders.Count);
+                Assert.Empty(SFLoggerImpl.s_appenders);
             }
         }
     }
