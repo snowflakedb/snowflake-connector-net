@@ -19,7 +19,7 @@ public sealed class SFFactAttribute : FactAttribute
 {
     public bool DedicatedSessionPool { get; }
 
-    public RetriesCount RetriesCount { get; }
+    public RetriesCount RetriesCount { get; set; }
 
     public SFFactAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = 0)
     {
@@ -39,7 +39,7 @@ public sealed class SFTheoryAttribute : TheoryAttribute
 {
     public bool DedicatedSessionPool { get; }
 
-    public RetriesCount RetriesCount { get; }
+    public RetriesCount RetriesCount { get; set; }
 
     public SFTheoryAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = 0)
     {

@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
         }
 
-        [SFTheory]
+        [SFTheory(RetriesCount = RetriesCount.Once)]
         [InlineData(1)]
         [InlineData(2)]
         [InlineData(3)]

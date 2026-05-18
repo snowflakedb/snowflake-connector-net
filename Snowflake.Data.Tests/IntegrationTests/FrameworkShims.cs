@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
@@ -26,6 +27,16 @@ public static class FrameworkShims
     {
         var result = connection.BeginTransaction(isolationLevel);
         return Task.FromResult(result);
+    }
+
+    public static bool TryDequeue<T>(this Queue<T> queue, out T element)
+    {
+        element = default(T);
+        if (queue.Count == 0)
+            return false;
+
+        element = queue.Dequeue();
+        return true;
     }
 }
 #endif

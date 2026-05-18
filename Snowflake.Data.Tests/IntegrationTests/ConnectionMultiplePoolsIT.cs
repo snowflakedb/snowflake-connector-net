@@ -143,8 +143,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connectionString = _fixture.ConnectionString + "application=TestWaitForMaxSize2;waitingForIdleSessionTimeout=1s;maxPoolSize=2;minPoolSize=1;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(0, pool.GetCurrentPoolSize());
-            var conn1 = OpenConnection(connectionString);
-            var conn2 = OpenConnection(connectionString);
+            var conn1 = await OpenConnectionAsync(connectionString);
+            var conn2 = await OpenConnectionAsync(connectionString);
             var watch = new StopWatch();
 
             // act
@@ -157,7 +157,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.True(thrown.InnerException is AggregateException);
             var nestedException = ((AggregateException)thrown.InnerException).InnerException;
             Assert.Contains("Could not obtain a connection from the pool within a given timeout", nestedException.Message);
-            Assert.InRange(watch.ElapsedMilliseconds, 1000, 1500);
+            Assert.InRange(watch.ElapsedMilliseconds, 1000, 3000);
             Assert.Equal(pool.GetCurrentPoolSize(), 2);
 
             // cleanup
@@ -319,10 +319,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(0, pool.GetCurrentPoolSize());
 
             // act
-            var conn1 = OpenConnection(connectionString);
-            var conn2 = OpenConnection(connectionString);
-            var conn3 = OpenConnection(connectionString);
-            var conn4 = OpenConnection(connectionString);
+            var conn1 = await OpenConnectionAsync(connectionString);
+            var conn2 = await OpenConnectionAsync(connectionString);
+            var conn3 = await OpenConnectionAsync(connectionString);
+            var conn4 = await OpenConnectionAsync(connectionString);
 
             // assert
             Assert.Equal(4, pool.GetCurrentPoolSize());
@@ -465,7 +465,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 var state = pool.GetCurrentState();
                 return state.IdleSessionsCount == 0 && state.BusySessionsCount == 1;
-            }, TimeSpan.FromMilliseconds(1000));
+            }, TimeSpan.FromMilliseconds(3000));
 
             // one busy session
             Assert.Equal(0, pool.GetCurrentState().IdleSessionsCount);

@@ -111,7 +111,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var messages = new[] {thrown.Message, thrown.InnerException?.Message};
                 var concatenatedMessages = string.Join(Environment.NewLine, messages);
                 Assert.Contains("Connection string is invalid: Unable to initialize session", concatenatedMessages);
-                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.Equal(_appendersPriorToTest.Count, SFLoggerImpl.s_appenders.Count);
             }
         }
 
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // assert
                 var messages = thrown.Message + "/n" + thrown.InnerException.Message;
                 Assert.Contains("Connection string is invalid: Unable to initialize session", messages);
-                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.Equal(_appendersPriorToTest.Count, SFLoggerImpl.s_appenders.Count);
             }
         }
 
@@ -226,7 +226,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var message = sb.ToString();
                 Assert.Contains("Connection string is invalid: Unable to initialize session", message);
                 Assert.Contains("Failed to create logs directory", message);
-                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.Equal(_appendersPriorToTest.Count, SFLoggerImpl.s_appenders.Count);
             }
         }
 
@@ -258,7 +258,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var messages = sb.ToString();
                 Assert.Contains("Connection string is invalid: Unable to initialize session", messages);
                 Assert.Contains("Too broad access permissions for logs directory", messages);
-                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.Equal(_appendersPriorToTest.Count, SFLoggerImpl.s_appenders.Count);
             }
         }
     }

@@ -28,6 +28,7 @@ public sealed class SFDelayedMessageBus(IMessageBus innerBus) : IMessageBus
 using System.Diagnostics;
 using System.Linq;
 using Xunit.Abstractions;
+using Snowflake.Data.Tests.IntegrationTests;
 
 namespace Snowflake.Data.Tests.Util;
 

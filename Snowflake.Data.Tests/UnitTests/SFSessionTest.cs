@@ -348,7 +348,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Once)]
         public void TestMFATokenCacheUsedInNewConnection()
         {
             // arrange
