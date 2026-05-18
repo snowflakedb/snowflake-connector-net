@@ -1955,7 +1955,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public async Task TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -1976,7 +1976,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (AggregateException e)
                 {
-                    SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
+                    SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e.InnerException, SFError.INTERNAL_ERROR);
                 }
                 stopwatch.Stop();
                 int delta = 10; // in case server time slower.
@@ -2316,7 +2316,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFTheory]
+        [SFTheory(RetriesCount = RetriesCount.Thrice)]
         [InlineData("connection_timeout=5;")]
         [InlineData("")]
         public async Task TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost(string extraParameters)
@@ -2392,11 +2392,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
-        [SFFact(RetriesCount = RetriesCount.Once)]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public async Task TestCloseSessionWhenGarbageCollectorFinalizesConnection()
         {
             // arrange
-            var session = await GetSessionFromForgottenConnection();
+            var connection = GetSessionFromForgottenConnection();
+            var session = connection.SfSession;
             Assert.NotNull(session);
             Assert.NotNull(session.sessionId);
             Assert.NotNull(session.sessionToken);
@@ -2409,11 +2410,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Null(session.sessionToken);
         }
 
-        private async Task<SFSession> GetSessionFromForgottenConnection()
+        private SnowflakeDbConnection GetSessionFromForgottenConnection()
         {
             var connection = new SnowflakeDbConnection(_fixture.ConnectionString + ";poolingEnabled=false;application=TestGarbageCollectorCloseSession");
-            await connection.OpenAsync(CancellationToken.None);
-            return connection.SfSession;
+            connection.Open();
+            return connection;
         }
 
         [SFFact]

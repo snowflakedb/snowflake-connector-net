@@ -193,7 +193,6 @@ public sealed class SFTestCases : LongLivedMarshalByRefObject, IXunitTestCase
             baseResult = await _xunitTestCaseImplementation
                 .RunAsync(diagnosticMessageSink, messageBusDecorator, constructorArguments, aggregator, cancellationTokenSource)
                 .ConfigureAwait(false);
-
         } while (retriesCount++ < _maxRetriesCount && baseResult.Failed > 0);
 
         baseResult.Failed -= messageBusDecorator.SkippedCount;
