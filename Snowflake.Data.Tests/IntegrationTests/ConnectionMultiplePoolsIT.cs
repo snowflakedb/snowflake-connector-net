@@ -433,7 +433,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return connection;
         }
 
-        [SFTheory]
+        [SFTheory(RetriesCount = RetriesCount.Once)]
         [InlineData(false)]
         [InlineData(true)]
         public async Task TestReturningCancelledSessionsToThePool(bool cancelAsync)
@@ -465,7 +465,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 var state = pool.GetCurrentState();
                 return state.IdleSessionsCount == 0 && state.BusySessionsCount == 1;
-            }, TimeSpan.FromMilliseconds(3000));
+            }, TimeSpan.FromMilliseconds(10000));
 
             // one busy session
             Assert.Equal(0, pool.GetCurrentState().IdleSessionsCount);

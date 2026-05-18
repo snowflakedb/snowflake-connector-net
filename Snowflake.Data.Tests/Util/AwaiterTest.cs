@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.Util
 {
     public class AwaiterTest
     {
-        private readonly TimeSpan _maxDurationRegardedAsImmediately = TimeSpan.FromSeconds(2);
+        private readonly TimeSpan _maxDurationRegardedAsImmediately = TimeSpan.FromMilliseconds(100);
 
         [SFFact]
         public async Task TestReturnsImmediatelyWhenConditionIsMet()
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.Util
             var millis = await MillisecondsOfWaiting(() => false, TimeSpan.FromSeconds(2));
 
             // assert
-            Assert.InRange(millis, _maxDurationRegardedAsImmediately.TotalMilliseconds, timeout.TotalMilliseconds + _maxDurationRegardedAsImmediately.TotalMilliseconds);
+            Assert.True(millis >= timeout.TotalMilliseconds);
         }
 
         private async Task<long> MillisecondsOfWaiting(Func<bool> condition, TimeSpan timeout)

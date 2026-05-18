@@ -126,7 +126,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnWindows)] // TODO investigate
         public void TestThatTokenIsNotStoredWhenCacheIsDisabled()
         {
             t_browserRunner

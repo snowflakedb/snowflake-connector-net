@@ -57,6 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _classFixture = classFixture;
 
             _appendersPriorToTest = SFLoggerImpl.s_appenders.ToList();
+            SFLoggerImpl.s_appenders = new List<SFAppender>();
         }
 
         public void Dispose()
