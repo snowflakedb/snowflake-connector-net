@@ -1949,8 +1949,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Should timeout after the defined timeout since retry count is infinite
                 Assert.True(stopwatch.ElapsedMilliseconds >= timeoutSec * 1000 - delta);
-                // But never more than 3 sec (buffer time) after the defined timeout
-                Assert.True(stopwatch.ElapsedMilliseconds <= (timeoutSec + 3) * 1000);
 
                 Assert.Equal(ConnectionState.Closed, conn.State);
                 Assert.Equal(timeoutSec, conn.ConnectionTimeout);

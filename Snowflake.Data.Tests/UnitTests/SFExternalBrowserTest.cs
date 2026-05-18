@@ -26,6 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests
     [Collection(nameof(SFExternalBrowserTestCollection))]
     public sealed class SFExternalBrowserTest
     {
+
         private readonly Mock<IWebBrowserRunner> t_browserRunner;
 
         private static readonly HttpClient s_httpClient = new();

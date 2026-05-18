@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact(Skip = "TODO investigate")]
+        [SFFact]
         public async Task TestFailToEnableEasyLoggingForWrongConfiguration()
         {
             // arrange
@@ -151,7 +151,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact(SkipCondition.RunOnlyOnWindows, Skip = "TODO investigate")]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public async Task TestReCreateEasyLoggingWindowsLogFileIgnoringCustomisedPermissions()
         {
             // arrange

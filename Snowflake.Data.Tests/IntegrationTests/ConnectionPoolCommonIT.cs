@@ -193,8 +193,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestRollbackTransactionOnPooledWhenConnectionClose()
         {
-            Skip.When(_connectionPoolTypeUnderTest == ConnectionPoolType.SingleConnectionCache, "TODO elusive for now, to investigate");
-
             var connectionString = SetPoolWithOneElement();
             Assert.Equal(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
 
