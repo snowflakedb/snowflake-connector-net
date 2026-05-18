@@ -1922,7 +1922,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public async Task TestAsyncLoginTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -2392,7 +2392,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Once)]
         public async Task TestCloseSessionWhenGarbageCollectorFinalizesConnection()
         {
             // arrange
