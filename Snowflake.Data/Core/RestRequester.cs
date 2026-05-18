@@ -84,7 +84,7 @@ namespace Snowflake.Data.Core
             {
                 return await DeserializeResponseAsync<T>(response, cancellationToken).ConfigureAwait(false);
             }
-            catch (JsonReaderException ex)
+            catch (JsonException ex)
             {
                 s_logger.Warn($"JSON deserialization failed for {method}, retrying request. Error: {ex.Message}.", ex);
             }
