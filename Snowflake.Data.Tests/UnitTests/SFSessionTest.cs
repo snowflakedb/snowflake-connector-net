@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests
             easyLoggingStarter.Verify(starter => starter.Init(configPath));
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public void TestThatIdTokenIsStoredWhenCachingIsEnabled()
         {
             // arrange

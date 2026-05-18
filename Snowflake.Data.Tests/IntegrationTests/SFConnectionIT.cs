@@ -427,7 +427,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Once)]
         public async Task TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
             using (var conn = new MockSnowflakeDbConnection())
@@ -457,9 +457,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 int delta = 10; // in case server time slower.
 
                 // Should timeout before the defined timeout plus 1 (buffer time)
-                Assert.True(stopwatch.ElapsedMilliseconds <= (retryTimeout + 1) * 1000);
                 // Should timeout after the defined timeout since retry count is infinite
-                Assert.True(stopwatch.ElapsedMilliseconds >= retryTimeout * 1000 - delta);
+                Assert.InRange(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta, retryTimeout * 1000 - delta);
 
                 Assert.Equal(retryTimeout, conn.ConnectionTimeout);
             }

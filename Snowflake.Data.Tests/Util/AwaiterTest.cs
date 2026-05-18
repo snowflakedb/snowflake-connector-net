@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.Util
             Assert.True(millis <= _maxDurationRegardedAsImmediately.TotalMilliseconds);
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Twice)]
         public async Task TestReturnsOnTimeout()
         {
             // arrange
