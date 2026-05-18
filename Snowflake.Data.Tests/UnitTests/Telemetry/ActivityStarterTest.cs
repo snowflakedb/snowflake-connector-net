@@ -102,14 +102,11 @@ internal sealed class ActivityStarterTest
         // Assert
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         Assert.AreEqual("ERROR", _sessionIdCapturedActivitiesMap[session.sessionId].GetTagItem(TelemetryTags.StatusCode));
-        Assert.AreEqual("something went wrong", _sessionIdCapturedActivitiesMap[session.sessionId].GetTagItem(TelemetryTags.StatusDescription));
 
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "exception");
         Assert.IsNotNull(exceptionEvent);
         Assert.AreEqual(typeof(AbandonedMutexException).FullName,
             exceptionEvent.Tags.First(t => t.Key == TelemetryTags.Exception).Value);
-        Assert.AreEqual("something went wrong",
-            exceptionEvent.Tags.First(t => t.Key == TelemetryTags.ExceptionMessage).Value);
     }
 
     [Test]
@@ -136,7 +133,6 @@ internal sealed class ActivityStarterTest
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         Assert.AreEqual("ERROR", _sessionIdCapturedActivitiesMap[session.sessionId].GetTagItem(TelemetryTags.StatusCode));
-        Assert.AreEqual("Unknown error", _sessionIdCapturedActivitiesMap[session.sessionId].GetTagItem(TelemetryTags.StatusDescription));
         Assert.IsEmpty(_sessionIdCapturedActivitiesMap[session.sessionId].Events);
     }
 
@@ -150,9 +146,8 @@ internal sealed class ActivityStarterTest
         activity.SetException(exception);
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
-        Assert.AreEqual("password=****", _sessionIdCapturedActivitiesMap[session.sessionId].GetTagItem(TelemetryTags.StatusDescription));
-        var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.First(e => e.Name == "exception");
-        Assert.AreEqual("password=****", exceptionEvent.Tags.First(t => t.Key == TelemetryTags.ExceptionMessage).Value);
+        var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "exception");
+        Assert.NotNull(exceptionEvent);
     }
 
     [Test]

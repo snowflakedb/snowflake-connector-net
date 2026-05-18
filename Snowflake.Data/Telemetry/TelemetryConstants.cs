@@ -48,9 +48,7 @@ internal static class TelemetryTags
     internal const string SessionId = "snowflake.session.id";
     internal const string Snowflake = "snowflake";
     internal const string StatusCode = "status.code";
-    internal const string StatusDescription = "status.description";
     internal const string Exception = "exception";
-    internal const string ExceptionMessage = "exception.message";
     internal const string ExceptionErrorCode = "exception.errorcode";
 }
 
@@ -63,6 +61,6 @@ internal static class TelemetryEvents
 
 internal static class TelemetryTransport
 {
-    internal const int TelemetryFlushSize = 10;
+    internal const int TelemetryFlushSize = 100;
     internal const int TelemetryFlushIntervalInMs = 1000 * 60;
 }

@@ -22,9 +22,8 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
 
     private static readonly int s_flushSize = TelemetryTransport.TelemetryFlushSize;
     private static readonly TimeSpan s_flushInterval = TimeSpan.FromMilliseconds(TelemetryTransport.TelemetryFlushIntervalInMs);
-    private static readonly TimeSpan s_sendTimeout = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan s_sendHttpTimeout = TimeSpan.FromSeconds(10);
 
+    private readonly TimeSpan _sendTimeout;
     private readonly LockObject _lock = new();
     private readonly string _sessionId;
     private readonly IRestRequester _restRequester;
@@ -48,6 +47,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
         _sessionToken = session.sessionToken;
         _restRequester = session.restRequester;
         _url = session.BuildUri(RestPath.SF_TELEMETRY_PATH);
+        _sendTimeout = session.connectionTimeout;
         _flushTimer = new Timer(_ => FlushTimerCallback(), null, flushInterval, flushInterval);
     }
 
@@ -72,7 +72,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
         {
             if (!IsTelemetryEnabled())
             {
-                s_logger.Debug($"Recorded activity, but client telemetry is disabled. Activity will be ignored.");
+                s_logger.Trace($"Recorded activity, but client telemetry is disabled. Activity will be ignored.");
                 return;
             }
 
@@ -89,7 +89,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
     {
         if (!IsTelemetryEnabled())
         {
-            s_logger.Debug("Trying to flush telemetry, but client telemetry is disabled.");
+            s_logger.Trace("Trying to flush telemetry, but client telemetry is disabled.");
             return;
         }
 
@@ -128,7 +128,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
     {
         if (!_isServiceAvailable || (!isCallingFromDispose && IsDisposed()))
         {
-            s_logger.Debug("Trying to flush telemetry, but client telemetry is disabled.");
+            s_logger.Trace("Trying to flush telemetry, but client telemetry is disabled.");
             return;
         }
 
@@ -204,7 +204,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
     {
         if (!IsTelemetryEnabled())
         {
-            s_logger.Debug($"Timer tries to flush client telemetry, but client telemetry is disabled.");
+            s_logger.Trace("Timer tries to flush client telemetry, but client telemetry is disabled.");
             return;
         }
 
@@ -271,8 +271,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
             authorizationToken = $"Snowflake Token=\"{_sessionToken}\"",
             jsonBody = new TelemetryRequest(data),
             sid = _sessionId,
-            RestTimeout = s_sendTimeout,
-            HttpTimeout = s_sendHttpTimeout,
+            RestTimeout = _sendTimeout,
         };
     }
 

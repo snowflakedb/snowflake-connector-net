@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
-using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Telemetry;
 
@@ -47,22 +46,16 @@ internal static class ActivityExtensions
         if (activity is null)
             return;
 
-        var description = exception != null
-            ? SecretDetector.MaskSecrets(exception.Message).maskedText
-            : "Unknown error";
-
 #if NET6_0_OR_GREATER
-        activity.SetStatus(ActivityStatusCode.Error, description);
+        activity.SetStatus(ActivityStatusCode.Error, "ERROR");
 #endif
         activity.SetTag(TelemetryTags.StatusCode, "ERROR");
-        activity.SetTag(TelemetryTags.StatusDescription, description);
 
         if (exception != null)
         {
             var tagsCollection = new ActivityTagsCollection
             {
                 { TelemetryTags.Exception, exception.GetType().FullName },
-                { TelemetryTags.ExceptionMessage, description },
             };
 
             if (TryGetErrorCode(exception, out var code))

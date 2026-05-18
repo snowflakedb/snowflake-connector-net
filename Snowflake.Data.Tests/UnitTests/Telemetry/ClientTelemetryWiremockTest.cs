@@ -433,7 +433,6 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             var middleChildLogs = customLogs.Where(l => l.StatusCode == "ERROR").ToList();
             Assert.AreEqual(1, middleChildLogs.Count, "Exactly one activity expected (MiddleChild)");
             Assert.AreEqual("123", middleChildLogs.Single().Tag("Something"));
-            Assert.AreEqual("Not great, not terrible", middleChildLogs.Single().Tag(TelemetryTags.StatusDescription));
 
             // YoungestChild: no SetSuccess/SetException called → UNSET status, synthetic event with display name
             var youngestChildLog = customLogs.Single(l => l.EventName == "YoungestChild");

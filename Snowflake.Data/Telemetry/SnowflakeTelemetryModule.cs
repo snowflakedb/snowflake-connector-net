@@ -43,7 +43,7 @@ internal static class SnowflakeTelemetryModule
     {
         if (!session.IsClientTelemetryEnabled())
         {
-            s_logger.Debug("Session tried to register to telemetry module, but it has client telemetry disabled!");
+            s_logger.Trace("Session tried to register to telemetry module, but it has client telemetry disabled!");
             return;
         }
 
@@ -51,12 +51,12 @@ internal static class SnowflakeTelemetryModule
         {
             if (s_sessions.TryGetValue(session.sessionId, out var existing))
             {
-                s_logger.Debug("Session re-registered in client telemetry module.");
+                s_logger.Trace("Session re-registered in client telemetry module.");
                 existing.UpdateToken(session.sessionToken);
                 return;
             }
 
-            s_logger.Debug("Session registering in client telemetry module.");
+            s_logger.Trace("Session registering in client telemetry module.");
             var module = new SessionTelemetryModule(session);
             s_sessions.Add(session.sessionId, module);
         }
@@ -99,11 +99,11 @@ internal static class SnowflakeTelemetryModule
         module = null;
         if (string.IsNullOrEmpty(sessionId))
         {
-            s_logger.Warn("Tried to unregister session without providing any id!");
+            s_logger.Debug("Tried to unregister session without providing any id!");
             return false;
         }
 
-        s_logger.Debug($"Unregistering session with id: {sessionId} from client telemetry module.");
+        s_logger.Trace($"Unregistering session with id: {sessionId} from client telemetry module.");
         lock (s_lock)
         {
             if (!s_sessions.TryGetValue(sessionId, out module))
@@ -119,14 +119,14 @@ internal static class SnowflakeTelemetryModule
     {
         if (!s_activitySources.Contains(activity.Source.Name))
         {
-            s_logger.Debug($"Activity {activity.Source.Name} will not be handled by this component!");
+            s_logger.Trace($"Activity {activity.Source.Name} will not be handled by this component!");
             return;
         }
 
         var sessionId = activity.GetTagItem(TelemetryTags.SessionId) as string;
         if (string.IsNullOrEmpty(sessionId))
         {
-            s_logger.Warn($"Activity with no {TelemetryTags.SessionId} recorded!");
+            s_logger.Debug($"Activity with no {TelemetryTags.SessionId} recorded!");
             return;
         }
 
@@ -135,7 +135,7 @@ internal static class SnowflakeTelemetryModule
         {
             if (!s_sessions.TryGetValue(sessionId, out module))
             {
-                s_logger.Warn($"Activity with no matching session telemetry module recorded! SessionId: {sessionId}");
+                s_logger.Debug($"Activity with no matching session telemetry module recorded! SessionId: {sessionId}");
                 return;
             }
         }
@@ -146,7 +146,7 @@ internal static class SnowflakeTelemetryModule
     private static void OnActivityStarted(Activity activity)
     {
         var sessionId = activity.GetTagItem(TelemetryTags.SessionId) as string;
-        s_logger.Info($"Activity {activity.DisplayName} for session: {sessionId} started..");
+        s_logger.Debug($"Activity {activity.DisplayName} for session: {sessionId} started..");
     }
 
     private static ActivitySamplingResult Sample(ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;

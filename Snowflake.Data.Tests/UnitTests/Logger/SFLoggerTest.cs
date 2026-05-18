@@ -32,6 +32,24 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [Test]
+        public void TestIsTraceEnabled(
+            [Values(false, true)] bool isEnabled)
+        {
+            _logger = GetLogger();
+            if (isEnabled)
+            {
+                SFLoggerImpl.SetLevel(LoggingEvent.TRACE);
+            }
+            else
+            {
+                SFLoggerImpl.SetLevel(LoggingEvent.OFF);
+            }
+
+            Assert.AreEqual(isEnabled, _logger.IsTraceEnabled());
+            _logger.Trace("trace log message", new Exception("test exception"));
+        }
+
+        [Test]
         public void TestIsDebugEnabled(
             [Values(false, true)] bool isEnabled)
         {
@@ -116,6 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 if (logLevel == LoggingEvent.OFF)
                 {
+                    Assert.IsFalse(_logger.IsTraceEnabled());
                     Assert.IsFalse(_logger.IsDebugEnabled());
                     Assert.IsFalse(_logger.IsInfoEnabled());
                     Assert.IsFalse(_logger.IsWarnEnabled());
@@ -123,6 +142,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
                 else if (logLevel == LoggingEvent.TRACE)
                 {
+                    Assert.IsTrue(_logger.IsTraceEnabled());
                     Assert.IsTrue(_logger.IsDebugEnabled());
                     Assert.IsTrue(_logger.IsInfoEnabled());
                     Assert.IsTrue(_logger.IsWarnEnabled());
@@ -130,6 +150,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
                 else if (logLevel == LoggingEvent.DEBUG)
                 {
+                    Assert.IsFalse(_logger.IsTraceEnabled());
                     Assert.IsTrue(_logger.IsDebugEnabled());
                     Assert.IsTrue(_logger.IsInfoEnabled());
                     Assert.IsTrue(_logger.IsWarnEnabled());
@@ -137,6 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
                 else if (logLevel == LoggingEvent.INFO)
                 {
+                    Assert.IsFalse(_logger.IsTraceEnabled());
                     Assert.IsFalse(_logger.IsDebugEnabled());
                     Assert.IsTrue(_logger.IsInfoEnabled());
                     Assert.IsTrue(_logger.IsWarnEnabled());
@@ -144,6 +166,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
                 else if (logLevel == LoggingEvent.WARN)
                 {
+                    Assert.IsFalse(_logger.IsTraceEnabled());
                     Assert.IsFalse(_logger.IsDebugEnabled());
                     Assert.IsFalse(_logger.IsInfoEnabled());
                     Assert.IsTrue(_logger.IsWarnEnabled());
@@ -151,6 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
                 else if (logLevel == LoggingEvent.ERROR)
                 {
+                    Assert.IsFalse(_logger.IsTraceEnabled());
                     Assert.IsFalse(_logger.IsDebugEnabled());
                     Assert.IsFalse(_logger.IsInfoEnabled());
                     Assert.IsFalse(_logger.IsWarnEnabled());
