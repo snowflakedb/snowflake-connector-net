@@ -11,16 +11,19 @@ using Xunit.Sdk;
 namespace Snowflake.Data.Tests.Util;
 
 #if NET8_0_OR_GREATER
-[XunitTestCaseDiscoverer(typeof(XunitTestCaseDiscoverer))]
+[XunitTestCaseDiscoverer(typeof(SFTestCaseDiscovererV3))]
 #else
-[XunitTestCaseDiscoverer($"Snowflake.Data.Tests.Util.{nameof(XunitTestCaseDiscoverer)}", "Snowflake.Data.Tests")]
+[XunitTestCaseDiscoverer($"Snowflake.Data.Tests.Util.{nameof(SFTestCaseDiscoverer)}", "Snowflake.Data.Tests")]
 #endif
-public sealed class SFFactAttribute : FactAttribute, ISFDedicatedSessionPoolConfig
+public sealed class SFFactAttribute : FactAttribute
 {
     public bool DedicatedSessionPool { get; }
 
-    public SFFactAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false)
+    public RetriesCount RetriesCount { get; }
+
+    public SFFactAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = 0)
     {
+        RetriesCount = retriesCount;
         DedicatedSessionPool = dedicatedSessionPool;
         Skip = SkipConditionEvaluator.Evaluate(skip);
         Timeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
@@ -28,27 +31,32 @@ public sealed class SFFactAttribute : FactAttribute, ISFDedicatedSessionPoolConf
 }
 
 #if NET8_0_OR_GREATER
-[XunitTestCaseDiscoverer(typeof(XunitTheoryDiscoverer))]
+[XunitTestCaseDiscoverer(typeof(SFTheoryDiscovererV3))]
 #else
-[XunitTestCaseDiscoverer($"Snowflake.Data.Tests.Util.{nameof(XunitTheoryDiscoverer)}", "Snowflake.Data.Tests")]
+[XunitTestCaseDiscoverer($"Snowflake.Data.Tests.Util.{nameof(SFTheoryDiscoverer)}", "Snowflake.Data.Tests")]
 #endif
-public sealed class SFTheoryAttribute : TheoryAttribute, ISFDedicatedSessionPoolConfig
+public sealed class SFTheoryAttribute : TheoryAttribute
 {
     public bool DedicatedSessionPool { get; }
 
-    public SFTheoryAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false)
+    public RetriesCount RetriesCount { get; }
+
+    public SFTheoryAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = 0)
     {
         DedicatedSessionPool = dedicatedSessionPool;
+        RetriesCount = retriesCount;
         Skip = SkipConditionEvaluator.Evaluate(skip);
         Timeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
     }
 }
 
-public interface ISFDedicatedSessionPoolConfig
+public enum RetriesCount
 {
-    public bool DedicatedSessionPool { get; }
+    NoRetries = 0,
+    Once = 1,
+    Twice = 2,
+    Thrice = 3
 }
-
 
 internal static class SkipConditionEvaluator
 {

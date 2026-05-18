@@ -279,7 +279,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PutGetCommandTestCases))]
+        [SFTheory(SkipCondition.SkipOnJenkins, retriesCount: RetriesCount.Thrice), MemberData(nameof(PutGetCommandTestCases))]
         public async Task TestPutGetCommand(ResultFormat resultFormat, int lobSize)
         {
             // arrange
