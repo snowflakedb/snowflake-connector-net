@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Tests.Util;
@@ -45,7 +46,7 @@ namespace Snowflake.Data.Tests.PackageTests
             try { Directory.Delete(_tempDir, true); } catch { }
         }
 
-        [SFFact(DisableDefaultTimeout = true)]
+        [SFFact]
         public async Task TestMiniCoreLoadsFromNugetPackage()
         {
             // 1. Pack NuGet

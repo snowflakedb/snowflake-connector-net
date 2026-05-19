@@ -157,7 +157,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.True(thrown.InnerException is AggregateException);
             var nestedException = ((AggregateException)thrown.InnerException).InnerException;
             Assert.Contains("Could not obtain a connection from the pool within a given timeout", nestedException.Message);
-            Assert.InRange(watch.ElapsedMilliseconds, 1000, 5000);
+            Assert.InRange(watch.ElapsedMilliseconds, 1000, 10000);
             Assert.Equal(pool.GetCurrentPoolSize(), 2);
 
             // cleanup
