@@ -23,6 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
     public sealed class ClientTelemetryWiremockTest
     {
         private static readonly string s_mappingPath = Path.Combine("wiremock", "Telemetry", "login_and_telemetry.json");
+        private static readonly string s_telemetryDisabledMappingPath = Path.Combine("wiremock", "Telemetry", "login_telemetry_disabled.json");
         private static readonly string s_failingQueryMappingPath = Path.Combine("wiremock", "Telemetry", "failing_query.json");
         private static readonly string s_connectionString =
             $"account=testaccount;user=dummyuser;password=testpwd;host=localhost;port={WiremockRunner.DefaultHttpPort};scheme=http;poolingEnabled=false;CLIENT_TELEMETRY_ENABLED=true;";
@@ -150,11 +151,30 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
         }
 
         [Test]
-        public void TestTelemetryDisabledSendsNothingToServer()
+        public void TestServerOverridesClientTelemetrySetting()
         {
+            // Client disables telemetry, but server responds with CLIENT_TELEMETRY_ENABLED=true
+            // Server wins — telemetry should be sent
             using var conn = new SnowflakeDbConnection(s_connectionStringTelemetryDisabled);
             conn.Open();
-            var sessionId = conn.SfSession.sessionId;
+
+            using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
+            cmd.CommandText = "SELECT 1";
+            cmd.ExecuteNonQuery();
+
+            conn.Close();
+
+            var logs = GetTelemetryLogs();
+            Assert.IsNotEmpty(logs, "Server override should enable telemetry even when client disabled it");
+        }
+
+        [Test]
+        public void TestServerDisabledTelemetrySendsNothingToServer()
+        {
+            _wiremock.AddMappings(s_telemetryDisabledMappingPath);
+
+            using var conn = new SnowflakeDbConnection(s_connectionString);
+            conn.Open();
 
             using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
             cmd.CommandText = "SELECT 1";
@@ -163,20 +183,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
 
             var telemetryRequests = GetWiremockRequestsTo("/telemetry/send", noRequestsExpected: true);
-            Assert.IsEmpty(telemetryRequests, "No telemetry should be sent when CLIENT_TELEMETRY_ENABLED=false");
-            using var conn2 = new SnowflakeDbConnection(s_connectionString);
-            conn2.Open();
-            var sessionId2 = conn2.SfSession.sessionId;
-
-            using var cmd2 = (SnowflakeDbCommand)conn2.CreateCommand();
-            cmd2.CommandText = "SELECT 1";
-            cmd2.ExecuteNonQuery();
-            conn2.Close();
-
-            var telemetryRequests2 = GetWiremockRequestsTo("/telemetry/send");
-            Assert.IsNotEmpty(telemetryRequests2);
-            Assert.True(telemetryRequests2.All(x => x["headers"]?["Sid"]?.ToString() != sessionId));
-            Assert.True(telemetryRequests2.Any(x => x["headers"]?["Sid"]?.ToString() != sessionId2));
+            Assert.IsEmpty(telemetryRequests, "No telemetry should be sent when server disables CLIENT_TELEMETRY_ENABLED");
         }
 
         [Test]
@@ -320,7 +327,10 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
         [Test]
         public void TestPublicStartActivityThrowsWhenTelemetryDisabled()
         {
-            using var conn = new SnowflakeDbConnection(s_connectionStringTelemetryDisabled);
+            _wiremock.ResetMapping();
+            _wiremock.AddMappings(s_telemetryDisabledMappingPath);
+
+            using var conn = new SnowflakeDbConnection(s_connectionString);
             conn.Open();
 
             using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
