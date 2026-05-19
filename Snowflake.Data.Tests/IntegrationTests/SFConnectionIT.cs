@@ -2396,8 +2396,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestCloseSessionWhenGarbageCollectorFinalizesConnection()
         {
             // arrange
-            var connection = GetSessionFromForgottenConnection();
-            var session = connection.SfSession;
+            var session = GetSessionFromForgottenConnection();
             Assert.NotNull(session);
             Assert.NotNull(session.sessionId);
             Assert.NotNull(session.sessionToken);
@@ -2410,11 +2409,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Null(session.sessionToken);
         }
 
-        private SnowflakeDbConnection GetSessionFromForgottenConnection()
+        private SFSession GetSessionFromForgottenConnection()
         {
             var connection = new SnowflakeDbConnection(_fixture.ConnectionString + ";poolingEnabled=false;application=TestGarbageCollectorCloseSession");
             connection.Open();
-            return connection;
+            return connection.SfSession;
         }
 
         [SFFact]
