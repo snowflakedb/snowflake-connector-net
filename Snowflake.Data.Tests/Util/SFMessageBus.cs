@@ -10,6 +10,7 @@ namespace Snowflake.Data.Tests.Util;
 public sealed class SFDelayedMessageBus(IMessageBus innerBus) : IMessageBus
 {
     private readonly List<IMessageSinkMessage> _messages = [];
+    private static TestPerformanceRecorder s_performanceRecorder = new ();
 
     public bool QueueMessage(IMessageSinkMessage message)
     {
@@ -20,11 +21,17 @@ public sealed class SFDelayedMessageBus(IMessageBus innerBus) : IMessageBus
     public void Dispose()
     {
         foreach (var message in _messages)
+        {
             innerBus.QueueMessage(message);
+
+            if (message is ITestResultMessage testResultMessage)
+                s_performanceRecorder.AddEntry(testResultMessage);
+        }
     }
 }
 
 #else
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using Xunit.Abstractions;
@@ -41,6 +48,8 @@ public class SFMessageBus : IMessageBus
     private bool _isMessageProcessingDelayed;
 
     public int SkippedCount { get; private set; }
+
+    private static TestPerformanceRecorder s_performanceRecorder = new ();
 
     public SFMessageBus(IMessageBus messageBusImplementation, int retriesCount)
     {
@@ -66,6 +75,8 @@ public class SFMessageBus : IMessageBus
                 _isMessageProcessingDelayed = false;
                 _messageBusImplementation.QueueMessage(delayedMessage);
             }
+
+            s_performanceRecorder.AddEntry((ITestResultMessage)message);
         }
 
         if (message is not ITestFailed testFailed)
@@ -84,10 +95,15 @@ public class SFMessageBus : IMessageBus
             return _messageBusImplementation.QueueMessage(skippedMessage);
         }
 
+        var result = DelayQueueMessage(message);
+
+        if (_retriesCountRemaining == 0)
+            s_performanceRecorder.AddEntry(testFailed);
+
         if (_retriesCountRemaining-- <= 0)
             _isMessageProcessingDelayed = false;
 
-        return DelayQueueMessage(message);
+        return result;
     }
 
     private bool DelayQueueMessage(IMessageSinkMessage message)

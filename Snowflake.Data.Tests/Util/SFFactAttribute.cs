@@ -29,8 +29,7 @@ public sealed class SFFactAttribute : FactAttribute
         DedicatedSessionPool = dedicatedSessionPool;
         Skip = SkipConditionEvaluator.Evaluate(skip);
 
-        if (!DisableDefaultTimeout)
-            Timeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
+        Timeout = !DisableDefaultTimeout ? (int)TimeSpan.FromMinutes(15).TotalMilliseconds : (int)TimeSpan.FromHours(10).TotalMilliseconds;
     }
 }
 
@@ -53,8 +52,7 @@ public sealed class SFTheoryAttribute : TheoryAttribute
         RetriesCount = retriesCount;
         Skip = SkipConditionEvaluator.Evaluate(skip);
 
-        if (!DisableDefaultTimeout)
-            Timeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
+        Timeout = !DisableDefaultTimeout ? (int)TimeSpan.FromMinutes(15).TotalMilliseconds : (int)TimeSpan.FromHours(10).TotalMilliseconds;
     }
 }
 
