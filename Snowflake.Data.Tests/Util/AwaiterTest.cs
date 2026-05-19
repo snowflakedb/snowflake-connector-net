@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.Util
             var millis = await MillisecondsOfWaiting(() => true, TimeSpan.FromHours(1));
 
             // assert
-            Assert.True(millis <= _maxDurationRegardedAsImmediately.TotalMilliseconds);
+            Assert.InRange(millis, long.MinValue,  _maxDurationRegardedAsImmediately.TotalMilliseconds);
         }
 
         [SFFact]

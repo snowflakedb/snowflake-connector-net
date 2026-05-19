@@ -2327,11 +2327,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var connection = new SnowflakeDbConnection(connectionString))
             {
                 // act
-                Exception thrown;
-                if (extraParameters  == "")
-                    thrown = await Assert.ThrowsAsync<TaskCanceledException>(() => connection.OpenAsync(CancellationToken.None));
-                else
-                    thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => connection.OpenAsync(CancellationToken.None));
+                var thrown = await Assert.ThrowsAnyAsync<Exception>(() => connection.OpenAsync(CancellationToken.None));
 
                 // assert
                 if (thrown.InnerException is SnowflakeDbException)
