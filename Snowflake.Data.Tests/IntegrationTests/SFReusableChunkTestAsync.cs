@@ -11,7 +11,7 @@ using Snowflake.Data.Core;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     [CollectionDefinition(nameof(SFReusableChunkTestAsyncCollection), DisableParallelization = true)]
-    public class SFReusableChunkTestAsyncCollection : ICollectionFixture<SFReusableChunkTestAsync>
+    public class SFReusableChunkTestAsyncCollection : ICollectionFixture<SFReusableChunkTestAsyncCollection>
     {
     }
 

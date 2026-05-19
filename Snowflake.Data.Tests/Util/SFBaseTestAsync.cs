@@ -14,7 +14,6 @@ using Xunit;
 #if NET8_0_OR_GREATER
 using TaskOrValueTask = System.Threading.Tasks.ValueTask;
 #else
-using Xunit.Abstractions;
 using TaskOrValueTask = System.Threading.Tasks.Task;
 #endif
 
@@ -22,16 +21,13 @@ using TaskOrValueTask = System.Threading.Tasks.Task;
 
 namespace Snowflake.Data.Tests
 {
-    // todo tests all ITs call start end?
     // TODO pass around cancellationtoken
     public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>
     {
-        protected ITestOutputHelper OutputHelper { get; }
         protected CancellationToken CancellationToken { get; }
 
-        protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture, ITestOutputHelper outputHelper = null)
+        protected SFBaseTestAsync(SFBaseTestAsyncFixture fixture)
         {
-            OutputHelper = outputHelper;
 #if NET8_0_OR_GREATER
             CancellationToken = TestContext.Current.CancellationToken;
 #else

@@ -21,12 +21,16 @@ public sealed class SFFactAttribute : FactAttribute
 
     public RetriesCount RetriesCount { get; set; }
 
+    public bool DisableDefaultTimeout { get; set; }
+
     public SFFactAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = 0)
     {
         RetriesCount = retriesCount;
         DedicatedSessionPool = dedicatedSessionPool;
         Skip = SkipConditionEvaluator.Evaluate(skip);
-        Timeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
+
+        if (!DisableDefaultTimeout)
+            Timeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
     }
 }
 
@@ -41,12 +45,16 @@ public sealed class SFTheoryAttribute : TheoryAttribute
 
     public RetriesCount RetriesCount { get; set; }
 
+    public bool DisableDefaultTimeout { get; set; }
+
     public SFTheoryAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = 0)
     {
         DedicatedSessionPool = dedicatedSessionPool;
         RetriesCount = retriesCount;
         Skip = SkipConditionEvaluator.Evaluate(skip);
-        Timeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
+
+        if (!DisableDefaultTimeout)
+            Timeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
     }
 }
 

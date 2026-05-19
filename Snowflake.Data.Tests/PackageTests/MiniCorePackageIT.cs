@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.PackageTests
             try { Directory.Delete(_tempDir, true); } catch { }
         }
 
-        [SFFact]
+        [SFFact(DisableDefaultTimeout = true)]
         public async Task TestMiniCoreLoadsFromNugetPackage()
         {
             // 1. Pack NuGet

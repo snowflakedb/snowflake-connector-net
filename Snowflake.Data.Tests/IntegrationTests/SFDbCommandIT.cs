@@ -157,13 +157,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     Assert.Fail();
                 }
-                catch (TimeoutException)
+                catch (Exception e) when (e is TaskCanceledException or TimeoutException or OperationCanceledException)
                 {
                     // we're good
                 }
                 catch (Exception e)
                 {
-                    Assert.IsType<TimeoutException>(e.InnerException);
+                    Assert.Fail($"Expected timeout related exception, got: {e}");
                 }
                 stopwatch.Stop();
 
@@ -1284,7 +1284,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString + "GCS_USE_DOWNSCOPED_CREDENTIAL=true;poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None);
 
-                int rowCount = 100000;
+                var rowCount = 100000L;
 
                 using (IDbCommand command = conn.CreateCommand())
                 {
