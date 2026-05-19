@@ -12,6 +12,7 @@ namespace Snowflake.Data.Core
         TIME_OUTPUT_FORMAT,
         CLIENT_REQUEST_MFA_TOKEN,
         CLIENT_STORE_TEMPORARY_CREDENTIAL,
-        TIMEZONE
+        TIMEZONE,
+        CLIENT_TELEMETRY_ENABLED
     }
 }

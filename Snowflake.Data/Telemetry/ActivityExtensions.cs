@@ -29,8 +29,7 @@ internal static class ActivityExtensions
         activity.Stop();
     }
 
-
-    internal static void AddTelemetryEvent(this Activity activity, string name)
+    public static void AddTelemetryEvent(this Activity activity, string name, params IEnumerable<KeyValuePair<string, object>> tags)
     {
         if (activity is null)
             return;
@@ -38,7 +37,7 @@ internal static class ActivityExtensions
         if (string.IsNullOrEmpty(name))
             return;
 
-        activity.AddEvent(new ActivityEvent(name));
+        activity.AddEvent(new ActivityEvent(name, tags: new ActivityTagsCollection(tags)));
     }
 
     public static void SetException(this Activity activity, Exception exception)

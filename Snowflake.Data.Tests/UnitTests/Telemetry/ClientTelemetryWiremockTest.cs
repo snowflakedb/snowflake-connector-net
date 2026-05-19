@@ -414,25 +414,23 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             // Custom activities
             var customLogs = logs.Where(l => l.Source == ActivityStarter.ClientDefinedTelemetrySourceName).ToList();
 
-            // Parent: 2 events (Parenting, OperationComplete) → 2 log entries
-            var parentLogs = customLogs.Where(l => l.StatusCode == "OK" && l.EventName is "Parenting" or "OperationComplete").ToList();
-            Assert.AreEqual(2, parentLogs.Count, "Parent activity should produce 2 log entries (one per event)");
-            foreach (var log in parentLogs)
-            {
-                Assert.AreEqual("client_activity", log.Type);
-                Assert.AreEqual("snowflake", log.Tag(TelemetryTags.DbSystem));
-                Assert.AreEqual("telemetry-test-session", log.Tag(TelemetryTags.SessionId));
-            }
+            // Parent: synthetic event + 2 explicit events (Parenting, OperationComplete) → 3 log entries
+            var parentSynthetic = customLogs.Single(l => l.EventName == "Parent");
+            Assert.AreEqual("client_activity", parentSynthetic.Type);
+            Assert.AreEqual("snowflake", parentSynthetic.Tag(TelemetryTags.DbSystem));
+            Assert.AreEqual("telemetry-test-session", parentSynthetic.Tag(TelemetryTags.SessionId));
+            var parentEventLogs = customLogs.Where(l => l.EventName is "Parenting" or "OperationComplete").ToList();
+            Assert.AreEqual(2, parentEventLogs.Count, "Parent activity should produce 2 explicit event log entries");
 
-            // OldestChild: 1 event (PsyOpDone), OK status, custom tag
-            var oldestChildLog = customLogs.Single(l => l.EventName == "PsyOpDone");
-            Assert.AreEqual("OK", oldestChildLog.StatusCode);
-            Assert.AreEqual("1000", oldestChildLog.Tag("some_sort_of_clients_psy_op"));
+            // OldestChild: synthetic event (with custom tag) + 1 explicit event (PsyOpDone)
+            var oldestChildSynthetic = customLogs.Single(l => l.EventName == "OldestChild");
+            Assert.AreEqual("OK", oldestChildSynthetic.StatusCode);
+            Assert.AreEqual("1000", oldestChildSynthetic.Tag("some_sort_of_clients_psy_op"));
 
-            // MiddleChild: failed with AbandonedMutexException → ERROR status, exception event
-            var middleChildLogs = customLogs.Where(l => l.StatusCode == "ERROR").ToList();
-            Assert.AreEqual(1, middleChildLogs.Count, "Exactly one activity expected (MiddleChild)");
-            Assert.AreEqual("123", middleChildLogs.Single().Tag("Something"));
+            // MiddleChild: synthetic event (with custom tag) + exception event → ERROR status
+            var middleChildSynthetic = customLogs.Single(l => l.EventName == "MiddleChild");
+            Assert.AreEqual("ERROR", middleChildSynthetic.StatusCode);
+            Assert.AreEqual("123", middleChildSynthetic.Tag("Something"));
 
             // YoungestChild: no SetSuccess/SetException called → UNSET status, synthetic event with display name
             var youngestChildLog = customLogs.Single(l => l.EventName == "YoungestChild");

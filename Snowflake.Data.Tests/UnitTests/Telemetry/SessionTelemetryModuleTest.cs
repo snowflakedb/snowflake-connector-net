@@ -62,9 +62,9 @@ internal sealed class SessionTelemetryModuleTest
     [TestCase(null, null, null, "UNSET", 1, TestName = "Eventless activity with UNSET status")]
     [TestCase(null, null, ActivityStatusCode.Ok, "OK", 1, TestName = "Eventless activity with OK status")]
     [TestCase(null, null, ActivityStatusCode.Error, "ERROR", 1, TestName = "Eventless activity with ERROR status")]
-    [TestCase("EventA", null, null, "UNSET", 1, TestName = "Activity with one event")]
-    [TestCase("EventA", "EventB", null, "UNSET", 2, TestName = "Activity with two events produces two log entries")]
-    [TestCase("EventA", "EventB", ActivityStatusCode.Ok, "OK", 2, TestName = "Activity with events and OK status")]
+    [TestCase("EventA", null, null, "UNSET", 2, TestName = "Activity with one event")]
+    [TestCase("EventA", "EventB", null, "UNSET", 3, TestName = "Activity with two events produces three log entries")]
+    [TestCase("EventA", "EventB", ActivityStatusCode.Ok, "OK", 3, TestName = "Activity with events and OK status")]
     public async Task TestFlushAsyncConvertsActivityToTelemetryData(string event1, string event2, ActivityStatusCode? status, string expectedStatus, int expectedLogCount)
     {
         // Arrange
@@ -94,6 +94,8 @@ internal sealed class SessionTelemetryModuleTest
         // Assert
         Assert.IsNotNull(capturedBody);
         Assert.AreEqual(expectedLogCount, capturedBody.Logs.Count);
+        // First entry is always the synthetic activity event
+        Assert.AreEqual("TestOp", capturedBody.Logs[0].Message[TelemetryField.EventName]);
         foreach (var log in capturedBody.Logs)
         {
             Assert.AreEqual("client_activity", log.Message[TelemetryField.Type]);
@@ -102,9 +104,9 @@ internal sealed class SessionTelemetryModuleTest
             Assert.NotNull(log.Message[TelemetryField.DriverVersion]);
         }
         if (event1 != null)
-            Assert.AreEqual(event1, capturedBody.Logs[0].Message[TelemetryField.EventName]);
+            Assert.AreEqual(event1, capturedBody.Logs[1].Message[TelemetryField.EventName]);
         if (event2 != null)
-            Assert.AreEqual(event2, capturedBody.Logs[1].Message[TelemetryField.EventName]);
+            Assert.AreEqual(event2, capturedBody.Logs[2].Message[TelemetryField.EventName]);
     }
 
     [Test]
@@ -526,6 +528,49 @@ internal sealed class SessionTelemetryModuleTest
         var log = capturedBody.Logs.First();
         Assert.IsTrue(log.Message.ContainsKey("tag.present"));
         Assert.IsFalse(log.Message.ContainsKey("tag.absent"));
+    }
+
+    [Test]
+    public async Task TestActivityTagsOnSyntheticEventAndEventTagsOnExplicitEvents()
+    {
+        // Arrange
+        var session = CreateSession();
+        TelemetryRequest capturedBody = null;
+        _mockRestRequester.Setup(r => r.PostAsync<NullDataResponse>(It.IsAny<IRestRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<IRestRequest, CancellationToken>((req, _) =>
+            {
+                capturedBody = (TelemetryRequest)((SFRestRequest)req).jsonBody;
+            })
+            .ReturnsAsync(new NullDataResponse { success = true });
+
+        var module = new SessionTelemetryModule(session);
+        var activity = new Activity("MyOp");
+        activity.Start();
+        activity.SetTag("session.tag", "session_value");
+        activity.AddEvent(new ActivityEvent("Step1", tags: new ActivityTagsCollection(new[]
+        {
+            new KeyValuePair<string, object>("event.tag", "event_value"),
+        })));
+        module.OnActivityStoppedImpl(activity);
+
+        // Act
+        await module.FlushAsync(CancellationToken.None);
+
+        // Assert
+        Assert.IsNotNull(capturedBody);
+        Assert.AreEqual(2, capturedBody.Logs.Count);
+
+        // Synthetic event carries activity-level tags
+        var syntheticLog = capturedBody.Logs[0];
+        Assert.AreEqual("MyOp", syntheticLog.Message[TelemetryField.EventName]);
+        Assert.AreEqual("session_value", syntheticLog.Message["tag.session.tag"]);
+        Assert.IsFalse(syntheticLog.Message.ContainsKey("tag.event.tag"));
+
+        // Explicit event carries its own tags
+        var eventLog = capturedBody.Logs[1];
+        Assert.AreEqual("Step1", eventLog.Message[TelemetryField.EventName]);
+        Assert.AreEqual("event_value", eventLog.Message["tag.event.tag"]);
+        Assert.IsFalse(eventLog.Message.ContainsKey("tag.session.tag"));
     }
 
 

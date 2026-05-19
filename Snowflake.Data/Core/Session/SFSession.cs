@@ -101,7 +101,7 @@ namespace Snowflake.Data.Core
 
         internal SecureString _mfaToken;
 
-        private readonly bool _isClientTelemetryEnabled;
+        private bool _isClientTelemetryEnabled;
 
         private bool _honorSessionTimezone = false;
 
@@ -547,6 +547,11 @@ namespace Snowflake.Data.Core
                 string val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
                 _queryContextCacheSize = Int32.Parse(val);
                 _queryContextCache.SetCapacity(_queryContextCacheSize);
+            }
+
+            if (ParameterMap.TryGetValue(SFSessionParameter.CLIENT_TELEMETRY_ENABLED, out var clientTelemetryEnabledObj) && bool.TryParse(clientTelemetryEnabledObj.ToString(), out var clientTelemetryEnabled))
+            {
+                _isClientTelemetryEnabled = clientTelemetryEnabled;
             }
         }
 

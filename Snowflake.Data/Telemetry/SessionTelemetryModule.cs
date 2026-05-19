@@ -221,8 +221,8 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
     private static IEnumerable<TelemetryData> ConvertActivityToTelemetryData(Activity activity)
     {
         var timestamp = new DateTimeOffset(activity.StartTimeUtc);
-        var events = activity.Events;
-        events = events.Any() ? events : [new(activity.DisplayName, timestamp)];
+        var activityEvent = new ActivityEvent(activity.DisplayName, timestamp, new ActivityTagsCollection(activity.TagObjects));
+        var events = activity.Events.Prepend(activityEvent);
         foreach (var @event in events)
         {
             var message = new Dictionary<string, string>
@@ -238,7 +238,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
                 { TelemetryField.EventTime, @event.Timestamp.ToString()}
             };
 
-            foreach (var tag in activity.TagObjects)
+            foreach (var tag in @event.Tags)
             {
                 if (tag.Value is null)
                     continue;

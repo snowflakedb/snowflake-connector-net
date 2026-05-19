@@ -290,6 +290,58 @@ internal sealed class ActivityStarterTest
     }
 
     [Test]
+    public void TestAddTelemetryEventWithTagsStoresTagsOnEvent()
+    {
+        var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
+        var activity = session.StartActivity("Op");
+        Assert.IsNotNull(activity);
+
+        activity.AddTelemetryEvent("StepComplete",
+            new KeyValuePair<string, object>("step.name", "validation"),
+            new KeyValuePair<string, object>("step.duration_ms", 42));
+        activity.Stop();
+
+        Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
+        var evt = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "StepComplete");
+        Assert.IsNotNull(evt);
+        Assert.AreEqual("validation", evt.Tags.First(t => t.Key == "step.name").Value);
+        Assert.AreEqual(42, evt.Tags.First(t => t.Key == "step.duration_ms").Value);
+    }
+
+    [Test]
+    public void TestAddTelemetryEventWithNoTagsCreatesEventWithEmptyTags()
+    {
+        var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
+        var activity = session.StartActivity("Op");
+        Assert.IsNotNull(activity);
+
+        activity.AddTelemetryEvent("SimpleEvent");
+        activity.Stop();
+
+        Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
+        var evt = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "SimpleEvent");
+        Assert.IsNotNull(evt);
+        Assert.IsFalse(evt.Tags.Any());
+    }
+
+    [Test]
+    public void TestAddTelemetryEventWithEmptyNameDoesNotAddEvent()
+    {
+        var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
+        var activity = session.StartActivity("Op");
+        Assert.IsNotNull(activity);
+
+        activity.AddTelemetryEvent("",
+            new KeyValuePair<string, object>("key", "value"));
+        activity.AddTelemetryEvent(null,
+            new KeyValuePair<string, object>("key", "value"));
+        activity.Stop();
+
+        Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
+        Assert.IsEmpty(_sessionIdCapturedActivitiesMap[session.sessionId].Events);
+    }
+
+    [Test]
     public void TestStartActivityOnCommandWithNullConnectionThrows()
     {
         var command = new SnowflakeDbCommand();
