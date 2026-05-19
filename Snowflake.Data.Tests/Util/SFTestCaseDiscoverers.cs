@@ -125,7 +125,7 @@ public sealed class SFTestCaseDiscoverer : IXunitTestCaseDiscoverer
     public IEnumerable<IXunitTestCase> Discover(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo factAttribute) =>
         _decorated.Discover(discoveryOptions, testMethod, factAttribute).Select(x =>
         {
-            var retriesCount = (int)factAttribute.GetConstructorArguments().Single(y => y is RetriesCount);
+            var retriesCount = (int)((SFFactAttribute)((ReflectionAttributeInfo)factAttribute).Attribute).RetriesCount;
             return new SFTestCases(x, retriesCount);
         });
 }
@@ -142,7 +142,7 @@ public sealed class SFTheoryDiscoverer : IXunitTestCaseDiscoverer
     public IEnumerable<IXunitTestCase> Discover(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo factAttribute) =>
         _decorated.Discover(discoveryOptions, testMethod, factAttribute).Select(x =>
         {
-            var retriesCount = (int)factAttribute.GetConstructorArguments().Single(y => y is RetriesCount);
+            var retriesCount = (int)((SFTheoryAttribute)((ReflectionAttributeInfo)factAttribute).Attribute).RetriesCount;
             return new SFTestCases(x, retriesCount);
         });
 }

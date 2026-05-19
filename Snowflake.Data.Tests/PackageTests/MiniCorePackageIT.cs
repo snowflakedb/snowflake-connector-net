@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 using Snowflake.Data.Tests.Util;
 using Xunit;
 
+#if !NET8_0_OR_GREATER
+using Xunit.Abstractions;
+#endif
+
 // Build NuGet, create a fresh consumer app, install the
 // packaged connector, and run it to ensure MiniCore ships and loads correctly.
 // Unit tests do not cover the nuget packaging step.
@@ -16,8 +20,11 @@ namespace Snowflake.Data.Tests.PackageTests
     [Trait("Category", "MiniCore")]
     public class MiniCorePackageIT : IDisposable
     {
-        public MiniCorePackageIT()
+        private readonly ITestOutputHelper _helper;
+
+        public MiniCorePackageIT(ITestOutputHelper helper)
         {
+            _helper = helper;
             Setup();
         }
 
@@ -38,11 +45,12 @@ namespace Snowflake.Data.Tests.PackageTests
             try { Directory.Delete(_tempDir, true); } catch { }
         }
 
-        [SFFact(RetriesCount = RetriesCount.Thrice)]
+        [SFFact]
         public async Task TestMiniCoreLoadsFromNugetPackage()
         {
             // 1. Pack NuGet
-            await RunCommandAsync("dotnet", $"pack \"{Path.Combine(_repoRoot, "Snowflake.Data", "Snowflake.Data.csproj")}\" -c Release -o \"{_artifactsDir}\" --verbosity quiet", timeoutMs: 1_000 * 60 * 15, expectedSuccessMessage: "Successfully created package").ConfigureAwait(false);
+            var timeoutMs = 1_000 * 60 * 20;
+            await RunCommandAsync("dotnet", $"pack \"{Path.Combine(_repoRoot, "Snowflake.Data", "Snowflake.Data.csproj")}\" -c Release -o \"{_artifactsDir}\" --verbosity quiet", timeoutMs: timeoutMs, expectedSuccessMessage: "Successfully created package").ConfigureAwait(false);
 
             var packagePath = Directory.GetFiles(_artifactsDir, "Snowflake.Data.*.nupkg")
                 .Where(f => !f.EndsWith(".symbols.nupkg"))
@@ -53,15 +61,15 @@ namespace Snowflake.Data.Tests.PackageTests
             var version = Path.GetFileNameWithoutExtension(packagePath).Replace("Snowflake.Data.", "");
 
             // 2. Create consumer app
-            await RunCommandAsync("dotnet", "new console --force --verbosity quiet", _tempDir, timeoutMs: 1_000 * 60 * 15).ConfigureAwait(false);
-            await RunCommandAsync("dotnet", "add package Microsoft.Extensions.Logging.Abstractions --version 9.0.5 --verbosity quiet", _tempDir, timeoutMs: 1_000 * 60 * 15).ConfigureAwait(false);
-            await RunCommandAsync("dotnet", $"add package Snowflake.Data --version {version} --source \"{_artifactsDir}\"", _tempDir, timeoutMs: 1_000 * 60 * 15).ConfigureAwait(false);
+            await RunCommandAsync("dotnet", "new console --force --verbosity quiet", _tempDir, timeoutMs: timeoutMs).ConfigureAwait(false);
+            await RunCommandAsync("dotnet", "add package Microsoft.Extensions.Logging.Abstractions --version 9.0.5 --verbosity quiet", _tempDir, timeoutMs: timeoutMs).ConfigureAwait(false);
+            await RunCommandAsync("dotnet", $"add package Snowflake.Data --version {version} --source \"{_artifactsDir}\"", _tempDir, timeoutMs: timeoutMs).ConfigureAwait(false);
 
             var sourceFile = Path.Combine(AppContext.BaseDirectory, "PackageTests", "MiniCoreVerificationAppSource.cs");
             File.Copy(sourceFile, Path.Combine(_tempDir, "Program.cs"), overwrite: true);
 
             // 3. Run & Assert
-            var (exitCode, output) = await RunCommandAsync("dotnet", "run --verbosity quiet", _tempDir, timeoutMs: 1_000 * 60 * 15).ConfigureAwait(false);
+            var (exitCode, output) = await RunCommandAsync("dotnet", "run --verbosity quiet", _tempDir, timeoutMs: timeoutMs).ConfigureAwait(false);
 
             Assert.Equal(0, exitCode);
             Assert.Contains("[PROBE] MiniCore loaded successfully", output);
@@ -114,7 +122,7 @@ namespace Snowflake.Data.Tests.PackageTests
             {
                 try { process.Kill(); } catch { }
                 var partialOutput = outputBuilder + Environment.NewLine + "ERROR (Partial):" + Environment.NewLine + errorBuilder;
-                // TestContext.Progress.WriteLine($"Command timed out! Partial output:\n{partialOutput}");
+                _helper.WriteLine(partialOutput);
 
                 if (string.IsNullOrEmpty(expectedSuccessMessage) || !partialOutput.Contains(expectedSuccessMessage)) // sometimes Process component has issues with exiting even though command was successful.
                     throw new TimeoutException($"Command '{command} {args}' timed out after {timeoutMs}ms");
