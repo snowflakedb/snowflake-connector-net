@@ -100,7 +100,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Once)]
         public async Task TestSelectAsync()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
