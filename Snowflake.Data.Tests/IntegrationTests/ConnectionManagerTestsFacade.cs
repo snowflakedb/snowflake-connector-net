@@ -28,7 +28,7 @@ internal class ConnectionManagerTestsFacade : IConnectionManager
     public static void RegisterDedicatedContext(string ambientContextName, ConnectionPoolType connectionPoolType, IConnectionManagerFactory connectionManagerFactory = null)
     {
         if (s_initState == 0)
-            throw new SFConnectionManagerTestsException("TODO");
+            throw new SFConnectionManagerTestsException("This is unsupported. You need to initialize this component before you can register dedicated context!");
 
         connectionManagerFactory ??= ConnectionManagerFactory.Singleton;
         var connectionManager = connectionManagerFactory.CreateConnectionManager(connectionPoolType);

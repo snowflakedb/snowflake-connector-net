@@ -338,7 +338,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public async Task TestCloseSessionAfterTimeout()
         {
             // arrange

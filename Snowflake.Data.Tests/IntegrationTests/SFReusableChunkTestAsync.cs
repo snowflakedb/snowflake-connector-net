@@ -10,6 +10,12 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
+    [CollectionDefinition(nameof(SFReusableChunkTestAsyncCollection), DisableParallelization = true)]
+    public class SFReusableChunkTestAsyncCollection : ICollectionFixture<SFReusableChunkTestAsync>
+    {
+    }
+
+    [Collection(nameof(SFReusableChunkTestAsyncCollection))]
     public class SFReusableChunkTestAsync : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;
@@ -198,7 +204,7 @@ select parse_json('{{
             }
         }
 
-        [SFFact(Skip = "TODO INVESTIGATE")]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public async Task TestExceptionThrownWhenChunkDownloadRetryCountExceeded()
         {
             const int ExcessiveRetryCount = 8;

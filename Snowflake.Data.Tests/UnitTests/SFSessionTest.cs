@@ -135,7 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
         }
 
-        [SFFact(SkipCondition.SkipOnWindows)] // TODO investigate
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public void TestThatIdTokenIsNotStoredWhenThereIsNoUserInTheConnectionString()
         {
             // arrange

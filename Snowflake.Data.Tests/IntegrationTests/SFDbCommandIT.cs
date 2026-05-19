@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact(Skip = "TODO investigate")]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public async Task TestExecuteAsyncWithMaxRetryReached()
         {
             var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
@@ -170,8 +170,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var totalDelaySeconds = 1 + 2 + 4 + 8 + 16 + 16 + 16 + 16;
                 // retry 8 times with backoff 1, 2, 4, 8, 16, 16, 16, 16 seconds
                 // but should not delay more than another 16 seconds
-                Assert.True(stopwatch.ElapsedMilliseconds < (totalDelaySeconds + 20) * 1000);
-                Assert.True(stopwatch.ElapsedMilliseconds >= totalDelaySeconds * 1000);
+                Assert.InRange(stopwatch.ElapsedMilliseconds, totalDelaySeconds * 1000, (totalDelaySeconds + 20) * 1000);
             }
         }
 
@@ -494,7 +493,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact] // TODO this is long and slows everything else, consider making some changes
+        [SFFact]
         public async Task TestGetResultsOfUnknownQueryIdAsyncWithConfiguredRetry()
         {
             var queryResultsRetryCount = 3;
@@ -1277,10 +1276,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact(SkipCondition.SkipOnCloudAWS | SkipCondition.SkipOnCloudAzure)]
+        [SFFact(SkipCondition.SkipOnCloudAWS | SkipCondition.SkipOnCloudAzure, RetriesCount = RetriesCount.Thrice)]
         public async Task testExecuteLargeQueryWithGcsDownscopedToken()
         {
-            Skip.When(true, "TODO investigate this");
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + "GCS_USE_DOWNSCOPED_CREDENTIAL=true;poolingEnabled=false";
