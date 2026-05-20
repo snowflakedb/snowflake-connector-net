@@ -194,6 +194,27 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
+### Configuring flush behavior
+
+The telemetry module buffers activities in memory and flushes them to Snowflake either when the buffer reaches a size threshold or on a periodic timer interval. Both values can be configured at application level:
+
+```csharp
+using Snowflake.Data.Telemetry;
+
+// Set the number of buffered activities that triggers an automatic flush (default: 100)
+SessionTelemetryModuleFacade.SetFlushSize(50);
+
+// Set the periodic flush interval in milliseconds (default: 60000 ms / 1 minute)
+SessionTelemetryModuleFacade.SetFlushInterval(30_000);
+```
+
+These settings are global and affect all sessions created **after** the call. Sessions that are already open continue using the values that were active when they were created.
+
+| Method | Default | Constraint |
+|---|---|---|
+| `SetFlushSize(int)` | 100 | Must be greater than 0 |
+| `SetFlushInterval(int)` | 60 000 ms | Must be greater than 0 |
+
 ### Activity sources
 
 | Source name | Description |

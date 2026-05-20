@@ -20,9 +20,10 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetSFLogger<SessionTelemetryModule>();
 
-    private static readonly int s_flushSize = TelemetryTransport.TelemetryFlushSize;
-    private static readonly TimeSpan s_flushInterval = TimeSpan.FromMilliseconds(TelemetryTransport.TelemetryFlushIntervalInMs);
+    private static volatile int s_flushSize = 100;
+    private static volatile int s_flushIntervalMs = 60 * 1_000;
 
+    private readonly int _flushSize;
     private readonly TimeSpan _sendTimeout;
     private readonly LockObject _lock = new();
     private readonly string _sessionId;
@@ -38,17 +39,35 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
     private volatile int _flushInProgress;
     private bool IsDisposed() => _disposed != 0;
 
-    internal SessionTelemetryModule(SFSession session) : this(session, s_flushInterval)
-    { }
-
-    internal SessionTelemetryModule(SFSession session, TimeSpan flushInterval)
+    internal SessionTelemetryModule(SFSession session) : this(session, s_flushSize, TimeSpan.FromMilliseconds(s_flushIntervalMs))
     {
+    }
+
+    internal SessionTelemetryModule(SFSession session, int flushSize, TimeSpan flushInterval)
+    {
+        _flushSize = flushSize;
         _sessionId = session.sessionId;
         _sessionToken = session.sessionToken;
         _restRequester = session.restRequester;
         _url = session.BuildUri(RestPath.SF_TELEMETRY_PATH);
         _sendTimeout = session.connectionTimeout;
         _flushTimer = new Timer(_ => FlushTimerCallback(), null, flushInterval, flushInterval);
+    }
+
+    public static void SetFlushSize(int flushSize)
+    {
+        if (flushSize <= 0)
+            throw new ArgumentException("Flush size must be greater than 0.");
+
+        Interlocked.Exchange(ref s_flushSize, flushSize);
+    }
+
+    public static void SetFlushInterval(int flushIntervalInMilliseconds)
+    {
+        if (flushIntervalInMilliseconds <= 0)
+            throw new ArgumentException("Flush interval must be greater than 0.");
+
+        Interlocked.Exchange(ref s_flushIntervalMs, flushIntervalInMilliseconds);
     }
 
     public void Dispose()
@@ -100,7 +119,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
                 return;
 
             toSend = _buffer;
-            _buffer = new List<TelemetryData>(s_flushSize);
+            _buffer = new List<TelemetryData>(_flushSize);
         }
 
         try
@@ -139,7 +158,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
                 return;
 
             toSend = _buffer;
-            _buffer = new List<TelemetryData>(s_flushSize);
+            _buffer = new List<TelemetryData>(_flushSize);
         }
 
         try
@@ -173,7 +192,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
             count = _buffer.Count;
         }
 
-        if (count < s_flushSize)
+        if (count < _flushSize)
             return;
 
         if (Interlocked.CompareExchange(ref _flushInProgress, 1, 0) != 0)

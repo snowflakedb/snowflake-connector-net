@@ -17,6 +17,10 @@ internal static class ActivityExtensions
         activity.SetTag(TelemetryTags.SessionId, session.sessionId);
     }
 
+    /// <summary>
+    /// Marks the activity as successful, sets the status code tag to "OK", and stops the activity.
+    /// </summary>
+    /// <param name="activity">The activity to mark as successful. If null, the call is a no-op.</param>
     public static void SetSuccess(this Activity activity)
     {
         if (activity is null)
@@ -29,6 +33,13 @@ internal static class ActivityExtensions
         activity.Stop();
     }
 
+    /// <summary>
+    /// This API is intended for internal Snowflake client use and is subject to breaking changes without notice.
+    /// Adds a named telemetry event to the activity with optional tags.
+    /// </summary>
+    /// <param name="activity">The activity to add the event to. If null, the call is a no-op.</param>
+    /// <param name="name">The name of the event. If null or empty, the call is a no-op.</param>
+    /// <param name="tags">Optional key-value pairs to attach to the event.</param>
     public static void AddTelemetryEvent(this Activity activity, string name, params IEnumerable<KeyValuePair<string, object>> tags)
     {
         if (activity is null)
@@ -40,6 +51,11 @@ internal static class ActivityExtensions
         activity.AddEvent(new ActivityEvent(name, tags: new ActivityTagsCollection(tags)));
     }
 
+    /// <summary>
+    /// Marks the activity as failed, records the exception details as an event, and stops the activity.
+    /// </summary>
+    /// <param name="activity">The activity to mark as failed. If null, the call is a no-op.</param>
+    /// <param name="exception">The exception to record. If null, only the error status is set.</param>
     public static void SetException(this Activity activity, Exception exception)
     {
         if (activity is null)

@@ -377,7 +377,7 @@ internal sealed class SessionTelemetryModuleTest
 
         var module = new SessionTelemetryModule(session);
 
-        var bufferSize = TelemetryTransport.TelemetryFlushSize;
+        const int bufferSize = 100;
         const int BuffersToSend = 12;
 
         var totalPoints = (BuffersToSend + 1) * bufferSize - 1;
@@ -448,9 +448,9 @@ internal sealed class SessionTelemetryModuleTest
             });
 
         var timerSpan = TimeSpan.FromMilliseconds(500);
-        var module = new SessionTelemetryModule(session, timerSpan);
+        const int bufferSize = 100;
+        var module = new SessionTelemetryModule(session, bufferSize, timerSpan);
 
-        var bufferSize = TelemetryTransport.TelemetryFlushSize;
         Parallel.For(0, bufferSize - 1, i =>
         {
             var activity = new Activity($"whatever {i}");
@@ -573,6 +573,120 @@ internal sealed class SessionTelemetryModuleTest
         Assert.IsFalse(eventLog.Message.ContainsKey("tag.session.tag"));
     }
 
+
+    [Test]
+    [TestCase(0)]
+    [TestCase(-1)]
+    [TestCase(-100)]
+    public void TestSetFlushSizeThrowsOnInvalidValue(int invalidSize)
+    {
+        Assert.Throws<ArgumentException>(() => SessionTelemetryModuleFacade.SetFlushSize(invalidSize));
+    }
+
+    [Test]
+    [TestCase(1)]
+    [TestCase(50)]
+    [TestCase(500)]
+    public void TestSetFlushSizeAcceptsValidValue(int validSize)
+    {
+        Assert.DoesNotThrow(() => SessionTelemetryModuleFacade.SetFlushSize(validSize));
+        SessionTelemetryModuleFacade.SetFlushSize(100);
+    }
+
+    [Test]
+    [TestCase(0)]
+    [TestCase(-1)]
+    [TestCase(-1000)]
+    public void TestSetFlushIntervalThrowsOnInvalidValue(int invalidInterval)
+    {
+        Assert.Throws<ArgumentException>(() => SessionTelemetryModule.SetFlushInterval(invalidInterval));
+    }
+
+    [Test]
+    [TestCase(1)]
+    [TestCase(1000)]
+    [TestCase(120_000)]
+    public void TestSetFlushIntervalAcceptsValidValue(int validInterval)
+    {
+        Assert.DoesNotThrow(() => SessionTelemetryModule.SetFlushInterval(validInterval));
+        SessionTelemetryModuleFacade.SetFlushInterval(1_000 * 60);
+    }
+
+    [Test]
+    [NonParallelizable]
+    public void TestSetFlushSizeAffectsAutoFlushThreshold()
+    {
+        // Arrange
+        var session = CreateSession();
+        var flushed = false;
+        _mockRestRequester.Setup(r => r.Post<NullDataResponse>(It.IsAny<IRestRequest>()))
+            .Returns(new NullDataResponse { success = true })
+            .Callback(() => flushed = true);
+
+        SessionTelemetryModuleFacade.SetFlushSize(5);
+        try
+        {
+            var module = new SessionTelemetryModule(session);
+
+            // Act - add exactly 5 items to trigger auto-flush at the new threshold
+            for (var i = 0; i < 5; i++)
+            {
+                var activity = new Activity($"op{i}");
+                activity.Start();
+                module.OnActivityStoppedImpl(activity);
+            }
+
+            SpinWait.SpinUntil(() => flushed, TimeSpan.FromSeconds(5));
+
+            // Assert
+            Assert.IsTrue(flushed);
+            module.Dispose();
+        }
+        finally
+        {
+            SessionTelemetryModule.SetFlushSize(100);
+        }
+    }
+
+    [Test]
+    [NonParallelizable]
+    public void TestSetFlushIntervalAffectsAutoFlushInterval()
+    {
+        // Arrange
+        var session = CreateSession();
+        var flushedCount = 0;
+        _mockRestRequester.Setup(r => r.Post<NullDataResponse>(It.IsAny<IRestRequest>()))
+            .Returns(new NullDataResponse { success = true })
+            .Callback<IRestRequest>(r =>
+            {
+                var sfRestRequest = (SFRestRequest)r;
+                var jsonBody = (TelemetryRequest)sfRestRequest.jsonBody;
+                var logsCount = jsonBody.Logs.Count;
+                Interlocked.Add(ref flushedCount, logsCount);
+            });
+
+        SessionTelemetryModuleFacade.SetFlushInterval(100);
+        try
+        {
+            var module = new SessionTelemetryModule(session);
+            for (var i = 0; i < 5; i++)
+            {
+                var activity = new Activity($"op{i}");
+                activity.Start();
+                module.OnActivityStoppedImpl(activity);
+            }
+
+            var result = SpinWait.SpinUntil(() => flushedCount == 5, TimeSpan.FromSeconds(5));
+
+            // Assert
+            Assert.IsTrue(result);
+            module.Dispose();
+        }
+        finally
+        {
+            SessionTelemetryModule.SetFlushInterval(1_000 * 60);
+        }
+    }
 
     private SFSession CreateSession()
     {

@@ -58,9 +58,3 @@ internal static class TelemetryEvents
     internal const string RowCountNegative = "RowCountNegative";
     internal const string DqlResultSetSkipped = "DqlResultSetSkipped";
 }
-
-internal static class TelemetryTransport
-{
-    internal const int TelemetryFlushSize = 100;
-    internal const int TelemetryFlushIntervalInMs = 1000 * 60;
-}
