@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBaseTestAsync>();
 
         private const string ConnectionStringWithoutAuthFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
-                                                              "account={3};role={4};db={5};schema={6};warehouse={7};";
+                                                              "account={3};role={4};db={5};schema={6};warehouse={7};client_telemetry_enabled={8}";
         private const string ConnectionStringSnowflakeAuthFmt = ";user={0};password={1};";
         private const string ConnectionStringJwtAuthFmt = ";authenticator=snowflake_jwt;user={0};private_key_file={1};";
         private const string ConnectionStringJwtContentFmt = ";authenticator=snowflake_jwt;user={0};private_key={1};";
@@ -168,7 +168,8 @@ namespace Snowflake.Data.Tests
                     testConfig.role,
                     testConfig.database,
                     testConfig.schema,
-                    testConfig.warehouse);
+                    testConfig.warehouse,
+                    "false");
 
         protected string ConnectionString => ConnectionStringWithoutAuth + GetAuthenticationString();
 

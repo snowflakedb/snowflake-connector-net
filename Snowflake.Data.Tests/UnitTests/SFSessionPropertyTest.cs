@@ -259,6 +259,20 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
+        [TestCase("true")]
+        [TestCase("false")]
+        public void TestClientTelemetryEnabledPropertyIsReadFromConnectionString(string value)
+        {
+            // arrange
+            var connectionString = $"ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;CLIENT_TELEMETRY_ENABLED={value}";
+
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.AreEqual(value, properties[SFSessionProperty.CLIENT_TELEMETRY_ENABLED]);
+        }
+
         [Test]
         [TestCase("DB", SFSessionProperty.DB, "\"testdb\"")]
         [TestCase("SCHEMA", SFSessionProperty.SCHEMA, "\"quotedSchema\"")]

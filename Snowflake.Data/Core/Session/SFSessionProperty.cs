@@ -154,6 +154,8 @@ namespace Snowflake.Data.Core
         MAXTLS,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         HONORSESSIONTIMEZONE,
+        [SFSessionPropertyAttr(required = false, defaultValue = "true")]
+        CLIENT_TELEMETRY_ENABLED
     }
 
     class SFSessionPropertyAttr : Attribute
