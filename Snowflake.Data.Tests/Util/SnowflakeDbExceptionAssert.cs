@@ -30,11 +30,18 @@ namespace Snowflake.Data.Tests.Util
             }
         }
 
+        public static void HasErrorCodeInExceptionChain(Exception exception, SFError sfError)
+        {
+            var exceptions = CollectExceptions(exception);
+            var errorCodes = exceptions.OfType<SnowflakeDbException>().Select(x => x.ErrorCode).Distinct().ToArray();
+            var expectedErrorCode = sfError.GetAttribute<SFErrorAttr>().errorCode;
+            Assert.Contains(expectedErrorCode, errorCodes);
+        }
+
         public static void HasHttpErrorCodeInExceptionChain(Exception exception, HttpStatusCode expected)
         {
             var exceptions = CollectExceptions(exception);
-            Assert.Equal(true,
-                exceptions.Any(e =>
+            Assert.Equal(true, exceptions.Any(e =>
                 {
                     switch (e)
                     {
@@ -45,16 +52,13 @@ namespace Snowflake.Data.Tests.Util
                         default:
                             return false;
                     }
-                }),
-                $"Any of exceptions in the chain should have HTTP Status: {expected}");
+                }));
         }
 
         public static void HasMessageInExceptionChain(Exception exception, string expected)
         {
             var exceptions = CollectExceptions(exception);
-            Assert.Equal(true,
-                exceptions.Any(e => e.Message.Contains(expected)),
-                $"Any of exceptions in the chain should contain message: {expected}");
+            Assert.Equal(true, exceptions.Any(e => e.Message.Contains(expected)));
         }
 
         private static List<Exception> CollectExceptions(Exception exception)
