@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             _wiremock.AddMappings(s_mappingPath);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("ExecuteNonQuery", TestName = "ExecuteNonQuery telemetry sent to server")]
         [InlineData("ExecuteScalar", TestName = "ExecuteScalar telemetry sent to server")]
         [InlineData("ExecuteReader", TestName = "ExecuteDbDataReader telemetry sent to server")]
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.Equal("client_activity", matching.First().Type);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("ExecuteNonQueryAsync", TestName = "ExecuteNonQueryAsync telemetry sent to server")]
         [InlineData("ExecuteScalarAsync", TestName = "ExecuteScalarAsync telemetry sent to server")]
         [InlineData("ExecuteReaderAsync", TestName = "ExecuteDbDataReaderAsync telemetry sent to server")]

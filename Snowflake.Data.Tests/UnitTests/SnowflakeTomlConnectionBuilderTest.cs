@@ -146,7 +146,7 @@ password = ""otherpassword""";
         }
 
 
-        [SFFact]
+        [SFTheory]
         [InlineData("database = \"mydb\"", "DB=mydb;")]
         public void TestConnectionMapPropertiesFromTomlKeyValues(string tomlKeyValue, string connectionStringValue)
         {
@@ -473,7 +473,7 @@ authenticator = ""oauth""");
             Assert.Equal($"account=testaccountname;authenticator=oauth;", connectionString);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("\\\"password;default\\\"", "password;default")]
         [InlineData("\\\"\\\"\\\"password;default\\\"", "\"password;default")]
         [InlineData("p\\\"assworddefault", "p\"assworddefault")]

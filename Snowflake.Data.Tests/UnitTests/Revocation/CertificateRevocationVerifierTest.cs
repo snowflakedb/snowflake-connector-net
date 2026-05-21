@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
     public class CertificateRevocationVerifierTest : RevocationTests
     {
-        [SFFact]
+        [SFTheory]
         [InlineData("Enabled", false)]
         [InlineData("Advisory", true)]
         [InlineData("Disabled", true)]
@@ -221,7 +221,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(true)]
         [InlineData(false)]
         public void TestVerifyCrlSignatureForEllipticCurveCertificates(bool signCrlWithCaPrivateKey)
@@ -250,7 +250,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(signCrlWithCaPrivateKey, result);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(30, "ChainError")]
         [InlineData(3, "ChainUnrevoked")]
         public void TestSkipShortLivedCertificate(int offsetDays, string expectedResultString)
@@ -276,7 +276,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(expectedResult, result);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("2024-03-14 23:59:59Z", "2024-03-16 00:00:00Z", false)]
         [InlineData("2024-03-15 00:00:00Z", "2024-03-25 00:00:00Z", true)]
         [InlineData("2024-03-15 00:00:00Z", "2024-03-25 00:01:00Z", false)]
@@ -301,7 +301,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(expectedResult, isShortLived);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(true)]
         [InlineData(false)]
         public void TestVerifyIfIssuerMatchesTheCertificateIssuer(bool expectEquivalent)

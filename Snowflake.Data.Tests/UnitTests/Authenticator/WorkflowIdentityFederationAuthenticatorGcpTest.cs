@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(JWTGCPToken, attestation.Credential);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(JWTGCPTokenWithoutIssuer, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
         [InlineData(JWTGCPTokenWithoutSubject, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
         [InlineData(JWTGCPUnparsableToken, "Retrieving attestation for GCP failed. Reading of the token failed.")]

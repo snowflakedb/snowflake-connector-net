@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     {
         private const string Token = "abc";
 
-        [SFFact]
+        [SFTheory]
         [InlineData("testUser", true, true)]
         [InlineData("", true, false)]
         [InlineData(null, true, false)]

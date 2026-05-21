@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests
             testThread.Join();
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("0", false)]
         [InlineData("t", true)]
         [InlineData("T", true)]
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("2100-12-31 23:59:59.9999999")]
         [InlineData("2200-01-01 11:22:33.4455667")]
         [InlineData("9999-12-31 23:59:59.9999999")]
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(inputTime, result);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("11:22:33.4455667")]
         [InlineData("23:59:59.9999999")]
         [InlineData("16:20:00.6666666")]
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("2100-12-31 23:59:59.9999999", DateTimeKind.Utc)]
         [InlineData("2100-12-31 23:59:59.9999999", DateTimeKind.Local)]
         [InlineData("2100-12-31 23:59:59.9999999", DateTimeKind.Unspecified)]
@@ -154,7 +154,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(dtExpected, dtResult);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("9223372036854775807")]
         [InlineData("-9223372036854775808")]
         [InlineData("-1")]
@@ -166,7 +166,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("2147483647")]
         [InlineData("-2147483648")]
         [InlineData("-1")]
@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("32767")]
         [InlineData("-32768")]
         [InlineData("-1")]
@@ -190,7 +190,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("255")]
         [InlineData("0")]
         public void TestConvertToByte(string s)
@@ -200,7 +200,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("256")]
         [InlineData("-1")]
         public void TestOverflowByte(string s)
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte)));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("32768")]
         [InlineData("-32769")]
         public void TestOverflowInt16(string s)
@@ -216,7 +216,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int16)));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("2147483648")]
         [InlineData("-2147483649")]
         public void TestOverflowInt32(string s)
@@ -224,7 +224,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32)));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("9223372036854775808")]
         [InlineData("-9223372036854775809")]
         public void TestOverflowInt64(string s)
@@ -232,7 +232,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64)));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("9223372036854775807.9223372036854775807")]
         [InlineData("-9223372036854775807.1234567890")]
         [InlineData("-1.300")]
@@ -253,7 +253,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("79228162514264337593543950336")] // Max decimal value + 1
         [InlineData("-79228162514264337593543950336")] // Min decimal value - 1
         [InlineData("79228162514264337593543950335.9999999999999999999999999999")] // The scaling factor range is 0 to 28. Scaling factor = 29 and fractional part > MaxValue
@@ -262,7 +262,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("9223372036854775807.9223372036854775807")]
         [InlineData("-9223372036854775807.1234567890")]
         [InlineData("-1.300")]
@@ -287,7 +287,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedFloat, actualFloat);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("thisIsNotAValidValue")]
         [InlineData("-0.999")]
         [InlineData("-1.300")]
@@ -305,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte)));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("thisIsNotAValidValue")]
         public void TestInvalidConversionInvalidFloat(string s)
         {
@@ -313,7 +313,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(double)));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("thisIsNotAValidValue")]
         [InlineData("1.5e-36")]
         [InlineData("1.5e+38")]
@@ -413,7 +413,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTime), null));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(SFDataType.TIMESTAMP_LTZ, typeof(DateTime))]
         [InlineData(SFDataType.TIMESTAMP_TZ, typeof(DateTime))]
         [InlineData(SFDataType.TIMESTAMP_NTZ, typeof(DateTimeOffset))]
@@ -434,7 +434,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(DbType.AnsiStringFixedLength, "hello", "hello")]
         [InlineData(DbType.AnsiString, "hello", "hello")]
         [InlineData(DbType.String, "hello", "hello")]
@@ -455,7 +455,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("a1b2c3d4-e5f6-7890-abcd-ef1234567890", result.Item2);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(DbType.Decimal, 42.4f, "42.4")]
         [InlineData(DbType.Decimal, 42.3d, "42.3")]
         [InlineData(DbType.SByte, -1, "-1")]
@@ -474,7 +474,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedVal, result.Item2);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(true, "True")]
         [InlineData(false, "False")]
         public void TestCSharpTypeValToSfTypeValBoolean(bool srcVal, string expectedVal)
@@ -484,7 +484,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedVal, result.Item2);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(DbType.Double, 1.5d, "REAL", "1.5")]
         [InlineData(DbType.Single, 1.5f, "REAL", "1.5")]
         public void TestCSharpTypeValToSfTypeValRealTypes(DbType dbType, object srcVal, string expectedType, string expectedValue)
@@ -503,7 +503,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("49530500000000", result.Item2);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(DbType.DateTime)]
         [InlineData(DbType.DateTime2)]
         public void TestCSharpTypeValToSfTypeValTimestampNtz(DbType dbType)

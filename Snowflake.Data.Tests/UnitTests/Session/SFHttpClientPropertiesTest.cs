@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(clientStoreTemporaryCredential, parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(1)]
         [InlineData(10)]
         [InlineData(100)]
@@ -112,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("abc")]
         [InlineData("1.5")]
         [InlineData("true")]
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.True(thrown.Message.Contains(expectedErrorMessage));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(100)]
         [InlineData(20971520)]
         public void TestValidCrlDownloadMaxSize(long validMaxSize)
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(properties.maxHttpRetries, config.MaxHttpRetries);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("enabled", true, false)]
         [InlineData("disabled", false, false)]
         [InlineData("advisory", true, false)]
@@ -223,7 +223,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("account=test;user=test;password=test;minTls=tls13;maxTls=tls13", "tls13", "tls13")]
         [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", "tls12", "tls13")]
         [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls12", "tls12", "tls12")]

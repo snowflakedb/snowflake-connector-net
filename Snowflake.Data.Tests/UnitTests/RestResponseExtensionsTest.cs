@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(response.IsQueryInProgress());
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(0)]
         [InlineData(200000)]
         [InlineData(390112)]
@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(response.IsSessionExpired());
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(0)]
         [InlineData(200000)]
         [InlineData(333333)]
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(response.IsSessionGone());
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(0)]
         [InlineData(200000)]
         [InlineData(333333)]

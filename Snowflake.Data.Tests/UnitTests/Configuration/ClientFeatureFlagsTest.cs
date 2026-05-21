@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
     public class ClientFeatureFlagsTest
     {
-        [SFFact]
+        [SFTheory]
         [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "true", true)]
         [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "TRUE", true)]
         [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "false", false)]

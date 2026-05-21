@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("NUMBER(18,10)")]
         [InlineData("NUMBER(18,12)")]
         [InlineData("NUMBER(38,20)")]
@@ -223,7 +223,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(null)]
         [InlineData("9999-12-31 00:00:00.0000000")]
         [InlineData("9999-12-30 00:00:00.0000000")]
@@ -268,7 +268,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(null, null)]
         [InlineData(null, 3)]
         [InlineData("9999-12-31 23:59:59.9999999", null)]
@@ -284,7 +284,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIME);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("11:22:33.4455667")]
         [InlineData("23:59:59.9999999")]
         [InlineData("16:20:00.6666666")]
@@ -519,7 +519,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(null, null)]
         [InlineData(null, 3)]
         [InlineData("2100-12-31 23:59:59.9999999", null)]
@@ -540,7 +540,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
 
-        [SFFact]
+        [SFTheory]
         [InlineData(0)]
         [InlineData(5)]
         [InlineData(-5)]
@@ -1598,7 +1598,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("99")]                           // Int8
         [InlineData("9.9")]                          // Int8 + scale
         [InlineData("999")]                          // Int16
@@ -1650,7 +1650,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("2019-01-01 12:12:12.1234567 +0500", 7)]
         [InlineData("2019-01-01 12:12:12.1234567 -0500", 7)]
         [InlineData("2019-01-01 12:12:12.1234567 +1400", 7)]
@@ -1679,7 +1679,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("2019-01-01 12:12:12.1234567 +0200", 7, "2019-01-01 02:12:12.1234567 -08:00")]
         [InlineData("2019-01-01 12:12:12.1234567 +1400", 7, "2018-12-31 14:12:12.1234567 -08:00")]
         [InlineData("1900-01-15 00:00:00.0000000 +0000", 9, "1900-01-14 16:00:00.0000000 -08:00")]
@@ -1711,7 +1711,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("2019-01-01 12:12:12.1234567", 7)]
         [InlineData("0001-01-01 00:00:00.0000000", 9)]
         [InlineData("9999-12-31 23:59:59.9999999", 9)]
@@ -1737,7 +1737,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("array")]
         [InlineData("object")]
         [InlineData("variant")]

@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser
             runner.Verify(r => r.Run(uri), Times.Once);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("file:///home/user/index.html")]
         [InlineData("http://localhost:8001/endpoint!")]
         public void TestValidateUrl(string invalidUrl)

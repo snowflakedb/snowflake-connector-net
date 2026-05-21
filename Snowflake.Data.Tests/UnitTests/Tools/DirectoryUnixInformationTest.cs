@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         private const long AnotherUserId = 6;
         static readonly string s_directoryFullName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
-        [SFFact]
+        [SFTheory]
         [InlineData(FileAccessPermissions.UserWrite)]
         [InlineData(FileAccessPermissions.UserRead)]
         [InlineData(FileAccessPermissions.UserExecute)]
@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isSafe);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
         public void TestUnsafePermissions(FileAccessPermissions unsecurePermissions)
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isSafe);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(FileAccessPermissions.UserRead)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
