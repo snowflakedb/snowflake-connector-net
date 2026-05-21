@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -11,9 +12,29 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
+    [CollectionDefinition(nameof(ProgrammaticAccessTokenAuthenticationTestFixture), DisableParallelization = true)]
+    public sealed class ProgrammaticAccessTokenAuthenticationTestFixture : ICollectionFixture<ProgrammaticAccessTokenAuthenticationTestFixture.Fixture>
+    {
+        public sealed class Fixture : IDisposable
+        {
+            internal readonly WiremockRunner Runner;
+
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
+        }
+    }
+
+    [Collection(nameof(ProgrammaticAccessTokenAuthenticationTestFixture))]
     public class ProgrammaticAccessTokenAuthenticationTest
     {
+        private readonly ProgrammaticAccessTokenAuthenticationTestFixture.Fixture _fixture;
         private static readonly string s_patMappingPath = Path.Combine("wiremock", "PAT");
         private static readonly string s_successfulPatFlowMappingPath = Path.Combine(s_patMappingPath, "successful_flow.json");
         private static readonly string s_invalidPatFlowMappingPath = Path.Combine(s_patMappingPath, "invalid_pat_token.json");
@@ -25,31 +46,17 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string Account = "MOCK_ACCOUNT_NAME";
         private const string Token = "MOCK_TOKEN";
 
-        private WiremockRunner _runner;
-
-        [OneTimeSetUp]
-        public void BeforeAll()
+        public ProgrammaticAccessTokenAuthenticationTest(ProgrammaticAccessTokenAuthenticationTestFixture.Fixture fixture)
         {
-            _runner = WiremockRunner.NewWiremock();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
+            _fixture = fixture;
+            _fixture.Runner.ResetMapping();
         }
 
         [SFFact]
         public void TestSuccessfulPatAuthentication()
         {
             // arrange
-            _runner.AddMappings(s_successfulPatFlowMappingPath);
+            _fixture.Runner.AddMappings(s_successfulPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
@@ -63,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestSuccessfulPatAuthenticationAsync()
         {
             // arrange
-            _runner.AddMappings(s_successfulPatFlowMappingPath);
+            _fixture.Runner.AddMappings(s_successfulPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
@@ -77,28 +84,28 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestInvalidPatAuthentication()
         {
             // arrange
-            _runner.AddMappings(s_invalidPatFlowMappingPath);
+            _fixture.Runner.AddMappings(s_invalidPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
 
             // assert
-            Assert.That(thrown.Message, Contains.Substring("Programmatic access token is invalid."));
+            Assert.Contains("Programmatic access token is invalid.", thrown.Message);
         }
 
         [SFFact]
-        public void TestInvalidPatAuthenticationAsync()
+        public async Task TestInvalidPatAuthenticationAsync()
         {
             // arrange
-            _runner.AddMappings(s_invalidPatFlowMappingPath);
+            _fixture.Runner.AddMappings(s_invalidPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
-            var thrown = Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
 
             // assert
-            Assert.That(thrown.Message, Contains.Substring("Programmatic access token is invalid."));
+            Assert.Contains("Programmatic access token is invalid.", thrown.Message);
         }
 
         private SFSession PrepareSession()

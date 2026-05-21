@@ -15,8 +15,27 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
-    public class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIdentityFederationAuthenticatorTest
+    [CollectionDefinition(nameof(WorkloadIdentityFederationAuthenticatorAwsTestFixture), DisableParallelization = true)]
+    public sealed class WorkloadIdentityFederationAuthenticatorAwsTestFixture : ICollectionFixture<WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture>
+    {
+        public sealed class Fixture : IDisposable
+        {
+            internal readonly WiremockRunner Runner;
+
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
+        }
+    }
+
+    [Collection(nameof(WorkloadIdentityFederationAuthenticatorAwsTestFixture))]
+    public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private const string AwsRegion = "eu-west-1";
         private const string AwsAccessKey = "ABCDEFGHIJ12345KLMNO"; // pragma: allowlist secret
@@ -37,31 +56,19 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_awsRequestBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(s_awsRequest));
         internal static readonly DateTime s_utcNow = new(2025, 5, 27, 14, 20, 33, 11, new GregorianCalendar(), DateTimeKind.Utc);
 
-        private WiremockRunner _runner;
+        private readonly WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture _fixture;
 
-        [OneTimeSetUp]
-        public void BeforeAll()
+        public WorkloadIdentityFederationAuthenticatorAwsTest(WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture fixture)
         {
-            _runner = WiremockRunner.NewWiremock();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
+            _fixture = fixture;
+            _fixture.Runner.ResetMapping();
         }
 
         [SFFact]
         public void TestSuccessfulAwsAuthorization()
         {
             // arrange
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, s_awsRequestBase64);
+            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AWS, s_awsRequestBase64);
             var session = PrepareSessionForAws(NoEnvironmentSetup);
 
             // act
@@ -75,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestSuccessfulAwsAuthorizationAsync()
         {
             // arrange
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, s_awsRequestBase64);
+            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AWS, s_awsRequestBase64);
             var session = PrepareSessionForAws(NoEnvironmentSetup);
 
             // act
