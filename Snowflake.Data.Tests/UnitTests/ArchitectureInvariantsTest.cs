@@ -20,7 +20,7 @@ public sealed class ArchitectureInvariantsTest
 
     private static readonly Assembly s_testAssembly = typeof(ArchitectureInvariantsTest).Assembly;
     private static readonly Assembly s_libAssembly = typeof(SnowflakeDbConnection).Assembly;
-    private static readonly Dictionary<string, Type>  s_libTypes = s_libAssembly.GetExportedTypes().ToDictionary(t => t.FullName, t => t);
+    private static readonly Dictionary<string, Type> s_libTypes = s_libAssembly.GetExportedTypes().ToDictionary(t => t.FullName, t => t);
 
     [SFFact]
     public void TestNoBareFact_AllTestsMustUseSFFactOrSFTheory()
@@ -48,11 +48,12 @@ public sealed class ArchitectureInvariantsTest
             }
         }
 
-        List<string> expectedViolations = [
+        List<string> expectedViolations =
+        [
             $"{GetType().FullName}.{nameof(DummyTest)} uses bare [Fact] instead of [SFFact]",
             $"{GetType().FullName}.{nameof(DummyParametrizedTest)} uses bare [Theory] instead of [SFTheory]",
         ];
-        AssertOnViolations(expectedViolations,  violations);
+        AssertOnViolations(expectedViolations, violations);
     }
 
     [SFFact]
@@ -63,7 +64,7 @@ public sealed class ArchitectureInvariantsTest
 
         Parallel.ForEach(csFiles, file =>
         {
-            var relativePath = Path.GetRelativePath(s_solutionRoot, file);
+            var relativePath = file.Substring(s_solutionRoot.Length + "Snowflake.Data".Length + 1);
             var source = File.ReadAllText(file);
             var tree = CSharpSyntaxTree.ParseText(source, path: file);
             var root = tree.GetRoot();
@@ -76,7 +77,8 @@ public sealed class ArchitectureInvariantsTest
                 {
                     invocation = null;
                 }
-                else if (invocation.Expression is MemberAccessExpressionSyntax { Name.Identifier.Text: "ConfigureAwait" } && invocation.ArgumentList.Arguments.Count == 1)
+                else if (invocation.Expression is MemberAccessExpressionSyntax { Name.Identifier.Text: "ConfigureAwait" } &&
+                         invocation.ArgumentList.Arguments.Count == 1)
                 {
                     var argument = invocation.ArgumentList.Arguments[0].Expression;
                     if (argument is LiteralExpressionSyntax literal && literal.IsKind(SyntaxKind.FalseLiteralExpression))
@@ -97,34 +99,33 @@ public sealed class ArchitectureInvariantsTest
         });
 
         // TODO SNOW-3560671
-        List<string> expectedViolations = [
-            "Snowflake.Data/Core/SFResultSet.cs: Task.FromResult(false)",
-            "Snowflake.Data/Core/ArrowResultSet.cs: Task.FromResult(false)",
-            "Snowflake.Data/Core/SFMultiStatementsResultSet.cs: NextResultAsync(CancellationToken.None)",
-            "Snowflake.Data/Core/SFMultiStatementsResultSet.cs: curResultSet.NextAsync()",
-            "Snowflake.Data/Core/SFMultiStatementsResultSet.cs: sfStatement.GetResultWithIdAsync(                                        resultIds[curResultIndex],                                        cancellationToken)",
-            "Snowflake.Data/Core/SFMultiStatementsResultSet.cs: Task.FromResult(curResultSet != null)",
-            "Snowflake.Data/Core/ReusableChunkParser.cs: Task.Run(...);",
-            "Snowflake.Data/Client/SnowflakeDbDataReader.cs: resultSet.NextAsync()",
-            "Snowflake.Data/Client/SnowflakeDbCommand.cs: _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken)",
-            "Snowflake.Data/Client/SnowflakeDbCommand.cs: _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true)",
-            "Snowflake.Data/Core/Authenticator/BasicAuthenticator.cs: base.LoginAsync(cancellationToken)",
-            "Snowflake.Data/Core/SFStatement.cs: RenewSessionIfNeededAsync(response, cancellationToken)",
-            "Snowflake.Data/Core/QueryResultsAwaiter.cs: GetQueryStatusAsync(connection, queryId, cancellationToken)",
-            "Snowflake.Data/Client/SnowflakeDbConnection.cs: taskCompletionSource.Task",
-            "Snowflake.Data/Core/Authenticator/MFACacheAuthenticator.cs: base.LoginAsync(cancellationToken)",
-            "Snowflake.Data/Core/SFBlockingChunkDownloaderV3.cs: chunk",
-            "Snowflake.Data/Core/SFBlockingChunkDownloaderV3.cs: Task.FromResult<BaseResultChunk>(null)",
-            "Snowflake.Data/Core/SFBlockingChunkDownloaderV3.cs: parser.ParseChunk(resultChunk)"
-        ];
+        var expectedViolations = new[] {
+            "/Core/SFResultSet.cs: Task.FromResult(false)",
+            "/Core/ArrowResultSet.cs: Task.FromResult(false)",
+            "/Core/SFMultiStatementsResultSet.cs: NextResultAsync(CancellationToken.None)",
+            "/Core/SFMultiStatementsResultSet.cs: curResultSet.NextAsync()",
+            "/Core/SFMultiStatementsResultSet.cs: sfStatement.GetResultWithIdAsync(                                        resultIds[curResultIndex],                                        cancellationToken)",
+            "/Core/SFMultiStatementsResultSet.cs: Task.FromResult(curResultSet != null)",
+            "/Core/ReusableChunkParser.cs: Task.Run(...);",
+            "/Client/SnowflakeDbDataReader.cs: resultSet.NextAsync()",
+            "/Client/SnowflakeDbCommand.cs: _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken)",
+            "/Client/SnowflakeDbCommand.cs: _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true)",
+            "/Core/Authenticator/BasicAuthenticator.cs: base.LoginAsync(cancellationToken)",
+            "/Core/SFStatement.cs: RenewSessionIfNeededAsync(response, cancellationToken)",
+            "/Core/QueryResultsAwaiter.cs: GetQueryStatusAsync(connection, queryId, cancellationToken)",
+            "/Client/SnowflakeDbConnection.cs: taskCompletionSource.Task",
+            "/Core/Authenticator/MFACacheAuthenticator.cs: base.LoginAsync(cancellationToken)",
+            "/Core/SFBlockingChunkDownloaderV3.cs: chunk",
+            "/Core/SFBlockingChunkDownloaderV3.cs: Task.FromResult<BaseResultChunk>(null)",
+            "/Core/SFBlockingChunkDownloaderV3.cs: parser.ParseChunk(resultChunk)"
+        }.Select(x => x.Replace('/', Path.DirectorySeparatorChar)).ToArray();
         AssertOnViolations(expectedViolations, violations);
     }
-
 
     [SFFact]
     public void TestPublicApiSurface_OnlyExplicitlyApprovedTypesArePublic()
     {
-            var publicTypes = s_libTypes
+        var publicTypes = s_libTypes
             .Keys
             .OrderBy(t => t)
             .ToArray();
@@ -150,7 +151,6 @@ public sealed class ArchitectureInvariantsTest
         throw new InvalidOperationException("Cannot find solution root directory");
     }
 
-
     [Fact]
     public void DummyTest()
     {
@@ -171,10 +171,12 @@ public sealed class ArchitectureInvariantsTest
         var unexpected = actualViolations.Except(expectedViolations).ToArray();
 
         var failedCount = expectedNotReceived.Length + unexpected.Length;
-        Assert.True(failedCount == 0, $"Expected but not received: \n {string.Join(",\n", expectedNotReceived)} \n Observed unexpected: \n {string.Join(",\n", unexpected)}");
+        Assert.True(failedCount == 0,
+            $"Expected, but not received: \n {string.Join(",\n", expectedNotReceived)} \n Observed unexpected: \n{string.Join(",\n", unexpected)}");
     }
 
-    private static readonly string[] s_approvedPublicTypes = [
+    private static readonly string[] s_approvedPublicTypes =
+    [
         "Snowflake.Data.Client.ISnowflakeCredentialManager",
         "Snowflake.Data.Client.SnowflakeColumn",
         "Snowflake.Data.Client.SnowflakeCredentialManagerFactory",
