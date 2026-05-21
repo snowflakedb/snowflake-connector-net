@@ -92,5 +92,5 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         {
             TearDown();
         }
-}
+    }
 }

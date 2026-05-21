@@ -69,5 +69,5 @@ namespace Snowflake.Data.Tests
             else
                 Assert.Equal("libsf_mini_core.so", name);
         }
-}
+    }
 }

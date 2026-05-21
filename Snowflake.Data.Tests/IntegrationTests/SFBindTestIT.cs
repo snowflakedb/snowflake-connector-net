@@ -682,7 +682,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                var fixtureTableName = _fixture.TableNameBaseName +  Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
                 await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola REAL",
@@ -752,7 +752,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                var fixtureTableName = _fixture.TableNameBaseName +  Guid.NewGuid().ToString("N");
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
                 await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER"

@@ -106,24 +106,24 @@ public enum SkipCondition
 
     // Platform (primitive bits)
     SkipOnWindows = 1 << 0,
-    SkipOnLinux   = 1 << 1,
-    SkipOnMacOS   = 1 << 2,
+    SkipOnLinux = 1 << 1,
+    SkipOnMacOS = 1 << 2,
 
     // Platform composites
-    RunOnlyOnWindows = SkipOnLinux   | SkipOnMacOS,
-    RunOnlyOnLinux   = SkipOnWindows | SkipOnMacOS,
-    RunOnlyOnMacOS   = SkipOnWindows | SkipOnLinux,
+    RunOnlyOnWindows = SkipOnLinux | SkipOnMacOS,
+    RunOnlyOnLinux = SkipOnWindows | SkipOnMacOS,
+    RunOnlyOnMacOS = SkipOnWindows | SkipOnLinux,
 
     // CI / Jenkins
-    SkipOnCI      = 1 << 3,
-    RunOnlyOnCI   = 1 << 4,
+    SkipOnCI = 1 << 3,
+    RunOnlyOnCI = 1 << 4,
     SkipOnJenkins = 1 << 5,
 
     // Cloud provider (reads snowflake_cloud_env)
-    SkipOnCloudAWS   = 1 << 6,
+    SkipOnCloudAWS = 1 << 6,
     SkipOnCloudAzure = 1 << 7,
-    SkipOnCloudGCP   = 1 << 8,
-    RunOnlyOnCloudAWS   = SkipOnCloudAzure | SkipOnCloudGCP,
-    RunOnlyOnCloudAzure = SkipOnCloudAWS   | SkipOnCloudGCP,
-    RunOnlyOnCloudGCP   = SkipOnCloudAWS   | SkipOnCloudAzure,
+    SkipOnCloudGCP = 1 << 8,
+    RunOnlyOnCloudAWS = SkipOnCloudAzure | SkipOnCloudGCP,
+    RunOnlyOnCloudAzure = SkipOnCloudAWS | SkipOnCloudGCP,
+    RunOnlyOnCloudGCP = SkipOnCloudAWS | SkipOnCloudAzure,
 }

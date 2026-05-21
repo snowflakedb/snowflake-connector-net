@@ -372,5 +372,5 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             TearDown();
         }
-}
+    }
 }

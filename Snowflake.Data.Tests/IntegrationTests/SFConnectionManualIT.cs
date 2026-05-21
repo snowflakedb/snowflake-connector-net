@@ -332,48 +332,48 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     }
 
 
-        private void RemoveOAuthCache(TestConfig testConfig)
-        {
-            var host = new Uri(_fixture.testConfig.oauthTokenRequestUrl).Host;
-            var accessCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, _fixture.testConfig.user, TokenType.OAuthAccessToken);
-            var refreshCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, _fixture.testConfig.user, TokenType.OAuthRefreshToken);
-            var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
-            credentialManager.RemoveCredentials(accessCacheKey);
-            credentialManager.RemoveCredentials(refreshCacheKey);
-        }
+    private void RemoveOAuthCache(TestConfig testConfig)
+    {
+        var host = new Uri(_fixture.testConfig.oauthTokenRequestUrl).Host;
+        var accessCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, _fixture.testConfig.user, TokenType.OAuthAccessToken);
+        var refreshCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, _fixture.testConfig.user, TokenType.OAuthRefreshToken);
+        var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
+        credentialManager.RemoveCredentials(accessCacheKey);
+        credentialManager.RemoveCredentials(refreshCacheKey);
+    }
 
-        private string ConnectionStringForOAuthFlows(TestConfig testConfig, string authenticator)
+    private string ConnectionStringForOAuthFlows(TestConfig testConfig, string authenticator)
+    {
+        var builder = new StringBuilder()
+            .Append($"authenticator={authenticator};user={_fixture.testConfig.user};password={_fixture.testConfig.password};account={_fixture.testConfig.account};certRevocationCheckMode=enabled;")
+            .Append($"db={_fixture.testConfig.database};role={_fixture.testConfig.role};warehouse={_fixture.testConfig.warehouse};host={_fixture.testConfig.host};port={_fixture.testConfig.port};")
+            .Append($"oauthClientId={_fixture.testConfig.oauthClientId};oauthClientSecret={_fixture.testConfig.oauthClientSecret};oauthScope={_fixture.testConfig.oauthScope};")
+            .Append($"oauthTokenRequestUrl={_fixture.testConfig.oauthTokenRequestUrl};")
+            .Append("poolingEnabled=false;");
+        switch (authenticator)
         {
-            var builder = new StringBuilder()
-                .Append($"authenticator={authenticator};user={_fixture.testConfig.user};password={_fixture.testConfig.password};account={_fixture.testConfig.account};certRevocationCheckMode=enabled;")
-                .Append($"db={_fixture.testConfig.database};role={_fixture.testConfig.role};warehouse={_fixture.testConfig.warehouse};host={_fixture.testConfig.host};port={_fixture.testConfig.port};")
-                .Append($"oauthClientId={_fixture.testConfig.oauthClientId};oauthClientSecret={_fixture.testConfig.oauthClientSecret};oauthScope={_fixture.testConfig.oauthScope};")
-                .Append($"oauthTokenRequestUrl={_fixture.testConfig.oauthTokenRequestUrl};")
-                .Append("poolingEnabled=false;");
-            switch (authenticator)
-            {
-                case OAuthAuthorizationCodeAuthenticator.AuthName:
-                    return builder
-                        .Append($"oauthRedirectUri={_fixture.testConfig.oauthRedirectUri};")
-                        .Append($"oauthAuthorizationUrl={_fixture.testConfig.oauthAuthorizationUrl}")
-                        .ToString();
-                case OAuthClientCredentialsAuthenticator.AuthName:
-                    return builder.ToString();
-                default:
-                    throw new Exception("Unknown authenticator");
-            }
+            case OAuthAuthorizationCodeAuthenticator.AuthName:
+                return builder
+                    .Append($"oauthRedirectUri={_fixture.testConfig.oauthRedirectUri};")
+                    .Append($"oauthAuthorizationUrl={_fixture.testConfig.oauthAuthorizationUrl}")
+                    .ToString();
+            case OAuthClientCredentialsAuthenticator.AuthName:
+                return builder.ToString();
+            default:
+                throw new Exception("Unknown authenticator");
         }
+    }
 
-        private string ConnectionStringForPat(TestConfig testConfig)
-        {
-            var role = "ANALYST";
-            return new StringBuilder()
-                .Append($"authenticator=programmatic_access_token;user={_fixture.testConfig.user};account={_fixture.testConfig.account};certRevocationCheckMode=enabled;")
-                .Append($"db={_fixture.testConfig.database};role={role};warehouse={_fixture.testConfig.warehouse};host={_fixture.testConfig.host};port={_fixture.testConfig.port};")
-                .Append($"token={_fixture.testConfig.programmaticAccessToken};")
-                .Append("poolingEnabled=false;")
-                .ToString();
-        }
+    private string ConnectionStringForPat(TestConfig testConfig)
+    {
+        var role = "ANALYST";
+        return new StringBuilder()
+            .Append($"authenticator=programmatic_access_token;user={_fixture.testConfig.user};account={_fixture.testConfig.account};certRevocationCheckMode=enabled;")
+            .Append($"db={_fixture.testConfig.database};role={role};warehouse={_fixture.testConfig.warehouse};host={_fixture.testConfig.host};port={_fixture.testConfig.port};")
+            .Append($"token={_fixture.testConfig.programmaticAccessToken};")
+            .Append("poolingEnabled=false;")
+            .ToString();
+    }
 
     [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     // to enroll to mfa authentication edit your user profile

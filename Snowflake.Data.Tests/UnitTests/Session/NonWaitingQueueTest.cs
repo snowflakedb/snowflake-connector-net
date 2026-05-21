@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.False(result);
-            Assert.InRange(watch.ElapsedMilliseconds, long.MinValue,50);
+            Assert.InRange(watch.ElapsedMilliseconds, long.MinValue, 50);
         }
 
         [SFFact]

@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.Util;
 
 public sealed class TestPerformanceRecorder : IDisposable
 {
-    private readonly Queue<LogEntry> _entries = new ();
+    private readonly Queue<LogEntry> _entries = new();
     private readonly object _lock = new();
     private static readonly string s_filePath;
 
@@ -51,11 +51,11 @@ public sealed class TestPerformanceRecorder : IDisposable
         {
             _entries.Enqueue(new LogEntry
             {
-                #if NET8_0_OR_GREATER
+#if NET8_0_OR_GREATER
                 TestName = testResult.TestUniqueID,
-                #else
+#else
                 TestName = testResult.Test.DisplayName,
-                #endif
+#endif
                 TestDuration = testResult.ExecutionTime
             });
 
@@ -74,15 +74,15 @@ public sealed class TestPerformanceRecorder : IDisposable
         var entriesStr = entry.Select(x => $"{x.TestName};{x.TestDuration}");
         var entyStr = string.Join("\n", entriesStr);
 
-        #if NETFRAMEWORK
+#if NETFRAMEWORK
         var sw = File.AppendText(s_filePath);
         sw.Write(entyStr);
         sw.Flush();
         sw.Close();
         return;
-        #else
+#else
         await File.AppendAllTextAsync(s_filePath, entyStr);
-        #endif
+#endif
     }
 
     private static string GetOs()

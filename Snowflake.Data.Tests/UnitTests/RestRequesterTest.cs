@@ -176,7 +176,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync( () => responses[callCount++]);
+                .ReturnsAsync(() => responses[callCount++]);
             return new HttpClient(mockHandler.Object);
         }
 

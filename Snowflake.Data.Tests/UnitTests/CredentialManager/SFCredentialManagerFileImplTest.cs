@@ -10,7 +10,8 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
-    public class SFCredentialManagerFileImplTest : SFBaseCredentialManagerTest{
+    public class SFCredentialManagerFileImplTest : SFBaseCredentialManagerTest
+    {
         public SFCredentialManagerFileImplTest()
         {
             SetUp();
