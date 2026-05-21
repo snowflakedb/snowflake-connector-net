@@ -228,7 +228,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact(Skip = "The test takes too long to finish when using the default retry")]
+        [SFFact(Skip = "The test takes too long to finish when using the default retry")]
         public async Task TestGetResultsOfUnknownQueryIdWithDefaultRetry()
         {
             string unknownQueryId = "ba987def-1abc-987f-987f-1234a56b789c";

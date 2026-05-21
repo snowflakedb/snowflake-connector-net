@@ -177,7 +177,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
-        [Fact(DisplayName = "test connection pooling with concurrent connection using async calls")]
+        [SFFact(DisplayName = "test connection pooling with concurrent connection using async calls")]
         public async Task TestConcurrentConnectionPoolingAsync()
         {
             // add test case name in connection string to make in unique for each test case
@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3);
         }
 
-        [Fact(DisplayName = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
+        [SFFact(DisplayName = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
         public async Task TestConcurrentConnectionPoolingDisposeAsync()
         {
             // add test case name in connection string to make in unique for each test case

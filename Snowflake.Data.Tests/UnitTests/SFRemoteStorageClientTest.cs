@@ -131,7 +131,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Fact(Skip = "RemoteStorageClientTest")]
+        [SFFact(Skip = "RemoteStorageClientTest")]
         public void RemoteStorageClientTestDone()
         {
             // Do nothing;

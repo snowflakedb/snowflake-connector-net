@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _fixture.Runner.ResetMapping();
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureAuthorization()
         {
             // arrange
@@ -76,7 +76,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestSuccessfulAzureAuthorizationAsync()
         {
             // arrange
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureAttestation()
         {
             // arrange
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureAttestationWithClientId()
         {
             // arrange
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureAttestationWithV2Issuer()
         {
             // arrange
@@ -145,7 +145,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailForUnparsableTokenAttestation()
         {
             AddAzureUnparsableTokenWiremockMappings();
@@ -160,7 +160,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Retrieving attestation for AZURE failed. Reading of the token failed.", thrown.Message);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureFunctionsAttestations()
         {
             // arrange
@@ -183,7 +183,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureFunctionsAttestationWithoutClientId()
         {
             // arrange
@@ -205,7 +205,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureFunctionsAttestationWithCustomEntraResource()
         {
             // arrange
@@ -228,7 +228,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailAzureFunctionsAttestationWithoutIdentityHeader()
         {
             // arrange
@@ -248,7 +248,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Retrieving attestation for AZURE failed. Managed identity is not enabled on this Azure function.", thrown.Message);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureFunctionsAttestationWithV2IssuerAuthentication()
         {
             // arrange
@@ -337,7 +337,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
             );
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailAzureAttestationWhenImpersonationIsUsed()
         {
             // arrange

@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _fixture.Runner.ResetMapping();
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulOidcAuthentication()
         {
             // arrange
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestSuccessfulOidcAuthenticationAsync()
         {
             // arrange
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestOidcAttestation()
         {
             // arrange
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(token, attestation.Credential);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailOidcAttestationForWrongToken()
         {
             // arrange
@@ -105,7 +105,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Retrieving attestation for OIDC failed. Failed to parse a token for OIDC workload identity federation.", thrown.Message);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailOidcAttestationWhenImpersonationIsUsed()
         {
             // arrange

@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _fixture.Runner.ResetMapping();
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAuthorizationCodeFlow()
         {
             // arrange
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestSuccessfulAuthorizationCodeFlowAsync()
         {
             // arrange
@@ -97,7 +97,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAuthorizationCodeFlowWithSingleUseRefreshTokens()
         {
             // arrange
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestSuccessfulAuthorizationCodeFlowWithSingleUseRefreshTokensAsync()
         {
             // arrange
@@ -137,7 +137,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAuthorizationCodeFlowWithDefaultCache()
         {
             // arrange
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             }
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAuthorizationFlowWithoutRefreshToken()
         {
             // arrange
@@ -188,7 +188,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestSuccessfulAuthorizationFlowWithoutRefreshTokenAsync()
         {
             // arrange
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAuthorizationCodeFlowWithClientSecretProvidedExternally()
         {
             // arrange
@@ -228,7 +228,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestDontUseCacheWhenUserNotProvided()
         {
             // arrange
@@ -247,7 +247,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestDontUseCacheWhenUserNotProvidedAsync()
         {
             // arrange
@@ -266,7 +266,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestDontUseCacheWhenClientStoreTemporaryCredentialsIsOff()
         {
             // arrange
@@ -285,7 +285,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestDontUseCacheWhenClientStoreTemporaryCredentialsIsOffAsync()
         {
             // arrange
@@ -304,7 +304,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestUseCachedAccessToken()
         {
             // arrange
@@ -324,7 +324,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestUseCachedAccessTokenAsync()
         {
             // arrange
@@ -344,7 +344,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestRefreshToken()
         {
             // arrange
@@ -366,7 +366,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestRefreshTokenAsync()
         {
             // arrange
@@ -388,7 +388,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestInvalidScope()
         {
             // arrange
@@ -405,7 +405,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestInvalidScopeAsync()
         {
             // arrange
@@ -422,7 +422,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestInvalidState()
         {
             // arrange
@@ -439,7 +439,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestInvalidStateAsync()
         {
             // arrange
@@ -456,7 +456,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestTokenRequestError()
         {
             // arrange
@@ -473,7 +473,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestTokenRequestErrorAsync()
         {
             // arrange

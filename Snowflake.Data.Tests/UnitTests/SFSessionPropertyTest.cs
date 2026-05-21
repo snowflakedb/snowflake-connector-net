@@ -15,8 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests
 {
     public class SFSessionPropertyTest
     {
-
-        [Theory, MemberData(nameof(ConnectionStringTestCases))]
+        [SFTheory, MemberData(nameof(ConnectionStringTestCases))]
         public void TestThatPropertiesAreParsed(TestCase testcase)
         {
             // arrange

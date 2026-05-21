@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             _runner.ResetMapping();
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestRunnerAddMapping()
         {
             // arrange
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(response.IsSuccessStatusCode);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestWiremockResetMapping()
         {
             // arrange

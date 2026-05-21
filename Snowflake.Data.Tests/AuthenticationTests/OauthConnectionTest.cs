@@ -38,7 +38,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
         }
 
-        [Fact(Skip = "Skipped, waits for SNOW-1893041")]
+        [SFFact(Skip = "Skipped, waits for SNOW-1893041")]
         public void TestAuthenticateUsingOauthMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

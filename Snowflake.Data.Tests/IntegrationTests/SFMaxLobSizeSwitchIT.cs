@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -13,7 +14,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private const string SqlSelectLargeString = "select randstr(20000000, random()) as large_str";
 
-        [Fact(Skip = "TODO: Enable when Max LOB size is available on the automated tests environment")]
+        [SFFact(Skip = "TODO: Enable when Max LOB size is available on the automated tests environment")]
         public async Task TestIncreaseMaxLobSizeParameterSwitchSelect()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))

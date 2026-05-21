@@ -26,7 +26,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         _fixture = fixture;
     }
 
-    [Fact(Skip = "This test requires established dev Okta SSO and credentials matching Snowflake user")]
+    [SFFact(Skip = "This test requires established dev Okta SSO and credentials matching Snowflake user")]
     public async Task TestNativeOktaSuccess()
     {
         var oktaUrl = "https://***.okta.com/";
@@ -41,7 +41,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual setup and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual setup and therefore cannot be run in CI")]
     public async Task TestOktaConnection()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -58,7 +58,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual setup and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual setup and therefore cannot be run in CI")]
     public async Task TestOkta2ConnectionsFollowingEachOther()
     {
         // This test is here because Cookies were messing up with sequential Okta connections
@@ -90,7 +90,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     public async Task TestSSOConnectionWithUser()
     {
         // Use external browser to log in using proper password for qa@snowflakecomputing.com
@@ -112,7 +112,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     public async Task TestSSOConnectionWithPoolingEnabled()
     {
         // Use external browser to log in using proper password for qa@snowflakecomputing.com
@@ -132,7 +132,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     public async Task TestSSOConnectionWithUserAsync()
     {
         // Use external browser to log in using proper password for qa@snowflakecomputing.com
@@ -155,7 +155,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     public async Task TestSSOConnectionWithUserAndDisableConsoleLogin()
     {
         // Use external browser to log in using proper password for qa@snowflakecomputing.com
@@ -174,7 +174,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     public async Task TestSSOConnectionWithUserAsyncAndDisableConsoleLogin()
     {
         // Use external browser to log in using proper password for qa@snowflakecomputing.com
@@ -197,7 +197,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     public async Task TestSSOConnectionTimeoutAfter10s()
     {
         // Do not log in by external browser - timeout after 10s should happen
@@ -228,7 +228,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         Assert.True(stopwatch.ElapsedMilliseconds <= (waitSeconds + 5) * 1000);
     }
 
-    [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     public async Task TestSSOConnectionWithTokenCaching()
     {
         /*
@@ -263,7 +263,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     }
 
 
-    [Fact(Skip = "Manual test only")]
+    [SFFact(Skip = "Manual test only")]
     public async Task TestOAuthFlow()
     {
         // arrange
@@ -285,7 +285,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Manual test only")]
+    [SFFact(Skip = "Manual test only")]
     public async Task TestProgrammaticAccessTokenAuthentication()
     {
         // arrange
@@ -296,7 +296,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     public async Task TestSSOConnectionWithTokenCachingAsync()
     {
         /*
@@ -396,7 +396,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     public async Task TestSSOConnectionWithInvalidCachedToken()
     {
         /*
@@ -429,7 +429,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
+    [SFFact(Skip = "This test requires manual interaction and therefore cannot be run in CI")]
     public async Task TestSSOConnectionWithWrongUser()
     {
         try
@@ -449,7 +449,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestValidOAuthExpiredTokenConnection()
     {
         try
@@ -473,7 +473,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestCorrectProxySettingFromConnectionString()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -489,7 +489,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestCorrectProxyWithCredsSettingFromConnectionString()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -507,7 +507,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestCorrectProxySettingWithByPassListFromConnectionString()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -526,7 +526,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestMultipleConnectionWithDifferentHttpHandlerSettings()
     {
         // Authenticated proxy
@@ -666,7 +666,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
+    [SFFact(Skip = "Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
     public async Task TestEscapeChar()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -691,7 +691,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
+    [SFFact(Skip = "Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
     public async Task TestEscapeChar1()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -717,7 +717,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
+    [SFFact(Skip = "Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
     public async Task TestHeartBeat()
     {
         var conn = new SnowflakeDbConnection();
@@ -735,7 +735,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         Assert.Equal(ConnectionState.Closed, conn.State);
     }
 
-    [Fact(Skip = "Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
+    [SFFact(Skip = "Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
     public async Task TestHeartBeatWithConnectionPool()
     {
         SnowflakeDbConnectionPool.ClearAllPools();
@@ -764,7 +764,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     }
 
 
-    [Fact(Skip = "TestConnectStringWithUserPwd, this will popup an internet browser for external login.")]
+    [SFFact(Skip = "TestConnectStringWithUserPwd, this will popup an internet browser for external login.")]
     public async Task TestConnectStringWithUserPwd()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -790,7 +790,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestJwtUnencryptedPemFileConnection()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -806,7 +806,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestJwtUnencryptedP8FileConnection()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -822,7 +822,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestJwtEncryptedPkFileConnection()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -839,7 +839,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestJwtUnencryptedPkConnection()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -855,7 +855,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestJwtEncryptedPkConnection()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -872,7 +872,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestJwtMissingConnectionSettingConnection()
     {
         try
@@ -897,7 +897,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestJwtEncryptedPkFileInvalidPwdConnection()
     {
         try
@@ -921,7 +921,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestJwtEncryptedPkFileNoPwdConnection()
     {
         try
@@ -945,7 +945,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestJwtConnectionWithWrongUser()
     {
         try
@@ -969,7 +969,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestJwtEncryptedPkConnectionWithWrongUser()
     {
         try
@@ -994,7 +994,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestValidOAuthConnection()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -1009,7 +1009,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         }
     }
 
-    [Fact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
+    [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task testMulitpleConnectionInParallel()
     {
         string baseConnectionString = _fixture.ConnectionString + $";CONNECTION_TIMEOUT=30;";

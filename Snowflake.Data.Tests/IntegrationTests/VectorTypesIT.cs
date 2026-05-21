@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestThrowExceptionForInvalidValueForIntVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
