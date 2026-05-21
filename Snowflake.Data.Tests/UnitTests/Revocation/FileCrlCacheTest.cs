@@ -12,7 +12,6 @@ using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-
     public class FileCrlCacheTest : RevocationTests
     {
         const string CrlUrl = "http://snowflakecomputing.com/crl1.crl";
@@ -82,8 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestDontReadFromInsecureFile()
         {
             // arrange
@@ -110,8 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestSetSecurePermissionsWhenSavingCrlCache()
         {
             // arrange
@@ -202,7 +199,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestWithMocksWindowsGetCrlForReadingError()
         {
             // arrange
-            var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
+            var tempDirectory = Path.Combine(Path.GetTempPath());
             var fileName = Path.Combine(tempDirectory, HttpUtility.UrlEncode(CrlUrl, Encoding.UTF8));
             var cacheConfig = new FileCrlCacheConfig(tempDirectory, true, 0, 0);
             var fileOperations = new Mock<FileOperations>();
@@ -229,7 +226,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
             // arrange
             var crl = CreateCrl();
-            var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
+            var tempDirectory = Path.Combine(Path.GetTempPath());
             var fileName = Path.Combine(tempDirectory, HttpUtility.UrlEncode(CrlUrl, Encoding.UTF8));
             var cacheConfig = new FileCrlCacheConfig(tempDirectory, true, 0, 0);
             var fileOperations = new Mock<FileOperations>();
@@ -273,8 +270,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [SFFact]
-        [Platform("Win")]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestWithMocksWindowsSaveCrlWithDirectoryCreation()
         {
             // arrange
@@ -301,8 +297,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixGetCrl()
         {
             // arrange
@@ -331,8 +326,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             AssertCrlsAreEqual(crl, crlRead);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixGetCrlFailsForReadingError()
         {
             // arrange
@@ -357,13 +351,12 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Null(crlRead);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixSaveCrl()
         {
             // arrange
             var crl = CreateCrl();
-            var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
+            var tempDirectory = Path.Combine(Path.GetTempPath());
             var fileName = Path.Combine(tempDirectory, HttpUtility.UrlEncode(CrlUrl, Encoding.UTF8));
             var cacheConfig = new FileCrlCacheConfig(tempDirectory, false, UnixUserId, UnixGroupId);
             var fileOperations = new Mock<FileOperations>();
@@ -388,8 +381,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixSaveCrlWithDirectoryCreation()
         {
             // arrange
@@ -420,8 +412,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixSaveCrlShouldFixIncorrectPermissions()
         {
             // arrange
@@ -455,8 +446,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [InlineData(1, 0, 0, 0)]
         [InlineData(0, 1, 0, 0)]
         [InlineData(0, 0, 1, 0)]
@@ -532,8 +522,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(expected.ThisUpdate, actual.ThisUpdate);
             Assert.Equal(expected.NextUpdate, actual.NextUpdate);
             Assert.Equal(expected.IssuerName, actual.IssuerName);
-            CollectionAssert.Equal(expected.IssuerDistributionPoints, actual.IssuerDistributionPoints);
-            CollectionAssert.Equal(expected.RevokedCertificates, actual.RevokedCertificates);
+            Assert.Equal(expected.IssuerDistributionPoints, actual.IssuerDistributionPoints);
+            Assert.Equal(expected.RevokedCertificates, actual.RevokedCertificates);
         }
     }
 }

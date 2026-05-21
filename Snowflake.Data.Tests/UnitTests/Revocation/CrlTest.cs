@@ -6,10 +6,10 @@ using Xunit;
 using Org.BouncyCastle.Math;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-
     public class CrlTest : RevocationTests
     {
         [SFFact]
@@ -33,9 +33,9 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(DigiCertNextUpdateString, crl.NextUpdate?.ToUniversalTime().ToString("o"));
             Assert.Equal(DigiCertIssuer, crl.IssuerName);
             Assert.NotNull(crl.IssuerNameRawData);
-            CollectionAssert.Equal(crl.BouncyCastleCrl.IssuerDN.GetEncoded(), crl.IssuerNameRawData);
-            Assert.That(crl.IssuerDistributionPoints, Is.EquivalentTo(expectedCrlDistributionPoints));
-            Assert.That(crl.RevokedCertificates, Does.Contain(DigiCertRevokedCertSerialNumber));
+            Assert.Equal(crl.BouncyCastleCrl.IssuerDN.GetEncoded(), crl.IssuerNameRawData);
+            Assert.Equivalent(expectedCrlDistributionPoints, crl.IssuerDistributionPoints);
+            Assert.Contains(DigiCertRevokedCertSerialNumber, crl.RevokedCertificates);
             Assert.True(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
             Assert.False(crl.RevokedCertificates.Contains(DigiCertUnrevokedCertSerialNumber));
             Assert.False(crl.IsRevoked(DigiCertUnrevokedCertSerialNumber));

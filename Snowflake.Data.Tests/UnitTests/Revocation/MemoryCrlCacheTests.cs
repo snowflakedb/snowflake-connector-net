@@ -1,10 +1,10 @@
 using System;
 using Xunit;
 using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-
     public class MemoryCrlCacheTests
     {
         const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";

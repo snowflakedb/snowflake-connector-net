@@ -6,11 +6,10 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-
     public class CertificateCrlDistributionPointsExtractorTest
     {
-        [SFFact]
-        [TestCaseSource(nameof(CrlsTestCases))]
+        [SFTheory]
+        [MemberData(nameof(CrlsTestCases))]
         public void TestExtractCertificateDistributionPoints(CrlExtractionTestCase testCase)
         {
             // arrange
@@ -22,31 +21,31 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
             // assert
             Assert.Equal(testCase.ExpectedCrlUrls.Length, crlUrls.Length);
-            Assert.That(testCase.ExpectedCrlUrls, Is.EquivalentTo(crlUrls));
+            Assert.Equivalent(crlUrls, testCase.ExpectedCrlUrls);
         }
 
-        public static IEnumerable<CrlExtractionTestCase> CrlsTestCases()
+        public static IEnumerable<object[]> CrlsTestCases()
         {
-            yield return new CrlExtractionTestCase
+            yield return new object[] { new CrlExtractionTestCase
             {
                 CrlDistributionPoints = new[] { new[] { "http://snowflake.com/crl1.crl" }, new[] { "http://snowflake.com/crl2.crl" } },
                 ExpectedCrlUrls = new[] { "http://snowflake.com/crl1.crl", "http://snowflake.com/crl2.crl" }
-            };
+            } };
 
-            yield return new CrlExtractionTestCase
+            yield return new object[] { new CrlExtractionTestCase
             {
                 CrlDistributionPoints = new[] {
                     new[] { "http://snowflake.com/crl1.crl", "ftp://snowflake.com/crl1.crl" },
                     new[] { "ftp://snowflake.com/crl2.crl", "http://snowflake.com/crl2.crl" }
                 },
                 ExpectedCrlUrls = new[] { "http://snowflake.com/crl1.crl", "http://snowflake.com/crl2.crl" }
-            };
+            } };
 
-            yield return new CrlExtractionTestCase
+            yield return new object[] { new CrlExtractionTestCase
             {
                 CrlDistributionPoints = new string[][] { },
                 ExpectedCrlUrls = new string[] { }
-            };
+            } };
         }
 
         public class CrlExtractionTestCase
