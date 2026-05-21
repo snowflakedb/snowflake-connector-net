@@ -2,14 +2,14 @@ using System.Collections.Generic;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.FileTransfer;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
     public class PutGetStageInfoTest
     {
-        [SFFact]
-        [TestCaseSource(nameof(TestCases))]
+        [SFTheory]
+        [MemberData(nameof(TestCases))]
         public void TestGcsRegionalUrl(string region, bool useRegionalUrl, string endPoint, string expectedGcsEndpoint)
         {
             // arrange

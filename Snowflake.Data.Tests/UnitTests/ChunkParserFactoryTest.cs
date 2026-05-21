@@ -1,28 +1,36 @@
+using System;
+using System.IO;
+using System.Text;
+using Snowflake.Data.Configuration;
+using Snowflake.Data.Core;
+using Snowflake.Data.Tests.Util;
+using Xunit;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using Xunit;
-    using Snowflake.Data.Configuration;
-    using Snowflake.Data.Core;
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Security;
-    using System.Text;
-    using System.Threading;
 
-    [TestFixture, NonParallelizable]
-    class ChunkParserFactoryTest
+    [CollectionDefinition(nameof(ChunkParserFactoryTestCollection), DisableParallelization = true)]
+    public sealed class ChunkParserFactoryTestCollection : ICollectionFixture<ChunkParserFactory>
+    {
+
+    }
+
+    [Collection(nameof(ChunkParserFactoryTestCollection))]
+    public sealed class ChunkParserFactoryTest : IDisposable
     {
         int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
 
-        [TearDown]
-        public void AfterTest()
+        public void Dispose()
         {
             SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
         }
 
-        [SFFact]
-        public void TestGetParser([Values(1, 2, 3, 4)] int chunkParserVersion)
+        [SFTheory(RetriesCount = RetriesCount.Once)]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(4)]
+        public void TestGetParser(int chunkParserVersion)
         {
             try
             {
@@ -38,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     if (chunkParserVersion == 4)
                     {
                         Exception ex = Assert.Throws<Exception>(() => parser = ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream));
-                        Assert.That(ex.Message, Does.Contain("Unsupported Chunk Parser version"));
+                        Assert.Contains("Unsupported Chunk Parser version", ex.Message);
                     }
                     else
                     {

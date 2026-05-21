@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
-    class SFSessionTimezoneTest
+    public class SFSessionTimezoneTest
     {
         [SFFact]
         public void TestGetSessionTimezoneReturnsLocalWhenFeatureDisabled()

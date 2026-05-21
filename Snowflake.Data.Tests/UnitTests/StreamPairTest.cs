@@ -2,10 +2,10 @@ using System.IO;
 using Xunit;
 using Moq;
 using Snowflake.Data.Core.FileTransfer;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
     public class StreamPairTest
     {
         [SFFact]

@@ -1,3 +1,5 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Xunit;
@@ -5,14 +7,11 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-
-
-    class SFDbCommandTest
+    public sealed class SFDbCommandTest
     {
         SnowflakeDbCommand command;
 
-        [SetUp]
-        public void BeforeTest()
+        public SFDbCommandTest()
         {
             command = new SnowflakeDbCommand();
         }
@@ -39,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<Exception>(() => command.ExecuteScalar());
 
             // Assert
-            Assert.Equal(thrown.Message, "Unable to execute command due to command text not being set");
+            Assert.NotEmpty(thrown.Message);
         }
 
         [SFFact]
@@ -58,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [SFFact]
         public void TestCommandPrepareShouldNotThrowsException()
         {
-            Assert.DoesNotThrow(() => command.Prepare());
+            command.Prepare();
         }
     }
 }

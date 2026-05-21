@@ -4,38 +4,40 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
+using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture, NonParallelizable]
+    [CollectionDefinition(nameof(RestRequesterWiremockTestFixture), DisableParallelization = true)]
+    public sealed class RestRequesterWiremockTestFixture : ICollectionFixture<RestRequesterWiremockTestFixture>, IDisposable
+    {
+        internal WiremockRunner Runner;
+
+        public RestRequesterWiremockTestFixture()
+        {
+            Runner = WiremockRunner.NewWiremock();
+        }
+
+        public void Dispose()
+        {
+            Runner.Stop();
+        }
+    }
+
+    [Collection(nameof(RestRequesterWiremockTestFixture))]
     public sealed class RestRequesterWiremockTest
     {
+        private readonly WiremockRunner _runner;
         private static readonly string s_mappingPath = Path.Combine("wiremock", "RestRequester");
         private static readonly string s_loginMapping = Path.Combine(s_mappingPath, "login_success.json");
         private static readonly string s_queryTruncatedThenValid = Path.Combine(s_mappingPath, "query_truncated_then_valid.json");
         private static readonly string s_queryTruncatedAlways = Path.Combine(s_mappingPath, "query_truncated_always.json");
 
-        private WiremockRunner _runner;
-
-        [OneTimeSetUp]
-        public void BeforeAll()
+        public RestRequesterWiremockTest(RestRequesterWiremockTestFixture fixture)
         {
-            _runner = WiremockRunner.NewWiremock();
-        }
-
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
+            _runner = fixture.Runner;
         }
 
         [SFFact]
@@ -61,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        public void TestExecuteReaderAsyncThrowsWhenAllRetriesFail()
+        public async Task TestExecuteReaderAsyncThrowsWhenAllRetriesFail()
         {
             // arrange
             _runner.AddMappings(s_loginMapping);
@@ -75,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests
             cmd.CommandText = "SELECT 1";
 
             // act & assert
-            Assert.ThrowsAsync<JsonReaderException>(
+            await Assert.ThrowsAsync<JsonReaderException>(
                 () => cmd.ExecuteReaderAsync(CancellationToken.None));
         }
 

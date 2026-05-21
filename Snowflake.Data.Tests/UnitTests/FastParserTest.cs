@@ -1,3 +1,5 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Xunit;
@@ -5,15 +7,11 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using System;
     using System.Text;
-
-
-    [SetCulture("en-US")]
-    class FastParserTest
+    public sealed class FastParserTest : IDisposable
     {
         byte[] _byte;
 
-        [SetUp]
-        public void AfterTest()
+        public void Dispose()
         {
             _byte = null;
         }
@@ -149,7 +147,7 @@ namespace Snowflake.Data.Tests.UnitTests
             UTF8Buffer srcVal = new UTF8Buffer(null, 0, 0);
 
             Exception ex = Assert.Throws<SnowflakeDbException>(() => FastParser.FastParseDecimal(srcVal.Buffer, srcVal.offset, srcVal.length));
-            Assert.That(ex.Message, Does.Match(".*Cannot parse a null buffer.*"));
+            Assert.Matches(".*Cannot parse a null buffer.*", ex.Message);
         }
     }
 }

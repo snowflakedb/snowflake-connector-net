@@ -1,6 +1,7 @@
 using System.Linq;
 using Apache.Arrow;
 using Apache.Arrow.Ipc;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -12,12 +13,13 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
-
-    [TestFixture, NonParallelizable]
-    class ArrowChunkParserTest
+    public class ArrowChunkParserTest
     {
-        [SFFact]
-        public void TestParseChunkReadsRecordBatches([Values(1, 2, 4)] int numberOfRecordBatch)
+        [SFTheory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(4)]
+        public void TestParseChunkReadsRecordBatches(int numberOfRecordBatch)
         {
             // Arrange
             MemoryStream stream = new MemoryStream();

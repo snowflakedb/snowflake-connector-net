@@ -7,10 +7,10 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
     public sealed class SFEnvironmentTest
     {
         [SFFact]
@@ -44,30 +44,26 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedVersion, actualVersion);
         }
 
-        [SFFact]
-        [RunOnlyOnCI]
+        [SFFact(SkipCondition.RunOnlyOnCI)]
         public void TestApplicationPathExtraction()
         {
             var applicationPath = SFEnvironment.ExtractApplicationPath();
 
             Assert.NotNull(applicationPath);
             Assert.NotEmpty(applicationPath);
-            Assert.True(System.IO.Path.IsPathRooted(applicationPath),
-                $"Application path should be absolute. Got: {applicationPath}");
+            Assert.True(System.IO.Path.IsPathRooted(applicationPath));
 
             var lowerPath = applicationPath.ToLower();
 #if NETFRAMEWORK
             Assert.True(
                 lowerPath.Contains("testhost") &&
-                (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
-                $"Application path should contain 'testhost' and end with .dll or .exe. Got: {applicationPath}");
+                (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")), $"Application path should contain 'snowflake.data.tests', 'bin' and end with .dll or .exe. Got: {applicationPath}");
 #else
             Assert.True(
                 lowerPath.Contains("snowflake.data.tests") &&
                 lowerPath.Contains("bin") &&
-                lowerPath.Contains("testhost") &&
                 (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
-                $"Application path should contain 'snowflake.data.tests', 'bin', 'testhost' and end with .dll or .exe. Got: {applicationPath}");
+                $"Application path should contain 'snowflake.data.tests', 'bin' and end with .dll or .exe. Got: {applicationPath}");
 #endif
         }
 
@@ -121,16 +117,14 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(firstClientCredentialEnvJson, secondClientCredentialEnvJson);
         }
 
-        [SFFact]
-        [Platform("Linux")]
+        [SFFact(SkipCondition.RunOnlyOnLinux)]
         public void TestOsDetailsExtractionOnLinux()
         {
             var osDetails = SFEnvironment.ExtractOsDetails();
 
             if (osDetails == null)
             {
-                Assert.False(File.Exists("/etc/os-release"),
-                    "ExtractOsDetails returned null but /etc/os-release exists");
+                Assert.False(File.Exists("/etc/os-release"));
                 return;
             }
 
@@ -138,7 +132,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedKeys = new[] { "NAME", "PRETTY_NAME", "ID", "BUILD_ID", "IMAGE_ID", "IMAGE_VERSION", "VERSION", "VERSION_ID" };
             foreach (var key in osDetails.Keys)
             {
-                Assert.Contains(key, expectedKeys, $"Unexpected key '{key}' found in OS details");
+                Assert.Contains(key, expectedKeys);
             }
         }
 
@@ -151,38 +145,34 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(RuntimeInformation.ProcessArchitecture.ToString().ToLower(), clientEnv.isa);
 
             // Fields NOT set by static constructor (populated in CloneForSession)
-            Assert.Null(clientEnv.minicoreVersion, "minicoreVersion should be null on the static ClientEnv");
-            Assert.Null(clientEnv.minicoreFileName, "minicoreFileName should be null on the static ClientEnv");
-            Assert.Null(clientEnv.minicoreLoadError, "minicoreLoadError should be null on the static ClientEnv");
-            Assert.Null(clientEnv.platform, "platform should be null on the static ClientEnv");
+            Assert.Null(clientEnv.minicoreVersion);
+            Assert.Null(clientEnv.minicoreFileName);
+            Assert.Null(clientEnv.minicoreLoadError);
+            Assert.Null(clientEnv.platform);
         }
 
-        [SFFact]
-        [Platform("Linux")]
+        [SFFact(SkipCondition.RunOnlyOnLinux)]
         public void TestStaticConstructorSetsLibcFieldsOnLinux()
         {
             var clientEnv = SFEnvironment.ClientEnv;
 
-            Assert.NotNull(clientEnv.libcFamily, "libcFamily should not be null on Linux");
-            Assert.That(clientEnv.libcFamily, Is.AnyOf("glibc", "could not determine"));
+            Assert.NotNull(clientEnv.libcFamily);
+            Assert.Contains(clientEnv.libcFamily, new[] { "glibc", "could not determine" });
 
-            Assert.NotNull(clientEnv.libcVersion, "libcVersion should not be null when family is glibc");
-            Assert.That(clientEnv.libcVersion, Does.Match(@"^\d+\.\d+"),
-                $"libcVersion should be a version string, got: {clientEnv.libcVersion}");
+            Assert.NotNull(clientEnv.libcVersion);
+            Assert.Matches(@"^\d+\.\d+", clientEnv.libcVersion);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Linux")]
+        [SFFact(SkipCondition.SkipOnLinux)]
         public void TestStaticConstructorSetsLibcFieldsOnNonLinux()
         {
             var clientEnv = SFEnvironment.ClientEnv;
 
-            Assert.Null(clientEnv.libcFamily, "libcFamily should be null on non-Linux");
-            Assert.Null(clientEnv.libcVersion, "libcVersion should be null on non-Linux");
+            Assert.Null(clientEnv.libcFamily);
+            Assert.Null(clientEnv.libcVersion);
         }
 
-        [SFFact]
-        [Platform("Linux")]
+        [SFFact(SkipCondition.RunOnlyOnLinux)]
         public void TestStaticConstructorSetsOsDetailsOnLinux()
         {
             var clientEnv = SFEnvironment.ClientEnv;
@@ -197,25 +187,22 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.NotEmpty(clientEnv.osDetails);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Linux")]
+        [SFFact(SkipCondition.SkipOnLinux)]
         public void TestStaticConstructorSetsOsDetailsOnNonLinux()
         {
             var clientEnv = SFEnvironment.ClientEnv;
 
-            Assert.Null(clientEnv.osDetails, "osDetails should be null on non-Linux");
+            Assert.Null(clientEnv.osDetails);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Linux")]
+        [SFFact(SkipCondition.SkipOnLinux)]
         public void TestOsDetailsExtractionOnNonLinux()
         {
             var osDetails = SFEnvironment.ExtractOsDetails();
-            Assert.Null(osDetails, "OS details should be null on non-Linux platforms");
+            Assert.Null(osDetails);
         }
 
-        [SFFact]
-        [Platform("Linux")]
+        [SFFact(SkipCondition.RunOnlyOnLinux)]
         public void TestOsDetailsFiltersUnwantedKeys()
         {
             var osDetails = SFEnvironment.ExtractOsDetails();

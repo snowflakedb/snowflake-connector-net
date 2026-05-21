@@ -10,9 +10,6 @@ namespace Snowflake.Data.Tests.UnitTests
     using Xunit;
     using System.Threading;
     using System.Globalization;
-
-
-    [SetCulture("en-US")]
     public sealed class SFDataConverterTest
     {
         // Method with the same signature as before the performance work
@@ -660,6 +657,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(result);
         }
 
+        [SFTheory]
         [InlineData(13, 45, 30, 500, "49530500000000")]
         [InlineData(23, 59, 59, 999, "86399999000000")]
         public void TestCSharpValToSfValTime(int hour, int minute, int second, int millisecond, string expected)
@@ -669,6 +667,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
+        [SFTheory]
         [InlineData(13, 45, 30, 500, "1704116730500000000")]
         [InlineData(23, 59, 59, 999, "1704153599999000000")]
         public void TestCSharpValToSfValTimestampNtz(int hour, int minute, int second, int millisecond, string expected)
@@ -678,6 +677,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
+        [SFTheory]
         [InlineData(13, 45, 30, 500, "1721051130500000000")]
         [InlineData(23, 59, 59, 999, "1721087999999000000")]
         public void TestCSharpValToSfValTimestampLtz(int hour, int minute, int second, int millisecond, string expected)
@@ -687,6 +687,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
+        [SFTheory]
         [InlineData(13, 45, 30, 500, "1721033130500000000 1740")]
         [InlineData(23, 59, 59, 999, "1721069999999000000 1740")]
         public void TestCSharpValToSfValTimestampTz(int hour, int minute, int second, int millisecond, string expected)

@@ -13,9 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.IO;
     using System.Text;
     using System;
-
-
-    class SFFileTransferAgentTest : UnitTestBase
+    public class SFFileTransferAgentTest : IDisposable
     {
         // Mock data for file metadata
         [ThreadStatic] private static string t_locationStage;
@@ -70,11 +68,20 @@ namespace Snowflake.Data.Tests.UnitTests
         static readonly string s_filePathWithoutSpaces = Path.Combine("C:\\Users\\Test\\", "folder_without_space", "*.*");
         static readonly string s_filePathWithSpaces = Path.Combine("C:\\Users\\Test\\", "folder with space", "*.*");
 
-        [SetUp]
+        public SFFileTransferAgentTest()
+        {
+            BeforeEachTest();
+        }
+
+        public void Dispose()
+        {
+            AfterEachTest();
+        }
+
         public void BeforeEachTest()
         {
             // Base object's names on worker thread id
-            var threadSuffix = TestContext.CurrentContext.WorkerId?.Replace('#', '_');
+            var threadSuffix = Thread.CurrentThread.ManagedThreadId.ToString()?.Replace('#', '_');
 
             // Set values for thread variables
             t_realSourceFilePath = $"realSrcFilePath_{threadSuffix}.txt";
@@ -120,8 +127,6 @@ namespace Snowflake.Data.Tests.UnitTests
 
             _session = new SFSession(ConnectionStringMock, new SessionPropertiesContext());
         }
-
-        [TearDown]
         public void AfterEachTest()
         {
             // Delete stage directory recursively
@@ -503,7 +508,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             Assert.Equal(_responseData.queryId, ex.QueryId);
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
-            Assert.That(ex.Message, Does.Match($"No file found for: {tempUploadRootDirectory}\\*/{tempUploadSecondDirectory}\\*/{mockFileName}"));
+            Assert.Matches($"No file found for: {tempUploadRootDirectory}\\*/{tempUploadSecondDirectory}\\*/{mockFileName}", ex.Message);
 
             for (int i = 0; i < numberOfDirectories; i++)
             {
@@ -598,10 +603,10 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             Assert.Equal(_responseData.queryId, ex.QueryId);
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
-            Assert.InstanceOf<AggregateException>(ex.InnerException);
+            Assert.IsType<AggregateException>(ex.InnerException);
             var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
-            Assert.InstanceOf<FileNotFoundException>(innerException);
-            Assert.That(innerException?.Message, Does.Match("Could not find file .*"));
+            Assert.IsType<FileNotFoundException>(innerException);
+            Assert.Matches("Could not find file .*", innerException?.Message);
         }
 
         [SFFact]
@@ -630,10 +635,10 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             Assert.Equal(_responseData.queryId, ex.QueryId);
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
-            Assert.InstanceOf<AggregateException>(ex.InnerException);
+            Assert.IsType<AggregateException>(ex.InnerException);
             var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
-            Assert.InstanceOf<DirectoryNotFoundException>(innerException);
-            Assert.That(innerException?.Message, Does.Match("Could not find a part of the path .*"));
+            Assert.IsType<DirectoryNotFoundException>(innerException);
+            Assert.Matches("Could not find a part of the path .*", innerException?.Message);
         }
 
         [SFFact]

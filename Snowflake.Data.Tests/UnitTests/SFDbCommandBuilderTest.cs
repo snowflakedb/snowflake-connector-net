@@ -1,15 +1,14 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Xunit;
     using Snowflake.Data.Client;
-
-
-    class SFDbCommandBuilderTest
+    public sealed class SFDbCommandBuilderTest
     {
         SnowflakeDbCommandBuilder builder;
 
-        [SetUp]
-        public void BeforeTest()
+        public SFDbCommandBuilderTest()
         {
             builder = new SnowflakeDbCommandBuilder();
         }
