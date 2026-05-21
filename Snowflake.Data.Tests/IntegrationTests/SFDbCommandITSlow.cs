@@ -47,4 +47,43 @@ class SFDbCommandITSlow : SFBaseTest
             conn.Close();
         }
     }
+
+    [Test]
+    public void TestExecuteAsyncWithMaxRetryReached()
+    {
+        var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
+
+        using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
+        {
+            string maxRetryConnStr = ConnectionString + "maxHttpRetries=8;poolingEnabled=false";
+
+            conn.ConnectionString = maxRetryConnStr;
+            conn.Open();
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            try
+            {
+                using (DbCommand command = conn.CreateCommand())
+                {
+                    command.CommandText = "select 1;";
+                    Task<object> t = command.ExecuteScalarAsync();
+                    t.Wait();
+                }
+
+                Assert.Fail();
+            }
+            catch (Exception e)
+            {
+                Assert.IsInstanceOf<TaskCanceledException>(e.InnerException);
+            }
+
+            stopwatch.Stop();
+
+            var totalDelaySeconds = 1 + 2 + 4 + 8 + 16 + 16 + 16 + 16;
+            // retry 8 times with backoff 1, 2, 4, 8, 16, 16, 16, 16 seconds
+            // but should not delay more than another 16 seconds
+            Assert.Less(stopwatch.ElapsedMilliseconds, (totalDelaySeconds + 20) * 1000);
+            Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, totalDelaySeconds * 1000);
+        }
+    }
 }
