@@ -4,7 +4,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-    [NonParallelizable, IgnoreOnCI]
+
     public class OktaClientsCredentialsTest
     {
         private string _connectionString = "";

@@ -5,7 +5,7 @@ using Snowflake.Data.Core.CredentialManager;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-    [NonParallelizable, IgnoreOnCI]
+
     public class MfaTest
     {
         [Test, IgnoreOnCI]
