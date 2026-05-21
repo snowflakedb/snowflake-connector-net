@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.WIFTests
 {
@@ -14,7 +15,6 @@ namespace Snowflake.Data.WIFTests
     /// 3. Run ci/test_wif.sh
     /// </summary>
     ///
-
     public class WifLatestTest
     {
         private static readonly string s_account = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_ACCOUNT");
@@ -31,8 +31,7 @@ namespace Snowflake.Data.WIFTests
             var user = ConnectAndQueryCurrentUser(connectionString);
             if (!string.IsNullOrEmpty(s_expectedUsername))
             {
-                Assert.Equal(s_expectedUsername, user,
-                    $"Expected direct WIF user to be '{s_expectedUsername}' but got '{user}'");
+                Assert.Equal(s_expectedUsername, user);
             }
         }
 
@@ -41,7 +40,7 @@ namespace Snowflake.Data.WIFTests
         {
             if (string.IsNullOrEmpty(s_impersonationPath))
             {
-                Assert.Ignore("Test only runs when SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH is set");
+                Skip.When(true, "Test only runs when SNOWFLAKE_TEST_WIF_IMPERSONATION_PATH is set");
             }
 
             // connect with impersonation
@@ -51,15 +50,13 @@ namespace Snowflake.Data.WIFTests
             // verify the impersonated user matches the expected username
             if (!string.IsNullOrEmpty(s_expectedUsernameImpersonation))
             {
-                Assert.Equal(s_expectedUsernameImpersonation, impersonatedUser,
-                    $"Expected impersonated user to be '{s_expectedUsernameImpersonation}' but got '{impersonatedUser}'");
+                Assert.Equal(s_expectedUsernameImpersonation, impersonatedUser);
             }
 
             // verify that impersonation resulted in a different user than the direct identity
             if (!string.IsNullOrEmpty(s_expectedUsername))
             {
-                Assert.NotEqual(s_expectedUsername, impersonatedUser,
-                    $"Expected impersonation to change the session user from '{s_expectedUsername}', but it did not");
+                Assert.NotEqual(s_expectedUsername, impersonatedUser);
             }
         }
 
@@ -68,7 +65,7 @@ namespace Snowflake.Data.WIFTests
         {
             if (!IsProviderGcp())
             {
-                Assert.Ignore("Test only runs when provider is GCP");
+                Skip.When(true, "Test only runs when provider is GCP");
             }
 
             var token = GetGcpAccessToken();
@@ -78,7 +75,7 @@ namespace Snowflake.Data.WIFTests
 
         private static bool IsProviderGcp()
         {
-            return string.Equals(s_provider, "GCP", StringComparison.OrdinalIgnoreCase);
+            return string.Equals(s_provider, "GCP");
         }
 
         private string GetGcpAccessToken()
@@ -127,7 +124,7 @@ namespace Snowflake.Data.WIFTests
                     var result = command.ExecuteScalar();
                     Assert.NotNull(result);
                     var user = result.ToString();
-                    Assert.NotEmpty(user, "CURRENT_USER() returned an empty string");
+                    Assert.NotEmpty(user);
                     return user;
                 }
             }

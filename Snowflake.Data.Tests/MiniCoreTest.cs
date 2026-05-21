@@ -1,51 +1,47 @@
+using System;
 using System.Runtime.InteropServices;
-using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.MiniCore;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests
 {
-
-    [Category("MiniCore")]
-    [NonParallelizable]
-    public class MiniCoreTest : SFBaseTest
+    [Trait("Category", "MiniCore")]
+    public class MiniCoreTest : SFBaseTestAsync, IDisposable
     {
-        private bool _originalMinicoreState;
-
-        [SetUp]
-        public void SetUp()
+        public MiniCoreTest(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
             _originalMinicoreState = SFEnvironment.MinicoreDisabled;
         }
 
-        [TearDown]
-        public void TearDown()
+        private readonly bool _originalMinicoreState;
+
+        public void Dispose()
         {
             SFEnvironment.MinicoreDisabled = _originalMinicoreState;
         }
 
-        private void WaitForMiniCoreToLoad()
+        private async Task WaitForMiniCoreToLoad()
         {
             SfMiniCore.StartLoading();
             for (int i = 0; i < 100 && !SfMiniCore.IsLoaded; i++)
-                Thread.Sleep(10);
+                await Task.Delay(10);
         }
 
         [SFFact]
-        public void TestMinicoreLoadsAndTelemetryIsCorrect()
+        public async Task TestMinicoreLoadsAndTelemetryIsCorrect()
         {
-            WaitForMiniCoreToLoad();
+            await WaitForMiniCoreToLoad();
 
             var clientEnv = SFEnvironment.ClientEnv.CloneForSession();
             var loadError = SfMiniCore.GetLoadError();
 
-            Assert.NotNull(clientEnv.minicoreVersion,
-                $"minicoreVersion should not be null. LoadError: {loadError}, FileName: {clientEnv.minicoreFileName}");
-            Assert.That(clientEnv.minicoreVersion, Does.Match(@"^\d+\.\d+\.\d+"),
-                $"Version should be semver, got: {clientEnv.minicoreVersion}");
-            Assert.NotNull(clientEnv.minicoreFileName, "minicoreFileName should not be null");
-            Assert.Null(clientEnv.minicoreLoadError, $"minicoreLoadError should be null on success, got: {clientEnv.minicoreLoadError}");
+            Assert.NotNull(clientEnv.minicoreVersion);
+            Assert.Matches(@"^\d+\.\d+\.\d+", clientEnv.minicoreVersion);
+            Assert.NotNull(clientEnv.minicoreFileName);
+            Assert.Null(clientEnv.minicoreLoadError);
         }
 
         [SFFact]
@@ -54,10 +50,9 @@ namespace Snowflake.Data.Tests
             SFEnvironment.MinicoreDisabled = true;
             var clientEnv = SFEnvironment.ClientEnv.CloneForSession();
 
-            Assert.Null(clientEnv.minicoreVersion, "Version should be null when disabled");
-            Assert.Null(clientEnv.minicoreFileName, "FileName should be null when disabled");
-            Assert.Equal(SfMiniCore.DISABLED_MESSAGE,
-                clientEnv.minicoreLoadError, "Should report disabled message");
+            Assert.Null(clientEnv.minicoreVersion);
+            Assert.Null(clientEnv.minicoreFileName);
+            Assert.Equal(SfMiniCore.DISABLED_MESSAGE, clientEnv.minicoreLoadError);
         }
 
         [SFFact]
@@ -74,6 +69,5 @@ namespace Snowflake.Data.Tests
             else
                 Assert.Equal("libsf_mini_core.so", name);
         }
-
-    }
+}
 }
