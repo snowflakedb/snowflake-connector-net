@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             _resultFormat = resultFormat;
         }
 
-        [Fact(Skip = "Not a scope for CICD")]
+        [SFFact(Skip = "Not a scope for CICD")]
         public void TestInsertPlainText()
         {
             // Arrange
@@ -112,7 +112,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Fact(Skip = "Not a scope for CICD tests")]
+        [SFFact(Skip = "Not a scope for CICD tests")]
         public void TestInsertWithValueBinding()
         {
             // Arrange
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Fact(Skip = "Not a scope for CICD")]
+        [SFFact(Skip = "Not a scope for CICD")]
         public void TestUpdateWithValueBinding()
         {
             // Arrange
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Fact(Skip = "Not a scope for CICD")]
+        [SFFact(Skip = "Not a scope for CICD")]
         public void TestJoin()
         {
             using (var conn = OpenConnection())
@@ -237,7 +237,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Fact(Skip = "Not a scope for CICD")]
+        [SFFact(Skip = "Not a scope for CICD")]
         public void TestDelete()
         {
             using (var conn = OpenConnection())
@@ -260,7 +260,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Fact(Skip = "Not a scope for CICD")]
+        [SFFact(Skip = "Not a scope for CICD")]
         public void TestDeleteAll()
         {
             using (var conn = OpenConnection())
@@ -282,7 +282,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Fact(Skip = "Not a scope for CICD")]
+        [SFFact(Skip = "Not a scope for CICD")]
         public void TestMultiStatement()
         {
             using (var conn = OpenConnection())
@@ -308,7 +308,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Fact(Skip = "Not a scope for CICD")]
+        [SFFact(Skip = "Not a scope for CICD")]
         public void TestBatchInsertForLargeData()
         {
             using (var conn = OpenConnection())
@@ -336,7 +336,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Fact(Skip = "Not a scope for CICD")]
+        [SFFact(Skip = "Not a scope for CICD")]
         public void TestStructuredTypesAsJsonString()
         {
             using (var conn = OpenConnection())

@@ -20,10 +20,16 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     {
         public sealed class Fixture : IDisposable
         {
-            internal readonly WiremockRunner Runner;
+            internal readonly IWiremockRunner Runner;
 
             public Fixture()
             {
+                if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
+                {
+                    Runner = new Mock<IWiremockRunner>().Object;
+                    return;
+                }
+
                 Runner = WiremockRunner.NewWiremock();
             }
 
@@ -64,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _fixture.Runner.ResetMapping();
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAwsAuthorization()
         {
             // arrange
@@ -78,7 +84,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestSuccessfulAwsAuthorizationAsync()
         {
             // arrange
@@ -92,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAwsAttestation()
         {
             // arrange

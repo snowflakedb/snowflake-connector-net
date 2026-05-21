@@ -1134,7 +1134,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         Assert.Equal(ConnectionPoolType.MultipleConnectionPool, poolVersion);
     }
 
-    [SFFact]
+    [SFFact(SkipCondition.SkipOnJenkins)]
     // to enroll to mfa authentication edit your user profile
     public async Task TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
     {

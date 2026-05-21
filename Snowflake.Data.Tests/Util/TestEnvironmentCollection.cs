@@ -36,10 +36,19 @@ public static class TestConfigSingleton
     private static TestConfig ReadTestConfig()
     {
         var fileName = "parameters.json";
+        if (!File.Exists(fileName) && !HasRequiredEnvironmentVariables())
+            throw new InvalidOperationException("No parameters.json file found and required environment variables are not set. See docs/TESTING.md for instructions on configuring your local test environment.");
+
         var testConfig = File.Exists(fileName) ? ReadTestConfigFile(fileName) : ReadTestConfigEnvVariables();
         var uniqueSuffix = Guid.NewGuid().ToString().Replace("-", "_");
         testConfig.schema = $"{testConfig.schema}_{uniqueSuffix}";
         return testConfig;
+    }
+
+    private static bool HasRequiredEnvironmentVariables()
+    {
+        return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_ACCOUNT")) ||
+               !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_HOST"));
     }
 
     private static TestConfig ReadTestConfigEnvVariables()

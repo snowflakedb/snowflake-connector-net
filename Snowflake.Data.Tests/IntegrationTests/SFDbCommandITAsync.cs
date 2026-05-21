@@ -349,7 +349,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact(Skip = "The test takes too long to finish when using the default retry")]
+        [SFFact(Skip = "The test takes too long to finish when using the default retry")]
         public async Task TestGetResultsOfUnknownQueryIdAsyncWithDefaultRetry()
         {
             string unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
@@ -649,7 +649,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Fact(Skip = "This test case takes too much time so run it manually")]
+        [SFFact(Skip = "This test case takes too much time so run it manually")]
         public async Task TestQueryTimeout()
         {
             using (var conn = new SnowflakeDbConnection())

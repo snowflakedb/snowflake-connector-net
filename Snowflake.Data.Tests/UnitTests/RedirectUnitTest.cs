@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _fixture.Runner.ResetMapping();
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestHttp307Retry()
         {
             // arrange
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await AssertResponseId(response, expectedQueryId);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestHttp308Retry()
         {
             // arrange

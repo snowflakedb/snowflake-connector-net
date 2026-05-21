@@ -51,7 +51,7 @@ public sealed class SFDbCommandITSlowB : SFBaseTestAsync
     }
 
 
-    [Fact(Skip = "This test case takes too much time so run it manually")]
+    [SFFact(Skip = "This test case takes too much time so run it manually")]
     public async Task TestRowsAffectedOverflowInt()
     {
         var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");

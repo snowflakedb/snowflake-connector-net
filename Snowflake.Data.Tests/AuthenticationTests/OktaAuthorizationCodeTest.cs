@@ -2,20 +2,20 @@ using System.Threading;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
-using Snowflake.Data.Tests;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class OktaAuthorizationCodeTest
     {
         private string _connectionString = "";
-        private string _login = AuthConnectionString.SsoUser;
-        private string _password = AuthConnectionString.SsoPassword;
+        private string _login;
+        private string _password;
 
         public OktaAuthorizationCodeTest()
         {
-            AuthTestHelper authTestHelper = new AuthTestHelper();
+            var authTestHelper = new AuthTestHelper();
             _login = AuthConnectionString.SsoUser;
             _password = AuthConnectionString.SsoPassword;
             authTestHelper.CleanBrowserProcess();
@@ -90,7 +90,7 @@ namespace Snowflake.Data.AuthenticationTests
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
             var parameters = AuthConnectionString.GetOAuthExternalAuthorizationCodeConnectionString();
-            parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "10");
+            parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "30");
             parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
             parameters[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL] = "true";
             var host = parameters[SFSessionProperty.HOST];

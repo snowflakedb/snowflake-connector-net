@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             return session;
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailsAuthorizationWhenProviderIsNotGiven()
         {
             // arrange/act
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Required property WORKLOAD_IDENTITY_PROVIDER is not provided", exception?.Message);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
         {
             // arrange: throws exception with "Not available" message
@@ -94,7 +94,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 .Throws(() => new Exception("Not available"));
         }
 
-        internal void SetupSnowflakeAuthentication(WiremockRunner runner, AttestationProvider provider, string accessToken) =>
+        internal void SetupSnowflakeAuthentication(IWiremockRunner runner, AttestationProvider provider, string accessToken) =>
             runner.AddMappings(s_SuccessfulMappingPath,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, accessToken)

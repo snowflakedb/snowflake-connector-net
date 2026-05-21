@@ -263,7 +263,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.True(exception.Message.Contains("Connection string is invalid: Parameter MINTLS should have one of the following values: TLS12, TLS13."));
         }
 
-        [Theory, MemberData(nameof(PropertiesProvider))]
+        [SFTheory, MemberData(nameof(PropertiesProvider))]
         public void TestExtractProperties(PropertiesTestCase testCase)
         {
             // arrange

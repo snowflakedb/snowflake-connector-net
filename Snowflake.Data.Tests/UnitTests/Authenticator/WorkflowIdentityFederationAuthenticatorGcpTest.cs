@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -17,10 +18,16 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     {
         public sealed class Fixture : IDisposable
         {
-            internal readonly WiremockRunner Runner;
+            internal readonly IWiremockRunner Runner;
 
             public Fixture()
             {
+                if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
+                {
+                    Runner = new Mock<IWiremockRunner>().Object;
+                    return;
+                }
+
                 Runner = WiremockRunner.NewWiremock();
             }
 
@@ -49,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _fixture.Runner.ResetMapping();
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulGCPAuthorization()
         {
             // arrange
@@ -64,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestSuccessfulGCPAuthorizationAsync()
         {
             // arrange
@@ -79,7 +86,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulGCPAttestation()
         {
             // arrange
@@ -96,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(JWTGCPToken, attestation.Credential);
         }
 
-        [SFTheory]
+        [SFTheory(SkipCondition.SkipOnJenkins)]
         [InlineData(JWTGCPTokenWithoutIssuer, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
         [InlineData(JWTGCPTokenWithoutSubject, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
         [InlineData(JWTGCPUnparsableToken, "Retrieving attestation for GCP failed. Reading of the token failed.")]
@@ -115,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains(expectedErrorMessage, thrown.Message);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailAttestationWhenHttpError()
         {
             // arrange
@@ -131,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Retrieving attestation for GCP failed. Failed to get token: Response status code does not indicate success: 400 (Bad Request).", thrown.Message);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulGCPTransitiveImpersonation()
         {
             // arrange
@@ -146,7 +153,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulGCPTransitiveImpersonationAttestation()
         {
             // arrange
@@ -166,7 +173,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private void AddGcpWiremockMapping(string token) =>
             AddGcpWiremockMapping(_fixture.Runner, token);
 
-        internal static void AddGcpWiremockMapping(WiremockRunner runner, string token) =>
+        internal static void AddGcpWiremockMapping(IWiremockRunner runner, string token) =>
             runner.AddMappings(s_wifGcpSuccessfulMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, token));
 
         private SFSession PrepareSessionForGcp(string connectionStringSuffix,

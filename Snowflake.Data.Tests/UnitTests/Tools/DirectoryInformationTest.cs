@@ -36,13 +36,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(false, result);
         }
 
-        internal static IEnumerable<object[]> OldCreatingDatesTestCases()
+        public static IEnumerable<object[]> OldCreatingDatesTestCases()
         {
             yield return new object[] { DateTime.UtcNow.AddMinutes(-2), DateTime.UtcNow };
             yield return new object[] { DateTime.UtcNow.AddSeconds(-61), DateTime.UtcNow };
         }
 
-        internal static IEnumerable<object[]> NewCreatingDatesTestCases()
+        public static IEnumerable<object[]> NewCreatingDatesTestCases()
         {
             yield return new object[] { true, DateTime.UtcNow.AddSeconds(-30), DateTime.UtcNow };
             yield return new object[] { true, DateTime.UtcNow.AddSeconds(30), DateTime.UtcNow };

@@ -5,9 +5,10 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class OauthConnectionTest
     {
-        private string _connectionString = "";
+        private string _connectionString;
 
         public OauthConnectionTest()
         {
@@ -19,7 +20,7 @@ namespace Snowflake.Data.AuthenticationTests
         [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingOauthSuccessful()
         {
-            AuthTestHelper authTestHelper = new AuthTestHelper();
+            var authTestHelper = new AuthTestHelper();
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
             authTestHelper.VerifyExceptionIsNotThrown();
@@ -38,7 +39,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
         }
 
-        [Fact(Skip = "Skipped, waits for SNOW-1893041")]
+        [SFFact(Skip = "Skipped, waits for SNOW-1893041")]
         public void TestAuthenticateUsingOauthMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

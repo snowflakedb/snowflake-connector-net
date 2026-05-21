@@ -318,19 +318,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        static IEnumerable<object[]> SelectOnSpecifiedSizeTestCases() =>
+        public static IEnumerable<object[]> SelectOnSpecifiedSizeTestCases() =>
             CombinedTestCases(nameof(TestSelectOnSpecifiedSize));
 
-        static IEnumerable<object[]> LiteralInsertTestCases() =>
+        public static IEnumerable<object[]> LiteralInsertTestCases() =>
             CombinedTestCases(nameof(TestLiteralInsert));
 
-        static IEnumerable<object[]> PositionalInsertTestCases() =>
+        public static IEnumerable<object[]> PositionalInsertTestCases() =>
             CombinedTestCases(nameof(TestPositionalInsert));
 
-        static IEnumerable<object[]> NamedInsertTestCases() =>
+        public static IEnumerable<object[]> NamedInsertTestCases() =>
             CombinedTestCases(nameof(TestNamedInsert));
 
-        static IEnumerable<object[]> PutGetCommandTestCases() =>
+        public static IEnumerable<object[]> PutGetCommandTestCases() =>
             CombinedTestCases(nameof(TestPutGetCommand));
 
         void PrepareTest()

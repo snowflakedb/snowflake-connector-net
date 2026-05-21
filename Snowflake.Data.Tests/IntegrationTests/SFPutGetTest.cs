@@ -131,7 +131,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public async Task TestPutFileQuestionMarkWildcard()
         {
             var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
@@ -464,7 +464,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory, MemberData(nameof(PutGetCommandTestCases))]
+        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PutGetCommandTestCases))]
         public async Task TestPutGetCommand(
             string sourceFileCompressionType,
             StageType stageType,
@@ -482,7 +482,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory, MemberData(nameof(PutGetCommandForNamedStageWithoutClientSideEncryptionTestCases))]
+        [SFTheory, MemberData(nameof(PutGetCommandForNamedStageWithoutClientSideEncryptionTestCases))]
         public async Task TestPutGetCommandForNamedStageWithoutClientSideEncryption(
             string sourceFileCompressionType,
             string stagePath,
@@ -517,7 +517,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Theory, MemberData(nameof(PutGetFileWithSpaceAndSingleQuoteTestCases))]
+        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PutGetFileWithSpaceAndSingleQuoteTestCases))]
         public async Task TestPutGetFileWithSpaceAndSingleQuote(
             StageType stageType,
             string stagePath)

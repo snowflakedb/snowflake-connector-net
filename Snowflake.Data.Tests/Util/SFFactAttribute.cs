@@ -25,7 +25,10 @@ public sealed class SFFactAttribute : FactAttribute
     {
         RetriesCount = retriesCount;
         DedicatedSessionPool = dedicatedSessionPool;
-        Skip = SkipConditionEvaluator.Evaluate(skip);
+        var skipEvaluationResult = SkipConditionEvaluator.Evaluate(skip);
+
+        if (skipEvaluationResult.ShouldSkip)
+            Skip = skipEvaluationResult.SkipMessage;
     }
 }
 
@@ -44,7 +47,10 @@ public sealed class SFTheoryAttribute : TheoryAttribute
     {
         DedicatedSessionPool = dedicatedSessionPool;
         RetriesCount = retriesCount;
-        Skip = SkipConditionEvaluator.Evaluate(skip);
+        var skipEvaluationResult = SkipConditionEvaluator.Evaluate(skip);
+
+        if (skipEvaluationResult.ShouldSkip)
+            Skip = skipEvaluationResult.SkipMessage;
     }
 }
 
@@ -58,7 +64,25 @@ public enum RetriesCount
 
 internal static class SkipConditionEvaluator
 {
-    internal static string Evaluate(SkipCondition condition)
+    internal readonly struct SkipEvaluationResult
+    {
+        internal readonly string SkipMessage;
+        internal readonly bool ShouldSkip;
+
+        public SkipEvaluationResult(string skipMessage, bool shouldSkip)
+        {
+            SkipMessage = skipMessage;
+            ShouldSkip = shouldSkip;
+        }
+    }
+
+    internal static SkipEvaluationResult Evaluate(SkipCondition condition)
+    {
+        var skipMessage = EvaluateInner(condition);
+        return new(skipMessage, !string.IsNullOrEmpty(skipMessage));
+    }
+
+    private static string EvaluateInner(SkipCondition condition)
     {
         if (condition == SkipCondition.None)
             return null;
@@ -73,7 +97,7 @@ internal static class SkipConditionEvaluator
         if (condition.HasFlag(SkipCondition.SkipOnMacOS) && RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             return "Test is skipped on macOS.";
 
-        // CI / Jenkins checks
+        // CI / Jenkins / Local checks
         if (condition.HasFlag(SkipCondition.SkipOnCI) && Environment.GetEnvironmentVariable("CI") == "true")
             return "Test is skipped on CI.";
 
@@ -82,6 +106,9 @@ internal static class SkipConditionEvaluator
 
         if (condition.HasFlag(SkipCondition.SkipOnJenkins) && !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JENKINS_HOME")))
             return "Test is skipped on Jenkins.";
+
+        if (condition.HasFlag(SkipCondition.SkipOnLocal) && Environment.GetEnvironmentVariable("CI") != "true" && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JENKINS_HOME")))
+            return "Test is skipped on local environment.";
 
         // Cloud provider checks
         var cloudEnv = Environment.GetEnvironmentVariable("snowflake_cloud_env");
@@ -114,15 +141,17 @@ public enum SkipCondition
     RunOnlyOnLinux = SkipOnWindows | SkipOnMacOS,
     RunOnlyOnMacOS = SkipOnWindows | SkipOnLinux,
 
-    // CI / Jenkins
+    // CI / Jenkins / Local
     SkipOnCI = 1 << 3,
     RunOnlyOnCI = 1 << 4,
     SkipOnJenkins = 1 << 5,
+    SkipOnLocal = 1 << 6,
+    RunOnlyOnLocal = SkipOnCI | SkipOnJenkins,
 
     // Cloud provider (reads snowflake_cloud_env)
-    SkipOnCloudAWS = 1 << 6,
-    SkipOnCloudAzure = 1 << 7,
-    SkipOnCloudGCP = 1 << 8,
+    SkipOnCloudAWS = 1 << 7,
+    SkipOnCloudAzure = 1 << 8,
+    SkipOnCloudGCP = 1 << 9,
     RunOnlyOnCloudAWS = SkipOnCloudAzure | SkipOnCloudGCP,
     RunOnlyOnCloudAzure = SkipOnCloudAWS | SkipOnCloudGCP,
     RunOnlyOnCloudGCP = SkipOnCloudAWS | SkipOnCloudAzure,

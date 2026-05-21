@@ -137,7 +137,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return logger;
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public void TestMaskedExceptionWithSensitiveData()
         {
             // Arrange

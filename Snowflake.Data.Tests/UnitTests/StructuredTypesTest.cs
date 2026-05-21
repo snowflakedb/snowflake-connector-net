@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        internal static IEnumerable<object[]> TimeConversionCases()
+        public static IEnumerable<object[]> TimeConversionCases()
         {
             yield return new object[] { "2024-07-11 14:20:05", SFDataType.TIMESTAMP_NTZ.ToString(), DateTime.Parse("2024-07-11 14:20:05") };
             yield return new object[] { "2024-07-11 14:20:05", SFDataType.TIMESTAMP_NTZ.ToString(), DateTimeOffset.Parse("2024-07-11 14:20:05Z") };
@@ -83,7 +83,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        internal static IEnumerable<object[]> TimeConversionWithNamedTimezoneCases()
+        public static IEnumerable<object[]> TimeConversionWithNamedTimezoneCases()
         {
             // TIMESTAMP_LTZ -> DateTimeOffset with Asia/Tokyo (UTC+9, no DST)
             yield return new object[]

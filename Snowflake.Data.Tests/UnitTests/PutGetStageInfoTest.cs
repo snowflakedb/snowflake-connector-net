@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedGcsEndpoint, gcsCustomEndpoint);
         }
 
-        internal static IEnumerable<object[]> TestCases()
+        public static IEnumerable<object[]> TestCases()
         {
             yield return new object[] { "US-CENTRAL1", false, null, null };
             yield return new object[] { "US-CENTRAL1", false, "", null };

@@ -2,25 +2,23 @@ using System.Threading;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
-using Snowflake.Data.Tests;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class SnowflakeAuthorizationCodeWildcardsTest
     {
-        private string _connectionString = "";
-        private SFSessionProperties login_credentials;
+        private string _connectionString;
         private string _login;
         private string _password;
 
-        public SnowflakeAuthorizationCodeWildcardsTest()
+        public SnowflakeAuthorizationCodeWildcardsTest(AuthenticationTestsCollectionFixture fixture)
         {
-            AuthTestHelper authTestHelper = new AuthTestHelper();
-            login_credentials = AuthConnectionString.GetSnowflakeLoginCredentials();
+            var authTestHelper = new AuthTestHelper();
 
-            _login = login_credentials[SFSessionProperty.USER];
-            _password = login_credentials[SFSessionProperty.PASSWORD];
+            _login = fixture.Login;
+            _password = fixture.Password;
             authTestHelper.CleanBrowserProcess();
             var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeWilidcardsConnectionParameters();
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);

@@ -1,17 +1,17 @@
 using System.Threading;
 using Xunit;
 using Snowflake.Data.Core;
-using Snowflake.Data.Tests;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
 
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class ExternalBrowserConnectionTest
     {
-        private string _connectionString = "";
-        private string _login = AuthConnectionString.SsoUser;
-        private string _password = AuthConnectionString.SsoPassword;
+        private string _connectionString;
+        private string _login;
+        private string _password;
 
         public ExternalBrowserConnectionTest()
         {
@@ -49,7 +49,7 @@ namespace Snowflake.Data.AuthenticationTests
             Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
 
             authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
-            authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user currently logged in at the IDP");
+            authTestHelper.VerifyExceptionIsThrown("Error: The user authenticated by the Identity Provider does not match the user specified in the Login UI. Please log out from the Identity Provider and try again.");
         }
 
         [SFFact(SkipCondition.SkipOnCI)]

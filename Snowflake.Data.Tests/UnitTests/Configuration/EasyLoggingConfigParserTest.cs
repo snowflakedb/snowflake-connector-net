@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Contains($"Parsing easy logging configuration failed", thrown.Message);
         }
 
-        [Theory, MemberData(nameof(ConfigFilesWithoutValues))]
+        [SFTheory, MemberData(nameof(ConfigFilesWithoutValues))]
         public void TestThatParsesConfigFileWithNullValues(string filePath)
         {
             // arrange
@@ -153,7 +153,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.True(thrown.Message.Contains("Finding easy logging configuration failed"));
         }
 
-        [Theory, MemberData(nameof(WrongConfigFiles))]
+        [SFTheory, MemberData(nameof(WrongConfigFiles))]
         public void TestThatFailsIfMissingOrInvalidRequiredFields(string filePath)
         {
             // arrange
