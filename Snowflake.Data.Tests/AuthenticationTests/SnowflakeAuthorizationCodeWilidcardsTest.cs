@@ -26,7 +26,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -38,7 +38,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -55,7 +55,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token.");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -74,7 +74,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 30 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsTimeout()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -87,7 +87,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWildcardsWithTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

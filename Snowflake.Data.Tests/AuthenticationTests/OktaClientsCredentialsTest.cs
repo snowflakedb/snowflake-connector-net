@@ -9,7 +9,7 @@ namespace Snowflake.Data.AuthenticationTests
     {
         private string _connectionString = "";
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateOktaClientCredentialsSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -21,7 +21,7 @@ namespace Snowflake.Data.AuthenticationTests
         }
 
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateOktaClientCredentialsMismatchedUsername()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -34,7 +34,7 @@ namespace Snowflake.Data.AuthenticationTests
         }
 
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateOktaClientCredentialsUnauthorized()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
