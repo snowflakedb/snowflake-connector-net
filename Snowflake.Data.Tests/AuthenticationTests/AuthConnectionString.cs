@@ -8,10 +8,8 @@ using System.Net;
 using Snowflake.Data.Core;
 using System.Net.Http;
 using System.Security.Authentication;
-using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.AuthenticationTests
-
 {
     static class AuthConnectionString
     {
@@ -20,7 +18,6 @@ namespace Snowflake.Data.AuthenticationTests
         public static readonly string SsoPassword = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_OKTA_PASS");
         public static readonly string SnowflakeUser = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_SNOWFLAKE_USER");
         public static readonly string SnowflakeRole = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_ROLE");
-
 
         private static SFSessionProperties GetBaseConnectionParameters()
         {
