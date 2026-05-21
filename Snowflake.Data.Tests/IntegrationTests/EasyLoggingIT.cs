@@ -99,9 +99,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestFailToEnableEasyLoggingForWrongConfiguration()
         {
-            #if NETFRAMEWORK
+#if NETFRAMEWORK
             Skip.When(true, "Not on framework");
-            #endif
+#endif
 
             // arrange
             var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, "random config content");
@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync(CancellationToken.None)).ConfigureAwait(false);
 
                 // assert
-                var messages = new[] {thrown.Message, thrown.InnerException?.Message};
+                var messages = new[] { thrown.Message, thrown.InnerException?.Message };
                 var concatenatedMessages = string.Join(Environment.NewLine, messages);
                 Assert.Contains("Connection string is invalid: Unable to initialize session", concatenatedMessages);
                 Assert.Empty(SFLoggerImpl.s_appenders);
@@ -221,7 +221,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // assert
                 var sb = new StringBuilder();
-                for (;;)
+                for (; ; )
                 {
                     sb.Append(thrown.Message);
                     thrown = thrown.InnerException;
@@ -253,7 +253,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // assert
                 var sb = new StringBuilder();
-                for (;;)
+                for (; ; )
                 {
                     sb.Append(thrown.Message);
                     thrown = thrown.InnerException;

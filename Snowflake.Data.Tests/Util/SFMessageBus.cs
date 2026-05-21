@@ -49,7 +49,7 @@ public class SFMessageBus : IMessageBus
 
     public int SkippedCount { get; private set; }
 
-    private static TestPerformanceRecorder s_performanceRecorder = new ();
+    private static TestPerformanceRecorder s_performanceRecorder = new();
 
     public SFMessageBus(IMessageBus messageBusImplementation, int retriesCount)
     {

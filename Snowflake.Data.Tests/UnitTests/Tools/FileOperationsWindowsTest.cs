@@ -57,11 +57,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // act and assert
             Assert.True(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
-    
+
         public void Dispose()
         {
             After();
         }
-}
+    }
 }
 

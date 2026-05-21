@@ -5,7 +5,8 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
-    public class SFCredentialManagerWindowsNativeImplTest : SFBaseCredentialManagerTest{
+    public class SFCredentialManagerWindowsNativeImplTest : SFBaseCredentialManagerTest
+    {
         public SFCredentialManagerWindowsNativeImplTest()
         {
             SetUp();

@@ -204,10 +204,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
         public static IEnumerable<object[]> InsecurePermissionsData() =>
             InsecurePermissions().Select(x => new object[] { x });
-    
+
         public void Dispose()
         {
             After();
         }
-}
+    }
 }

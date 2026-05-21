@@ -78,8 +78,8 @@ namespace Snowflake.Data.Tests
             var now = DateTimeOffset.UtcNow;
             var startedAt = now.Subtract(_stopwatch.Elapsed);
 
-                // TODO
-                //_envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
+            // TODO
+            //_envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
             await RemoveTables();
             await IntegrationTestEnvironment.EndIntegrationTest();
         }

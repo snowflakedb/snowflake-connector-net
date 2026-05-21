@@ -822,7 +822,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-     [SFFact(RetriesCount = RetriesCount.Thrice)]
+    [SFFact(RetriesCount = RetriesCount.Thrice)]
     public async Task TestAsyncLoginTimeout()
     {
         using (var conn = new MockSnowflakeDbConnection())
@@ -882,42 +882,42 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             SFSessionHttpClientProperties.DefaultRetryTimeout = _oldTimeout;
         }
 
-    [SFFact]
-    public async Task TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
-    {
-        using (var conn = new MockSnowflakeDbConnection())
+        [SFFact]
+        public async Task TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
-            int connectionTimeout = 5;
-            int retryTimeout = 1;
-            conn.ConnectionString = String.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
-                connectionTimeout, retryTimeout);
-
-            Assert.Equal(conn.State, ConnectionState.Closed);
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            try
+            using (var conn = new MockSnowflakeDbConnection())
             {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-            catch (AggregateException e)
-            {
-                SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.REQUEST_TIMEOUT);
-            }
-            catch (SnowflakeDbException e)
-            {
-                SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.REQUEST_TIMEOUT);
-            }
+                int connectionTimeout = 5;
+                int retryTimeout = 1;
+                conn.ConnectionString = String.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+                    connectionTimeout, retryTimeout);
 
-            stopwatch.Stop();
-            int delta = 10; // in case server time slower.
+                Assert.Equal(conn.State, ConnectionState.Closed);
 
-            // Should timeout after the defined timeout since retry count is infinite
-            Assert.InRange(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta, long.MaxValue);
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                try
+                {
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (AggregateException e)
+                {
+                    SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.REQUEST_TIMEOUT);
+                }
+                catch (SnowflakeDbException e)
+                {
+                    SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.REQUEST_TIMEOUT);
+                }
 
-            Assert.Equal(ConnectionState.Closed, conn.State);
-            Assert.Equal(retryTimeout, conn.ConnectionTimeout);
+                stopwatch.Stop();
+                int delta = 10; // in case server time slower.
+
+                // Should timeout after the defined timeout since retry count is infinite
+                Assert.InRange(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta, long.MaxValue);
+
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(retryTimeout, conn.ConnectionTimeout);
+            }
         }
-    }
     }
 
 

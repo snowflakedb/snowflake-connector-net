@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry;
 [Collection(nameof(SessionTelemetryModuleTestFixture))]
 public sealed class SessionTelemetryModuleTest
 {
-    [CollectionDefinition(nameof(SessionTelemetryModuleTestFixture), DisableParallelization =  true)]
+    [CollectionDefinition(nameof(SessionTelemetryModuleTestFixture), DisableParallelization = true)]
     public sealed class SessionTelemetryModuleTestFixture : ICollectionFixture<SessionTelemetryModuleTestFixture>
     { }
 

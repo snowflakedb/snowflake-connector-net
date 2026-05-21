@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Text;
     using System.Net;
     using Moq;
-    public sealed class SFRemoteStorageClientTest: IDisposable
+    public sealed class SFRemoteStorageClientTest : IDisposable
     {
         private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
         // Mock data for file metadata
@@ -571,13 +571,13 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private async Task<string> ReadDownloadFileAsync()
         {
-            #if NETFRAMEWORK
+#if NETFRAMEWORK
             var result = File.ReadAllText(t_downloadFileName);
             return result;
-            #else
+#else
             var text = await File.ReadAllTextAsync(t_downloadFileName, _cancellationToken);
             return text;
-            #endif
+#endif
         }
     }
 }

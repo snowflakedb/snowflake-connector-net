@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests;
 
-[CollectionDefinition(nameof(SFSessionPropertyWithIsolatedLoggerCtxTestFixture), DisableParallelization =  true)]
+[CollectionDefinition(nameof(SFSessionPropertyWithIsolatedLoggerCtxTestFixture), DisableParallelization = true)]
 public sealed class SFSessionPropertyWithIsolatedLoggerCtxTestFixture : ICollectionFixture<SFSessionPropertyWithIsolatedLoggerCtxTest>
 {
 }

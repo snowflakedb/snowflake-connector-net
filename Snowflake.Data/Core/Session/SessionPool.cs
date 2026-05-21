@@ -66,7 +66,7 @@ namespace Snowflake.Data.Core.Session
             _instanceSessionFactory = sessionFactory;
         }
 
-        internal static SessionPool CreateSessionCache() => new ();
+        internal static SessionPool CreateSessionCache() => new();
 
         internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token) =>
             CreateSessionPool(connectionString, password, oauthClientSecret, token, null);

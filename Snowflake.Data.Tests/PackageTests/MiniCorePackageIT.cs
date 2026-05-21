@@ -140,5 +140,5 @@ namespace Snowflake.Data.Tests.PackageTests
         {
             TearDown();
         }
-}
+    }
 }
