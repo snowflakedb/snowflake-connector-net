@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.Mock
             return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+        public async Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)postRequest;
             if (sfRequest.jsonBody is LoginRequest)
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.Mock
                 };
 
                 // login request return success
-                return Task.FromResult<T>((T)(object)authnResponse);
+                return (T)(object)authnResponse;
             }
 
             if (sfRequest.Url.Query.StartsWith("?delete=true"))
@@ -66,9 +66,9 @@ namespace Snowflake.Data.Tests.Mock
                     message = "Session no longer exists. New login required to access the service",
                     success = false
                 };
-                Thread.Sleep(TimeSpan.FromSeconds(10));
+                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
                 CloseRequests.Add(sfRequest);
-                return Task.FromResult<T>((T)(object)closeResponse);
+                return (T)(object)closeResponse;
             }
 
             throw new NotImplementedException();

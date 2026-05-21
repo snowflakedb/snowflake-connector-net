@@ -1,10 +1,10 @@
 using Moq;
 using Xunit;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-
     public class EasyLoggingConfigProviderTest
     {
         private const string FilePathFromConnectionString = "/Users/dotnet/config.json";
