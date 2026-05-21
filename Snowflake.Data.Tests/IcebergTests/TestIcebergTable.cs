@@ -7,15 +7,23 @@ using System.Text;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests.IntegrationTests;
 using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.Util.TestData;
 
 namespace Snowflake.Data.Tests.IcebergTests
 {
-    [TestFixture(ResultFormat.ARROW)]
-    [TestFixture(ResultFormat.JSON)]
-    [NonParallelizable]
-    public class TestIcebergTable : SFBaseTest
+    public sealed class TestIcebergTableJson : TestIcebergTable
+    {
+        public TestIcebergTableJson(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.JSON) { }
+    }
+
+    public sealed class TestIcebergTableArrow : TestIcebergTable
+    {
+        public TestIcebergTableArrow(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.ARROW) { }
+    }
+
+    public abstract class TestIcebergTable : SFBaseTestAsync
     {
         private const string TableNameIceberg = "DOTNET_TEST_DATA_IB";
         private const string TableNameHybrid = "DOTNET_TEST_DATA_HY";
@@ -67,13 +75,14 @@ namespace Snowflake.Data.Tests.IcebergTests
         private const string FormatYmdHmsf = "yyyy-MM-dd HH:mm:ss.fffffff";
         private const string FormatYmdHmsfZ = "yyyy-MM-dd HH:mm:ss.fffffff zzz";
 
-        public TestIcebergTable(ResultFormat resultFormat)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public TestIcebergTable(SFBaseTestAsyncFixture fixture, ResultFormat resultFormat) : base(fixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
         }
 
-        [SFFact]
-        [Ignore("Not a scope for CICD")]
+        [Fact(Skip = "Not a scope for CICD")]
         public void TestInsertPlainText()
         {
             // Arrange
@@ -103,9 +112,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-
-        [SFFact]
-        [Ignore("Not a scope for CICD tests")]
+        [Fact(Skip = "Not a scope for CICD tests")]
         public void TestInsertWithValueBinding()
         {
             // Arrange
@@ -129,8 +136,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [SFFact]
-        [Ignore("Not a scope for CICD")]
+        [Fact(Skip = "Not a scope for CICD")]
         public void TestUpdateWithValueBinding()
         {
             // Arrange
@@ -187,8 +193,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [SFFact]
-        [Ignore("Not a scope for CICD")]
+        [Fact(Skip = "Not a scope for CICD")]
         public void TestJoin()
         {
             using (var conn = OpenConnection())
@@ -232,8 +237,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [SFFact]
-        [Ignore("Not a scope for CICD")]
+        [Fact(Skip = "Not a scope for CICD")]
         public void TestDelete()
         {
             using (var conn = OpenConnection())
@@ -256,8 +260,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [SFFact]
-        [Ignore("Not a scope for CICD")]
+        [Fact(Skip = "Not a scope for CICD")]
         public void TestDeleteAll()
         {
             using (var conn = OpenConnection())
@@ -279,8 +282,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [SFFact]
-        [Ignore("Not a scope for CICD")]
+        [Fact(Skip = "Not a scope for CICD")]
         public void TestMultiStatement()
         {
             using (var conn = OpenConnection())
@@ -306,8 +308,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [SFFact]
-        [Ignore("Not a scope for CICD")]
+        [Fact(Skip = "Not a scope for CICD")]
         public void TestBatchInsertForLargeData()
         {
             using (var conn = OpenConnection())
@@ -335,8 +336,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [SFFact]
-        [Ignore("Not a scope for CICD")]
+        [Fact(Skip = "Not a scope for CICD")]
         public void TestStructuredTypesAsJsonString()
         {
             using (var conn = OpenConnection())
@@ -375,7 +375,7 @@ namespace Snowflake.Data.Tests.IcebergTests
 
         private SnowflakeDbConnection OpenConnection()
         {
-            var conn = new SnowflakeDbConnection(ConnectionString);
+            var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
             conn.Open();
             return conn;
         }
@@ -503,34 +503,32 @@ namespace Snowflake.Data.Tests.IcebergTests
                 switch (expected)
                 {
                     case Int32 i32:
-                        Assert.Equal(i32, actualRow.GetInt32(idx), mismatch);
+                        Assert.Equal(i32, actualRow.GetInt32(idx));
                         break;
                     case Int64 i64:
-                        Assert.Equal(i64, actualRow.GetInt64(idx), mismatch);
+                        Assert.Equal(i64, actualRow.GetInt64(idx));
                         break;
                     case Decimal dec:
-                        Assert.Equal(dec, actualRow.GetDecimal(idx), mismatch);
+                        Assert.Equal(dec, actualRow.GetDecimal(idx));
                         break;
                     case float flt:
-                        Assert.Equal(flt, actualRow.GetFloat(idx), mismatch);
+                        Assert.Equal(flt, actualRow.GetFloat(idx));
                         break;
                     case String str:
-                        Assert.Equal(str, actualRow.GetString(idx), mismatch);
+                        Assert.Equal(str, actualRow.GetString(idx));
                         break;
                     case Boolean bl:
-                        Assert.Equal(bl, actualRow.GetBoolean(idx), mismatch);
+                        Assert.Equal(bl, actualRow.GetBoolean(idx));
                         break;
                     case DateTime dt:
                         var frmt = column.Contains(" TIME") ? FormatHms : FormatYmdHmsf;
-                        Assert.Equal(dt.ToString(frmt), actualRow.GetDateTime(idx).ToString(frmt), mismatch);
+                        Assert.Equal(dt.ToString(frmt), actualRow.GetDateTime(idx).ToString(frmt));
                         break;
                     case DateTimeOffset dto:
-                        Assert.Equal(dto.ToUniversalTime().ToString(FormatYmdHmsfZ),
-                                        actualRow.GetFieldValue<DateTimeOffset>(idx).ToUniversalTime().ToString(FormatYmdHmsfZ),
-                                        mismatch);
+                        Assert.Equal(dto.ToUniversalTime().ToString(FormatYmdHmsfZ), actualRow.GetFieldValue<DateTimeOffset>(idx).ToUniversalTime().ToString(FormatYmdHmsfZ));
                         break;
                     case byte[] bt:
-                        Assert.Equal(bt, actualRow.GetFieldValue<byte[]>(idx), mismatch);
+                        Assert.Equal(bt, actualRow.GetFieldValue<byte[]>(idx));
                         break;
                 }
             }
