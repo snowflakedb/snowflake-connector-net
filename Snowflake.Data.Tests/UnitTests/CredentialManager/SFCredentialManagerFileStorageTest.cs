@@ -1,14 +1,13 @@
 using System;
 using System.IO;
-using Xunit;
 using Moq;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
-
+using Snowflake.Data.Tests.Util;
+using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
-
     public class SFCredentialManagerFileStorageTest
     {
         private const string SnowflakeCacheLocation = "/Users/snowflake/cache";
@@ -18,8 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         [ThreadStatic]
         private static Mock<EnvironmentOperations> t_environmentOperations;
 
-        [SetUp]
-        public void SetUp()
+        public SFCredentialManagerFileStorageTest()
         {
             t_environmentOperations = new Mock<EnvironmentOperations>();
         }
@@ -75,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var thrown = Assert.Throws<Exception>(() => new SFCredentialManagerFileStorage(t_environmentOperations.Object));
 
             // assert
-            Assert.That(thrown.Message, Contains.Substring("Unable to identify credential cache directory"));
+            Assert.Contains(thrown.Message, "Unable to identify credential cache directory");
         }
 
         private void AssertFileStorageForLocation(string directory, SFCredentialManagerFileStorage fileStorage)
