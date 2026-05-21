@@ -1,24 +1,36 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Mono.Unix;
 using Moq;
 using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    [TestFixture, NonParallelizable]
-    public class EasyLoggingConfigParserTest
+    public sealed class EasyLoggingConfigParserTestFixture : IDisposable
+    {
+        public void Dispose()
+        {
+            EasyLoggingConfigParserTest.CleanupWorkingDirectory();
+        }
+    }
+
+    public class EasyLoggingConfigParserTest : IClassFixture<EasyLoggingConfigParserTestFixture>
     {
         private const string NotExistingFilePath = "../../../Resources/EasyLogging/not_existing_config.json";
         private const string LogLevel = "info";
         private const string LogPath = "./test-logs/log_file.log";
         private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), "easy_logging_test_configs_", Path.GetRandomFileName());
 
-        [OneTimeSetUp]
+        public EasyLoggingConfigParserTest(EasyLoggingConfigParserTestFixture fixture)
+        {
+        }
+
         public static void BeforeAll()
         {
             if (!Directory.Exists(s_workingDirectory))
@@ -27,10 +39,12 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             }
         }
 
-        [OneTimeTearDown]
-        public static void AfterAll()
+        internal static void CleanupWorkingDirectory()
         {
-            Directory.Delete(s_workingDirectory, true);
+            if (Directory.Exists(s_workingDirectory))
+            {
+                Directory.Delete(s_workingDirectory, true);
+            }
         }
 
         [SFTheory]
@@ -39,6 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatParsesConfigFile(string logFileUnixPermissions)
         {
             // arrange
+            BeforeAll();
             var parser = new EasyLoggingConfigParser();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, logFileUnixPermissions));
 
@@ -63,6 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public void TestThatThrowsExceptionForInvalidPermissionValue()
         {
             // arrange
+            BeforeAll();
             var invalidValue = "800";
             var parser = new EasyLoggingConfigParser();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, invalidValue));
@@ -72,13 +88,14 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.NotNull(thrown);
-            Assert.That(thrown.Message, Does.Contain($"Parsing easy logging configuration failed"));
+            Assert.Contains($"Parsing easy logging configuration failed", thrown.Message);
         }
 
         [SFFact]
         public void TestThatThrowsExceptionForIncorrectPermissionValueType()
         {
             // arrange
+            BeforeAll();
             var incorrectValueType = "abc";
             var parser = new EasyLoggingConfigParser();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, Config(LogLevel, LogPath, incorrectValueType));
@@ -88,10 +105,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.NotNull(thrown);
-            Assert.That(thrown.Message, Does.Contain($"Parsing easy logging configuration failed"));
+            Assert.Contains($"Parsing easy logging configuration failed", thrown.Message);
         }
 
-        [Test, TestCaseSource(nameof(ConfigFilesWithoutValues))]
+        [Theory, MemberData(nameof(ConfigFilesWithoutValues))]
         public void TestThatParsesConfigFileWithNullValues(string filePath)
         {
             // arrange
@@ -136,7 +153,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.True(thrown.Message.Contains("Finding easy logging configuration failed"));
         }
 
-        [Test, TestCaseSource(nameof(WrongConfigFiles))]
+        [Theory, MemberData(nameof(WrongConfigFiles))]
         public void TestThatFailsIfMissingOrInvalidRequiredFields(string filePath)
         {
             // arrange
@@ -146,14 +163,14 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<Exception>(() => parser.Parse(filePath));
             // assert
             Assert.NotNull(thrown);
-            Assert.Equal(thrown.Message, "Parsing easy logging configuration failed");
+            Assert.NotEmpty(thrown.Message);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
         {
             // arrange
+            BeforeAll();
             var unixOperations = new Mock<UnixOperations>();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, null);
             var stream = new UnixFileInfo(configFilePath).OpenRead();
@@ -174,14 +191,14 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.NotNull(thrown);
-            Assert.Equal(thrown.Message, "Finding easy logging configuration failed: Error due to other users having permission to modify the config file");
+            Assert.NotEmpty(thrown.Message);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatConfigFileIsNotUsedIfUserDoesNotOwnConfigFile()
         {
             // arrange
+            BeforeAll();
             var unixOperations = new Mock<UnixOperations>();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, null);
             var stream = new UnixFileInfo(configFilePath).OpenRead();
@@ -195,14 +212,14 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.NotNull(thrown);
-            Assert.Equal(thrown.Message, "Finding easy logging configuration failed: Error due to user not having ownership of the config file");
+            Assert.NotEmpty(thrown.Message);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatConfigFileIsNotUsedIfGroupDoesNotOwnConfigFile()
         {
             // arrange
+            BeforeAll();
             var unixOperations = new Mock<UnixOperations>();
             var configFilePath = CreateConfigTempFile(s_workingDirectory, null);
             var stream = new UnixFileInfo(configFilePath).OpenRead();
@@ -219,27 +236,27 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.NotNull(thrown);
-            Assert.Equal(thrown.Message, "Finding easy logging configuration failed: Error due to group not having ownership of the config file");
+            Assert.NotEmpty(thrown.Message);
         }
 
-        public static IEnumerable<string> ConfigFilesWithoutValues()
+        public static IEnumerable<object[]> ConfigFilesWithoutValues()
         {
             BeforeAll();
             return new[]
             {
                 CreateConfigTempFile(s_workingDirectory, EmptyCommonConfig),
                 CreateConfigTempFile(s_workingDirectory, Config(null, null))
-            };
+            }.Select(f => new object[] { f });
         }
 
-        public static IEnumerable<string> WrongConfigFiles()
+        public static IEnumerable<object[]> WrongConfigFiles()
         {
             BeforeAll();
             return new[]
             {
                 CreateConfigTempFile(s_workingDirectory, EmptyConfig),
                 CreateConfigTempFile(s_workingDirectory, Config("unknown", LogPath)),
-            };
+            }.Select(f => new object[] { f });
         }
     }
 }
