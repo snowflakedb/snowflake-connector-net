@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-
     public class OsReleaseReaderTest
     {
         [SFFact]

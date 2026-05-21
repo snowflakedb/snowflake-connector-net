@@ -2,18 +2,17 @@ using System.IO;
 using Mono.Unix;
 using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-
-    [Platform(Exclude = "Win")]
     public class DirectoryUnixInformationTest
     {
         private const long UserId = 5;
         private const long AnotherUserId = 6;
         static readonly string s_directoryFullName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
-        [SFTheory]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [InlineData(FileAccessPermissions.UserWrite)]
         [InlineData(FileAccessPermissions.UserRead)]
         [InlineData(FileAccessPermissions.UserExecute)]
@@ -30,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isSafe);
         }
 
-        [SFTheory]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
         public void TestUnsafePermissions(FileAccessPermissions unsecurePermissions)
@@ -45,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isSafe);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestSafeExactlyDirectory()
         {
             // arrange
@@ -58,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isSafe);
         }
 
-        [SFTheory]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [InlineData(FileAccessPermissions.UserRead)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
@@ -74,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isSafe);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestOwnedByOthers()
         {
             // arrange

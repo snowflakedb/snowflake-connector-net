@@ -3,10 +3,10 @@ using System.Linq;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
     public class SessionOrCreationTokensTest
     {
         private SFSession _session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());

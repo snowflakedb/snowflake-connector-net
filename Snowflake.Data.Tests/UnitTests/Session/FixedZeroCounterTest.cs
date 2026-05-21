@@ -1,9 +1,9 @@
 using Xunit;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
     public class FixedZeroCounterTest
     {
         [SFFact]

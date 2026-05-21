@@ -2,11 +2,10 @@ using System.Diagnostics;
 using System.Threading;
 using Xunit;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
-    [Parallelizable(ParallelScope.Self)]
     public class NonWaitingQueueTest
     {
         [SFFact]
@@ -23,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.False(result);
-            Assert.LessOrEqual(watch.ElapsedMilliseconds, 50);
+            Assert.InRange(watch.ElapsedMilliseconds, long.MinValue,50);
         }
 
         [SFFact]
@@ -60,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var nonWaitingQueue = new NonWaitingQueue();
 
             // act/assert
-            Assert.DoesNotThrow(() => nonWaitingQueue.Reset());
+            nonWaitingQueue.Reset();
         }
     }
 }

@@ -3,12 +3,17 @@ using System.IO;
 using Moq;
 using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-
     public class SpcsTokenProviderTest
     {
+        public SpcsTokenProviderTest()
+        {
+            Setup();
+        }
+
         [ThreadStatic]
         private static Mock<FileOperations> t_fileOperations;
 
@@ -17,8 +22,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
         [ThreadStatic]
         private static SpcsTokenProvider t_provider;
-
-        [SetUp]
         public void Setup()
         {
             t_fileOperations = new Mock<FileOperations>();

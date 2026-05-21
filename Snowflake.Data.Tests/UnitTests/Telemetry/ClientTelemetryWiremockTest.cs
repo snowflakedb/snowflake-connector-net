@@ -7,19 +7,38 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
-using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Telemetry;
 using Snowflake.Data.Tests.Util;
+using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests.Telemetry
 {
+    [CollectionDefinition(nameof(ClientTelemetryWiremockTestFixture), DisableParallelization = true)]
+    public sealed class ClientTelemetryWiremockTestFixture : ICollectionFixture<ClientTelemetryWiremockTestFixture.Fixture>
+    {
+        public sealed class Fixture : IDisposable
+        {
+            internal WiremockRunner Runner { get; }
+
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
+        }
+    }
+
     /// <summary>
     /// End-to-(almost)-end telemetry tests using wiremock.
     /// Verifies the real pipeline: command execution -> activity -> SessionTelemetryModule -> POST /telemetry/send -> wiremock captures it.
     /// Assertions are made against what wiremock actually received, not against in-process activity captures.
     /// </summary>
-    [TestFixture, NonParallelizable]
+    [Collection(nameof(ClientTelemetryWiremockTestFixture))]
     public sealed class ClientTelemetryWiremockTest
     {
         private static readonly string s_mappingPath = Path.Combine("wiremock", "Telemetry", "login_and_telemetry.json");
@@ -32,30 +51,20 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
         private static readonly HttpClient s_http = new();
 
         private WiremockRunner _wiremock;
+        private readonly ClientTelemetryWiremockTestFixture.Fixture _fixture;
 
-        [OneTimeSetUp]
-        public void BeforeAll()
+        public ClientTelemetryWiremockTest(ClientTelemetryWiremockTestFixture.Fixture fixture)
         {
-            _wiremock = WiremockRunner.NewWiremock();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _wiremock?.Dispose();
-        }
-
-        [SetUp]
-        public void SetUp()
-        {
-            _wiremock.ResetMapping();
-            _wiremock.AddMappings(s_mappingPath);
+            _fixture = fixture;
+            _wiremock = _fixture.Runner;
+            _fixture.Runner.ResetMapping();
+            _fixture.Runner.AddMappings(s_mappingPath);
         }
 
         [SFTheory]
-        [InlineData("ExecuteNonQuery", TestName = "ExecuteNonQuery telemetry sent to server")]
-        [InlineData("ExecuteScalar", TestName = "ExecuteScalar telemetry sent to server")]
-        [InlineData("ExecuteReader", TestName = "ExecuteDbDataReader telemetry sent to server")]
+        [InlineData("ExecuteNonQuery")]
+        [InlineData("ExecuteScalar")]
+        [InlineData("ExecuteReader")]
         public void TestSyncCommandSendsTelemetryToServer(string method)
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
@@ -75,14 +84,14 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             var logs = GetTelemetryLogs();
             var matching = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName && l.StatusCode == "OK").ToList();
-            Assert.NotEmpty(matching, $"Expected telemetry log for {method} to be sent to /telemetry/send");
+            Assert.NotEmpty(matching);
             Assert.Equal("client_activity", matching.First().Type);
         }
 
         [SFTheory]
-        [InlineData("ExecuteNonQueryAsync", TestName = "ExecuteNonQueryAsync telemetry sent to server")]
-        [InlineData("ExecuteScalarAsync", TestName = "ExecuteScalarAsync telemetry sent to server")]
-        [InlineData("ExecuteReaderAsync", TestName = "ExecuteDbDataReaderAsync telemetry sent to server")]
+        [InlineData("ExecuteNonQueryAsync")]
+        [InlineData("ExecuteScalarAsync")]
+        [InlineData("ExecuteReaderAsync")]
         public async Task TestAsyncCommandSendsTelemetryToServer(string method)
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
@@ -102,7 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             var logs = GetTelemetryLogs();
             var matching = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName && l.StatusCode == "OK").ToList();
-            Assert.NotEmpty(matching, $"Expected telemetry log for {method} to be sent to /telemetry/send");
+            Assert.NotEmpty(matching);
             Assert.Equal("client_activity", matching.First().Type);
         }
 
@@ -119,7 +128,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
 
             var logs = GetTelemetryLogs();
-            Assert.NotEmpty(logs, "Expected at least one telemetry log");
+            Assert.NotEmpty(logs);
 
             var log = logs.First();
             Assert.Equal("snowflake", log.Tag(TelemetryTags.DbSystem));
@@ -165,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
 
             var logs = GetTelemetryLogs();
-            Assert.NotEmpty(logs, "Server override should enable telemetry even when client disabled it");
+            Assert.NotEmpty(logs); //"Server override should enable telemetry even when client disabled it"
         }
 
         [SFFact]
@@ -183,7 +192,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
 
             var telemetryRequests = GetWiremockRequestsTo("/telemetry/send", noRequestsExpected: true);
-            Assert.Empty(telemetryRequests, "No telemetry should be sent when server disables CLIENT_TELEMETRY_ENABLED");
+            Assert.Empty(telemetryRequests); // "Server override should enable telemetry even when client disabled it"
         }
 
         [SFFact]
@@ -222,7 +231,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             var logs = GetTelemetryLogs();
             var errorLogs = logs.Where(l => l.StatusCode == "ERROR").ToList();
-            Assert.NotEmpty(errorLogs, "Expected at least one ERROR telemetry log when command fails");
+            Assert.NotEmpty(errorLogs); //"Expected at least one ERROR telemetry log when command fails"
         }
 
         [SFFact]
@@ -249,12 +258,12 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             // Internal telemetry
             var internalLogs = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName).ToList();
-            Assert.NotEmpty(internalLogs, "Internal telemetry should still be sent");
+            Assert.NotEmpty(internalLogs); //"Internal telemetry should still be sent"
             Assert.Equal("OK", internalLogs.First().StatusCode);
 
             // Custom telemetry — single synthetic entry (no events added → display name becomes event name)
             var customLogs = logs.Where(l => l.Source == ActivityStarter.ClientDefinedTelemetrySourceName).ToList();
-            Assert.Equal(1, customLogs.Count, "Exactly one custom telemetry log expected (MyCustomOp has no events, so one synthetic entry)");
+            AssertExtensions.Equal(1, customLogs.Count, "Exactly one custom telemetry log expected (MyCustomOp has no events, so one synthetic entry)");
 
             var custom = customLogs.Single();
             Assert.Equal("client_activity", custom.Type);
@@ -282,7 +291,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             }
 
             cmd.CommandText = "SELECT 1";
-            Assert.DoesNotThrow(() => cmd.ExecuteNonQuery());
+            cmd.ExecuteNonQuery();
 
             conn.Close();
         }
@@ -336,7 +345,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
 
             var ex = Assert.Throws<ArgumentException>(() => cmd.StartActivity("ShouldFail"));
-            Assert.That(ex.Message, Does.Contain("Client telemetry needs to be enabled"));
+            Assert.Contains("Client telemetry needs to be enabled", ex.Message);
 
             conn.Close();
         }
@@ -418,7 +427,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             // Internal command telemetry
             var internalLogs = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName).ToList();
-            Assert.NotEmpty(internalLogs, "Internal telemetry for ExecuteNonQuery should be sent to server");
+            Assert.NotEmpty(internalLogs);
             Assert.Equal("OK", internalLogs.First().StatusCode);
 
             // Custom activities
@@ -430,7 +439,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.Equal("snowflake", parentSynthetic.Tag(TelemetryTags.DbSystem));
             Assert.Equal("telemetry-test-session", parentSynthetic.Tag(TelemetryTags.SessionId));
             var parentEventLogs = customLogs.Where(l => l.EventName is "Parenting" or "OperationComplete").ToList();
-            Assert.Equal(2, parentEventLogs.Count, "Parent activity should produce 2 explicit event log entries");
+            AssertExtensions.Equal(2, parentEventLogs.Count, "Parent activity should produce 2 explicit event log entries");
 
             // OldestChild: synthetic event (with custom tag) + 1 explicit event (PsyOpDone)
             var oldestChildSynthetic = customLogs.Single(l => l.EventName == "OldestChild");

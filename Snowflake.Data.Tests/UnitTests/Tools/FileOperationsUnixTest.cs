@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security;
 using Mono.Unix;
 using Mono.Unix.Native;
@@ -7,21 +9,23 @@ using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
+using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
-    [Platform(Exclude = "Win")]
-    public class FileOperationsUnixTest
+    public class FileOperationsUnixTest : IDisposable
     {
+        public FileOperationsUnixTest()
+        {
+            Before();
+        }
+
         private static FileOperations s_fileOperations;
         private static readonly string s_relativeWorkingDirectory = $"file_operations_test_{Path.GetRandomFileName()}";
         private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
         private static readonly string s_content = "random text";
         private static readonly string s_fileName = "testfile";
-
-        [SetUp]
         public static void Before()
         {
             if (!Directory.Exists(s_workingDirectory))
@@ -31,16 +35,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             s_fileOperations = new FileOperations();
         }
-
-        [TearDown]
         public static void After()
         {
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [SFFact]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(UserAllowedFilePermissionsData))]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
-            [ValueSource(nameof(UserAllowedFilePermissions))]
             FileAccessPermissions userAllowedFilePermissions)
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
@@ -55,9 +57,9 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, result);
         }
 
-        [SFFact]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(UserAllowedFilePermissionsData))]
         public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadConfigurationFile(
-            [ValueSource(nameof(UserAllowedFilePermissions))]
             FileAccessPermissions userAllowedFilePermissions)
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
@@ -66,12 +68,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions),
-                "Attempting to read a file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
         }
 
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestFileIsSafeOnNotWindows()
         {
             // arrange
@@ -82,9 +83,9 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
 
-        [SFFact]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(InsecurePermissionsData))]
         public void TestFileIsNotSafeOnNotWindowsWhenTooBroadPermissionsAreUsed(
-            [ValueSource(nameof(InsecurePermissions))]
             FileAccessPermissions permissions)
         {
             // arrange
@@ -95,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestOwnerIsCurrentUser()
         {
             // arrange
@@ -107,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(fileOps.IsFileOwnedByCurrentUser(absolutePath));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
@@ -119,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(fileOps.IsFileOwnedByCurrentUser(absolutePath));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestFileIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange
@@ -139,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestFileCopyUsesProperPermissions()
         {
             // arrange
@@ -160,7 +161,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, File.ReadAllText(DestFilePath));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestFileCopyShouldThrowExecptionIfTooBroadPermissionsAreUsed()
         {
             // arrange
@@ -174,7 +175,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             File.WriteAllText(SrcFilePath, s_content);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_fileOperations.CopyFile(SrcFilePath, DestFilePath), $"File ${SrcFilePath} is not safe to read.");
+            Assert.Throws<SecurityException>(() => s_fileOperations.CopyFile(SrcFilePath, DestFilePath));
         }
 
 
@@ -197,5 +198,16 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             yield return FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute;
             yield return FileAccessPermissions.AllPermissions;
         }
-    }
+
+        public static IEnumerable<object[]> UserAllowedFilePermissionsData() =>
+            UserAllowedFilePermissions().Select(x => new object[] { x });
+
+        public static IEnumerable<object[]> InsecurePermissionsData() =>
+            InsecurePermissions().Select(x => new object[] { x });
+    
+        public void Dispose()
+        {
+            After();
+        }
+}
 }

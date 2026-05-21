@@ -1,23 +1,26 @@
+using System;
 using System.IO;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
+using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
-    [Platform("Win")]
-    public class FileOperationsWindowsTest
+    public class FileOperationsWindowsTest : IDisposable
     {
+        public FileOperationsWindowsTest()
+        {
+            Before();
+        }
+
         private static FileOperations s_fileOperations;
         private static readonly string s_relativeWorkingDirectory = $"file_operations_test_{Path.GetRandomFileName()}";
         private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
         private static readonly string s_content = "random text";
         private static readonly string s_fileName = "testfile";
-
-        [SetUp]
         public static void Before()
         {
             if (!Directory.Exists(s_workingDirectory))
@@ -27,14 +30,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             s_fileOperations = new FileOperations();
         }
-
-        [TearDown]
         public static void After()
         {
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestReadAllTextOnWindows()
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
@@ -46,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, result);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestFileIsSafeOnWindows()
         {
             // arrange
@@ -56,6 +57,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // act and assert
             Assert.True(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
-    }
+    
+        public void Dispose()
+        {
+            After();
+        }
+}
 }
 

@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-
     public class TimeoutHelperTest
     {
-        [SFFact]
-        [TestCaseSource(nameof(InfiniteTimeouts))]
+        [SFTheory]
+        [MemberData(nameof(InfiniteTimeouts))]
         public void TestInfinity(TimeSpan infiniteTimeout)
         {
             // act
@@ -19,8 +19,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isInfinite);
         }
 
-        [SFFact]
-        [TestCaseSource(nameof(FiniteTimeouts))]
+        [SFTheory]
+        [MemberData(nameof(FiniteTimeouts))]
         public void TestFiniteValue(TimeSpan finiteTimeout)
         {
             // act
@@ -30,8 +30,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isInfinite);
         }
 
-        [SFFact]
-        [TestCaseSource(nameof(ZeroLengthTimeouts))]
+        [SFTheory]
+        [MemberData(nameof(ZeroLengthTimeouts))]
         public void TestZeroLength(TimeSpan zeroTimeout)
         {
             // act
@@ -41,8 +41,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isZeroLength);
         }
 
-        [SFFact]
-        [TestCaseSource(nameof(NonZeroLengthTimeouts))]
+        [SFTheory]
+        [MemberData(nameof(NonZeroLengthTimeouts))]
         public void TestNonZeroLength(TimeSpan nonZeroTimeout)
         {
             // act
@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                 TimeoutHelper.FiniteTimeoutLeftMillis(1000, 2000, TimeoutHelper.Infinity()));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Infinite timeout cannot be used to determine milliseconds left"));
+            Assert.Contains("Infinite timeout cannot be used to determine milliseconds left", thrown.Message);
         }
 
 
@@ -139,31 +139,31 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(expectedMillisLeft, millisLeft);
         }
 
-        public static IEnumerable<TimeSpan> InfiniteTimeouts()
+        public static IEnumerable<object[]> InfiniteTimeouts()
         {
-            yield return TimeoutHelper.Infinity();
-            yield return TimeSpan.FromMilliseconds(-1);
+            yield return new object[] { TimeoutHelper.Infinity() };
+            yield return new object[] { TimeSpan.FromMilliseconds(-1) };
         }
 
-        public static IEnumerable<TimeSpan> FiniteTimeouts()
+        public static IEnumerable<object[]> FiniteTimeouts()
         {
-            yield return TimeSpan.Zero;
-            yield return TimeSpan.FromMilliseconds(1);
-            yield return TimeSpan.FromSeconds(2);
+            yield return new object[] { TimeSpan.Zero };
+            yield return new object[] { TimeSpan.FromMilliseconds(1) };
+            yield return new object[] { TimeSpan.FromSeconds(2) };
         }
 
-        public static IEnumerable<TimeSpan> ZeroLengthTimeouts()
+        public static IEnumerable<object[]> ZeroLengthTimeouts()
         {
-            yield return TimeSpan.Zero;
-            yield return TimeSpan.FromMilliseconds(0);
-            yield return TimeSpan.FromSeconds(0);
+            yield return new object[] { TimeSpan.Zero };
+            yield return new object[] { TimeSpan.FromMilliseconds(0) };
+            yield return new object[] { TimeSpan.FromSeconds(0) };
         }
 
-        public static IEnumerable<TimeSpan> NonZeroLengthTimeouts()
+        public static IEnumerable<object[]> NonZeroLengthTimeouts()
         {
-            yield return TimeoutHelper.Infinity();
-            yield return TimeSpan.FromMilliseconds(3);
-            yield return TimeSpan.FromSeconds(5);
+            yield return new object[] { TimeoutHelper.Infinity() };
+            yield return new object[] { TimeSpan.FromMilliseconds(3) };
+            yield return new object[] { TimeSpan.FromSeconds(5) };
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Xunit;
 using Snowflake.Data.Client;
@@ -11,14 +12,21 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
     public class SFHttpClientPropertiesTest
     {
-        [SFFact]
+        [SFTheory]
+        [InlineData(false, false, false)]
+        [InlineData(false, false, true)]
+        [InlineData(false, true, false)]
+        [InlineData(false, true, true)]
+        [InlineData(true, false, false)]
+        [InlineData(true, false, true)]
+        [InlineData(true, true, false)]
+        [InlineData(true, true, true)]
         public void TestConvertToMapOnly2Properties(
-            [Values(true, false)] bool validateDefaultParameters,
-            [Values(true, false)] bool clientSessionKeepAlive,
-            [Values(true, false)] bool clientStoreTemporaryCredential)
+            bool validateDefaultParameters,
+            bool clientSessionKeepAlive,
+            bool clientStoreTemporaryCredential)
         {
             // arrange
             var proxyProperties = new SFSessionHttpClientProxyProperties()
@@ -244,7 +252,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // act & assert
             var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;minTls=tls13;maxTls=tls12", new SessionPropertiesContext()));
-            Assert.That(exception.Message.Contains("Connection string is invalid: Parameter MINTLS value cannot be higher than MAXTLS value."));
+            Assert.True(exception.Message.Contains("Connection string is invalid: Parameter MINTLS value cannot be higher than MAXTLS value."));
         }
 
         [SFFact]
@@ -252,10 +260,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // act & assert
             var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;minTls=tls11;maxTls=tls11", new SessionPropertiesContext()));
-            Assert.That(exception.Message.Contains("Connection string is invalid: Parameter MINTLS should have one of the following values: TLS12, TLS13."));
+            Assert.True(exception.Message.Contains("Connection string is invalid: Parameter MINTLS should have one of the following values: TLS12, TLS13."));
         }
 
-        [Test, TestCaseSource(nameof(PropertiesProvider))]
+        [Theory, MemberData(nameof(PropertiesProvider))]
         public void TestExtractProperties(PropertiesTestCase testCase)
         {
             // arrange
@@ -281,7 +289,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.NotNull(proxyProperties);
         }
 
-        public static IEnumerable<PropertiesTestCase> PropertiesProvider()
+        public static IEnumerable<object[]> PropertiesProvider()
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             var defaultProperties = new PropertiesTestCase()
@@ -572,7 +580,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     _allowCertificatesWithoutCrlUrl = false
                 }
             };
-            return new[]
+            return new PropertiesTestCase[]
             {
                 defaultProperties,
                 propertiesWithValidateDefaultParametersChanged,
@@ -589,7 +597,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 propertiesWithMaxHttpRetriesChangedToAValueAbove7,
                 propertiesWithMaxHttpRetriesChangedToAValueBelow7,
                 propertiesWithMaxHttpRetriesChangedToZero
-            };
+            }.Select(tc => new object[] { tc });
         }
 
         public class PropertiesTestCase
