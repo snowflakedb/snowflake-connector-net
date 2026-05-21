@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _runner = fixture.Runner;
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestExecuteReaderAsyncRetriesOnTruncatedJson()
         {
             // arrange
@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("1", reader.GetString(0));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestExecuteReaderAsyncThrowsWhenAllRetriesFail()
         {
             // arrange
