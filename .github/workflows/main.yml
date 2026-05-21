@@ -48,15 +48,15 @@ jobs:
           - dotnet: net8.0
             sdk: '8.0.x'
             test_runner: 'dotnet run --framework net8.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             sdk: '9.0.x'
             test_runner: 'dotnet run --framework net9.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             sdk: '10.0.x'
             test_runner: 'dotnet run --framework net10.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net462
             sdk: '6.0.x'
             test_runner: 'dotnet test --framework net462'
@@ -170,15 +170,15 @@ jobs:
           - dotnet: net8.0
             sdk: '8.0.x'
             test_runner: 'dotnet run --framework net8.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             sdk: '9.0.x'
             test_runner: 'dotnet run --framework net9.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             sdk: '10.0.x'
             test_runner: 'dotnet run --framework net10.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -269,15 +269,15 @@ jobs:
           - dotnet: net8.0
             sdk: '8.0.x'
             test_runner: 'dotnet run --framework net8.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             sdk: '9.0.x'
             test_runner: 'dotnet run --framework net9.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             sdk: '10.0.x'
             test_runner: 'dotnet run --framework net10.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -365,13 +365,13 @@ jobs:
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             test_runner: 'dotnet run --framework net8.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             test_runner: 'dotnet run --framework net9.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             test_runner: 'dotnet run --framework net10.0'
-            test_args: '--no-build'
+            test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
       - name: Build and Run Tests in Docker

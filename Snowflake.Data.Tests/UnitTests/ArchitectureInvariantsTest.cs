@@ -8,6 +8,11 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
+using Snowflake.Data.Core;
+using Snowflake.Data.Core.FileTransfer;
+using Snowflake.Data.Core.Session;
+using Snowflake.Data.Telemetry;
 using Snowflake.Data.Tests.Util;
 using Xunit;
 
@@ -99,7 +104,8 @@ public sealed class ArchitectureInvariantsTest
         });
 
         // TODO SNOW-3560671
-        var expectedViolations = new[] {
+        var expectedViolations = new[]
+        {
             "/Core/SFResultSet.cs: Task.FromResult(false)",
             "/Core/ArrowResultSet.cs: Task.FromResult(false)",
             "/Core/SFMultiStatementsResultSet.cs: NextResultAsync(CancellationToken.None)",
@@ -130,7 +136,88 @@ public sealed class ArchitectureInvariantsTest
             .OrderBy(t => t)
             .ToArray();
 
-        AssertOnViolations(s_approvedPublicTypes, publicTypes);
+        var shimTypeToIgnore = "Mono.Unix.FileAccessPermissions";
+        AssertOnViolations(s_approvedPublicTypes, publicTypes, shimTypeToIgnore);
+    }
+
+    [SFTheory]
+    [MemberData(nameof(ApprovedPublicTypes))]
+    public void TestPublicApiSurface_OnlyExplicitlyApprovedMethodsArePublic(string typeName)
+    {
+        var type = s_libTypes[typeName];
+        var approvedMethods = s_apiDefinition[type].Methods;
+        var actualMethods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Where(m => !m.IsSpecialName)
+            .Select(m => new { m.Name, Params = m.GetParameters() })
+            .Select(m => new { m.Name, ParamsStr = string.Join(", ", m.Params.Select(p => p.ParameterType.Name)) })
+            .Select(m => $"{m.Name}({m.ParamsStr})")
+            .ToList();
+
+        AssertOnViolations(approvedMethods.OrderBy(t => t).ToList(), actualMethods);
+    }
+
+    [SFTheory]
+    [MemberData(nameof(ApprovedPublicTypes))]
+    public void TestPublicApiSurface_OnlyExplicitlyApprovedFieldsArePublic(string typeName)
+    {
+        var type = s_libTypes[typeName];
+        var approvedFields = s_apiDefinition[type].Fields;
+        var actualFields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Select(f => f.Name)
+            .ToList();
+
+        var enumMemberToIgnore = "value__";
+        AssertOnViolations(approvedFields, actualFields, enumMemberToIgnore);
+    }
+
+    [SFTheory]
+    [MemberData(nameof(ApprovedPublicTypes))]
+    public void TestPublicApiSurface_OnlyExplicitlyApprovedConstructorsArePublic(string typeName)
+    {
+        var type = s_libTypes[typeName];
+        var approvedConstructors = s_apiDefinition[type].Constructors;
+        var actualConstructors = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Select(c => $".ctor({string.Join(", ", c.GetParameters().Select(p => p.ParameterType.Name))})")
+            .ToList();
+
+        AssertOnViolations(approvedConstructors, actualConstructors);
+    }
+
+    [SFTheory]
+    [MemberData(nameof(ApprovedPublicTypes))]
+    public void TestPublicApiSurface_OnlyExplicitlyApprovedGettersArePublic(string typeName)
+    {
+        var type = s_libTypes[typeName];
+        var approvedGetters = s_apiDefinition[type].Getters;
+        var actualGetters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Where(p => p.GetMethod is { IsPublic: true })
+            .Select(p => p.Name)
+            .ToList();
+
+        AssertOnViolations(approvedGetters, actualGetters);
+    }
+
+    [SFTheory]
+    [MemberData(nameof(ApprovedPublicTypes))]
+    public void TestPublicApiSurface_OnlyExplicitlyApprovedSettersArePublic(string typeName)
+    {
+        var type = s_libTypes[typeName];
+        var approvedSetters = s_apiDefinition[type].Setters;
+        var actualSetters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Where(p => p.SetMethod is { IsPublic: true })
+            .Select(p => p.Name)
+            .ToList();
+
+        AssertOnViolations(approvedSetters, actualSetters);
+    }
+
+    private readonly struct ComponentFace
+    {
+        public string[] Constructors { get; init; }
+        public string[] Methods { get; init; }
+        public string[] Getters { get; init; }
+        public string[] Setters { get; init; }
+        public string[] Fields { get; init; }
     }
 
     private static string FindSolutionRoot()
@@ -151,6 +238,11 @@ public sealed class ArchitectureInvariantsTest
         throw new InvalidOperationException("Cannot find solution root directory");
     }
 
+    public static IEnumerable<object[]> ApprovedPublicTypes => s_approvedPublicTypes
+        .OrderBy(t => t)
+        .Select(t => new object[] { t });
+
+
     [Fact]
     public void DummyTest()
     {
@@ -165,8 +257,10 @@ public sealed class ArchitectureInvariantsTest
         Assert.True(true);
     }
 
-    private static void AssertOnViolations(IEnumerable<string> expectedViolations, IEnumerable<string> actualViolations)
+    private static void AssertOnViolations(IEnumerable<string> expectedViolations, IEnumerable<string> actualViolations, params string[] toIgnore)
     {
+        expectedViolations = expectedViolations.Concat(toIgnore);
+        actualViolations = actualViolations.Concat(toIgnore);
         var expectedNotReceived = expectedViolations.Except(actualViolations).ToArray();
         var unexpected = actualViolations.Except(expectedViolations).ToArray();
 
@@ -204,10 +298,272 @@ public sealed class ArchitectureInvariantsTest
         "Snowflake.Data.Core.SFDataType",
         "Snowflake.Data.Core.SFError",
         "Snowflake.Data.Core.Session.ChangedSessionBehavior",
-#if WINDOWS_BUILD
-        "Mono.Unix.FileAccessPermissions",
-#endif
         "Snowflake.Data.Telemetry.ActivityStarter",
         "Snowflake.Data.Telemetry.SessionTelemetryModuleFacade",
     ];
+
+    private static readonly Dictionary<Type, ComponentFace> s_apiDefinition = new()
+    {
+        [typeof(ISnowflakeCredentialManager)] = new()
+        {
+            Constructors = [],
+            Methods = ["GetCredentials(String)", "RemoveCredentials(String)", "SaveCredentials(String, String)"],
+            Getters = [],
+            Setters = [],
+            Fields = []
+        },
+        [typeof(SnowflakeColumn)] = new()
+        {
+            Constructors = [".ctor()"],
+            Methods = [],
+            Getters = ["Name", "IgnoreForPropertyOrder"],
+            Setters = ["Name", "IgnoreForPropertyOrder"],
+            Fields = []
+        },
+        [typeof(SnowflakeCredentialManagerFactory)] = new()
+        {
+            Constructors = [".ctor()"],
+            Methods =
+            [
+                "UseDefaultCredentialManager()", "UseInMemoryCredentialManager()", "UseFileCredentialManager()", "UseWindowsCredentialManager()",
+                "SetCredentialManager(ISnowflakeCredentialManager)", "GetCredentialManager()"
+            ],
+            Getters = [],
+            Fields = [],
+            Setters = []
+        },
+        [typeof(SnowflakeDbCommand)] = new()
+        {
+            Constructors = [".ctor()", ".ctor(SnowflakeDbConnection)", ".ctor(SnowflakeDbConnection, String)"],
+            Methods =
+            [
+                "Cancel()", "ExecuteNonQuery()", "ExecuteNonQueryAsync(CancellationToken)", "ExecuteScalar()",
+                "ExecuteScalarAsync(CancellationToken)", "Prepare()", "GetQueryId()", "ExecuteInAsyncMode()",
+                "ExecuteAsyncInAsyncMode(CancellationToken)", "GetQueryStatus(String)", "GetQueryStatusAsync(String, CancellationToken)",
+                "GetResultsFromQueryId(String)", "GetResultsFromQueryIdAsync(String, CancellationToken)"
+            ],
+            Getters = ["CommandText", "CommandTimeout", "QueryTag", "CommandType", "DesignTimeVisible", "UpdatedRowSource"],
+            Setters = ["CommandText", "CommandTimeout", "QueryTag", "CommandType", "DesignTimeVisible", "UpdatedRowSource"],
+            Fields = []
+        },
+        [typeof(SnowflakeDbCommandBuilder)] = new()
+        {
+            Constructors = [".ctor()", ".ctor(SnowflakeDbDataAdapter)"],
+            Methods = [],
+            Getters = ["QuotePrefix", "QuoteSuffix"],
+            Setters = ["QuotePrefix", "QuoteSuffix"],
+            Fields = ["DEFAULT_QUOTE_PREFIX", "DEFAULT_QUOTE_SUFFIX"]
+        },
+        [typeof(SnowflakeDbConnection)] = new()
+        {
+            Constructors = [".ctor()", ".ctor(String)"],
+            Methods =
+            [
+                "IsOpen()", "PreventPooling()", "ChangeDatabase(String)", "Close()", "CloseAsync()", "CloseAsync(CancellationToken)", "Open()",
+                "OpenAsync(CancellationToken)", "GetArrayBindingMutex()", "IsArrayBindStageCreated()", "SetArrayBindStageCreated()",
+                "IsStillRunning(QueryStatus)", "IsAnError(QueryStatus)"
+            ],
+            Getters =
+            [
+                "ConnectionString", "Password", "Passcode", "OAuthClientSecret", "Token", "Database", "ConnectionTimeout", "DataSource",
+                "ServerVersion", "State"
+            ],
+            Setters = ["ConnectionString", "Password", "Passcode", "OAuthClientSecret", "Token"],
+            Fields = []
+        },
+        [typeof(SnowflakeDbConnectionPool)] = new()
+        {
+            Constructors = [".ctor()"],
+            Methods =
+            [
+                "GetPool(String, SecureString, SecureString, SecureString)", "GetPool(String)", "ClearAllPools()", "SetMaxPoolSize(Int32)",
+                "GetMaxPoolSize()", "SetTimeout(Int64)", "GetTimeout()", "GetCurrentPoolSize()", "SetPooling(Boolean)", "GetPooling()",
+                "SetOldConnectionPoolVersion()"
+            ],
+            Getters = [],
+            Fields = [],
+            Setters = []
+        },
+        [typeof(SnowflakeDbConnectionStringBuilder)] = new() { Constructors = [".ctor()"], Methods = [], Getters = [], Fields = [], Setters = [] },
+        [typeof(SnowflakeDbDataAdapter)] = new()
+        {
+            Constructors = [".ctor()", ".ctor(SnowflakeDbCommand)", ".ctor(String, SnowflakeDbConnection)"],
+            Methods = [],
+            Getters = ["SelectCommand"],
+            Setters = ["SelectCommand"],
+            Fields = []
+        },
+        [typeof(SnowflakeDbDataReader)] = new()
+        {
+            Constructors = [],
+            Methods =
+            [
+                "GetSchemaTable()", "GetQueryId()", "GetBoolean(Int32)", "GetByte(Int32)", "GetBytes(Int32, Int64, Byte[], Int32, Int32)",
+                "GetChar(Int32)", "GetChars(Int32, Int64, Char[], Int32, Int32)", "GetDataTypeName(Int32)", "GetDateTime(Int32)",
+                "GetTimeSpan(Int32)", "GetDecimal(Int32)", "GetDouble(Int32)", "GetEnumerator()", "GetFieldType(Int32)", "GetFloat(Int32)",
+                "GetGuid(Int32)", "GetInt16(Int32)", "GetInt32(Int32)", "GetInt64(Int32)", "GetName(Int32)", "GetOrdinal(String)", "GetString(Int32)",
+                "GetValue(Int32)", "GetValues(Object[])", "GetObject(Int32)", "GetArray(Int32)", "GetMap(Int32)", "IsDBNull(Int32)", "NextResult()",
+                "NextResultAsync(CancellationToken)", "Read()", "ReadAsync(CancellationToken)", "Close()"
+            ],
+            Getters = ["Item", "Item", "Depth", "FieldCount", "HasRows", "IsClosed", "RecordsAffected"],
+            Fields = [],
+            Setters = []
+        },
+        [typeof(SnowflakeDbException)] = new()
+        {
+            Constructors =
+            [
+                ".ctor(String, Int32, String, String)", ".ctor(SFError, String, Exception)", ".ctor(SFError, Object[])",
+                ".ctor(String, SFError, Object[])", ".ctor(Exception, SFError, Object[])", ".ctor(Exception, String, SFError, Object[])"
+            ],
+            Methods = [],
+            Getters = ["SqlState", "QueryId", "ErrorCode"],
+            Fields = [],
+            Setters = ["QueryId"]
+        },
+        [typeof(SnowflakeDbFactory)] = new()
+        {
+            Constructors = [".ctor()"],
+            Methods =
+            [
+                "CreateCommand()", "CreateConnection()", "CreateParameter()", "CreateConnectionStringBuilder()", "CreateCommandBuilder()",
+                "CreateDataAdapter()"
+            ],
+            Getters = [],
+            Fields = ["Instance"],
+            Setters = []
+        },
+        [typeof(SnowflakeDbLoggerConfig)] = new()
+        { Constructors = [".ctor()"], Methods = ["ResetCustomLogger()", "SetCustomLogger(ILogger)"], Getters = [], Fields = [], Setters = [] },
+        [typeof(SnowflakeDbParameter)] = new()
+        {
+            Constructors = [".ctor()", ".ctor(String, SFDataType)", ".ctor(Int32, SFDataType)"],
+            Methods = ["ResetDbType()"],
+            Getters =
+            [
+                "SFDataType", "DbType", "Direction", "IsNullable", "ParameterName", "Size", "SourceColumn", "SourceColumnNullMapping", "Value"
+            ],
+            Setters =
+                ["SFDataType", "DbType", "Direction", "IsNullable", "ParameterName", "Size", "SourceColumn", "SourceColumnNullMapping", "Value"],
+            Fields = []
+        },
+        [typeof(SnowflakeDbParameterCollection)] = new()
+        {
+            Constructors = [],
+            Methods =
+            [
+                "Add(Object)", "Add(String, SFDataType)", "AddRange(Array)", "Clear()", "Contains(String)", "Contains(Object)",
+                "CopyTo(Array, Int32)", "GetEnumerator()", "IndexOf(String)", "IndexOf(Object)", "Insert(Int32, Object)", "Remove(Object)",
+                "RemoveAt(String)", "RemoveAt(Int32)"
+            ],
+            Getters = ["Count", "SyncRoot"],
+            Fields = [],
+            Setters = []
+        },
+        [typeof(SnowflakeDbSessionPool)] = new()
+        {
+            Constructors = [],
+            Methods =
+            [
+                "GetPooling()", "GetMinPoolSize()", "GetMaxPoolSize()", "GetCurrentPoolSize()", "GetExpirationTimeout()", "GetConnectionTimeout()",
+                "GetWaitForIdleSessionTimeout()", "ClearPool()", "GetChangedSession()"
+            ],
+            Getters = [],
+            Fields = [],
+            Setters = []
+        },
+        [typeof(SnowflakeDbTransaction)] = new()
+        {
+            Constructors = [".ctor(IsolationLevel, SnowflakeDbConnection)"],
+            Methods = ["Commit()", "Rollback()"],
+            Getters = ["IsolationLevel"],
+            Setters = [],
+            Fields = []
+        },
+        [typeof(SnowflakeObject)] = new()
+        {
+            Constructors = [".ctor()"],
+            Methods = [],
+            Getters = ["ConstructionMethod"],
+            Setters = ["ConstructionMethod"],
+            Fields = []
+        },
+        [typeof(SnowflakeObjectConstructionMethod)] = new()
+        {
+            Constructors = [],
+            Methods = [],
+            Getters = [],
+            Fields = ["PROPERTIES_ORDER", "PROPERTIES_NAMES", "CONSTRUCTOR"],
+            Setters = []
+        },
+        [typeof(SFConfiguration)] = new()
+        {
+            Constructors = [],
+            Methods = ["Instance()", "GetChunkParserVersion()", "GetChunkDownloaderVersion()"],
+            Getters = [],
+            Setters = [],
+            Fields = ["ChunkDownloaderVersion", "ChunkParserVersion"]
+        },
+        [typeof(SslProtocolsExtensions)] = new()
+        { Constructors = [], Methods = ["FromString(String)"], Getters = [], Fields = ["Tls13"], Setters = [] },
+        [typeof(SFEncryptionMetadata)] = new()
+        {
+            Constructors = [".ctor()"],
+            Methods = [],
+            Getters = ["iv", "key", "aad", "keyIV", "keyAad", "matDesc"],
+            Setters = ["iv", "key", "aad", "keyIV", "keyAad", "matDesc"],
+            Fields = []
+        },
+        [typeof(QueryStatus)] = new()
+        {
+            Constructors = [],
+            Methods = [],
+            Getters = [],
+            Setters = [],
+            Fields =
+            [
+                "NoData", "Running", "Aborting", "Success", "FailedWithError", "Aborted", "Queued", "FailedWithIncident", "Disconnected",
+                "ResumingWarehouse", "QueuedReparingWarehouse", "Restarted", "Blocked"
+            ]
+        },
+        [typeof(ResultFormat)] = new() { Constructors = [], Methods = [], Getters = [], Fields = ["JSON", "ARROW"], Setters = [] },
+        [typeof(SFDataType)] = new()
+        {
+            Constructors = [],
+            Methods = [],
+            Getters = [],
+            Setters = [],
+            Fields =
+            [
+                "None", "FIXED", "REAL", "TEXT", "DATE", "VARIANT", "TIMESTAMP_LTZ", "TIMESTAMP_NTZ", "TIMESTAMP_TZ", "OBJECT", "BINARY",
+                "TIME", "BOOLEAN", "ARRAY", "MAP", "VECTOR", "DECFLOAT"
+            ]
+        },
+        [typeof(SFError)] = new()
+        {
+            Constructors = [],
+            Methods = [],
+            Getters = [],
+            Setters = [],
+            Fields =
+            [
+                "INTERNAL_ERROR", "COLUMN_INDEX_OUT_OF_BOUND", "INVALID_DATA_CONVERSION", "STATEMENT_ALREADY_RUNNING_QUERY",
+                "QUERY_CANCELLED", "MISSING_CONNECTION_PROPERTY", "REQUEST_TIMEOUT", "INVALID_CONNECTION_STRING", "UNSUPPORTED_FEATURE",
+                "DATA_READER_ALREADY_CLOSED", "UNKNOWN_AUTHENTICATOR", "UNSUPPORTED_PLATFORM", "IDP_SSO_TOKEN_URL_MISMATCH",
+                "IDP_SAML_POSTBACK_NOTFOUND", "IDP_SAML_POSTBACK_INVALID", "BROWSER_RESPONSE_WRONG_METHOD", "BROWSER_RESPONSE_INVALID_PREFIX",
+                "JWT_ERROR_READING_PK", "UNSUPPORTED_DOTNET_TYPE", "UNSUPPORTED_SNOWFLAKE_TYPE_FOR_PARAM", "INVALID_CONNECTION_PARAMETER_VALUE",
+                "INVALID_BROWSER_URL", "BROWSER_RESPONSE_TIMEOUT", "IO_ERROR_ON_GETPUT_COMMAND", "EXECUTE_COMMAND_ON_CLOSED_CONNECTION",
+                "INCONSISTENT_RESULT_ERROR", "STRUCTURED_TYPE_READ_ERROR", "STRUCTURED_TYPE_READ_DETAILED_ERROR", "BROWSER_RESPONSE_ERROR",
+                "OAUTH_TOKEN_REQUEST_ERROR", "EXPERIMENTAL_AUTHENTICATION_DISABLED", "WIF_ATTESTATION_ERROR", "SESSION_GONE", "EXT_AUTHN_DENIED",
+                "EXT_AUTHN_LOCKED", "EXT_AUTHN_TIMEOUT", "EXT_AUTHN_INVALID", "EXT_AUTHN_EXCEPTION", "EXT_OAUTH_ACCESS_TOKEN_EXPIRED",
+                "EXT_OAUTH_ACCESS_TOKEN_INVALID", "ID_TOKEN_INVALID"
+            ]
+        },
+        [typeof(ChangedSessionBehavior)] =
+            new() { Constructors = [], Methods = [], Getters = [], Fields = ["OriginalPool", "Destroy"], Setters = [] },
+        [typeof(ActivityStarter)] =
+            new() { Constructors = [], Methods = ["StartActivity(SnowflakeDbCommand, String)"], Getters = [], Fields = [], Setters = [] },
+        [typeof(SessionTelemetryModuleFacade)] = new()
+        { Constructors = [], Methods = ["SetFlushSize(Int32)", "SetFlushInterval(Int32)"], Getters = [], Fields = [], Setters = [] },
+    };
 }
