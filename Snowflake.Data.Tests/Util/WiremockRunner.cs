@@ -10,7 +10,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.Util
 {
-    internal interface IWiremockRunner : IDisposable
+    public interface IWiremockRunner : IDisposable
     {
         string WiremockBaseHttpUrl { get; }
         void Stop();

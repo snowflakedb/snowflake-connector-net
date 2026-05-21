@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Snowflake.Data.AuthenticationTests;
 
-[CollectionDefinition(nameof(AuthenticationTestsCollectionFixture),  DisableParallelization = true)]
+[CollectionDefinition(nameof(AuthenticationTestsCollectionFixture), DisableParallelization = true)]
 public class AuthenticationTestsCollectionFixture : ICollectionFixture<AuthenticationTestsCollectionFixture>
 {
     internal readonly string Login;
