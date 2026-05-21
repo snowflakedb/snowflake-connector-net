@@ -1,53 +1,40 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
-    public class FileUploadDownloadLargeFilesIT : SFBaseTest
+    public sealed class FileUploadDownloadLargeFilesITFixture : IDisposable
     {
-        private const string FileName = "large_file_to_test_dotnet_driver.json";
-        private static readonly string s_uniqueId = TestDataGenarator.NextAlphaNumeric(6);
-        private static readonly string s_localFolderName = Path.Combine(Path.GetTempPath(), s_uniqueId);
-        private static readonly string s_remoteFolderName = $"files_to_test_put_get_{s_uniqueId}";
-        private static readonly string s_downloadFolderName = Path.Combine(s_localFolderName, "download");
-        private static readonly string s_fullFileName = Path.Combine(s_localFolderName, FileName);
-        private static readonly string s_fullDownloadedFileName = Path.Combine(s_downloadFolderName, FileName);
-        private static readonly MD5 s_md5 = MD5.Create();
+        internal const string FileName = "large_file_to_test_dotnet_driver.json";
+        internal readonly string s_uniqueId;
+        internal readonly string s_localFolderName;
+        internal readonly string s_remoteFolderName;
+        internal readonly string s_downloadFolderName;
+        internal readonly string s_fullFileName;
+        internal readonly string s_fullDownloadedFileName;
 
-        [OneTimeSetUp]
-        public static void GenerateLargeFileForTests()
+        public FileUploadDownloadLargeFilesITFixture()
         {
+            s_uniqueId = TestDataGenarator.NextAlphaNumeric(6);
+            s_localFolderName = Path.Combine(Path.GetTempPath(), s_uniqueId);
+            s_remoteFolderName = $"files_to_test_put_get_{s_uniqueId}";
+            s_downloadFolderName = Path.Combine(s_localFolderName, "download");
+            s_fullFileName = Path.Combine(s_localFolderName, FileName);
+            s_fullDownloadedFileName = Path.Combine(s_downloadFolderName, FileName);
             CreateLocalDirectory(s_localFolderName);
             GenerateLargeFile(s_fullFileName);
         }
 
-        [OneTimeTearDown]
-        public static void DeleteGeneratedLargeFile()
+        public void Dispose()
         {
             RemoveLocalFile(s_fullFileName);
             RemoveDirectory(s_localFolderName);
-        }
-
-        [SFFact]
-        public void TestThatUploadsAndDownloadsTheSameFile()
-        {
-            // act
-            UploadFile(s_fullFileName, s_remoteFolderName);
-            DownloadFile(s_remoteFolderName, s_downloadFolderName, FileName);
-
-            // assert
-            Assert.Equal(
-                CalcualteMD5(s_fullFileName),
-                CalcualteMD5(s_fullDownloadedFileName));
-
-            // cleanup
-            RemoveFilesFromServer(s_remoteFolderName);
-            RemoveLocalFile(s_fullDownloadedFileName);
         }
 
         private static void GenerateLargeFile(string fullFileName)
@@ -56,40 +43,77 @@ namespace Snowflake.Data.Tests.IntegrationTests
             RandomJsonGenerator.GenerateRandomJsonFile(fullFileName, 128 * 1024);
         }
 
-        private void UploadFile(string fullFileName, string remoteFolderName)
+        internal static void RemoveLocalFile(string fullFileName) => File.Delete(fullFileName);
+
+        private static void CreateLocalDirectory(string path) => Directory.CreateDirectory(path);
+
+        private static void RemoveDirectory(string path) => Directory.Delete(path, true);
+    }
+
+    public class FileUploadDownloadLargeFilesIT : SFBaseTestAsync, IClassFixture<FileUploadDownloadLargeFilesITFixture>
+    {
+        private readonly SFBaseTestAsyncFixture _fixture;
+        private readonly FileUploadDownloadLargeFilesITFixture _fixture2;
+
+        public FileUploadDownloadLargeFilesIT(SFBaseTestAsyncFixture fixture, FileUploadDownloadLargeFilesITFixture fixture2) : base(fixture)
+        {
+            _fixture = fixture;
+            _fixture2 = fixture2;
+        }
+
+        private static readonly MD5 s_md5 = MD5.Create();
+
+        [SFFact]
+        public async Task TestThatUploadsAndDownloadsTheSameFile()
+        {
+            // act
+            await UploadFileAsync(_fixture2.s_fullFileName, _fixture2.s_remoteFolderName);
+            await DownloadFileAsync(_fixture2.s_remoteFolderName, _fixture2.s_downloadFolderName, FileUploadDownloadLargeFilesITFixture.FileName);
+
+            // assert
+            Assert.Equal(
+                CalcualteMD5(_fixture2.s_fullFileName),
+                CalcualteMD5(_fixture2.s_fullDownloadedFileName));
+
+            // cleanup
+            await RemoveFilesFromServerAsync(_fixture2.s_remoteFolderName);
+            FileUploadDownloadLargeFilesITFixture.RemoveLocalFile(_fixture2.s_fullDownloadedFileName);
+        }
+
+        private async Task UploadFileAsync(string fullFileName, string remoteFolderName)
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "FILE_TRANSFER_MEMORY_THRESHOLD=1048576;";
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString + "FILE_TRANSFER_MEMORY_THRESHOLD=1048576;";
+                await conn.OpenAsync(CancellationToken.None);
                 var command = conn.CreateCommand();
                 command.CommandText = $"PUT file://{fullFileName} @~/{remoteFolderName} AUTO_COMPRESS=FALSE";
                 command.ExecuteNonQuery();
             }
         }
 
-        private void DownloadFile(string remoteFolderName, string downloadFolderName, string fileName)
+        private async Task DownloadFileAsync(string remoteFolderName, string downloadFolderName, string fileName)
         {
             var filePattern = $"{remoteFolderName}/{fileName}";
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
                 var command = conn.CreateCommand();
                 command.CommandText = $"GET @~/{remoteFolderName} file://{downloadFolderName} PATTERN='{filePattern}'";
                 command.ExecuteNonQuery();
             }
         }
 
-        private void RemoveFilesFromServer(string remoteFolderName)
+        private async Task RemoveFilesFromServerAsync(string remoteFolderName)
         {
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
                 var command = conn.CreateCommand();
                 command.CommandText = $"remove @~/{remoteFolderName};";
-                command.ExecuteNonQuery();
+                await command.ExecuteNonQueryAsync();
             }
         }
 
@@ -102,10 +126,5 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private static void RemoveLocalFile(string fullFileName) => File.Delete(fullFileName);
-
-        private static void CreateLocalDirectory(string path) => Directory.CreateDirectory(path);
-
-        private static void RemoveDirectory(string path) => Directory.Delete(path, true);
     }
 }
