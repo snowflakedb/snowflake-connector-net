@@ -80,7 +80,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedTokyo, afterUpdate);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("America/Los_Angeles")]
         [InlineData("UTC")]
         [InlineData("Asia/Tokyo")]

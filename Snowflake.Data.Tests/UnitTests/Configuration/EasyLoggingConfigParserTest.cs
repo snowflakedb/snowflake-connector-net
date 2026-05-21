@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(null)]
         [InlineData("640")]
         public void TestThatParsesConfigFile(string logFileUnixPermissions)
@@ -107,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Null(config.CommonProps.LogPath);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(null)]
         [InlineData("")]
         public void TestThatReturnsNullWhenNothingToParse(string noFilePath)

@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isZeroLength);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(1000, 1000)]
         [InlineData(1000, 2000)]
         public void TestInfiniteTimeoutDoesNotExpire(long startedAtMillis, long nowMillis)
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isExpired);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(1000, 1000, 0, true)]
         [InlineData(1000, 2000, 0, true)]
         [InlineData(1000, 1100, 100, true)]
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isExpired);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(0, 0, true)]
         [InlineData(1000, 0, true)]
         [InlineData(100, 100, true)]
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
 
-        [SFFact]
+        [SFTheory]
         [InlineData(1000, 1000, 0, 0)]
         [InlineData(1000, 2000, 0, 0)]
         [InlineData(1000, 1100, 100, 0)]

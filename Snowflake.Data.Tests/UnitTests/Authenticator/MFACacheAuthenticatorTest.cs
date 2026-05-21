@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
     public class MFACacheAuthenticatorTest
     {
-        [SFFact]
+        [SFTheory]
         [InlineData("username_password_mfa", true)]
         [InlineData("USERNAME_PASSWORD_MFA", true)]
         [InlineData("snowflake", false)]

@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.True(pool.IsConfigOverridden());
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443", "somePassword", "someSecret", "someToken", " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
         [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
         [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key=SomePrivateKey;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal("", poolIdentification);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(null)]
         [InlineData("")]
         [InlineData("anyPassword")]
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.DoesNotThrow(() => pool.ValidateSecurePassword(securePassword));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(null)]
         [InlineData("")]
         [InlineData("anySecret")]
@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.DoesNotThrow(() => pool.ValidateSecureOAuthClientSecret(secureOAuthClientSecret));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(null)]
         [InlineData("")]
         [InlineData("anySecret")]
@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.DoesNotThrow(() => pool.ValidateSecureToken(secureToken));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("somePassword", null)]
         [InlineData("somePassword", "")]
         [InlineData("somePassword", "anotherPassword")]
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(thrown.Message, Does.Contain("Could not get a pool because of password mismatch"));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("someSecret", null)]
         [InlineData("someSecret", "")]
         [InlineData("someSecret", "anotherSecret")]
@@ -218,7 +218,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(thrown.Message, Does.Contain("Could not get a pool because of oauth client secret mismatch"));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("someToken", null)]
         [InlineData("someToken", "")]
         [InlineData("someToken", "anotherToken")]
@@ -238,7 +238,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(thrown.Message, Does.Contain("Could not get a pool because of token mismatch"));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;", true)]
         [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;", false)]
         [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;", false)]
@@ -259,7 +259,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(expectedPoolingEnabled, isSessionReturnedToPool);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;")]
         [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;")]
         [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;")]

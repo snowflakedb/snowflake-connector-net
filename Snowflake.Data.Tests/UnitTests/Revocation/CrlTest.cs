@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.False(crl.NeedsReplacement(now, TimeSpan.FromDays(1)));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("2025-07-25T16:57:00.0000000Z", false)]
         [InlineData("2025-08-02T16:57:00.0000000Z", true)]
         public void TestCrlExpiredDependingOnNextUpdate(string nowString, bool expectedIsExpired)
@@ -112,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.True(needsReplacement);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("127", "7F")]
         [InlineData("32768", "008000")]
         public void TestConvertBigIntegerToHexString(string stringValue, string expectedHexString)

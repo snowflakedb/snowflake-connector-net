@@ -352,7 +352,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(20)]
         [InlineData(28)]
         public void TestExtractCellReturnsDecimal128WithHighScale(int scale)
@@ -376,7 +376,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(10)]
         [InlineData(12)]
         [InlineData(18)]

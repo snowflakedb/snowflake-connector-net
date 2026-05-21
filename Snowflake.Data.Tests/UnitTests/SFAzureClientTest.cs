@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(bucketAndKey[1], location.key);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
@@ -232,7 +232,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
 
-        [SFFact]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
@@ -289,7 +289,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
@@ -339,7 +339,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
 
-        [SFFact]
+        [SFTheory]
         [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]

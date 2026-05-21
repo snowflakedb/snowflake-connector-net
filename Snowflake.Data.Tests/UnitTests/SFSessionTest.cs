@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(roleName, sfSession.role);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(null)]
         [InlineData("/some-path/config.json")]
         [InlineData("C:\\some-path\\config.json")]
@@ -163,7 +163,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(null, "accountDefault", "accountDefault", false)]
         [InlineData("initial", "initial", "initial", false)]
         [InlineData("initial", null, "initial", false)]

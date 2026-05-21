@@ -163,7 +163,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SqlExpected, SFStatement.TrimSql(SqlSource));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("running", QueryStatus.Running)]
         [InlineData("RUNNING", QueryStatus.Running)]
         [InlineData("resuming_warehouse", QueryStatus.ResumingWarehouse)]
@@ -195,7 +195,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedStatus, QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("UNKNOWN")]
         [InlineData("RANDOM_STATUS")]
         [InlineData("aBcZyX")]
@@ -205,7 +205,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(thrown.Message.Contains("The query status returned by the server is not recognized"));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(QueryStatus.Running, true)]
         [InlineData(QueryStatus.ResumingWarehouse, true)]
         [InlineData(QueryStatus.Queued, true)]
@@ -224,7 +224,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResult, QueryStatusExtensions.IsStillRunning(status));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(QueryStatus.Aborting, true)]
         [InlineData(QueryStatus.FailedWithError, true)]
         [InlineData(QueryStatus.Aborted, true)]

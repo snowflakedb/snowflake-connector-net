@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
     class EasyLoggingLogLevelTest
     {
-        [SFFact]
+        [SFTheory]
         [InlineData("OFF", EasyLoggingLogLevel.Off)]
         [InlineData("off", EasyLoggingLogLevel.Off)]
         [InlineData("iNfO", EasyLoggingLogLevel.Info)]

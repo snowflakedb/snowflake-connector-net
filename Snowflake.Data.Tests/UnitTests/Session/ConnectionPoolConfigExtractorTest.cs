@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(maxPoolSize, result.MaxPoolSize);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("wrong_value")]
         [InlineData("0")]
         [InlineData("-1")]
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.MAXPOOLSIZE.ToString()}"));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("0", 0)]
         [InlineData("7", 7)]
         [InlineData("10", 10)]
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(expectedMinPoolSize, result.MinPoolSize);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("wrong_value")]
         [InlineData("-1")]
         public void TestExtractFailsForWrongValueOfMinPoolSize(string minPoolSize)
@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.CONNECTION_TIMEOUT.ToString()}"));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("true", true)]
         [InlineData("TRUE", true)]
         [InlineData("false", false)]
@@ -219,7 +219,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(poolingEnabled, result.PoolingEnabled);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("account=test;user=test;password=test;", true)]
         [InlineData("authenticator=externalbrowser;account=test;user=test;", false)]
         [InlineData("authenticator=externalbrowser;account=test;user=test;poolingEnabled=true;", true)]
@@ -241,7 +241,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(poolingEnabled, result.PoolingEnabled);
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("wrong_value")]
         [InlineData("15")]
         public void TestExtractFailsForWrongValueOfPoolingEnabled(string propertyValue)
@@ -256,7 +256,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.POOLINGENABLED.ToString()}"));
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData("OriginalPool", ChangedSessionBehavior.OriginalPool)]
         [InlineData("originalpool", ChangedSessionBehavior.OriginalPool)]
         [InlineData("ORIGINALPOOL", ChangedSessionBehavior.OriginalPool)]

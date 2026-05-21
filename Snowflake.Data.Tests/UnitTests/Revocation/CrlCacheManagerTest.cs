@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [SFFact]
+        [SFTheory]
         [InlineData(true, false)]
         [InlineData(false, true)]
         [InlineData(true, true)]
