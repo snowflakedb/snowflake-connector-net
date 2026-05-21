@@ -7,10 +7,10 @@ using Snowflake.Data.Core.Authenticator.Browser;
 using Snowflake.Data.Core.Session;
 using Moq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-
     public class OAuthAuthorizationCodeAuthenticatorTest
     {
         private const string Account = "testaccount";
@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var thrown = Assert.Throws<SnowflakeDbException>(() => browserStarter.StartBrowser(invalidUrl));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Invalid browser url"));
+            Assert.Contains("Invalid browser url", thrown.Message);
             var urlInException = thrown.Message.Split('\"')[1];
             Assert.Equal(expectedUrlInException, urlInException);
         }

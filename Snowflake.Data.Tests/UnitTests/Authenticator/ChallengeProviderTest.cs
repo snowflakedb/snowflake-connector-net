@@ -1,10 +1,10 @@
 using System.Text.RegularExpressions;
 using Xunit;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-
     public class ChallengeProviderTest
     {
         private readonly ChallengeProvider _challengeProvider = new();
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var codeVerifier = _challengeProvider.GenerateCodeVerifier().Value;
 
             // assert
-            Assert.That(codeVerifier.Length, Is.GreaterThanOrEqualTo(43).And.LessThanOrEqualTo(128));
+            Assert.InRange(codeVerifier.Length, 43, 128);
             Assert.True(_onlyDigitsOrNumbers.IsMatch(codeVerifier));
         }
     }
