@@ -114,7 +114,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     var logFilePermissions = UnixOperations.Instance.GetFilePermissions(logFile);
-                    Assert.AreEqual(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupRead,
+                    Assert.Equal(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupRead,
                         logFilePermissions);
                     var logs = FileOperations.Instance.ReadAllText(logFile);
                     Assert.That(logs, Does.Contain("This is a warning message"));

@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var backupLogs = Directory.GetFiles(_directoryLogPath.Value, $"{logFileName}.*.bak");
 
             // assert
-            Assert.AreEqual(ExpectedBackupLogCount, backupLogs.Length);
+            Assert.Equal(ExpectedBackupLogCount, backupLogs.Length);
         }
 
         [Test]
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         {
             Assert.True(Directory.Exists(directoryLogPath));
             var files = Directory.GetFiles(directoryLogPath);
-            Assert.AreEqual(1, files.Length);
+            Assert.Equal(1, files.Length);
             return files.First();
         }
 

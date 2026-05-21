@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var decodedPassword = SecureStringHelper.Decode(securePassword);
 
             // assert
-            Assert.AreEqual(passwordText, decodedPassword);
+            Assert.Equal(passwordText, decodedPassword);
         }
     }
 }

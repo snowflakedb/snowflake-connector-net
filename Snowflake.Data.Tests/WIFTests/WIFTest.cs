@@ -31,7 +31,7 @@ namespace Snowflake.Data.WIFTests
             var user = ConnectAndQueryCurrentUser(connectionString);
             if (!string.IsNullOrEmpty(s_expectedUsername))
             {
-                Assert.AreEqual(s_expectedUsername, user,
+                Assert.Equal(s_expectedUsername, user,
                     $"Expected direct WIF user to be '{s_expectedUsername}' but got '{user}'");
             }
         }
@@ -51,14 +51,14 @@ namespace Snowflake.Data.WIFTests
             // verify the impersonated user matches the expected username
             if (!string.IsNullOrEmpty(s_expectedUsernameImpersonation))
             {
-                Assert.AreEqual(s_expectedUsernameImpersonation, impersonatedUser,
+                Assert.Equal(s_expectedUsernameImpersonation, impersonatedUser,
                     $"Expected impersonated user to be '{s_expectedUsernameImpersonation}' but got '{impersonatedUser}'");
             }
 
             // verify that impersonation resulted in a different user than the direct identity
             if (!string.IsNullOrEmpty(s_expectedUsername))
             {
-                Assert.AreNotEqual(s_expectedUsername, impersonatedUser,
+                Assert.NotEqual(s_expectedUsername, impersonatedUser,
                     $"Expected impersonation to change the session user from '{s_expectedUsername}', but it did not");
             }
         }
@@ -120,7 +120,7 @@ namespace Snowflake.Data.WIFTests
             {
                 conn.ConnectionString = connectionString;
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT CURRENT_USER()";
@@ -139,12 +139,12 @@ namespace Snowflake.Data.WIFTests
             {
                 conn.ConnectionString = connectionString;
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT 1";
                     var result = command.ExecuteScalar();
-                    Assert.AreEqual("1", result.ToString());
+                    Assert.Equal("1", result.ToString());
                 }
             }
         }

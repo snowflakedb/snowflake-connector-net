@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.PackageTests
             // 3. Run & Assert
             var (exitCode, output) = await RunCommandAsync("dotnet", "run --verbosity quiet", _tempDir, timeoutMs: 60000).ConfigureAwait(false);
 
-            Assert.AreEqual(0, exitCode, $"Verification app failed: {output}");
+            Assert.Equal(0, exitCode, $"Verification app failed: {output}");
             Assert.That(output, Contains.Substring("[PROBE] MiniCore loaded successfully"));
         }
 

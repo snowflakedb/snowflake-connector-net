@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // assert
             Assert.True(response.IsSuccessStatusCode);
             dynamic jsonObject = JsonConvert.DeserializeObject(Task.Run(async () => await response.Content.ReadAsStringAsync()).Result);
-            Assert.AreEqual("0", jsonObject?.meta.total.ToString());
+            Assert.Equal("0", jsonObject?.meta.total.ToString());
         }
     }
 }

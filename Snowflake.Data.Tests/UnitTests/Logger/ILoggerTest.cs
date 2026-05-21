@@ -63,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
-            Assert.AreEqual(isEnabled, _logger.IsEnabled(LogLevel.Debug));
+            Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Debug));
         }
 
         [Test]
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
-            Assert.AreEqual(isEnabled, _logger.IsEnabled(LogLevel.Information));
+            Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Information));
         }
 
         [Test]
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
-            Assert.AreEqual(isEnabled, _logger.IsEnabled(LogLevel.Warning));
+            Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Warning));
         }
 
         [Test]
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
-            Assert.AreEqual(isEnabled, _logger.IsEnabled(LogLevel.Error));
+            Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Error));
         }
 
         [Test]
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             [Values(false, true)] bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
-            Assert.AreEqual(isEnabled, _logger.IsEnabled(LogLevel.Critical));
+            Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Critical));
         }
 
         private ILogger GetLogger(bool isEnabled)

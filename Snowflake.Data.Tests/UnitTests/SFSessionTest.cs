@@ -55,10 +55,10 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.UpdateSessionProperties(queryExecResponseData);
 
             // assert
-            Assert.AreEqual(databaseName, sfSession.database);
-            Assert.AreEqual(schemaName, sfSession.schema);
-            Assert.AreEqual(warehouseName, sfSession.warehouse);
-            Assert.AreEqual(roleName, sfSession.role);
+            Assert.Equal(databaseName, sfSession.database);
+            Assert.Equal(schemaName, sfSession.schema);
+            Assert.Equal(warehouseName, sfSession.warehouse);
+            Assert.Equal(roleName, sfSession.role);
         }
 
         [Test]
@@ -82,10 +82,10 @@ namespace Snowflake.Data.Tests.UnitTests
             // assert
             // when database or schema name is missing in the response,
             // the cached value should keep unchanged
-            Assert.AreEqual(databaseName, sfSession.database);
-            Assert.AreEqual(schemaName, sfSession.schema);
-            Assert.AreEqual(warehouseName, sfSession.warehouse);
-            Assert.AreEqual(roleName, sfSession.role);
+            Assert.Equal(databaseName, sfSession.database);
+            Assert.Equal(schemaName, sfSession.schema);
+            Assert.Equal(warehouseName, sfSession.warehouse);
+            Assert.Equal(roleName, sfSession.role);
         }
 
         [Test]
@@ -131,7 +131,7 @@ namespace Snowflake.Data.Tests.UnitTests
             session.ProcessLoginResponse(authnResponse);
 
             // assert
-            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty,
+            Assert.Equal(expectedIdToken, new NetworkCredential(string.Empty,
                 SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
         }
 
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests
             session.ProcessLoginResponse(authnResponse);
 
             // assert
-            Assert.AreEqual(expectedIdToken, new NetworkCredential(string.Empty,
+            Assert.Equal(expectedIdToken, new NetworkCredential(string.Empty,
                 SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
         }
 
@@ -187,11 +187,11 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.UpdateSessionProperty(ref changedSessionValue, serverResponseFinalSessionValue);
 
             // Assert
-            Assert.AreEqual(sfSession.SessionPropertiesChanged, wasChanged);
+            Assert.Equal(sfSession.SessionPropertiesChanged, wasChanged);
             if (wasChanged || sessionInitialValue is null)
-                Assert.AreEqual(unquotedExpectedFinalValue, changedSessionValue);
+                Assert.Equal(unquotedExpectedFinalValue, changedSessionValue);
             else
-                Assert.AreEqual(sessionInitialValue, changedSessionValue);
+                Assert.Equal(sessionInitialValue, changedSessionValue);
         }
 
         [Test]
@@ -205,16 +205,16 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
 
             // assert
-            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            Assert.Equal(1, restRequester.LoginRequests.Count);
             var loginRequest = restRequester.LoginRequests[0];
-            Assert.AreEqual("test\"with'quotations{}", loginRequest.data.password);
+            Assert.Equal("test\"with'quotations{}", loginRequest.data.password);
 
             // act
             var json = JsonConvert.SerializeObject(loginRequest, JsonUtils.JsonSettings);
             var deserializedLoginRequest = (LoginRequest)JsonConvert.DeserializeObject(json, typeof(LoginRequest));
 
             // assert
-            Assert.AreEqual(loginRequest.data.password, deserializedLoginRequest.data.password);
+            Assert.Equal(loginRequest.data.password, deserializedLoginRequest.data.password);
         }
 
         [Test]
@@ -229,10 +229,10 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
 
             // assert
-            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            Assert.Equal(1, restRequester.LoginRequests.Count);
             var loginRequest = restRequester.LoginRequests[0];
-            Assert.AreEqual(passcode, loginRequest.data.passcode);
-            Assert.AreEqual("passcode", loginRequest.data.extAuthnDuoMethod);
+            Assert.Equal(passcode, loginRequest.data.passcode);
+            Assert.Equal("passcode", loginRequest.data.extAuthnDuoMethod);
         }
 
         [Test]
@@ -248,10 +248,10 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
 
             // assert
-            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            Assert.Equal(1, restRequester.LoginRequests.Count);
             var loginRequest = restRequester.LoginRequests[0];
-            Assert.AreEqual(passcode, loginRequest.data.passcode);
-            Assert.AreEqual("passcode", loginRequest.data.extAuthnDuoMethod);
+            Assert.Equal(passcode, loginRequest.data.passcode);
+            Assert.Equal("passcode", loginRequest.data.extAuthnDuoMethod);
         }
 
         [Test]
@@ -266,10 +266,10 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
 
             // assert
-            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            Assert.Equal(1, restRequester.LoginRequests.Count);
             var loginRequest = restRequester.LoginRequests[0];
             Assert.Null(loginRequest.data.passcode);
-            Assert.AreEqual("passcode", loginRequest.data.extAuthnDuoMethod);
+            Assert.Equal("passcode", loginRequest.data.extAuthnDuoMethod);
         }
 
         [Test]
@@ -283,10 +283,10 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
 
             // assert
-            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            Assert.Equal(1, restRequester.LoginRequests.Count);
             var loginRequest = restRequester.LoginRequests[0];
             Assert.Null(loginRequest.data.passcode);
-            Assert.AreEqual("push", loginRequest.data.extAuthnDuoMethod);
+            Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
         [Test]
@@ -300,10 +300,10 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
 
             // assert
-            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            Assert.Equal(1, restRequester.LoginRequests.Count);
             var loginRequest = restRequester.LoginRequests[0];
             Assert.Null(loginRequest.data.passcode);
-            Assert.AreEqual("push", loginRequest.data.extAuthnDuoMethod);
+            Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
         [Test]
@@ -317,11 +317,11 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
 
             // assert
-            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            Assert.Equal(1, restRequester.LoginRequests.Count);
             var loginRequest = restRequester.LoginRequests.Dequeue();
             Assert.Null(loginRequest.data.passcode);
             Assert.True(loginRequest.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
-            Assert.AreEqual("push", loginRequest.data.extAuthnDuoMethod);
+            Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
         [Test]
@@ -340,12 +340,12 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
 
             // assert
-            Assert.AreEqual(1, restRequester.LoginRequests.Count);
+            Assert.Equal(1, restRequester.LoginRequests.Count);
             var loginRequest = restRequester.LoginRequests.Dequeue();
-            Assert.AreEqual(SecureStringHelper.Decode(sfSession._mfaToken), testToken);
+            Assert.Equal(SecureStringHelper.Decode(sfSession._mfaToken), testToken);
             Assert.Null(loginRequest.data.passcode);
             Assert.True(loginRequest.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
-            Assert.AreEqual("push", loginRequest.data.extAuthnDuoMethod);
+            Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
         [Test]
@@ -367,15 +367,15 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSessionWithCachedToken.Open();
 
             // assert
-            Assert.AreEqual(2, restRequester.LoginRequests.Count);
+            Assert.Equal(2, restRequester.LoginRequests.Count);
             var firstLoginRequest = restRequester.LoginRequests.Dequeue();
-            Assert.AreEqual(SecureStringHelper.Decode(sfSession._mfaToken), testToken);
+            Assert.Equal(SecureStringHelper.Decode(sfSession._mfaToken), testToken);
             Assert.Null(firstLoginRequest.data.passcode);
             Assert.True(firstLoginRequest.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
-            Assert.AreEqual("push", firstLoginRequest.data.extAuthnDuoMethod);
+            Assert.Equal("push", firstLoginRequest.data.extAuthnDuoMethod);
 
             var secondLoginRequest = restRequester.LoginRequests.Dequeue();
-            Assert.AreEqual(secondLoginRequest.data.Token, testToken);
+            Assert.Equal(secondLoginRequest.data.Token, testToken);
         }
 
         [Test]

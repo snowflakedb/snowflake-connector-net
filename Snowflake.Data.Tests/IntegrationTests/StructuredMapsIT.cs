@@ -50,7 +50,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         dt.Load(reader);
 
                         // assert
-                        Assert.AreEqual($"{key}:{value}", DataTableParser.GetFirstRowValue(dt, colName));
+                        Assert.Equal($"{key}:{value}", DataTableParser.GetFirstRowValue(dt, colName));
                     }
                 }
             }
@@ -76,10 +76,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(map);
-                    Assert.AreEqual(3, map.Count);
-                    Assert.AreEqual("San Mateo", map["city"]);
-                    Assert.AreEqual("CA", map["state"]);
-                    Assert.AreEqual("01-234", map["zip"]);
+                    Assert.Equal(3, map.Count);
+                    Assert.Equal("San Mateo", map["city"]);
+                    Assert.Equal("CA", map["state"]);
+                    Assert.Equal("01-234", map["zip"]);
 
                     if (_nativeArrow)
                     {
@@ -115,10 +115,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(map);
-                    Assert.AreEqual(3, map.Count);
-                    Assert.AreEqual("San Mateo", map[5]);
-                    Assert.AreEqual("CA", map[8]);
-                    Assert.AreEqual("01-234", map[13]);
+                    Assert.Equal(3, map.Count);
+                    Assert.Equal("San Mateo", map[5]);
+                    Assert.Equal("CA", map[8]);
+                    Assert.Equal("01-234", map[13]);
                 }
             }
         }
@@ -143,10 +143,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(map);
-                    Assert.AreEqual(3, map.Count);
-                    Assert.AreEqual("San Mateo", map[5L]);
-                    Assert.AreEqual("CA", map[8L]);
-                    Assert.AreEqual("01-234", map[13L]);
+                    Assert.Equal(3, map.Count);
+                    Assert.Equal("San Mateo", map[5L]);
+                    Assert.Equal("CA", map[8L]);
+                    Assert.Equal("01-234", map[13L]);
                 }
             }
         }
@@ -174,9 +174,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(map);
-                    Assert.AreEqual(2, map.Count);
-                    Assert.AreEqual(new Zip("01", "234"), map["Warsaw"]);
-                    Assert.AreEqual(new Zip("02", "567"), map["San Mateo"]);
+                    Assert.Equal(2, map.Count);
+                    Assert.Equal(new Zip("01", "234"), map["Warsaw"]);
+                    Assert.Equal(new Zip("02", "567"), map["San Mateo"]);
                 }
             }
         }
@@ -200,9 +200,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var map = reader.GetMap<string, string[]>(0);
 
                     // assert
-                    Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
-                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
+                    Assert.Equal(1, map.Count);
+                    CollectionAssert.Equal(new string[] { "a" }, map.Keys);
+                    CollectionAssert.Equal(new string[] { "b", "c" }, map["a"]);
                 }
             }
         }
@@ -226,9 +226,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var map = reader.GetMap<string, List<string>>(0);
 
                     // assert
-                    Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(new string[] { "a" }, map.Keys);
-                    CollectionAssert.AreEqual(new string[] { "b", "c" }, map["a"]);
+                    Assert.Equal(1, map.Count);
+                    CollectionAssert.Equal(new string[] { "a" }, map.Keys);
+                    CollectionAssert.Equal(new string[] { "b", "c" }, map["a"]);
                 }
             }
         }
@@ -252,10 +252,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var map = reader.GetMap<string, Dictionary<string, string>>(0);
 
                     // assert
-                    Assert.AreEqual(1, map.Count);
+                    Assert.Equal(1, map.Count);
                     var nestedMap = map["a"];
-                    Assert.AreEqual(1, nestedMap.Count);
-                    Assert.AreEqual("c", nestedMap["b"]);
+                    Assert.Equal(1, nestedMap.Count);
+                    Assert.Equal("c", nestedMap["b"]);
                 }
             }
         }
@@ -282,8 +282,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(map);
-                    Assert.AreEqual(1, map.Count);
-                    CollectionAssert.AreEqual(RemoveWhiteSpaces(expectedValue), RemoveWhiteSpaces(map["x"]));
+                    Assert.Equal(1, map.Count);
+                    CollectionAssert.Equal(RemoveWhiteSpaces(expectedValue), RemoveWhiteSpaces(map["x"]));
                 }
             }
         }

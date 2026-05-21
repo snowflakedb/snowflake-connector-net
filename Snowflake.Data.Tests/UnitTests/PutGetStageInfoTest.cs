@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var gcsCustomEndpoint = stageInfo.GcsCustomEndpoint();
 
             // assert
-            Assert.AreEqual(expectedGcsEndpoint, gcsCustomEndpoint);
+            Assert.Equal(expectedGcsEndpoint, gcsCustomEndpoint);
         }
 
         internal static IEnumerable<object[]> TestCases()

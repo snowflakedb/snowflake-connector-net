@@ -28,8 +28,8 @@ namespace Snowflake.Data.Tests.UnitTests
             command = new SnowflakeDbCommand(conn, commandText);
 
             // Assert
-            Assert.AreEqual(conn, command.Connection);
-            Assert.AreEqual(commandText, command.CommandText);
+            Assert.Equal(conn, command.Connection);
+            Assert.Equal(commandText, command.CommandText);
         }
 
         [Test]
@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<Exception>(() => command.ExecuteScalar());
 
             // Assert
-            Assert.AreEqual(thrown.Message, "Unable to execute command due to command text not being set");
+            Assert.Equal(thrown.Message, "Unable to execute command due to command text not being set");
         }
 
         [Test]
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<AggregateException>(() => commandTask.Wait());
 
             // Assert
-            Assert.AreEqual(thrown.InnerException.Message, "Unable to execute command due to command text not being set");
+            Assert.Equal(thrown.InnerException.Message, "Unable to execute command due to command text not being set");
         }
 
         [Test]

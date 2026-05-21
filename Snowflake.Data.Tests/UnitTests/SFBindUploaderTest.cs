@@ -18,11 +18,11 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var dateExpected = DateTime.Parse(expected);
             var check = SFDataConverter.CSharpValToSfVal(SFDataType.DATE, dateExpected);
-            Assert.AreEqual(check, input);
+            Assert.Equal(check, input);
             // Act
             DateTime dateActual = DateTime.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
             // Assert
-            Assert.AreEqual(dateExpected, dateActual);
+            Assert.Equal(dateExpected, dateActual);
         }
 
         [TestCase(SFDataType.TIME, "0", "00:00:00.000000")]
@@ -35,11 +35,11 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             DateTime timeExpected = DateTime.Parse(expected);
             var check = SFDataConverter.CSharpValToSfVal(SFDataType.TIME, timeExpected);
-            Assert.AreEqual(check, input);
+            Assert.Equal(check, input);
             // Act
             DateTime timeActual = DateTime.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
             // Assert
-            Assert.AreEqual(timeExpected, timeActual);
+            Assert.Equal(timeExpected, timeActual);
         }
 
         [TestCase(SFDataType.TIMESTAMP_LTZ, "0", "1970-01-01T00:00:00.0000000+00:00")]
@@ -54,11 +54,11 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var timestampExpected = DateTimeOffset.Parse(expected);
             var check = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_LTZ, timestampExpected);
-            Assert.AreEqual(check, input);
+            Assert.Equal(check, input);
             // Act
             var timestampActual = DateTimeOffset.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
             // Assert
-            Assert.AreEqual(timestampExpected.ToLocalTime(), timestampActual);
+            Assert.Equal(timestampExpected.ToLocalTime(), timestampActual);
         }
 
         [TestCase(SFDataType.TIMESTAMP_TZ, "0 1440", "1970-01-01 00:00:00.000000 +00:00")]
@@ -71,11 +71,11 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             DateTimeOffset timestampExpected = DateTimeOffset.Parse(expected);
             var check = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_TZ, timestampExpected);
-            Assert.AreEqual(check, input);
+            Assert.Equal(check, input);
             // Act
             DateTimeOffset timestampActual = DateTimeOffset.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
             // Assert
-            Assert.AreEqual(timestampExpected, timestampActual);
+            Assert.Equal(timestampExpected, timestampActual);
         }
 
         [TestCase(SFDataType.TIMESTAMP_NTZ, "0", "1970-01-01 00:00:00.000000")]
@@ -88,11 +88,11 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             DateTime timestampExpected = DateTime.Parse(expected);
             var check = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_NTZ, timestampExpected);
-            Assert.AreEqual(check, input);
+            Assert.Equal(check, input);
             // Act
             DateTime timestampActual = DateTime.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
             // Assert
-            Assert.AreEqual(timestampExpected, timestampActual);
+            Assert.Equal(timestampExpected, timestampActual);
         }
 
         [TestCase(SFDataType.TEXT, "", "\"\"")]
@@ -106,7 +106,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Act
             var actual = _bindUploader.GetCSVData(dbType.ToString(), input);
             // Assert
-            Assert.AreEqual(expected, actual);
+            Assert.Equal(expected, actual);
         }
 
     }

@@ -42,7 +42,7 @@ class SFDbCommandITSlow : SFBaseTest
                 command.CommandText = $"INSERT INTO {TableName} SELECT SEQ4() FROM TABLE(GENERATOR(ROWCOUNT=>2147484000))";
                 int affected = command.ExecuteNonQuery();
 
-                Assert.AreEqual(-1, affected);
+                Assert.Equal(-1, affected);
             }
             conn.Close();
         }

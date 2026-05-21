@@ -26,10 +26,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var config = new FileCrlCacheConfig(environmentOperations.Object, unixOperations.Object);
 
             // assert
-            Assert.AreEqual(ExpectedCrlCacheDirectory, config.DirectoryPath);
+            Assert.Equal(ExpectedCrlCacheDirectory, config.DirectoryPath);
             Assert.True(config.IsWindows);
-            Assert.AreEqual(0, config.UnixUserId);
-            Assert.AreEqual(0, config.UnixGroupId);
+            Assert.Equal(0, config.UnixUserId);
+            Assert.Equal(0, config.UnixGroupId);
             unixOperations.VerifyNoOtherCalls();
         }
 
@@ -59,10 +59,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var config = new FileCrlCacheConfig(environmentOperations.Object, unixOperations.Object);
 
             // assert
-            Assert.AreEqual(expectedDirectory, config.DirectoryPath);
+            Assert.Equal(expectedDirectory, config.DirectoryPath);
             Assert.False(config.IsWindows);
-            Assert.AreEqual(UnixUserId, config.UnixUserId);
-            Assert.AreEqual(UnixGroupId, config.UnixGroupId);
+            Assert.Equal(UnixUserId, config.UnixUserId);
+            Assert.Equal(UnixGroupId, config.UnixGroupId);
         }
     }
 }

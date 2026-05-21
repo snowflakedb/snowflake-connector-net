@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.NewToken();
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
 
         [Test]
@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.RemoveToken(token);
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
 
         [Test]
@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.RemoveToken(unknownToken);
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
     }
 }

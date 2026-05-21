@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests
 
             Assert.Null(clientEnv.minicoreVersion, "Version should be null when disabled");
             Assert.Null(clientEnv.minicoreFileName, "FileName should be null when disabled");
-            Assert.AreEqual(SfMiniCore.DISABLED_MESSAGE,
+            Assert.Equal(SfMiniCore.DISABLED_MESSAGE,
                 clientEnv.minicoreLoadError, "Should report disabled message");
         }
 
@@ -68,11 +68,11 @@ namespace Snowflake.Data.Tests
             Assert.NotNull(name);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                Assert.AreEqual("sf_mini_core.dll", name);
+                Assert.Equal("sf_mini_core.dll", name);
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                Assert.AreEqual("libsf_mini_core.dylib", name);
+                Assert.Equal("libsf_mini_core.dylib", name);
             else
-                Assert.AreEqual("libsf_mini_core.so", name);
+                Assert.Equal("libsf_mini_core.so", name);
         }
 
     }

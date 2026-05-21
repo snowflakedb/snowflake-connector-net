@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests
             if (chunkDownloaderVersion == 4)
             {
                 Exception ex = Assert.Throws<Exception>(() => ChunkDownloaderFactory.GetDownloader(null, null, token));
-                Assert.AreEqual("Unsupported Chunk Downloader version specified in the SFConfiguration", ex.Message);
+                Assert.Equal("Unsupported Chunk Downloader version specified in the SFConfiguration", ex.Message);
             }
             else
             {

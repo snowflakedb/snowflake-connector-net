@@ -41,31 +41,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = $"SELECT COUNT(*) FROM {TableName};";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.True(reader.Read());
-                    Assert.AreEqual(3, reader.GetInt16(0));
+                    Assert.Equal(3, reader.GetInt16(0));
 
                     command.CommandText = $"SELECT * FROM {TableName};";
                     reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual("[1,2,3]", reader.GetString(0));
+                    Assert.Equal("[1,2,3]", reader.GetString(0));
                     var arr = reader.GetArray<int>(0);
-                    Assert.AreEqual(1, arr[0]);
-                    Assert.AreEqual(2, arr[1]);
-                    Assert.AreEqual(3, arr[2]);
+                    Assert.Equal(1, arr[0]);
+                    Assert.Equal(2, arr[1]);
+                    Assert.Equal(3, arr[2]);
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual("[4,5,6]", reader.GetString(0));
+                    Assert.Equal("[4,5,6]", reader.GetString(0));
                     arr = reader.GetArray<int>(0);
-                    Assert.AreEqual(4, arr[0]);
-                    Assert.AreEqual(5, arr[1]);
-                    Assert.AreEqual(6, arr[2]);
+                    Assert.Equal(4, arr[0]);
+                    Assert.Equal(5, arr[1]);
+                    Assert.Equal(6, arr[2]);
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual("[7,8,9]", reader.GetString(0));
+                    Assert.Equal("[7,8,9]", reader.GetString(0));
                     arr = reader.GetArray<int>(0);
-                    Assert.AreEqual(7, arr[0]);
-                    Assert.AreEqual(8, arr[1]);
-                    Assert.AreEqual(9, arr[2]);
+                    Assert.Equal(7, arr[0]);
+                    Assert.Equal(8, arr[1]);
+                    Assert.Equal(9, arr[2]);
 
                     command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
                     command.ExecuteNonQuery();
@@ -96,31 +96,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = $"SELECT COUNT(*) FROM {TableName};";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
                     Assert.True(reader.Read());
-                    Assert.AreEqual(3, reader.GetInt16(0));
+                    Assert.Equal(3, reader.GetInt16(0));
 
                     command.CommandText = $"SELECT * FROM {TableName};";
                     reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual("[1.100000,2.200000,3.300000]", reader.GetString(0));
+                    Assert.Equal("[1.100000,2.200000,3.300000]", reader.GetString(0));
                     var arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(1.1f, arr[0]);
-                    Assert.AreEqual(2.2f, arr[1]);
-                    Assert.AreEqual(3.3f, arr[2]);
+                    Assert.Equal(1.1f, arr[0]);
+                    Assert.Equal(2.2f, arr[1]);
+                    Assert.Equal(3.3f, arr[2]);
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual("[4.400000,5.500000,6.600000]", reader.GetString(0));
+                    Assert.Equal("[4.400000,5.500000,6.600000]", reader.GetString(0));
                     arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(4.4f, arr[0]);
-                    Assert.AreEqual(5.5f, arr[1]);
-                    Assert.AreEqual(6.6f, arr[2]);
+                    Assert.Equal(4.4f, arr[0]);
+                    Assert.Equal(5.5f, arr[1]);
+                    Assert.Equal(6.6f, arr[2]);
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual("[7.700000,8.800000,9.900000]", reader.GetString(0));
+                    Assert.Equal("[7.700000,8.800000,9.900000]", reader.GetString(0));
                     arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(7.7f, arr[0]);
-                    Assert.AreEqual(8.8f, arr[1]);
-                    Assert.AreEqual(9.9f, arr[2]);
+                    Assert.Equal(7.7f, arr[0]);
+                    Assert.Equal(8.8f, arr[1]);
+                    Assert.Equal(9.9f, arr[2]);
 
                     command.CommandText = $"DROP TABLE IF EXISTS {TableName};";
                     command.ExecuteNonQuery();
@@ -143,12 +143,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual("[1,2,3]", reader.GetString(0));
+                    Assert.Equal("[1,2,3]", reader.GetString(0));
 
                     var arr = reader.GetArray<int>(0);
-                    Assert.AreEqual(1, arr[0]);
-                    Assert.AreEqual(2, arr[1]);
-                    Assert.AreEqual(3, arr[2]);
+                    Assert.Equal(1, arr[0]);
+                    Assert.Equal(2, arr[1]);
+                    Assert.Equal(3, arr[2]);
                 }
             }
         }
@@ -168,11 +168,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual($"[{Int32.MinValue},{Int32.MaxValue}]", reader.GetString(0));
+                    Assert.Equal($"[{Int32.MinValue},{Int32.MaxValue}]", reader.GetString(0));
 
                     var arr = reader.GetArray<int>(0);
-                    Assert.AreEqual(Int32.MinValue, arr[0]);
-                    Assert.AreEqual(Int32.MaxValue, arr[1]);
+                    Assert.Equal(Int32.MinValue, arr[0]);
+                    Assert.Equal(Int32.MaxValue, arr[1]);
                 }
             }
         }
@@ -232,12 +232,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual("[1.100000,2.220000,3.333000]", reader.GetString(0));
+                    Assert.Equal("[1.100000,2.220000,3.333000]", reader.GetString(0));
 
                     var arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(1.1f, arr[0]);
-                    Assert.AreEqual(2.22f, arr[1]);
-                    Assert.AreEqual(3.333f, arr[2]);
+                    Assert.Equal(1.1f, arr[0]);
+                    Assert.Equal(2.22f, arr[1]);
+                    Assert.Equal(3.333f, arr[2]);
                 }
             }
         }
@@ -261,11 +261,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     var arr = reader.GetArray<float>(0);
 #if NETFRAMEWORK
-                    Assert.AreEqual(float.MinValue.ToString(), arr[0].ToString());
-                    Assert.AreEqual(float.MaxValue.ToString(), arr[1].ToString());
+                    Assert.Equal(float.MinValue.ToString(), arr[0].ToString());
+                    Assert.Equal(float.MaxValue.ToString(), arr[1].ToString());
 #else
-                    Assert.AreEqual(float.MinValue, arr[0]);
-                    Assert.AreEqual(float.MaxValue, arr[1]);
+                    Assert.Equal(float.MinValue, arr[0]);
+                    Assert.Equal(float.MaxValue, arr[1]);
 #endif
                 }
             }
@@ -286,12 +286,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual("[1.000000,2.000000,3.000000]", reader.GetString(0));
+                    Assert.Equal("[1.000000,2.000000,3.000000]", reader.GetString(0));
 
                     var arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(1f, arr[0]);
-                    Assert.AreEqual(2f, arr[1]);
-                    Assert.AreEqual(3f, arr[2]);
+                    Assert.Equal(1f, arr[0]);
+                    Assert.Equal(2f, arr[1]);
+                    Assert.Equal(3f, arr[2]);
                 }
             }
         }
@@ -311,12 +311,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
                     Assert.True(reader.Read());
-                    Assert.AreEqual("[1.123457,2.123457,3.123457]", reader.GetString(0));
+                    Assert.Equal("[1.123457,2.123457,3.123457]", reader.GetString(0));
 
                     var arr = reader.GetArray<float>(0);
-                    Assert.AreEqual(1.123457f, arr[0]);
-                    Assert.AreEqual(2.123457f, arr[1]);
-                    Assert.AreEqual(3.123457f, arr[2]);
+                    Assert.Equal(1.123457f, arr[0]);
+                    Assert.Equal(2.123457f, arr[1]);
+                    Assert.Equal(3.123457f, arr[2]);
                 }
             }
         }

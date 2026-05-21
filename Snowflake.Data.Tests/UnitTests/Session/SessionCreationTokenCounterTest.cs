@@ -22,13 +22,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.NewToken();
 
             // assert
-            Assert.AreEqual(1, tokens.Count());
+            Assert.Equal(1, tokens.Count());
 
             // act
             tokens.NewToken();
 
             // assert
-            Assert.AreEqual(2, tokens.Count());
+            Assert.Equal(2, tokens.Count());
         }
 
         [Test]
@@ -43,13 +43,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.RemoveToken(token1);
 
             // assert
-            Assert.AreEqual(1, tokens.Count());
+            Assert.Equal(1, tokens.Count());
 
             // act
             tokens.RemoveToken(token2);
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
 
         [Test]
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.RemoveToken(unknownToken);
 
             // assert
-            Assert.AreEqual(1, tokens.Count());
+            Assert.Equal(1, tokens.Count());
         }
 
         [Test]
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var tokens = new SessionCreationTokenCounter(s_shortTime);
             var token = tokens.NewToken();
             tokens.NewToken(); // this token will be cleaned because of expiration
-            Assert.AreEqual(2, tokens.Count());
+            Assert.Equal(2, tokens.Count());
             const int EpsilonMillis = 5;
             Thread.Sleep((int)s_shortTime.TotalMilliseconds + EpsilonMillis);
 
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.RemoveToken(token);
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
 
         [Test]
@@ -97,7 +97,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.Reset();
 
             // assert
-            Assert.AreEqual(0, tokens.Count());
+            Assert.Equal(0, tokens.Count());
         }
     }
 }

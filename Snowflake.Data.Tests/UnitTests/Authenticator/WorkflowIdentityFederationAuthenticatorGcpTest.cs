@@ -85,9 +85,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.GCP, attestation.Provider);
-            Assert.AreEqual("some-subject", attestation.UserIdentifierComponents["sub"]);
-            Assert.AreEqual(JWTGCPToken, attestation.Credential);
+            Assert.Equal(AttestationProvider.GCP, attestation.Provider);
+            Assert.Equal("some-subject", attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(JWTGCPToken, attestation.Credential);
         }
 
         [Test]
@@ -152,9 +152,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.GCP, attestation.Provider);
-            Assert.AreEqual("some-subject", attestation.UserIdentifierComponents["sub"]);
-            Assert.AreEqual(JWTGCPToken, attestation.Credential);
+            Assert.Equal(AttestationProvider.GCP, attestation.Provider);
+            Assert.Equal("some-subject", attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(JWTGCPToken, attestation.Credential);
         }
 
         private void AddGcpWiremockMapping(string token) =>

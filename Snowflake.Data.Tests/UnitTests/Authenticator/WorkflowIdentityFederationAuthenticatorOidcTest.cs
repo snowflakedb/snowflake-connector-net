@@ -76,10 +76,10 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.OIDC, attestation.Provider);
-            Assert.AreEqual(subject, attestation.UserIdentifierComponents["sub"]);
-            Assert.AreEqual(issuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(token, attestation.Credential);
+            Assert.Equal(AttestationProvider.OIDC, attestation.Provider);
+            Assert.Equal(subject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(issuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(token, attestation.Credential);
         }
 
         [Test]

@@ -38,11 +38,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 var enumerator = reader.GetEnumerator();
                 Assert.True(enumerator.MoveNext());
-                Assert.AreEqual(3, (enumerator.Current as DbDataRecord).GetInt64(0));
+                Assert.Equal(3, (enumerator.Current as DbDataRecord).GetInt64(0));
                 Assert.True(enumerator.MoveNext());
-                Assert.AreEqual(5, (enumerator.Current as DbDataRecord).GetInt64(0));
+                Assert.Equal(5, (enumerator.Current as DbDataRecord).GetInt64(0));
                 Assert.True(enumerator.MoveNext());
-                Assert.AreEqual(8, (enumerator.Current as DbDataRecord).GetInt64(0));
+                Assert.Equal(8, (enumerator.Current as DbDataRecord).GetInt64(0));
                 Assert.False(enumerator.MoveNext());
 
                 reader.Close();
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 DbDataReader reader = selectCmd.ExecuteReader() as DbDataReader;
 
                 var dataRecords = reader.Cast<DbDataRecord>().ToList();
-                Assert.AreEqual(3, dataRecords.Count);
+                Assert.Equal(3, dataRecords.Count);
 
                 reader.Close();
 
@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             IDbCommand cmd = conn.CreateCommand();
             cmd.CommandText = $"drop table if exists {TableName}";
             var count = cmd.ExecuteNonQuery();
-            Assert.AreEqual(0, count);
+            Assert.Equal(0, count);
 
             CloseConnection(conn);
         }

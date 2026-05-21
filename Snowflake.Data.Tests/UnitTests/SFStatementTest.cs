@@ -24,11 +24,11 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
             var statement = new SFStatement(sfSession);
             var resultSet = statement.Execute(0, "select 1", null, false, false);
-            Assert.AreEqual(true, resultSet.Next());
-            Assert.AreEqual("1", resultSet.GetString(0));
-            Assert.AreEqual("new_session_token", sfSession.sessionToken);
-            Assert.AreEqual("new_master_token", sfSession.masterToken);
-            Assert.AreEqual(restRequester.FirstTimeRequestID, restRequester.SecondTimeRequestID);
+            Assert.Equal(true, resultSet.Next());
+            Assert.Equal("1", resultSet.GetString(0));
+            Assert.Equal("new_session_token", sfSession.sessionToken);
+            Assert.Equal("new_master_token", sfSession.masterToken);
+            Assert.Equal(restRequester.FirstTimeRequestID, restRequester.SecondTimeRequestID);
         }
 
         [Test]
@@ -39,10 +39,10 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
             var statement = new SFStatement(sfSession);
             var resultSet = statement.GetResultWithId("mockId");
-            Assert.AreEqual(true, resultSet.Next());
-            Assert.AreEqual("abc", resultSet.GetString(0));
-            Assert.AreEqual("new_session_token", sfSession.sessionToken);
-            Assert.AreEqual("new_master_token", sfSession.masterToken);
+            Assert.Equal(true, resultSet.Next());
+            Assert.Equal("abc", resultSet.GetString(0));
+            Assert.Equal("new_session_token", sfSession.sessionToken);
+            Assert.Equal("new_master_token", sfSession.masterToken);
         }
 
         [Test]
@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
             var statement = new SFStatement(sfSession);
             var thrown = Assert.Throws<SnowflakeDbException>(() => statement.GetResultWithId("retryId"));
-            Assert.AreEqual(thrown.ErrorCode, Mock.MockRestSessionExpired.SESSION_EXPIRED_CODE);
+            Assert.Equal(thrown.ErrorCode, Mock.MockRestSessionExpired.SESSION_EXPIRED_CODE);
         }
 
         [Test]
@@ -64,10 +64,10 @@ namespace Snowflake.Data.Tests.UnitTests
             await sfSession.OpenAsync(CancellationToken.None);
             var statement = new SFStatement(sfSession);
             var resultSet = await statement.GetResultWithIdAsync("mockId", CancellationToken.None);
-            Assert.AreEqual(true, resultSet.Next());
-            Assert.AreEqual("abc", resultSet.GetString(0));
-            Assert.AreEqual("new_session_token", sfSession.sessionToken);
-            Assert.AreEqual("new_master_token", sfSession.masterToken);
+            Assert.Equal(true, resultSet.Next());
+            Assert.Equal("abc", resultSet.GetString(0));
+            Assert.Equal("new_session_token", sfSession.sessionToken);
+            Assert.Equal("new_master_token", sfSession.masterToken);
         }
 
         [Test]
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await sfSession.OpenAsync(CancellationToken.None);
             var statement = new SFStatement(sfSession);
             var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () => await statement.GetResultWithIdAsync("retryId", CancellationToken.None));
-            Assert.AreEqual(thrown.ErrorCode, Mock.MockRestSessionExpired.SESSION_EXPIRED_CODE);
+            Assert.Equal(thrown.ErrorCode, Mock.MockRestSessionExpired.SESSION_EXPIRED_CODE);
         }
 
         // Mock test for session renew during query execution
@@ -90,8 +90,8 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
             var statement = new SFStatement(sfSession);
             var resultSet = statement.Execute(0, "select 1", null, false, false);
-            Assert.AreEqual(true, resultSet.Next());
-            Assert.AreEqual("1", resultSet.GetString(0));
+            Assert.Equal(true, resultSet.Next());
+            Assert.Equal("1", resultSet.GetString(0));
         }
 
         // Mock test for Service Name
@@ -105,13 +105,13 @@ namespace Snowflake.Data.Tests.UnitTests
             var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             var expectServiceName = Mock.MockServiceName.INIT_SERVICE_NAME;
-            Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
+            Assert.Equal(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
             for (var i = 0; i < 5; i++)
             {
                 var statement = new SFStatement(sfSession);
                 var resultSet = statement.Execute(0, "SELECT 1", null, false, false);
                 expectServiceName += "a";
-                Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
+                Assert.Equal(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
             }
         }
 
@@ -124,7 +124,7 @@ namespace Snowflake.Data.Tests.UnitTests
             const string SqlSource = "/*comment*/select 1/*comment*/";
             const string SqlExpected = "select 1";
 
-            Assert.AreEqual(SqlExpected, SFStatement.TrimSql(SqlSource));
+            Assert.Equal(SqlExpected, SFStatement.TrimSql(SqlSource));
         }
 
         /// <summary>
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.UnitTests
             const string SqlSource = "/*comment\r\ncomment*/select 1/*comment\r\ncomment*/";
             const string SqlExpected = "select 1";
 
-            Assert.AreEqual(SqlExpected, SFStatement.TrimSql(SqlSource));
+            Assert.Equal(SqlExpected, SFStatement.TrimSql(SqlSource));
         }
 
         /// <summary>
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.UnitTests
             const string SqlSource = "--comment\r\nselect 1\r\n--comment";
             const string SqlExpected = "select 1\r\n--comment";
 
-            Assert.AreEqual(SqlExpected, SFStatement.TrimSql(SqlSource));
+            Assert.Equal(SqlExpected, SFStatement.TrimSql(SqlSource));
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace Snowflake.Data.Tests.UnitTests
             const string SqlSource = "--comment\r\nselect 1\r\n--comment\r\n";
             const string SqlExpected = "select 1";
 
-            Assert.AreEqual(SqlExpected, SFStatement.TrimSql(SqlSource));
+            Assert.Equal(SqlExpected, SFStatement.TrimSql(SqlSource));
         }
 
         [Test]
@@ -192,7 +192,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("BLOCKED", QueryStatus.Blocked)]
         public void TestGetQueryStatusByStringValue(string stringValue, QueryStatus expectedStatus)
         {
-            Assert.AreEqual(expectedStatus, QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
+            Assert.Equal(expectedStatus, QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
         }
 
         [Test]
@@ -221,7 +221,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(QueryStatus.Blocked, false)]
         public void TestIsStillRunning(QueryStatus status, bool expectedResult)
         {
-            Assert.AreEqual(expectedResult, QueryStatusExtensions.IsStillRunning(status));
+            Assert.Equal(expectedResult, QueryStatusExtensions.IsStillRunning(status));
         }
 
         [Test]
@@ -240,7 +240,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase(QueryStatus.Restarted, false)]
         public void TestIsAnError(QueryStatus status, bool expectedResult)
         {
-            Assert.AreEqual(expectedResult, QueryStatusExtensions.IsAnError(status));
+            Assert.Equal(expectedResult, QueryStatusExtensions.IsAnError(status));
         }
 
         [Test]
@@ -260,7 +260,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<SnowflakeDbException>(() => statement.BuildResultSet(response, CancellationToken.None));
 
             // assert
-            Assert.AreEqual("Error: internal error SqlState: , VendorCode: 500, QueryId: ", thrown.Message);
+            Assert.Equal("Error: internal error SqlState: , VendorCode: 500, QueryId: ", thrown.Message);
         }
 
         [Test]
@@ -294,8 +294,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
-            Assert.AreEqual(1, cachedContext.Entries.Count);
-            Assert.AreEqual(42, cachedContext.Entries[0].Id);
+            Assert.Equal(1, cachedContext.Entries.Count);
+            Assert.Equal(42, cachedContext.Entries[0].Id);
         }
 
         [Test]
@@ -310,7 +310,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
             session.UpdateQueryContextCache(preExistingContext);
-            Assert.AreEqual(1, session.GetQueryContextRequest().Entries.Count);
+            Assert.Equal(1, session.GetQueryContextRequest().Entries.Count);
 
             var response = new QueryExecResponse
             {
@@ -331,8 +331,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
-            Assert.AreEqual(1, cachedContext.Entries.Count);
-            Assert.AreEqual(99, cachedContext.Entries[0].Id);
+            Assert.Equal(1, cachedContext.Entries.Count);
+            Assert.Equal(99, cachedContext.Entries[0].Id);
         }
 
         [Test]
@@ -347,8 +347,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
-            Assert.AreEqual(1, cachedContext.Entries.Count);
-            Assert.AreEqual(42, cachedContext.Entries[0].Id);
+            Assert.Equal(1, cachedContext.Entries.Count);
+            Assert.Equal(42, cachedContext.Entries[0].Id);
         }
 
         [Test]
@@ -364,8 +364,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
-            Assert.AreEqual(1, cachedContext.Entries.Count);
-            Assert.AreEqual(42, cachedContext.Entries[0].Id);
+            Assert.Equal(1, cachedContext.Entries.Count);
+            Assert.Equal(42, cachedContext.Entries[0].Id);
         }
 
         [Test]
@@ -377,7 +377,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var statement = new SFStatement(sfSession);
 
             var thrown = Assert.Throws<SnowflakeDbException>(() => statement.Execute(0, "select 1", null, false, false));
-            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
             Assert.True(sfSession.IsInvalidatedForPooling());
         }
 
@@ -391,7 +391,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
                 await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None));
-            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
             Assert.True(sfSession.IsInvalidatedForPooling());
         }
 
@@ -404,7 +404,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var statement = new SFStatement(sfSession);
 
             var thrown = Assert.Throws<SnowflakeDbException>(() => statement.GetResultWithId("mockId"));
-            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
         [Test]
@@ -417,7 +417,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
                 await statement.GetResultWithIdAsync("mockId", CancellationToken.None));
-            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
         [Test]
@@ -429,7 +429,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var statement = new SFStatement(sfSession);
 
             var thrown = Assert.Throws<SnowflakeDbException>(() => statement.GetQueryStatus("mockQueryId"));
-            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
         [Test]
@@ -442,7 +442,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
                 await statement.GetQueryStatusAsync("mockQueryId", CancellationToken.None));
-            Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
     }
 }

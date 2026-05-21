@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _loggerPair.IsDebugEnabled());
+            Assert.Equal(isEnabled, _loggerPair.IsDebugEnabled());
             _loggerPair.Debug("debug log message", new Exception("test exception"));
         }
 
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _loggerPair.IsInfoEnabled());
+            Assert.Equal(isEnabled, _loggerPair.IsInfoEnabled());
             _loggerPair.Info("info log message", new Exception("test exception"));
         }
 
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _loggerPair.IsWarnEnabled());
+            Assert.Equal(isEnabled, _loggerPair.IsWarnEnabled());
             _loggerPair.Warn("warn log message", new Exception("test exception"));
         }
 
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _loggerPair.IsErrorEnabled());
+            Assert.Equal(isEnabled, _loggerPair.IsErrorEnabled());
             _loggerPair.Error("error log message", new Exception("test exception"));
         }
 
@@ -141,7 +141,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             var loggedExceptionString = _testAppender.LoggedExceptions[0]?.ToString() ?? "";
             var expectedMaskedString = "System.Exception: Connection failed with password=****";
-            Assert.AreEqual(expectedMaskedString, loggedExceptionString);
+            Assert.Equal(expectedMaskedString, loggedExceptionString);
         }
 
         private class TestAppender : SFAppender

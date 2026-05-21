@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.Util
     {
         public static void HasErrorCode(SnowflakeDbException exception, SFError sfError)
         {
-            Assert.AreEqual(sfError.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+            Assert.Equal(sfError.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
         }
 
         public static void HasErrorCode(Exception exception, SFError sfError)
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.Util
             switch (exception)
             {
                 case SnowflakeDbException snowflakeDbException:
-                    Assert.AreEqual(sfError.GetAttribute<SFErrorAttr>().errorCode, snowflakeDbException.ErrorCode);
+                    Assert.Equal(sfError.GetAttribute<SFErrorAttr>().errorCode, snowflakeDbException.ErrorCode);
                     break;
                 default:
                     Assert.Fail(exception.GetType() + " type is not " + typeof(SnowflakeDbException));
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.Util
         public static void HasHttpErrorCodeInExceptionChain(Exception exception, HttpStatusCode expected)
         {
             var exceptions = CollectExceptions(exception);
-            Assert.AreEqual(true,
+            Assert.Equal(true,
                 exceptions.Any(e =>
                 {
                     switch (e)
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.Util
         public static void HasMessageInExceptionChain(Exception exception, string expected)
         {
             var exceptions = CollectExceptions(exception);
-            Assert.AreEqual(true,
+            Assert.Equal(true,
                 exceptions.Any(e => e.Message.Contains(expected)),
                 $"Any of exceptions in the chain should contain message: {expected}");
         }

@@ -19,8 +19,8 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestDefaultValues()
         {
             // FastMemoryStream defaults to size of 0 and buffer of size 256
-            Assert.AreEqual(0, _fastMemoryStream.Length);
-            Assert.AreEqual(FastMemoryStream.DEFAULT_BUFFER_SIZE, _fastMemoryStream.GetBuffer().Length);
+            Assert.Equal(0, _fastMemoryStream.Length);
+            Assert.Equal(FastMemoryStream.DEFAULT_BUFFER_SIZE, _fastMemoryStream.GetBuffer().Length);
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 _fastMemoryStream.WriteByte(val);
             }
 
-            Assert.AreEqual(byteArr, _fastMemoryStream.GetBuffer());
+            Assert.Equal(byteArr, _fastMemoryStream.GetBuffer());
         }
 
         [Test]
@@ -49,11 +49,11 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             // Size should be equal to the buffer length
-            Assert.AreEqual(bufferLength, _fastMemoryStream.Length);
+            Assert.Equal(bufferLength, _fastMemoryStream.Length);
             // Clear() resets the size
             _fastMemoryStream.Clear();
             // Size should be back to 0
-            Assert.AreEqual(0, _fastMemoryStream.Length);
+            Assert.Equal(0, _fastMemoryStream.Length);
         }
 
         [Test]
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 _fastMemoryStream.WriteByte(val);
             }
 
-            Assert.AreEqual(byteArr, _fastMemoryStream.GetBuffer());
+            Assert.Equal(byteArr, _fastMemoryStream.GetBuffer());
         }
     }
 }

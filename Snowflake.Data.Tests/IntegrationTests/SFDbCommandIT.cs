@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -46,11 +46,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         }
                     });
                     // query is not finished yet, result is still 0;
-                    Assert.AreEqual(0, queryResult);
+                    Assert.Equal(0, queryResult);
                     // block till query finished
                     readCallback.Wait();
                     // queryResult should be updated by callback
-                    Assert.AreNotEqual(0, queryResult);
+                    Assert.NotEqual(0, queryResult);
                 }
 
                 conn.Close();
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Task connectTask = conn.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
 
                 Task[] taskArray = new Task[5];
                 for (int i = 0; i < taskArray.Length; i++)
@@ -88,11 +88,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 }
                             });
                             // query is not finished yet, result is still 0;
-                            Assert.AreEqual(0, queryResult);
+                            Assert.Equal(0, queryResult);
                             // block till query finished
                             readCallback.Wait();
                             // queryResult should be updated by callback
-                            Assert.AreNotEqual(0, queryResult);
+                            Assert.NotEqual(0, queryResult);
                         }
                     });
                 }
@@ -166,7 +166,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var queryStatus = await cmd.GetQueryStatusAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false);
 
                     // Assert
-                    Assert.AreEqual(QueryStatus.NoData, queryStatus);
+                    Assert.Equal(QueryStatus.NoData, queryStatus);
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -247,8 +247,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(2003, e.ErrorCode);
-                    Assert.AreNotEqual("", e.QueryId);
+                    Assert.Equal(2003, e.ErrorCode);
+                    Assert.NotEqual("", e.QueryId);
                 }
 
                 conn.Close();
@@ -295,7 +295,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     if (e.InnerException.GetType() != typeof(NUnit.Framework.AssertionException))
                     {
-                        Assert.AreEqual(
+                        Assert.Equal(
                         "System.Threading.Tasks.TaskCanceledException",
                         e.InnerException.GetType().ToString());
                     }
@@ -340,7 +340,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (SnowflakeDbException e)
                 {
                     // 604 is error code from server meaning query has been canceled
-                    Assert.AreEqual(e.ErrorCode, 604);
+                    Assert.Equal(e.ErrorCode, 604);
                 }
 
                 conn.Close();

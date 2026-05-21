@@ -46,12 +46,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
             AwsSignature4Signer.AddTokenAndSignatureHeaders(request, awsConfig, s_time);
 
             // assert
-            Assert.AreEqual(5, request.Headers.Count);
-            Assert.AreEqual(AwsStsHost, request.Headers["host"]);
-            Assert.AreEqual(SnowflakeAudience, request.Headers["x-snowflake-audience"]);
-            Assert.AreEqual(ExpectedAmazonDate, request.Headers["x-amz-date"]);
-            Assert.AreEqual(AwsToken, request.Headers["x-amz-security-token"]);
-            Assert.AreEqual(s_expectedAuthorization, request.Headers["authorization"]);
+            Assert.Equal(5, request.Headers.Count);
+            Assert.Equal(AwsStsHost, request.Headers["host"]);
+            Assert.Equal(SnowflakeAudience, request.Headers["x-snowflake-audience"]);
+            Assert.Equal(ExpectedAmazonDate, request.Headers["x-amz-date"]);
+            Assert.Equal(AwsToken, request.Headers["x-amz-security-token"]);
+            Assert.Equal(s_expectedAuthorization, request.Headers["authorization"]);
         }
     }
 }

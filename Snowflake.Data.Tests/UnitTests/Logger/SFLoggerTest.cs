@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _logger.IsTraceEnabled());
+            Assert.Equal(isEnabled, _logger.IsTraceEnabled());
             _logger.Trace("trace log message", new Exception("test exception"));
         }
 
@@ -63,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _logger.IsDebugEnabled());
+            Assert.Equal(isEnabled, _logger.IsDebugEnabled());
             _logger.Debug("debug log message", new Exception("test exception"));
         }
 
@@ -81,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _logger.IsInfoEnabled());
+            Assert.Equal(isEnabled, _logger.IsInfoEnabled());
             _logger.Info("info log message", new Exception("test exception"));
         }
 
@@ -99,7 +99,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _logger.IsWarnEnabled());
+            Assert.Equal(isEnabled, _logger.IsWarnEnabled());
             _logger.Warn("warn log message", new Exception("test exception"));
         }
 
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _logger.IsErrorEnabled());
+            Assert.Equal(isEnabled, _logger.IsErrorEnabled());
             _logger.Error("error log message", new Exception("test exception"));
         }
 
@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests
             if (isEnabled)
             {
                 SFLoggerImpl.SetLevel(logLevel);
-                Assert.AreEqual(logLevel, SFLoggerImpl.s_level);
+                Assert.Equal(logLevel, SFLoggerImpl.s_level);
 
                 if (logLevel == LoggingEvent.OFF)
                 {

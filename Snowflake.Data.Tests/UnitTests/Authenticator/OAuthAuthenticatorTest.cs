@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var result = OAuthAuthenticator.IsOAuthAuthenticator(authenticator);
 
             // assert
-            Assert.AreEqual(expectedResult, result);
+            Assert.Equal(expectedResult, result);
         }
     }
 }

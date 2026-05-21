@@ -83,8 +83,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
 
-            Assert.AreEqual(bucketAndKey[0], location.bucket);
-            Assert.AreEqual(bucketAndKey[1], location.key);
+            Assert.Equal(bucketAndKey[0], location.bucket);
+            Assert.Equal(bucketAndKey[1], location.key);
         }
 
         [Test]
@@ -131,12 +131,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private void AssertForGetFileHeaderWhenFileHeaderAlreadyExistsTests(ResultStatus expectedResultStatus, FileHeader fileHeader)
         {
-            Assert.AreEqual(MockGCSClient.ContentLength, fileHeader.contentLength);
-            Assert.AreEqual(MockGCSClient.SFCDigest, fileHeader.digest);
-            Assert.AreEqual(MockGCSClient.GcsIV, fileHeader.encryptionMetadata.iv);
-            Assert.AreEqual(MockGCSClient.GcsKey, fileHeader.encryptionMetadata.key);
-            Assert.AreEqual(MockGCSClient.GcsMatdesc, fileHeader.encryptionMetadata.matDesc);
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(MockGCSClient.ContentLength, fileHeader.contentLength);
+            Assert.Equal(MockGCSClient.SFCDigest, fileHeader.digest);
+            Assert.Equal(MockGCSClient.GcsIV, fileHeader.encryptionMetadata.iv);
+            Assert.Equal(MockGCSClient.GcsKey, fileHeader.encryptionMetadata.key);
+            Assert.Equal(MockGCSClient.GcsMatdesc, fileHeader.encryptionMetadata.matDesc);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -195,8 +195,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (expectedResultStatus == ResultStatus.UPLOADED)
             {
-                Assert.AreEqual(MockGCSClient.ContentLength, fileHeader.contentLength);
-                Assert.AreEqual(MockGCSClient.SFCDigest, fileHeader.digest);
+                Assert.Equal(MockGCSClient.ContentLength, fileHeader.contentLength);
+                Assert.Equal(MockGCSClient.SFCDigest, fileHeader.digest);
                 Assert.Null(_fileMetadata.lastError);
             }
             else if (expectedResultStatus == ResultStatus.NOT_FOUND_FILE)
@@ -209,7 +209,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.Null(fileHeader);
                 Assert.NotNull(_fileMetadata.lastError);
             }
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -281,10 +281,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (expectedResultStatus == ResultStatus.UPLOADED)
             {
-                Assert.AreEqual(_fileMetadata.uploadSize, _fileMetadata.destFileSize);
+                Assert.Equal(_fileMetadata.uploadSize, _fileMetadata.destFileSize);
             }
 
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -365,7 +365,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var uri = _client.FormBaseRequest(fileMetadata, "PUT").RequestUri.ToString();
 
             // assert
-            Assert.AreEqual(expectedRequestUri, uri);
+            Assert.Equal(expectedRequestUri, uri);
         }
 
         [Test]
@@ -396,7 +396,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var uri = _client.FormBaseRequest(fileMetadata, "PUT").RequestUri.ToString();
 
             // assert
-            Assert.AreEqual(expectedRequestUri, uri);
+            Assert.Equal(expectedRequestUri, uri);
         }
 
         [Test]
@@ -414,8 +414,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.NotNull(header);
-            Assert.AreEqual(1, header.Count());
-            Assert.AreEqual(HeaderValue, header.First());
+            Assert.Equal(1, header.Count());
+            Assert.Equal(HeaderValue, header.First());
         }
 
         [Test]
@@ -433,8 +433,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.NotNull(header);
-            Assert.AreEqual(1, header.Count());
-            Assert.AreEqual(HeaderValue, header.First());
+            Assert.Equal(1, header.Count());
+            Assert.Equal(HeaderValue, header.First());
         }
 
         [Test]
@@ -453,9 +453,9 @@ namespace Snowflake.Data.Tests.UnitTests
             var fileHeader = client.handleGetFileHeaderResponse(response.Object, fileMetadata);
 
             // assert
-            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), fileMetadata.resultStatus);
+            Assert.Equal(ResultStatus.UPLOADED.ToString(), fileMetadata.resultStatus);
             Assert.Null(fileHeader.digest);
-            Assert.AreEqual(123, fileHeader.contentLength);
+            Assert.Equal(123, fileHeader.contentLength);
         }
 
         private void AssertForDownloadFileTests(ResultStatus expectedResultStatus)
@@ -463,11 +463,11 @@ namespace Snowflake.Data.Tests.UnitTests
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
                 string text = File.ReadAllText(t_downloadFileName);
-                Assert.AreEqual(MockGCSClient.GcsFileContent, text);
+                Assert.Equal(MockGCSClient.GcsFileContent, text);
                 File.Delete(t_downloadFileName);
             }
 
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
     }
 }

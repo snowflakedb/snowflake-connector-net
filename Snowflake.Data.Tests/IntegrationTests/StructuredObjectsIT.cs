@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         dt.Load(reader);
 
                         // assert
-                        Assert.AreEqual($"{key}:{value}", DataTableParser.GetFirstRowValue(dt, colName));
+                        Assert.Equal($"{key}:{value}", DataTableParser.GetFirstRowValue(dt, colName));
                     }
                 }
             }
@@ -74,8 +74,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var address = reader.GetObject<Address>(0);
 
                     // assert
-                    Assert.AreEqual("San Mateo", address.city);
-                    Assert.AreEqual("CA", address.state);
+                    Assert.Equal("San Mateo", address.city);
+                    Assert.Equal("CA", address.state);
                     Assert.Null(address.zip);
 
                     if (_nativeArrow)
@@ -112,11 +112,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var address = reader.GetObject<Address>(0);
 
                     // assert
-                    Assert.AreEqual("San Mateo", address.city);
-                    Assert.AreEqual("CA", address.state);
+                    Assert.Equal("San Mateo", address.city);
+                    Assert.Equal("CA", address.state);
                     Assert.NotNull(address.zip);
-                    Assert.AreEqual("00", address.zip.prefix);
-                    Assert.AreEqual("11", address.zip.postfix);
+                    Assert.Equal("00", address.zip.prefix);
+                    Assert.Equal("11", address.zip.postfix);
                 }
             }
         }
@@ -141,9 +141,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(grades);
-                    Assert.AreEqual(2, grades.Names.Count);
-                    Assert.AreEqual("6", grades.Names["Excellent"]);
-                    Assert.AreEqual("1", grades.Names["Poor"]);
+                    Assert.Equal(2, grades.Names.Count);
+                    Assert.Equal("6", grades.Names["Excellent"]);
+                    Assert.Equal("1", grades.Names["Poor"]);
                 }
             }
         }
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(grades);
-                    CollectionAssert.AreEqual(new[] { "Excellent", "Poor" }, grades.Names);
+                    CollectionAssert.Equal(new[] { "Excellent", "Poor" }, grades.Names);
                 }
             }
         }
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(grades);
-                    CollectionAssert.AreEqual(new List<string> { "Excellent", "Poor" }, grades.Names);
+                    CollectionAssert.Equal(new List<string> { "Excellent", "Poor" }, grades.Names);
                 }
             }
         }
@@ -220,7 +220,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(wrapperObject);
-                    Assert.AreEqual(RemoveWhiteSpaces(expectedValue), RemoveWhiteSpaces(wrapperObject.Value));
+                    Assert.Equal(RemoveWhiteSpaces(expectedValue), RemoveWhiteSpaces(wrapperObject.Value));
                 }
             }
         }
@@ -303,16 +303,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(objectWithStructuredTypes);
-                    Assert.AreEqual(new Identity("John"), objectWithStructuredTypes.ObjectValue);
-                    CollectionAssert.AreEqual(new[] { "a", "b" }, objectWithStructuredTypes.ListValue);
-                    CollectionAssert.AreEqual(new[] { "c" }, objectWithStructuredTypes.ArrayValue);
-                    CollectionAssert.AreEqual(new[] { "d", "e" }, objectWithStructuredTypes.IListValue);
-                    Assert.AreEqual(typeof(List<string>), objectWithStructuredTypes.IListValue.GetType());
-                    Assert.AreEqual(1, objectWithStructuredTypes.MapValue.Count);
-                    Assert.AreEqual(5, objectWithStructuredTypes.MapValue[3]);
-                    Assert.AreEqual(1, objectWithStructuredTypes.IMapValue.Count);
-                    Assert.AreEqual(13, objectWithStructuredTypes.IMapValue[8]);
-                    Assert.AreEqual(typeof(Dictionary<int, int>), objectWithStructuredTypes.IMapValue.GetType());
+                    Assert.Equal(new Identity("John"), objectWithStructuredTypes.ObjectValue);
+                    CollectionAssert.Equal(new[] { "a", "b" }, objectWithStructuredTypes.ListValue);
+                    CollectionAssert.Equal(new[] { "c" }, objectWithStructuredTypes.ArrayValue);
+                    CollectionAssert.Equal(new[] { "d", "e" }, objectWithStructuredTypes.IListValue);
+                    Assert.Equal(typeof(List<string>), objectWithStructuredTypes.IListValue.GetType());
+                    Assert.Equal(1, objectWithStructuredTypes.MapValue.Count);
+                    Assert.Equal(5, objectWithStructuredTypes.MapValue[3]);
+                    Assert.Equal(1, objectWithStructuredTypes.IMapValue.Count);
+                    Assert.Equal(13, objectWithStructuredTypes.IMapValue[8]);
+                    Assert.Equal(typeof(Dictionary<int, int>), objectWithStructuredTypes.IMapValue.GetType());
                 }
             }
         }
@@ -343,9 +343,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(objectForAnnotatedClass);
-                    Assert.AreEqual("abc", objectForAnnotatedClass.StringValue);
+                    Assert.Equal("abc", objectForAnnotatedClass.StringValue);
                     Assert.Null(objectForAnnotatedClass.IgnoredValue);
-                    Assert.AreEqual(8, objectForAnnotatedClass.IntegerValue);
+                    Assert.Equal(8, objectForAnnotatedClass.IntegerValue);
                 }
             }
         }
@@ -376,9 +376,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(objectForAnnotatedClass);
-                    Assert.AreEqual("abc", objectForAnnotatedClass.StringValue);
+                    Assert.Equal("abc", objectForAnnotatedClass.StringValue);
                     Assert.Null(objectForAnnotatedClass.IgnoredValue);
-                    Assert.AreEqual(8, objectForAnnotatedClass.IntegerValue);
+                    Assert.Equal(8, objectForAnnotatedClass.IntegerValue);
                 }
             }
         }
@@ -409,9 +409,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(objectForAnnotatedClass);
-                    Assert.AreEqual("abc", objectForAnnotatedClass.StringValue);
+                    Assert.Equal("abc", objectForAnnotatedClass.StringValue);
                     Assert.Null(objectForAnnotatedClass.IgnoredValue);
-                    Assert.AreEqual(8, objectForAnnotatedClass.IntegerValue);
+                    Assert.Equal(8, objectForAnnotatedClass.IntegerValue);
                 }
             }
         }

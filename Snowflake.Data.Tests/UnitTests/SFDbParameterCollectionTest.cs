@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests
                 _parameterCollection.Add(parameter);
             }
 
-            Assert.AreEqual(PARAM_COUNT, _parameterCollection.Count);
+            Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
         }
 
         [Test]
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterCollectionAddNameAndType([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter parameter = _parameterCollection.Add("1", SFDataType);
-            Assert.AreEqual(parameter, _parameterCollection[0]);
+            Assert.Equal(parameter, _parameterCollection[0]);
         }
 
         [Test]
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests
             }
 
             _parameterCollection.AddRange(parameterArray);
-            Assert.AreEqual(PARAM_COUNT, _parameterCollection.Count);
+            Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
         }
 
         [Test]
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests
             }
 
             _parameterCollection.AddRange(parameterArray);
-            Assert.AreEqual(PARAM_COUNT, _parameterCollection.Count);
+            Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
 
             _parameterCollection.Clear();
             Assert.Zero(_parameterCollection.Count);
@@ -123,7 +123,7 @@ namespace Snowflake.Data.Tests
 
             parameterEnumerator.Reset();
             Assert.True(parameterEnumerator.MoveNext());
-            Assert.AreEqual(parameter, (SnowflakeDbParameter)parameterEnumerator.Current);
+            Assert.Equal(parameter, (SnowflakeDbParameter)parameterEnumerator.Current);
             Assert.False(parameterEnumerator.MoveNext());
         }
 
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests
                 _parameterCollection.Add(new SnowflakeDbParameter(i, SFDataType));
             }
 
-            Assert.AreEqual(PARAM_COUNT - 1, _parameterCollection.IndexOf(paramName));
+            Assert.Equal(PARAM_COUNT - 1, _parameterCollection.IndexOf(paramName));
         }
 
         [Test]
@@ -156,7 +156,7 @@ namespace Snowflake.Data.Tests
         {
             int expectedParameterIndex = -1;
             string paramName = "1";
-            Assert.AreEqual(expectedParameterIndex, _parameterCollection.IndexOf(paramName));
+            Assert.Equal(expectedParameterIndex, _parameterCollection.IndexOf(paramName));
         }
 
         [Test]
@@ -166,7 +166,7 @@ namespace Snowflake.Data.Tests
             SnowflakeDbParameter parameter = new SnowflakeDbParameter(1, SFDataType);
 
             _parameterCollection.Add(parameter);
-            Assert.AreEqual(expectedParameterIndex, _parameterCollection.IndexOf(parameter));
+            Assert.Equal(expectedParameterIndex, _parameterCollection.IndexOf(parameter));
         }
 
         [Test]
@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests
                 parameter = new SnowflakeDbParameter(expectedParamIndex.ToString(), SFDataType);
 
                 _parameterCollection.Insert(expectedParamIndex, parameter);
-                Assert.AreEqual(expectedParamIndex, _parameterCollection.IndexOf(parameter));
+                Assert.Equal(expectedParamIndex, _parameterCollection.IndexOf(parameter));
             }
         }
 
@@ -201,13 +201,13 @@ namespace Snowflake.Data.Tests
             }
 
             _parameterCollection.AddRange(parameterArray);
-            Assert.AreEqual(PARAM_COUNT, _parameterCollection.Count);
+            Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
 
 
             for (int i = 0; i < PARAM_COUNT; i++)
             {
                 _parameterCollection.Remove((SnowflakeDbParameter)_parameterCollection[0]);
-                Assert.AreEqual(PARAM_COUNT - i - 1, _parameterCollection.Count);
+                Assert.Equal(PARAM_COUNT - i - 1, _parameterCollection.Count);
             }
         }
 
@@ -222,12 +222,12 @@ namespace Snowflake.Data.Tests
             }
 
             _parameterCollection.AddRange(parameterArray);
-            Assert.AreEqual(PARAM_COUNT, _parameterCollection.Count);
+            Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
 
             for (int i = 0; i < PARAM_COUNT; i++)
             {
                 _parameterCollection.RemoveAt(((SnowflakeDbParameter)_parameterCollection[0]).ParameterName);
-                Assert.AreEqual(PARAM_COUNT - i - 1, _parameterCollection.Count);
+                Assert.Equal(PARAM_COUNT - i - 1, _parameterCollection.Count);
             }
         }
 
@@ -242,13 +242,13 @@ namespace Snowflake.Data.Tests
             }
 
             _parameterCollection.AddRange(parameterArray);
-            Assert.AreEqual(PARAM_COUNT, _parameterCollection.Count);
+            Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
 
 
             for (int i = 0; i < PARAM_COUNT; i++)
             {
                 _parameterCollection.RemoveAt(0);
-                Assert.AreEqual(PARAM_COUNT - i - 1, _parameterCollection.Count);
+                Assert.Equal(PARAM_COUNT - i - 1, _parameterCollection.Count);
             }
         }
 
@@ -258,7 +258,7 @@ namespace Snowflake.Data.Tests
             string paramName = "1";
             SnowflakeDbParameter expectedParameter = new SnowflakeDbParameter(paramName, SFDataType);
             _parameterCollection.Add(expectedParameter);
-            Assert.AreEqual(expectedParameter, _parameterCollection[paramName]);
+            Assert.Equal(expectedParameter, _parameterCollection[paramName]);
         }
 
         [Test]
@@ -267,7 +267,7 @@ namespace Snowflake.Data.Tests
             int paramIndex = 0;
             SnowflakeDbParameter expectedParameter = new SnowflakeDbParameter(1, SFDataType);
             _parameterCollection.Add(expectedParameter);
-            Assert.AreEqual(expectedParameter, _parameterCollection[paramIndex]);
+            Assert.Equal(expectedParameter, _parameterCollection[paramIndex]);
         }
 
         [Test]
@@ -277,11 +277,11 @@ namespace Snowflake.Data.Tests
             string secondParamName = "2";
             SnowflakeDbParameter expectedFirstParameter = new SnowflakeDbParameter(firstParamName, SFDataType);
             _parameterCollection.Add(expectedFirstParameter);
-            Assert.AreEqual(expectedFirstParameter, _parameterCollection[firstParamName]);
+            Assert.Equal(expectedFirstParameter, _parameterCollection[firstParamName]);
 
             SnowflakeDbParameter expectedSecondParameter = new SnowflakeDbParameter(secondParamName, SFDataType);
             _parameterCollection[firstParamName] = expectedSecondParameter;
-            Assert.AreEqual(expectedSecondParameter, _parameterCollection[secondParamName]);
+            Assert.Equal(expectedSecondParameter, _parameterCollection[secondParamName]);
         }
 
         [Test]
@@ -290,11 +290,11 @@ namespace Snowflake.Data.Tests
             int paramIndex = 0;
             SnowflakeDbParameter expectedFirstParameter = new SnowflakeDbParameter(1, SFDataType);
             _parameterCollection.Add(expectedFirstParameter);
-            Assert.AreEqual(expectedFirstParameter, _parameterCollection[paramIndex]);
+            Assert.Equal(expectedFirstParameter, _parameterCollection[paramIndex]);
 
             SnowflakeDbParameter expectedSecondParameter = new SnowflakeDbParameter(2, SFDataType);
             _parameterCollection[paramIndex] = expectedSecondParameter;
-            Assert.AreEqual(expectedSecondParameter, _parameterCollection[paramIndex]);
+            Assert.Equal(expectedSecondParameter, _parameterCollection[paramIndex]);
         }
 
         [Test]
@@ -307,7 +307,7 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterCollectionTryCastThrowWrongType()
         {
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _parameterCollection.Add(new SnowflakeDbCommand()));
-            Assert.AreEqual(SFError.UNSUPPORTED_FEATURE.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
+            Assert.Equal(SFError.UNSUPPORTED_FEATURE.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
 
         }
     }

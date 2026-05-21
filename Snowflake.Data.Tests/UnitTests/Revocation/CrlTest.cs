@@ -26,14 +26,14 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crl = crlParser.Parse(crlBytes, now);
 
             // assert
-            Assert.AreEqual(now, crl.DownloadTime);
-            Assert.AreEqual(DateTimeKind.Utc, crl.ThisUpdate.Kind);
-            Assert.AreEqual(DigiCertThisUpdateString, crl.ThisUpdate.ToUniversalTime().ToString("o"));
-            Assert.AreEqual(DateTimeKind.Utc, crl.NextUpdate?.Kind);
-            Assert.AreEqual(DigiCertNextUpdateString, crl.NextUpdate?.ToUniversalTime().ToString("o"));
-            Assert.AreEqual(DigiCertIssuer, crl.IssuerName);
+            Assert.Equal(now, crl.DownloadTime);
+            Assert.Equal(DateTimeKind.Utc, crl.ThisUpdate.Kind);
+            Assert.Equal(DigiCertThisUpdateString, crl.ThisUpdate.ToUniversalTime().ToString("o"));
+            Assert.Equal(DateTimeKind.Utc, crl.NextUpdate?.Kind);
+            Assert.Equal(DigiCertNextUpdateString, crl.NextUpdate?.ToUniversalTime().ToString("o"));
+            Assert.Equal(DigiCertIssuer, crl.IssuerName);
             Assert.NotNull(crl.IssuerNameRawData);
-            CollectionAssert.AreEqual(crl.BouncyCastleCrl.IssuerDN.GetEncoded(), crl.IssuerNameRawData);
+            CollectionAssert.Equal(crl.BouncyCastleCrl.IssuerDN.GetEncoded(), crl.IssuerNameRawData);
             Assert.That(crl.IssuerDistributionPoints, Is.EquivalentTo(expectedCrlDistributionPoints));
             Assert.That(crl.RevokedCertificates, Does.Contain(DigiCertRevokedCertSerialNumber));
             Assert.True(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var isExpired = crl.NeedsReplacement(now, TimeSpan.FromDays(365));
 
             // assert
-            Assert.AreEqual(expectedIsExpired, isExpired);
+            Assert.Equal(expectedIsExpired, isExpired);
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var validityTime = crlParser.GetCacheValidityTime();
 
             // assert
-            Assert.AreEqual(TimeSpan.FromDays(1), validityTime);
+            Assert.Equal(TimeSpan.FromDays(1), validityTime);
         }
 
         [Test]
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var validityTime = crlParser.GetCacheValidityTime();
 
             // assert
-            Assert.AreEqual(TimeSpan.FromDays(7), validityTime);
+            Assert.Equal(TimeSpan.FromDays(7), validityTime);
         }
 
         [Test]
@@ -126,7 +126,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var hexString = crlParser.ConvertToHexadecimalString(bigInt);
 
             // assert
-            Assert.AreEqual(expectedHexString, hexString);
+            Assert.Equal(expectedHexString, hexString);
         }
     }
 }

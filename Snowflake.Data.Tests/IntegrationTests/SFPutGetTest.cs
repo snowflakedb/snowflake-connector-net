@@ -245,7 +245,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     command.CommandText = sql;
                     var reader = command.ExecuteReader();
-                    Assert.AreEqual(false, reader.Read());
+                    Assert.Equal(false, reader.Read());
                 }
             }
         }
@@ -657,29 +657,29 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (SnowflakeDbException e)
                 {
                     // to make sure in a failure case command was set properly with a failed QueryId
-                    Assert.AreEqual(e.QueryId, ((SnowflakeDbCommand)command).GetQueryId());
+                    Assert.Equal(e.QueryId, ((SnowflakeDbCommand)command).GetQueryId());
                     throw;
                 }
                 // Checking query id when reader succeeded
                 queryId = ((SnowflakeDbDataReader)reader).GetQueryId();
                 // Checking if query Id is provided on the command level as well
-                Assert.AreEqual(queryId, ((SnowflakeDbCommand)command).GetQueryId());
+                Assert.Equal(queryId, ((SnowflakeDbCommand)command).GetQueryId());
                 // Check file status
-                Assert.AreEqual(expectedStatus.ToString(),
+                Assert.Equal(expectedStatus.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check source and destination compression type
                 if (t_autoCompress)
                 {
-                    Assert.AreEqual(t_sourceCompressionType,
+                    Assert.Equal(t_sourceCompressionType,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                    Assert.AreEqual(t_destCompressionType,
+                    Assert.Equal(t_destCompressionType,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                 }
                 else
                 {
-                    Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
+                    Assert.Equal(SFFileCompressionTypes.NONE.Name,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                    Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
+                    Assert.Equal(SFFileCompressionTypes.NONE.Name,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                 }
                 Assert.Null(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
@@ -713,13 +713,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     for (var i = 0; i < s_colData.Length; i++)
                     {
-                        Assert.AreEqual(reader.GetString(i), s_colData[i]);
+                        Assert.Equal(reader.GetString(i), s_colData[i]);
                     }
                 }
 
                 // Check row count is correct
                 command.CommandText = $"SELECT COUNT(*) FROM {t_schemaName}.{t_tableName}";
-                Assert.AreEqual(NumberOfRows, command.ExecuteScalar());
+                Assert.Equal(NumberOfRows, command.ExecuteScalar());
             }
         }
 
@@ -739,7 +739,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.True(reader.Read());
 
                 // Check file status
-                Assert.AreEqual(ResultStatus.DOWNLOADED.ToString(),
+                Assert.Equal(ResultStatus.DOWNLOADED.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
 
                 // Check file contents
@@ -750,7 +750,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     for (var i = 0; i < s_colData.Length; i++)
                     {
-                        Assert.AreEqual(s_colData[i], values[i]);
+                        Assert.Equal(s_colData[i], values[i]);
                     }
                 }
             }
@@ -795,7 +795,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var bytes = new byte[stream.Length];
             stream.Position = 0;
             var readBytes = stream.Read(bytes, 0, (int)stream.Length);
-            Assert.AreEqual(stream.Length, readBytes);
+            Assert.Equal(stream.Length, readBytes);
             return Encoding.UTF8.GetString(bytes).Split('\n');
         }
 
@@ -829,7 +829,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var dbDataReader = cmd.ExecuteReader();
                 var dt = new DataTable();
                 dt.Load(dbDataReader);
-                Assert.AreEqual(files.Count, dt.Rows.Count);
+                Assert.Equal(files.Count, dt.Rows.Count);
             }
         }
     }

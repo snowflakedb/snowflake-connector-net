@@ -206,8 +206,8 @@ namespace Snowflake.Data.Tests.UnitTests
             SFRemoteStorageUtil.UploadOneFile(_fileMetadata);
 
             // Assert
-            Assert.AreEqual(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
-            Assert.AreEqual(ResultStatus.SKIPPED.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
+            Assert.Equal(ResultStatus.SKIPPED.ToString(), _fileMetadata.resultStatus);
         }
 
         private Mock<WebRequest> CreateBaseMockClient()
@@ -260,7 +260,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFRemoteStorageUtil.UploadOneFileWithRetry(_fileMetadata);
 
             // Assert
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -274,7 +274,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await SFRemoteStorageUtil.UploadOneFileWithRetryAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
             // Assert
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -293,9 +293,9 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.SKIPPED)
             {
-                Assert.AreEqual(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
+                Assert.Equal(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
             }
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -314,9 +314,9 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.SKIPPED)
             {
-                Assert.AreEqual(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
+                Assert.Equal(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
             }
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -333,7 +333,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(ex.Message, Does.Match(MockRemoteStorageClient.ErrorMessage));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -350,7 +350,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(ex.Message, Does.Match(MockRemoteStorageClient.ErrorMessage));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
 
@@ -366,7 +366,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(ex.Message, Does.Match($"Unknown Error in uploading a file: .*"));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -381,7 +381,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(ex.Message, Does.Match($"Unknown Error in uploading a file: .*"));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         private void SetUpMockClientForDownload(HttpStatusCode statusCode, bool isAsync)
@@ -424,9 +424,9 @@ namespace Snowflake.Data.Tests.UnitTests
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
                 string text = File.ReadAllText(t_downloadFileName);
-                Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
+                Assert.Equal(MockRemoteStorageClient.FileContent, text);
             }
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -444,9 +444,9 @@ namespace Snowflake.Data.Tests.UnitTests
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
                 string text = File.ReadAllText(t_downloadFileName);
-                Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
+                Assert.Equal(MockRemoteStorageClient.FileContent, text);
             }
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -463,7 +463,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(ex.Message, Does.Match(MockRemoteStorageClient.ErrorMessage));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -480,7 +480,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(ex.Message, Does.Match(MockRemoteStorageClient.ErrorMessage));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -545,8 +545,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             string text = File.ReadAllText(t_downloadFileName);
-            Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(MockRemoteStorageClient.FileContent, text);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -562,8 +562,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             string text = File.ReadAllText(t_downloadFileName);
-            Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(MockRemoteStorageClient.FileContent, text);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
     }
 }

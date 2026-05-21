@@ -96,9 +96,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
@@ -114,9 +114,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
@@ -132,9 +132,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
@@ -170,9 +170,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
@@ -192,9 +192,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
@@ -215,9 +215,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
@@ -258,9 +258,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 

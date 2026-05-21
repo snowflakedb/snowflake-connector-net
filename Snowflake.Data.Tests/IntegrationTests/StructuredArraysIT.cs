@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         dt.Load(reader);
 
                         // assert
-                        Assert.AreEqual($"{expectedValueA},{expectedValueB},{expectedValueC}", DataTableParser.GetFirstRowValue(dt, colName));
+                        Assert.Equal($"{expectedValueA},{expectedValueB},{expectedValueC}", DataTableParser.GetFirstRowValue(dt, colName));
                     }
                 }
             }
@@ -78,8 +78,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<string>(0);
 
                     // assert
-                    Assert.AreEqual(3, array.Length);
-                    CollectionAssert.AreEqual(new[] { "a", "b", "c" }, array);
+                    Assert.Equal(3, array.Length);
+                    CollectionAssert.Equal(new[] { "a", "b", "c" }, array);
 
                     if (_nativeArrow)
                     {
@@ -115,8 +115,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<Identity>(0);
 
                     // assert
-                    Assert.AreEqual(2, array.Length);
-                    CollectionAssert.AreEqual(new[] { new Identity("Alex"), new Identity("Brian") }, array);
+                    Assert.Equal(2, array.Length);
+                    CollectionAssert.Equal(new[] { new Identity("Alex"), new Identity("Brian") }, array);
                 }
             }
         }
@@ -140,8 +140,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<string[]>(0);
 
                     // assert
-                    Assert.AreEqual(2, array.Length);
-                    CollectionAssert.AreEqual(new[] { new[] { "a", "b" }, new[] { "c", "d" } }, array);
+                    Assert.Equal(2, array.Length);
+                    CollectionAssert.Equal(new[] { new[] { "a", "b" }, new[] { "c", "d" } }, array);
                 }
             }
         }
@@ -165,11 +165,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<Dictionary<string, string>>(0);
 
                     // assert
-                    Assert.AreEqual(1, array.Length);
+                    Assert.Equal(1, array.Length);
                     var map = array[0];
                     Assert.NotNull(map);
-                    Assert.AreEqual(1, map.Count);
-                    Assert.AreEqual("b", map["a"]);
+                    Assert.Equal(1, map.Count);
+                    Assert.Equal("b", map["a"]);
                 }
             }
         }
@@ -196,7 +196,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(array);
-                    CollectionAssert.AreEqual(new[] { RemoveWhiteSpaces(expectedValue) }, array.Select(RemoveWhiteSpaces).ToArray());
+                    CollectionAssert.Equal(new[] { RemoveWhiteSpaces(expectedValue) }, array.Select(RemoveWhiteSpaces).ToArray());
                 }
             }
         }
@@ -220,8 +220,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<int>(0);
 
                     // assert
-                    Assert.AreEqual(3, array.Length);
-                    CollectionAssert.AreEqual(new[] { 3, 5, 8 }, array);
+                    Assert.Equal(3, array.Length);
+                    CollectionAssert.Equal(new[] { 3, 5, 8 }, array);
                 }
             }
         }
@@ -245,8 +245,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<long>(0);
 
                     // assert
-                    Assert.AreEqual(3, array.Length);
-                    CollectionAssert.AreEqual(new[] { 3L, 5L, 8L }, array);
+                    Assert.Equal(3, array.Length);
+                    CollectionAssert.Equal(new[] { 3L, 5L, 8L }, array);
                 }
             }
         }
@@ -270,8 +270,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<float>(0);
 
                     // assert
-                    Assert.AreEqual(3, array.Length);
-                    CollectionAssert.AreEqual(new[] { 3.1f, 5.2f, 8.11f }, array);
+                    Assert.Equal(3, array.Length);
+                    CollectionAssert.Equal(new[] { 3.1f, 5.2f, 8.11f }, array);
                 }
             }
         }
@@ -295,8 +295,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<double>(0);
 
                     // assert
-                    Assert.AreEqual(3, array.Length);
-                    CollectionAssert.AreEqual(new[] { 3.1d, 5.2d, 8.11d }, array);
+                    Assert.Equal(3, array.Length);
+                    CollectionAssert.Equal(new[] { 3.1d, 5.2d, 8.11d }, array);
                 }
             }
         }
@@ -320,8 +320,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<double>(0);
 
                     // assert
-                    Assert.AreEqual(2, array.Length);
-                    CollectionAssert.AreEqual(new[] { 1.0e100d, 1.0e-100d }, array);
+                    Assert.Equal(2, array.Length);
+                    CollectionAssert.Equal(new[] { 1.0e100d, 1.0e-100d }, array);
                 }
             }
         }
@@ -345,8 +345,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<bool>(0);
 
                     // assert
-                    Assert.AreEqual(2, array.Length);
-                    CollectionAssert.AreEqual(new[] { true, false }, array);
+                    Assert.Equal(2, array.Length);
+                    CollectionAssert.Equal(new[] { true, false }, array);
                 }
             }
         }
@@ -371,8 +371,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var strings = array.Select(b => Encoding.UTF8.GetString(b)).ToArray();
 
                     // assert
-                    Assert.AreEqual(2, array.Length);
-                    CollectionAssert.AreEqual(new[] { "AB", "BC" }, strings);
+                    Assert.Equal(2, array.Length);
+                    CollectionAssert.Equal(new[] { "AB", "BC" }, strings);
                 }
             }
         }
@@ -396,8 +396,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<DateTime>(0);
 
                     // assert
-                    Assert.AreEqual(1, array.Length);
-                    CollectionAssert.AreEqual(new[] { DateTime.Parse("2024-01-01") }, array);
+                    Assert.Equal(1, array.Length);
+                    CollectionAssert.Equal(new[] { DateTime.Parse("2024-01-01") }, array);
                 }
             }
         }
@@ -421,8 +421,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<string>(0);
 
                     // assert
-                    Assert.AreEqual(3, array.Length);
-                    CollectionAssert.AreEqual(new[] { "a", null, "b" }, array);
+                    Assert.Equal(3, array.Length);
+                    CollectionAssert.Equal(new[] { "a", null, "b" }, array);
                 }
             }
         }
@@ -446,8 +446,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<int?>(0);
 
                     // assert
-                    Assert.AreEqual(3, array.Length);
-                    CollectionAssert.AreEqual(new int?[] { 3, null, 5 }, array);
+                    Assert.Equal(3, array.Length);
+                    CollectionAssert.Equal(new int?[] { 3, null, 5 }, array);
                 }
             }
         }

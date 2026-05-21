@@ -80,7 +80,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedDatabase);
             connection.Close();
 
-            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+            Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
         [Test]
@@ -93,7 +93,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.Open();
             connection.Close();
 
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            Assert.Equal(1, pool.GetCurrentPoolSize());
         }
 
         [Test]
@@ -108,12 +108,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var sessionId = connection.SfSession.sessionId;
             connection.Close();
 
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            Assert.Equal(1, pool.GetCurrentPoolSize());
             connection.Close();
 
             var connection2 = new SnowflakeDbConnection(connectionString);
             connection2.Open();
-            Assert.AreEqual(sessionId, connection2.SfSession.sessionId);
+            Assert.Equal(sessionId, connection2.SfSession.sessionId);
             connection2.Close();
         }
 
@@ -129,11 +129,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var sessionId = connection.SfSession.sessionId;
             connection.Close();
 
-            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+            Assert.Equal(0, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
             connection2.Open();
-            Assert.AreNotEqual(sessionId, connection2.SfSession.sessionId);
+            Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
             connection2.Close();
         }
 
@@ -150,11 +150,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.Close();
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
             connection2.Open();
-            Assert.AreNotEqual(sessionId, connection2.SfSession.sessionId);
+            Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
             connection2.Close();
         }
 
@@ -178,11 +178,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.Close();
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
             connection2.Open();
-            Assert.AreEqual(sessionId, connection2.SfSession.sessionId);
+            Assert.Equal(sessionId, connection2.SfSession.sessionId);
             connection2.Close();
         }
 
@@ -206,11 +206,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.Close();
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
             connection2.Open();
-            Assert.AreNotEqual(sessionId, connection2.SfSession.sessionId);
+            Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
             connection2.Close();
         }
     }

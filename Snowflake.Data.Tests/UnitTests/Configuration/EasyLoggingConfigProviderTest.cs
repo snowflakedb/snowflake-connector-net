@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var result = configProvider.ProvideConfig(FilePathFromConnectionString);
 
             // assert
-            Assert.AreSame(config, result);
+            Assert.Same(config, result);
         }
 
         [Test]

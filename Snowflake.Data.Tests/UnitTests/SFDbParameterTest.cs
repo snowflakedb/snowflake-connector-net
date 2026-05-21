@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests
         public void TestDefaultDbParameter()
         {
             _parameter = new SnowflakeDbParameter();
-            Assert.AreEqual(SFDataType.None, _parameter.SFDataType);
+            Assert.Equal(SFDataType.None, _parameter.SFDataType);
         }
 
         [Test]
@@ -24,8 +24,8 @@ namespace Snowflake.Data.Tests
         {
             string expectedParameterName = "1";
             _parameter = new SnowflakeDbParameter(expectedParameterName, expectedSFDataType);
-            Assert.AreEqual(expectedParameterName, _parameter.ParameterName);
-            Assert.AreEqual(expectedSFDataType, _parameter.SFDataType);
+            Assert.Equal(expectedParameterName, _parameter.ParameterName);
+            Assert.Equal(expectedSFDataType, _parameter.SFDataType);
         }
 
         [Test]
@@ -34,8 +34,8 @@ namespace Snowflake.Data.Tests
             int expectedParameterIndex = 1;
 
             _parameter = new SnowflakeDbParameter(expectedParameterIndex, expectedSFDataType);
-            Assert.AreEqual(expectedParameterIndex.ToString(), _parameter.ParameterName);
-            Assert.AreEqual(expectedSFDataType, _parameter.SFDataType);
+            Assert.Equal(expectedParameterIndex.ToString(), _parameter.ParameterName);
+            Assert.Equal(expectedSFDataType, _parameter.SFDataType);
         }
 
         [Test]
@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests
         {
             _parameter = new SnowflakeDbParameter();
             _parameter.DbType = expectedDbType;
-            Assert.AreEqual(expectedDbType, _parameter.DbType);
+            Assert.Equal(expectedDbType, _parameter.DbType);
         }
 
         [Test]
@@ -53,12 +53,12 @@ namespace Snowflake.Data.Tests
             if (ParameterDirection == ParameterDirection.Input)
             {
                 _parameter.Direction = ParameterDirection;
-                Assert.AreEqual(ParameterDirection.Input, _parameter.Direction);
+                Assert.Equal(ParameterDirection.Input, _parameter.Direction);
             }
             else
             {
                 SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _parameter.Direction = ParameterDirection);
-                Assert.AreEqual(SFError.UNSUPPORTED_FEATURE.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
+                Assert.Equal(SFError.UNSUPPORTED_FEATURE.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
             }
         }
 
@@ -66,10 +66,10 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterIsNullable([Values] SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.AreEqual(false, _parameter.IsNullable);
+            Assert.Equal(false, _parameter.IsNullable);
 
             _parameter.IsNullable = true;
-            Assert.AreEqual(true, _parameter.IsNullable);
+            Assert.Equal(true, _parameter.IsNullable);
         }
 
         [Test]
@@ -79,49 +79,49 @@ namespace Snowflake.Data.Tests
             Assert.Zero(_parameter.Size);
 
             _parameter.Size = 1;
-            Assert.AreEqual(1, _parameter.Size);
+            Assert.Equal(1, _parameter.Size);
         }
 
         [Test]
         public void TestDbParameterSourceColumn([Values] SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.AreEqual(null, _parameter.SourceColumn);
+            Assert.Equal(null, _parameter.SourceColumn);
 
             string col = "col";
             _parameter.SourceColumn = col;
-            Assert.AreEqual(col, _parameter.SourceColumn);
+            Assert.Equal(col, _parameter.SourceColumn);
         }
 
         [Test]
         public void TestDbParameterSourceColumnNullMapping([Values] SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.AreEqual(false, _parameter.SourceColumnNullMapping);
+            Assert.Equal(false, _parameter.SourceColumnNullMapping);
 
             _parameter.SourceColumnNullMapping = true;
-            Assert.AreEqual(true, _parameter.SourceColumnNullMapping);
+            Assert.Equal(true, _parameter.SourceColumnNullMapping);
         }
 
         [Test]
         public void TestDbParameterValue([Values] SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.AreEqual(null, _parameter.Value);
+            Assert.Equal(null, _parameter.Value);
 
             object obj = new object();
             _parameter.Value = obj;
-            Assert.AreEqual(obj, _parameter.Value);
+            Assert.Equal(obj, _parameter.Value);
         }
 
         [Test]
         public void TestDbParameterResetDbType([Values] SFDataType expectedSFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, expectedSFDataType);
-            Assert.AreEqual(expectedSFDataType, _parameter.SFDataType);
+            Assert.Equal(expectedSFDataType, _parameter.SFDataType);
 
             _parameter.ResetDbType();
-            Assert.AreEqual(SFDataType.None, _parameter.SFDataType);
+            Assert.Equal(SFDataType.None, _parameter.SFDataType);
         }
 
         [Test]
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests
                     break;
             }
 
-            Assert.AreEqual(expectedDbType, _parameter.DbType);
+            Assert.Equal(expectedDbType, _parameter.DbType);
         }
 
         [Test]
@@ -199,7 +199,7 @@ namespace Snowflake.Data.Tests
         {
             _parameter = new SnowflakeDbParameter();
             _parameter.Value = null;
-            Assert.AreEqual(default(DbType), _parameter.DbType);
+            Assert.Equal(default(DbType), _parameter.DbType);
         }
 
         [Test]
@@ -209,7 +209,7 @@ namespace Snowflake.Data.Tests
             _parameter = new SnowflakeDbParameter();
             _parameter.Value = null;
             _parameter.DbType = nonDefaultDbType;
-            Assert.AreEqual(nonDefaultDbType, _parameter.DbType);
+            Assert.Equal(nonDefaultDbType, _parameter.DbType);
         }
     }
 }

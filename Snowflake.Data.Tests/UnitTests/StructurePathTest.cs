@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = new StructurePath().ToString();
 
             // assert
-            Assert.AreEqual("$", value);
+            Assert.Equal("$", value);
         }
 
         [Test]
@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithPropertyIndex(2);
 
             // assert
-            Assert.AreEqual("$[2]", value.ToString());
+            Assert.Equal("$[2]", value.ToString());
         }
 
         [Test]
@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithPropertyIndex(1);
 
             // assert
-            Assert.AreEqual("$[2][1]", value.ToString());
+            Assert.Equal("$[2][1]", value.ToString());
         }
 
         [Test]
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithArrayIndex(2);
 
             // assert
-            Assert.AreEqual("$[2]", value.ToString());
+            Assert.Equal("$[2]", value.ToString());
         }
 
         [Test]
@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithArrayIndex(1);
 
             // assert
-            Assert.AreEqual("$[2][1]", value.ToString());
+            Assert.Equal("$[2][1]", value.ToString());
         }
 
         [Test]
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithMapIndex(2);
 
             // assert
-            Assert.AreEqual("$[2]", value.ToString());
+            Assert.Equal("$[2]", value.ToString());
         }
 
         [Test]
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithMapIndex(1);
 
             // assert
-            Assert.AreEqual("$[2][1]", value.ToString());
+            Assert.Equal("$[2][1]", value.ToString());
         }
     }
 }

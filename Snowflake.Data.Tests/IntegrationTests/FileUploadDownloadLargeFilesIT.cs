@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             DownloadFile(s_remoteFolderName, s_downloadFolderName, FileName);
 
             // assert
-            Assert.AreEqual(
+            Assert.Equal(
                 CalcualteMD5(s_fullFileName),
                 CalcualteMD5(s_fullDownloadedFileName));
 

@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var result = OktaAuthenticator.IsOktaAuthenticator(authenticator);
 
             // assert
-            Assert.AreEqual(expectedResult, result);
+            Assert.Equal(expectedResult, result);
         }
     }
 }

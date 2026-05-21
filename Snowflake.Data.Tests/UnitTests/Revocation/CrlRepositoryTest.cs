@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var cleanupInterval = CrlRepository.GetCleanupInterval();
 
             // assert
-            Assert.AreEqual(TimeSpan.FromDays(7), cleanupInterval,
+            Assert.Equal(TimeSpan.FromDays(7), cleanupInterval,
                 "Default cleanup interval should be 7 days");
         }
 
@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var cleanupInterval = CrlRepository.GetCleanupInterval();
 
             // assert
-            Assert.AreEqual(TimeSpan.FromDays(14), cleanupInterval,
+            Assert.Equal(TimeSpan.FromDays(14), cleanupInterval,
                 "Cleanup interval should be 14 days when SF_CRL_CACHE_REMOVAL_DELAY=14");
         }
 
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var cleanupInterval = CrlRepository.GetCleanupInterval();
 
             // assert
-            Assert.AreEqual(TimeSpan.FromDays(7), cleanupInterval,
+            Assert.Equal(TimeSpan.FromDays(7), cleanupInterval,
                 "Should use default 7 days when environment variable is invalid");
         }
     }

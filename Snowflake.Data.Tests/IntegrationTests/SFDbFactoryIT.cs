@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             object res = _command.ExecuteScalar();
 
-            Assert.AreEqual(1, res);
+            Assert.Equal(1, res);
         }
 
         [Test]
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             var result = _command.ExecuteScalar();
 
-            Assert.AreEqual(expectedIntValue, result);
+            Assert.Equal(expectedIntValue, result);
         }
 
         [Test]
@@ -84,7 +84,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             var result = _command.ExecuteScalar();
 
-            Assert.AreEqual(1, result);
+            Assert.Equal(1, result);
         }
 
         [Test]
@@ -102,7 +102,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             adapter.Fill(ds);
 
-            Assert.AreEqual(1, ds.Tables[0].Rows[0].ItemArray[0]);
+            Assert.Equal(1, ds.Tables[0].Rows[0].ItemArray[0]);
         }
     }
 }

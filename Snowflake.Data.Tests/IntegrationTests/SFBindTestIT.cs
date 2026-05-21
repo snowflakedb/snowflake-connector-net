@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p2);
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(3, count);
+                    Assert.Equal(3, count);
                 }
 
                 conn.Close();
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             param.Value = nullValue;
                             command.Parameters.Add(param);
                             int rowsInserted = command.ExecuteNonQuery();
-                            Assert.AreEqual(1, rowsInserted);
+                            Assert.Equal(1, rowsInserted);
                         }
                         else
                         {
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             }
                             catch (SnowflakeDbException e)
                             {
-                                Assert.AreEqual(270053, e.ErrorCode);
+                                Assert.Equal(270053, e.ErrorCode);
                             }
                         }
                     }
@@ -314,7 +314,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             command.CommandText = $"insert into {TableName}({colName}) values(:p0)";
                             command.Parameters.Add(param);
                             int rowsInserted = command.ExecuteNonQuery();
-                            Assert.AreEqual(1, rowsInserted);
+                            Assert.Equal(1, rowsInserted);
                         }
                         else
                         {
@@ -327,7 +327,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             }
                             catch (SnowflakeDbException e)
                             {
-                                Assert.AreEqual(270053, e.ErrorCode);
+                                Assert.Equal(270053, e.ErrorCode);
                             }
                         }
                     }
@@ -438,7 +438,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 command.CommandText = $"insert into {TableName}(data) values(:p0)";
                                 command.Parameters.Add(param);
                                 int rowsInserted = command.ExecuteNonQuery();
-                                Assert.AreEqual(1, rowsInserted);
+                                Assert.Equal(1, rowsInserted);
                             }
                             // DB rejects query if param type is VARIANT, OBJECT or ARRAY
                             else if (!type.Equals(SFDataType.VARIANT) &&
@@ -454,7 +454,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 }
                                 catch (SnowflakeDbException e)
                                 {
-                                    Assert.AreEqual(270054, e.ErrorCode);
+                                    Assert.Equal(270054, e.ErrorCode);
                                 }
                             }
                         }
@@ -512,21 +512,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Throws<NotImplementedException>(
                         () => { cmd.Parameters.CopyTo(parameters, 5); });
 
-                    Assert.AreEqual(3, cmd.Parameters.Count);
+                    Assert.Equal(3, cmd.Parameters.Count);
                     Assert.True(cmd.Parameters.Contains(p2));
                     Assert.True(cmd.Parameters.Contains("2"));
-                    Assert.AreEqual(1, cmd.Parameters.IndexOf(p2));
-                    Assert.AreEqual(1, cmd.Parameters.IndexOf("2"));
+                    Assert.Equal(1, cmd.Parameters.IndexOf(p2));
+                    Assert.Equal(1, cmd.Parameters.IndexOf("2"));
 
                     cmd.Parameters.Remove(p2);
-                    Assert.AreEqual(2, cmd.Parameters.Count);
-                    Assert.AreSame(p1, cmd.Parameters[0]);
+                    Assert.Equal(2, cmd.Parameters.Count);
+                    Assert.Same(p1, cmd.Parameters[0]);
 
                     cmd.Parameters.RemoveAt(0);
-                    Assert.AreSame(p3, cmd.Parameters[0]);
+                    Assert.Same(p3, cmd.Parameters[0]);
 
                     cmd.Parameters.Clear();
-                    Assert.AreEqual(0, cmd.Parameters.Count);
+                    Assert.Equal(0, cmd.Parameters.Count);
                 }
 
                 conn.Close();
@@ -651,7 +651,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p6);
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(total * 3, count);
+                    Assert.Equal(total * 3, count);
 
                     cmd.Parameters.Clear();
                     cmd.CommandText = $"SELECT * FROM {TableName}";
@@ -725,7 +725,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p3);
 
                     var rowsCount = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(total * 3, rowsCount);
+                    Assert.Equal(total * 3, rowsCount);
 
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
@@ -768,7 +768,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p1);
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(70000, count);
+                    Assert.Equal(70000, count);
 
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
@@ -803,7 +803,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p1);
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(1, count);
+                    Assert.Equal(1, count);
                 }
 
                 conn.Close();
@@ -835,7 +835,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p1);
 
                     var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(3, count);
+                    Assert.Equal(3, count);
                 }
 
                 conn.Close();
@@ -955,7 +955,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ++row;
                         string faultMessage = $"Mismatch for row: {row}, {testCase}";
-                        Assert.AreEqual(row, reader.GetInt32(0));
+                        Assert.Equal(row, reader.GetInt32(0));
 
                         for (int i = 0; i < timestamps.Length; ++i)
                         {
@@ -963,7 +963,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         }
                     }
                 }
-                Assert.AreEqual(1 + smallBatchRowCount + bigBatchRowCount, row);
+                Assert.Equal(1 + smallBatchRowCount + bigBatchRowCount, row);
             }
         }
 
@@ -1000,7 +1000,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var rowsAffected = insert.ExecuteNonQuery();
 
                 // Assert
-                Assert.AreEqual(1, rowsAffected);
+                Assert.Equal(1, rowsAffected);
                 Assert.Null(((SnowflakeDbCommand)insert).GetBindStage());
             }
         }
@@ -1039,7 +1039,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var rowsAffected = insert.ExecuteNonQuery();
 
                 // Assert
-                Assert.AreEqual(rowsCount, rowsAffected);
+                Assert.Equal(rowsCount, rowsAffected);
                 if (shouldUseBinding)
                     Assert.NotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
                 else
@@ -1097,13 +1097,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             switch (_columnType)
             {
                 case SFDataType.TIMESTAMP_TZ:
-                    Assert.AreEqual(GetDateTimeOffsets()[index].ToString(comparisonFormat), ((DateTimeOffset)actual).ToString(comparisonFormat), faultMessage);
+                    Assert.Equal(GetDateTimeOffsets()[index].ToString(comparisonFormat), ((DateTimeOffset)actual).ToString(comparisonFormat), faultMessage);
                     break;
                 case SFDataType.TIMESTAMP_LTZ:
-                    Assert.AreEqual(GetDateTimeOffsets()[index].ToUniversalTime().ToString(comparisonFormat), ((DateTimeOffset)actual).ToUniversalTime().ToString(comparisonFormat), faultMessage);
+                    Assert.Equal(GetDateTimeOffsets()[index].ToUniversalTime().ToString(comparisonFormat), ((DateTimeOffset)actual).ToUniversalTime().ToString(comparisonFormat), faultMessage);
                     break;
                 default:
-                    Assert.AreEqual(GetDateTimes()[index].ToString(comparisonFormat), ((DateTime)actual).ToString(comparisonFormat), faultMessage);
+                    Assert.Equal(GetDateTimes()[index].ToString(comparisonFormat), ((DateTime)actual).ToString(comparisonFormat), faultMessage);
                     break;
             }
         }

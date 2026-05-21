@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             Assert.True(mockRequester.CancelRequestSent,
                 "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested");
-            Assert.AreEqual(ValidQueryId, mockRequester.CancelledQueryId,
+            Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId,
                 "Expected the cancelled query ID to match the in-flight query");
         }
 
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             Assert.True(mockRequester.CancelRequestSent,
                 "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested during polling");
-            Assert.AreEqual(ValidQueryId, mockRequester.CancelledQueryId,
+            Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId,
                 "Expected the cancelled query ID to match the in-flight query");
         }
 
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             Assert.True(mockRequester.CancelRequestSent,
                 "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested");
-            Assert.AreEqual(ValidQueryId, mockRequester.CancelledQueryId,
+            Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId,
                 "Expected the cancelled query ID to match the in-flight query");
         }
 
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             Assert.True(mockRequester.CancelRequestSent,
                 "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested during sync polling");
-            Assert.AreEqual(ValidQueryId, mockRequester.CancelledQueryId,
+            Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId,
                 "Expected the cancelled query ID to match the in-flight query");
         }
 

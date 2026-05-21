@@ -60,16 +60,16 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Awaiter.WaitUntilConditionOrTimeout(() => s_restRequester.LoginRequests.Count == 2, TimeSpan.FromSeconds(15));
-            Assert.AreEqual(2, s_restRequester.LoginRequests.Count);
+            Assert.Equal(2, s_restRequester.LoginRequests.Count);
             var loginRequest1 = s_restRequester.LoginRequests.Dequeue();
-            Assert.AreEqual(string.Empty, loginRequest1.data.Token);
-            Assert.AreEqual(testToken, SecureStringHelper.Decode(session._mfaToken));
+            Assert.Equal(string.Empty, loginRequest1.data.Token);
+            Assert.Equal(testToken, SecureStringHelper.Decode(session._mfaToken));
             Assert.True(loginRequest1.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
-            Assert.AreEqual("passcode", loginRequest1.data.extAuthnDuoMethod);
+            Assert.Equal("passcode", loginRequest1.data.extAuthnDuoMethod);
             var loginRequest2 = s_restRequester.LoginRequests.Dequeue();
-            Assert.AreEqual(testToken, loginRequest2.data.Token);
+            Assert.Equal(testToken, loginRequest2.data.Token);
             Assert.True(loginRequest2.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value1) && (bool)value1);
-            Assert.AreEqual("passcode", loginRequest2.data.extAuthnDuoMethod);
+            Assert.Equal("passcode", loginRequest2.data.extAuthnDuoMethod);
         }
 
         [Test]

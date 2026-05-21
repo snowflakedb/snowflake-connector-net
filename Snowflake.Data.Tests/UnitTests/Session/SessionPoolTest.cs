@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.SetMaxPoolSize(newMaxPoolSize);
 
             // assert
-            Assert.AreEqual(newMaxPoolSize, pool.GetMaxPoolSize());
+            Assert.Equal(newMaxPoolSize, pool.GetMaxPoolSize());
             Assert.True(pool.IsConfigOverridden());
         }
 
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.SetTimeout(newExpirationTimeoutSeconds);
 
             // assert
-            Assert.AreEqual(newExpirationTimeoutSeconds, pool.GetTimeout());
+            Assert.Equal(newExpirationTimeoutSeconds, pool.GetTimeout());
             Assert.True(pool.IsConfigOverridden());
         }
 
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var poolIdentification = pool.PoolIdentificationBasedOnConnectionString;
 
             // assert
-            Assert.AreEqual(expectedPoolIdentification, poolIdentification);
+            Assert.Equal(expectedPoolIdentification, poolIdentification);
         }
 
         [Test]
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var poolIdentification = pool.PoolIdentification();
 
             // assert
-            Assert.AreEqual("", poolIdentification);
+            Assert.Equal("", poolIdentification);
         }
 
         [Test]
@@ -250,13 +250,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var session = CreateSessionWithCurrentStartTime(connectionString);
 
             // assert
-            Assert.AreEqual(expectedPoolingEnabled, pool.GetPooling());
+            Assert.Equal(expectedPoolingEnabled, pool.GetPooling());
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
-            Assert.AreEqual(expectedPoolingEnabled, isSessionReturnedToPool);
+            Assert.Equal(expectedPoolingEnabled, isSessionReturnedToPool);
         }
 
         [Test]
@@ -273,7 +273,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionCache();
 
             // assert
-            Assert.AreEqual(true, pool.GetPooling()); // for the old connection cache pooling is always enabled
+            Assert.Equal(true, pool.GetPooling()); // for the old connection cache pooling is always enabled
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);
@@ -291,14 +291,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var contextElement = new QueryContextElement(123, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 1, "context");
             var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new(contextElement) } };
             session.UpdateQueryContextCache(context);
-            Assert.AreEqual(1, session.GetQueryContextRequest().Entries.Count);
+            Assert.Equal(1, session.GetQueryContextRequest().Entries.Count);
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
             Assert.True(isSessionReturnedToPool);
-            Assert.AreEqual(0, session.GetQueryContextRequest().Entries.Count);
+            Assert.Equal(0, session.GetQueryContextRequest().Entries.Count);
         }
 
         [Test]
@@ -311,14 +311,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var contextElement = new QueryContextElement(123, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 1, "context");
             var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new(contextElement) } };
             session.UpdateQueryContextCache(context);
-            Assert.AreEqual(1, session.GetQueryContextRequest().Entries.Count);
+            Assert.Equal(1, session.GetQueryContextRequest().Entries.Count);
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
             Assert.True(isSessionReturnedToPool);
-            Assert.AreEqual(0, session.GetQueryContextRequest().Entries.Count);
+            Assert.Equal(0, session.GetQueryContextRequest().Entries.Count);
         }
 
         [Test]
@@ -336,7 +336,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.ExtractIdleSession(connectionString);
 
             // assert
-            Assert.AreEqual(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
+            Assert.Equal(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
         }
 
         [Test]
@@ -362,7 +362,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             }
 
             // assert
-            Assert.AreNotEqual(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
+            Assert.NotEqual(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
         }
 
         [Test]
@@ -396,13 +396,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
             pool._idleSessions.Add(session1);
             pool._idleSessions.Add(session2);
-            Assert.AreEqual(2, pool._idleSessions.Count);
+            Assert.Equal(2, pool._idleSessions.Count);
 
             // act
             pool.ClearIdleSessions();
 
             // assert - pool must be empty even though close() threw for each session
-            Assert.AreEqual(0, pool._idleSessions.Count);
+            Assert.Equal(0, pool._idleSessions.Count);
         }
 
         [Test]
@@ -424,7 +424,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.ClearIdleSessions();
 
             // assert - pool must be empty and second session's close should have been attempted
-            Assert.AreEqual(0, pool._idleSessions.Count);
+            Assert.Equal(0, pool._idleSessions.Count);
             Assert.Null(normalSession.sessionToken);
         }
 
@@ -451,7 +451,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert — invalidated session must be rejected
             Assert.False(wasAdded);
-            Assert.AreEqual(0, pool._idleSessions.Count);
+            Assert.Equal(0, pool._idleSessions.Count);
         }
 
         [Test]
@@ -468,7 +468,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert - valid session should be returned to pool
             Assert.True(wasAdded);
-            Assert.AreEqual(1, pool._idleSessions.Count);
+            Assert.Equal(1, pool._idleSessions.Count);
         }
 
         [Test]
@@ -484,7 +484,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act & assert - DestroyPool should not throw even if session.close() fails
             Assert.DoesNotThrow(() => pool.DestroyPool());
-            Assert.AreEqual(0, pool._idleSessions.Count);
+            Assert.Equal(0, pool._idleSessions.Count);
         }
 
         [Test]
@@ -500,7 +500,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act & assert - ClearSessions should not throw even if session.close() fails
             Assert.DoesNotThrow(() => pool.ClearSessions());
-            Assert.AreEqual(0, pool._idleSessions.Count);
+            Assert.Equal(0, pool._idleSessions.Count);
         }
 
         private SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)

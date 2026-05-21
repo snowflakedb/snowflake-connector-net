@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 #if NETFRAMEWORK
             Assert.That(innerException.Message, Does.Contain("Unauthorized"));
 #else
-            Assert.AreEqual(HttpStatusCode.Unauthorized, innerException.StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, innerException.StatusCode);
 #endif
             // In case of failed revocation check the StatusCode would be null
             // and HttpRequestException would contain an inner exception of type AuthenticationException

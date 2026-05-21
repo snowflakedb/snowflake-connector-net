@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private void ValidateResultFormat(IDataReader reader)
         {
-            Assert.AreEqual(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
+            Assert.Equal(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
         }
 
         /// <summary>
@@ -70,8 +70,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
-                        Assert.AreEqual(typeof(string), reader.GetFieldType(0));
+                        Assert.Equal("DECFLOAT", reader.GetDataTypeName(0));
+                        Assert.Equal(typeof(string), reader.GetFieldType(0));
 
                         Assert.True(reader.Read());
 
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         Assert.InstanceOf<string>(value);
 
                         // Parse and compare numerically (format may vary between Arrow/JSON)
-                        Assert.AreEqual(123.456m, ParseDecfloatValue((string)value));
+                        Assert.Equal(123.456m, ParseDecfloatValue((string)value));
 
                         Assert.False(reader.Read());
                     }
@@ -106,7 +106,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         var value = reader.GetValue(0);
                         Assert.InstanceOf<string>(value);
-                        Assert.AreEqual(1234567890.123456789m, ParseDecfloatValue((string)value));
+                        Assert.Equal(1234567890.123456789m, ParseDecfloatValue((string)value));
 
                         Assert.False(reader.Read());
                     }
@@ -131,7 +131,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         Assert.True(reader.Read());
                         Assert.True(reader.IsDBNull(0));
-                        Assert.AreEqual(DBNull.Value, reader.GetValue(0));
+                        Assert.Equal(DBNull.Value, reader.GetValue(0));
 
                         Assert.False(reader.Read());
                     }
@@ -158,7 +158,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         var value = reader.GetValue(0);
                         Assert.InstanceOf<string>(value);
-                        Assert.AreEqual(-987.654m, ParseDecfloatValue((string)value));
+                        Assert.Equal(-987.654m, ParseDecfloatValue((string)value));
 
                         Assert.False(reader.Read());
                     }
@@ -185,7 +185,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         var value = reader.GetValue(0);
                         Assert.InstanceOf<string>(value);
-                        Assert.AreEqual(0m, ParseDecfloatValue((string)value));
+                        Assert.Equal(0m, ParseDecfloatValue((string)value));
 
                         Assert.False(reader.Read());
                     }
@@ -212,7 +212,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         var value = reader.GetValue(0);
                         Assert.InstanceOf<string>(value);
-                        Assert.AreEqual(12300000000m, ParseDecfloatValue((string)value));
+                        Assert.Equal(12300000000m, ParseDecfloatValue((string)value));
 
                         Assert.False(reader.Read());
                     }
@@ -239,7 +239,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         var value = reader.GetValue(0);
                         Assert.InstanceOf<string>(value);
-                        Assert.AreEqual(0.0015m, ParseDecfloatValue((string)value));
+                        Assert.Equal(0.0015m, ParseDecfloatValue((string)value));
 
                         Assert.False(reader.Read());
                     }
@@ -267,13 +267,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
+                        Assert.Equal("DECFLOAT", reader.GetDataTypeName(0));
 
                         Assert.True(reader.Read());
-                        Assert.AreEqual(-999.999m, ParseDecfloatValue((string)reader.GetValue(0)));
+                        Assert.Equal(-999.999m, ParseDecfloatValue((string)reader.GetValue(0)));
 
                         Assert.True(reader.Read());
-                        Assert.AreEqual(123.456m, ParseDecfloatValue((string)reader.GetValue(0)));
+                        Assert.Equal(123.456m, ParseDecfloatValue((string)reader.GetValue(0)));
 
                         Assert.True(reader.Read());
                         Assert.True(reader.IsDBNull(0));
@@ -302,17 +302,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Assert.AreEqual(3, reader.FieldCount);
+                        Assert.Equal(3, reader.FieldCount);
                         for (int i = 0; i < 3; i++)
                         {
-                            Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(i));
-                            Assert.AreEqual(typeof(string), reader.GetFieldType(i));
+                            Assert.Equal("DECFLOAT", reader.GetDataTypeName(i));
+                            Assert.Equal(typeof(string), reader.GetFieldType(i));
                         }
 
                         Assert.True(reader.Read());
-                        Assert.AreEqual(1.1m, ParseDecfloatValue((string)reader.GetValue(0)));
-                        Assert.AreEqual(2.2m, ParseDecfloatValue((string)reader.GetValue(1)));
-                        Assert.AreEqual(3.3m, ParseDecfloatValue((string)reader.GetValue(2)));
+                        Assert.Equal(1.1m, ParseDecfloatValue((string)reader.GetValue(0)));
+                        Assert.Equal(2.2m, ParseDecfloatValue((string)reader.GetValue(1)));
+                        Assert.Equal(3.3m, ParseDecfloatValue((string)reader.GetValue(2)));
 
                         Assert.False(reader.Read());
                     }

@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
             // assert
             Assert.NotNull(retrieved);
-            Assert.AreEqual(issuerName, retrieved.IssuerName);
+            Assert.Equal(issuerName, retrieved.IssuerName);
         }
 
 
@@ -242,7 +242,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
             // assert
             Assert.NotNull(result2, "CRL should be found in memory cache even after file deletion");
-            Assert.AreEqual(issuerName, result2.IssuerName);
+            Assert.Equal(issuerName, result2.IssuerName);
         }
 
         private static string GetCrlCacheDirectory()

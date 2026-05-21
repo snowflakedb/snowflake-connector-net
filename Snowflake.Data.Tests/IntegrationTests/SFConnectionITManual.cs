@@ -22,10 +22,10 @@ public sealed class SFConnectionITManual
                 "",
                 "externalbrowser");
 
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
             conn.Open();
             conn.Close();
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
 
@@ -43,7 +43,7 @@ public sealed class SFConnectionITManual
                       testConfig.oktaUser,
                       testConfig.oktaPassword);
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -62,7 +62,7 @@ public sealed class SFConnectionITManual
                       testConfig.oktaUser,
                       testConfig.oktaPassword);
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
 
 
@@ -76,7 +76,7 @@ public sealed class SFConnectionITManual
                       testConfig.oktaUser,
                       testConfig.oktaPassword);
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -91,14 +91,14 @@ public sealed class SFConnectionITManual
                 = ConnectionStringWithoutAuth
                   + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
             // connection pooling is disabled for external browser by default
-            Assert.AreEqual(false, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
+            Assert.Equal(false, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
             using (IDbCommand command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
-                Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                Assert.Equal("QA", command.ExecuteScalar().ToString());
             }
         }
     }
@@ -114,12 +114,12 @@ public sealed class SFConnectionITManual
                 = ConnectionStringWithoutAuth
                   + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;POOLINGENABLED=TRUE";
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
-            Assert.AreEqual(true, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
+            Assert.Equal(ConnectionState.Open, conn.State);
+            Assert.Equal(true, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
             using (IDbCommand command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
-                Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                Assert.Equal("QA", command.ExecuteScalar().ToString());
             }
         }
     }
@@ -137,13 +137,13 @@ public sealed class SFConnectionITManual
 
             Task connectTask = conn.OpenAsync(CancellationToken.None);
             connectTask.Wait();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
             using (DbCommand command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
                 Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
                 task.Wait(CancellationToken.None);
-                Assert.AreEqual("QA", task.Result);
+                Assert.Equal("QA", task.Result);
             }
         }
     }
@@ -159,11 +159,11 @@ public sealed class SFConnectionITManual
                 = ConnectionStringWithoutAuth
                   + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;disable_console_login=false;";
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
             using (IDbCommand command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
-                Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                Assert.Equal("QA", command.ExecuteScalar().ToString());
             }
         }
     }
@@ -181,13 +181,13 @@ public sealed class SFConnectionITManual
 
             Task connectTask = conn.OpenAsync(CancellationToken.None);
             connectTask.Wait();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
             using (DbCommand command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
                 Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
                 task.Wait(CancellationToken.None);
-                Assert.AreEqual("QA", task.Result);
+                Assert.Equal("QA", task.Result);
             }
         }
     }
@@ -207,11 +207,11 @@ public sealed class SFConnectionITManual
                         = ConnectionStringWithoutAuth
                           + $";authenticator=externalbrowser;user=qa@snowflakecomputing.com;BROWSER_RESPONSE_TIMEOUT={waitSeconds}";
                     conn.Open();
-                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    Assert.Equal(ConnectionState.Open, conn.State);
                     using (IDbCommand command = conn.CreateCommand())
                     {
                         command.CommandText = "SELECT CURRENT_USER()";
-                        Assert.AreEqual("QA", command.ExecuteScalar().ToString());
+                        Assert.Equal("QA", command.ExecuteScalar().ToString());
                     }
                 }
             }
@@ -246,7 +246,7 @@ public sealed class SFConnectionITManual
 
             // Authenticate to retrieve and store the token if doesn't exist or invalid
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
 
         using (IDbConnection conn = new SnowflakeDbConnection())
@@ -255,7 +255,7 @@ public sealed class SFConnectionITManual
 
             // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -286,7 +286,7 @@ public sealed class SFConnectionITManual
 
             // Open a connection which should switch to external browser after trying to connect using the wrong token
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
             // Switch back to the default credential manager
             SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
@@ -310,7 +310,7 @@ public sealed class SFConnectionITManual
         }
         catch (SnowflakeDbException e)
         {
-            Assert.AreEqual(390191, e.ErrorCode);
+            Assert.Equal(390191, e.ErrorCode);
         }
     }
 
@@ -327,7 +327,7 @@ public sealed class SFConnectionITManual
                       testConfig.jwtAuthUser,
                       testConfig.pemFilePath);
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -344,7 +344,7 @@ public sealed class SFConnectionITManual
                       testConfig.jwtAuthUser,
                       testConfig.p8FilePath);
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -362,7 +362,7 @@ public sealed class SFConnectionITManual
                       testConfig.pwdProtectedPrivateKeyFilePath,
                       testConfig.privateKeyFilePwd);
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -379,7 +379,7 @@ public sealed class SFConnectionITManual
                       testConfig.jwtAuthUser,
                       testConfig.privateKey);
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -397,7 +397,7 @@ public sealed class SFConnectionITManual
                       testConfig.pwdProtectedPrivateKey,
                       testConfig.privateKeyFilePwd);
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -423,7 +423,7 @@ public sealed class SFConnectionITManual
         {
             // Missing PRIVATE_KEY_FILE connection setting required for
             // authenticator =snowflake_jwt
-            Assert.AreEqual(270008, e.ErrorCode);
+            Assert.Equal(270008, e.ErrorCode);
         }
     }
 
@@ -448,7 +448,7 @@ public sealed class SFConnectionITManual
         catch (SnowflakeDbException e)
         {
             // Invalid password for decrypting the private key
-            Assert.AreEqual(270052, e.ErrorCode);
+            Assert.Equal(270052, e.ErrorCode);
         }
     }
 
@@ -473,7 +473,7 @@ public sealed class SFConnectionITManual
         catch (SnowflakeDbException e)
         {
             // Invalid password (none provided) for decrypting the private key
-            Assert.AreEqual(270052, e.ErrorCode);
+            Assert.Equal(270052, e.ErrorCode);
         }
     }
 
@@ -498,7 +498,7 @@ public sealed class SFConnectionITManual
         catch (SnowflakeDbException e)
         {
             // Jwt token is invalid
-            Assert.AreEqual(390144, e.ErrorCode);
+            Assert.Equal(390144, e.ErrorCode);
         }
     }
 
@@ -524,7 +524,7 @@ public sealed class SFConnectionITManual
         catch (SnowflakeDbException e)
         {
             // Jwt token is invalid
-            Assert.AreEqual(390144, e.ErrorCode);
+            Assert.Equal(390144, e.ErrorCode);
         }
     }
 
@@ -541,7 +541,7 @@ public sealed class SFConnectionITManual
                       ";authenticator=oauth;token={0}",
                       testConfig.oauthToken);
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -566,7 +566,7 @@ public sealed class SFConnectionITManual
         {
             Console.Write(e);
             // Token is expired
-            Assert.AreEqual(390318, e.ErrorCode);
+            Assert.Equal(390318, e.ErrorCode);
         }
     }
 
@@ -775,21 +775,21 @@ public sealed class SFConnectionITManual
         {
             conn.ConnectionString = ConnectionString + "poolingEnabled=false;key1=test\'password;key2=test\"password;key3=test==password";
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
             // Data source is empty string for now
-            Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+            Assert.Equal("", ((SnowflakeDbConnection)conn).DataSource);
 
             string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
             if (!string.Equals(serverVersion, "Dev"))
             {
                 string[] versionElements = serverVersion.Split('.');
-                Assert.AreEqual(3, versionElements.Length);
+                Assert.Equal(3, versionElements.Length);
             }
 
             conn.Close();
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
 
@@ -801,21 +801,21 @@ public sealed class SFConnectionITManual
         {
             conn.ConnectionString = ConnectionString + "poolingEnabled=false;key==word=value; key1=\"test;password\"; key2=\"test=password\"";
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
             // Data source is empty string for now
-            Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+            Assert.Equal("", ((SnowflakeDbConnection)conn).DataSource);
 
             string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
             if (!string.Equals(serverVersion, "Dev"))
             {
                 string[] versionElements = serverVersion.Split('.');
-                Assert.AreEqual(3, versionElements.Length);
+                Assert.Equal(3, versionElements.Length);
             }
 
             conn.Close();
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
 
@@ -831,11 +831,11 @@ public sealed class SFConnectionITManual
         using (IDbCommand command = conn.CreateCommand())
         {
             command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-            Assert.AreEqual(command.ExecuteScalar(), 46);
+            Assert.Equal(command.ExecuteScalar(), 46);
         }
 
         conn.Close();
-        Assert.AreEqual(ConnectionState.Closed, conn.State);
+        Assert.Equal(ConnectionState.Closed, conn.State);
     }
 
     [Test]
@@ -849,7 +849,7 @@ public sealed class SFConnectionITManual
         conn.Open();
         conn.Close();
 
-        Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+        Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
 
         var conn1 = new SnowflakeDbConnection();
         conn1.ConnectionString = ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
@@ -859,11 +859,11 @@ public sealed class SFConnectionITManual
         using (IDbCommand command = conn.CreateCommand())
         {
             command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-            Assert.AreEqual(command.ExecuteScalar(), 46);
+            Assert.Equal(command.ExecuteScalar(), 46);
         }
 
         conn1.Close();
-        Assert.AreEqual(ConnectionState.Closed, conn1.State);
-        Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+        Assert.Equal(ConnectionState.Closed, conn1.State);
+        Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
     }
 }

@@ -22,11 +22,11 @@ namespace Snowflake.Data.Tests.UnitTests
             var result = timeConverter.Convert(value, sfType, csharpType, TimeZoneInfo.Local);
 
             // assert
-            Assert.AreEqual(expected, result);
+            Assert.Equal(expected, result);
 
             if (csharpType == typeof(DateTime))
             {
-                Assert.AreEqual(((DateTime)expected).Kind, ((DateTime)result).Kind);
+                Assert.Equal(((DateTime)expected).Kind, ((DateTime)result).Kind);
             }
         }
 
@@ -72,14 +72,14 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var result = timeConverter.Convert(value, sfType, csharpType, tz);
 
-            Assert.AreEqual(expected, result);
+            Assert.Equal(expected, result);
             if (csharpType == typeof(DateTime))
             {
-                Assert.AreEqual(((DateTime)expected).Kind, ((DateTime)result).Kind);
+                Assert.Equal(((DateTime)expected).Kind, ((DateTime)result).Kind);
             }
             if (csharpType == typeof(DateTimeOffset))
             {
-                Assert.AreEqual(((DateTimeOffset)expected).Offset, ((DateTimeOffset)result).Offset);
+                Assert.Equal(((DateTimeOffset)expected).Offset, ((DateTimeOffset)result).Offset);
             }
         }
 
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var result = timeConverter.Convert("2024-01-01 00:00:00 +0:00", SFDataType.TIMESTAMP_LTZ, typeof(string), tokyoTz);
 
-            Assert.AreEqual("2024-01-01 00:00:00 +0:00", result);
+            Assert.Equal("2024-01-01 00:00:00 +0:00", result);
         }
     }
 }

@@ -22,13 +22,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultMaxPoolSize, result.MaxPoolSize, "max pool size");
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultMinPoolSize, result.MinPoolSize, "min pool size");
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultChangedSession, result.ChangedSession, "changed session");
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultExpirationTimeout, result.ExpirationTimeout, "expiration timeout");
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultWaitingForIdleSessionTimeout, result.WaitingForIdleSessionTimeout, "waiting for idle session timeout");
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionTimeout, result.ConnectionTimeout, "connection timeout");
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultPoolingEnabled, result.PoolingEnabled, "pooling enabled");
+            Assert.Equal(SFSessionHttpClientProperties.DefaultMaxPoolSize, result.MaxPoolSize, "max pool size");
+            Assert.Equal(SFSessionHttpClientProperties.DefaultMinPoolSize, result.MinPoolSize, "min pool size");
+            Assert.Equal(SFSessionHttpClientProperties.DefaultChangedSession, result.ChangedSession, "changed session");
+            Assert.Equal(SFSessionHttpClientProperties.DefaultExpirationTimeout, result.ExpirationTimeout, "expiration timeout");
+            Assert.Equal(SFSessionHttpClientProperties.DefaultWaitingForIdleSessionTimeout, result.WaitingForIdleSessionTimeout, "waiting for idle session timeout");
+            Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionTimeout, result.ConnectionTimeout, "connection timeout");
+            Assert.Equal(SFSessionHttpClientProperties.DefaultPoolingEnabled, result.PoolingEnabled, "pooling enabled");
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.AreEqual(maxPoolSize, result.MaxPoolSize);
+            Assert.Equal(maxPoolSize, result.MaxPoolSize);
         }
 
         [Test]
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.AreEqual(expectedMinPoolSize, result.MinPoolSize);
+            Assert.Equal(expectedMinPoolSize, result.MinPoolSize);
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.AreEqual(testCase.ExpectedTimeout, result.ExpirationTimeout);
+            Assert.Equal(testCase.ExpectedTimeout, result.ExpirationTimeout);
         }
 
         [Test]
@@ -144,7 +144,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.AreEqual(testCase.ExpectedTimeout, result.WaitingForIdleSessionTimeout);
+            Assert.Equal(testCase.ExpectedTimeout, result.WaitingForIdleSessionTimeout);
         }
 
         [Test]
@@ -185,7 +185,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.AreEqual(testCase.ExpectedTimeout, result.ConnectionTimeout);
+            Assert.Equal(testCase.ExpectedTimeout, result.ConnectionTimeout);
         }
 
         [Test]
@@ -216,7 +216,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.AreEqual(poolingEnabled, result.PoolingEnabled);
+            Assert.Equal(poolingEnabled, result.PoolingEnabled);
         }
 
         [Test]
@@ -238,7 +238,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.AreEqual(poolingEnabled, result.PoolingEnabled);
+            Assert.Equal(poolingEnabled, result.PoolingEnabled);
         }
 
         [Test]
@@ -271,7 +271,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.AreEqual(expectedChangedSession, result.ChangedSession);
+            Assert.Equal(expectedChangedSession, result.ChangedSession);
         }
 
         private ConnectionPoolConfig ExtractConnectionPoolConfig(string connectionString) =>

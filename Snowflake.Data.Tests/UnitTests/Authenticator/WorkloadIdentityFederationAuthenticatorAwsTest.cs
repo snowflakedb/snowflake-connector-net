@@ -96,18 +96,18 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AWS, attestation.Provider);
+            Assert.Equal(AttestationProvider.AWS, attestation.Provider);
             var signedJsonRequest = DecodeFromBase64(attestation.Credential);
             var signedRequest = JsonConvert.DeserializeObject<AttestationRequest>(signedJsonRequest);
-            Assert.AreEqual("POST", signedRequest.Method);
-            Assert.AreEqual($"https://sts.{AwsRegion}.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15", signedRequest.Url);
-            Assert.AreEqual($"sts.{AwsRegion}.amazonaws.com", signedRequest.Headers["Host"]);
-            Assert.AreEqual("snowflakecomputing.com", signedRequest.Headers["X-Snowflake-Audience"]);
-            Assert.AreEqual("20250527T142033Z", signedRequest.Headers["x-amz-date"]);
-            Assert.AreEqual(AwsToken, signedRequest.Headers["x-amz-security-token"]);
+            Assert.Equal("POST", signedRequest.Method);
+            Assert.Equal($"https://sts.{AwsRegion}.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15", signedRequest.Url);
+            Assert.Equal($"sts.{AwsRegion}.amazonaws.com", signedRequest.Headers["Host"]);
+            Assert.Equal("snowflakecomputing.com", signedRequest.Headers["X-Snowflake-Audience"]);
+            Assert.Equal("20250527T142033Z", signedRequest.Headers["x-amz-date"]);
+            Assert.Equal(AwsToken, signedRequest.Headers["x-amz-security-token"]);
             Assert.True(signedRequest.Headers["authorization"].StartsWith($"AWS4-HMAC-SHA256 Credential={AwsAccessKey}/20250527/{AwsRegion}/sts/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token;x-snowflake-audience, Signature="));
-            Assert.AreEqual(64, ExtractSignature(signedRequest.Headers["authorization"]).Length);
-            Assert.AreEqual(5, signedRequest.Headers.Count);
+            Assert.Equal(64, ExtractSignature(signedRequest.Headers["authorization"]).Length);
+            Assert.Equal(5, signedRequest.Headers.Count);
         }
 
         private string ExtractSignature(string authorizationHeader)

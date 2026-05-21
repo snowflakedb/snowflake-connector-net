@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var clientFeatures = new ClientFeatureFlags(environmentOperations.Object);
 
             // assert
-            Assert.AreEqual(expectedValue, clientFeatures.IsEnabledExperimentalAuthentication);
+            Assert.Equal(expectedValue, clientFeatures.IsEnabledExperimentalAuthentication);
         }
 
         [Test]
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<SnowflakeDbException>(() => clientFeatures.VerifyIfExperimentalAuthenticationEnabled("workload_identity"));
 
             // assert
-            Assert.AreEqual(SFError.EXPERIMENTAL_AUTHENTICATION_DISABLED.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Equal(SFError.EXPERIMENTAL_AUTHENTICATION_DISABLED.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
             Assert.That(thrown.Message, Does.Contain("Experimental authentication of 'workload_identity' is disabled. You can enable it by SF_ENABLE_EXPERIMENTAL_AUTHENTICATION environmental variable."));
         }
     }

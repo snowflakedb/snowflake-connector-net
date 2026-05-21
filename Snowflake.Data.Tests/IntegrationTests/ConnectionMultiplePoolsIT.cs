@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             var connectionString = ConnectionString + "application=TestWaitForMaxSize1;waitingForIdleSessionTimeout=1s;maxPoolSize=2;minPoolSize=1;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
-            Assert.AreEqual(0, pool.GetCurrentPoolSize(), "expecting pool to be empty");
+            Assert.Equal(0, pool.GetCurrentPoolSize(), "expecting pool to be empty");
             var conn1 = OpenConnection(connectionString);
             var conn2 = OpenConnection(connectionString);
             var watch = new StopWatch();
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // assert
             Assert.That(thrown.Message, Does.Contain("Unable to connect. Could not obtain a connection from the pool within a given timeout"));
             Assert.That(watch.ElapsedMilliseconds, Is.InRange(1000, 1500));
-            Assert.AreEqual(pool.GetCurrentPoolSize(), 2);
+            Assert.Equal(pool.GetCurrentPoolSize(), 2);
 
             // cleanup
             conn1.Close();
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             var connectionString = ConnectionString + "application=TestWaitForMaxSize3;waitingForIdleSessionTimeout=3s;maxPoolSize=2;minPoolSize=0;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPoolInternal(connectionString);
-            Assert.AreEqual(0, pool.GetCurrentPoolSize(), "the pool is expected to be empty");
+            Assert.Equal(0, pool.GetCurrentPoolSize(), "the pool is expected to be empty");
             const long ADelay = 0;
             const long BDelay = 400;
             const long CDelay = 2 * BDelay;
@@ -101,21 +101,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // assert
             var events = threads.Events().ToList();
-            Assert.AreEqual(6, events.Count); // A,B - connected; C,D - waiting, connected
+            Assert.Equal(6, events.Count); // A,B - connected; C,D - waiting, connected
             var waitingEvents = events.Where(e => e.IsWaitingEvent()).ToList();
-            Assert.AreEqual(2, waitingEvents.Count);
-            CollectionAssert.AreEquivalent(new[] { "C", "D" }, waitingEvents.Select(e => e.ThreadName)); // equivalent = in any order
+            Assert.Equal(2, waitingEvents.Count);
+            CollectionAssert.Equivalent(new[] { "C", "D" }, waitingEvents.Select(e => e.ThreadName)); // equivalent = in any order
             var connectedEvents = events.Where(e => e.IsConnectedEvent()).ToList();
-            Assert.AreEqual(4, connectedEvents.Count);
+            Assert.Equal(4, connectedEvents.Count);
             var firstConnectedEventsGroup = connectedEvents.GetRange(0, 2);
-            CollectionAssert.AreEquivalent(new[] { "A", "B" }, firstConnectedEventsGroup.Select(e => e.ThreadName));
+            CollectionAssert.Equivalent(new[] { "A", "B" }, firstConnectedEventsGroup.Select(e => e.ThreadName));
             var lastConnectingEventsGroup = connectedEvents.GetRange(2, 2);
-            CollectionAssert.AreEquivalent(new[] { "C", "D" }, lastConnectingEventsGroup.Select(e => e.ThreadName));
+            CollectionAssert.Equivalent(new[] { "C", "D" }, lastConnectingEventsGroup.Select(e => e.ThreadName));
             Assert.LessOrEqual(firstConnectedEventsGroup[0].Duration, ConnectPessimisticEstimate);
             Assert.LessOrEqual(firstConnectedEventsGroup[1].Duration, ConnectPessimisticEstimate);
             // first to wait from C and D should first to connect, because we won't create a new session, we just reuse sessions returned by A and B threads
-            Assert.AreEqual(waitingEvents[0].ThreadName, lastConnectingEventsGroup[0].ThreadName);
-            Assert.AreEqual(waitingEvents[1].ThreadName, lastConnectingEventsGroup[1].ThreadName);
+            Assert.Equal(waitingEvents[0].ThreadName, lastConnectingEventsGroup[0].ThreadName);
+            Assert.Equal(waitingEvents[1].ThreadName, lastConnectingEventsGroup[1].ThreadName);
             Assert.That(lastConnectingEventsGroup[0].Duration, Is.InRange(CMinConnectDuration - MeasurementTolerance, CMaxConnectDuration));
             Assert.That(lastConnectingEventsGroup[1].Duration, Is.InRange(DMinConnectDuration - MeasurementTolerance, DMaxConnectDuration));
         }
@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // assert
             var pool = SnowflakeDbConnectionPool.GetPool(connection.ConnectionString);
             Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentPoolSize() == 3, TimeSpan.FromMilliseconds(1000));
-            Assert.AreEqual(3, pool.GetCurrentPoolSize());
+            Assert.Equal(3, pool.GetCurrentPoolSize());
 
             // cleanup
             connection.Close();
@@ -156,14 +156,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connectionString = ConnectionString + "minPoolSize=0;poolingEnabled=true";
             var connection = OpenConnection(connectionString);
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
-            Assert.AreEqual(1, pool.GetCurrentPoolSize());
+            Assert.Equal(1, pool.GetCurrentPoolSize());
 
             // act
             connection.PreventPooling();
             connection.Close();
 
             // assert
-            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+            Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
         [Test]
@@ -175,18 +175,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var commandThrowingExceptionOnlyForRollback = MockHelper.CommandThrowingExceptionOnlyForRollback();
             var mockDbProviderFactory = new Mock<DbProviderFactory>();
             mockDbProviderFactory.Setup(p => p.CreateCommand()).Returns(commandThrowingExceptionOnlyForRollback.Object);
-            Assert.AreEqual(0, pool.GetCurrentPoolSize());
+            Assert.Equal(0, pool.GetCurrentPoolSize());
             var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object);
             connection.ConnectionString = connectionString;
             connection.Open();
             connection.BeginTransaction();
-            Assert.AreEqual(true, connection.HasActiveExplicitTransaction());
+            Assert.Equal(true, connection.HasActiveExplicitTransaction());
 
             // act
             connection.Close();
 
             // assert
-            Assert.AreEqual(0, pool.GetCurrentPoolSize(), "Should not return connection to the pool");
+            Assert.Equal(0, pool.GetCurrentPoolSize(), "Should not return connection to the pool");
         }
 
         private SnowflakeDbConnection OpenConnection(string connectionString)
@@ -207,8 +207,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             pool.ClearSessions();
 
             // pool is empty
-            Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
-            Assert.AreEqual(0, pool.GetCurrentState().BusySessionsCount);
+            Assert.Equal(0, pool.GetCurrentState().IdleSessionsCount);
+            Assert.Equal(0, pool.GetCurrentState().BusySessionsCount);
 
             var cts = new CancellationTokenSource();
             var task = Task.Run(async () =>
@@ -231,8 +231,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }, TimeSpan.FromMilliseconds(1000));
 
             // one busy session
-            Assert.AreEqual(0, pool.GetCurrentState().IdleSessionsCount);
-            Assert.AreEqual(1, pool.GetCurrentState().BusySessionsCount);
+            Assert.Equal(0, pool.GetCurrentState().IdleSessionsCount);
+            Assert.Equal(1, pool.GetCurrentState().BusySessionsCount);
 
             if (cancelAsync)
 #if NET8_0_OR_GREATER
@@ -248,8 +248,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.InstanceOf<OperationCanceledException>(thrown.InnerException);
 
             // one idle session
-            Assert.AreEqual(1, pool.GetCurrentState().IdleSessionsCount);
-            Assert.AreEqual(0, pool.GetCurrentState().BusySessionsCount);
+            Assert.Equal(1, pool.GetCurrentState().IdleSessionsCount);
+            Assert.Equal(0, pool.GetCurrentState().BusySessionsCount);
         }
     }
 }

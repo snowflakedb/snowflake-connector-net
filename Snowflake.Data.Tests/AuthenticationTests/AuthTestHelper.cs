@@ -45,13 +45,13 @@ namespace Snowflake.Data.AuthenticationTests
                     conn.ConnectionString = connectionString;
 
                     conn.Open();
-                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    Assert.Equal(ConnectionState.Open, conn.State);
 
                     using (IDbCommand command = conn.CreateCommand())
                     {
                         command.CommandText = "SELECT 1";
                         var result = command.ExecuteScalar();
-                        Assert.AreEqual("1", result.ToString());
+                        Assert.Equal("1", result.ToString());
                         s_logger.Info(result.ToString());
                     }
                 }
@@ -118,7 +118,7 @@ namespace Snowflake.Data.AuthenticationTests
                     var parameters = AuthConnectionString.GetOktaConnectionString();
                     conn.ConnectionString = AuthConnectionString.ConvertToConnectionString(parameters);
                     conn.Open();
-                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    Assert.Equal(ConnectionState.Open, conn.State);
                     using (IDbCommand dbCommand = conn.CreateCommand())
                     {
                         dbCommand.CommandText = command;

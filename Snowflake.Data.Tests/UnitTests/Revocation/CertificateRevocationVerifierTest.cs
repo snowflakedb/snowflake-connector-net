@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.CheckCertificateRevocationStatus(certificate, chain); // there will be an error because we didn't configure crl distribution points
 
             // assert
-            Assert.AreEqual(expectedResult, result);
+            Assert.Equal(expectedResult, result);
         }
 
         [Test]
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
-            Assert.AreEqual(CertRevocationCheckResult.CertUnrevoked, result);
+            Assert.Equal(CertRevocationCheckResult.CertUnrevoked, result);
         }
 
         [Test]
@@ -93,7 +93,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
-            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+            Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
         [Test]
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
-            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+            Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
         [Test]
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
-            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+            Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
         [Test]
@@ -195,7 +195,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
-            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+            Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
         [Test]
@@ -218,7 +218,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
-            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+            Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
         [Test]
@@ -247,7 +247,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.IsCrlSignatureValid(crl, parentCertificate);
 
             // assert
-            Assert.AreEqual(signCrlWithCaPrivateKey, result);
+            Assert.Equal(signCrlWithCaPrivateKey, result);
         }
 
         [Test]
@@ -273,7 +273,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.CheckChainRevocation(chain);
 
             // assert
-            Assert.AreEqual(expectedResult, result);
+            Assert.Equal(expectedResult, result);
         }
 
         [Test]
@@ -298,7 +298,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var isShortLived = verifier.IsShortLived(certificate);
 
             // assert
-            Assert.AreEqual(expectedResult, isShortLived);
+            Assert.Equal(expectedResult, isShortLived);
         }
 
         [Test]
@@ -321,7 +321,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var isEquivalent = verifier.IsIssuerEquivalent(crl, certificate);
 
             // assert
-            Assert.AreEqual(expectEquivalent, isEquivalent);
+            Assert.Equal(expectEquivalent, isEquivalent);
         }
 
         [Test]
@@ -491,7 +491,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
-            Assert.AreEqual(CertRevocationCheckResult.CertError, result);
+            Assert.Equal(CertRevocationCheckResult.CertError, result);
         }
 
         [Test]
@@ -545,7 +545,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
 
             // assert
-            Assert.AreEqual(CertRevocationCheckResult.CertUnrevoked, result);
+            Assert.Equal(CertRevocationCheckResult.CertUnrevoked, result);
         }
 
         private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled, long crlDownloadMaxSize = 20971520) =>

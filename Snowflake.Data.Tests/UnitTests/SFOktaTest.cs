@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(SFError.IDP_SSO_TOKEN_URL_MISMATCH.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+                Assert.Equal(SFError.IDP_SSO_TOKEN_URL_MISMATCH.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
             }
         }
 
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(SFError.IDP_SAML_POSTBACK_NOTFOUND.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e.InnerException).ErrorCode);
+                Assert.Equal(SFError.IDP_SAML_POSTBACK_NOTFOUND.GetAttribute<SFErrorAttr>().errorCode, ((SnowflakeDbException)e.InnerException).ErrorCode);
             }
         }
 
@@ -81,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(SFError.IDP_SAML_POSTBACK_INVALID.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+                Assert.Equal(SFError.IDP_SAML_POSTBACK_INVALID.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
             }
         }
 
@@ -199,7 +199,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             // Assert
-            Assert.AreEqual($"LoginRequest {{data: LoginRequestData {{ClientAppVersion: {SFEnvironment.DriverVersion},\n " +
+            Assert.Equal($"LoginRequest {{data: LoginRequestData {{ClientAppVersion: {SFEnvironment.DriverVersion},\n " +
                 $"AccountName: {expectedOktaAccount},\n " +
                 $"loginName: {expectedOktaUser},\n " +
                 $"ClientEnv: {{ " +
@@ -229,7 +229,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             // Assert
-            Assert.AreEqual($"AuthenticatorRequest {{data: AuthenticatorRequestData {{ACCOUNT_NAME: {expectedOktaAccount} }} }}",
+            Assert.Equal($"AuthenticatorRequest {{data: AuthenticatorRequestData {{ACCOUNT_NAME: {expectedOktaAccount} }} }}",
                 authenticatorRequest.ToString());
         }
     }
