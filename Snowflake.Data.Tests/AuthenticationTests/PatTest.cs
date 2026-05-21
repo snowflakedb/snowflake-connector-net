@@ -2,17 +2,16 @@ using System;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-
     public class PatTest
     {
         private string _connectionString = "";
         private string _patName = "";
 
-        [SetUp, IgnoreOnCI]
-        public void SetUp()
+        public PatTest()
         {
             var parameters = AuthConnectionString.GetPatConnectionParameters();
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);

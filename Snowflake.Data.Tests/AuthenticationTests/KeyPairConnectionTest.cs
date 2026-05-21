@@ -1,10 +1,9 @@
 using Xunit;
 using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-
-
     public class KeyPairConnectionTest
     {
         private string _connectionString = "";

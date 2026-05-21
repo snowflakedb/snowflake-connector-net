@@ -2,10 +2,10 @@ using System.Threading;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-
 
     public class ExternalBrowserConnectionTest
     {
@@ -13,8 +13,7 @@ namespace Snowflake.Data.AuthenticationTests
         private string _login = AuthConnectionString.SsoUser;
         private string _password = AuthConnectionString.SsoPassword;
 
-        [SetUp, IgnoreOnCI]
-        public void SetUp()
+        public ExternalBrowserConnectionTest()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
             _login = AuthConnectionString.SsoUser;

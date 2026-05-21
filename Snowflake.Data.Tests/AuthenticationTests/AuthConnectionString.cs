@@ -184,7 +184,7 @@ namespace Snowflake.Data.AuthenticationTests
             string filePath = Environment.GetEnvironmentVariable(fileLocation);
             Assert.NotNull(filePath);
             string pemKey = File.ReadAllText(Path.Combine("..", "..", "..", "..", filePath));
-            Assert.NotNull(pemKey, $"Failed to read file: {filePath}");
+            Assert.NotNull(pemKey);
             return pemKey;
 
         }

@@ -3,6 +3,7 @@ using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
@@ -14,8 +15,7 @@ namespace Snowflake.Data.AuthenticationTests
         private string _password;
 
 
-        [SetUp, IgnoreOnCI]
-        public void SetUp()
+        public SnowflakeAuthorizationCodeTest()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
 
