@@ -25,6 +25,739 @@ class SFConnectionITAsync : SFBaseTestAsync
 {
     private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
+    [Test]
+    public void TestBasicConnection()
+    {
+        using (IDbConnection conn = new SnowflakeDbConnection())
+        {
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+            Assert.AreEqual(ConnectionState.Open, conn.State);
+
+            Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+            // Data source is empty string for now
+            Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+
+            string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+            if (!string.Equals(serverVersion, "Dev"))
+            {
+                string[] versionElements = serverVersion.Split('.');
+                Assert.AreEqual(3, versionElements.Length);
+            }
+
+            conn.Close();
+            Assert.AreEqual(ConnectionState.Closed, conn.State);
+        }
+    }
+
+    [Test]
+    public void TestApplicationName()
+    {
+        string[] validApplicationNames = { "test1234", "test_1234", "test-1234", "test.1234" };
+        string[] invalidApplicationNames = { "1234test", "test$A", "test<script>" };
+
+        // Valid names
+        foreach (string appName in validApplicationNames)
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString += $"application={appName}";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+
+                conn.Close();
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+
+        // Invalid names
+        foreach (string appName in invalidApplicationNames)
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString += $"application={appName}";
+                try
+                {
+                    conn.Open();
+                    s_logger.Debug("{appName}");
+                    Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {
+                    // Expected
+                    s_logger.Debug("Failed opening connection ", e);
+                    AssertIsConnectionFailure(e);
+                }
+
+                Assert.AreEqual(ConnectionState.Closed, conn.State);
+            }
+        }
+    }
+
+    [Test]
+    [RunOnlyOnCI]
+    public void TestApplicationPathIsSentDuringAuthentication()
+    {
+        using (var conn = new SnowflakeDbConnection())
+        {
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+
+            var authenticator = (BaseAuthenticator)conn.SfSession.authenticator;
+            var clientEnv = authenticator.BuildLoginRequestData().clientEnv;
+            var lowerPath = clientEnv.applicationPath.ToLower();
+#if NETFRAMEWORK
+                Assert.IsTrue(
+                    lowerPath.Contains("testhost") &&
+                    (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
+                    $"APPLICATION_PATH should contain 'testhost' and end with .dll or .exe. Got: {clientEnv.applicationPath}");
+#else
+            Assert.IsTrue(
+                lowerPath.Contains("snowflake.data.tests") &&
+                lowerPath.Contains("bin") &&
+                lowerPath.Contains("testhost") &&
+                (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
+                $"APPLICATION_PATH should contain 'snowflake.data.tests', 'bin', 'testhost' and end with .dll or .exe. Got: {clientEnv.applicationPath}");
+#endif
+        }
+    }
+
+    [Test]
+    public void TestIncorrectUserOrPasswordBasicConnection()
+    {
+        using (var conn = new SnowflakeDbConnection())
+        {
+            conn.ConnectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
+                                                  "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
+                testConfig.protocol,
+                testConfig.host,
+                testConfig.port,
+                testConfig.account,
+                testConfig.role,
+                testConfig.database,
+                testConfig.schema,
+                testConfig.warehouse,
+                "unknown",
+                testConfig.password);
+
+            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            try
+            {
+                conn.Open();
+                Assert.Fail();
+            }
+            catch (SnowflakeDbException e)
+            {
+                // Expected
+                s_logger.Debug("Failed opening connection ", e);
+                AssertIsConnectionFailure(e);
+            }
+
+            Assert.AreEqual(ConnectionState.Closed, conn.State);
+        }
+    }
+
+    [Test]
+    [TestCase(true)]
+    [TestCase(false)]
+    public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
+    {
+        for (int i = 0; i < 2; ++i)
+        {
+            s_logger.Debug($"Running try #{i}");
+            SnowflakeDbConnection snowflakeConnection = null;
+            try
+            {
+                snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName);
+                snowflakeConnection.Open();
+                Assert.Fail("Connection open should fail");
+            }
+            catch (SnowflakeDbException e)
+            {
+                AssertIsConnectionFailure(e);
+                AssertConnectionIsNotOpen(snowflakeConnection);
+                if (explicitClose)
+                {
+                    snowflakeConnection.Close();
+                    AssertConnectionIsNotOpen(snowflakeConnection);
+                }
+            }
+        }
+    }
+
+    [Test]
+    public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
+    {
+        for (int i = 0; i < 2; ++i)
+        {
+            s_logger.Debug($"Running try #{i}");
+            SnowflakeDbConnection snowflakeConnection = null;
+            try
+            {
+                using (snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName))
+                {
+                    snowflakeConnection.Open();
+                }
+            }
+            catch (SnowflakeDbException e)
+            {
+                AssertIsConnectionFailure(e);
+                AssertConnectionIsNotOpen(snowflakeConnection);
+            }
+        }
+    }
+
+    private static void AssertConnectionIsNotOpen(SnowflakeDbConnection snowflakeDbConnection)
+    {
+        Assert.NotNull(snowflakeDbConnection);
+        Assert.IsFalse(snowflakeDbConnection.IsOpen()); // check via public method
+        Assert.AreEqual(ConnectionState.Closed, snowflakeDbConnection.State); // ensure internal state is expected
+    }
+
+    private static void AssertIsConnectionFailure(SnowflakeDbException e)
+    {
+        Assert.AreEqual(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
+    }
+
+    [Test]
+    public void TestConnectString()
+    {
+        var schemaName = "dlSchema_" + Guid.NewGuid().ToString().Replace("-", "_");
+        var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = ConnectionString;
+        conn.Open();
+        using (IDbCommand cmd = conn.CreateCommand())
+        {
+            //cmd.CommandText = "create database \"dlTest\"";
+            //cmd.ExecuteNonQuery();
+            //cmd.CommandText = "use database \"dlTest\"";
+            //cmd.ExecuteNonQuery();
+            cmd.CommandText = $"create schema \"{schemaName}\"";
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = $"use schema \"{schemaName}\"";
+            cmd.ExecuteNonQuery();
+            //cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
+            cmd.CommandText = $"create table {TableName} (col1 string, col2 int)";
+            cmd.ExecuteNonQuery();
+            //cmd.CommandText = "insert into \"dlTest\".\"dlSchema\".test1 Values ('test 1', 1);";
+            cmd.CommandText = $"insert into {TableName} Values ('test 1', 1);";
+            cmd.ExecuteNonQuery();
+        }
+
+        using (var conn1 = new SnowflakeDbConnection())
+        {
+            conn1.ConnectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
+                                                   "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
+                testConfig.protocol,
+                testConfig.host,
+                testConfig.port,
+                testConfig.account,
+                testConfig.role,
+                //"\"dlTest\"",
+                testConfig.database,
+                $"\"{schemaName}\"",
+                //testConfig.schema,
+                testConfig.warehouse,
+                testConfig.user,
+                testConfig.password);
+            Assert.AreEqual(conn1.State, ConnectionState.Closed);
+
+            conn1.Open();
+            using (IDbCommand cmd = conn1.CreateCommand())
+            {
+                cmd.CommandText = $"SELECT count(*) FROM {TableName}";
+                IDataReader reader = cmd.ExecuteReader();
+                Assert.IsTrue(reader.Read());
+                Assert.AreEqual(1, reader.GetInt32(0));
+            }
+
+            conn1.Close();
+
+            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+        }
+
+        using (IDbCommand cmd = conn.CreateCommand())
+        {
+            //cmd.CommandText = "drop database \"dlTest\"";
+            cmd.CommandText = $"drop schema \"{schemaName}\"";
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = "use database " + testConfig.database;
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = "use schema " + testConfig.schema;
+            cmd.ExecuteNonQuery();
+        }
+
+        conn.Close();
+    }
+
+    [Test]
+    [TimeSensitive]
+    public void TestLoginWithMaxRetryReached()
+    {
+        using (IDbConnection conn = new MockSnowflakeDbConnection())
+        {
+            string maxRetryConnStr = ConnectionString + "maxHttpRetries=7";
+
+            conn.ConnectionString = maxRetryConnStr;
+
+            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            try
+            {
+                conn.Open();
+                Assert.Fail();
+            }
+            catch (Exception e)
+            {
+                // Jitter can cause the request to reach max number of retries before reaching the timeout
+                Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                              SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
+                              ((SnowflakeDbException)e.InnerException).ErrorCode);
+            }
+
+            stopwatch.Stop();
+
+            // retry 7 times with starting backoff of 1 second
+            // backoff is chosen randomly it can drop to 0. So the minimal backoff time could be 1 + 0 + 0 + 0 + 0 + 0 + 0 = 1
+            // The maximal backoff time could be 1 + 2 + 5 + 10 + 21 + 42 + 85 = 166
+            Assert.Less(stopwatch.ElapsedMilliseconds, 166 * 1000);
+            Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000);
+        }
+    }
+
+    [Test]
+    public void TestValidateDefaultParameters()
+    {
+        string connectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
+                                                "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
+            testConfig.protocol,
+            testConfig.host,
+            testConfig.port,
+            testConfig.account,
+            testConfig.role,
+            testConfig.database,
+            testConfig.schema,
+            "WAREHOUSE_NEVER_EXISTS",
+            testConfig.user,
+            testConfig.password);
+
+        // By default should validate parameters
+        using (IDbConnection conn = new SnowflakeDbConnection())
+        {
+            try
+            {
+                conn.ConnectionString = connectionString;
+                conn.Open();
+                Assert.Fail();
+            }
+            catch (SnowflakeDbException e)
+            {
+                Assert.AreEqual(390201, e.ErrorCode);
+            }
+        }
+
+        // This should succeed
+        using (IDbConnection conn = new SnowflakeDbConnection())
+        {
+            conn.ConnectionString = connectionString + ";VALIDATE_DEFAULT_PARAMETERS=false";
+            conn.Open();
+        }
+    }
+
+    [Test]
+    public void TestInvalidConnectionString()
+    {
+        string[] invalidStrings =
+        {
+            // missing required connection property password
+            "ACCOUNT=testaccount;user=testuser",
+            // invalid account value
+            "ACCOUNT=A=C;USER=testuser;password=123;key",
+            "complete_invalid_string",
+        };
+
+        int[] expectedErrorCode = { 270006, 270008, 270008 };
+
+        using (IDbConnection conn = new SnowflakeDbConnection())
+        {
+            for (int i = 0; i < invalidStrings.Length; i++)
+            {
+                try
+                {
+                    conn.ConnectionString = invalidStrings[i];
+                    conn.Open();
+                    Assert.Fail();
+                }
+                catch (SnowflakeDbException e)
+                {
+                    Assert.AreEqual(expectedErrorCode[i], e.ErrorCode);
+                }
+            }
+        }
+    }
+
+    [Test]
+    public void TestUnknownConnectionProperty()
+    {
+        using (IDbConnection conn = new SnowflakeDbConnection())
+        {
+            // invalid propety will be ignored.
+            conn.ConnectionString = ConnectionString + ";invalidProperty=invalidvalue;";
+
+            conn.Open();
+            Assert.AreEqual(conn.State, ConnectionState.Open);
+            conn.Close();
+        }
+    }
+
+    [Test]
+    [IgnoreOnEnvIs("snowflake_cloud_env",
+        new string[] { "AZURE", "GCP" })]
+    public void TestSwitchDb()
+    {
+        using (IDbConnection conn = new SnowflakeDbConnection())
+        {
+            conn.ConnectionString = ConnectionString;
+
+            Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+            conn.Open();
+
+            Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
+            Assert.AreEqual(conn.State, ConnectionState.Open);
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                conn.ChangeDatabase("SNOWFLAKE_SAMPLE_DATA");
+                Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);
+            }
+
+            conn.ChangeDatabase(testConfig.database);
+            conn.Close();
+        }
+    }
+
+    [Test]
+    public void TestConnectWithoutHost()
+    {
+        using (IDbConnection conn = new SnowflakeDbConnection())
+        {
+            string connStrFmt = "account={0};user={1};password={2};certRevocationCheckMode=enabled;";
+            conn.ConnectionString = string.Format(connStrFmt, testConfig.account,
+                testConfig.user, testConfig.password);
+            // Check that connection succeeds if host is not specified in test configs, i.e. default should work.
+            if (string.IsNullOrEmpty(testConfig.host))
+            {
+                conn.Open();
+                Assert.AreEqual(conn.State, ConnectionState.Open);
+                conn.Close();
+            }
+        }
+    }
+
+    [Test]
+    public void TestConnectWithDifferentRole()
+    {
+        using (IDbConnection conn = new SnowflakeDbConnection())
+        {
+            var host = testConfig.host;
+            if (string.IsNullOrEmpty(host))
+            {
+                host = $"{testConfig.account}.snowflakecomputing.com";
+            }
+
+            string connStrFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
+                                "user={3};password={4};account={5};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED;validate_default_parameters=false";
+
+            conn.ConnectionString = string.Format(
+                connStrFmt,
+                testConfig.protocol,
+                testConfig.host,
+                testConfig.port,
+                testConfig.user,
+                testConfig.password,
+                testConfig.account
+            );
+            conn.Open();
+            Assert.AreEqual(conn.State, ConnectionState.Open);
+
+            using (IDbCommand command = conn.CreateCommand())
+            {
+                command.CommandText = "select current_role()";
+                Assert.AreEqual(command.ExecuteScalar().ToString(), "PUBLIC");
+
+                command.CommandText = "select current_database()";
+                CollectionAssert.Contains(new[] { "SNOWFLAKE_SAMPLE_DATA", "" }, command.ExecuteScalar().ToString());
+
+                command.CommandText = "select current_schema()";
+                CollectionAssert.Contains(new[] { "INFORMATION_SCHEMA", "" }, command.ExecuteScalar().ToString());
+
+                command.CommandText = "select current_warehouse()";
+                // Command will return empty string if the hardcoded warehouse does not exist.
+                Assert.AreEqual("", command.ExecuteScalar().ToString());
+            }
+
+            conn.Close();
+        }
+    }
+
+    // Test that when a connection is disposed, a close would send out and unfinished transaction would be roll back.
+    [Test]
+    public void TestConnectionDispose()
+    {
+        using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+        {
+            conn.Open();
+            CreateOrReplaceTable(conn, TableName, new[] { "c INT" });
+            var t1 = conn.BeginTransaction();
+            var t1c1 = conn.CreateCommand();
+            t1c1.Transaction = t1;
+            t1c1.CommandText = $"insert into {TableName} values (1)";
+            t1c1.ExecuteNonQuery();
+        }
+
+        using (IDbConnection conn = new SnowflakeDbConnection())
+        {
+            // Previous connection would be disposed and
+            // uncommitted txn would rollback at this point
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+            IDbCommand command = conn.CreateCommand();
+            command.CommandText = $"SELECT * FROM {TableName}";
+            IDataReader reader = command.ExecuteReader();
+            Assert.IsFalse(reader.Read());
+        }
+    }
+
+    [Test]
+    public void TestUnknownAuthenticator()
+    {
+        string[] wrongAuthenticators = new string[]
+        {
+            "http://snowflakecomputing.okta.com",
+            "https://snowflake.com",
+            "unknown",
+        };
+
+        foreach (string wrongAuthenticator in wrongAuthenticators)
+        {
+            try
+            {
+                IDbConnection conn = new SnowflakeDbConnection();
+                conn.ConnectionString = "scheme=http;host=test;port=8080;user=test;password=test;account=test;authenticator=" +
+                                        wrongAuthenticator;
+                conn.Open();
+                Assert.Fail("Authentication of {0} should fail", wrongAuthenticator);
+            }
+            catch (SnowflakeDbException e)
+            {
+                SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.UNKNOWN_AUTHENTICATOR);
+            }
+        }
+    }
+
+    [Test]
+    public void TestOktaConnectionUntilMaxTimeout()
+    {
+        var expectedMaxRetryCount = 15;
+        var expectedMaxConnectionTimeout = 450;
+        var oktaUrl = "https://test.okta.com";
+        var mockRestRequester = new MockOktaRestRequester()
+        {
+            TokenUrl = $"{oktaUrl}/api/v1/sessions?additionalFields=cookieToken",
+            SSOUrl = $"{oktaUrl}/app/testaccount/sso/saml",
+            ResponseContent = "<form=error}",
+            MaxRetryCount = expectedMaxRetryCount,
+            MaxRetryTimeout = expectedMaxConnectionTimeout
+        };
+        using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
+        {
+            try
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                      + String.Format(
+                          ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
+                          oktaUrl,
+                          expectedMaxRetryCount,
+                          expectedMaxConnectionTimeout);
+                conn.Open();
+                Assert.Fail();
+            }
+            catch (Exception e)
+            {
+                Assert.IsInstanceOf<SnowflakeDbException>(e);
+                SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.INTERNAL_ERROR);
+                Assert.IsTrue(e.Message.Contains(
+                    $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
+                    $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
+                    "while trying to authenticate through Okta"));
+            }
+        }
+    }
+
+    [Test]
+    public void TestInValidOAuthTokenConnection()
+    {
+        try
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString
+                    = ConnectionStringWithoutAuth
+                      + ";authenticator=oauth;token=notAValidOAuthToken";
+                conn.Open();
+                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Fail();
+            }
+        }
+        catch (SnowflakeDbException e)
+        {
+            // Invalid OAuth access token
+            Assert.AreEqual(390303, e.ErrorCode);
+        }
+    }
+
+    [Test]
+    public void TestInvalidProxySettingFromConnectionString()
+    {
+        using (var conn = new SnowflakeDbConnection())
+        {
+            conn.ConnectionString =
+                ConnectionString + "connection_timeout=5;useProxy=true;proxyHost=Invalid;proxyPort=8080";
+            try
+            {
+                conn.Open();
+                Assert.Fail();
+            }
+            catch (SnowflakeDbException e)
+            {
+                // Expected
+                s_logger.Debug("Failed opening connection ", e);
+                Assert.AreEqual(270001, e.ErrorCode); //Internal error
+                AssertIsConnectionFailure(e);
+            }
+        }
+    }
+
+    [Test]
+    [TestCase("*")]
+    [TestCase("*{0}*")]
+    [TestCase("^*{0}*")]
+    [TestCase("*{0}*$")]
+    [TestCase("^*{0}*$")]
+    [TestCase("^nonmatch*{0}$|*")]
+    [TestCase("*a*", "a")]
+    [TestCase("*la*", "la")]
+    [Retry(3)]
+    public void TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
+    {
+        using (var conn = new SnowflakeDbConnection())
+        {
+            // Arrange
+            var host = ResolveHost();
+            var nonProxyHosts = string.Format(regexHost, $"{host}");
+            conn.ConnectionString =
+                $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+
+            // Act
+            conn.Open();
+
+            // Assert
+            // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
+            Assert.AreEqual(ConnectionState.Open, conn.State);
+        }
+    }
+
+    [Test]
+    [TestCase("invalid{0}")]
+    [TestCase("*invalid{0}*")]
+    [TestCase("^invalid{0}$")]
+    [TestCase("*a.b")]
+    [TestCase("a", "a")]
+    [TestCase("la", "la")]
+    [Retry(3)]
+    public void TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
+    {
+        using (var conn = new SnowflakeDbConnection())
+        {
+            // Arrange
+            var nonProxyHosts = string.Format(regexHost, $"{testConfig.host}");
+            conn.ConnectionString =
+                $"{ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+
+            // Act/Assert
+            // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
+            var exception = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+
+            // Assert
+            Assert.AreEqual(270001, exception.ErrorCode);
+            AssertIsConnectionFailure(exception);
+        }
+    }
+
+    [Test]
+    public void TestUseProxyFalseWithInvalidProxyConnectionString()
+    {
+        using (var conn = new SnowflakeDbConnection())
+        {
+            conn.ConnectionString =
+                ConnectionString + ";useProxy=false;proxyHost=Invalid;proxyPort=8080";
+            conn.Open();
+            // Because useProxy=false, the proxy settings are ignored
+        }
+    }
+
+    [Test]
+    public void TestInvalidProxySettingWithByPassListFromConnectionString()
+    {
+        using (var conn = new SnowflakeDbConnection())
+        {
+            conn.ConnectionString
+                = ConnectionString
+                  + String.Format(
+                      ";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
+                      $"*.foo.com %7C{testConfig.account}.snowflakecomputing.com|*{testConfig.host}*");
+            conn.Open();
+            // Because testConfig.host is in the bypass list, the proxy should not be used
+        }
+    }
+
+    [Test]
+    [TimeSensitive]
+    public async Task TestKeepAlive()
+    {
+        // create 100 connections, one per second
+        var connCount = 100;
+        // pooled connection expires in 5 seconds so after 5 seconds,
+        // one connection per second will be closed
+        var connectionString = ConnectionString + "maxPoolSize=20;ExpirationTimeout=5;CLIENT_SESSION_KEEP_ALIVE=true";
+        // heart beat interval is validity/4 so send out per 5 seconds
+        HeartBeatBackground.setValidity(20);
+        try
+        {
+            for (int i = 0; i < connCount; i++)
+            {
+                using (var conn = new SnowflakeDbConnection())
+                {
+                    conn.ConnectionString = connectionString;
+                    conn.Open();
+                }
+                await Task.Delay(TimeSpan.FromSeconds(1));
+                // roughly should only have 5 sessions in pool stay alive
+                // check for 10 in case of bad timing, also much less than the
+                // pool max size to ensure it's unpooled because of expire
+                Assert.Less(HeartBeatBackground.getQueueLength(), 10);
+            }
+        }
+        catch
+        {
+            // fail the test case if any exception is thrown
+            Assert.Fail();
+        }
+    }
 
     [Test]
     public void TestCancelLoginBeforeTimeout()
@@ -57,7 +790,6 @@ class SFConnectionITAsync : SFBaseTestAsync
                 Assert.AreEqual(
                     "System.Threading.Tasks.TaskCanceledException",
                     e.InnerException.GetType().ToString());
-
             }
 
             Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -88,6 +820,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             {
                 SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
             }
+
             stopwatch.Stop();
             int delta = 10; // in case server time slower.
 
@@ -126,6 +859,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             {
                 SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
             }
+
             stopwatch.Stop();
             int delta = 10; // in case server time slower.
 
@@ -160,6 +894,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             {
                 SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
             }
+
             stopwatch.Stop();
             int delta = 10; // in case server time slower.
 
