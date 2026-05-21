@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThatThrowsErrorWhenCacheFailToCreateCacheFile()
         {
             // arrange
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.That(thrown.Message, Does.Contain("Failed to create the JSON token cache file"));
         }
 
-        [Test]
+        [SFFact]
         public void TestThatThrowsErrorWhenCacheFileCanBeAccessedByOthers()
         {
             // arrange
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThatJsonFileIsCheckedIfAlreadyExists()
         {
             // arrange
@@ -154,7 +154,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_fileOperations.Verify(f => f.Exists(s_customJsonPath), Times.Exactly(2));
         }
 
-        [Test]
+        [SFFact]
         public void TestWritingIsUnavailableIfFailedToCreateDirLock()
         {
             // arrange
@@ -192,7 +192,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_fileOperations.Verify(f => f.Write(s_customJsonPath, It.IsAny<string>(), It.IsAny<Action<UnixStream>>()), Times.Never);
         }
 
-        [Test]
+        [SFFact]
         public void TestReadingIsUnavailableIfFailedToCreateDirLock()
         {
             // arrange
@@ -230,7 +230,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_fileOperations.Verify(f => f.ReadAllText(s_customJsonPath, It.IsAny<Action<UnixStream>>()), Times.Never);
         }
 
-        [Test]
+        [SFFact]
         public void TestReadingAndWritingAreUnavailableIfDirLockExists()
         {
             // arrange
@@ -257,7 +257,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThatDoesNotChangeCacheDirPermissionsWhenInsecure()
         {
             // arrange
@@ -286,7 +286,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestCreateDirectoryWithSecurePermissions()
         {
             // arrange

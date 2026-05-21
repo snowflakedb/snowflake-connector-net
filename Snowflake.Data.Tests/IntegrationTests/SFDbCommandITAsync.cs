@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.IntegrationTests;
 
 public sealed class SFDbCommandITAsync : SFBaseTestAsync
 {
-    [Test]
+    [SFFact]
     public async Task TestCancelExecuteAsync()
     {
         CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
@@ -47,7 +47,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [TimeSensitive("If this takes too long, query will be in success state.")]
     public async Task TestAsyncExecQueryAsync()
     {
@@ -145,7 +145,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public async Task TestAsyncExecCancelWhileGettingResultsAsync()
     {
         using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -179,7 +179,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public async Task TestAsyncExecCancelAbortsQueryOnServer()
     {
         string queryId;
@@ -233,7 +233,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public async Task TestFailedAsyncExecQueryThrowsErrorAsync()
     {
         using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -273,7 +273,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestSimpleCommand()
     {
         using (IDbConnection conn = new SnowflakeDbConnection())
@@ -336,7 +336,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestSimpleLargeResultSet()
     {
         using (IDbConnection conn = new SnowflakeDbConnection())
@@ -442,7 +442,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestDataSourceError()
     {
         using (IDbConnection conn = new SnowflakeDbConnection())
@@ -468,7 +468,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [TimeSensitive]
     public async Task TestCancelQuery()
     {
@@ -522,7 +522,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             conn.Close();
         }
 
-        [Test]
+        [SFFact]
         public void TestTransaction()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -576,7 +576,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestRowsAffected()
         {
             String[] testCommands =
@@ -614,7 +614,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestExecuteScalarNull()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -634,7 +634,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestExecuteWithMaxRetryReached()
         {
             var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
@@ -673,7 +673,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestCreateCommandBeforeOpeningConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -689,7 +689,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestRowsAffectedUnload()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -723,7 +723,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         // [Ignore("Ignore flaky unstable test case for now.")]
         [Retry(2)]
         public void testPutArrayBindAsync()
@@ -871,7 +871,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         [Retry(2)]
         public void TestPutArrayBindAsyncMultiThreading()
         {
@@ -911,7 +911,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             ArrayBindTest(connstr, tableName, 25000);
         }
 
-        [Test]
+        [SFFact]
         public void testExecuteScalarAsyncSelect()
         {
             CancellationTokenSource externalCancel = new CancellationTokenSource();
@@ -952,7 +952,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         [IgnoreOnEnvIs("snowflake_cloud_env",
             new string[] { "AWS", "AZURE" })]
         public void testExecuteLargeQueryWithGcsDownscopedToken()
@@ -974,7 +974,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetQueryId()
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -1060,7 +1060,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         [TimeSensitive("It needs to take max 5 seconds.")]
         public void TestAsyncExecQuery()
         {
@@ -1155,7 +1155,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public async Task TestFailedAsyncExecQueryThrowsError()
         {
             string queryId;
@@ -1194,7 +1194,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestAsyncExecQueryPutGetThrowsNotImplemented()
         {
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -1227,7 +1227,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetStatusOfInvalidQueryId()
         {
             string fakeQueryId = "fakeQueryId";
@@ -1250,7 +1250,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetResultsOfInvalidQueryId()
         {
             string fakeQueryId = "fakeQueryId";
@@ -1426,7 +1426,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             AssertSingleTelemetryActivity(capturedActivities, expectedOp);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestQueryIdOperationsEmitTelemetryWIthCustomEventsFromClient()
         {
             using var conn = new SnowflakeDbConnection();
@@ -1517,7 +1517,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             Assert.NotNull(activity.GetTagItem(TelemetryTags.DbName));
         }
 
-        [Test]
+        [SFFact]
         [Ignore("The test takes too long to finish when using the default retry")]
         public void TestGetResultsOfUnknownQueryIdWithDefaultRetry()
         {
@@ -1541,7 +1541,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetResultsOfUnknownQueryIdWithConfiguredRetry()
         {
             var queryResultsRetryCount = 3;
@@ -1571,7 +1571,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSetQueryTagOverridesConnectionString()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -1591,7 +1591,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestCommandWithCommentEmbedded()
         {
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -1607,7 +1607,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public async Task TestCommandWithCommentEmbeddedAsync()
         {
             using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -1623,7 +1623,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestExecuteNonQueryReturnsCorrectRowCountForUploadWithMultipleFiles()
         {
             const int NumberOfFiles = 5;
@@ -1668,7 +1668,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [Test]
+        [SFFact]
         public async Task TestExecuteNonQueryAsyncReturnsCorrectRowCountForUploadWithMultipleFiles()
         {
             const int NumberOfFiles = 5;

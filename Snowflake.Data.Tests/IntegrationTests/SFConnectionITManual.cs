@@ -2,7 +2,7 @@ namespace Snowflake.Data.Tests.IntegrationTests;
 
 public sealed class SFConnectionITManual
 {
-    [Test]
+    [SFFact]
     [Ignore("TestConnectStringWithUserPwd, this will popup an internet browser for external login.")]
     public void TestConnectStringWithUserPwd()
     {
@@ -29,7 +29,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual setup and therefore cannot be run in CI")]
     public void TestOktaConnection()
     {
@@ -47,7 +47,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual setup and therefore cannot be run in CI")]
     public void TestOkta2ConnectionsFollowingEachOther()
     {
@@ -80,7 +80,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
     public void TestSSOConnectionWithUser()
     {
@@ -103,7 +103,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
     public void TestSSOConnectionWithPoolingEnabled()
     {
@@ -124,7 +124,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
     public void TestSSOConnectionWithUserAsync()
     {
@@ -148,7 +148,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
     public void TestSSOConnectionWithUserAndDisableConsoleLogin()
     {
@@ -168,7 +168,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
     public void TestSSOConnectionWithUserAsyncAndDisableConsoleLogin()
     {
@@ -192,7 +192,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
     public void TestSSOConnectionTimeoutAfter10s()
     {
@@ -224,7 +224,7 @@ public sealed class SFConnectionITManual
         Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (waitSeconds + 5) * 1000);
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
     public void TestSSOConnectionWithTokenCaching()
     {
@@ -259,7 +259,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
     public void TestSSOConnectionWithInvalidCachedToken()
     {
@@ -293,7 +293,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
     public void TestSSOConnectionWithWrongUser()
     {
@@ -314,7 +314,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestJwtUnencryptedPemFileConnection()
     {
@@ -331,7 +331,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestJwtUnencryptedP8FileConnection()
     {
@@ -348,7 +348,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestJwtEncryptedPkFileConnection()
     {
@@ -366,7 +366,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestJwtUnencryptedPkConnection()
     {
@@ -383,7 +383,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestJwtEncryptedPkConnection()
     {
@@ -401,7 +401,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestJwtMissingConnectionSettingConnection()
     {
@@ -427,7 +427,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestJwtEncryptedPkFileInvalidPwdConnection()
     {
@@ -452,7 +452,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestJwtEncryptedPkFileNoPwdConnection()
     {
@@ -477,7 +477,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestJwtConnectionWithWrongUser()
     {
@@ -502,7 +502,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestJwtEncryptedPkConnectionWithWrongUser()
     {
@@ -529,7 +529,7 @@ public sealed class SFConnectionITManual
     }
 
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestValidOAuthConnection()
     {
@@ -545,7 +545,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestValidOAuthExpiredTokenConnection()
     {
@@ -570,7 +570,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestCorrectProxySettingFromConnectionString()
     {
@@ -587,7 +587,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestCorrectProxyWithCredsSettingFromConnectionString()
     {
@@ -606,7 +606,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestCorrectProxySettingWithByPassListFromConnectionString()
     {
@@ -626,7 +626,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public void TestMultipleConnectionWithDifferentHttpHandlerSettings()
     {
@@ -767,7 +767,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
     public void TestEscapeChar()
     {
@@ -793,7 +793,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test, please test this manual with breakpoint at SFSessionProperty::ParseConnectionString() to verify")]
     public void TestEscapeChar1()
     {
@@ -819,7 +819,7 @@ public sealed class SFConnectionITManual
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
     public void TestHeartBeat()
     {
@@ -838,7 +838,7 @@ public sealed class SFConnectionITManual
         Assert.Equal(ConnectionState.Closed, conn.State);
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Ignore this test. Please run this manually, since it takes 4 hrs to finish.")]
     public void TestHeartBeatWithConnectionPool()
     {

@@ -25,7 +25,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 {
     private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
-    [Test]
+    [SFFact]
     public void TestBasicConnection()
     {
         using (IDbConnection conn = new SnowflakeDbConnection())
@@ -50,7 +50,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestApplicationName()
     {
         string[] validApplicationNames = { "test1234", "test_1234", "test-1234", "test.1234" };
@@ -96,7 +96,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [RunOnlyOnCI]
     public void TestApplicationPathIsSentDuringAuthentication()
     {
@@ -124,7 +124,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestIncorrectUserOrPasswordBasicConnection()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -159,7 +159,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [TestCase(true)]
     [TestCase(false)]
     public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
@@ -187,7 +187,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
     {
         for (int i = 0; i < 2; ++i)
@@ -221,7 +221,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         Assert.Equal(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
     }
 
-    [Test]
+    [SFFact]
     public void TestConnectString()
     {
         var schemaName = "dlSchema_" + Guid.NewGuid().ToString().Replace("-", "_");
@@ -292,7 +292,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         conn.Close();
     }
 
-    [Test]
+    [SFFact]
     [TimeSensitive]
     public void TestLoginWithMaxRetryReached()
     {
@@ -327,7 +327,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestValidateDefaultParameters()
     {
         string connectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
@@ -366,7 +366,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestInvalidConnectionString()
     {
         string[] invalidStrings =
@@ -398,7 +398,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestUnknownConnectionProperty()
     {
         using (IDbConnection conn = new SnowflakeDbConnection())
@@ -412,7 +412,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [IgnoreOnEnvIs("snowflake_cloud_env",
         new string[] { "AZURE", "GCP" })]
     public void TestSwitchDb()
@@ -439,7 +439,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestConnectWithoutHost()
     {
         using (IDbConnection conn = new SnowflakeDbConnection())
@@ -457,7 +457,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestConnectWithDifferentRole()
     {
         using (IDbConnection conn = new SnowflakeDbConnection())
@@ -504,7 +504,7 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     // Test that when a connection is disposed, a close would send out and unfinished transaction would be roll back.
-    [Test]
+    [SFFact]
     public void TestConnectionDispose()
     {
         using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
@@ -531,7 +531,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestUnknownAuthenticator()
     {
         string[] wrongAuthenticators = new string[]
@@ -558,7 +558,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestOktaConnectionUntilMaxTimeout()
     {
         var expectedMaxRetryCount = 15;
@@ -598,7 +598,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestInValidOAuthTokenConnection()
     {
         try
@@ -620,7 +620,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestInvalidProxySettingFromConnectionString()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -642,7 +642,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [TestCase("*")]
     [TestCase("*{0}*")]
     [TestCase("^*{0}*")]
@@ -671,7 +671,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [TestCase("invalid{0}")]
     [TestCase("*invalid{0}*")]
     [TestCase("^invalid{0}$")]
@@ -698,7 +698,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestUseProxyFalseWithInvalidProxyConnectionString()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -710,7 +710,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestInvalidProxySettingWithByPassListFromConnectionString()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -725,7 +725,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [TimeSensitive]
     public async Task TestKeepAlive()
     {
@@ -759,7 +759,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestCancelLoginBeforeTimeout()
     {
         using (var conn = new MockSnowflakeDbConnection())
@@ -797,7 +797,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [TimeSensitive]
     public void TestAsyncLoginTimeout()
     {
@@ -834,7 +834,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [Retry(2)]
     [TimeSensitive]
     public void TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
@@ -873,7 +873,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [TimeSensitive]
     public void TestAsyncDefaultLoginTimeout()
     {
@@ -908,7 +908,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestAsyncConnectionFailFastForNonRetried404OnLogin()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -942,7 +942,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestCloseAsyncWithCancellation()
     {
         // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
@@ -978,7 +978,7 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
 #if NETCOREAPP3_0_OR_GREATER
-    [Test]
+    [SFFact]
     public void TestCloseAsync()
     {
         // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
@@ -1014,7 +1014,7 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 #endif
 
-    [Test]
+    [SFFact]
     public void TestCloseAsyncFailure()
     {
         using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
@@ -1044,7 +1044,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestExplicitTransactionOperationsTracked()
     {
         using (var conn = new SnowflakeDbConnection(ConnectionString))
@@ -1066,7 +1066,7 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
 
-    [Test]
+    [SFFact]
     public void TestAsyncOktaConnectionUntilMaxTimeout()
     {
         var expectedMaxRetryCount = 15;
@@ -1113,7 +1113,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires established dev Okta SSO and credentials matching Snowflake user")]
     public void TestNativeOktaSuccess()
     {
@@ -1129,7 +1129,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestConnectStringWithQueryTag()
     {
         using (var conn = new SnowflakeDbConnection())
@@ -1147,7 +1147,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestUseMultiplePoolsConnectionPoolByDefault()
     {
         // act
@@ -1157,7 +1157,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         Assert.Equal(ConnectionPoolType.MultipleConnectionPool, poolVersion);
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")] // to enroll to mfa authentication edit your user profile
     public void TestMFATokenCachingWithPasscodeFromConnectionString()
     {
@@ -1179,7 +1179,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
     public void TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
     {
@@ -1203,7 +1203,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [TestCase("connection_timeout=5;")]
     [TestCase("")]
     public void TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost(string extraParameters)
@@ -1224,7 +1224,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestOpenAsyncThrowExceptionWhenOperationIsCancelled()
     {
         // arrange
@@ -1242,7 +1242,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
     public void TestSSOConnectionWithTokenCachingAsync()
     {
@@ -1280,7 +1280,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 
     }
 
-    [Test]
+    [SFFact]
     public void TestCloseSessionWhenGarbageCollectorFinalizesConnection()
     {
         // arrange
@@ -1304,7 +1304,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         return connection.SfSession;
     }
 
-    [Test]
+    [SFFact]
     [TimeSensitive]
     public void TestHangingCloseIsNotBlocking()
     {
@@ -1329,7 +1329,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         Assert.GreaterOrEqual(watchClosedFinished.Elapsed.Duration(), TimeSpan.FromSeconds(10)); // while background task took more time
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Manual test only")]
     public void TestOAuthFlow()
     {
@@ -1353,7 +1353,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [Test]
+    [SFFact]
     [Ignore("Manual test only")]
     public void TestProgrammaticAccessTokenAuthentication()
     {

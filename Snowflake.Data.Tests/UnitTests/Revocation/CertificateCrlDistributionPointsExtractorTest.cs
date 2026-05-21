@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
     public class CertificateCrlDistributionPointsExtractorTest
     {
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(CrlsTestCases))]
         public void TestExtractCertificateDistributionPoints(CrlExtractionTestCase testCase)
         {

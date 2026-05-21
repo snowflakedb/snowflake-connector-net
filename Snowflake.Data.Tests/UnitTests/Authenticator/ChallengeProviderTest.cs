@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private readonly ChallengeProvider _challengeProvider = new();
         private readonly Regex _onlyDigitsOrNumbers = new(@"^[0-9a-zA-Z]+$");
 
-        [Test]
+        [SFFact]
         public void TestGenerateState()
         {
             // act
@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.True(_onlyDigitsOrNumbers.IsMatch(state));
         }
 
-        [Test]
+        [SFFact]
         public void TestGenerateCodeVerifier()
         {
             // act

@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests
             s_restRequester.Reset();
         }
 
-        [Test]
+        [SFFact]
         public void TestPoolManagerReturnsSessionPoolForGivenConnectionStringUsingMFA()
         {
             // Arrange
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("passcode", loginRequest2.data.extAuthnDuoMethod);
         }
 
-        [Test]
+        [SFFact]
         public void TestPoolManagerShouldThrowExceptionIfForcePoolingWithPasscodeNotUsingMFATokenCacheAuthenticator()
         {
             // Arrange
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain("Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication"));
         }
 
-        [Test]
+        [SFFact]
         public void TestPoolManagerShouldThrowExceptionIfForcePoolingWithPasscodeAsSecureStringNotUsingMFATokenCacheAuthenticator()
         {
             // Arrange
@@ -94,7 +94,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain("Passcode with MinPoolSize feature of connection pool allowed only for username_password_mfa authentication"));
         }
 
-        [Test]
+        [SFFact]
         public void TestPoolManagerShouldNotThrowExceptionIfForcePoolingWithPasscodeNotUsingMFATokenCacheAuthenticator()
         {
             // Arrange
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.DoesNotThrow(() => _connectionPoolManager.GetSession(connectionString, new SessionPropertiesContext()));
         }
 
-        [Test]
+        [SFFact]
         public void TestPoolManagerShouldNotThrowExceptionIfMinPoolSizeZeroNotUsingMFATokenCacheAuthenticator()
         {
             // Arrange

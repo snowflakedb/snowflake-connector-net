@@ -42,7 +42,7 @@ public sealed class SnowflakeTelemetryModuleTest
         _listener?.Dispose();
     }
 
-    [Test]
+    [SFFact]
     public void TestRegisterCreatesSessionModule()
     {
         // Arrange
@@ -58,7 +58,7 @@ public sealed class SnowflakeTelemetryModuleTest
         SnowflakeTelemetryModule.Unregister(sessionId);
     }
 
-    [Test]
+    [SFFact]
     public void TestRegisterSameSessionUpdatesToken()
     {
         // Arrange
@@ -81,13 +81,13 @@ public sealed class SnowflakeTelemetryModuleTest
         SnowflakeTelemetryModule.Unregister(sessionId);
     }
 
-    [Test]
+    [SFFact]
     public void TestUnregisterNonExistentSessionDoesNotThrow()
     {
         Assert.DoesNotThrow(() => SnowflakeTelemetryModule.Unregister("non-existent-session"));
     }
 
-    [Test]
+    [SFFact]
     public void TestUnregisterDisposesModule()
     {
         // Arrange
@@ -108,7 +108,7 @@ public sealed class SnowflakeTelemetryModuleTest
         Assert.True(sessionModule.IsDisposed);
     }
 
-    [Test]
+    [SFFact]
     public async Task TestUnregisterAsyncFlushesAndDisposes()
     {
         // Arrange
@@ -130,7 +130,7 @@ public sealed class SnowflakeTelemetryModuleTest
         await SnowflakeTelemetryModule.UnregisterAsync(sessionId, CancellationToken.None);
     }
 
-    [Test]
+    [SFFact]
     public async Task TestUnregisterAsyncForNonExistentSessionDoesNotThrow()
     {
         await SnowflakeTelemetryModule.UnregisterAsync("non-existent-async", CancellationToken.None);
@@ -168,7 +168,7 @@ public sealed class SnowflakeTelemetryModuleTest
         SnowflakeTelemetryModule.Unregister(sessionId2);
     }
 
-    [Test]
+    [SFFact]
     public void TestRegisterWithTelemetryDisabledDoesNotCreateModule()
     {
         // Arrange - session with telemetry disabled

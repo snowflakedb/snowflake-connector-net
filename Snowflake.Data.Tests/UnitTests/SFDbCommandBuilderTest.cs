@@ -14,21 +14,21 @@ namespace Snowflake.Data.Tests.UnitTests
             builder = new SnowflakeDbCommandBuilder();
         }
 
-        [Test]
+        [SFFact]
         public void TestDefaultCommandBuilder()
         {
             Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
             Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
         }
 
-        [Test]
+        [SFFact]
         public void TestCommandBuilderWithoutAdapter()
         {
             builder = new SnowflakeDbCommandBuilder();
             Assert.Equal(null, builder.DataAdapter);
         }
 
-        [Test]
+        [SFFact]
         public void TestCommandBuilderWithAdapter()
         {
             SnowflakeDbDataAdapter adapter = new SnowflakeDbDataAdapter();
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
         }
 
-        [Test]
+        [SFFact]
         public void TestCommandBuilderSetPrefix()
         {
             string newQuotePrefix = "\'";
@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(newQuotePrefix, builder.QuotePrefix);
         }
 
-        [Test]
+        [SFFact]
         public void TestCommandBuilderSetSuffix()
         {
             string newQuoteSuffix = "\'";

@@ -18,13 +18,13 @@ namespace Snowflake.Data.Tests
             _parameterCollection = new SnowflakeDbParameterCollection();
         }
 
-        [Test]
+        [SFFact]
         public void TestDefaultDbParameterCollection()
         {
             Assert.Zero(_parameterCollection.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionCount()
         {
             Assert.Zero(_parameterCollection.Count);
@@ -39,28 +39,28 @@ namespace Snowflake.Data.Tests
             Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionSyncRoot()
         {
             object obj;
             Assert.Throws<NotImplementedException>(() => obj = _parameterCollection.SyncRoot);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionAddParameter([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter parameter = new SnowflakeDbParameter(1, SFDataType);
             Assert.Zero(_parameterCollection.Add(parameter));
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionAddNameAndType([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter parameter = _parameterCollection.Add("1", SFDataType);
             Assert.Equal(parameter, _parameterCollection[0]);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionAddRange([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter[] parameterArray = new SnowflakeDbParameter[PARAM_COUNT];
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionClear([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter[] parameterArray = new SnowflakeDbParameter[PARAM_COUNT];
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests
             Assert.Zero(_parameterCollection.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionContainsName([Values] SFDataType SFDataType)
         {
             string paramName = "1";
@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests
             Assert.True(_parameterCollection.Contains(paramName));
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionContainsParameter([Values] SFDataType SFDataType)
         {
             string paramName = "1";
@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests
 
 
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionGetEnumerator([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests
             Assert.False(parameterEnumerator.MoveNext());
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionCopyTo([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests
             Assert.Throws<NotImplementedException>(() => _parameterCollection.CopyTo(parameterArray, 0));
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionIndexOfName([Values] SFDataType SFDataType)
         {
             string paramName = "9";
@@ -151,7 +151,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(PARAM_COUNT - 1, _parameterCollection.IndexOf(paramName));
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionIndexOfNameNotExists([Values] SFDataType SFDataType)
         {
             int expectedParameterIndex = -1;
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedParameterIndex, _parameterCollection.IndexOf(paramName));
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionIndexOfValue([Values] SFDataType SFDataType)
         {
             int expectedParameterIndex = 0;
@@ -169,7 +169,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedParameterIndex, _parameterCollection.IndexOf(parameter));
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionInsert([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter parameter;
@@ -182,7 +182,7 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionInsertOutOfBounds([Values] SFDataType SFDataType)
         {
             int indexGreaterThanParameterCollectionSize = _parameterCollection.Count + 1;
@@ -190,7 +190,7 @@ namespace Snowflake.Data.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => _parameterCollection.Insert(indexGreaterThanParameterCollectionSize, parameter));
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionRemove([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter[] parameterArray = new SnowflakeDbParameter[PARAM_COUNT];
@@ -211,7 +211,7 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionRemoveAtName([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter[] parameterArray = new SnowflakeDbParameter[PARAM_COUNT];
@@ -231,7 +231,7 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionRemoveAtIndex([Values] SFDataType SFDataType)
         {
             SnowflakeDbParameter[] parameterArray = new SnowflakeDbParameter[PARAM_COUNT];
@@ -252,7 +252,7 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionGetParameterByName([Values] SFDataType SFDataType)
         {
             string paramName = "1";
@@ -261,7 +261,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedParameter, _parameterCollection[paramName]);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionGetParameterByIndex([Values] SFDataType SFDataType)
         {
             int paramIndex = 0;
@@ -270,7 +270,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedParameter, _parameterCollection[paramIndex]);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionSetParameterByName([Values] SFDataType SFDataType)
         {
             string firstParamName = "1";
@@ -284,7 +284,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedSecondParameter, _parameterCollection[secondParamName]);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionSetParameterByIndex([Values] SFDataType SFDataType)
         {
             int paramIndex = 0;
@@ -297,13 +297,13 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedSecondParameter, _parameterCollection[paramIndex]);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionTryCastWrongType()
         {
             Assert.False(_parameterCollection.Contains(new SnowflakeDbCommand()));
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterCollectionTryCastThrowWrongType()
         {
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _parameterCollection.Add(new SnowflakeDbCommand()));

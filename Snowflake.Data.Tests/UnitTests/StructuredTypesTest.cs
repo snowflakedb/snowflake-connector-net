@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
     public class StructuredTypesTest
     {
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(TimeConversionCases))]
         public void TestTimeConversions(string value, string sfTypeString, object expected)
         {
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests
             yield return new object[] { "0001-01-01 00:00:00.123456 -13:00", SFDataType.TIMESTAMP_LTZ.ToString(), DateTime.Parse("0001-01-01 13:00:00.123456").ToLocalTime() };
         }
 
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(TimeConversionWithNamedTimezoneCases))]
         public void TestTimeConversionsWithNamedTimezone(string value, string sfTypeString, string tzName, object expected)
         {
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
         }
 
-        [Test]
+        [SFFact]
         public void TestTimeConverterThrowsWhenSessionTimezoneIsNull()
         {
             var timeConverter = new TimeConverter();
@@ -151,7 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(ex.Message, Does.Contain("Session timezone is required"));
         }
 
-        [Test]
+        [SFFact]
         public void TestTimeConverterLtzReturnsStringWhenTargetIsString()
         {
             var timeConverter = new TimeConverter();

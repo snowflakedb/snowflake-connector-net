@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _resultFormat = resultFormat;
         }
 
-        [Test]
+        [SFFact]
         public void TestGetEnumerator()
         {
             using (var conn = CreateAndOpenConnection())
@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetEnumeratorShouldBeEmptyWhenNotRowsReturned()
         {
             using (var conn = CreateAndOpenConnection())
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetEnumeratorWithCastMethod()
         {
             using (var conn = CreateAndOpenConnection())
@@ -93,7 +93,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetEnumeratorForEachShouldNotEnterWhenResultsIsEmpty()
         {
             using (var conn = CreateAndOpenConnection())
@@ -115,7 +115,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetEnumeratorShouldThrowNonSupportedExceptionWhenReset()
         {
             using (var conn = CreateAndOpenConnection())

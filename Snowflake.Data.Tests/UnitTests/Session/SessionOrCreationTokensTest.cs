@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     {
         private SFSession _session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
 
-        [Test]
+        [SFFact]
         public void TestNoBackgroundSessionsToCreateWhenInitialisedWithSession()
         {
             // arrange
@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, backgroundCreationTokens.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnFirstCreationToken()
         {
             // arrange
@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Same(tokens[0], token);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnCreationTokensFromTheSecondOneForBackgroundExecution()
         {
             // arrange

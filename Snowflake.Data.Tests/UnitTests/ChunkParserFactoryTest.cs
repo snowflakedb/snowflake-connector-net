@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
         }
 
-        [Test]
+        [SFFact]
         public void TestGetParser([Values(1, 2, 3, 4)] int chunkParserVersion)
         {
             try

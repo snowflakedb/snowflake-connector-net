@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestEnableEasyLogging()
         {
             // arrange
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestFailToEnableEasyLoggingForWrongConfiguration()
         {
             // arrange
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestReCreateEasyLoggingUnixLogFileWithCustomisedPermissions()
         {
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Platform("Win")]
         public void TestReCreateEasyLoggingWindowsLogFileIgnoringCustomisedPermissions()
         {
@@ -160,7 +160,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
         {
@@ -180,7 +180,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestFailToEnableEasyLoggingWhenLogDirectoryNotAccessible()
         {
@@ -200,7 +200,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestFailToEnableEasyLoggingWhenPathIsAccessibleForGroup()
         {

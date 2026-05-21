@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     [TestFixture, NonParallelizable]
     class SFReusableChunkTest : SFBaseTest
     {
-        [Test]
+        [SFFact]
         public void TestDelCharPr431()
         {
             const int TestRowCount = 10000;
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestParseJson()
         {
             IChunkParserFactory previous = ChunkParserFactory.Instance;

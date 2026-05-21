@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
     class SFStatementTest
     {
         // Mock test for session token renew
-        [Test]
+        [SFFact]
         public void TestSessionRenew()
         {
             var restRequester = new Mock.MockRestSessionExpired();
@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(restRequester.FirstTimeRequestID, restRequester.SecondTimeRequestID);
         }
 
-        [Test]
+        [SFFact]
         public void TestSessionRenewGetResultWithId()
         {
             var restRequester = new Mock.MockRestSessionExpired();
@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("new_master_token", sfSession.masterToken);
         }
 
-        [Test]
+        [SFFact]
         public void TestSessionRenewGetResultWithIdOnlyRetries3Times()
         {
             var restRequester = new Mock.MockRestSessionExpired();
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(thrown.ErrorCode, Mock.MockRestSessionExpired.SESSION_EXPIRED_CODE);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestSessionRenewGetResultWithIdAsync()
         {
             var restRequester = new Mock.MockRestSessionExpired();
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("new_master_token", sfSession.masterToken);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestSessionRenewGetResultWithIdOnlyRetries3TimesAsync()
         {
             var restRequester = new Mock.MockRestSessionExpired();
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         // Mock test for session renew during query execution
-        [Test]
+        [SFFact]
         public void TestSessionRenewDuringQueryExec()
         {
             var restRequester = new Mock.MockRestSessionExpiredInQueryExec();
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests
         // The Mock requester would take in the X-Snowflake-Service header in the request
         // and append a character 'a' at the end, send back as SERVICE_NAME parameter
         // This test is to assure that SETVICE_NAME parameter would be upgraded to the session
-        [Test]
+        [SFFact]
         public void TestServiceName()
         {
             var restRequester = new Mock.MockServiceName();
@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests
         /// <summary>
         /// Ensure TrimSql stops reading the query when no more characters after a block comment
         /// </summary>
-        [Test]
+        [SFFact]
         public void TestTrimSqlBlockComment()
         {
             const string SqlSource = "/*comment*/select 1/*comment*/";
@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests
         /// <summary>
         /// Ensure TrimSql stops reading the query when no more characters after a multiline block comment
         /// </summary>
-        [Test]
+        [SFFact]
         public void TestTrimSqlBlockCommentMultiline()
         {
             const string SqlSource = "/*comment\r\ncomment*/select 1/*comment\r\ncomment*/";
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests.UnitTests
         /// <summary>
         /// Ensure TrimSql stops reading the query when no more characters after a line comment
         /// </summary>
-        [Test]
+        [SFFact]
         public void TestTrimSqlLineComment()
         {
             const string SqlSource = "--comment\r\nselect 1\r\n--comment";
@@ -154,7 +154,7 @@ namespace Snowflake.Data.Tests.UnitTests
         /// <summary>
         /// Ensure TrimSql stops reading the query when no more characters after a line comment with a closing newline
         /// </summary>
-        [Test]
+        [SFFact]
         public void TestTrimSqlLineCommentWithClosingNewline()
         {
             const string SqlSource = "--comment\r\nselect 1\r\n--comment\r\n";
@@ -163,7 +163,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SqlExpected, SFStatement.TrimSql(SqlSource));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("running", QueryStatus.Running)]
         [TestCase("RUNNING", QueryStatus.Running)]
         [TestCase("resuming_warehouse", QueryStatus.ResumingWarehouse)]
@@ -195,7 +195,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedStatus, QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("UNKNOWN")]
         [TestCase("RANDOM_STATUS")]
         [TestCase("aBcZyX")]
@@ -205,7 +205,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(thrown.Message.Contains("The query status returned by the server is not recognized"));
         }
 
-        [Test]
+        [SFFact]
         [TestCase(QueryStatus.Running, true)]
         [TestCase(QueryStatus.ResumingWarehouse, true)]
         [TestCase(QueryStatus.Queued, true)]
@@ -224,7 +224,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResult, QueryStatusExtensions.IsStillRunning(status));
         }
 
-        [Test]
+        [SFFact]
         [TestCase(QueryStatus.Aborting, true)]
         [TestCase(QueryStatus.FailedWithError, true)]
         [TestCase(QueryStatus.Aborted, true)]
@@ -243,7 +243,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResult, QueryStatusExtensions.IsAnError(status));
         }
 
-        [Test]
+        [SFFact]
         public void TestHandleNullDataForFailedResponse()
         {
             // arrange
@@ -263,7 +263,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("Error: internal error SqlState: , VendorCode: 500, QueryId: ", thrown.Message);
         }
 
-        [Test]
+        [SFFact]
         public void TestBuildResultSetMergesQccOnFailedResponse()
         {
             var queryContext = new ResponseQueryContext
@@ -298,7 +298,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(42, cachedContext.Entries[0].Id);
         }
 
-        [Test]
+        [SFFact]
         public void TestBuildResultSetDoesNotClearQccOnFailedResponseWithoutQueryContext()
         {
             var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
@@ -335,7 +335,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(99, cachedContext.Entries[0].Id);
         }
 
-        [Test]
+        [SFFact]
         public void TestExecuteMergesQccOnFailedResponse()
         {
             var restRequester = new Mock.MockRestRequesterWithQccOnError();
@@ -351,7 +351,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(42, cachedContext.Entries[0].Id);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestExecuteAsyncMergesQccOnFailedResponse()
         {
             var restRequester = new Mock.MockRestRequesterWithQccOnError();
@@ -368,7 +368,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(42, cachedContext.Entries[0].Id);
         }
 
-        [Test]
+        [SFFact]
         public void TestSessionGoneThrowsOnExecute()
         {
             var restRequester = new Mock.MockSessionGone();
@@ -381,7 +381,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(sfSession.IsInvalidatedForPooling());
         }
 
-        [Test]
+        [SFFact]
         public async Task TestSessionGoneThrowsOnExecuteAsync()
         {
             var restRequester = new Mock.MockSessionGone();
@@ -395,7 +395,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(sfSession.IsInvalidatedForPooling());
         }
 
-        [Test]
+        [SFFact]
         public void TestSessionGoneThrowsOnGetResultWithId()
         {
             var restRequester = new Mock.MockSessionGone();
@@ -407,7 +407,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestSessionGoneThrowsOnGetResultWithIdAsync()
         {
             var restRequester = new Mock.MockSessionGone();
@@ -420,7 +420,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         public void TestSessionGoneThrowsOnGetQueryStatus()
         {
             var restRequester = new Mock.MockSessionGone();
@@ -432,7 +432,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestSessionGoneThrowsOnGetQueryStatusAsync()
         {
             var restRequester = new Mock.MockSessionGone();

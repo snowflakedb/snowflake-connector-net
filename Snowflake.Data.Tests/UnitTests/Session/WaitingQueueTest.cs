@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     {
         private static readonly int s_timeMeasurementLeftToleranceInMs = Stopwatch.IsHighResolution ? 1 : 20; // DateTime precision is ~10ms, safety coefficient = x2
 
-        [Test]
+        [SFFact]
         public void TestWaitForTheResourceUntilTimeout()
         {
             // arrange
@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
         }
 
-        [Test]
+        [SFFact]
         public void TestWaitForTheResourceUntilCancellation()
         {
             // arrange
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
         }
 
-        [Test]
+        [SFFact]
         public void TestWaitUntilResourceAvailable()
         {
             // arrange
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
         }
 
-        [Test]
+        [SFFact]
         public void TestWaitingEnabled()
         {
             // arrange
@@ -83,7 +83,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.True(isWaitingEnabled);
         }
 
-        [Test]
+        [SFFact]
         public void TestNoOneIsWaiting()
         {
             // arrange
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.False(isAnyoneWaiting);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestSomeoneIsWaiting()
         {
             // arrange
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.True(isAnyoneWaiting);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnUnsuccessfulOnResetWhileWaiting()
         {
             // arrange

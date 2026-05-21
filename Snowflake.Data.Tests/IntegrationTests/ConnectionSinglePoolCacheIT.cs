@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             SnowflakeDbConnectionPool.ClearAllPools();
         }
 
-        [Test]
+        [SFFact]
         public void TestBasicConnectionPool()
         {
             SnowflakeDbConnectionPool.SetMaxPoolSize(1);
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
         }
 
-        [Test]
+        [SFFact]
         public void TestConcurrentConnectionPooling()
         {
             // add test case name in connection string to make in unique for each test case
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             ConcurrentPoolingHelper(connStr, true);
         }
 
-        [Test]
+        [SFFact]
         // test connection pooling with concurrent connection and no close
         // call for connection. Connection is closed when Dispose() is called
         // by framework.

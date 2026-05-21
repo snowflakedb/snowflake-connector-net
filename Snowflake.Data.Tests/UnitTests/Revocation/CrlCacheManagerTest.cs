@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Test]
+        [SFFact]
         [TestCase(true, false)]
         [TestCase(false, true)]
         [TestCase(true, true)]
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
 
-        [Test]
+        [SFFact]
         public void TestGetReturnsNullForMissingEntry()
         {
             // arrange
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Null(result);
         }
 
-        [Test]
+        [SFFact]
         public void TestScheduledCleanupRemovesExpiredEntries()
         {
             // arrange
@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl2), "Valid CRL should remain in cache");
         }
 
-        [Test]
+        [SFFact]
         public void TestScheduledCleanupRemovesStaleEntries()
         {
             // arrange
@@ -167,7 +167,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl2), "Valid CRL should remain in cache");
         }
 
-        [Test]
+        [SFFact]
         public void TestCleanupKeepsValidEntries()
         {
             // arrange
@@ -196,7 +196,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl1), "Valid CRL should remain in cache after cleanup");
         }
 
-        [Test]
+        [SFFact]
         public void TestGetPromotesFromFileCacheToMemoryCache()
         {
             // arrange

@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return result.GetObjectInternal((int)typeInfo).ToString();
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadUsingFilepath()
         {
             // Arrange
@@ -187,7 +187,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestUploadAsyncUsingFilepath()
         {
             // Arrange
@@ -215,7 +215,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadUsingMemoryStream()
         {
             // Arrange
@@ -248,7 +248,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestUploadAsyncUsingMemoryStream()
         {
             // Arrange
@@ -281,7 +281,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadWithGZIPCompression()
         {
             // Arrange
@@ -311,7 +311,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("gzip", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadWithWildcardInTheFilename()
         {
             // Arrange
@@ -361,7 +361,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadWithWildcardInTheRootDirectory()
         {
             // Arrange
@@ -411,7 +411,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadWithWildcardInTheDirectoryPath()
         {
             // Arrange
@@ -461,7 +461,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Directory.Delete(tempUploadRootDirectory, true);
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadThrowsExceptionForMissingRootDirectoryWithWildcard()
         {
             // Arrange
@@ -522,7 +522,7 @@ namespace Snowflake.Data.Tests.UnitTests
             File.WriteAllText(_location + t_realSourceFilePath, FileContent);
         }
 
-        [Test]
+        [SFFact]
         public void TestDownload()
         {
             // Arrange
@@ -547,7 +547,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDownloadAsync()
         {
             // Arrange
@@ -572,7 +572,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
         }
 
-        [Test]
+        [SFFact]
         public void TestDownloadThrowsErrorFileNotFound()
         {
             // Arrange
@@ -604,7 +604,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(innerException?.Message, Does.Match("Could not find file .*"));
         }
 
-        [Test]
+        [SFFact]
         public void TestDownloadThrowsErrorDirectoryNotFound()
         {
             // Arrange
@@ -636,25 +636,25 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(innerException?.Message, Does.Match("Could not find a part of the path .*"));
         }
 
-        [Test]
+        [SFFact]
         public void TestGetFilePathWithoutSpacesFromPutCommand()
         {
             TestGetFilePathFromPutCommand("PUT file://" + s_filePathWithoutSpaces + " @TestStage", s_filePathWithoutSpaces);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetFilePathWithSpacesFromPutCommand()
         {
             TestGetFilePathFromPutCommand("PUT file://" + s_filePathWithSpaces + "  @TestStage", s_filePathWithSpaces);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetFilePathWithoutSpacesAndWithSingleQuotesFromPutCommand()
         {
             TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithoutSpaces + "' @TestStage", s_filePathWithoutSpaces);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetFilePathWithSpacesAndWithSingleQuotesFromPutCommand()
         {
             TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithSpaces + "'  @TestStage", s_filePathWithSpaces);

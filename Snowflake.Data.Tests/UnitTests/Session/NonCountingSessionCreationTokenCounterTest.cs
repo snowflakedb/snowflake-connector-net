@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
     public class NonCountingSessionCreationTokenCounterTest
     {
-        [Test]
+        [SFFact]
         public void TestGrantSessionCreation()
         {
             // arrange
@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, tokens.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestCompleteSessionCreation()
         {
             // arrange
@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, tokens.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestCompleteUnknownTokenDoesNotThrowExceptions()
         {
             // arrange

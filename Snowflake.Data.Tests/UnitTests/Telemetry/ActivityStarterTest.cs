@@ -39,7 +39,7 @@ internal sealed class ActivityStarterTest
         _listener?.Dispose();
     }
 
-    [Test]
+    [SFFact]
     public void TestStartActivityCreatesActivityWithSessionTags()
     {
         // Arrange
@@ -59,21 +59,21 @@ internal sealed class ActivityStarterTest
         Assert.Equal(session.sessionId, activity.GetTagItem(TelemetryTags.SessionId));
     }
 
-    [Test]
+    [SFFact]
     public void TestStartActivityThrowsOnNullName()
     {
         var session = CreateSession("s1", "wh", "role", "db", true);
         Assert.Throws<ArgumentException>(() => session.StartActivity(null));
     }
 
-    [Test]
+    [SFFact]
     public void TestStartActivityThrowsOnEmptyName()
     {
         var session = CreateSession("s1", "wh", "role", "db", true);
         Assert.Throws<ArgumentException>(() => session.StartActivity(""));
     }
 
-    [Test]
+    [SFFact]
     public void TestSetSuccessSetsOkStatusAndStops()
     {
         // Arrange
@@ -88,7 +88,7 @@ internal sealed class ActivityStarterTest
         Assert.Equal("OK", _sessionIdCapturedActivitiesMap[session.sessionId].GetTagItem(TelemetryTags.StatusCode));
     }
 
-    [Test]
+    [SFFact]
     public void TestSetExceptionSetsErrorStatusAndAddsEvent()
     {
         // Arrange
@@ -109,21 +109,21 @@ internal sealed class ActivityStarterTest
             exceptionEvent.Tags.First(t => t.Key == TelemetryTags.Exception).Value);
     }
 
-    [Test]
+    [SFFact]
     public void TestSetSuccessOnNullActivityDoesNotThrow()
     {
         Activity nullActivity = null;
         Assert.DoesNotThrow(nullActivity.SetSuccess);
     }
 
-    [Test]
+    [SFFact]
     public void TestSetExceptionOnNullActivityDoesNotThrow()
     {
         Activity nullActivity = null;
         Assert.DoesNotThrow(() => nullActivity.SetException(new Exception("test")));
     }
 
-    [Test]
+    [SFFact]
     public void TestSetExceptionWithNullExceptionSetsUnknownError()
     {
         var session = CreateSession("s1", "wh", "role", "db", true);
@@ -136,7 +136,7 @@ internal sealed class ActivityStarterTest
         Assert.Empty(_sessionIdCapturedActivitiesMap[session.sessionId].Events);
     }
 
-    [Test]
+    [SFFact]
     public void TestSetExceptionMasksSecretsInMessage()
     {
         var session = CreateSession("s1", "wh", "role", "db", true);
@@ -150,7 +150,7 @@ internal sealed class ActivityStarterTest
         Assert.NotNull(exceptionEvent);
     }
 
-    [Test]
+    [SFFact]
     public void TestSetExceptionIncludesErrorCodeForSnowflakeDbException()
     {
         var session = CreateSession("s1", "wh", "role", "db", true);
@@ -168,7 +168,7 @@ internal sealed class ActivityStarterTest
         Assert.Equal(exception.ErrorCode.ToString(), errorCode);
     }
 
-    [Test]
+    [SFFact]
     public void TestSetExceptionDoesNotIncludeErrorCodeForNonSnowflakeException()
     {
         var session = CreateSession("s1", "wh", "role", "db", true);
@@ -182,7 +182,7 @@ internal sealed class ActivityStarterTest
         Assert.False(exceptionEvent.Tags.Any(t => t.Key == TelemetryTags.ExceptionErrorCode));
     }
 
-    [Test]
+    [SFFact]
     public void TestSetExceptionUnwrapsSnowflakeDbExceptionFromAggregateException()
     {
         var session = CreateSession("s1", "wh", "role", "db", true);
@@ -218,7 +218,7 @@ internal sealed class ActivityStarterTest
         Assert.Equal(((SnowflakeDbException)snowflakeEx).ErrorCode.ToString(), errorCode);
     }
 
-    [Test]
+    [SFFact]
     public void TestSetExceptionDoesNotUnwrapNestedAggregateExceptionsAfterThreshold()
     {
         var session = CreateSession("s1", "wh", "role", "db", true);
@@ -234,7 +234,7 @@ internal sealed class ActivityStarterTest
         Assert.Null(errorCode);
     }
 
-    [Test]
+    [SFFact]
     public void TestSetExceptionDoesNotUnwrapNestedAggregateExceptionsAfterThresholdEvenThoughDepthFirstWouldWork()
     {
         var session = CreateSession("s1", "wh", "role", "db", true);
@@ -253,7 +253,7 @@ internal sealed class ActivityStarterTest
         Assert.Null(errorCode);
     }
 
-    [Test]
+    [SFFact]
     public void TestSetExceptionWithAggregateExceptionWithoutSnowflakeDbException()
     {
         var session = CreateSession("s1", "wh", "role", "db", true);
@@ -267,14 +267,14 @@ internal sealed class ActivityStarterTest
         Assert.False(exceptionEvent.Tags.Any(t => t.Key == TelemetryTags.ExceptionErrorCode));
     }
 
-    [Test]
+    [SFFact]
     public void TestAddTelemetryEventOnNullActivityDoesNotThrow()
     {
         Activity nullActivity = null;
         Assert.DoesNotThrow(() => nullActivity.AddTelemetryEvent("SomeEvent"));
     }
 
-    [Test]
+    [SFFact]
     public void TestAddTelemetryEventAddsNamedEvent()
     {
         var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
@@ -289,7 +289,7 @@ internal sealed class ActivityStarterTest
         Assert.NotNull(evt);
     }
 
-    [Test]
+    [SFFact]
     public void TestAddTelemetryEventWithTagsStoresTagsOnEvent()
     {
         var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
@@ -308,7 +308,7 @@ internal sealed class ActivityStarterTest
         Assert.Equal(42, evt.Tags.First(t => t.Key == "step.duration_ms").Value);
     }
 
-    [Test]
+    [SFFact]
     public void TestAddTelemetryEventWithNoTagsCreatesEventWithEmptyTags()
     {
         var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
@@ -324,7 +324,7 @@ internal sealed class ActivityStarterTest
         Assert.False(evt.Tags.Any());
     }
 
-    [Test]
+    [SFFact]
     public void TestAddTelemetryEventWithEmptyNameDoesNotAddEvent()
     {
         var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
@@ -341,14 +341,14 @@ internal sealed class ActivityStarterTest
         Assert.Empty(_sessionIdCapturedActivitiesMap[session.sessionId].Events);
     }
 
-    [Test]
+    [SFFact]
     public void TestStartActivityOnCommandWithNullConnectionThrows()
     {
         var command = new SnowflakeDbCommand();
         Assert.Throws<ArgumentException>(() => command.StartActivity("Op"));
     }
 
-    [Test]
+    [SFFact]
     public void TestStartActivityOnCommandWithClosedConnectionThrows()
     {
         var connection = new SnowflakeDbConnection();
@@ -356,7 +356,7 @@ internal sealed class ActivityStarterTest
         Assert.Throws<ArgumentException>(() => command.StartActivity("Op"));
     }
 
-    [Test]
+    [SFFact]
     public void TestStartActivityOnCommandWithTelemetryDisabledThrows()
     {
         var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: false);
@@ -371,7 +371,7 @@ internal sealed class ActivityStarterTest
         Assert.Throws<ArgumentException>(() => command.StartActivity("Op"));
     }
 
-    [Test]
+    [SFFact]
     public void TestStartActivityOnCommandUsesCustomActivitySource()
     {
         Activity captured = null;

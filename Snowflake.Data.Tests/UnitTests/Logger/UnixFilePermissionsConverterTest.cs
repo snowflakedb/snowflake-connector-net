@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
     [Platform(Exclude = "Win")]
     public class UnixFilePermissionsConverterTest
     {
-        [Test]
+        [SFFact]
         public void TestConversionForAllPermissionCombinations(
             [ValueSource(nameof(UserPermissionTestCases))] PermissionTestCase userTestCase,
             [ValueSource(nameof(GroupPermissionTestCases))] PermissionTestCase groupTestCase,

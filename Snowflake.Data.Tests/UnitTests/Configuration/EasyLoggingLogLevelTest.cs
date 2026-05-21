@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
     class EasyLoggingLogLevelTest
     {
-        [Test]
+        [SFFact]
         [TestCase("OFF", EasyLoggingLogLevel.Off)]
         [TestCase("off", EasyLoggingLogLevel.Off)]
         [TestCase("iNfO", EasyLoggingLogLevel.Info)]
@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(expectedLogLevel, logLevel);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatFailsToParseLogLevelFromUnknownValue()
         {
             // act

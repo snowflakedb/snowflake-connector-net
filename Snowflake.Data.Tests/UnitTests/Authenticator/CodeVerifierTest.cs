@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
     public class CodeVerifierTest
     {
-        [Test]
+        [SFFact]
         public void TestFailForTooShortCodeVerifier()
         {
             // act
@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.That(thrown.Message, Does.Contain("The code verifier must be at least 43 characters"));
         }
 
-        [Test]
+        [SFFact]
         public void TestFailForTooLongCodeVerifier()
         {
             // arrange
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.That(thrown.Message, Does.Contain("The code verifier must not be longer than 128 characters"));
         }
 
-        [Test]
+        [SFFact]
         public void TestSkipIllegalCharacters()
         {
             // arrange

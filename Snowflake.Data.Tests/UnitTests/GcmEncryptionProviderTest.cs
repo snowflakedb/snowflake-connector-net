@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests
             MaxBytesInMemory = FileTransferConfiguration.DefaultMaxBytesInMemory
         };
 
-        [Test]
+        [SFFact]
         public void TestEncryptAndDecryptWithoutAad()
         {
             // arrange
@@ -76,7 +76,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestEncryptAndDecryptWithEmptyAad()
         {
             // arrange
@@ -110,7 +110,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestEncryptAndDecryptWithAad()
         {
             // arrange
@@ -144,7 +144,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestFailDecryptWithInvalidKeyAad()
         {
             // arrange
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestFailDecryptWithInvalidContentAad()
         {
             // arrange
@@ -204,7 +204,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestFailDecryptWhenMissingAad()
         {
             // arrange
@@ -235,7 +235,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestEncryptAndDecryptFile()
         {
             // arrange

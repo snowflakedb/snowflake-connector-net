@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             RemoveDirectory(s_localFolderName);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatUploadsAndDownloadsTheSameFile()
         {
             // act

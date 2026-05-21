@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
     public class SecureStringHelperTest
     {
-        [Test]
+        [SFFact]
         public void TestConvertPassword()
         {
             // arrange

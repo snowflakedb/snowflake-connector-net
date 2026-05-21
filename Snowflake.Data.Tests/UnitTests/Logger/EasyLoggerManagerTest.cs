@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatChangesLogLevel()
         {
             // arrange
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.True(logger.IsErrorEnabled());
         }
 
-        [Test]
+        [SFFact]
         public static void TestThatLogsToProperFileWithProperLogLevelOnly()
         {
             // arrange
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains(DebugMessage)));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestThatRollsLogIfSizeIsTooBig()
         {
             // arrange
@@ -151,7 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             Assert.Equal(ExpectedBackupLogCount, backupLogs.Length);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatOnlyUnknownFieldsAreLogged()
         {
             // arrange

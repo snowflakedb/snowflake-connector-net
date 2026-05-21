@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _runner.Stop();
         }
 
-        [Test]
+        [SFFact]
         public async Task TestHttp307Retry()
         {
             // arrange
@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await AssertResponseId(response, expectedQueryId);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestHttp308Retry()
         {
             // arrange

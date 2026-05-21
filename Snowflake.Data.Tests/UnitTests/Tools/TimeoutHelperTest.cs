@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
     public class TimeoutHelperTest
     {
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(InfiniteTimeouts))]
         public void TestInfinity(TimeSpan infiniteTimeout)
         {
@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isInfinite);
         }
 
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(FiniteTimeouts))]
         public void TestFiniteValue(TimeSpan finiteTimeout)
         {
@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isInfinite);
         }
 
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(ZeroLengthTimeouts))]
         public void TestZeroLength(TimeSpan zeroTimeout)
         {
@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isZeroLength);
         }
 
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(NonZeroLengthTimeouts))]
         public void TestNonZeroLength(TimeSpan nonZeroTimeout)
         {
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isZeroLength);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(1000, 1000)]
         [TestCase(1000, 2000)]
         public void TestInfiniteTimeoutDoesNotExpire(long startedAtMillis, long nowMillis)
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isExpired);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(1000, 1000, 0, true)]
         [TestCase(1000, 2000, 0, true)]
         [TestCase(1000, 1100, 100, true)]
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(expectedIsExpired, isExpired);
         }
 
-        [Test]
+        [SFFact]
         public void TestInfiniteTimeoutNeverExpires()
         {
             // act
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isExpired);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(0, 0, true)]
         [TestCase(1000, 0, true)]
         [TestCase(100, 100, true)]
@@ -110,7 +110,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(expectedIsExpired, isExpired);
         }
 
-        [Test]
+        [SFFact]
         public void TestFiniteTimeoutLeftFailsForInfiniteTimeout()
         {
             // act
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
 
-        [Test]
+        [SFFact]
         [TestCase(1000, 1000, 0, 0)]
         [TestCase(1000, 2000, 0, 0)]
         [TestCase(1000, 1100, 100, 0)]

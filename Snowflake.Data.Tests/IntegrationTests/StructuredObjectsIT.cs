@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _nativeArrow = nativeArrow;
         }
 
-        [Test]
+        [SFFact]
         public void TestDataTableLoadOnStructuredObject()
         {
             if (_resultFormat != ResultFormat.JSON)
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectStructuredTypeObject()
         {
             // arrange
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectNestedStructuredTypeObject()
         {
             // arrange
@@ -121,7 +121,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectObjectWithMap()
         {
             // arrange
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectObjectWithArrays()
         {
             // arrange
@@ -173,7 +173,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectObjectWithList()
         {
             // arrange
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [TestCase(@"OBJECT_CONSTRUCT('Value', OBJECT_CONSTRUCT('a', 'b'))::OBJECT(Value OBJECT)", "{\"a\": \"b\"}")]
         [TestCase(@"OBJECT_CONSTRUCT('Value', ARRAY_CONSTRUCT('a', 'b'))::OBJECT(Value ARRAY)", "[\"a\", \"b\"]")]
         [TestCase(@"OBJECT_CONSTRUCT('Value', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::OBJECT(Value VARIANT)", "{\"a\": \"b\"}")]
@@ -225,7 +225,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectStructuredTypesAsNulls()
         {
             // arrange
@@ -269,7 +269,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectNestedStructuredTypesNotNull()
         {
             // arrange
@@ -317,7 +317,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestRenamePropertyForPropertiesNamesConstruction()
         {
             // arrange
@@ -350,7 +350,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestIgnorePropertyForPropertiesOrderConstruction()
         {
             // arrange
@@ -383,7 +383,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestConstructorConstructionMethod()
         {
             // arrange
@@ -416,7 +416,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectNullObject()
         {
             // arrange
@@ -440,7 +440,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThrowExceptionForInvalidObject()
         {
             // arrange
@@ -466,7 +466,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThrowExceptionForInvalidPropertyType()
         {
             // arrange

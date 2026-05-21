@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.Stop();
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulGCPAuthorization()
         {
             // arrange
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestSuccessfulGCPAuthorizationAsync()
         {
             // arrange
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulGCPAttestation()
         {
             // arrange
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(JWTGCPToken, attestation.Credential);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(JWTGCPTokenWithoutIssuer, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
         [TestCase(JWTGCPTokenWithoutSubject, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
         [TestCase(JWTGCPUnparsableToken, "Retrieving attestation for GCP failed. Reading of the token failed.")]
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
         }
 
-        [Test]
+        [SFFact]
         public void TestFailAttestationWhenHttpError()
         {
             // arrange
@@ -125,7 +125,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.That(thrown.Message, Does.Contain("Retrieving attestation for GCP failed. Failed to get token: Response status code does not indicate success: 400 (Bad Request)."));
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulGCPTransitiveImpersonation()
         {
             // arrange
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulGCPTransitiveImpersonationAttestation()
         {
             // arrange

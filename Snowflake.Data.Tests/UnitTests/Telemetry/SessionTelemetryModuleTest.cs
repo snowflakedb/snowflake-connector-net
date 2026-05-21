@@ -24,7 +24,7 @@ internal sealed class SessionTelemetryModuleTest
         _mockRestRequester = new Mock<IMockRestRequester>();
     }
 
-    [Test]
+    [SFFact]
     public void TestDisposeIsIdempotent()
     {
         var session = CreateSession();
@@ -38,7 +38,7 @@ internal sealed class SessionTelemetryModuleTest
         });
     }
 
-    [Test]
+    [SFFact]
     public void TestDisposeIsIdempotentWhenBuffer()
     {
         var session = CreateSession();
@@ -58,7 +58,7 @@ internal sealed class SessionTelemetryModuleTest
         });
     }
 
-    [Test]
+    [SFFact]
     [TestCase(null, null, null, "UNSET", 1, TestName = "Eventless activity with UNSET status")]
     [TestCase(null, null, ActivityStatusCode.Ok, "OK", 1, TestName = "Eventless activity with OK status")]
     [TestCase(null, null, ActivityStatusCode.Error, "ERROR", 1, TestName = "Eventless activity with ERROR status")]
@@ -109,7 +109,7 @@ internal sealed class SessionTelemetryModuleTest
             Assert.Equal(event2, capturedBody.Logs[2].Message[TelemetryField.EventName]);
     }
 
-    [Test]
+    [SFFact]
     public async Task TestFlushAsyncSendsMultipleActivities()
     {
         // Arrange
@@ -138,7 +138,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.Equal("Op3", capturedBody.Logs[2].Message[TelemetryField.EventName]);
     }
 
-    [Test]
+    [SFFact]
     public async Task TestFlushAsyncSendsMultipleNestedActivities()
     {
         // Arrange
@@ -176,7 +176,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.Equal("Op3", capturedBody.Logs[2].Message[TelemetryField.EventName]);
     }
 
-    [Test]
+    [SFFact]
     public async Task TestFlushAsyncRecordsActivitySourceName()
     {
         // Arrange
@@ -206,7 +206,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.Equal("MyApp.Instrumentation", capturedBody.Logs.Single().Message[TelemetryField.Source]);
     }
 
-    [Test]
+    [SFFact]
     [TestCase(true)]
     [TestCase(false)]
     public async Task TestFlushAsyncDisablesTelemetryAfterFailure(bool throwException)
@@ -242,7 +242,7 @@ internal sealed class SessionTelemetryModuleTest
         module.Dispose();
     }
 
-    [Test]
+    [SFFact]
     public async Task TestFlushAsyncSendsBufferedDataWithChangedToken()
     {
         var session = CreateSession();
@@ -319,7 +319,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.False(((ISessionTelemetryModule)module).IsServiceAvailable);
     }
 
-    [Test]
+    [SFFact]
     public async Task TestFlushAsyncWithEmptyBufferDoesNotPost()
     {
         // Arrange
@@ -337,7 +337,7 @@ internal sealed class SessionTelemetryModuleTest
         module.Dispose();
     }
 
-    [Test]
+    [SFFact]
     public void TestDisposeFlushesBufferedData()
     {
         // Arrange
@@ -359,7 +359,7 @@ internal sealed class SessionTelemetryModuleTest
             Times.Once());
     }
 
-    [Test]
+    [SFFact]
     [NonParallelizable]
     public void TestBufferOverflowFlushesBufferedData()
     {
@@ -392,7 +392,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.That(datapointsCounter, Is.LessThanOrEqualTo(totalPoints));
     }
 
-    [Test]
+    [SFFact]
     public void TestConcurrentAutoFlushDoesNotFireMultipleFlushes()
     {
         // Arrange
@@ -432,7 +432,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.That(flushCount, Is.AtMost(2));
     }
 
-    [Test]
+    [SFFact]
     public async Task TimeShouldFlushPeriodically()
     {
         // Arrange
@@ -469,7 +469,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.That(logsSent, Is.EqualTo(bufferSize));
     }
 
-    [Test]
+    [SFFact]
     public async Task TestActivityTagValuesAreMaskedBySecretDetector()
     {
         // Arrange
@@ -500,7 +500,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.Equal("password=****", log.Message["tag.credential"]);
     }
 
-    [Test]
+    [SFFact]
     public async Task TestActivityTagWithNullValueIsSkipped()
     {
         // Arrange
@@ -530,7 +530,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.False(log.Message.ContainsKey("tag.absent"));
     }
 
-    [Test]
+    [SFFact]
     public async Task TestActivityTagsOnSyntheticEventAndEventTagsOnExplicitEvents()
     {
         // Arrange
@@ -574,7 +574,7 @@ internal sealed class SessionTelemetryModuleTest
     }
 
 
-    [Test]
+    [SFFact]
     [TestCase(0)]
     [TestCase(-1)]
     [TestCase(-100)]
@@ -583,7 +583,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.Throws<ArgumentException>(() => SessionTelemetryModuleFacade.SetFlushSize(invalidSize));
     }
 
-    [Test]
+    [SFFact]
     [TestCase(1)]
     [TestCase(50)]
     [TestCase(500)]
@@ -593,7 +593,7 @@ internal sealed class SessionTelemetryModuleTest
         SessionTelemetryModuleFacade.SetFlushSize(100);
     }
 
-    [Test]
+    [SFFact]
     [TestCase(0)]
     [TestCase(-1)]
     [TestCase(-1000)]
@@ -602,7 +602,7 @@ internal sealed class SessionTelemetryModuleTest
         Assert.Throws<ArgumentException>(() => SessionTelemetryModule.SetFlushInterval(invalidInterval));
     }
 
-    [Test]
+    [SFFact]
     [TestCase(1)]
     [TestCase(1000)]
     [TestCase(120_000)]
@@ -612,7 +612,7 @@ internal sealed class SessionTelemetryModuleTest
         SessionTelemetryModuleFacade.SetFlushInterval(1_000 * 60);
     }
 
-    [Test]
+    [SFFact]
     [NonParallelizable]
     public void TestSetFlushSizeAffectsAutoFlushThreshold()
     {
@@ -648,7 +648,7 @@ internal sealed class SessionTelemetryModuleTest
         }
     }
 
-    [Test]
+    [SFFact]
     [NonParallelizable]
     public void TestSetFlushIntervalAffectsAutoFlushInterval()
     {

@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
     class SFUriUpdaterTest
     {
-        [Test]
+        [SFFact]
         public void TestRetryCount()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestRetryReasonEnabled()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_REASON + "=" + 429));
         }
 
-        [Test]
+        [SFFact]
         public void TestRetryReasonDisabled()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_REASON));
         }
 
-        [Test]
+        [SFFact]
         /// This uri with query path other than query request should not have a retry counter
         public void TestRetryCountNoneQueryPath()
         {
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_COUNT));
         }
 
-        [Test]
+        [SFFact]
         public void TestRequestGUIDUpdate()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_LOGIN_PATH);

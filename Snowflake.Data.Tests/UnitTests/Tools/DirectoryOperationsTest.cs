@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
+        [SFFact]
         [Platform("Win")]
         public void TestDirectoryIsSafeOnWindows()
         {
@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(s_directoryOperations.IsDirectorySafe(absoluteFilePath));
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestDirectoryIsNotSafeOnNotWindowsWhenPermissionsAreTooBroad(
             [ValueSource(nameof(InsecurePermissions))]
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(s_directoryOperations.IsDirectorySafe(s_dirAbsolutePath));
         }
 
-        [Test]
+        [SFFact]
         public void TestShouldCreateDirectoryWithSafePermissions()
         {
             // act
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(s_directoryOperations.IsDirectorySafe(s_dirAbsolutePath));
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestOwnerIsCurrentUser()
         {
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(dirOps.IsDirectoryOwnedByCurrentUser(s_dirAbsolutePath));
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestOwnerIsNotCurrentUser()
         {
@@ -94,7 +94,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(dirOps.IsDirectoryOwnedByCurrentUser(s_dirAbsolutePath));
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestDirectoryIsNotSecureWhenNotOwnedByCurrentUser()
         {

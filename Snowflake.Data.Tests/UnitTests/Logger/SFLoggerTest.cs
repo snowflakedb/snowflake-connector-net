@@ -24,14 +24,14 @@ namespace Snowflake.Data.Tests.UnitTests
             EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
         }
 
-        [Test]
+        [SFFact]
         public void TestUsingSFLogger()
         {
             _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
             Assert.InstanceOf<SFLoggerImpl>(_logger);
         }
 
-        [Test]
+        [SFFact]
         public void TestIsTraceEnabled(
             [Values(false, true)] bool isEnabled)
         {
@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Trace("trace log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFFact]
         public void TestIsDebugEnabled(
             [Values(false, true)] bool isEnabled)
         {
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Debug("debug log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFFact]
         public void TestIsInfoEnabled(
             [Values(false, true)] bool isEnabled)
         {
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Info("info log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFFact]
         public void TestIsWarnEnabled(
             [Values(false, true)] bool isEnabled)
         {
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Warn("warn log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFFact]
         public void TestIsErrorEnabled(
             [Values(false, true)] bool isEnabled)
         {
@@ -121,7 +121,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _logger.Error("error log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFFact]
         public void TestSetLevel(
             [Values(false, true)] bool isEnabled,
             [Values] LoggingEvent logLevel)

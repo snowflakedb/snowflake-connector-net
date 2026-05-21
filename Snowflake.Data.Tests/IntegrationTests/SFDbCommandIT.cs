@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     class SFDbCommandIT : SFBaseTest
     {
-        [Test]
+        [SFFact]
         public void TestExecAsyncAPI()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestExecAsyncAPIParallel()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -102,7 +102,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public async Task TestGetStatusOfInvalidQueryIdAsync()
         {
             string fakeQueryId = "fakeQueryId";
@@ -126,7 +126,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public async Task TestGetResultsOfInvalidQueryIdAsync()
         {
             string fakeQueryId = "fakeQueryId";
@@ -173,7 +173,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Ignore("The test takes too long to finish when using the default retry")]
         public async Task TestGetResultsOfUnknownQueryIdAsyncWithDefaultRetry()
         {
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public async Task TestGetResultsOfUnknownQueryIdAsyncWithConfiguredRetry()
         {
             var queryResultsRetryCount = 3;
@@ -229,7 +229,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDataSourceError()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -255,7 +255,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [TimeSensitive]
         public async Task TestCancelQuery()
         {
@@ -310,7 +310,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Ignore("This test case takes too much time so run it manually")]
         public void TestQueryTimeout()
         {

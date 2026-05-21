@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
     public class MFACacheAuthenticatorTest
     {
-        [Test]
+        [SFFact]
         [TestCase("username_password_mfa", true)]
         [TestCase("USERNAME_PASSWORD_MFA", true)]
         [TestCase("snowflake", false)]

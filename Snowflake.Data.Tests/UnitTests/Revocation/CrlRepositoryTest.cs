@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Environment.SetEnvironmentVariable("SF_CRL_CACHE_REMOVAL_DELAY", null);
         }
 
-        [Test]
+        [SFFact]
         public void TestDefaultCleanupInterval()
         {
             // arrange & act
@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 "Default cleanup interval should be 7 days");
         }
 
-        [Test]
+        [SFFact]
         public void TestCustomCleanupIntervalFromEnvironmentVariable()
         {
             // arrange
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 "Cleanup interval should be 14 days when SF_CRL_CACHE_REMOVAL_DELAY=14");
         }
 
-        [Test]
+        [SFFact]
         public void TestInvalidCleanupIntervalUsesDefault()
         {
             // arrange

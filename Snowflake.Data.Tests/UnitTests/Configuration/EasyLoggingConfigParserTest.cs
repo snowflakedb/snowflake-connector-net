@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(null)]
         [TestCase("640")]
         public void TestThatParsesConfigFile(string logFileUnixPermissions)
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThatThrowsExceptionForInvalidPermissionValue()
         {
             // arrange
@@ -75,7 +75,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.That(thrown.Message, Does.Contain($"Parsing easy logging configuration failed"));
         }
 
-        [Test]
+        [SFFact]
         public void TestThatThrowsExceptionForIncorrectPermissionValueType()
         {
             // arrange
@@ -107,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Null(config.CommonProps.LogPath);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(null)]
         [TestCase("")]
         public void TestThatReturnsNullWhenNothingToParse(string noFilePath)
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Null(config);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatFailsWhenTheFileDoesNotExist()
         {
             // arrange
@@ -149,7 +149,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(thrown.Message, "Parsing easy logging configuration failed");
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestThatConfigFileIsNotUsedIfOthersCanModifyTheConfigFile()
         {
@@ -177,7 +177,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(thrown.Message, "Finding easy logging configuration failed: Error due to other users having permission to modify the config file");
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestThatConfigFileIsNotUsedIfUserDoesNotOwnConfigFile()
         {
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(thrown.Message, "Finding easy logging configuration failed: Error due to user not having ownership of the config file");
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestThatConfigFileIsNotUsedIfGroupDoesNotOwnConfigFile()
         {

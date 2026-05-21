@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         private static readonly CrlParser s_crlParser = new(TimeSpan.FromDays(10));
         private static readonly TimeSpan s_removalDelay = TimeSpan.FromDays(7);
 
-        [Test]
+        [SFFact]
         public void TestGetAndSetCacheOperations()
         {
             // arrange
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSetOverridesExistingFile()
         {
             // arrange
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestDontReadFromInsecureFile()
         {
@@ -110,7 +110,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestSetSecurePermissionsWhenSavingCrlCache()
         {
@@ -145,7 +145,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMocksWindowsGetCrl()
         {
             // arrange
@@ -175,7 +175,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMocksWindowsGetCrlForNotExistingFile()
         {
             // arrange
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMocksWindowsGetCrlForReadingError()
         {
             // arrange
@@ -224,7 +224,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMocksWindowsSaveCrl()
         {
             // arrange
@@ -247,7 +247,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMocksWindowsSaveCrlError()
         {
             // arrange
@@ -273,7 +273,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         [Platform("Win")]
         public void TestWithMocksWindowsSaveCrlWithDirectoryCreation()
         {
@@ -301,7 +301,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestWithMocksUnixGetCrl()
         {
@@ -331,7 +331,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             AssertCrlsAreEqual(crl, crlRead);
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestWithMocksUnixGetCrlFailsForReadingError()
         {
@@ -357,7 +357,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Null(crlRead);
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestWithMocksUnixSaveCrl()
         {
@@ -388,7 +388,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestWithMocksUnixSaveCrlWithDirectoryCreation()
         {
@@ -420,7 +420,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestWithMocksUnixSaveCrlShouldFixIncorrectPermissions()
         {
@@ -455,7 +455,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         [TestCase(1, 0, 0, 0)]
         [TestCase(0, 1, 0, 0)]

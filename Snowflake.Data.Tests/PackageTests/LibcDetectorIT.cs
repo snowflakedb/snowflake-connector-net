@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.PackageTests
 
     public sealed class LibcDetectorIT
     {
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Linux")]
         public void TestDetectReturnsNotApplicableOnNonLinux()
         {
@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.PackageTests
             Assert.That(version, Is.Null);
         }
 
-        [Test]
+        [SFFact]
         [Platform(Include = "Linux")]
         public void TestDetectReturnsKnownFamilyOnLinux()
         {
@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.PackageTests
             Assert.That(family, Is.Not.EqualTo(LibcFamily.NotApplicable));
         }
 
-        [Test]
+        [SFFact]
         [Platform(Include = "Linux")]
         public void TestDetectReturnsVersionStringOnLinuxGlibc()
         {
@@ -47,14 +47,14 @@ namespace Snowflake.Data.Tests.PackageTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestTryGetGlibcVersionDoesNotThrow()
         {
             // Act — must not throw on any platform
             Assert.DoesNotThrow(() => LibcDetector.TryGetGlibcVersion(out _));
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Linux")]
         public void TestTryGetGlibcVersionReturnsFalseOnNonLinux()
         {
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.PackageTests
             Assert.That(version, Is.Null);
         }
 
-        [Test]
+        [SFFact]
         [Platform(Include = "Linux")]
         public void TestTryGetGlibcVersionReturnsTrueOnLinuxGlibc()
         {

@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
         }
 
-        [Test]
+        [SFFact]
         public void TestUsingDefaultCredentialManager()
         {
             // arrange
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSettingCustomCredentialManager()
         {
             // arrange
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.InstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
         }
 
-        [Test]
+        [SFFact]
         public void TestUseMemoryImplCredentialManager()
         {
             // arrange
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.InstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatThrowsErrorWhenTryingToSetCredentialManagerToNull()
         {
             // act and assert
@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.That(exception.Message, Does.Contain("Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method."));
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Win")]
         public void TestUseWindowsCredentialManagerFailsOnUnix()
         {
@@ -80,7 +80,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.Equal("Windows native credential manager implementation can be used only on Windows", thrown.Message);
         }
 
-        [Test]
+        [SFFact]
         [Platform("Win")]
         public void TestUseFileCredentialManagerFailsOnWindows()
         {

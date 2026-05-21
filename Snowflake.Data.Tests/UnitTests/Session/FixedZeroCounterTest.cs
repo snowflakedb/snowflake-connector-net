@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
     public class FixedZeroCounterTest
     {
-        [Test]
+        [SFFact]
         public void TestInitialZero()
         {
             // arrange
@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, count);
         }
 
-        [Test]
+        [SFFact]
         public void TestZeroAfterIncrease()
         {
             // arrange
@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, counter.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestZeroAfterDecrease()
         {
             // arrange
@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, counter.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestZeroAfterReset()
         {
             // arrange

@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.Util
     {
         private readonly TimeSpan _maxDurationRegardedAsImmediately = TimeSpan.FromSeconds(1);
 
-        [Test]
+        [SFFact]
         public void TestReturnsImmediatelyWhenConditionIsMet()
         {
             // act
@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.Util
             Assert.LessOrEqual(millis, _maxDurationRegardedAsImmediately.TotalMilliseconds);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsImmediatelyOnZeroTimeout()
         {
             // act
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.Util
             Assert.LessOrEqual(millis, _maxDurationRegardedAsImmediately.TotalMilliseconds);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsOnTimeout()
         {
             // arrange

@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner = new Mock<IWebBrowserRunner>();
         }
 
-        [Test]
+        [SFFact]
         public void TestDefaultAuthentication()
         {
             t_browserRunner
@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestConsoleLogin()
         {
             t_browserRunner
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestSSOToken()
         {
             var user = "test";
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner.Verify(b => b.Run(It.IsAny<Uri>()), Times.Never);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTokenIsStoredWhenCacheIsEnabled()
         {
             t_browserRunner
@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTokenIsNotStoredWhenCacheIsDisabled()
         {
             t_browserRunner
@@ -158,7 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        [Test]
+        [SFFact]
         public void TestThatRetriesAuthenticationForInvalidIdToken()
         {
             t_browserRunner
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        [Test]
+        [SFFact]
         public void TestThatDoesNotRetryAuthenticationForNonInvalidIdTokenException()
         {
             var expectedIdToken = "validIdToken";
@@ -216,7 +216,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        [Test]
+        [SFFact]
         public void TestThatThrowsTimeoutErrorWhenNoBrowserResponse()
         {
             t_browserRunner
@@ -239,7 +239,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SFError.BROWSER_RESPONSE_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatThrowsErrorWhenUrlDoesNotMatchRegex()
         {
             var restRequester = new Mock.MockExternalBrowserRestRequester()
@@ -252,7 +252,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatThrowsErrorWhenUrlIsNotWellFormedUriString()
         {
             var restRequester = new Mock.MockExternalBrowserRestRequester()
@@ -265,7 +265,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatThrowsErrorWhenBrowserRequestMethodIsNotGet()
         {
             t_browserRunner
@@ -285,7 +285,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SFError.BROWSER_RESPONSE_WRONG_METHOD.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatThrowsErrorWhenBrowserRequestHasInvalidQuery()
         {
             t_browserRunner
@@ -306,7 +306,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SFError.BROWSER_RESPONSE_INVALID_PREFIX.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         public void TestDefaultAuthenticationAsync()
         {
             t_browserRunner
@@ -330,7 +330,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestConsoleLoginAsync()
         {
             t_browserRunner
@@ -356,7 +356,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestSSOTokenAsync()
         {
             var user = "test";
@@ -378,7 +378,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner.Verify(b => b.Run(It.IsAny<Uri>()), Times.Never());
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTokenIsStoredWhenCacheIsEnabledAsync()
         {
             t_browserRunner
@@ -409,7 +409,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTokenIsNotStoredWhenCacheIsDisabledAsync()
         {
             t_browserRunner
@@ -440,7 +440,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(string.Empty, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        [Test]
+        [SFFact]
         public void TestThatRetriesAuthenticationForInvalidIdTokenAsync()
         {
             t_browserRunner
@@ -477,7 +477,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
         }
 
-        [Test]
+        [SFFact]
         public void TestThatDoesNotRetryAuthenticationForNonInvalidIdTokenExceptionAsync()
         {
             var expectedIdToken = "validIdToken";
