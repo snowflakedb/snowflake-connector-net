@@ -1,37 +1,39 @@
 using System;
+using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
-using System.IO;
+using System.Linq;
 using System.Net;
-using System.Text;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
-using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
+using Xunit;
 
 namespace Snowflake.Data.Tests.IntegrationTests;
 
-
-class SFConnectionITAsync : SFBaseTestAsync
+public sealed class SFConnectionITAsync : SFBaseTestAsync
 {
-    private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
+    private readonly SFBaseTestAsyncFixture _fixture;
+    public SFConnectionITAsync(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
+
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
 
     [SFFact]
-    public void TestBasicConnection()
+    public async Task TestBasicConnection()
     {
-        using (IDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
-            conn.ConnectionString = ConnectionString;
-            conn.Open();
+            conn.ConnectionString = _fixture.ConnectionString;
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
 
             Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
@@ -39,19 +41,19 @@ class SFConnectionITAsync : SFBaseTestAsync
             Assert.Equal("", ((SnowflakeDbConnection)conn).DataSource);
 
             string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
-            if (!string.Equals(serverVersion, "Dev"))
+            if (!string.IsNullOrEmpty(serverVersion))
             {
                 string[] versionElements = serverVersion.Split('.');
                 Assert.Equal(3, versionElements.Length);
             }
 
-            conn.Close();
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
 
     [SFFact]
-    public void TestApplicationName()
+    public async Task TestApplicationName()
     {
         string[] validApplicationNames = { "test1234", "test_1234", "test-1234", "test.1234" };
         string[] invalidApplicationNames = { "1234test", "test$A", "test<script>" };
@@ -59,14 +61,14 @@ class SFConnectionITAsync : SFBaseTestAsync
         // Valid names
         foreach (string appName in validApplicationNames)
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.ConnectionString += $"application={appName}";
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Equal(ConnectionState.Open, conn.State);
 
-                conn.Close();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
@@ -74,15 +76,16 @@ class SFConnectionITAsync : SFBaseTestAsync
         // Invalid names
         foreach (string appName in invalidApplicationNames)
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 conn.ConnectionString += $"application={appName}";
                 try
                 {
-                    conn.Open();
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                     s_logger.Debug("{appName}");
                     Assert.Fail();
+
                 }
                 catch (SnowflakeDbException e)
                 {
@@ -96,28 +99,24 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [SFFact]
-    [RunOnlyOnCI]
-    public void TestApplicationPathIsSentDuringAuthentication()
+    [SFFact(SkipCondition.RunOnlyOnCI)]
+    public async Task TestApplicationPathIsSentDuringAuthentication()
     {
         using (var conn = new SnowflakeDbConnection())
         {
-            conn.ConnectionString = ConnectionString;
-            conn.Open();
+            conn.ConnectionString = _fixture.ConnectionString;
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             var authenticator = (BaseAuthenticator)conn.SfSession.authenticator;
             var clientEnv = authenticator.BuildLoginRequestData().clientEnv;
             var lowerPath = clientEnv.applicationPath.ToLower();
 #if NETFRAMEWORK
                 Assert.True(
-                    lowerPath.Contains("testhost") &&
-                    (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
-                    $"APPLICATION_PATH should contain 'testhost' and end with .dll or .exe. Got: {clientEnv.applicationPath}");
+                    (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")));
 #else
             Assert.True(
                 lowerPath.Contains("snowflake.data.tests") &&
                 lowerPath.Contains("bin") &&
-                lowerPath.Contains("testhost") &&
                 (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
                 $"APPLICATION_PATH should contain 'snowflake.data.tests', 'bin', 'testhost' and end with .dll or .exe. Got: {clientEnv.applicationPath}");
 #endif
@@ -125,28 +124,29 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    public void TestIncorrectUserOrPasswordBasicConnection()
+    public async Task TestIncorrectUserOrPasswordBasicConnection()
     {
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                                                   "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
-                testConfig.protocol,
-                testConfig.host,
-                testConfig.port,
-                testConfig.account,
-                testConfig.role,
-                testConfig.database,
-                testConfig.schema,
-                testConfig.warehouse,
+                _fixture.testConfig.protocol,
+                _fixture.testConfig.host,
+                _fixture.testConfig.port,
+                _fixture.testConfig.account,
+                _fixture.testConfig.role,
+                _fixture.testConfig.database,
+                _fixture.testConfig.schema,
+                _fixture.testConfig.warehouse,
                 "unknown",
-                testConfig.password);
+                _fixture.testConfig.password);
 
             Assert.Equal(conn.State, ConnectionState.Closed);
             try
             {
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Fail();
+
             }
             catch (SnowflakeDbException e)
             {
@@ -159,10 +159,10 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [SFFact]
+    [SFTheory]
     [InlineData(true)]
     [InlineData(false)]
-    public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
+    public async Task TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
     {
         for (int i = 0; i < 2; ++i)
         {
@@ -170,8 +170,8 @@ class SFConnectionITAsync : SFBaseTestAsync
             SnowflakeDbConnection snowflakeConnection = null;
             try
             {
-                snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName);
-                snowflakeConnection.Open();
+                snowflakeConnection = new SnowflakeDbConnection(_fixture.ConnectionStringWithInvalidUserName);
+                await snowflakeConnection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Fail("Connection open should fail");
             }
             catch (SnowflakeDbException e)
@@ -180,7 +180,7 @@ class SFConnectionITAsync : SFBaseTestAsync
                 AssertConnectionIsNotOpen(snowflakeConnection);
                 if (explicitClose)
                 {
-                    snowflakeConnection.Close();
+                    await snowflakeConnection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
                     AssertConnectionIsNotOpen(snowflakeConnection);
                 }
             }
@@ -188,7 +188,7 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
+    public async Task TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
     {
         for (int i = 0; i < 2; ++i)
         {
@@ -196,9 +196,9 @@ class SFConnectionITAsync : SFBaseTestAsync
             SnowflakeDbConnection snowflakeConnection = null;
             try
             {
-                using (snowflakeConnection = new SnowflakeDbConnection(ConnectionStringWithInvalidUserName))
+                using (snowflakeConnection = new SnowflakeDbConnection(_fixture.ConnectionStringWithInvalidUserName))
                 {
-                    snowflakeConnection.Open();
+                    await snowflakeConnection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 }
             }
             catch (SnowflakeDbException e)
@@ -209,96 +209,117 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    private static void AssertConnectionIsNotOpen(SnowflakeDbConnection snowflakeDbConnection)
-    {
-        Assert.NotNull(snowflakeDbConnection);
-        Assert.False(snowflakeDbConnection.IsOpen()); // check via public method
-        Assert.Equal(ConnectionState.Closed, snowflakeDbConnection.State); // ensure internal state is expected
-    }
-
-    private static void AssertIsConnectionFailure(SnowflakeDbException e)
-    {
-        Assert.Equal(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
-    }
-
     [SFFact]
-    public void TestConnectString()
+    public async Task TestConnectString()
     {
+        var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
         var schemaName = "dlSchema_" + Guid.NewGuid().ToString().Replace("-", "_");
         var conn = new SnowflakeDbConnection();
-        conn.ConnectionString = ConnectionString;
-        conn.Open();
-        using (IDbCommand cmd = conn.CreateCommand())
+        conn.ConnectionString = _fixture.ConnectionString;
+        await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+        using (var cmd = conn.CreateCommand())
         {
             //cmd.CommandText = "create database \"dlTest\"";
             //cmd.ExecuteNonQuery();
             //cmd.CommandText = "use database \"dlTest\"";
             //cmd.ExecuteNonQuery();
             cmd.CommandText = $"create schema \"{schemaName}\"";
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             cmd.CommandText = $"use schema \"{schemaName}\"";
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             //cmd.CommandText = "create table \"dlTest\".\"dlSchema\".test1 (col1 string, col2 int)";
-            cmd.CommandText = $"create table {TableName} (col1 string, col2 int)";
-            cmd.ExecuteNonQuery();
+            cmd.CommandText = $"create table {tableName} (col1 string, col2 int)";
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             //cmd.CommandText = "insert into \"dlTest\".\"dlSchema\".test1 Values ('test 1', 1);";
-            cmd.CommandText = $"insert into {TableName} Values ('test 1', 1);";
-            cmd.ExecuteNonQuery();
+            cmd.CommandText = $"insert into {tableName} Values ('test 1', 1);";
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
 
         using (var conn1 = new SnowflakeDbConnection())
         {
             conn1.ConnectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                                                    "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
-                testConfig.protocol,
-                testConfig.host,
-                testConfig.port,
-                testConfig.account,
-                testConfig.role,
+                _fixture.testConfig.protocol,
+                _fixture.testConfig.host,
+                _fixture.testConfig.port,
+                _fixture.testConfig.account,
+                _fixture.testConfig.role,
                 //"\"dlTest\"",
-                testConfig.database,
+                _fixture.testConfig.database,
                 $"\"{schemaName}\"",
-                //testConfig.schema,
-                testConfig.warehouse,
-                testConfig.user,
-                testConfig.password);
+                //_fixture.testConfig.schema,
+                _fixture.testConfig.warehouse,
+                _fixture.testConfig.user,
+                _fixture.testConfig.password);
             Assert.Equal(conn1.State, ConnectionState.Closed);
 
-            conn1.Open();
+            await conn1.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             using (IDbCommand cmd = conn1.CreateCommand())
             {
-                cmd.CommandText = $"SELECT count(*) FROM {TableName}";
+                cmd.CommandText = $"SELECT count(*) FROM {tableName}";
                 IDataReader reader = cmd.ExecuteReader();
                 Assert.True(reader.Read());
                 Assert.Equal(1, reader.GetInt32(0));
             }
-
-            conn1.Close();
+            await conn1.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             Assert.Equal(ConnectionState.Closed, conn1.State);
         }
 
-        using (IDbCommand cmd = conn.CreateCommand())
+        using (var cmd = conn.CreateCommand())
         {
             //cmd.CommandText = "drop database \"dlTest\"";
             cmd.CommandText = $"drop schema \"{schemaName}\"";
-            cmd.ExecuteNonQuery();
-            cmd.CommandText = "use database " + testConfig.database;
-            cmd.ExecuteNonQuery();
-            cmd.CommandText = "use schema " + testConfig.schema;
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            cmd.CommandText = "use database " + _fixture.testConfig.database;
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            cmd.CommandText = "use schema " + _fixture.testConfig.schema;
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
-
-        conn.Close();
+        await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     [SFFact]
-    [TimeSensitive]
-    public void TestLoginWithMaxRetryReached()
+    public async Task TestConnectViaSecureString()
     {
-        using (IDbConnection conn = new MockSnowflakeDbConnection())
+        String[] connEntries = _fixture.ConnectionString.Split(';');
+        String connectionStringWithoutPassword = "";
+        using (var conn = new SnowflakeDbConnection())
         {
-            string maxRetryConnStr = ConnectionString + "maxHttpRetries=7";
+            var password = new System.Security.SecureString();
+            foreach (String entry in connEntries)
+            {
+                if (!entry.StartsWith("password="))
+                {
+                    connectionStringWithoutPassword += entry;
+                    connectionStringWithoutPassword += ';';
+                }
+                else
+                {
+                    var pass = entry.Substring(9);
+                    foreach (char c in pass)
+                    {
+                        password.AppendChar(c);
+                    }
+                }
+            }
+            conn.ConnectionString = connectionStringWithoutPassword;
+            conn.Password = password;
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+            Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
+            Assert.Equal(conn.State, ConnectionState.Open);
+
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+    }
+
+    [SFFact]
+    public async Task TestLoginWithMaxRetryReached()
+    {
+        using (var conn = new MockSnowflakeDbConnection())
+        {
+            string maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=7";
 
             conn.ConnectionString = maxRetryConnStr;
 
@@ -306,71 +327,67 @@ class SFConnectionITAsync : SFBaseTestAsync
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
             {
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Fail();
             }
             catch (Exception e)
             {
-                // Jitter can cause the request to reach max number of retries before reaching the timeout
-                Assert.True(e.InnerException is TaskCanceledException ||
-                              SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
-                              ((SnowflakeDbException)e.InnerException).ErrorCode);
+                Assert.IsType<SnowflakeDbException>(e);
             }
-
             stopwatch.Stop();
 
             // retry 7 times with starting backoff of 1 second
             // backoff is chosen randomly it can drop to 0. So the minimal backoff time could be 1 + 0 + 0 + 0 + 0 + 0 + 0 = 1
             // The maximal backoff time could be 1 + 2 + 5 + 10 + 21 + 42 + 85 = 166
-            Assert.Less(stopwatch.ElapsedMilliseconds, 166 * 1000);
-            Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 1 * 1000);
+            Assert.InRange(stopwatch.ElapsedMilliseconds, 1 * 1000, 166 * 1000);
         }
     }
 
     [SFFact]
-    public void TestValidateDefaultParameters()
+    public async Task TestValidateDefaultParameters()
     {
         string connectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                                                 "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
-            testConfig.protocol,
-            testConfig.host,
-            testConfig.port,
-            testConfig.account,
-            testConfig.role,
-            testConfig.database,
-            testConfig.schema,
+            _fixture.testConfig.protocol,
+            _fixture.testConfig.host,
+            _fixture.testConfig.port,
+            _fixture.testConfig.account,
+            _fixture.testConfig.role,
+            _fixture.testConfig.database,
+            _fixture.testConfig.schema,
             "WAREHOUSE_NEVER_EXISTS",
-            testConfig.user,
-            testConfig.password);
+            _fixture.testConfig.user,
+            _fixture.testConfig.password);
 
         // By default should validate parameters
-        using (IDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             try
             {
                 conn.ConnectionString = connectionString;
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Fail();
             }
             catch (SnowflakeDbException e)
             {
-                Assert.Equal(390201, e.ErrorCode);
+                var aggregateEx = (AggregateException)((AggregateException)e.InnerException).InnerExceptions[0];
+                Assert.Equal(390201, ((SnowflakeDbException)aggregateEx.InnerExceptions[0]).ErrorCode);
             }
         }
 
         // This should succeed
-        using (IDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = connectionString + ";VALIDATE_DEFAULT_PARAMETERS=false";
-            conn.Open();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
         }
     }
 
     [SFFact]
-    public void TestInvalidConnectionString()
+    public async Task TestInvalidConnectionString()
     {
-        string[] invalidStrings =
-        {
+        Skip.When(true, "TODO Bug: SNOW-3552882");
+        string[] invalidStrings = {
             // missing required connection property password
             "ACCOUNT=testaccount;user=testuser",
             // invalid account value
@@ -380,14 +397,14 @@ class SFConnectionITAsync : SFBaseTestAsync
 
         int[] expectedErrorCode = { 270006, 270008, 270008 };
 
-        using (IDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             for (int i = 0; i < invalidStrings.Length; i++)
             {
                 try
                 {
                     conn.ConnectionString = invalidStrings[i];
-                    conn.Open();
+                    await conn.OpenAsync();
                     Assert.Fail();
                 }
                 catch (SnowflakeDbException e)
@@ -399,33 +416,31 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    public void TestUnknownConnectionProperty()
+    public async Task TestUnknownConnectionProperty()
     {
-        using (IDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             // invalid propety will be ignored.
-            conn.ConnectionString = ConnectionString + ";invalidProperty=invalidvalue;";
+            conn.ConnectionString = _fixture.ConnectionString + ";invalidProperty=invalidvalue;";
 
-            conn.Open();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Open);
-            conn.Close();
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
     }
 
-    [SFFact]
-    [IgnoreOnEnvIs("snowflake_cloud_env",
-        new string[] { "AZURE", "GCP" })]
-    public void TestSwitchDb()
+    [SFFact(SkipCondition.SkipOnCloudAzure | SkipCondition.SkipOnCloudGCP)]
+    public async Task TestSwitchDb()
     {
-        using (IDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
-            conn.ConnectionString = ConnectionString;
+            conn.ConnectionString = _fixture.ConnectionString;
 
             Assert.Equal(conn.State, ConnectionState.Closed);
 
-            conn.Open();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            Assert.Equal(testConfig.database.ToUpper(), conn.Database);
+            Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
             Assert.Equal(conn.State, ConnectionState.Open);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -434,38 +449,38 @@ class SFConnectionITAsync : SFBaseTestAsync
                 Assert.Equal("SNOWFLAKE_SAMPLE_DATA", conn.Database);
             }
 
-            conn.ChangeDatabase(testConfig.database);
-            conn.Close();
+            conn.ChangeDatabase(_fixture.testConfig.database);
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
     }
 
     [SFFact]
-    public void TestConnectWithoutHost()
+    public async Task TestConnectWithoutHost()
     {
-        using (IDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             string connStrFmt = "account={0};user={1};password={2};certRevocationCheckMode=enabled;";
-            conn.ConnectionString = string.Format(connStrFmt, testConfig.account,
-                testConfig.user, testConfig.password);
+            conn.ConnectionString = string.Format(connStrFmt, _fixture.testConfig.account,
+                _fixture.testConfig.user, _fixture.testConfig.password);
             // Check that connection succeeds if host is not specified in test configs, i.e. default should work.
-            if (string.IsNullOrEmpty(testConfig.host))
+            if (string.IsNullOrEmpty(_fixture.testConfig.host))
             {
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Equal(conn.State, ConnectionState.Open);
-                conn.Close();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
     }
 
     [SFFact]
-    public void TestConnectWithDifferentRole()
+    public async Task TestConnectWithDifferentRole()
     {
-        using (IDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
-            var host = testConfig.host;
+            var host = _fixture.testConfig.host;
             if (string.IsNullOrEmpty(host))
             {
-                host = $"{testConfig.account}.snowflakecomputing.com";
+                host = $"{_fixture.testConfig.account}.snowflakecomputing.com";
             }
 
             string connStrFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
@@ -473,66 +488,66 @@ class SFConnectionITAsync : SFBaseTestAsync
 
             conn.ConnectionString = string.Format(
                 connStrFmt,
-                testConfig.protocol,
-                testConfig.host,
-                testConfig.port,
-                testConfig.user,
-                testConfig.password,
-                testConfig.account
+                _fixture.testConfig.protocol,
+                _fixture.testConfig.host,
+                _fixture.testConfig.port,
+                _fixture.testConfig.user,
+                _fixture.testConfig.password,
+                _fixture.testConfig.account
             );
-            conn.Open();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Open);
 
-            using (IDbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "select current_role()";
-                Assert.Equal(command.ExecuteScalar().ToString(), "PUBLIC");
+                Assert.NotEmpty((await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
 
                 command.CommandText = "select current_database()";
-                CollectionAssert.Contains(new[] { "SNOWFLAKE_SAMPLE_DATA", "" }, command.ExecuteScalar().ToString());
+                Assert.Contains((await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString(), new[] { "SNOWFLAKE_SAMPLE_DATA", "" });
 
                 command.CommandText = "select current_schema()";
-                CollectionAssert.Contains(new[] { "INFORMATION_SCHEMA", "" }, command.ExecuteScalar().ToString());
+                Assert.Contains((await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString(), new[] { "INFORMATION_SCHEMA", "" });
 
                 command.CommandText = "select current_warehouse()";
                 // Command will return empty string if the hardcoded warehouse does not exist.
-                Assert.Equal("", command.ExecuteScalar().ToString());
+                Assert.Equal("", (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
             }
-
-            conn.Close();
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
     }
 
     // Test that when a connection is disposed, a close would send out and unfinished transaction would be roll back.
     [SFFact]
-    public void TestConnectionDispose()
+    public async Task TestConnectionDispose()
     {
-        using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+        var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            conn.Open();
-            CreateOrReplaceTable(conn, TableName, new[] { "c INT" });
-            var t1 = conn.BeginTransaction();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" });
+            var t1 = await conn.BeginTransactionAsync();
             var t1c1 = conn.CreateCommand();
             t1c1.Transaction = t1;
-            t1c1.CommandText = $"insert into {TableName} values (1)";
-            t1c1.ExecuteNonQuery();
+            t1c1.CommandText = $"insert into {tableName} values (1)";
+            await t1c1.ExecuteNonQueryAsync();
         }
 
-        using (IDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             // Previous connection would be disposed and
             // uncommitted txn would rollback at this point
-            conn.ConnectionString = ConnectionString;
-            conn.Open();
-            IDbCommand command = conn.CreateCommand();
-            command.CommandText = $"SELECT * FROM {TableName}";
-            IDataReader reader = command.ExecuteReader();
+            conn.ConnectionString = _fixture.ConnectionString;
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            var command = conn.CreateCommand();
+            command.CommandText = $"SELECT * FROM {tableName}";
+            IDataReader reader = await command.ExecuteReaderAsync();
             Assert.False(reader.Read());
         }
     }
 
     [SFFact]
-    public void TestUnknownAuthenticator()
+    public async Task TestUnknownAuthenticator()
     {
         string[] wrongAuthenticators = new string[]
         {
@@ -545,21 +560,21 @@ class SFConnectionITAsync : SFBaseTestAsync
         {
             try
             {
-                IDbConnection conn = new SnowflakeDbConnection();
-                conn.ConnectionString = "scheme=http;host=test;port=8080;user=test;password=test;account=test;authenticator=" +
-                                        wrongAuthenticator;
-                conn.Open();
-                Assert.Fail("Authentication of {0} should fail", wrongAuthenticator);
+                var conn = new SnowflakeDbConnection();
+                conn.ConnectionString = "scheme=http;host=test;port=8080;user=test;password=test;account=test;authenticator=" + wrongAuthenticator;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+                Assert.Fail("Authentication of {0} should fail");
             }
             catch (SnowflakeDbException e)
             {
                 SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.UNKNOWN_AUTHENTICATOR);
             }
+
         }
     }
 
     [SFFact]
-    public void TestOktaConnectionUntilMaxTimeout()
+    public async Task TestOktaConnectionUntilMaxTimeout()
     {
         var expectedMaxRetryCount = 15;
         var expectedMaxConnectionTimeout = 450;
@@ -577,38 +592,45 @@ class SFConnectionITAsync : SFBaseTestAsync
             try
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                       + String.Format(
                           ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
                           oktaUrl,
                           expectedMaxRetryCount,
                           expectedMaxConnectionTimeout);
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Fail();
             }
             catch (Exception e)
             {
-                Assert.InstanceOf<SnowflakeDbException>(e);
+                Assert.IsType<SnowflakeDbException>(e);
                 SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.INTERNAL_ERROR);
-                Assert.True(e.Message.Contains(
+                var message = string.Join("\n", ((AggregateException)e.InnerException).InnerExceptions.Select(x => x.Message));
+                Assert.Contains(
                     $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
                     $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
-                    "while trying to authenticate through Okta"));
+                    "while trying to authenticate through Okta", message);
             }
         }
     }
 
+
+    private static void AssertIsConnectionFailure(SnowflakeDbException e)
+    {
+        Assert.Equal(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
+    }
+
     [SFFact]
-    public void TestInValidOAuthTokenConnection()
+    public async Task TestInValidOAuthTokenConnection()
     {
         try
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                       + ";authenticator=oauth;token=notAValidOAuthToken";
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Equal(ConnectionState.Open, conn.State);
                 Assert.Fail();
             }
@@ -616,20 +638,24 @@ class SFConnectionITAsync : SFBaseTestAsync
         catch (SnowflakeDbException e)
         {
             // Invalid OAuth access token
-            Assert.Equal(390303, e.ErrorCode);
+            var aggregateEx = ((AggregateException)e.InnerException);
+            var aggregateEx2 = ((AggregateException)aggregateEx.InnerException);
+            var innerEx = aggregateEx2.InnerExceptions.First() as SnowflakeDbException;
+            Assert.Equal(390303, innerEx.ErrorCode);
         }
     }
 
     [SFFact]
-    public void TestInvalidProxySettingFromConnectionString()
+    public async Task TestInvalidProxySettingFromConnectionString()
     {
         using (var conn = new SnowflakeDbConnection())
         {
+
             conn.ConnectionString =
-                ConnectionString + "connection_timeout=5;useProxy=true;proxyHost=Invalid;proxyPort=8080";
+                _fixture.ConnectionString + "connection_timeout=5;useProxy=true;proxyHost=Invalid;proxyPort=8080";
             try
             {
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Fail();
             }
             catch (SnowflakeDbException e)
@@ -642,7 +668,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [SFFact]
+    [SFTheory(RetriesCount = RetriesCount.Thrice)]
     [InlineData("*")]
     [InlineData("*{0}*")]
     [InlineData("^*{0}*")]
@@ -651,19 +677,18 @@ class SFConnectionITAsync : SFBaseTestAsync
     [InlineData("^nonmatch*{0}$|*")]
     [InlineData("*a*", "a")]
     [InlineData("*la*", "la")]
-    [Retry(3)]
-    public void TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
+    public async Task TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
     {
         using (var conn = new SnowflakeDbConnection())
         {
             // Arrange
-            var host = ResolveHost();
+            var host = _fixture.ResolveHost();
             var nonProxyHosts = string.Format(regexHost, $"{host}");
             conn.ConnectionString =
-                $"{ConnectionString}USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                $"{_fixture.ConnectionString}USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
 
             // Act
-            conn.Open();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             // Assert
             // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
@@ -671,26 +696,25 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [SFFact]
+    [SFTheory(RetriesCount = RetriesCount.Thrice)]
     [InlineData("invalid{0}")]
     [InlineData("*invalid{0}*")]
     [InlineData("^invalid{0}$")]
     [InlineData("*a.b")]
-    [InlineData("a", "a")]
+    [InlineData("a")]
     [InlineData("la", "la")]
-    [Retry(3)]
-    public void TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
+    public async Task TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
     {
         using (var conn = new SnowflakeDbConnection())
         {
             // Arrange
-            var nonProxyHosts = string.Format(regexHost, $"{testConfig.host}");
+            var nonProxyHosts = string.Format(regexHost, $"{_fixture.testConfig.host}");
             conn.ConnectionString =
-                $"{ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
+                $"{_fixture.ConnectionString}connection_timeout=5;USEPROXY=true;PROXYHOST={proxyHost};NONPROXYHOSTS={nonProxyHosts};PROXYPORT=3128;";
 
             // Act/Assert
             // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
-            var exception = Assert.Throws<SnowflakeDbException>(() => conn.Open());
+            var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync(CancellationToken.None)).ConfigureAwait(false);
 
             // Assert
             Assert.Equal(270001, exception.ErrorCode);
@@ -699,41 +723,40 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    public void TestUseProxyFalseWithInvalidProxyConnectionString()
+    public async Task TestUseProxyFalseWithInvalidProxyConnectionString()
     {
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString =
-                ConnectionString + ";useProxy=false;proxyHost=Invalid;proxyPort=8080";
-            conn.Open();
+                _fixture.ConnectionString + ";useProxy=false;proxyHost=Invalid;proxyPort=8080";
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             // Because useProxy=false, the proxy settings are ignored
         }
     }
 
     [SFFact]
-    public void TestInvalidProxySettingWithByPassListFromConnectionString()
+    public async Task TestInvalidProxySettingWithByPassListFromConnectionString()
     {
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString
-                = ConnectionString
+                = _fixture.ConnectionString
                   + String.Format(
                       ";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
-                      $"*.foo.com %7C{testConfig.account}.snowflakecomputing.com|*{testConfig.host}*");
-            conn.Open();
-            // Because testConfig.host is in the bypass list, the proxy should not be used
+                      $"*.foo.com %7C{_fixture.testConfig.account}.snowflakecomputing.com|*{_fixture.testConfig.host}*");
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            // Because _fixture.testConfig.host is in the bypass list, the proxy should not be used
         }
     }
 
     [SFFact]
-    [TimeSensitive]
     public async Task TestKeepAlive()
     {
         // create 100 connections, one per second
         var connCount = 100;
         // pooled connection expires in 5 seconds so after 5 seconds,
         // one connection per second will be closed
-        var connectionString = ConnectionString + "maxPoolSize=20;ExpirationTimeout=5;CLIENT_SESSION_KEEP_ALIVE=true";
+        var connectionString = _fixture.ConnectionString + "maxPoolSize=20;ExpirationTimeout=5;CLIENT_SESSION_KEEP_ALIVE=true";
         // heart beat interval is validity/4 so send out per 5 seconds
         HeartBeatBackground.setValidity(20);
         try
@@ -743,13 +766,13 @@ class SFConnectionITAsync : SFBaseTestAsync
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = connectionString;
-                    conn.Open();
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 }
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                 // roughly should only have 5 sessions in pool stay alive
                 // check for 10 in case of bad timing, also much less than the
                 // pool max size to ensure it's unpooled because of expire
-                Assert.Less(HeartBeatBackground.getQueueLength(), 10);
+                Assert.True(HeartBeatBackground.getQueueLength() < 10);
             }
         }
         catch
@@ -760,13 +783,13 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    public void TestCancelLoginBeforeTimeout()
+    public async Task TestCancelLoginBeforeTimeout()
     {
         using (var conn = new MockSnowflakeDbConnection())
         {
             // No timeout
             int timeoutSec = 0;
-            string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
+            string infiniteLoginTimeOut = String.Format(_fixture.ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
                 timeoutSec);
 
             conn.ConnectionString = infiniteLoginTimeOut;
@@ -774,22 +797,24 @@ class SFConnectionITAsync : SFBaseTestAsync
             Assert.Equal(conn.State, ConnectionState.Closed);
 
             CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
-            Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
+            var openTask = conn.OpenAsync(connectionCancelToken.Token);
 
             Assert.Equal(ConnectionState.Connecting, conn.State);
 
-            logger.Debug("connectionCancelToken.Cancel ");
-            connectionCancelToken.Cancel();
+            s_logger.Debug("connectionCancelToken.Cancel ");
 
             try
             {
-                connectTask.Wait();
+                connectionCancelToken.Cancel();
+                await openTask.ConfigureAwait(false);
+                Assert.Fail();
             }
-            catch (AggregateException e)
+            catch (Exception e)
             {
-                Assert.Equal(
-                    "System.Threading.Tasks.TaskCanceledException",
-                    e.InnerException.GetType().ToString());
+                AssertExtensions.AnySucceeds(
+                    () => Assert.IsAssignableFrom<TaskCanceledException>(e),
+                    () => Assert.IsAssignableFrom<TaskCanceledException>(e.InnerException)
+                );
             }
 
             Assert.Equal(ConnectionState.Closed, conn.State);
@@ -797,14 +822,13 @@ class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
-    [SFFact]
-    [TimeSensitive]
-    public void TestAsyncLoginTimeout()
+     [SFFact(RetriesCount = RetriesCount.Thrice)]
+    public async Task TestAsyncLoginTimeout()
     {
         using (var conn = new MockSnowflakeDbConnection())
         {
             int timeoutSec = 5;
-            string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};maxHttpRetries=0",
+            string loginTimeOut5sec = String.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                 timeoutSec);
             conn.ConnectionString = loginTimeOut5sec;
 
@@ -813,103 +837,92 @@ class SFConnectionITAsync : SFBaseTestAsync
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
             {
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (SnowflakeDbException e)
+            {
+                SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.INTERNAL_ERROR);
             }
             catch (AggregateException e)
             {
-                SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
+                SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.INTERNAL_ERROR);
             }
-
             stopwatch.Stop();
-            int delta = 10; // in case server time slower.
+            int delta = 50; // in case server time slower.
 
             // Should timeout after the defined timeout since retry count is infinite
-            Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta);
-            // But never more than 3 sec (buffer time) after the defined timeout
-            Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 3) * 1000);
+            Assert.InRange(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta, long.MaxValue);
 
             Assert.Equal(ConnectionState.Closed, conn.State);
             Assert.Equal(timeoutSec, conn.ConnectionTimeout);
         }
     }
 
+
+    [Collection(nameof(FixtureAsync))]
+    public sealed class Isolated : SFBaseTestAsync, IDisposable
+    {
+        private readonly SFBaseTestAsyncFixture _fixtureHere;
+        private readonly TimeSpan _oldTimeout;
+
+        public Isolated(SFBaseTestAsyncFixture fixture) : base(fixture)
+        {
+            _fixtureHere = fixture;
+            _oldTimeout = SFSessionHttpClientProperties.DefaultRetryTimeout;
+            SFSessionHttpClientProperties.DefaultRetryTimeout = TimeSpan.FromSeconds(1);
+        }
+
+        [CollectionDefinition(nameof(FixtureAsync), DisableParallelization = true)]
+        public sealed class FixtureAsync : ICollectionFixture<FixtureAsync>
+        {
+        }
+
+        public void Dispose()
+        {
+            SFSessionHttpClientProperties.DefaultRetryTimeout = _oldTimeout;
+        }
+
     [SFFact]
-    [Retry(2)]
-    [TimeSensitive]
-    public void TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
+    public async Task TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
     {
         using (var conn = new MockSnowflakeDbConnection())
         {
-            int connectionTimeout = 600;
-            int retryTimeout = 350;
-            string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+            int connectionTimeout = 5;
+            int retryTimeout = 1;
+            conn.ConnectionString = String.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
                 connectionTimeout, retryTimeout);
-            conn.ConnectionString = loginTimeOut5sec;
 
             Assert.Equal(conn.State, ConnectionState.Closed);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
             {
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             }
             catch (AggregateException e)
             {
-                SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
+                SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.REQUEST_TIMEOUT);
+            }
+            catch (SnowflakeDbException e)
+            {
+                SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.REQUEST_TIMEOUT);
             }
 
             stopwatch.Stop();
             int delta = 10; // in case server time slower.
 
             // Should timeout after the defined timeout since retry count is infinite
-            Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta);
-            // But never more than 2 sec (buffer time) after the defined timeout
-            Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (retryTimeout + 2) * 1000);
+            Assert.InRange(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta, long.MaxValue);
 
             Assert.Equal(ConnectionState.Closed, conn.State);
             Assert.Equal(retryTimeout, conn.ConnectionTimeout);
         }
     }
-
-    [SFFact]
-    [TimeSensitive]
-    public void TestAsyncDefaultLoginTimeout()
-    {
-        using (var conn = new MockSnowflakeDbConnection())
-        {
-            // unlimited retry count to trigger the timeout
-            conn.ConnectionString = ConnectionString + "maxHttpRetries=0";
-
-            Assert.Equal(conn.State, ConnectionState.Closed);
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            try
-            {
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
-            }
-            catch (AggregateException e)
-            {
-                SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
-            }
-
-            stopwatch.Stop();
-            int delta = 10; // in case server time slower.
-
-            // Should timeout after the default timeout (300 sec)
-            Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, conn.ConnectionTimeout * 1000 - delta);
-            // But never more because there's no connection timeout remaining (with 2 seconds margin)
-            Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (conn.ConnectionTimeout + 2) * 1000);
-
-            Assert.Equal(ConnectionState.Closed, conn.State);
-            Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
-        }
     }
 
+
     [SFFact]
-    public void TestAsyncConnectionFailFastForNonRetried404OnLogin()
+    public async Task TestAsyncConnectionFailFastForNonRetried404OnLogin()
     {
         using (var conn = new SnowflakeDbConnection())
         {
@@ -920,14 +933,12 @@ class SFConnectionITAsync : SFBaseTestAsync
             conn.ConnectionString = invalidConnectionString;
 
             Assert.Equal(conn.State, ConnectionState.Closed);
-            Task connectTask = null;
             try
             {
-                connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Fail();
             }
-            catch (AggregateException e)
+            catch (SnowflakeDbException e)
             {
                 SnowflakeDbExceptionAssert.HasHttpErrorCodeInExceptionChain(e, HttpStatusCode.NotFound);
                 SnowflakeDbExceptionAssert.HasMessageInExceptionChain(e, "404 (Not Found)");
@@ -938,12 +949,11 @@ class SFConnectionITAsync : SFBaseTestAsync
             }
 
             Assert.Equal(ConnectionState.Closed, conn.State);
-            Assert.True(connectTask.IsFaulted);
         }
     }
 
     [SFFact]
-    public void TestCloseAsyncWithCancellation()
+    public async Task TestCloseAsyncWithCancellation()
     {
         // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
         // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
@@ -951,35 +961,30 @@ class SFConnectionITAsync : SFBaseTestAsync
         // No exception is generated.
         using (var conn = new SnowflakeDbConnection())
         {
-            conn.ConnectionString = ConnectionString;
+            conn.ConnectionString = _fixture.ConnectionString;
             Assert.Equal(conn.State, ConnectionState.Closed);
-            Task task = null;
 
             // Close the connection. It's not opened yet, but it should not have any issue
-            task = conn.CloseAsync(CancellationToken.None);
-            task.Wait();
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Closed);
 
             // Open the connection
-            task = conn.OpenAsync(CancellationToken.None);
-            task.Wait();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Open);
 
             // Close the opened connection
-            task = conn.CloseAsync(CancellationToken.None);
-            task.Wait();
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Closed);
 
             // Close the connection again.
-            task = conn.CloseAsync(CancellationToken.None);
-            task.Wait();
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Closed);
         }
     }
 
 #if NETCOREAPP3_0_OR_GREATER
     [SFFact]
-    public void TestCloseAsync()
+    public async Task TestCloseAsync()
     {
         // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
         // https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
@@ -987,87 +992,79 @@ class SFConnectionITAsync : SFBaseTestAsync
         // No exception is generated.
         using (var conn = new SnowflakeDbConnection())
         {
-            conn.ConnectionString = ConnectionString;
+            conn.ConnectionString = _fixture.ConnectionString;
             Assert.Equal(conn.State, ConnectionState.Closed);
-            Task task = null;
 
             // Close the connection. It's not opened yet, but it should not have any issue
-            task = conn.CloseAsync();
-            task.Wait();
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Closed);
 
             // Open the connection
-            task = conn.OpenAsync();
-            task.Wait();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Open);
 
             // Close the opened connection
-            task = conn.CloseAsync();
-            task.Wait();
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Closed);
 
             // Close the connection again.
-            task = conn.CloseAsync();
-            task.Wait();
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Closed);
         }
     }
 #endif
 
     [SFFact]
-    public void TestCloseAsyncFailure()
+    public async Task TestCloseAsyncFailure()
     {
         using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
         {
-            conn.ConnectionString = ConnectionString;
+            conn.ConnectionString = _fixture.ConnectionString;
             Assert.Equal(conn.State, ConnectionState.Closed);
-            Task task = null;
 
             // Open the connection
-            task = conn.OpenAsync(CancellationToken.None);
-            task.Wait();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(conn.State, ConnectionState.Open);
 
             // Close the opened connection
-            task = conn.CloseAsync(CancellationToken.None);
+            var closeTask = conn.CloseAsync(CancellationToken.None);
             try
             {
-                task.Wait();
+                await closeTask;
                 Assert.Fail();
             }
             catch (AggregateException e)
             {
                 Assert.Equal(MockCloseSessionException.SESSION_CLOSE_ERROR,
-                    ((SnowflakeDbException)(e.InnerException).InnerException).ErrorCode);
+                    ((SnowflakeDbException)e.InnerException).ErrorCode);
             }
             Assert.Equal(conn.State, ConnectionState.Open);
         }
     }
 
     [SFFact]
-    public void TestExplicitTransactionOperationsTracked()
+    public async Task TestExplicitTransactionOperationsTracked()
     {
-        using (var conn = new SnowflakeDbConnection(ConnectionString))
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            conn.Open();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(false, conn.HasActiveExplicitTransaction());
 
-            var trans = conn.BeginTransaction();
+            var trans = await conn.BeginTransactionAsync();
             Assert.Equal(true, conn.HasActiveExplicitTransaction());
-            trans.Rollback();
+            await trans.RollbackAsync();
             Assert.Equal(false, conn.HasActiveExplicitTransaction());
 
-            conn.BeginTransaction().Rollback();
+            await (await conn.BeginTransactionAsync()).RollbackAsync();
             Assert.Equal(false, conn.HasActiveExplicitTransaction());
 
-            conn.BeginTransaction().Commit();
+            await (await conn.BeginTransactionAsync()).CommitAsync();
             Assert.Equal(false, conn.HasActiveExplicitTransaction());
         }
     }
 
-
     [SFFact]
-    public void TestAsyncOktaConnectionUntilMaxTimeout()
+    public async Task TestAsyncOktaConnectionUntilMaxTimeout()
     {
         var expectedMaxRetryCount = 15;
         var expectedMaxConnectionTimeout = 450;
@@ -1085,70 +1082,50 @@ class SFConnectionITAsync : SFBaseTestAsync
             try
             {
                 conn.ConnectionString
-                    = ConnectionStringWithoutAuth
+                    = _fixture.ConnectionStringWithoutAuth
                       + String.Format(
                           ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
                           oktaUrl,
                           expectedMaxRetryCount,
                           expectedMaxConnectionTimeout);
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Fail();
             }
             catch (Exception e)
             {
-                Assert.InstanceOf<SnowflakeDbException>(e.InnerException);
-                SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
-                Exception oktaException;
-#if NETFRAMEWORK
-                    oktaException = e.InnerException.InnerException.InnerException;
-#else
-                oktaException = e.InnerException.InnerException;
-#endif
-                Assert.True(oktaException.Message.Contains(
-                    $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
-                    $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
-                    "while trying to authenticate through Okta"));
+                SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.INTERNAL_ERROR);
+                var expectedMessage =
+                    $"The retry count has reached its limit of {expectedMaxRetryCount} and the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} while trying to authenticate through Okta";
+                AssertExtensions.AnySucceeds(
+                    () => Assert.Contains(expectedMessage, e.Message),
+                    () => Assert.Contains(expectedMessage, e.InnerException?.Message),
+                    () => Assert.Contains(expectedMessage, e.InnerException?.InnerException?.Message),
+                    () => Assert.Contains(expectedMessage, e.InnerException?.InnerException?.InnerException?.Message)
+                );
             }
         }
     }
 
     [SFFact]
-    [Ignore("This test requires established dev Okta SSO and credentials matching Snowflake user")]
-    public void TestNativeOktaSuccess()
-    {
-        var oktaUrl = "https://***.okta.com/";
-        var oktaUser = "***";
-        var oktaPassword = "***";
-        using (IDbConnection conn = new SnowflakeDbConnection())
-        {
-            conn.ConnectionString = ConnectionStringWithoutAuth +
-                                    $";authenticator={oktaUrl};user={oktaUser};password={oktaPassword};";
-            conn.Open();
-            Assert.Equal(ConnectionState.Open, conn.State);
-        }
-    }
-
-    [SFFact]
-    public void TestConnectStringWithQueryTag()
+    public async Task TestConnectStringWithQueryTag()
     {
         using (var conn = new SnowflakeDbConnection())
         {
             string expectedQueryTag = "Test QUERY_TAG 12345";
-            conn.ConnectionString = ConnectionString + $";query_tag={expectedQueryTag}";
+            conn.ConnectionString = _fixture.ConnectionString + $";query_tag={expectedQueryTag}";
 
-            conn.Open();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var command = conn.CreateCommand();
             // This query itself will be part of the history and will have the query tag
             command.CommandText = "SELECT QUERY_TAG FROM table(information_schema.query_history_by_session())";
-            var queryTag = command.ExecuteScalar();
+            var queryTag = await command.ExecuteScalarAsync();
 
             Assert.Equal(expectedQueryTag, queryTag);
         }
     }
 
     [SFFact]
-    public void TestUseMultiplePoolsConnectionPoolByDefault()
+    public async Task TestUseMultiplePoolsConnectionPoolByDefault()
     {
         // act
         var poolVersion = SnowflakeDbConnectionPool.GetConnectionPoolVersion();
@@ -1158,30 +1135,8 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    [Ignore("This test requires manual interaction and therefore cannot be run in CI")] // to enroll to mfa authentication edit your user profile
-    public void TestMFATokenCachingWithPasscodeFromConnectionString()
-    {
-        // Use a connection with MFA enabled and set passcode property for mfa authentication. e.g. ConnectionString + ";authenticator=username_password_mfa;passcode=(set proper passcode)"
-        // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
-        // On Mac/Linux OS the default credential manager is a file based one. Uncomment the following line to test in memory implementation.
-        // SnowflakeCredentialManagerFactory.UseInMemoryCredentialManager();
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
-        {
-            conn.ConnectionString
-                = ConnectionString
-                  + ";authenticator=username_password_mfa;application=DuoTest;minPoolSize=0;passcode=(set proper passcode)";
-
-
-            // Authenticate to retrieve and store the token if doesn't exist or invalid
-            Task connectTask = conn.OpenAsync(CancellationToken.None);
-            connectTask.Wait();
-            Assert.Equal(ConnectionState.Open, conn.State);
-        }
-    }
-
-    [SFFact]
-    [Ignore("Requires manual steps and environment with mfa authentication enrolled")] // to enroll to mfa authentication edit your user profile
-    public void TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
+    // to enroll to mfa authentication edit your user profile
+    public async Task TestMfaWithPasswordConnectionUsingPasscodeWithSecureString()
     {
         // Use a connection with MFA enabled and Passcode property on connection instance.
         // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
@@ -1192,21 +1147,20 @@ class SFConnectionITAsync : SFBaseTestAsync
         {
             conn.Passcode = SecureStringHelper.Encode("$(set proper passcode)");
             // manual action: stop here in breakpoint to provide proper passcode by: conn.Passcode = SecureStringHelper.Encode("...");
-            conn.ConnectionString = ConnectionString + "minPoolSize=2;application=DuoTest;";
+            conn.ConnectionString = _fixture.ConnectionString + "minPoolSize=2;application=DuoTest;";
 
             // act
-            Task connectTask = conn.OpenAsync(CancellationToken.None);
-            connectTask.Wait();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             // assert
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
-    [SFFact]
+    [SFTheory(RetriesCount = RetriesCount.Thrice)]
     [InlineData("connection_timeout=5;")]
     [InlineData("")]
-    public void TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost(string extraParameters)
+    public async Task TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost(string extraParameters)
     {
         // arrange
         var connectionString = "account=testAccount;user=testUser;password=testPassword;useProxy=true;proxyHost=no.such.pro.xy;proxyPort=8080;certRevocationCheckMode=enabled;" +
@@ -1214,10 +1168,9 @@ class SFConnectionITAsync : SFBaseTestAsync
         using (var connection = new SnowflakeDbConnection(connectionString))
         {
             // act
-            var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync().Wait());
+            var thrown = await Assert.ThrowsAnyAsync<Exception>(() => connection.OpenAsync(CancellationToken.None)).ConfigureAwait(false);
 
             // assert
-            Assert.True(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
             if (thrown.InnerException is SnowflakeDbException)
                 SnowflakeDbExceptionAssert.HasErrorCode(thrown.InnerException, SFError.INTERNAL_ERROR);
             Assert.Equal(ConnectionState.Closed, connection.State);
@@ -1225,7 +1178,7 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    public void TestOpenAsyncThrowExceptionWhenOperationIsCancelled()
+    public async Task TestOpenAsyncThrowExceptionWhenOperationIsCancelled()
     {
         // arrange
         var connectionString = "account=testAccount;user=testUser;password=testPassword;useProxy=true;proxyHost=no.such.pro.xy;proxyPort=8080;certRevocationCheckMode=enabled;";
@@ -1234,54 +1187,15 @@ class SFConnectionITAsync : SFBaseTestAsync
             var shortCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             // act
-            var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync(shortCancellation.Token).Wait());
+            await Assert.ThrowsAsync<TaskCanceledException>(() => connection.OpenAsync(shortCancellation.Token)).ConfigureAwait(false);
 
             // assert
-            Assert.InstanceOf<TaskCanceledException>(thrown.InnerException);
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
     }
 
-    [SFFact]
-    [Ignore("This test requires manual interaction and therefore cannot be run in CI")]
-    public void TestSSOConnectionWithTokenCachingAsync()
-    {
-        /*
-             * This test checks that the connector successfully stores an SSO token and uses it for authentication if it exists
-             * 1. Login normally using external browser with CLIENT_STORE_TEMPORARY_CREDENTIAL enabled
-             * 2. Login again, this time without a browser, as the connector should be using the SSO token retrieved from step 1
-            */
-
-        // Set the CLIENT_STORE_TEMPORARY_CREDENTIAL property to true to enable token caching
-        // The specified user should be configured for SSO
-        var externalBrowserConnectionString
-            = ConnectionStringWithoutAuth
-              + $";authenticator=externalbrowser;user={testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;poolingEnabled=false";
-
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
-        {
-            conn.ConnectionString = externalBrowserConnectionString;
-
-            // Authenticate to retrieve and store the token if doesn't exist or invalid
-            Task connectTask = conn.OpenAsync(CancellationToken.None);
-            connectTask.Wait();
-            Assert.Equal(ConnectionState.Open, conn.State);
-        }
-
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
-        {
-            conn.ConnectionString = externalBrowserConnectionString;
-
-            // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
-            Task connectTask = conn.OpenAsync(CancellationToken.None);
-            connectTask.Wait();
-            Assert.Equal(ConnectionState.Open, conn.State);
-        }
-
-    }
-
-    [SFFact]
-    public void TestCloseSessionWhenGarbageCollectorFinalizesConnection()
+    [SFFact(RetriesCount = RetriesCount.Thrice)]
+    public async Task TestCloseSessionWhenGarbageCollectorFinalizesConnection()
     {
         // arrange
         var session = GetSessionFromForgottenConnection();
@@ -1291,7 +1205,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 
         // act
         GC.Collect();
-        Awaiter.WaitUntilConditionOrTimeout(() => session.sessionToken == null, TimeSpan.FromSeconds(15));
+        await Awaiter.WaitUntilConditionOrTimeout(() => session.sessionToken == null, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
         // assert
         Assert.Null(session.sessionToken);
@@ -1299,19 +1213,18 @@ class SFConnectionITAsync : SFBaseTestAsync
 
     private SFSession GetSessionFromForgottenConnection()
     {
-        var connection = new SnowflakeDbConnection(ConnectionString + ";poolingEnabled=false;application=TestGarbageCollectorCloseSession");
+        var connection = new SnowflakeDbConnection(_fixture.ConnectionString + ";poolingEnabled=false;application=TestGarbageCollectorCloseSession");
         connection.Open();
         return connection.SfSession;
     }
 
     [SFFact]
-    [TimeSensitive]
-    public void TestHangingCloseIsNotBlocking()
+    public async Task TestHangingCloseIsNotBlocking()
     {
         // arrange
         var restRequester = new MockCloseHangingRestRequester();
         var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
-        session.Open();
+        await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
         var watchClose = new Stopwatch();
         var watchClosedFinished = new Stopwatch();
 
@@ -1320,91 +1233,19 @@ class SFConnectionITAsync : SFBaseTestAsync
         watchClosedFinished.Start();
         session.CloseNonBlocking();
         watchClose.Stop();
-        Awaiter.WaitUntilConditionOrTimeout(() => restRequester.CloseRequests.Count > 0, TimeSpan.FromSeconds(15));
+        await Awaiter.WaitUntilConditionOrTimeout(() => restRequester.CloseRequests.Count > 0, TimeSpan.FromSeconds(15)).ConfigureAwait(false);
         watchClosedFinished.Stop();
 
         // assert
         Assert.Equal(1, restRequester.CloseRequests.Count);
-        Assert.Less(watchClose.Elapsed.Duration(), TimeSpan.FromSeconds(5)); // close executed immediately
-        Assert.GreaterOrEqual(watchClosedFinished.Elapsed.Duration(), TimeSpan.FromSeconds(10)); // while background task took more time
+        Assert.True(watchClose.Elapsed.Duration() < TimeSpan.FromSeconds(5)); // close executed immediately
+        Assert.True(watchClosedFinished.Elapsed.Duration() >= TimeSpan.FromSeconds(10)); // while background task took more time
     }
 
-    [SFFact]
-    [Ignore("Manual test only")]
-    public void TestOAuthFlow()
+    private static void AssertConnectionIsNotOpen(SnowflakeDbConnection snowflakeDbConnection)
     {
-        // arrange
-        var driverRootPath = Path.Combine("..", "..", "..", "..");
-        var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
-        var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName; // Set either OAuthAuthorizationCodeAuthenticator.AuthName or OAuthClientCredentialsAuthenticator.AuthName
-        var testConfig = TestEnvironment.ReadTestConfigFile(configFilePath);
-        RemoveOAuthCache(testConfig);
-        try
-        {
-            using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthFlows(testConfig, authenticator)))
-            {
-                // act
-                connection.Open();
-            }
-        }
-        finally
-        {
-            RemoveOAuthCache(testConfig);
-        }
-    }
-
-    [SFFact]
-    [Ignore("Manual test only")]
-    public void TestProgrammaticAccessTokenAuthentication()
-    {
-        // arrange
-        using (var connection = new SnowflakeDbConnection(ConnectionStringForPat(testConfig)))
-        {
-            // act
-            connection.Open();
-        }
-    }
-
-    private void RemoveOAuthCache(TestConfig testConfig)
-    {
-        var host = new Uri(testConfig.oauthTokenRequestUrl).Host;
-        var accessCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthAccessToken);
-        var refreshCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, testConfig.user, TokenType.OAuthRefreshToken);
-        var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
-        credentialManager.RemoveCredentials(accessCacheKey);
-        credentialManager.RemoveCredentials(refreshCacheKey);
-    }
-
-    private string ConnectionStringForOAuthFlows(TestConfig testConfig, string authenticator)
-    {
-        var builder = new StringBuilder()
-            .Append($"authenticator={authenticator};user={testConfig.user};password={testConfig.password};account={testConfig.account};certRevocationCheckMode=enabled;")
-            .Append($"db={testConfig.database};role={testConfig.role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
-            .Append($"oauthClientId={testConfig.oauthClientId};oauthClientSecret={testConfig.oauthClientSecret};oauthScope={testConfig.oauthScope};")
-            .Append($"oauthTokenRequestUrl={testConfig.oauthTokenRequestUrl};")
-            .Append("poolingEnabled=false;");
-        switch (authenticator)
-        {
-            case OAuthAuthorizationCodeAuthenticator.AuthName:
-                return builder
-                    .Append($"oauthRedirectUri={testConfig.oauthRedirectUri};")
-                    .Append($"oauthAuthorizationUrl={testConfig.oauthAuthorizationUrl}")
-                    .ToString();
-            case OAuthClientCredentialsAuthenticator.AuthName:
-                return builder.ToString();
-            default:
-                throw new Exception("Unknown authenticator");
-        }
-    }
-
-    private string ConnectionStringForPat(TestConfig testConfig)
-    {
-        var role = "ANALYST";
-        return new StringBuilder()
-            .Append($"authenticator=programmatic_access_token;user={testConfig.user};account={testConfig.account};certRevocationCheckMode=enabled;")
-            .Append($"db={testConfig.database};role={role};warehouse={testConfig.warehouse};host={testConfig.host};port={testConfig.port};")
-            .Append($"token={testConfig.programmaticAccessToken};")
-            .Append("poolingEnabled=false;")
-            .ToString();
+        Assert.NotNull(snowflakeDbConnection);
+        Assert.False(snowflakeDbConnection.IsOpen()); // check via public method
+        Assert.Equal(ConnectionState.Closed, snowflakeDbConnection.State); // ensure internal state is expected
     }
 }

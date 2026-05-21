@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 try
                 {
                     SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                    _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" });
+                    await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" });
 
                     IDbCommand cmd = conn.CreateCommand();
                     var rowCount = 0;
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     await conn.OpenAsync(CancellationToken.None);
 
                     SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                    _fixture.CreateOrReplaceTable(conn, tableName, new[] { "src VARIANT" });
+                    await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "src VARIANT" });
 
                     var cmd = conn.CreateCommand();
                     var rowCount = 0;
@@ -163,7 +163,7 @@ select parse_json('{{
                 {
                     ChunkParserFactory.Instance = testFactory;
                     SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                    _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" });
+                    await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" });
 
                     var cmd = conn.CreateCommand();
                     var rowCount = 0;
@@ -225,7 +225,7 @@ select parse_json('{{
                     try
                     {
                         SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                        _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" });
+                        await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" });
 
                         var cmd = conn.CreateCommand();
                         var rowCount = 0;

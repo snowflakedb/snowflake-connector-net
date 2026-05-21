@@ -256,7 +256,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await SetResultFormat(conn);
 
                 var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-                _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[] { "col_decfloat DECFLOAT" });
+                await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[] { "col_decfloat DECFLOAT" });
 
                 using (var cmd = conn.CreateCommand())
                 {

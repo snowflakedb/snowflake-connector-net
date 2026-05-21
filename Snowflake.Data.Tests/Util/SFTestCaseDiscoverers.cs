@@ -11,7 +11,6 @@ namespace Snowflake.Data.Tests.Util;
 using System.Threading.Tasks;
 using Xunit.v3;
 
-// TODO polish
 public sealed class SFTestCaseDiscovererV3 : IXunitTestCaseDiscoverer
 {
     public ValueTask<IReadOnlyCollection<IXunitTestCase>> Discover(ITestFrameworkDiscoveryOptions discoveryOptions, IXunitTestMethod testMethod, IFactAttribute factAttribute)

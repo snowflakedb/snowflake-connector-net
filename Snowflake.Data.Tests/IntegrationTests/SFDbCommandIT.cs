@@ -1,240 +1,26 @@
+using System;
 using System.Data;
 using System.Data.Common;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using Snowflake.Data.Core;
-using System.Linq;
-using System.IO;
-using Xunit;
 using Snowflake.Data.Client;
-using Snowflake.Data.Telemetry;
-using Snowflake.Data.Tests.Mock;
+using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Xunit;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
-    class SFDbCommandIT : SFBaseTest
+    public sealed class SFDbCommandIT : SFBaseTestAsync
     {
-        [SFFact]
-        public void TestExecAsyncAPI()
-        {
-            using (DbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
-
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
-                Assert.Equal(ConnectionState.Open, conn.State);
-
-                using (DbCommand cmd = conn.CreateCommand())
-                {
-                    long queryResult = 0;
-                    cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 3)) v";
-                    Task<DbDataReader> execution = cmd.ExecuteReaderAsync();
-                    Task readCallback = execution.ContinueWith((t) =>
-                    {
-                        using (DbDataReader reader = t.Result)
-                        {
-                            Assert.True(reader.Read());
-                            queryResult = reader.GetInt64(0);
-                            Assert.False(reader.Read());
-                        }
-                    });
-                    // query is not finished yet, result is still 0;
-                    Assert.Equal(0, queryResult);
-                    // block till query finished
-                    readCallback.Wait();
-                    // queryResult should be updated by callback
-                    Assert.NotEqual(0, queryResult);
-                }
-
-                conn.Close();
-            }
-        }
-
-        [SFFact]
-        public void TestExecAsyncAPIParallel()
-        {
-            using (DbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
-
-                Task connectTask = conn.OpenAsync(CancellationToken.None);
-                connectTask.Wait();
-                Assert.Equal(ConnectionState.Open, conn.State);
-
-                Task[] taskArray = new Task[5];
-                for (int i = 0; i < taskArray.Length; i++)
-                {
-                    taskArray[i] = Task.Factory.StartNew(() =>
-                    {
-                        using (DbCommand cmd = conn.CreateCommand())
-                        {
-                            long queryResult = 0;
-                            cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 3)) v";
-                            Task<DbDataReader> execution = cmd.ExecuteReaderAsync();
-                            Task readCallback = execution.ContinueWith((t) =>
-                            {
-                                using (DbDataReader reader = t.Result)
-                                {
-                                    Assert.True(reader.Read());
-                                    queryResult = reader.GetInt64(0);
-                                    Assert.False(reader.Read());
-                                }
-                            });
-                            // query is not finished yet, result is still 0;
-                            Assert.Equal(0, queryResult);
-                            // block till query finished
-                            readCallback.Wait();
-                            // queryResult should be updated by callback
-                            Assert.NotEqual(0, queryResult);
-                        }
-                    });
-                }
-
-                Task.WaitAll(taskArray);
-                conn.Close();
-            }
-        }
-
-        [SFFact]
-        public async Task TestGetStatusOfInvalidQueryIdAsync()
-        {
-            string fakeQueryId = "fakeQueryId";
-
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Act
-                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
-                        await cmd.GetQueryStatusAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
-
-                    // Assert
-                    Assert.True(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
-                }
-
-                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-        }
-
-        [SFFact]
-        public async Task TestGetResultsOfInvalidQueryIdAsync()
-        {
-            string fakeQueryId = "fakeQueryId";
-
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Act
-                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
-                        await cmd.GetResultsFromQueryIdAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
-
-                    // Assert
-                    Assert.True(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
-                }
-
-                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-        }
-
-        [Test, NonParallelizable]
-        public async Task TestGetStatusOfUnknownQueryIdAsync()
-        {
-            string unknownQueryId = "ba321edc-1abc-123e-987f-1234a56b789c";
-
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Act
-                    var queryStatus = await cmd.GetQueryStatusAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false);
-
-                    // Assert
-                    Assert.Equal(QueryStatus.NoData, queryStatus);
-                }
-
-                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-        }
-
-        [SFFact]
-        [Ignore("The test takes too long to finish when using the default retry")]
-        public async Task TestGetResultsOfUnknownQueryIdAsyncWithDefaultRetry()
-        {
-            string unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
-
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Act
-                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
-                        await cmd.GetResultsFromQueryIdAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false));
-
-                    // Assert
-                    Assert.True(thrown.Message.Contains($"Max retry for no data is reached"));
-                }
-
-                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-        }
-
-        [SFFact]
-        public async Task TestGetResultsOfUnknownQueryIdAsyncWithConfiguredRetry()
-        {
-            var queryResultsRetryCount = 3;
-            var queryResultsRetryPattern = new int[] { 1, 2 };
-            var unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
-
-            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-
-                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
-                {
-                    // Arrange
-                    QueryResultsAwaiter queryResultsAwaiter =
-                        new QueryResultsAwaiter(new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern));
-
-                    // Act
-                    var thrown = Assert.ThrowsAsync<Exception>(async () =>
-                        await queryResultsAwaiter.RetryUntilQueryResultIsAvailable(conn, unknownQueryId, CancellationToken.None, true)
-                            .ConfigureAwait(false));
-
-                    // Assert
-                    Assert.True(thrown.Message.Contains($"Max retry for no data is reached"));
-                }
-
-                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-        }
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFDbCommandIT(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
 
         [SFFact]
         public void TestDataSourceError()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
 
                 conn.Open();
 
@@ -255,97 +41,244 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
-        [TimeSensitive]
-        public async Task TestCancelQuery()
+        [Collection(nameof(SfDbCommandIsolatedFixture))]
+        public sealed class Isolated : SFBaseTestAsync
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            private readonly SFBaseTestAsyncFixture _isolatedFixture;
+
+            [CollectionDefinition(nameof(SfDbCommandIsolatedFixture), DisableParallelization = true)]
+            public sealed class SfDbCommandIsolatedFixture : ICollectionFixture<SfDbCommandIsolatedFixture>
             {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
+            }
 
-                conn.Open();
+            public Isolated(SFBaseTestAsyncFixture fixture) : base(fixture)
+            {
+                _isolatedFixture = fixture;
+            }
 
-                IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
-                Task executionThread = Task.Run(() =>
+            [SFFact]
+            public async Task TestCancelQuery()
+            {
+                using (IDbConnection conn = new SnowflakeDbConnection())
                 {
+                    conn.ConnectionString = _isolatedFixture.ConnectionString + "poolingEnabled=false";
+
+                    conn.Open();
+
+                    IDbCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
+                    Task executionThread = Task.Run(() =>
+                    {
+                        try
+                        {
+                            cmd.ExecuteScalar();
+                            Assert.Fail();
+                        }
+                        catch (SnowflakeDbException e)
+                        {
+                            // 604 is error code from server meaning query has been canceled
+                            if (604 != e.ErrorCode)
+                            {
+                                Assert.Fail($"Unexpected error code {e.ErrorCode} for {e.Message}");
+                            }
+                        }
+                    });
+
+                    await Task.Delay(8000);
+                    cmd.Cancel();
+
                     try
                     {
-                        cmd.ExecuteScalar();
-                        Assert.Fail();
+                        executionThread.Wait();
                     }
-                    catch (SnowflakeDbException e)
+                    catch (AggregateException e)
                     {
-                        // 604 is error code from server meaning query has been canceled
-                        if (604 != e.ErrorCode)
-                        {
-                            Assert.Fail($"Unexpected error code {e.ErrorCode} for {e.Message}");
-                        }
+                        Assert.IsAssignableFrom<TaskCanceledException>(e.InnerException);
                     }
-                });
 
-                await Task.Delay(8000);
-                cmd.Cancel();
-
-                try
-                {
-                    executionThread.Wait();
+                    conn.Close();
                 }
-                catch (AggregateException e)
-                {
-                    if (e.InnerException.GetType() != typeof(NUnit.Framework.AssertionException))
-                    {
-                        Assert.Equal(
-                        "System.Threading.Tasks.TaskCanceledException",
-                        e.InnerException.GetType().ToString());
-                    }
-                    else
-                    {
-                        // Unexpected exception
-                        throw;
-                    }
-                }
-
-                conn.Close();
             }
         }
 
         [SFFact]
-        [Ignore("This test case takes too much time so run it manually")]
-        public void TestQueryTimeout()
+        public async Task TestExecAPI()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString + "poolingEnabled=false";
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
 
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None);
+                Assert.Equal(ConnectionState.Open, conn.State);
 
-                IDbCommand cmd = conn.CreateCommand();
-                // timelimit = 17min
-                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 1020)) v";
-                // timeout = 16min - Using a timeout > default Rest timeout of 15min
-                cmd.CommandTimeout = 16 * 60;
-
-                try
+                using (DbCommand cmd = conn.CreateCommand())
                 {
-                    Stopwatch stopwatch = Stopwatch.StartNew();
-                    cmd.ExecuteScalar();
-                    stopwatch.Stop();
-                    //Should timeout before the query time limit of 17min
-                    Assert.Less(stopwatch.ElapsedMilliseconds, 17 * 60 * 1000);
-                    // Should timeout after the defined query timeout of 16min
-                    Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 16 * 60 * 1000);
-                    Assert.Fail();
-                }
-                catch (SnowflakeDbException e)
-                {
-                    // 604 is error code from server meaning query has been canceled
-                    Assert.Equal(e.ErrorCode, 604);
+                    long queryResult = 0;
+                    cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 3)) v";
+                    using var reader = cmd.ExecuteReader();
+                    Assert.True(reader.Read());
+                    queryResult = reader.GetInt64(0);
+                    Assert.False(reader.Read());
+                    Assert.NotEqual(0, queryResult);
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
+        }
 
+        [SFFact]
+        public async Task TestExecParallelAPI()
+        {
+            using (DbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
+
+                Task connectTask = conn.OpenAsync(CancellationToken.None);
+                connectTask.Wait();
+                Assert.Equal(ConnectionState.Open, conn.State);
+
+                Task[] taskArray = new Task[5];
+                for (int i = 0; i < taskArray.Length; i++)
+                {
+                    taskArray[i] = Task.Factory.StartNew(() =>
+                    {
+                        using (DbCommand cmd = conn.CreateCommand())
+                        {
+                            long queryResult = 0;
+                            cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 3)) v";
+                            using var reader = cmd.ExecuteReader();
+                            Assert.True(reader.Read());
+                            queryResult = reader.GetInt64(0);
+                            Assert.False(reader.Read());
+                            Assert.NotEqual(0, queryResult);
+                        }
+                    });
+                }
+                Task.WaitAll(taskArray);
+                await conn.CloseAsync();
+            }
+        }
+
+        [SFFact]
+        public async Task TestGetStatusOfInvalidQueryId()
+        {
+            string fakeQueryId = "fakeQueryId";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
+                await conn.OpenAsync(CancellationToken.None);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.Throws<Exception>(() => cmd.GetQueryStatus(fakeQueryId));
+
+                    // Assert
+                    Assert.True(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None);
+            }
+        }
+
+        [SFFact]
+        public async Task TestGetResultsOfInvalidQueryId()
+        {
+            string fakeQueryId = "fakeQueryId";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
+                await conn.OpenAsync(CancellationToken.None);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(fakeQueryId));
+
+                    // Assert
+                    Assert.True(thrown.InnerException.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None);
+            }
+        }
+
+        [SFFact]
+        public async Task TestGetStatusOfUnknownQueryId()
+        {
+            string unknownQueryId = "ab123cde-1cba-789a-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
+                await conn.OpenAsync(CancellationToken.None);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var queryStatus = cmd.GetQueryStatus(unknownQueryId);
+
+                    // Assert
+                    Assert.Equal(QueryStatus.NoData, queryStatus);
+                }
+
+                await conn.CloseAsync(CancellationToken.None);
+            }
+        }
+
+        [Fact(Skip = "The test takes too long to finish when using the default retry")]
+        public async Task TestGetResultsOfUnknownQueryIdWithDefaultRetry()
+        {
+            string unknownQueryId = "ba987def-1abc-987f-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
+                await conn.OpenAsync(CancellationToken.None);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Act
+                    var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(unknownQueryId));
+
+                    // Assert
+                    Assert.True(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None);
+            }
+        }
+
+        [SFFact]
+        public async Task TestGetResultsOfUnknownQueryIdWithConfiguredRetry()
+        {
+            var queryResultsRetryCount = 3;
+            var queryResultsRetryPattern = new int[] { 1, 2 };
+            var unknownQueryId = "ba987def-1abc-987f-987f-1234a56b789c";
+
+            using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
+                await conn.OpenAsync(CancellationToken.None);
+
+                using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+                {
+                    // Arrange
+                    QueryResultsAwaiter queryResultsAwaiter =
+                        new QueryResultsAwaiter(new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern));
+                    var task = queryResultsAwaiter.RetryUntilQueryResultIsAvailable(conn, unknownQueryId, CancellationToken.None, false);
+
+                    // Act
+                    var thrown = Assert.Throws<AggregateException>(() => task.Wait());
+
+                    // Assert
+                    Assert.True(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
+                }
+
+                await conn.CloseAsync(CancellationToken.None);
+            }
         }
     }
 }
