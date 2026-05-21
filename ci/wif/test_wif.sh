@@ -4,4 +4,5 @@ set -o pipefail
 
 export SF_ENABLE_EXPERIMENTAL_AUTHENTICATION=true
 
-dotnet test --framework net9.0 -p:TargetFrameworks=net9.0 -l "console;verbosity=info" --filter FullyQualifiedName~WIFTests
+cd Snowflake.Data.Tests
+dotnet run --framework net9.0 -namespace "Snowflake.Data.WIFTests"
