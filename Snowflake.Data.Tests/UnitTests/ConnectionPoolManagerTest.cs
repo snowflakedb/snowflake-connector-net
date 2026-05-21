@@ -211,8 +211,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("authenticator=externalbrowser;account=test;user=test;")]
-        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key")]
+        [InlineData("authenticator=externalbrowser;account=test;user=test;")]
+        [InlineData("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key")]
         public void TestDisabledPoolingWhenSecretesProvidedExternally(string connectionString)
         {
             // act
@@ -333,8 +333,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(null)]
-        [TestCase("")]
+        [InlineData(null)]
+        [InlineData("")]
         public void TestGetPoolFailsWhenNoPasswordProvided(string password)
         {
             // arrange

@@ -353,8 +353,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(20)]
-        [TestCase(28)]
+        [InlineData(20)]
+        [InlineData(28)]
         public void TestExtractCellReturnsDecimal128WithHighScale(int scale)
         {
             var testValues = new decimal[] { 0m, 1.23m, -1.23m };
@@ -377,9 +377,9 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(10)]
-        [TestCase(12)]
-        [TestCase(18)]
+        [InlineData(10)]
+        [InlineData(12)]
+        [InlineData(18)]
         public void TestExtractCellReturnsNumber64WithScaleAbove9(int scale)
         {
             var testValues = new long[] { 0, 123456789012345L, -123456789012345L };

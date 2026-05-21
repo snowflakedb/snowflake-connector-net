@@ -53,8 +53,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [SFFact]
-        [TestCase(1000, 1000)]
-        [TestCase(1000, 2000)]
+        [InlineData(1000, 1000)]
+        [InlineData(1000, 2000)]
         public void TestInfiniteTimeoutDoesNotExpire(long startedAtMillis, long nowMillis)
         {
             // act
@@ -65,11 +65,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [SFFact]
-        [TestCase(1000, 1000, 0, true)]
-        [TestCase(1000, 2000, 0, true)]
-        [TestCase(1000, 1100, 100, true)]
-        [TestCase(1000, 1099, 100, false)]
-        [TestCase(1000, 2000, 100, true)]
+        [InlineData(1000, 1000, 0, true)]
+        [InlineData(1000, 2000, 0, true)]
+        [InlineData(1000, 1100, 100, true)]
+        [InlineData(1000, 1099, 100, false)]
+        [InlineData(1000, 2000, 100, true)]
         public void TestExpiredTimeout(long startedAtMillis, long nowMillis, long timeoutMillis, bool expectedIsExpired)
         {
             // arrange
@@ -93,11 +93,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [SFFact]
-        [TestCase(0, 0, true)]
-        [TestCase(1000, 0, true)]
-        [TestCase(100, 100, true)]
-        [TestCase(99, 100, false)]
-        [TestCase(1000, 100, true)]
+        [InlineData(0, 0, true)]
+        [InlineData(1000, 0, true)]
+        [InlineData(100, 100, true)]
+        [InlineData(99, 100, false)]
+        [InlineData(1000, 100, true)]
         public void TestExpiredTimeoutByDuration(long durationMillis, long timeoutMillis, bool expectedIsExpired)
         {
             // arrange
@@ -123,10 +123,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
 
         [SFFact]
-        [TestCase(1000, 1000, 0, 0)]
-        [TestCase(1000, 2000, 0, 0)]
-        [TestCase(1000, 1100, 100, 0)]
-        [TestCase(1000, 1095, 100, 5)]
+        [InlineData(1000, 1000, 0, 0)]
+        [InlineData(1000, 2000, 0, 0)]
+        [InlineData(1000, 1100, 100, 0)]
+        [InlineData(1000, 1095, 100, 5)]
         public void TestFiniteTimeoutLeft(long startedAtMillis, long nowMillis, long timeoutMillis, long expectedMillisLeft)
         {
             // arrange

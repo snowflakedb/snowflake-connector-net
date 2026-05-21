@@ -27,8 +27,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser
         }
 
         [SFFact]
-        [TestCase("file:///home/user/index.html")]
-        [TestCase("http://localhost:8001/endpoint!")]
+        [InlineData("file:///home/user/index.html")]
+        [InlineData("http://localhost:8001/endpoint!")]
         public void TestValidateUrl(string invalidUrl)
         {
             // arrange

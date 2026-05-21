@@ -22,12 +22,12 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(0)]
-        [TestCase(200000)]
-        [TestCase(390112)]
-        [TestCase(333335)]
-        [TestCase(333332)]
-        [TestCase(-1)]
+        [InlineData(0)]
+        [InlineData(200000)]
+        [InlineData(390112)]
+        [InlineData(333335)]
+        [InlineData(333332)]
+        [InlineData(-1)]
         public void TestRequestInProgressReturnsFalseForOtherCodes(int code)
         {
             var response = new NullDataResponse { code = code };
@@ -42,13 +42,13 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(0)]
-        [TestCase(200000)]
-        [TestCase(333333)]
-        [TestCase(333334)]
-        [TestCase(390111)]
-        [TestCase(390113)]
-        [TestCase(-1)]
+        [InlineData(0)]
+        [InlineData(200000)]
+        [InlineData(333333)]
+        [InlineData(333334)]
+        [InlineData(390111)]
+        [InlineData(390113)]
+        [InlineData(-1)]
         public void TestSessionExpiredReturnsFalseForOtherCodes(int code)
         {
             var response = new NullDataResponse { code = code };
@@ -63,13 +63,13 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(0)]
-        [TestCase(200000)]
-        [TestCase(333333)]
-        [TestCase(333334)]
-        [TestCase(390110)]
-        [TestCase(390112)]
-        [TestCase(-1)]
+        [InlineData(0)]
+        [InlineData(200000)]
+        [InlineData(333333)]
+        [InlineData(333334)]
+        [InlineData(390110)]
+        [InlineData(390112)]
+        [InlineData(-1)]
         public void TestSessionNoLongerExistsReturnsFalseForOtherCodes(int code)
         {
             var response = new NullDataResponse { code = code };

@@ -96,14 +96,14 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        [TestCase(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
-        [TestCase(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
-        [TestCase(HttpStatusCode.Forbidden, ResultStatus.ERROR)]  // Any error that isn't the above will return ResultStatus.ERROR
-        [TestCase(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
-        [TestCase(HttpStatusCode.RequestTimeout, ResultStatus.ERROR)]
-        [TestCase(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
-        [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
+        [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
+        [InlineData(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
+        [InlineData(HttpStatusCode.Forbidden, ResultStatus.ERROR)]  // Any error that isn't the above will return ResultStatus.ERROR
+        [InlineData(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.RequestTimeout, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, ResultStatus.ERROR)]
         public void TestGetFileHeader(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -135,10 +135,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        [TestCase(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
-        [TestCase(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
-        [TestCase(HttpStatusCode.Forbidden, ResultStatus.ERROR)]  // Any error that isn't the above will return ResultStatus.ERROR
+        [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
+        [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
+        [InlineData(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
+        [InlineData(HttpStatusCode.Forbidden, ResultStatus.ERROR)]  // Any error that isn't the above will return ResultStatus.ERROR
         public async Task TestGetFileHeaderAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -187,14 +187,14 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        [TestCase(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
-        [TestCase(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
-        [TestCase(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
+        [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
+        [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
+        [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
         public void TestUploadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -233,15 +233,15 @@ namespace Snowflake.Data.Tests.UnitTests
 
 
         [SFFact]
-        [TestCase(HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        [TestCase(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
-        [TestCase(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
-        [TestCase(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
-        [TestCase(HttpStatusCode.TemporaryRedirect, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.OK, ResultStatus.UPLOADED)]
+        [InlineData(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
+        [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
+        [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.TemporaryRedirect, ResultStatus.ERROR)]
         public async Task TestUploadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -290,14 +290,14 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
-        [TestCase(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
-        [TestCase(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
-        [TestCase(HttpStatusCode.NotFound, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
+        [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
+        [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.NotFound, ResultStatus.ERROR)]
         public void TestDownloadFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -340,14 +340,14 @@ namespace Snowflake.Data.Tests.UnitTests
 
 
         [SFFact]
-        [TestCase(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
-        [TestCase(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
-        [TestCase(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
-        [TestCase(HttpStatusCode.RequestTimeout, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
+        [InlineData(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
+        [InlineData(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
+        [InlineData(HttpStatusCode.BadGateway, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.GatewayTimeout, ResultStatus.ERROR)]
+        [InlineData(HttpStatusCode.RequestTimeout, ResultStatus.ERROR)]
         public async Task TestDownloadFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange

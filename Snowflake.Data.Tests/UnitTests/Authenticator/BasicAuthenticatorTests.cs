@@ -7,9 +7,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     public class BasicAuthenticatorTests
     {
         [SFFact]
-        [TestCase("snowflake", true)]
-        [TestCase("SNOWFLAKE", true)]
-        [TestCase("username_password_mfa", false)]
+        [InlineData("snowflake", true)]
+        [InlineData("SNOWFLAKE", true)]
+        [InlineData("username_password_mfa", false)]
         public void TestRecognizeBasicAuthenticator(string authenticator, bool expectedResult)
         {
             // act

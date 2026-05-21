@@ -71,14 +71,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443", "somePassword", "someSecret", "someToken", " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key=SomePrivateKey;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;token=someToken;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key_pwd=somePrivateKeyPwd;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;proxyPassword=someProxyPassword;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("ACCOUNT=someAccount;DB=someDb;HOST=someHost;PASSWORD=somePassword;passcode=123;USER=SomeUser;PORT=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("ACCOUNT=\"someAccount\";DB=\"someDb\";HOST=\"someHost\";PASSWORD=\"somePassword\";PASSCODE=\"123\";USER=\"SomeUser\";PORT=\"443\"", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443", "somePassword", "someSecret", "someToken", " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key=SomePrivateKey;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;token=someToken;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key_pwd=somePrivateKeyPwd;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;proxyPassword=someProxyPassword;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("ACCOUNT=someAccount;DB=someDb;HOST=someHost;PASSWORD=somePassword;passcode=123;USER=SomeUser;PORT=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("ACCOUNT=\"someAccount\";DB=\"someDb\";HOST=\"someHost\";PASSWORD=\"somePassword\";PASSCODE=\"123\";USER=\"SomeUser\";PORT=\"443\"", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
         public void TestPoolIdentificationBasedOnConnectionString(string connectionString, string password, string clientSecret, string token, string expectedPoolIdentification)
         {
             // arrange
@@ -137,9 +137,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase("anyPassword")]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("anyPassword")]
         public void TestValidateValidSecurePassword(string password)
         {
             // arrange
@@ -151,9 +151,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase("anySecret")]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("anySecret")]
         public void TestValidateValidSecureClientCredentials(string oauthClientSecret)
         {
             // arrange
@@ -165,9 +165,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase("anySecret")]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("anySecret")]
         public void TestValidateValidSecureToken(string token)
         {
             // arrange
@@ -179,11 +179,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("somePassword", null)]
-        [TestCase("somePassword", "")]
-        [TestCase("somePassword", "anotherPassword")]
-        [TestCase("", "anotherPassword")]
-        [TestCase(null, "anotherPassword")]
+        [InlineData("somePassword", null)]
+        [InlineData("somePassword", "")]
+        [InlineData("somePassword", "anotherPassword")]
+        [InlineData("", "anotherPassword")]
+        [InlineData(null, "anotherPassword")]
         public void TestFailToValidateNotMatchingSecurePassword(string poolPassword, string notMatchingPassword)
         {
             // arrange
@@ -199,11 +199,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("someSecret", null)]
-        [TestCase("someSecret", "")]
-        [TestCase("someSecret", "anotherSecret")]
-        [TestCase("", "anotherSecret")]
-        [TestCase(null, "anotherSecret")]
+        [InlineData("someSecret", null)]
+        [InlineData("someSecret", "")]
+        [InlineData("someSecret", "anotherSecret")]
+        [InlineData("", "anotherSecret")]
+        [InlineData(null, "anotherSecret")]
         public void TestFailToValidateNotMatchingSecureClientCredentials(string poolOAuthClientSecret, string notMatchingOAuthClientSecret)
         {
             // arrange
@@ -219,11 +219,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("someToken", null)]
-        [TestCase("someToken", "")]
-        [TestCase("someToken", "anotherToken")]
-        [TestCase("", "anotherToken")]
-        [TestCase(null, "anotherToken")]
+        [InlineData("someToken", null)]
+        [InlineData("someToken", "")]
+        [InlineData("someToken", "anotherToken")]
+        [InlineData("", "anotherToken")]
+        [InlineData(null, "anotherToken")]
         public void TestFailToValidateNotMatchingSecureToken(string poolToken, string notMatchingToken)
         {
             // arrange
@@ -239,10 +239,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;", true)]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;", false)]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;", false)]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;", false)]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;", true)]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;", false)]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;", false)]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;", false)]
         public void TestConnectionPoolPoolingForOAuthAuthorizationCode(string connectionString, bool expectedPoolingEnabled)
         {
             // arrange
@@ -260,12 +260,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;")]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;")]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;")]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;")]
-        [TestCase("authenticator=oauth_client_credentials;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;oauthTokenRequestUrl=https://okta.com/token-request;")]
-        [TestCase("authenticator=programmatic_access_token;account=test;token=patToken")]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;")]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;")]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;")]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;")]
+        [InlineData("authenticator=oauth_client_credentials;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;oauthTokenRequestUrl=https://okta.com/token-request;")]
+        [InlineData("authenticator=programmatic_access_token;account=test;token=patToken")]
         public void TestConnectionCachePoolingDisabledForNewAuthenticators(string connectionString)
         {
             // arrange

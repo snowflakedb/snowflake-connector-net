@@ -117,10 +117,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        [TestCase("NUMBER(18,10)")]
-        [TestCase("NUMBER(18,12)")]
-        [TestCase("NUMBER(38,20)")]
-        [TestCase("NUMBER(38,28)")]
+        [InlineData("NUMBER(18,10)")]
+        [InlineData("NUMBER(18,12)")]
+        [InlineData("NUMBER(38,20)")]
+        [InlineData("NUMBER(38,28)")]
         public void TestGetNumberWithHighScale(string columnType)
         {
             using (var conn = CreateAndOpenConnection())
@@ -224,12 +224,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        [TestCase(null)]
-        [TestCase("9999-12-31 00:00:00.0000000")]
-        [TestCase("9999-12-30 00:00:00.0000000")]
-        [TestCase("1982-01-18 00:00:00.0000000")]
-        [TestCase("1969-07-21 00:00:00.0000000")]
-        [TestCase("1900-09-03 00:00:00.0000000")]
+        [InlineData(null)]
+        [InlineData("9999-12-31 00:00:00.0000000")]
+        [InlineData("9999-12-30 00:00:00.0000000")]
+        [InlineData("1982-01-18 00:00:00.0000000")]
+        [InlineData("1969-07-21 00:00:00.0000000")]
+        [InlineData("1900-09-03 00:00:00.0000000")]
         public void TestGetDate(string inputTimeStr)
         {
             TestGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
@@ -269,36 +269,36 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        [TestCase(null, null)]
-        [TestCase(null, 3)]
-        [TestCase("9999-12-31 23:59:59.9999999", null)]
-        [TestCase("9999-12-31 23:59:59.9999999", 5)]
-        [TestCase("1982-01-18 16:20:00.6666666", null)]
-        [TestCase("1982-01-18 16:20:00.6666666", 3)]
-        [TestCase("1969-07-21 02:56:15.1234567", null)]
-        [TestCase("1969-07-21 02:56:15.1234567", 1)]
-        [TestCase("1900-09-03 12:12:12.1212121", null)]
-        [TestCase("1900-09-03 12:12:12.1212121", 1)]
+        [InlineData(null, null)]
+        [InlineData(null, 3)]
+        [InlineData("9999-12-31 23:59:59.9999999", null)]
+        [InlineData("9999-12-31 23:59:59.9999999", 5)]
+        [InlineData("1982-01-18 16:20:00.6666666", null)]
+        [InlineData("1982-01-18 16:20:00.6666666", 3)]
+        [InlineData("1969-07-21 02:56:15.1234567", null)]
+        [InlineData("1969-07-21 02:56:15.1234567", 1)]
+        [InlineData("1900-09-03 12:12:12.1212121", null)]
+        [InlineData("1900-09-03 12:12:12.1212121", 1)]
         public void TestGetTime(string inputTimeStr, int? precision)
         {
             TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIME);
         }
 
         [SFFact]
-        [TestCase("11:22:33.4455667")]
-        [TestCase("23:59:59.9999999")]
-        [TestCase("16:20:00.6666666")]
-        [TestCase("00:00:00.0000000")]
-        [TestCase("00:00:00")]
-        [TestCase("23:59:59.1")]
-        [TestCase("23:59:59.12")]
-        [TestCase("23:59:59.123")]
-        [TestCase("23:59:59.1234")]
-        [TestCase("23:59:59.12345")]
-        [TestCase("23:59:59.123456")]
-        [TestCase("23:59:59.1234567")]
-        [TestCase("23:59:59.12345678")]
-        [TestCase("23:59:59.123456789")]
+        [InlineData("11:22:33.4455667")]
+        [InlineData("23:59:59.9999999")]
+        [InlineData("16:20:00.6666666")]
+        [InlineData("00:00:00.0000000")]
+        [InlineData("00:00:00")]
+        [InlineData("23:59:59.1")]
+        [InlineData("23:59:59.12")]
+        [InlineData("23:59:59.123")]
+        [InlineData("23:59:59.1234")]
+        [InlineData("23:59:59.12345")]
+        [InlineData("23:59:59.123456")]
+        [InlineData("23:59:59.1234567")]
+        [InlineData("23:59:59.12345678")]
+        [InlineData("23:59:59.123456789")]
         public void TestGetTimeSpan(string inputTimeStr)
         {
             using (var conn = CreateAndOpenConnection())
@@ -520,20 +520,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        [TestCase(null, null)]
-        [TestCase(null, 3)]
-        [TestCase("2100-12-31 23:59:59.9999999", null)]
-        [TestCase("2100-12-31 23:59:59.9999999", 5)]
-        [TestCase("9999-12-31 23:59:59.9999999", null)]
-        [TestCase("9999-12-31 23:59:59.9999999", 5)]
-        [TestCase("9999-12-30 23:59:59.9999999", null)]
-        [TestCase("9999-12-30 23:59:59.9999999", 5)]
-        [TestCase("1982-01-18 16:20:00.6666666", null)]
-        [TestCase("1982-01-18 16:20:00.6666666", 3)]
-        //[TestCase("1969-07-21 02:56:15.1234567", null)] //parsing fails with dates with second fractions before the unix epoch
-        [TestCase("1969-07-21 02:56:15.0000000", 1)] //dates w/o second fractions before the unix epoch are fine
-        //[TestCase("1900-09-03 12:12:12.1212121", null)] // fails
-        [TestCase("1900-09-03 12:12:12.0000000", 1)]
+        [InlineData(null, null)]
+        [InlineData(null, 3)]
+        [InlineData("2100-12-31 23:59:59.9999999", null)]
+        [InlineData("2100-12-31 23:59:59.9999999", 5)]
+        [InlineData("9999-12-31 23:59:59.9999999", null)]
+        [InlineData("9999-12-31 23:59:59.9999999", 5)]
+        [InlineData("9999-12-30 23:59:59.9999999", null)]
+        [InlineData("9999-12-30 23:59:59.9999999", 5)]
+        [InlineData("1982-01-18 16:20:00.6666666", null)]
+        [InlineData("1982-01-18 16:20:00.6666666", 3)]
+        //[InlineData("1969-07-21 02:56:15.1234567", null)] //parsing fails with dates with second fractions before the unix epoch
+        [InlineData("1969-07-21 02:56:15.0000000", 1)] //dates w/o second fractions before the unix epoch are fine
+        //[InlineData("1900-09-03 12:12:12.1212121", null)] // fails
+        [InlineData("1900-09-03 12:12:12.0000000", 1)]
         public void TestGetTimestampNTZ(string inputTimeStr, int? precision)
         {
             TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIMESTAMP_NTZ);
@@ -541,11 +541,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
 
         [SFFact]
-        [TestCase(0)]
-        [TestCase(5)]
-        [TestCase(-5)]
-        [TestCase(14)]
-        [TestCase(-14)]
+        [InlineData(0)]
+        [InlineData(5)]
+        [InlineData(-5)]
+        [InlineData(14)]
+        [InlineData(-14)]
         public void TestGetTimestampTZ(int timezoneOffsetInHours)
         {
             using (var conn = CreateAndOpenConnection())
@@ -1599,16 +1599,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        [TestCase("99")]                           // Int8
-        [TestCase("9.9")]                          // Int8 + scale
-        [TestCase("999")]                          // Int16
-        [TestCase("9.99")]                         // Int16 + scale
-        [TestCase("99999999")]                     // Int32
-        [TestCase("999999.99")]                    // Int32 + scale
-        [TestCase("99999999999")]                  // Int64
-        [TestCase("999999999.99")]                 // Int64 + scale
-        [TestCase("999999999999999999999999999")]  // Decimal
-        [TestCase("9999999999999999999999999.99")] // Decimal + scale
+        [InlineData("99")]                           // Int8
+        [InlineData("9.9")]                          // Int8 + scale
+        [InlineData("999")]                          // Int16
+        [InlineData("9.99")]                         // Int16 + scale
+        [InlineData("99999999")]                     // Int32
+        [InlineData("999999.99")]                    // Int32 + scale
+        [InlineData("99999999999")]                  // Int64
+        [InlineData("999999999.99")]                 // Int64 + scale
+        [InlineData("999999999999999999999999999")]  // Decimal
+        [InlineData("9999999999999999999999999.99")] // Decimal + scale
         public void TestNumericValues(string testValue)
         {
             using (var conn = CreateAndOpenConnection())
@@ -1651,12 +1651,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        [TestCase("2019-01-01 12:12:12.1234567 +0500", 7)]
-        [TestCase("2019-01-01 12:12:12.1234567 -0500", 7)]
-        [TestCase("2019-01-01 12:12:12.1234567 +1400", 7)]
-        [TestCase("2019-01-01 12:12:12.1234567 -1400", 7)]
-        [TestCase("0001-01-01 00:00:00.0000000 +0000", 9)]
-        [TestCase("9999-12-31 23:59:59.9999999 +0000", 9)]
+        [InlineData("2019-01-01 12:12:12.1234567 +0500", 7)]
+        [InlineData("2019-01-01 12:12:12.1234567 -0500", 7)]
+        [InlineData("2019-01-01 12:12:12.1234567 +1400", 7)]
+        [InlineData("2019-01-01 12:12:12.1234567 -1400", 7)]
+        [InlineData("0001-01-01 00:00:00.0000000 +0000", 9)]
+        [InlineData("9999-12-31 23:59:59.9999999 +0000", 9)]
         public void TestTimestampTz(string testValue, int scale)
         {
             using (var conn = CreateAndOpenConnection())
@@ -1680,12 +1680,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        [TestCase("2019-01-01 12:12:12.1234567 +0200", 7, "2019-01-01 02:12:12.1234567 -08:00")]
-        [TestCase("2019-01-01 12:12:12.1234567 +1400", 7, "2018-12-31 14:12:12.1234567 -08:00")]
-        [TestCase("1900-01-15 00:00:00.0000000 +0000", 9, "1900-01-14 16:00:00.0000000 -08:00")]
-        [TestCase("1883-11-19 00:00:00.0000000 +0000", 9, "1883-11-18 16:00:00.0000000 -08:00")]
-        [TestCase("9999-12-31 23:59:59.9999999 +0000", 9, "9999-12-31 15:59:59.9999999 -08:00")]
-        [TestCase("2019-01-01 12:12:12.1234567", 7, "2019-01-01 12:12:12.1234567 -08:00")]
+        [InlineData("2019-01-01 12:12:12.1234567 +0200", 7, "2019-01-01 02:12:12.1234567 -08:00")]
+        [InlineData("2019-01-01 12:12:12.1234567 +1400", 7, "2018-12-31 14:12:12.1234567 -08:00")]
+        [InlineData("1900-01-15 00:00:00.0000000 +0000", 9, "1900-01-14 16:00:00.0000000 -08:00")]
+        [InlineData("1883-11-19 00:00:00.0000000 +0000", 9, "1883-11-18 16:00:00.0000000 -08:00")]
+        [InlineData("9999-12-31 23:59:59.9999999 +0000", 9, "9999-12-31 15:59:59.9999999 -08:00")]
+        [InlineData("2019-01-01 12:12:12.1234567", 7, "2019-01-01 12:12:12.1234567 -08:00")]
         public void TestTimestampLtz(string testValue, int scale, string expectedValue)
         {
             using (var conn = CreateAndOpenConnectionWithHonorSessionTimezone())
@@ -1712,9 +1712,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        [TestCase("2019-01-01 12:12:12.1234567", 7)]
-        [TestCase("0001-01-01 00:00:00.0000000", 9)]
-        [TestCase("9999-12-31 23:59:59.9999999", 9)]
+        [InlineData("2019-01-01 12:12:12.1234567", 7)]
+        [InlineData("0001-01-01 00:00:00.0000000", 9)]
+        [InlineData("9999-12-31 23:59:59.9999999", 9)]
         public void TestTimestampNtz(string testValue, int scale)
         {
             using (var conn = CreateAndOpenConnection())
@@ -1738,9 +1738,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        [TestCase("array")]
-        [TestCase("object")]
-        [TestCase("variant")]
+        [InlineData("array")]
+        [InlineData("object")]
+        [InlineData("variant")]
         public void TestDataTableLoadOnSemiStructuredColumn(string type)
         {
             using (var conn = CreateAndOpenConnection())

@@ -89,9 +89,9 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(null)]
-        [TestCase("/some-path/config.json")]
-        [TestCase("C:\\some-path\\config.json")]
+        [InlineData(null)]
+        [InlineData("/some-path/config.json")]
+        [InlineData("C:\\some-path\\config.json")]
         public void TestThatConfiguresEasyLogging(string configPath)
         {
             // arrange
@@ -164,19 +164,19 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(null, "accountDefault", "accountDefault", false)]
-        [TestCase("initial", "initial", "initial", false)]
-        [TestCase("initial", null, "initial", false)]
-        [TestCase("initial", "IniTiaL", "initial", false)]
-        [TestCase("initial", "final", "final", true)]
-        [TestCase("initial", "\\\"final\\\"", "\"final\"", true)]
-        [TestCase("initial", "\\\"Final\\\"", "\"Final\"", true)]
-        [TestCase("\"Ini\\t\"ial\"", "\\\"Ini\\t\"ial\\\"", "\"Ini\\t\"ial\"", false)]
-        [TestCase("\"initial\"", "initial", "initial", true)]
-        [TestCase("\"initial\"", "\\\"initial\\\"", "\"initial\"", false)]
-        [TestCase("init\"ial", "init\"ial", "init\"ial", false)]
-        [TestCase("\"init\"ial\"", "\\\"init\"ial\\\"", "\"init\"ial\"", false)]
-        [TestCase("\"init\"ial\"", "\\\"Init\"ial\\\"", "\"Init\"ial\"", true)]
+        [InlineData(null, "accountDefault", "accountDefault", false)]
+        [InlineData("initial", "initial", "initial", false)]
+        [InlineData("initial", null, "initial", false)]
+        [InlineData("initial", "IniTiaL", "initial", false)]
+        [InlineData("initial", "final", "final", true)]
+        [InlineData("initial", "\\\"final\\\"", "\"final\"", true)]
+        [InlineData("initial", "\\\"Final\\\"", "\"Final\"", true)]
+        [InlineData("\"Ini\\t\"ial\"", "\\\"Ini\\t\"ial\\\"", "\"Ini\\t\"ial\"", false)]
+        [InlineData("\"initial\"", "initial", "initial", true)]
+        [InlineData("\"initial\"", "\\\"initial\\\"", "\"initial\"", false)]
+        [InlineData("init\"ial", "init\"ial", "init\"ial", false)]
+        [InlineData("\"init\"ial\"", "\\\"init\"ial\\\"", "\"init\"ial\"", false)]
+        [InlineData("\"init\"ial\"", "\\\"Init\"ial\\\"", "\"Init\"ial\"", true)]
         public void TestSessionPropertyQuotationSafeUpdateOnServerResponse(string sessionInitialValue, string serverResponseFinalSessionValue, string unquotedExpectedFinalValue, bool wasChanged)
         {
             // Arrange

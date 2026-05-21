@@ -147,7 +147,7 @@ password = ""otherpassword""";
 
 
         [SFFact]
-        [TestCase("database = \"mydb\"", "DB=mydb;")]
+        [InlineData("database = \"mydb\"", "DB=mydb;")]
         public void TestConnectionMapPropertiesFromTomlKeyValues(string tomlKeyValue, string connectionStringValue)
         {
             // Arrange
@@ -474,13 +474,13 @@ authenticator = ""oauth""");
         }
 
         [SFFact]
-        [TestCase("\\\"password;default\\\"", "password;default")]
-        [TestCase("\\\"\\\"\\\"password;default\\\"", "\"password;default")]
-        [TestCase("p\\\"assworddefault", "p\"assworddefault")]
-        [TestCase("password\\\"default", "password\"default")]
-        [TestCase("password\'default", "password\'default")]
-        [TestCase("password=default", "password=default")]
-        [TestCase("\\\"pa=ss\\\"\\\"word;def\'ault\\\"", "pa=ss\"word;def\'ault")]
+        [InlineData("\\\"password;default\\\"", "password;default")]
+        [InlineData("\\\"\\\"\\\"password;default\\\"", "\"password;default")]
+        [InlineData("p\\\"assworddefault", "p\"assworddefault")]
+        [InlineData("password\\\"default", "password\"default")]
+        [InlineData("password\'default", "password\'default")]
+        [InlineData("password=default", "password=default")]
+        [InlineData("\\\"pa=ss\\\"\\\"word;def\'ault\\\"", "pa=ss\"word;def\'ault")]
         public void TestConnectionMapPropertiesWithSpecialCharacters(string passwordValueWithSpecialCharacter, string expectedValue)
         {
             // Arrange

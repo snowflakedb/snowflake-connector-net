@@ -46,11 +46,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("0", false)]
-        [TestCase("t", true)]
-        [TestCase("T", true)]
-        [TestCase("1", true)]
-        [TestCase("anything else", false)]
+        [InlineData("0", false)]
+        [InlineData("t", true)]
+        [InlineData("T", true)]
+        [InlineData("1", true)]
+        [InlineData("anything else", false)]
         public void TestConvertBoolean(string inputBooleanString, bool expected)
         {
             var actual = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputBooleanString), SFDataType.BOOLEAN, typeof(bool));
@@ -58,11 +58,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("2100-12-31 23:59:59.9999999")]
-        [TestCase("2200-01-01 11:22:33.4455667")]
-        [TestCase("9999-12-31 23:59:59.9999999")]
-        [TestCase("1982-01-18 16:20:00.6666666")]
-        [TestCase(null)]
+        [InlineData("2100-12-31 23:59:59.9999999")]
+        [InlineData("2200-01-01 11:22:33.4455667")]
+        [InlineData("9999-12-31 23:59:59.9999999")]
+        [InlineData("1982-01-18 16:20:00.6666666")]
+        [InlineData(null)]
         public void TestConvertDatetime(string inputTimeStr)
         {
             DateTime inputTime;
@@ -83,20 +83,20 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("11:22:33.4455667")]
-        [TestCase("23:59:59.9999999")]
-        [TestCase("16:20:00.6666666")]
-        [TestCase("00:00:00.0000000")]
-        [TestCase("00:00:00")]
-        [TestCase("23:59:59.1")]
-        [TestCase("23:59:59.12")]
-        [TestCase("23:59:59.123")]
-        [TestCase("23:59:59.1234")]
-        [TestCase("23:59:59.12345")]
-        [TestCase("23:59:59.123456")]
-        [TestCase("23:59:59.1234567")]
-        [TestCase("23:59:59.12345678")]
-        [TestCase("23:59:59.123456789")]
+        [InlineData("11:22:33.4455667")]
+        [InlineData("23:59:59.9999999")]
+        [InlineData("16:20:00.6666666")]
+        [InlineData("00:00:00.0000000")]
+        [InlineData("00:00:00")]
+        [InlineData("23:59:59.1")]
+        [InlineData("23:59:59.12")]
+        [InlineData("23:59:59.123")]
+        [InlineData("23:59:59.1234")]
+        [InlineData("23:59:59.12345")]
+        [InlineData("23:59:59.123456")]
+        [InlineData("23:59:59.1234567")]
+        [InlineData("23:59:59.12345678")]
+        [InlineData("23:59:59.123456789")]
         public void TestConvertTimeSpan(string inputTimeStr)
         {
             // The expected result. Timespan precision only goes up to 7 digits
@@ -117,17 +117,17 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Utc)]
-        [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Local)]
-        [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Unspecified)]
-        [TestCase("2200-01-01 00:00:00.0000000", DateTimeKind.Utc)]
-        [TestCase("2200-01-01 00:00:00.0000000", DateTimeKind.Local)]
-        [TestCase("2200-01-01 00:00:00.0000000", DateTimeKind.Unspecified)]
-        [TestCase("1960-01-01 00:00:00.0000000", DateTimeKind.Unspecified)]
-        [TestCase("9999-12-31 23:59:59.9999999", DateTimeKind.Unspecified)]
-        [TestCase("1982-01-18 16:20:00.6666666", DateTimeKind.Unspecified)]
-        [TestCase("1982-01-18 23:59:59.0000000", DateTimeKind.Unspecified)]
-        [TestCase(null, DateTimeKind.Unspecified)]
+        [InlineData("2100-12-31 23:59:59.9999999", DateTimeKind.Utc)]
+        [InlineData("2100-12-31 23:59:59.9999999", DateTimeKind.Local)]
+        [InlineData("2100-12-31 23:59:59.9999999", DateTimeKind.Unspecified)]
+        [InlineData("2200-01-01 00:00:00.0000000", DateTimeKind.Utc)]
+        [InlineData("2200-01-01 00:00:00.0000000", DateTimeKind.Local)]
+        [InlineData("2200-01-01 00:00:00.0000000", DateTimeKind.Unspecified)]
+        [InlineData("1960-01-01 00:00:00.0000000", DateTimeKind.Unspecified)]
+        [InlineData("9999-12-31 23:59:59.9999999", DateTimeKind.Unspecified)]
+        [InlineData("1982-01-18 16:20:00.6666666", DateTimeKind.Unspecified)]
+        [InlineData("1982-01-18 23:59:59.0000000", DateTimeKind.Unspecified)]
+        [InlineData(null, DateTimeKind.Unspecified)]
         public void TestConvertDate(string inputTimeStr, object kind = null)
         {
             if (kind == null)
@@ -155,10 +155,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("9223372036854775807")]
-        [TestCase("-9223372036854775808")]
-        [TestCase("-1")]
-        [TestCase("999999999999999999")]
+        [InlineData("9223372036854775807")]
+        [InlineData("-9223372036854775808")]
+        [InlineData("-1")]
+        [InlineData("999999999999999999")]
         public void TestConvertToInt64(string s)
         {
             Int64 actual = (Int64)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64));
@@ -167,10 +167,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("2147483647")]
-        [TestCase("-2147483648")]
-        [TestCase("-1")]
-        [TestCase("0")]
+        [InlineData("2147483647")]
+        [InlineData("-2147483648")]
+        [InlineData("-1")]
+        [InlineData("0")]
         public void TestConvertToInt32(string s)
         {
             Int32 actual = (Int32)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32));
@@ -179,10 +179,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("32767")]
-        [TestCase("-32768")]
-        [TestCase("-1")]
-        [TestCase("0")]
+        [InlineData("32767")]
+        [InlineData("-32768")]
+        [InlineData("-1")]
+        [InlineData("0")]
         public void TestConvertToInt16(string s)
         {
             Int16 actual = (Int16)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int16));
@@ -191,8 +191,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("255")]
-        [TestCase("0")]
+        [InlineData("255")]
+        [InlineData("0")]
         public void TestConvertToByte(string s)
         {
             byte actual = (byte)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte));
@@ -201,50 +201,50 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("256")]
-        [TestCase("-1")]
+        [InlineData("256")]
+        [InlineData("-1")]
         public void TestOverflowByte(string s)
         {
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte)));
         }
 
         [SFFact]
-        [TestCase("32768")]
-        [TestCase("-32769")]
+        [InlineData("32768")]
+        [InlineData("-32769")]
         public void TestOverflowInt16(string s)
         {
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int16)));
         }
 
         [SFFact]
-        [TestCase("2147483648")]
-        [TestCase("-2147483649")]
+        [InlineData("2147483648")]
+        [InlineData("-2147483649")]
         public void TestOverflowInt32(string s)
         {
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32)));
         }
 
         [SFFact]
-        [TestCase("9223372036854775808")]
-        [TestCase("-9223372036854775809")]
+        [InlineData("9223372036854775808")]
+        [InlineData("-9223372036854775809")]
         public void TestOverflowInt64(string s)
         {
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64)));
         }
 
         [SFFact]
-        [TestCase("9223372036854775807.9223372036854775807")]
-        [TestCase("-9223372036854775807.1234567890")]
-        [TestCase("-1.300")]
-        [TestCase("999999999999999999.000000000000100000000000")]
-        [TestCase("4294967295.4294967296")]
-        [TestCase("-0.999")]
-        [TestCase("307.48100000000000000000")]
-        [TestCase("79228162514264337593543950335")] // Max decimal value
-        [TestCase("-79228162514264337593543950335")] // Min decimal value
-        [TestCase("9.9999999999999999999999999999")] // The scaling factor range is 0 to 28
-        [TestCase("-9.9999999999999999999999999999")] // The scaling factor range is 0 to 28
-        [TestCase("79228162514264337593543950334.9999999999999999999999999999")] //A Decimal object has 29 digits of precision. If s represents a number that has more than 29 digits, but has a fractional part and is within the range of MaxValue and MinValue, the number is rounded
+        [InlineData("9223372036854775807.9223372036854775807")]
+        [InlineData("-9223372036854775807.1234567890")]
+        [InlineData("-1.300")]
+        [InlineData("999999999999999999.000000000000100000000000")]
+        [InlineData("4294967295.4294967296")]
+        [InlineData("-0.999")]
+        [InlineData("307.48100000000000000000")]
+        [InlineData("79228162514264337593543950335")] // Max decimal value
+        [InlineData("-79228162514264337593543950335")] // Min decimal value
+        [InlineData("9.9999999999999999999999999999")] // The scaling factor range is 0 to 28
+        [InlineData("-9.9999999999999999999999999999")] // The scaling factor range is 0 to 28
+        [InlineData("79228162514264337593543950334.9999999999999999999999999999")] //A Decimal object has 29 digits of precision. If s represents a number that has more than 29 digits, but has a fractional part and is within the range of MaxValue and MinValue, the number is rounded
         public void TestConvertToDecimal(string s)
         {
             decimal actual = (decimal)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal));
@@ -254,26 +254,26 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("79228162514264337593543950336")] // Max decimal value + 1
-        [TestCase("-79228162514264337593543950336")] // Min decimal value - 1
-        [TestCase("79228162514264337593543950335.9999999999999999999999999999")] // The scaling factor range is 0 to 28. Scaling factor = 29 and fractional part > MaxValue
+        [InlineData("79228162514264337593543950336")] // Max decimal value + 1
+        [InlineData("-79228162514264337593543950336")] // Min decimal value - 1
+        [InlineData("79228162514264337593543950335.9999999999999999999999999999")] // The scaling factor range is 0 to 28. Scaling factor = 29 and fractional part > MaxValue
         public void TestOverflowDecimal(string s)
         {
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
         }
 
         [SFFact]
-        [TestCase("9223372036854775807.9223372036854775807")]
-        [TestCase("-9223372036854775807.1234567890")]
-        [TestCase("-1.300")]
-        [TestCase("-0.999")]
-        [TestCase("999999999999999999.000000000000100000000000")]
-        [TestCase("4294967295.4294967296")]
-        [TestCase("1.5e-36")]
-        [TestCase("1.5e+38")]
-        //[TestCase("inf")] -- TODO - Not supported yet
-        //[TestCase("-inf")] -- TODO - Not supported yet
-        [TestCase("NaN")]
+        [InlineData("9223372036854775807.9223372036854775807")]
+        [InlineData("-9223372036854775807.1234567890")]
+        [InlineData("-1.300")]
+        [InlineData("-0.999")]
+        [InlineData("999999999999999999.000000000000100000000000")]
+        [InlineData("4294967295.4294967296")]
+        [InlineData("1.5e-36")]
+        [InlineData("1.5e+38")]
+        //[InlineData("inf")] -- TODO - Not supported yet
+        //[InlineData("-inf")] -- TODO - Not supported yet
+        [InlineData("NaN")]
         public void TestConvertToFloat(string s)
         {
             double actualDouble = (double)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(double));
@@ -288,15 +288,15 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("thisIsNotAValidValue")]
-        [TestCase("-0.999")]
-        [TestCase("-1.300")]
-        [TestCase("425.426")]
-        [TestCase("1.5e-36")]
-        [TestCase("1.5e+38")]
-        [TestCase("inf")]
-        [TestCase("-inf")]
-        [TestCase("NaN")]
+        [InlineData("thisIsNotAValidValue")]
+        [InlineData("-0.999")]
+        [InlineData("-1.300")]
+        [InlineData("425.426")]
+        [InlineData("1.5e-36")]
+        [InlineData("1.5e+38")]
+        [InlineData("inf")]
+        [InlineData("-inf")]
+        [InlineData("NaN")]
         public void TestInvalidConversionInvalidInt(string s)
         {
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32)));
@@ -306,7 +306,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("thisIsNotAValidValue")]
+        [InlineData("thisIsNotAValidValue")]
         public void TestInvalidConversionInvalidFloat(string s)
         {
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(float)));
@@ -314,12 +314,12 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("thisIsNotAValidValue")]
-        [TestCase("1.5e-36")]
-        [TestCase("1.5e+38")]
-        [TestCase("inf")]
-        [TestCase("-inf")]
-        [TestCase("NaN")]
+        [InlineData("thisIsNotAValidValue")]
+        [InlineData("1.5e-36")]
+        [InlineData("1.5e+38")]
+        [InlineData("inf")]
+        [InlineData("-inf")]
+        [InlineData("NaN")]
         public void TestInvalidConversionInvalidDecimal(string s)
         {
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
@@ -414,11 +414,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(SFDataType.TIMESTAMP_LTZ, typeof(DateTime))]
-        [TestCase(SFDataType.TIMESTAMP_TZ, typeof(DateTime))]
-        [TestCase(SFDataType.TIMESTAMP_NTZ, typeof(DateTimeOffset))]
-        [TestCase(SFDataType.TIME, typeof(DateTimeOffset))]
-        [TestCase(SFDataType.DATE, typeof(DateTimeOffset))]
+        [InlineData(SFDataType.TIMESTAMP_LTZ, typeof(DateTime))]
+        [InlineData(SFDataType.TIMESTAMP_TZ, typeof(DateTime))]
+        [InlineData(SFDataType.TIMESTAMP_NTZ, typeof(DateTimeOffset))]
+        [InlineData(SFDataType.TIME, typeof(DateTimeOffset))]
+        [InlineData(SFDataType.DATE, typeof(DateTimeOffset))]
         public void TestInvalidTimestampConversion(SFDataType dataType, Type unsupportedType)
         {
             object unsupportedObject;
@@ -435,10 +435,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(DbType.AnsiStringFixedLength, "hello", "hello")]
-        [TestCase(DbType.AnsiString, "hello", "hello")]
-        [TestCase(DbType.String, "hello", "hello")]
-        [TestCase(DbType.StringFixedLength, "hello", "hello")]
+        [InlineData(DbType.AnsiStringFixedLength, "hello", "hello")]
+        [InlineData(DbType.AnsiString, "hello", "hello")]
+        [InlineData(DbType.String, "hello", "hello")]
+        [InlineData(DbType.StringFixedLength, "hello", "hello")]
         public void TestCSharpTypeValToSfTypeValTextTypes(DbType dbType, string srcVal, string expectedVal)
         {
             var result = SFDataConverter.CSharpTypeValToSfTypeVal(dbType, srcVal);
@@ -456,17 +456,17 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(DbType.Decimal, 42.4f, "42.4")]
-        [TestCase(DbType.Decimal, 42.3d, "42.3")]
-        [TestCase(DbType.SByte, -1, "-1")]
-        [TestCase(DbType.Int16, 123, "123")]
-        [TestCase(DbType.Int32, 42, "42")]
-        [TestCase(DbType.Int64, 9999999999L, "9999999999")]
-        [TestCase(DbType.Byte, 255, "255")]
-        [TestCase(DbType.UInt16, 65535u, "65535")]
-        [TestCase(DbType.UInt32, 4294967295u, "4294967295")]
-        [TestCase(DbType.UInt64, 18446744073709551615ul, "18446744073709551615")]
-        [TestCase(DbType.VarNumeric, 123, "123")]
+        [InlineData(DbType.Decimal, 42.4f, "42.4")]
+        [InlineData(DbType.Decimal, 42.3d, "42.3")]
+        [InlineData(DbType.SByte, -1, "-1")]
+        [InlineData(DbType.Int16, 123, "123")]
+        [InlineData(DbType.Int32, 42, "42")]
+        [InlineData(DbType.Int64, 9999999999L, "9999999999")]
+        [InlineData(DbType.Byte, 255, "255")]
+        [InlineData(DbType.UInt16, 65535u, "65535")]
+        [InlineData(DbType.UInt32, 4294967295u, "4294967295")]
+        [InlineData(DbType.UInt64, 18446744073709551615ul, "18446744073709551615")]
+        [InlineData(DbType.VarNumeric, 123, "123")]
         public void TestCSharpTypeValToSfTypeValNumericTypes(DbType dbType, object srcVal, string expectedVal)
         {
             var result = SFDataConverter.CSharpTypeValToSfTypeVal(dbType, srcVal);
@@ -475,8 +475,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(true, "True")]
-        [TestCase(false, "False")]
+        [InlineData(true, "True")]
+        [InlineData(false, "False")]
         public void TestCSharpTypeValToSfTypeValBoolean(bool srcVal, string expectedVal)
         {
             var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Boolean, srcVal);
@@ -485,8 +485,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(DbType.Double, 1.5d, "REAL", "1.5")]
-        [TestCase(DbType.Single, 1.5f, "REAL", "1.5")]
+        [InlineData(DbType.Double, 1.5d, "REAL", "1.5")]
+        [InlineData(DbType.Single, 1.5f, "REAL", "1.5")]
         public void TestCSharpTypeValToSfTypeValRealTypes(DbType dbType, object srcVal, string expectedType, string expectedValue)
         {
             var result = SFDataConverter.CSharpTypeValToSfTypeVal(dbType, srcVal);
@@ -504,8 +504,8 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(DbType.DateTime)]
-        [TestCase(DbType.DateTime2)]
+        [InlineData(DbType.DateTime)]
+        [InlineData(DbType.DateTime2)]
         public void TestCSharpTypeValToSfTypeValTimestampNtz(DbType dbType)
         {
             var dt = new DateTime(2024, 7, 15, 10, 30, 0);
@@ -660,8 +660,8 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(result);
         }
 
-        [TestCase(13, 45, 30, 500, "49530500000000")]
-        [TestCase(23, 59, 59, 999, "86399999000000")]
+        [InlineData(13, 45, 30, 500, "49530500000000")]
+        [InlineData(23, 59, 59, 999, "86399999000000")]
         public void TestCSharpValToSfValTime(int hour, int minute, int second, int millisecond, string expected)
         {
             var dt = new DateTime(2024, 1, 1, hour, minute, second, millisecond);
@@ -669,8 +669,8 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [TestCase(13, 45, 30, 500, "1704116730500000000")]
-        [TestCase(23, 59, 59, 999, "1704153599999000000")]
+        [InlineData(13, 45, 30, 500, "1704116730500000000")]
+        [InlineData(23, 59, 59, 999, "1704153599999000000")]
         public void TestCSharpValToSfValTimestampNtz(int hour, int minute, int second, int millisecond, string expected)
         {
             var dt = new DateTime(2024, 1, 1, hour, minute, second, millisecond);
@@ -678,8 +678,8 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [TestCase(13, 45, 30, 500, "1721051130500000000")]
-        [TestCase(23, 59, 59, 999, "1721087999999000000")]
+        [InlineData(13, 45, 30, 500, "1721051130500000000")]
+        [InlineData(23, 59, 59, 999, "1721087999999000000")]
         public void TestCSharpValToSfValTimestampLtz(int hour, int minute, int second, int millisecond, string expected)
         {
             var dto = new DateTimeOffset(2024, 7, 15, hour, minute, second, millisecond, TimeSpan.Zero);
@@ -687,8 +687,8 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [TestCase(13, 45, 30, 500, "1721033130500000000 1740")]
-        [TestCase(23, 59, 59, 999, "1721069999999000000 1740")]
+        [InlineData(13, 45, 30, 500, "1721033130500000000 1740")]
+        [InlineData(23, 59, 59, 999, "1721069999999000000 1740")]
         public void TestCSharpValToSfValTimestampTz(int hour, int minute, int second, int millisecond, string expected)
         {
             var dto = new DateTimeOffset(2024, 7, 15, hour, minute, second, millisecond, TimeSpan.FromHours(5));

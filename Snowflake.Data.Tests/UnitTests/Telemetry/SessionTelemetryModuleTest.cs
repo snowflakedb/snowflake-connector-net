@@ -59,12 +59,12 @@ internal sealed class SessionTelemetryModuleTest
     }
 
     [SFFact]
-    [TestCase(null, null, null, "UNSET", 1, TestName = "Eventless activity with UNSET status")]
-    [TestCase(null, null, ActivityStatusCode.Ok, "OK", 1, TestName = "Eventless activity with OK status")]
-    [TestCase(null, null, ActivityStatusCode.Error, "ERROR", 1, TestName = "Eventless activity with ERROR status")]
-    [TestCase("EventA", null, null, "UNSET", 2, TestName = "Activity with one event")]
-    [TestCase("EventA", "EventB", null, "UNSET", 3, TestName = "Activity with two events produces three log entries")]
-    [TestCase("EventA", "EventB", ActivityStatusCode.Ok, "OK", 3, TestName = "Activity with events and OK status")]
+    [InlineData(null, null, null, "UNSET", 1, TestName = "Eventless activity with UNSET status")]
+    [InlineData(null, null, ActivityStatusCode.Ok, "OK", 1, TestName = "Eventless activity with OK status")]
+    [InlineData(null, null, ActivityStatusCode.Error, "ERROR", 1, TestName = "Eventless activity with ERROR status")]
+    [InlineData("EventA", null, null, "UNSET", 2, TestName = "Activity with one event")]
+    [InlineData("EventA", "EventB", null, "UNSET", 3, TestName = "Activity with two events produces three log entries")]
+    [InlineData("EventA", "EventB", ActivityStatusCode.Ok, "OK", 3, TestName = "Activity with events and OK status")]
     public async Task TestFlushAsyncConvertsActivityToTelemetryData(string event1, string event2, ActivityStatusCode? status, string expectedStatus, int expectedLogCount)
     {
         // Arrange
@@ -207,8 +207,8 @@ internal sealed class SessionTelemetryModuleTest
     }
 
     [SFFact]
-    [TestCase(true)]
-    [TestCase(false)]
+    [InlineData(true)]
+    [InlineData(false)]
     public async Task TestFlushAsyncDisablesTelemetryAfterFailure(bool throwException)
     {
         // Arrange
@@ -267,8 +267,8 @@ internal sealed class SessionTelemetryModuleTest
         _mockRestRequester.Verify(x => x.PostAsync<NullDataResponse>(It.Is<IRestRequest>(y => ((SFRestRequest)y).authorizationToken == $"Snowflake Token=\"{newToken}\""), It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [TestCase(1)]
-    [TestCase(3)]
+    [InlineData(1)]
+    [InlineData(3)]
     public void TestSyncFlushOnDisposeOnFailure(int disposeCalls)
     {
         // Arrange
@@ -293,8 +293,8 @@ internal sealed class SessionTelemetryModuleTest
         Assert.False(((ISessionTelemetryModule)module).IsServiceAvailable);
     }
 
-    [TestCase(1)]
-    [TestCase(3)]
+    [InlineData(1)]
+    [InlineData(3)]
     public void TestSyncFlushOnDisposeDisablesTelemetryOnNonSuccessResponse(int disposeCalls)
     {
         // Arrange
@@ -575,18 +575,18 @@ internal sealed class SessionTelemetryModuleTest
 
 
     [SFFact]
-    [TestCase(0)]
-    [TestCase(-1)]
-    [TestCase(-100)]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
     public void TestSetFlushSizeThrowsOnInvalidValue(int invalidSize)
     {
         Assert.Throws<ArgumentException>(() => SessionTelemetryModuleFacade.SetFlushSize(invalidSize));
     }
 
     [SFFact]
-    [TestCase(1)]
-    [TestCase(50)]
-    [TestCase(500)]
+    [InlineData(1)]
+    [InlineData(50)]
+    [InlineData(500)]
     public void TestSetFlushSizeAcceptsValidValue(int validSize)
     {
         Assert.DoesNotThrow(() => SessionTelemetryModuleFacade.SetFlushSize(validSize));
@@ -594,18 +594,18 @@ internal sealed class SessionTelemetryModuleTest
     }
 
     [SFFact]
-    [TestCase(0)]
-    [TestCase(-1)]
-    [TestCase(-1000)]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-1000)]
     public void TestSetFlushIntervalThrowsOnInvalidValue(int invalidInterval)
     {
         Assert.Throws<ArgumentException>(() => SessionTelemetryModule.SetFlushInterval(invalidInterval));
     }
 
     [SFFact]
-    [TestCase(1)]
-    [TestCase(1000)]
-    [TestCase(120_000)]
+    [InlineData(1)]
+    [InlineData(1000)]
+    [InlineData(120_000)]
     public void TestSetFlushIntervalAcceptsValidValue(int validInterval)
     {
         Assert.DoesNotThrow(() => SessionTelemetryModule.SetFlushInterval(validInterval));

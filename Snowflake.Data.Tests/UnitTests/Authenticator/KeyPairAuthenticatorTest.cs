@@ -7,9 +7,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     public class KeyPairAuthenticatorTest
     {
         [SFFact]
-        [TestCase("snowflake_jwt", true)]
-        [TestCase("SNOWFLAKE_JWT", true)]
-        [TestCase("username_password_mfa", false)]
+        [InlineData("snowflake_jwt", true)]
+        [InlineData("SNOWFLAKE_JWT", true)]
+        [InlineData("username_password_mfa", false)]
         public void TestRecognizeKeyPairAuthenticator(string authenticator, bool expectedResult)
         {
             // act

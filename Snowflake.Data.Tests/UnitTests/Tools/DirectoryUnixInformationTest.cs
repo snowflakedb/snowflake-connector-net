@@ -14,10 +14,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         static readonly string s_directoryFullName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
         [SFFact]
-        [TestCase(FileAccessPermissions.UserWrite)]
-        [TestCase(FileAccessPermissions.UserRead)]
-        [TestCase(FileAccessPermissions.UserExecute)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute)]
+        [InlineData(FileAccessPermissions.UserWrite)]
+        [InlineData(FileAccessPermissions.UserRead)]
+        [InlineData(FileAccessPermissions.UserExecute)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute)]
         public void TestSafeDirectory(FileAccessPermissions securePermissions)
         {
             // arrange
@@ -31,8 +31,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [SFFact]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
         public void TestUnsafePermissions(FileAccessPermissions unsecurePermissions)
         {
             // arrange
@@ -59,9 +59,9 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [SFFact]
-        [TestCase(FileAccessPermissions.UserRead)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
+        [InlineData(FileAccessPermissions.UserRead)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
         public void TestUnsafeExactlyPermissions(FileAccessPermissions unsecurePermissions)
         {
             // arrange

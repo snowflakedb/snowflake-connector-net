@@ -457,10 +457,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
         [SFFact]
         [Platform(Exclude = "Win")]
-        [TestCase(1, 0, 0, 0)]
-        [TestCase(0, 1, 0, 0)]
-        [TestCase(0, 0, 1, 0)]
-        [TestCase(0, 0, 1, 1)]
+        [InlineData(1, 0, 0, 0)]
+        [InlineData(0, 1, 0, 0)]
+        [InlineData(0, 0, 1, 0)]
+        [InlineData(0, 0, 1, 1)]
         public void TestWithMocksUnixCrlShouldNotBeSavedIfFailedToSetSecurePermissions(long changeDirOwnerResult, long changeDirPermissionsResult, long changeFileOwnerResult, long changeFilePermissionsResult)
         {
             // arrange

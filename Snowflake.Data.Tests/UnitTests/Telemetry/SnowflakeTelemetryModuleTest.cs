@@ -136,8 +136,8 @@ public sealed class SnowflakeTelemetryModuleTest
         await SnowflakeTelemetryModule.UnregisterAsync("non-existent-async", CancellationToken.None);
     }
 
-    [TestCase(true)]
-    [TestCase(false)]
+    [InlineData(true)]
+    [InlineData(false)]
     public void TestOnActivityStoppedRoutesToCorrectSession(bool useCustomClientTelemetry)
     {
         // Arrange

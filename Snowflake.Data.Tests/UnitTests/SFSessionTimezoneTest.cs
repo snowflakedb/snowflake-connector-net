@@ -81,11 +81,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase("America/Los_Angeles")]
-        [TestCase("UTC")]
-        [TestCase("Asia/Tokyo")]
-        [TestCase("Europe/Warsaw")]
-        [TestCase("Pacific/Honolulu")]
+        [InlineData("America/Los_Angeles")]
+        [InlineData("UTC")]
+        [InlineData("Asia/Tokyo")]
+        [InlineData("Europe/Warsaw")]
+        [InlineData("Pacific/Honolulu")]
         public void TestGetSessionTimezoneResolvesVariousTimezones(string tzName)
         {
             var session = new SFSession(
