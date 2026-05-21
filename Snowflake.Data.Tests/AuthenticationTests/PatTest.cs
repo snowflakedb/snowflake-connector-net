@@ -1,21 +1,20 @@
 using System;
 using Xunit;
 using Snowflake.Data.Core;
-using Snowflake.Data.Tests;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class PatTest
     {
-        private string _connectionString = "";
+        private string _connectionString;
         private string _patName = "";
 
         public PatTest()
         {
             var parameters = AuthConnectionString.GetPatConnectionParameters();
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
-
         }
 
         [SFFact(SkipCondition.SkipOnCI)]

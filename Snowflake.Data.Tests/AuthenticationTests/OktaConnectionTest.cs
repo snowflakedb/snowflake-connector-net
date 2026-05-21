@@ -1,23 +1,22 @@
 using Xunit;
 using Snowflake.Data.Core;
-using Snowflake.Data.Tests;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
 
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class OktaConnectionTest
     {
-        private string _connectionString = "";
+        private string _connectionString;
 
         public OktaConnectionTest()
         {
-            AuthTestHelper authTestHelper = new AuthTestHelper();
+            var authTestHelper = new AuthTestHelper();
 
             var parameters = AuthConnectionString.GetOktaConnectionString();
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
             authTestHelper.CleanBrowserProcess();
-
         }
 
         [SFFact(SkipCondition.SkipOnCI)]

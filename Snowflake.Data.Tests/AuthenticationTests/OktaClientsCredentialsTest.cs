@@ -5,6 +5,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class OktaClientsCredentialsTest
     {
         private string _connectionString = "";
@@ -12,7 +13,7 @@ namespace Snowflake.Data.AuthenticationTests
         [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateOktaClientCredentialsSuccessful()
         {
-            AuthTestHelper authTestHelper = new AuthTestHelper();
+            var authTestHelper = new AuthTestHelper();
             var parameters = AuthConnectionString.GetOAuthExternalClientCredentialParameters();
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
