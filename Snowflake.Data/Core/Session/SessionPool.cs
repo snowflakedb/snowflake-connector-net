@@ -16,7 +16,7 @@ namespace Snowflake.Data.Core.Session
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
         private readonly object _sessionPoolLock = new object();
-        internal static ISessionFactory s_sessionFactorySingleton = new SessionFactory();
+        private static readonly ISessionFactory s_sessionFactorySingleton = new SessionFactory();
         private readonly ISessionFactory _instanceSessionFactory;
 
         private ISessionFactory SessionFactory => _instanceSessionFactory ?? s_sessionFactorySingleton;
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Core.Session
             _instanceSessionFactory = sessionFactory;
         }
 
-        internal static SessionPool CreateSessionCache() => new();
+        internal static SessionPool CreateSessionCache() => new ();
 
         internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token) =>
             CreateSessionPool(connectionString, password, oauthClientSecret, token, null);
