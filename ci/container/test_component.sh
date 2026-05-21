@@ -8,4 +8,4 @@ export JENKINS_HOME='/var/jenkins_home'
 
 cd $SOURCE_ROOT
 cp Snowflake.Data.Tests/parameters-local.json Snowflake.Data.Tests/parameters.json
-dotnet test -l "console;verbosity=normal" --logger:"junit;LogFilePath=$WORKSPACE/junit-dotnet.xml"
+dotnet run  --project ./Snowflake.Data.Tests/Snowflake.Data.Tests.csproj --framework net10.0 -jUnit "junit-dotnet.xml"
