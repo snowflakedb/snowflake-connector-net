@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var exception = Assert.Throws<SnowflakeDbException>(() => PrepareSession(null, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled));
 
             // assert
-            Assert.That(exception?.Message, Does.Contain("Required property WORKLOAD_IDENTITY_PROVIDER is not provided"));
+            Assert.Contains("Required property WORKLOAD_IDENTITY_PROVIDER is not provided", exception?.Message);
         }
 
         [SFFact]
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var exception = Assert.Throws<SnowflakeDbException>(() => session.Open());
 
             // assert
-            Assert.That(exception?.Message, Does.Contain("Retrieving attestation for AWS failed. Not available"));
+            Assert.Contains("Retrieving attestation for AWS failed. Not available", exception?.Message);
         }
 
         internal void NoEnvironmentSetup(Mock<EnvironmentOperations> environmentOperations)

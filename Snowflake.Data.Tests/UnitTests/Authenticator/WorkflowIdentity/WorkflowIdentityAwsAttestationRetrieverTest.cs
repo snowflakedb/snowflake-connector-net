@@ -1,9 +1,9 @@
 using Xunit;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
 {
-
     public class WorkflowIdentityAwsAttestationRetrieverTest
     {
         [SFTheory]

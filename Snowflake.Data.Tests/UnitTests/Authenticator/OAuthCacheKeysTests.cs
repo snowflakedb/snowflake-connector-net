@@ -3,10 +3,10 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using Moq;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-
     public class OAuthCacheKeysTests
     {
         private const string Token = "abc";
@@ -71,15 +71,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var cacheKeys = OAuthCacheKeys.CreateForDisabledCache();
 
             // act/assert
-            Assert.DoesNotThrow(() =>
-            {
-                cacheKeys.GetAccessToken();
-                cacheKeys.GetRefreshToken();
-                cacheKeys.SaveAccessToken(Token);
-                cacheKeys.SaveRefreshToken(Token);
-                cacheKeys.RemoveAccessToken();
-                cacheKeys.RemoveRefreshToken();
-            });
+            cacheKeys.GetAccessToken();
+            cacheKeys.GetRefreshToken();
+            cacheKeys.SaveAccessToken(Token);
+            cacheKeys.SaveRefreshToken(Token);
+            cacheKeys.RemoveAccessToken();
+            cacheKeys.RemoveRefreshToken();
         }
 
         [SFFact]

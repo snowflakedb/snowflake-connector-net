@@ -5,10 +5,10 @@ using System.Net.Http;
 using Amazon.Runtime;
 using Xunit;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
 {
-
     public class AwsSignature4SignerTest
     {
         private const string AwsStsHost = "sts.eu-west-1.amazonaws.com";

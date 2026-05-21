@@ -4,10 +4,10 @@ using Moq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator.Browser;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser
 {
-
     public class WebBrowserStarterTest
     {
         [SFFact]
