@@ -151,13 +151,13 @@ namespace Snowflake.Data.AuthenticationTests
 
         public void VerifyExceptionIsNotThrown()
         {
-            Assert.That(_exception, Is.Null, "Unexpected exception thrown");
+            Assert.Null(_exception);
         }
 
         public void VerifyExceptionIsThrown(string error)
         {
-            Assert.That(_exception, Is.Not.Null, "Expected exception was not thrown");
-            Assert.That(_exception.Message, Does.Contain(error), "Unexpected exception message.");
+            Assert.NotNull(_exception);
+            Assert.Contains(error, _exception.Message);
 
         }
 

@@ -1,11 +1,10 @@
 using Xunit;
-using Snowflake.Data.Tests;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-
     public class MfaTest
     {
         [SFFact(SkipCondition.SkipOnCI)]
@@ -18,7 +17,7 @@ namespace Snowflake.Data.AuthenticationTests
 
             // Generate TOTP codes
             var totpCodes = authTestHelper.GetTotp();
-            Assert.NotNull(totpCodes, "TOTP codes should not be null");
+            Assert.NotNull(totpCodes);
             Assert.True(totpCodes.Length > 0, $"Should have TOTP codes but got {totpCodes.Length}");
 
             // Test MFA authentication with TOTP codes

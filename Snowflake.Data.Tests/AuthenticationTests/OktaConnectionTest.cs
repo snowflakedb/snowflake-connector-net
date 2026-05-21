@@ -1,17 +1,16 @@
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-
 
     public class OktaConnectionTest
     {
         private string _connectionString = "";
 
-        [SetUp, IgnoreOnCI]
-        public void SetUp()
+        public OktaConnectionTest()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
 
