@@ -10,7 +10,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
+
     public class CrlCacheManagerTest
     {
         const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";

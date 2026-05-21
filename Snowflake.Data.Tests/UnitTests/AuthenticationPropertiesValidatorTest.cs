@@ -8,7 +8,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     public class AuthenticationPropertiesValidatorTest
     {
         private const string _necessaryNonAuthProperties = "account=a;";

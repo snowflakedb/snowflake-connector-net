@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Text;
     using System;
 
-    [TestFixture]
+
     class SFFileTransferAgentTest : UnitTestBase
     {
         // Mock data for file metadata

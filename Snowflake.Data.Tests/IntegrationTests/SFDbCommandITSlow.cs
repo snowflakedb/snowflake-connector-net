@@ -4,7 +4,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.IntegrationTests;
 
-[TestFixture]
+
 class SFDbCommandITSlow : SFBaseTest
 {
     [Test]

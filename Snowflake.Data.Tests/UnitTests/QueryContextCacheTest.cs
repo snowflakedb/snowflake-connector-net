@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.Collections.Generic;
 
-    [TestFixture]
+
     class QueryContextCacheTest
     {
         private QueryContextCache _qcc = null;

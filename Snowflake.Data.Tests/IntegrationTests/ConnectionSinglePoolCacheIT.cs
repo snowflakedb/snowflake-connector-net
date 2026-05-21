@@ -12,7 +12,7 @@ using Moq;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
+
     [NonParallelizable]
     public class ConnectionSinglePoolCacheIT : SFBaseTest
     {

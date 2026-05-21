@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Core;
     using System.Threading.Tasks;
 
-    [TestFixture]
+
     class SFDbTransactionIT : SFBaseTest
     {
         [Test]

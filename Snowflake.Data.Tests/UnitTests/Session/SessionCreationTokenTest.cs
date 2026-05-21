@@ -4,7 +4,7 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
+
     public class SessionCreationTokenTest
     {
         private static readonly TimeSpan s_timeout30Seconds = TimeSpan.FromSeconds(30);

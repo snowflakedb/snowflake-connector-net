@@ -4,7 +4,7 @@ using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture]
+
     public class ChallengeProviderTest
     {
         private readonly ChallengeProvider _challengeProvider = new();

@@ -7,7 +7,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    [TestFixture]
+
     public class EasyLoggingConfigFinderTest
     {
         private const string InputConfigFilePath = "input_config.json";

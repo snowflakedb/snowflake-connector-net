@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Threading;
     using System.Threading.Tasks;
 
-    [TestFixture]
+
     class SFDbCommandTest
     {
         SnowflakeDbCommand command;

@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.FileTransfer;
 
-    [TestFixture]
+
     [Parallelizable(ParallelScope.Children)]
     class SFPutGetTest : SFBaseTest
     {

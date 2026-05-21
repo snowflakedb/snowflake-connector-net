@@ -6,7 +6,7 @@ using System;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
+
     [TestFixture(ResultFormat.ARROW)]
     [TestFixture(ResultFormat.JSON)]
     class VectorTypesIT : SFBaseTest

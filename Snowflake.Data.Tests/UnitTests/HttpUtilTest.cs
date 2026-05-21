@@ -13,7 +13,7 @@ using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     class HttpUtilTest
     {
         [Test]

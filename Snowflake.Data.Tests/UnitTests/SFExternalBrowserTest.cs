@@ -16,7 +16,7 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     class SFExternalBrowserTest
     {
         [ThreadStatic]

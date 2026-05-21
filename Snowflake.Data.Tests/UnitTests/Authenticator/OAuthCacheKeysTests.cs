@@ -6,7 +6,7 @@ using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture]
+
     public class OAuthCacheKeysTests
     {
         private const string Token = "abc";

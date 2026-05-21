@@ -8,7 +8,7 @@ using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
 {
-    [TestFixture]
+
     public class AwsSignature4SignerTest
     {
         private const string AwsStsHost = "sts.eu-west-1.amazonaws.com";

@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Threading;
     using System.Globalization;
 
-    [TestFixture]
+
     [SetCulture("en-US")]
     public sealed class SFDataConverterTest
     {

@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.Text;
 
-    [TestFixture]
+
     [SetCulture("en-US")]
     class FastParserTest
     {

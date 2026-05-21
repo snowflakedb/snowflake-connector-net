@@ -3,7 +3,7 @@ using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
 {
-    [TestFixture]
+
     public class WorkflowIdentityAwsAttestationRetrieverTest
     {
         [Test]

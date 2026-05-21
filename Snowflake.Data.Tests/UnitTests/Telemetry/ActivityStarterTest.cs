@@ -13,7 +13,7 @@ using Snowflake.Data.Telemetry;
 
 namespace Snowflake.Data.Tests.UnitTests.Telemetry;
 
-[TestFixture]
+
 internal sealed class ActivityStarterTest
 {
     private ActivityListener _listener;

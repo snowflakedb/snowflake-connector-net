@@ -5,7 +5,7 @@ using Snowflake.Data.Core.FileTransfer;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     public class StreamPairTest
     {
         [Test]

@@ -5,7 +5,7 @@ using System.Data.Common;
 namespace Snowflake.Data.Tests.IntegrationTests
 {
 
-    [TestFixture]
+
     class SFDbFactoryIT : SFBaseTest
     {
         DbProviderFactory _factory;

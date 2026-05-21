@@ -10,7 +10,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     public sealed class SFEnvironmentTest
     {
         [Test]

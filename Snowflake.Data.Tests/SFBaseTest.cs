@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests
      * Base class for unit tests - it uses MockSynchronizationContext to verify that
      * there are no async deadlocks in the library
      */
-    [TestFixture]
+
     public class UnitTestBase : BaseTestInfrastructure
     {
         [SetUp]
@@ -54,7 +54,7 @@ namespace Snowflake.Data.Tests
      * Base class for integration tests that call blocking methods in the library - it uses MockSynchronizationContext to verify that
      * there are no async deadlocks in the library
      */
-    [TestFixture]
+
     [Timeout(1_000 * 60 * 10)] // 10 mins
     public class SFBaseTest : SFBaseTestAsync
     {
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests
     /*
      * Base class for integration tests that call async methods - provides database connection infrastructure
      */
-    [TestFixture]
+
     [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     [SetCulture("en-US")]
 #if !SEQUENTIAL_TEST_RUN

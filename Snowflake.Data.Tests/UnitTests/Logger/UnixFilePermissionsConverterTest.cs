@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    [TestFixture]
+
     [Platform(Exclude = "Win")]
     public class UnixFilePermissionsConverterTest
     {

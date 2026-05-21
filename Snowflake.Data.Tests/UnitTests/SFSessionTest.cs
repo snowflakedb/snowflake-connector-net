@@ -12,7 +12,7 @@ using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     class SFSessionTest
     {
         // Mock test for session gone

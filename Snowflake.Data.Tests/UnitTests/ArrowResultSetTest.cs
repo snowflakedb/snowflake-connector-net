@@ -15,7 +15,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     class ArrowResultSetTest
     {
         private const int RowCount = 10;

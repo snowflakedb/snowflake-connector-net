@@ -4,7 +4,7 @@ using Snowflake.Data.Core.Revocation;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
+
     public class MemoryCrlCacheTests
     {
         const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";

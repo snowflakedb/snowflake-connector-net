@@ -3,7 +3,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Xunit;
     using Snowflake.Data.Client;
 
-    [TestFixture]
+
     class SFDbCommandBuilderTest
     {
         SnowflakeDbCommandBuilder builder;

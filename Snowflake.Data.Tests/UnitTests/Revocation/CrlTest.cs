@@ -9,7 +9,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
+
     public class CrlTest : RevocationTests
     {
         [Test]

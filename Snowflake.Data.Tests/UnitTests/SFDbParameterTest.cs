@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests
     using System.Data;
     using System.Text;
 
-    [TestFixture]
+
     class SFDbParameterTest
     {
         SnowflakeDbParameter _parameter;

@@ -4,7 +4,7 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
+
     public class NonCountingSessionCreationTokenCounterTest
     {
         [Test]

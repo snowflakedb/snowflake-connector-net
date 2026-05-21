@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests
     using System;
     using System.Collections;
 
-    [TestFixture]
+
     class SFDbParameterCollectionTest
     {
         SnowflakeDbParameterCollection _parameterCollection;

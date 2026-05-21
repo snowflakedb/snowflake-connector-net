@@ -7,7 +7,7 @@ using Snowflake.Data.Core.Authenticator.Browser;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser
 {
-    [TestFixture]
+
     public class WebBrowserStarterTest
     {
         [Test]

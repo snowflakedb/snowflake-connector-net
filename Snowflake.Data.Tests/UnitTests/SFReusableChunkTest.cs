@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Client;
     using System.Threading.Tasks;
 
-    [TestFixture]
+
     class SFReusableChunkTest
     {
         [Test]

@@ -3,7 +3,7 @@ using Snowflake.Data.Core.Converter;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     public class StructurePathTest
     {
         [Test]

@@ -5,7 +5,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Data;
     using System.Runtime.InteropServices;
 
-    [TestFixture]
+
     class SFDbAdaptorIT : SFBaseTest
     {
         private IDbDataAdapter _adapter;

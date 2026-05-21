@@ -7,7 +7,7 @@ using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
+
     public class FileCrlCacheConfigTest
     {
         [Test]
