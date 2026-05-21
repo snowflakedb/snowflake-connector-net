@@ -19,7 +19,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingPatSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -38,7 +38,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingPatInvalid()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -49,7 +49,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Programmatic access token is invalid.");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingPatMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

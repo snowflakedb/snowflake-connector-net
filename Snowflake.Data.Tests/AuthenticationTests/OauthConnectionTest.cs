@@ -18,7 +18,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingOauthSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -27,7 +27,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingOauthInvalidToken()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

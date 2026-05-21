@@ -21,7 +21,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingOktaSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -31,7 +31,7 @@ namespace Snowflake.Data.AuthenticationTests
 
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingOktaWrongUsernameParam()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -44,7 +44,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("401 (Unauthorized)");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingOktaWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -59,7 +59,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("401 (Unauthorized)");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingOktaWrongUrl()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -74,7 +74,7 @@ namespace Snowflake.Data.AuthenticationTests
         }
 
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingUrlWithoutOkta()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
