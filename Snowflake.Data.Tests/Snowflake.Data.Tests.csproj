@@ -15,9 +15,9 @@
         <LangVersion>13</LangVersion>
         <DefineConstants>$(SEQUENTIAL_ENV)</DefineConstants>
         <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
-        <!-- Suppress xUnit analyzer rules that conflict with NUnit-migrated code patterns (internal classes, non-public methods, InlineData mismatches) -->
-        <NoWarn>$(NoWarn);xUnit1000;xUnit1001;xUnit1003;xUnit1019;xUnit1016;xUnit1002;xUnit1009</NoWarn>
         <OutputType Condition="'$(OldXunit)' != 'True'">Exe</OutputType>
+        <!-- SNOW-3560694 !-->
+        <NoWarn>$(NoWarn);xUnit2009;xUnit1013;xUnit2004;xUnit2000</NoWarn>
     </PropertyGroup>
     <ItemGroup>
         <Content Include="wiremock\**\*.*">
@@ -34,6 +34,7 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="JunitXml.TestLogger" Version="3.1.12"/>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
         <PackageReference Include="Moq" Version="4.20.72"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Log4Net.AspNetCore" Version="8.0.0"/>
         <PackageReference Include="NLog.Extensions.Logging" Version="5.5.0"/>

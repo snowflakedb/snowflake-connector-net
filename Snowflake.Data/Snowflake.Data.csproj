@@ -16,6 +16,8 @@
     <Version>5.6.0</Version>
     <DebugType>Full</DebugType>
     <LangVersion>13</LangVersion>
+      <!-- SNOW-3560694 !-->
+    <NoWarn>$(NoWarn);CA2022</NoWarn>
   </PropertyGroup>
 
   <!-- Define WINDOWS_BUILD for all Windows-specific targets -->

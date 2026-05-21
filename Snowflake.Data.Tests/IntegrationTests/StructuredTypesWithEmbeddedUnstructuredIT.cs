@@ -320,7 +320,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        internal static IEnumerable<object[]> DateTimeConversionCases()
+        public static IEnumerable<object[]> DateTimeConversionCases()
         {
             yield return new object[]
             {
@@ -450,7 +450,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        internal static IEnumerable<object[]> DateTimeOffsetConversionCases()
+        public static IEnumerable<object[]> DateTimeOffsetConversionCases()
         {
             yield return new object[]
             {

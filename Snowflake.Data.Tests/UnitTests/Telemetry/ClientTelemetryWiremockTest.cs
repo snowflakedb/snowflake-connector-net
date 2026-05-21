@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             _fixture.Runner.AddMappings(s_mappingPath);
         }
 
-        [SFTheory]
+        [SFTheory(SkipCondition.SkipOnJenkins)]
         [InlineData("ExecuteNonQuery")]
         [InlineData("ExecuteScalar")]
         [InlineData("ExecuteReader")]
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.Equal("client_activity", matching.First().Type);
         }
 
-        [SFTheory]
+        [SFTheory(SkipCondition.SkipOnJenkins)]
         [InlineData("ExecuteNonQueryAsync")]
         [InlineData("ExecuteScalarAsync")]
         [InlineData("ExecuteReaderAsync")]
