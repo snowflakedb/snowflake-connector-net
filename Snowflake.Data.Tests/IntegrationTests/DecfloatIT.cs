@@ -2,7 +2,7 @@ using System;
 using System.Data;
 using System.Globalization;
 using System.Reflection;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 
@@ -293,7 +293,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT 
+                    cmd.CommandText = @"SELECT
                         1.1::DECFLOAT AS col1,
                         2.2::DECFLOAT AS col2,
                         3.3::DECFLOAT AS col3";

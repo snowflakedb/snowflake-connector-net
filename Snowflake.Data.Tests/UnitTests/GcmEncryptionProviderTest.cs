@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using Org.BouncyCastle.Crypto;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.FileTransfer;

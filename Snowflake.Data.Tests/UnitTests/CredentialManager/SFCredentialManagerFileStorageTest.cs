@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using NUnit.Framework;
+using Xunit;
 using Moq;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;

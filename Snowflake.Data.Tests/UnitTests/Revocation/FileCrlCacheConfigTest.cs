@@ -1,6 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
 using Moq;

@@ -1,6 +1,6 @@
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.FileTransfer.StorageClient;
     using Snowflake.Data.Core.FileTransfer;

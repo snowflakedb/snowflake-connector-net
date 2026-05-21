@@ -1,4 +1,4 @@
-using NUnit.Framework;
+using Xunit;
 using Microsoft.Extensions.Logging;
 using System;
 using Snowflake.Data.Client;

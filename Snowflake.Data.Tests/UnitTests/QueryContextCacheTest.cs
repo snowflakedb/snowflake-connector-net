@@ -1,7 +1,7 @@
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Newtonsoft.Json;
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Core;
     using System;
     using System.Collections.Generic;

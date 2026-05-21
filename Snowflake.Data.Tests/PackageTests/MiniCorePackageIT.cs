@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 
 // Build NuGet, create a fresh consumer app, install the
 // packaged connector, and run it to ensure MiniCore ships and loads correctly.

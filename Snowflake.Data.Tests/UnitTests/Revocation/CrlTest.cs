@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Org.BouncyCastle.Math;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;

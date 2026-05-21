@@ -3,7 +3,7 @@ using System.Data;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix.Native;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;

@@ -1,5 +1,5 @@
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration

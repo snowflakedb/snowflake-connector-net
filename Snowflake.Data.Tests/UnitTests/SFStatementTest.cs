@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
-using NUnit.Framework;
+using Xunit;
 using System;
 using System.Threading.Tasks;
 using Snowflake.Data.Core.Session;

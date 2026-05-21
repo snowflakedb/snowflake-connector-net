@@ -1,5 +1,5 @@
 using System;
-using NUnit.Framework;
+using Xunit;
 using Moq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;

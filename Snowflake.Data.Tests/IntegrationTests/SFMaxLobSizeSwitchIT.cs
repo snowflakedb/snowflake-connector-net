@@ -1,5 +1,5 @@
 using System.Data;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.IntegrationTests

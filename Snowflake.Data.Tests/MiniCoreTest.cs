@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Threading;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.MiniCore;
 

@@ -1,6 +1,6 @@
 using System.IO;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.FileTransfer;
 
 namespace Snowflake.Data.Tests

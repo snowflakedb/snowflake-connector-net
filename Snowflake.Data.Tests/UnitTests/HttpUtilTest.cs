@@ -1,5 +1,5 @@
 using System.Net.Http;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using RichardSzalay.MockHttp;
 using System.Threading;

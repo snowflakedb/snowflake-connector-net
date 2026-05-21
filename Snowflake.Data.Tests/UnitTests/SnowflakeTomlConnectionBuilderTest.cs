@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using System.IO;
     using Moq;
-    using NUnit.Framework;
+    using Xunit;
     using Core.Tools;
     using Snowflake.Data.Core;
 

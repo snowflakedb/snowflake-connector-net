@@ -2,7 +2,7 @@ namespace Snowflake.Data.Tests.UnitTests
 {
     using System;
     using Mock;
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.Session;
     using Snowflake.Data.Client;

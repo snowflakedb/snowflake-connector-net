@@ -3,7 +3,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using System.Data;
     using System.Data.Common;
     using System;
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using System.Threading.Tasks;
@@ -75,7 +75,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        // Test SNOW-761136 unnecessary ROLLBACK 
+        // Test SNOW-761136 unnecessary ROLLBACK
         public void TestTransactionRollback()
         {
             var conn = new SnowflakeDbConnection();
@@ -126,7 +126,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [Test]
-        // Test SNOW-761136 unnecessary ROLLBACK 
+        // Test SNOW-761136 unnecessary ROLLBACK
         public void TestTransactionRollbackOn2Transactions()
         {
             var conn = new SnowflakeDbConnection();

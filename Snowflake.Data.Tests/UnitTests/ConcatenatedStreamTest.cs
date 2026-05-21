@@ -1,5 +1,5 @@
 using Snowflake.Data.Tests.Util;
-using NUnit.Framework;
+using Xunit;
 using System;
 using System.IO;
 using System.Text;

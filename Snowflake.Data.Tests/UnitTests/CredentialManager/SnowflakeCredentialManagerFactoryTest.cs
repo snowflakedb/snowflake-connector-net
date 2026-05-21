@@ -1,6 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
