@@ -7,8 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
     {
         protected ISnowflakeCredentialManager _credentialManager;
 
-        [SFFact]
-        public void TestSavingAndRemovingCredentials()
+        public virtual void TestSavingAndRemovingCredentials()
         {
             // arrange
             var key = "mockKey";
@@ -27,8 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
-        [SFFact]
-        public void TestSavingCredentialsForAnExistingKey()
+        public virtual void TestSavingCredentialsForAnExistingKey()
         {
             // arrange
             var key = "mockKey";
@@ -55,8 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 
         }
 
-        [SFFact]
-        public void TestRemovingCredentialsForKeyThatDoesNotExist()
+        public virtual void TestRemovingCredentialsForKeyThatDoesNotExist()
         {
             // arrange
             var key = "mockKey";
@@ -68,8 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
-        [SFFact]
-        public void TestGetCredentialsForProperKey()
+        public virtual void TestGetCredentialsForProperKey()
         {
             // arrange
             var key = "key";
@@ -86,8 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.Equal(token, result);
         }
 
-        [SFFact]
-        public void TestGetCredentialsForTokenWithManyCharacters()
+        public virtual void TestGetCredentialsForTokenWithManyCharacters()
         {
             // arrange
             var key = "mockKey";
@@ -106,8 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
-        [SFFact]
-        public void TestGetCredentialsForCredentialsThatDoesNotExist()
+        public virtual void TestGetCredentialsForCredentialsThatDoesNotExist()
         {
             // arrange
             var key = "fakeKey";
