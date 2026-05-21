@@ -4,12 +4,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
-using Snowflake.Data.Tests.IntegrationTests;
 using Snowflake.Data.Tests.Util;
 using Xunit;
 #if NET8_0_OR_GREATER
@@ -105,12 +103,12 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        public Task CreateOrReplaceTable(SnowflakeDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
+        public TaskOrValueTask CreateOrReplaceTable(SnowflakeDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
         {
             return CreateOrReplaceTable(conn, tableName, "", columns, additionalQueryStr);
         }
 
-        public async Task CreateOrReplaceTable(SnowflakeDbConnection conn, string tableName, string tableType, IEnumerable<string> columns,
+        public async TaskOrValueTask CreateOrReplaceTable(SnowflakeDbConnection conn, string tableName, string tableType, IEnumerable<string> columns,
             string additionalQueryStr = null)
         {
             var columnsStr = string.Join(", ", columns);
