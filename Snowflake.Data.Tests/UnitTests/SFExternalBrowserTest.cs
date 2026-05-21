@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             sfSession.Open();
 
-            Assert.IsTrue(sfSession._disableConsoleLogin);
+            Assert.True(sfSession._disableConsoleLogin);
             t_browserRunner.Verify(b => b.Run(It.Is<Uri>(s => localhostRegex.IsMatch(s.ToString()))), Times.Once());
             t_browserRunner.VerifyNoOtherCalls();
         }
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
             SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             sfSession.Open();
-            Assert.IsFalse(sfSession._disableConsoleLogin);
+            Assert.False(sfSession._disableConsoleLogin);
             t_browserRunner.Verify(b => b.Run(It.Is<Uri>(s => s.ToString().Contains("https://test.snowflakecomputing.com/console/login?"))), Times.Once());
             t_browserRunner.VerifyNoOtherCalls();
         }
@@ -325,7 +325,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
 
-            Assert.IsTrue(sfSession._disableConsoleLogin);
+            Assert.True(sfSession._disableConsoleLogin);
             t_browserRunner.Verify(b => b.Run(It.Is<Uri>(s => localhostRegex.IsMatch(s.ToString()))), Times.Once());
             t_browserRunner.VerifyNoOtherCalls();
         }
@@ -351,7 +351,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
 
-            Assert.IsFalse(sfSession._disableConsoleLogin);
+            Assert.False(sfSession._disableConsoleLogin);
             t_browserRunner.Verify(b => b.Run(It.Is<Uri>(s => s.ToString().Contains("https://test.snowflakecomputing.com/console/login?"))), Times.Once());
             t_browserRunner.VerifyNoOtherCalls();
         }

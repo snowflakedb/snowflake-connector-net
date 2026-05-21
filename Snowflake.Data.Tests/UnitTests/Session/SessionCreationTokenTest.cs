@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
             // assert
-            Assert.IsFalse(isExpired);
+            Assert.False(isExpired);
         }
 
         [Test]
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + timeout30SecondsAsMillis + 1);
 
             // assert
-            Assert.IsTrue(isExpired);
+            Assert.True(isExpired);
         }
     }
 }

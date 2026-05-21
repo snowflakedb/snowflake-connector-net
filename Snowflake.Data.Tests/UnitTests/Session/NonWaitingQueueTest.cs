@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
+            Assert.False(result);
             Assert.LessOrEqual(watch.ElapsedMilliseconds, 50);
         }
 
@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isAnyoneWaiting = nonWaitingQueue.IsAnyoneWaiting();
 
             // assert
-            Assert.IsFalse(isAnyoneWaiting);
+            Assert.False(isAnyoneWaiting);
         }
 
         [Test]
@@ -50,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isWaitingEnabled = nonWaitingQueue.IsWaitingEnabled();
 
             // assert
-            Assert.IsFalse(isWaitingEnabled);
+            Assert.False(isWaitingEnabled);
         }
 
         [Test]

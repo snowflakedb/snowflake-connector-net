@@ -171,7 +171,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             else
             {
-                Assert.IsNull(fileHeader);
+                Assert.Null(fileHeader);
             }
 
             Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
@@ -248,7 +248,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(amazonS3Client.ServiceURL, Is.EqualTo(expectedEndpoint));
-            Assert.IsNull(amazonS3Client.RegionEndpoint);
+            Assert.Null(amazonS3Client.RegionEndpoint);
         }
 
         [Test]
@@ -264,7 +264,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(amazonS3Client.RegionEndpoint, Is.EqualTo(expectedRegionEndpoint));
-            Assert.IsNull(amazonS3Client.ServiceURL);
+            Assert.Null(amazonS3Client.ServiceURL);
         }
 
         [Test]
@@ -386,7 +386,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
-            Assert.IsNull(fileHeader.digest);
+            Assert.Null(fileHeader.digest);
             Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
             Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
             Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);

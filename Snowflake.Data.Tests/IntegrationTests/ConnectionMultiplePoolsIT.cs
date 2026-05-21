@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var thrown = Assert.Throws<Exception>(() => SnowflakeDbConnectionPool.SetPooling(false));
 
             // assert
-            Assert.IsNotNull(thrown);
+            Assert.NotNull(thrown);
         }
 
         [Test]
@@ -245,7 +245,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // operation cancelled properly
             var thrown = Assert.Throws<AggregateException>(() => task.Wait());
-            Assert.IsInstanceOf<OperationCanceledException>(thrown.InnerException);
+            Assert.InstanceOf<OperationCanceledException>(thrown.InnerException);
 
             // one idle session
             Assert.AreEqual(1, pool.GetCurrentState().IdleSessionsCount);

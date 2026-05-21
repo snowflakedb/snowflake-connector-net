@@ -171,9 +171,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             for (var i = 0; i < RowCount; ++i)
             {
-                Assert.IsTrue(chunk.Next());
+                Assert.True(chunk.Next());
             }
-            Assert.IsFalse(chunk.Next());
+            Assert.False(chunk.Next());
         }
 
         [Test]
@@ -191,9 +191,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             for (var i = 0; i < RowCount; ++i)
             {
-                Assert.IsTrue(chunk.Rewind());
+                Assert.True(chunk.Rewind());
             }
-            Assert.IsFalse(chunk.Rewind());
+            Assert.False(chunk.Rewind());
         }
 
         [Test]

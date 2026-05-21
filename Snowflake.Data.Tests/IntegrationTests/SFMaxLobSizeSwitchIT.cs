@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = SqlSelectLargeString;
                 var reader = cmd.ExecuteReader();
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
             }
         }
     }

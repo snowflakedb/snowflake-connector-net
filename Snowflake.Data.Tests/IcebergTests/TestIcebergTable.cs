@@ -494,7 +494,7 @@ namespace Snowflake.Data.Tests.IcebergTests
                 var expected = expectedRow[idx];
                 if (expected is DBNull || expected == null)
                 {
-                    Assert.IsTrue(actualRow.IsDBNull(idx));
+                    Assert.True(actualRow.IsDBNull(idx));
                     continue;
                 }
 

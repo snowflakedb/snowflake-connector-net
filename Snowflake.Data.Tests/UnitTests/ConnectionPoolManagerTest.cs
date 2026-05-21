@@ -205,9 +205,9 @@ namespace Snowflake.Data.Tests.UnitTests
             var pooling = _connectionPoolManager.GetPooling();
 
             // Assert
-            Assert.IsTrue(pooling);
-            Assert.IsTrue(sessionPool1.GetPooling());
-            Assert.IsFalse(sessionPool2.GetPooling());
+            Assert.True(pooling);
+            Assert.True(sessionPool1.GetPooling());
+            Assert.False(sessionPool2.GetPooling());
         }
 
         [Test]
@@ -219,7 +219,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var pool = _connectionPoolManager.GetPool(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.IsFalse(pool.GetPooling());
+            Assert.False(pool.GetPooling());
         }
 
         [Test]
@@ -233,9 +233,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act/Assert
             var exception = Assert.Throws<SnowflakeDbException>(() => _connectionPoolManager.GetTimeout());
-            Assert.IsNotNull(exception);
+            Assert.NotNull(exception);
             Assert.AreEqual(SFError.INCONSISTENT_RESULT_ERROR.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
-            Assert.IsTrue(exception.Message.Contains("Multiple pools have different Timeout values"));
+            Assert.True(exception.Message.Contains("Multiple pools have different Timeout values"));
         }
 
         [Test]
@@ -262,9 +262,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act/Assert
             var exception = Assert.Throws<SnowflakeDbException>(() => _connectionPoolManager.GetMaxPoolSize());
-            Assert.IsNotNull(exception);
+            Assert.NotNull(exception);
             Assert.AreEqual(SFError.INCONSISTENT_RESULT_ERROR.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
-            Assert.IsTrue(exception.Message.Contains("Multiple pools have different Max Pool Size values"));
+            Assert.True(exception.Message.Contains("Multiple pools have different Max Pool Size values"));
         }
 
         [Test]
@@ -361,7 +361,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var serializedPool = pool.ToString();
 
             // assert
-            Assert.IsFalse(serializedPool.Contains(password));
+            Assert.False(serializedPool.Contains(password));
         }
 
         private void EnsurePoolSize(string connectionString, SessionPropertiesContext sessionContext, int requiredCurrentSize)

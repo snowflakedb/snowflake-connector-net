@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(testcase.ConnectionString, propertiesContext);
 
             // assert
-            CollectionAssert.IsSubsetOf(testcase.ExpectedProperties, properties);
+            CollectionAssert.SubsetOf(testcase.ExpectedProperties, properties);
         }
 
         [Test]
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
-            Assert.IsTrue(exception.Message.Contains(expectedErrorMessagePart));
+            Assert.True(exception.Message.Contains(expectedErrorMessagePart));
         }
 
         [Test]
@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.IsTrue(properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPassword));
+            Assert.True(properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPassword));
             Assert.AreEqual(expectedPasscodeInPassword, passcodeInPassword);
         }
 
@@ -233,8 +233,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 // Verify the Turkish culture issue exists
                 Assert.AreNotEqual(cultureDependent, cultureInvariant, "Turkish culture should produce different casing");
-                Assert.IsTrue(cultureDependent.Contains("İ"), "Turkish ToUpper() should contain Turkish dotted capital I");
-                Assert.IsTrue(cultureInvariant.Contains("I"), "Invariant ToUpper() should contain ASCII capital I");
+                Assert.True(cultureDependent.Contains("İ"), "Turkish ToUpper() should contain Turkish dotted capital I");
+                Assert.True(cultureInvariant.Contains("I"), "Invariant ToUpper() should contain ASCII capital I");
 
                 // Verify that invalid properties still throw exceptions even with Turkish culture
                 var invalidConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;invalidproperty=somevalue";
@@ -248,7 +248,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.AreEqual("testpassword", properties[SFSessionProperty.PASSWORD]);
 
                 // Verify invalid property is not present (can't use Enum.Parse here as it would throw)
-                Assert.IsFalse(properties.Any(p => p.Key.ToString().Equals("INVALIDPROPERTY", StringComparison.OrdinalIgnoreCase)),
+                Assert.False(properties.Any(p => p.Key.ToString().Equals("INVALIDPROPERTY", StringComparison.OrdinalIgnoreCase)),
                     "Invalid property should not be present in parsed properties");
             }
             finally
@@ -389,12 +389,12 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHCLIENTID, out var _));
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHCLIENTSECRET, out var _));
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHSCOPE, out var _));
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHREDIRECTURI, out var _));
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHAUTHORIZATIONURL, out var _));
-            Assert.IsFalse(properties.TryGetValue(SFSessionProperty.OAUTHTOKENREQUESTURL, out var _));
+            Assert.False(properties.TryGetValue(SFSessionProperty.OAUTHCLIENTID, out var _));
+            Assert.False(properties.TryGetValue(SFSessionProperty.OAUTHCLIENTSECRET, out var _));
+            Assert.False(properties.TryGetValue(SFSessionProperty.OAUTHSCOPE, out var _));
+            Assert.False(properties.TryGetValue(SFSessionProperty.OAUTHREDIRECTURI, out var _));
+            Assert.False(properties.TryGetValue(SFSessionProperty.OAUTHAUTHORIZATIONURL, out var _));
+            Assert.False(properties.TryGetValue(SFSessionProperty.OAUTHTOKENREQUESTURL, out var _));
         }
 
         [Test]

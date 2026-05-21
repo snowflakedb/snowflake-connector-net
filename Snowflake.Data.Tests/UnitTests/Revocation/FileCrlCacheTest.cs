@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 var crlReadFromNotExistingFile = cache.Get(CrlUrl);
 
                 // assert
-                Assert.IsNull(crlReadFromNotExistingFile);
+                Assert.Null(crlReadFromNotExistingFile);
 
                 // act
                 cache.Set(CrlUrl, crl);
@@ -102,7 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 var crlReadFromTooPermissiveFile = cache.Get(CrlUrl);
 
                 // assert
-                Assert.IsNull(crlReadFromTooPermissiveFile);
+                Assert.Null(crlReadFromTooPermissiveFile);
             }
             finally
             {
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlRead = cache.Get(CrlUrl);
 
             // assert
-            Assert.IsNull(crlRead);
+            Assert.Null(crlRead);
             unixOperations.VerifyNoOtherCalls();
         }
 
@@ -220,7 +220,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlRead = cache.Get(CrlUrl);
 
             // assert
-            Assert.IsNull(crlRead);
+            Assert.Null(crlRead);
             unixOperations.VerifyNoOtherCalls();
         }
 
@@ -354,7 +354,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlRead = cache.Get(CrlUrl);
 
             // assert
-            Assert.IsNull(crlRead);
+            Assert.Null(crlRead);
         }
 
         [Test]

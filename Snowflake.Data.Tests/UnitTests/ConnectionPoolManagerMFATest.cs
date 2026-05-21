@@ -64,11 +64,11 @@ namespace Snowflake.Data.Tests.UnitTests
             var loginRequest1 = s_restRequester.LoginRequests.Dequeue();
             Assert.AreEqual(string.Empty, loginRequest1.data.Token);
             Assert.AreEqual(testToken, SecureStringHelper.Decode(session._mfaToken));
-            Assert.IsTrue(loginRequest1.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
+            Assert.True(loginRequest1.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value) && (bool)value);
             Assert.AreEqual("passcode", loginRequest1.data.extAuthnDuoMethod);
             var loginRequest2 = s_restRequester.LoginRequests.Dequeue();
             Assert.AreEqual(testToken, loginRequest2.data.Token);
-            Assert.IsTrue(loginRequest2.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value1) && (bool)value1);
+            Assert.True(loginRequest2.data.SessionParameters.TryGetValue(SFSessionParameter.CLIENT_REQUEST_MFA_TOKEN, out var value1) && (bool)value1);
             Assert.AreEqual("passcode", loginRequest2.data.extAuthnDuoMethod);
         }
 

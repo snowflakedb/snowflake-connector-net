@@ -73,15 +73,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
                         Assert.AreEqual(typeof(string), reader.GetFieldType(0));
 
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
 
                         var value = reader.GetValue(0);
-                        Assert.IsInstanceOf<string>(value);
+                        Assert.InstanceOf<string>(value);
 
                         // Parse and compare numerically (format may vary between Arrow/JSON)
                         Assert.AreEqual(123.456m, ParseDecfloatValue((string)value));
 
-                        Assert.IsFalse(reader.Read());
+                        Assert.False(reader.Read());
                     }
                 }
             }
@@ -102,13 +102,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
 
                         var value = reader.GetValue(0);
-                        Assert.IsInstanceOf<string>(value);
+                        Assert.InstanceOf<string>(value);
                         Assert.AreEqual(1234567890.123456789m, ParseDecfloatValue((string)value));
 
-                        Assert.IsFalse(reader.Read());
+                        Assert.False(reader.Read());
                     }
                 }
             }
@@ -129,11 +129,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Assert.IsTrue(reader.Read());
-                        Assert.IsTrue(reader.IsDBNull(0));
+                        Assert.True(reader.Read());
+                        Assert.True(reader.IsDBNull(0));
                         Assert.AreEqual(DBNull.Value, reader.GetValue(0));
 
-                        Assert.IsFalse(reader.Read());
+                        Assert.False(reader.Read());
                     }
                 }
             }
@@ -154,13 +154,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
 
                         var value = reader.GetValue(0);
-                        Assert.IsInstanceOf<string>(value);
+                        Assert.InstanceOf<string>(value);
                         Assert.AreEqual(-987.654m, ParseDecfloatValue((string)value));
 
-                        Assert.IsFalse(reader.Read());
+                        Assert.False(reader.Read());
                     }
                 }
             }
@@ -181,13 +181,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
 
                         var value = reader.GetValue(0);
-                        Assert.IsInstanceOf<string>(value);
+                        Assert.InstanceOf<string>(value);
                         Assert.AreEqual(0m, ParseDecfloatValue((string)value));
 
-                        Assert.IsFalse(reader.Read());
+                        Assert.False(reader.Read());
                     }
                 }
             }
@@ -208,13 +208,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
 
                         var value = reader.GetValue(0);
-                        Assert.IsInstanceOf<string>(value);
+                        Assert.InstanceOf<string>(value);
                         Assert.AreEqual(12300000000m, ParseDecfloatValue((string)value));
 
-                        Assert.IsFalse(reader.Read());
+                        Assert.False(reader.Read());
                     }
                 }
             }
@@ -235,13 +235,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ValidateResultFormat(reader);
 
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
 
                         var value = reader.GetValue(0);
-                        Assert.IsInstanceOf<string>(value);
+                        Assert.InstanceOf<string>(value);
                         Assert.AreEqual(0.0015m, ParseDecfloatValue((string)value));
 
-                        Assert.IsFalse(reader.Read());
+                        Assert.False(reader.Read());
                     }
                 }
             }
@@ -269,16 +269,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         Assert.AreEqual("DECFLOAT", reader.GetDataTypeName(0));
 
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
                         Assert.AreEqual(-999.999m, ParseDecfloatValue((string)reader.GetValue(0)));
 
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
                         Assert.AreEqual(123.456m, ParseDecfloatValue((string)reader.GetValue(0)));
 
-                        Assert.IsTrue(reader.Read());
-                        Assert.IsTrue(reader.IsDBNull(0));
+                        Assert.True(reader.Read());
+                        Assert.True(reader.IsDBNull(0));
 
-                        Assert.IsFalse(reader.Read());
+                        Assert.False(reader.Read());
                     }
                 }
             }
@@ -309,12 +309,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             Assert.AreEqual(typeof(string), reader.GetFieldType(i));
                         }
 
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
                         Assert.AreEqual(1.1m, ParseDecfloatValue((string)reader.GetValue(0)));
                         Assert.AreEqual(2.2m, ParseDecfloatValue((string)reader.GetValue(1)));
                         Assert.AreEqual(3.3m, ParseDecfloatValue((string)reader.GetValue(2)));
 
-                        Assert.IsFalse(reader.Read());
+                        Assert.False(reader.Read());
                     }
                 }
             }
@@ -343,13 +343,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         Console.WriteLine($"DataTypeName: {dataTypeName}");
                         Console.WriteLine($"FieldType: {fieldType}");
 
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
 
                         var value = reader.GetValue(0);
                         Console.WriteLine($"Value type: {value?.GetType()?.Name ?? "null"}");
                         Console.WriteLine($"Value: {value}");
 
-                        Assert.IsFalse(reader.Read());
+                        Assert.False(reader.Read());
                     }
                 }
             }
@@ -388,13 +388,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             Console.WriteLine($"DataTypeName: {dataTypeName}");
                             Console.WriteLine($"FieldType: {fieldType}");
 
-                            Assert.IsTrue(reader.Read());
+                            Assert.True(reader.Read());
 
                             var value = reader.GetValue(0);
                             Console.WriteLine($"Value type: {value?.GetType()?.Name ?? "null"}");
                             Console.WriteLine($"Value: {value}");
 
-                            Assert.IsFalse(reader.Read());
+                            Assert.False(reader.Read());
                         }
                     }
                 }

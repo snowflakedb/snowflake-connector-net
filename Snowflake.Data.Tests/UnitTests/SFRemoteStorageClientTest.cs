@@ -159,19 +159,19 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 if (stageType == SFRemoteStorageUtil.S3_FS)
                 {
-                    Assert.IsInstanceOf<SFS3Client>(client);
+                    Assert.InstanceOf<SFS3Client>(client);
                 }
                 else if (stageType == SFRemoteStorageUtil.AZURE_FS)
                 {
-                    Assert.IsInstanceOf<SFSnowflakeAzureClient>(client);
+                    Assert.InstanceOf<SFSnowflakeAzureClient>(client);
                 }
                 else if (stageType == SFRemoteStorageUtil.GCS_FS)
                 {
-                    Assert.IsInstanceOf<SFGCSClient>(client);
+                    Assert.InstanceOf<SFGCSClient>(client);
                 }
                 else
                 {
-                    Assert.IsNull(client);
+                    Assert.Null(client);
                 }
             }
         }
@@ -495,7 +495,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(ex.Message, Does.Match($"Unknown Error in downloading a file: .*"));
-            Assert.IsNull(_fileMetadata.resultStatus);
+            Assert.Null(_fileMetadata.resultStatus);
         }
 
         [Test]
@@ -510,7 +510,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.That(ex.Message, Does.Match($"Unknown Error in downloading a file: .*"));
-            Assert.IsNull(_fileMetadata.resultStatus);
+            Assert.Null(_fileMetadata.resultStatus);
         }
 
         private void SetUpMockEncryptedFileForDownload()

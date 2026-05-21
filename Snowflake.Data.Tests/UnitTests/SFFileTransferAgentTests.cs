@@ -354,8 +354,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 // Assert the file is uploaded
                 Assert.AreEqual(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check the name of the source file and destination file are the same
-                Assert.IsTrue(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName).Contains(mockFileName));
-                Assert.IsTrue(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName).Contains(mockFileName));
+                Assert.True(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName).Contains(mockFileName));
+                Assert.True(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName).Contains(mockFileName));
 
                 File.Delete($"{mockFileName}{index}.{extension}");
             }
@@ -598,9 +598,9 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             Assert.AreEqual(_responseData.queryId, ex.QueryId);
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
-            Assert.IsInstanceOf<AggregateException>(ex.InnerException);
+            Assert.InstanceOf<AggregateException>(ex.InnerException);
             var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
-            Assert.IsInstanceOf<FileNotFoundException>(innerException);
+            Assert.InstanceOf<FileNotFoundException>(innerException);
             Assert.That(innerException?.Message, Does.Match("Could not find file .*"));
         }
 
@@ -630,9 +630,9 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             Assert.AreEqual(_responseData.queryId, ex.QueryId);
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
-            Assert.IsInstanceOf<AggregateException>(ex.InnerException);
+            Assert.InstanceOf<AggregateException>(ex.InnerException);
             var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
-            Assert.IsInstanceOf<DirectoryNotFoundException>(innerException);
+            Assert.InstanceOf<DirectoryNotFoundException>(innerException);
             Assert.That(innerException?.Message, Does.Match("Could not find a part of the path .*"));
         }
 

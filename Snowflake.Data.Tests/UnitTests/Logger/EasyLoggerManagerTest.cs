@@ -52,37 +52,37 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Off, _directoryLogPath.Value);
 
             // assert
-            Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInfoEnabled());
-            Assert.IsFalse(logger.IsWarnEnabled());
-            Assert.IsFalse(logger.IsErrorEnabled());
+            Assert.False(logger.IsDebugEnabled());
+            Assert.False(logger.IsInfoEnabled());
+            Assert.False(logger.IsWarnEnabled());
+            Assert.False(logger.IsErrorEnabled());
 
             // act
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, _directoryLogPath.Value);
 
             // assert
-            Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInfoEnabled());
-            Assert.IsFalse(logger.IsWarnEnabled());
-            Assert.IsTrue(logger.IsErrorEnabled());
+            Assert.False(logger.IsDebugEnabled());
+            Assert.False(logger.IsInfoEnabled());
+            Assert.False(logger.IsWarnEnabled());
+            Assert.True(logger.IsErrorEnabled());
 
             // act
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
 
             // assert
-            Assert.IsFalse(logger.IsDebugEnabled());
-            Assert.IsFalse(logger.IsInfoEnabled());
-            Assert.IsTrue(logger.IsWarnEnabled());
-            Assert.IsTrue(logger.IsErrorEnabled());
+            Assert.False(logger.IsDebugEnabled());
+            Assert.False(logger.IsInfoEnabled());
+            Assert.True(logger.IsWarnEnabled());
+            Assert.True(logger.IsErrorEnabled());
 
             // act
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, _directoryLogPath.Value);
 
             // assert
-            Assert.IsTrue(logger.IsDebugEnabled());
-            Assert.IsTrue(logger.IsInfoEnabled());
-            Assert.IsTrue(logger.IsWarnEnabled());
-            Assert.IsTrue(logger.IsErrorEnabled());
+            Assert.True(logger.IsDebugEnabled());
+            Assert.True(logger.IsInfoEnabled());
+            Assert.True(logger.IsWarnEnabled());
+            Assert.True(logger.IsErrorEnabled());
         }
 
         [Test]
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
 
         internal static string FindLogFilePath(string directoryLogPath)
         {
-            Assert.IsTrue(Directory.Exists(directoryLogPath));
+            Assert.True(Directory.Exists(directoryLogPath));
             var files = Directory.GetFiles(directoryLogPath);
             Assert.AreEqual(1, files.Length);
             return files.First();

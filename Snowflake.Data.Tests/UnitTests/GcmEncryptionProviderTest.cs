@@ -63,8 +63,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                Assert.IsNull(encryptionMetadata.keyAad);
-                Assert.IsNull(encryptionMetadata.aad);
+                Assert.Null(encryptionMetadata.keyAad);
+                Assert.Null(encryptionMetadata.aad);
 
                 // act
                 using (var decryptedStream = GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration))
@@ -162,7 +162,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
                 CollectionAssert.AreEqual(s_keyAadBase64, encryptionMetadata.keyAad);
-                Assert.IsNull(encryptionMetadata.aad);
+                Assert.Null(encryptionMetadata.aad);
                 encryptionMetadata.keyAad = s_invalidAadBase64;
 
                 // act
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                Assert.IsNull(encryptionMetadata.keyAad);
+                Assert.Null(encryptionMetadata.keyAad);
                 CollectionAssert.AreEqual(s_contentAadBase64, encryptionMetadata.aad);
                 encryptionMetadata.aad = s_invalidAadBase64;
 

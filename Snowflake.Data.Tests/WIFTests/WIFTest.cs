@@ -125,9 +125,9 @@ namespace Snowflake.Data.WIFTests
                 {
                     command.CommandText = "SELECT CURRENT_USER()";
                     var result = command.ExecuteScalar();
-                    Assert.IsNotNull(result);
+                    Assert.NotNull(result);
                     var user = result.ToString();
-                    Assert.IsNotEmpty(user, "CURRENT_USER() returned an empty string");
+                    Assert.NotEmpty(user, "CURRENT_USER() returned an empty string");
                     return user;
                 }
             }

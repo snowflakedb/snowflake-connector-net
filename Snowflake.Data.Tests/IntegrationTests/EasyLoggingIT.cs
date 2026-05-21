@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Open();
 
                 // assert
-                Assert.IsTrue(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.True(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
 
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // assert
                 Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
-                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
 
@@ -176,7 +176,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // assert
                 Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
-                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
 
@@ -196,7 +196,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // assert
                 Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
                 Assert.That(thrown.InnerException.Message, Does.Contain("Failed to create logs directory"));
-                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
 
@@ -220,7 +220,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // assert
                 Assert.That(thrown.Message, Does.Contain("Connection string is invalid: Unable to initialize session"));
                 Assert.That(thrown.InnerException.Message, Does.Contain("Too broad access permissions for logs directory"));
-                Assert.IsFalse(EasyLoggerManager.HasEasyLoggingAppender());
+                Assert.False(EasyLoggerManager.HasEasyLoggingAppender());
             }
         }
     }

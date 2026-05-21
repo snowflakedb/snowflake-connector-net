@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests
             responseData.rowsetBase64 = "";
             var arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
 
-            Assert.IsFalse(arrowResultSet.Next());
+            Assert.False(arrowResultSet.Next());
         }
 
         [Test]
@@ -55,9 +55,9 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             for (var i = 0; i < RowCount; ++i)
             {
-                Assert.IsTrue(_arrowResultSet.Next());
+                Assert.True(_arrowResultSet.Next());
             }
-            Assert.IsFalse(_arrowResultSet.Next());
+            Assert.False(_arrowResultSet.Next());
         }
 
         [Test]
@@ -65,27 +65,27 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             for (var i = 0; i < RowCount; ++i)
             {
-                Assert.IsTrue(await _arrowResultSet.NextAsync());
+                Assert.True(await _arrowResultSet.NextAsync());
             }
-            Assert.IsFalse(await _arrowResultSet.NextAsync());
+            Assert.False(await _arrowResultSet.NextAsync());
         }
 
         [Test]
         public void TestNextResultReturnsFalse()
         {
-            Assert.IsFalse(_arrowResultSet.NextResult());
+            Assert.False(_arrowResultSet.NextResult());
         }
 
         [Test]
         public async Task TestNextResultAsyncReturnsFalse()
         {
-            Assert.IsFalse(await _arrowResultSet.NextResultAsync(CancellationToken.None));
+            Assert.False(await _arrowResultSet.NextResultAsync(CancellationToken.None));
         }
 
         [Test]
         public void TestHasRowsReturnsTrueIfRowExists()
         {
-            Assert.IsTrue(_arrowResultSet.HasRows());
+            Assert.True(_arrowResultSet.HasRows());
         }
 
         [Test]
@@ -93,20 +93,20 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             PrepareTestCase(SFDataType.FIXED, 0, new sbyte[] { });
 
-            Assert.IsFalse(_arrowResultSet.HasRows());
+            Assert.False(_arrowResultSet.HasRows());
         }
 
         [Test]
         public void TestRewindReturnsFalseBeforeFirstRow()
         {
-            Assert.IsFalse(_arrowResultSet.Rewind());
+            Assert.False(_arrowResultSet.Rewind());
         }
 
         [Test]
         public void TestRewindReturnsFalseForFirstRow()
         {
             _arrowResultSet.Next(); // move to first row
-            Assert.IsFalse(_arrowResultSet.Rewind());
+            Assert.False(_arrowResultSet.Rewind());
         }
 
         [Test]
@@ -114,8 +114,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             _arrowResultSet.Next(); // move to first row
             _arrowResultSet.Next(); // move to second row
-            Assert.IsTrue(_arrowResultSet.Rewind());
-            Assert.IsFalse(_arrowResultSet.Rewind());
+            Assert.True(_arrowResultSet.Rewind());
+            Assert.False(_arrowResultSet.Rewind());
         }
 
         [Test]
@@ -124,9 +124,9 @@ namespace Snowflake.Data.Tests.UnitTests
             _arrowResultSet.Next(); // move to first row
             _arrowResultSet.Next(); // move to second row
             _arrowResultSet.Next(); // move to third row
-            Assert.IsTrue(_arrowResultSet.Rewind());
-            Assert.IsTrue(_arrowResultSet.Rewind());
-            Assert.IsFalse(_arrowResultSet.Rewind());
+            Assert.True(_arrowResultSet.Rewind());
+            Assert.True(_arrowResultSet.Rewind());
+            Assert.False(_arrowResultSet.Rewind());
         }
 
         [Test]
@@ -474,7 +474,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), new CancellationToken()));
-            Assert.IsTrue(exception.Message.Contains($"Unknown column type: {UnknownDataType}"));
+            Assert.True(exception.Message.Contains($"Unknown column type: {UnknownDataType}"));
         }
 
         [Test]
@@ -493,7 +493,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), new CancellationToken()));
-            Assert.IsTrue(exception.Message.Contains($"Unknown column type: {SFDataType.None.ToString()}"));
+            Assert.True(exception.Message.Contains($"Unknown column type: {SFDataType.None.ToString()}"));
         }
 
         private void PrepareTestCase(SFDataType sfType, long scale, object values)

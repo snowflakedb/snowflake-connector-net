@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (AggregateException e)
                 {
                     // Jitter can cause the request to reach max number of retries before reaching the timeout
-                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                    Assert.True(e.InnerException is TaskCanceledException ||
                         SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (Exception e)
                 {
                     // Jitter can cause the request to reach max number of retries before reaching the timeout
-                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                    Assert.True(e.InnerException is TaskCanceledException ||
                         SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }
@@ -156,7 +156,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (AggregateException e)
                 {
                     // Jitter can cause the request to reach max number of retries before reaching the timeout
-                    Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                    Assert.True(e.InnerException is TaskCanceledException ||
                         SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
                         ((SnowflakeDbException)e.InnerException).ErrorCode);
                 }

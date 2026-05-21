@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.PackageTests
                 .Where(f => !f.EndsWith(".symbols.nupkg"))
                 .OrderByDescending(File.GetLastWriteTimeUtc)
                 .FirstOrDefault();
-            Assert.IsNotNull(packagePath, "NuGet package not found");
+            Assert.NotNull(packagePath, "NuGet package not found");
 
             var version = Path.GetFileNameWithoutExtension(packagePath).Replace("Snowflake.Data.", "");
 

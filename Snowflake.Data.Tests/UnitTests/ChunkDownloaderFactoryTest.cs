@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 IChunkDownloader downloader = ChunkDownloaderFactory.GetDownloader(responseData, resultSet, token);
 
-                Assert.IsTrue(downloader is SFBlockingChunkDownloaderV3);
+                Assert.True(downloader is SFBlockingChunkDownloaderV3);
             }
         }
     }

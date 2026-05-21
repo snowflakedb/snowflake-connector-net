@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             cacheKeys.RemoveRefreshToken();
 
             // assert
-            Assert.IsFalse(cacheKeys.IsAvailable());
+            Assert.False(cacheKeys.IsAvailable());
             credentialManager.VerifyNoOtherCalls();
         }
 
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var cacheKeys = OAuthCacheKeys.CreateForAuthorizationCodeFlow("snowflakecomputing.com", "testUser", true, () => credentialManager);
 
             // act/assert
-            Assert.IsTrue(cacheKeys.IsAvailable());
+            Assert.True(cacheKeys.IsAvailable());
             Assert.AreEqual(string.Empty, cacheKeys.GetAccessToken());
             cacheKeys.SaveAccessToken(Token);
             Assert.AreEqual(Token, cacheKeys.GetAccessToken());
@@ -106,7 +106,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var cacheKeys = OAuthCacheKeys.CreateForAuthorizationCodeFlow("snowflakecomputing.com", "testUser", true, () => credentialManager);
 
             // act/assert
-            Assert.IsTrue(cacheKeys.IsAvailable());
+            Assert.True(cacheKeys.IsAvailable());
             Assert.AreEqual(string.Empty, cacheKeys.GetRefreshToken());
             cacheKeys.SaveRefreshToken(Token);
             Assert.AreEqual(Token, cacheKeys.GetRefreshToken());

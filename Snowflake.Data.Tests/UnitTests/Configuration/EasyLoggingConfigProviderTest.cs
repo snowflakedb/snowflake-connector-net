@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var result = configProvider.ProvideConfig(FilePathFromConnectionString);
 
             // assert
-            Assert.IsNull(result);
+            Assert.Null(result);
             configParser.Verify(parser => parser.Parse(It.IsAny<string>()), Times.Never);
         }
     }

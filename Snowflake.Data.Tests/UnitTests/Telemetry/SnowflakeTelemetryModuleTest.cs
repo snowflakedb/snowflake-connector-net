@@ -155,7 +155,7 @@ public sealed class SnowflakeTelemetryModuleTest
             ? CreateCommand(session).StartActivity("TestRoutingCustom")
             : session.StartActivity("TestRouting");
 
-        Assert.IsNotNull(activity);
+        Assert.NotNull(activity);
         activity.SetSuccess();
 
         if (!SpinWait.SpinUntil(() => sessionModule.CurrentBufferSize == 1, TimeSpan.FromMinutes(1)))

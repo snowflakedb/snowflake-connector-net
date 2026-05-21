@@ -36,14 +36,14 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         public void TestResetCustomLogger()
         {
             SnowflakeDbLoggerConfig.ResetCustomLogger();
-            Assert.IsInstanceOf<ILogger>(SFLoggerFactory.s_customLogger);
+            Assert.InstanceOf<ILogger>(SFLoggerFactory.s_customLogger);
         }
 
         [Test]
         public void TestSettingCustomLogger()
         {
             SnowflakeDbLoggerConfig.SetCustomLogger(new LoggerEmptyImpl());
-            Assert.IsInstanceOf<LoggerEmptyImpl>(SFLoggerFactory.s_customLogger);
+            Assert.InstanceOf<LoggerEmptyImpl>(SFLoggerFactory.s_customLogger);
         }
 
         [Test]
@@ -130,11 +130,11 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
                 using (StreamReader logFileReader = new StreamReader(logFileStream))
                 {
                     string logLines = logFileReader.ReadToEnd();
-                    Assert.IsTrue(logLines.Contains(DebugMessage));
-                    Assert.IsTrue(logLines.Contains(InfoMessage));
-                    Assert.IsTrue(logLines.Contains(WarnMessage));
-                    Assert.IsTrue(logLines.Contains(ErrorMessage));
-                    Assert.IsTrue(logLines.Contains(CriticalMessage));
+                    Assert.True(logLines.Contains(DebugMessage));
+                    Assert.True(logLines.Contains(InfoMessage));
+                    Assert.True(logLines.Contains(WarnMessage));
+                    Assert.True(logLines.Contains(ErrorMessage));
+                    Assert.True(logLines.Contains(CriticalMessage));
                 }
             }
         }

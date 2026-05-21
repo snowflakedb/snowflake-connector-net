@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestUsingSFLogger()
         {
             _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
-            Assert.IsInstanceOf<SFLoggerImpl>(_logger);
+            Assert.InstanceOf<SFLoggerImpl>(_logger);
         }
 
         [Test]
@@ -134,51 +134,51 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 if (logLevel == LoggingEvent.OFF)
                 {
-                    Assert.IsFalse(_logger.IsTraceEnabled());
-                    Assert.IsFalse(_logger.IsDebugEnabled());
-                    Assert.IsFalse(_logger.IsInfoEnabled());
-                    Assert.IsFalse(_logger.IsWarnEnabled());
-                    Assert.IsFalse(_logger.IsErrorEnabled());
+                    Assert.False(_logger.IsTraceEnabled());
+                    Assert.False(_logger.IsDebugEnabled());
+                    Assert.False(_logger.IsInfoEnabled());
+                    Assert.False(_logger.IsWarnEnabled());
+                    Assert.False(_logger.IsErrorEnabled());
                 }
                 else if (logLevel == LoggingEvent.TRACE)
                 {
-                    Assert.IsTrue(_logger.IsTraceEnabled());
-                    Assert.IsTrue(_logger.IsDebugEnabled());
-                    Assert.IsTrue(_logger.IsInfoEnabled());
-                    Assert.IsTrue(_logger.IsWarnEnabled());
-                    Assert.IsTrue(_logger.IsErrorEnabled());
+                    Assert.True(_logger.IsTraceEnabled());
+                    Assert.True(_logger.IsDebugEnabled());
+                    Assert.True(_logger.IsInfoEnabled());
+                    Assert.True(_logger.IsWarnEnabled());
+                    Assert.True(_logger.IsErrorEnabled());
                 }
                 else if (logLevel == LoggingEvent.DEBUG)
                 {
-                    Assert.IsFalse(_logger.IsTraceEnabled());
-                    Assert.IsTrue(_logger.IsDebugEnabled());
-                    Assert.IsTrue(_logger.IsInfoEnabled());
-                    Assert.IsTrue(_logger.IsWarnEnabled());
-                    Assert.IsTrue(_logger.IsErrorEnabled());
+                    Assert.False(_logger.IsTraceEnabled());
+                    Assert.True(_logger.IsDebugEnabled());
+                    Assert.True(_logger.IsInfoEnabled());
+                    Assert.True(_logger.IsWarnEnabled());
+                    Assert.True(_logger.IsErrorEnabled());
                 }
                 else if (logLevel == LoggingEvent.INFO)
                 {
-                    Assert.IsFalse(_logger.IsTraceEnabled());
-                    Assert.IsFalse(_logger.IsDebugEnabled());
-                    Assert.IsTrue(_logger.IsInfoEnabled());
-                    Assert.IsTrue(_logger.IsWarnEnabled());
-                    Assert.IsTrue(_logger.IsErrorEnabled());
+                    Assert.False(_logger.IsTraceEnabled());
+                    Assert.False(_logger.IsDebugEnabled());
+                    Assert.True(_logger.IsInfoEnabled());
+                    Assert.True(_logger.IsWarnEnabled());
+                    Assert.True(_logger.IsErrorEnabled());
                 }
                 else if (logLevel == LoggingEvent.WARN)
                 {
-                    Assert.IsFalse(_logger.IsTraceEnabled());
-                    Assert.IsFalse(_logger.IsDebugEnabled());
-                    Assert.IsFalse(_logger.IsInfoEnabled());
-                    Assert.IsTrue(_logger.IsWarnEnabled());
-                    Assert.IsTrue(_logger.IsErrorEnabled());
+                    Assert.False(_logger.IsTraceEnabled());
+                    Assert.False(_logger.IsDebugEnabled());
+                    Assert.False(_logger.IsInfoEnabled());
+                    Assert.True(_logger.IsWarnEnabled());
+                    Assert.True(_logger.IsErrorEnabled());
                 }
                 else if (logLevel == LoggingEvent.ERROR)
                 {
-                    Assert.IsFalse(_logger.IsTraceEnabled());
-                    Assert.IsFalse(_logger.IsDebugEnabled());
-                    Assert.IsFalse(_logger.IsInfoEnabled());
-                    Assert.IsFalse(_logger.IsWarnEnabled());
-                    Assert.IsTrue(_logger.IsErrorEnabled());
+                    Assert.False(_logger.IsTraceEnabled());
+                    Assert.False(_logger.IsDebugEnabled());
+                    Assert.False(_logger.IsInfoEnabled());
+                    Assert.False(_logger.IsWarnEnabled());
+                    Assert.True(_logger.IsErrorEnabled());
                 }
             }
         }

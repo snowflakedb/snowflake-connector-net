@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arraySFString = "ARRAY_CONSTRUCT('a','b','c')::ARRAY(TEXT)";
                     command.CommandText = $"SELECT {arraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<string>(0);
@@ -86,10 +86,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         var arrowString = reader.GetString(0);
                         EnableStructuredTypes(connection, ResultFormat.JSON);
                         reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
                         var jsonString = reader.GetString(0);
 
-                        Assert.IsTrue(JToken.DeepEquals(JArray.Parse(jsonString), JArray.Parse(arrowString)));
+                        Assert.True(JToken.DeepEquals(JArray.Parse(jsonString), JArray.Parse(arrowString)));
                     }
                 }
             }
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         "ARRAY_CONSTRUCT(OBJECT_CONSTRUCT('name', 'Alex'), OBJECT_CONSTRUCT('name', 'Brian'))::ARRAY(OBJECT(name VARCHAR))";
                     command.CommandText = $"SELECT {arrayOfObjects}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<Identity>(0);
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfArrays = "ARRAY_CONSTRUCT(ARRAY_CONSTRUCT('a', 'b'), ARRAY_CONSTRUCT('c', 'd'))::ARRAY(ARRAY(TEXT))";
                     command.CommandText = $"SELECT {arrayOfArrays}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<string[]>(0);
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfMap = "ARRAY_CONSTRUCT(OBJECT_CONSTRUCT('a', 'b'))::ARRAY(MAP(VARCHAR,VARCHAR))";
                     command.CommandText = $"SELECT {arrayOfMap}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<Dictionary<string, string>>(0);
@@ -189,7 +189,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     command.CommandText = $"SELECT {valueSfString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<string>(0);
@@ -214,7 +214,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfIntegers = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(INTEGER)";
                     command.CommandText = $"SELECT {arrayOfIntegers}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<int>(0);
@@ -239,7 +239,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfLongs = "ARRAY_CONSTRUCT(3, 5, 8)::ARRAY(BIGINT)";
                     command.CommandText = $"SELECT {arrayOfLongs}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<long>(0);
@@ -264,7 +264,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfFloats = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(FLOAT)";
                     command.CommandText = $"SELECT {arrayOfFloats}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<float>(0);
@@ -289,7 +289,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfDoubles = "ARRAY_CONSTRUCT(3.1, 5.2, 8.11)::ARRAY(DOUBLE)";
                     command.CommandText = $"SELECT {arrayOfDoubles}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<double>(0);
@@ -314,7 +314,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfDoubles = "ARRAY_CONSTRUCT(1.0e100, 1.0e-100)::ARRAY(DOUBLE)";
                     command.CommandText = $"SELECT {arrayOfDoubles}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<double>(0);
@@ -339,7 +339,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfBooleans = "ARRAY_CONSTRUCT(true, false)::ARRAY(BOOLEAN)";
                     command.CommandText = $"SELECT {arrayOfBooleans}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<bool>(0);
@@ -364,7 +364,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfBinaries = "ARRAY_CONSTRUCT(TO_BINARY('AB', 'UTF-8'), TO_BINARY('BC', 'UTF-8'))::ARRAY(BINARY)";
                     command.CommandText = $"SELECT {arrayOfBinaries}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<byte[]>(0);
@@ -390,7 +390,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfDates = "ARRAY_CONSTRUCT('2024-01-01'::DATE)::ARRAY(DATE)";
                     command.CommandText = $"SELECT {arrayOfDates}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<DateTime>(0);
@@ -415,7 +415,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arraySFString = "ARRAY_CONSTRUCT('a',NULL,'b')::ARRAY(TEXT)";
                     command.CommandText = $"SELECT {arraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<string>(0);
@@ -440,7 +440,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arrayOfNumberSFString = "ARRAY_CONSTRUCT(3,NULL,5)::ARRAY(INTEGER)";
                     command.CommandText = $"SELECT {arrayOfNumberSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var array = reader.GetArray<int?>(0);
@@ -465,13 +465,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var nullArraySFString = "NULL::ARRAY(TEXT)";
                     command.CommandText = $"SELECT {nullArraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var nullArray = reader.GetArray<string>(0);
 
                     // assert
-                    Assert.IsNull(nullArray);
+                    Assert.Null(nullArray);
                 }
             }
         }
@@ -489,7 +489,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arraySFString = "ARRAY_CONSTRUCT('x', 'y')::ARRAY";
                     command.CommandText = $"SELECT {arraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<string>(0));
@@ -515,7 +515,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var arraySFString = "ARRAY_CONSTRUCT('a76dacad-0e35-497b-bf9b-7cd49262b68b', 'z76dacad-0e35-497b-bf9b-7cd49262b68b')::ARRAY(TEXT)";
                     command.CommandText = $"SELECT {arraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<Guid>(0));
@@ -546,7 +546,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )::ARRAY(OBJECT(x VARCHAR, y VARCHAR))";
                     command.CommandText = $"SELECT {arraySFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetArray<AnnotatedClassForConstructorConstruction>(0));

@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
             // assert
             Assert.AreEqual(ExpectedCrlCacheDirectory, config.DirectoryPath);
-            Assert.IsTrue(config.IsWindows);
+            Assert.True(config.IsWindows);
             Assert.AreEqual(0, config.UnixUserId);
             Assert.AreEqual(0, config.UnixGroupId);
             unixOperations.VerifyNoOtherCalls();
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
             // assert
             Assert.AreEqual(expectedDirectory, config.DirectoryPath);
-            Assert.IsFalse(config.IsWindows);
+            Assert.False(config.IsWindows);
             Assert.AreEqual(UnixUserId, config.UnixUserId);
             Assert.AreEqual(UnixGroupId, config.UnixGroupId);
         }

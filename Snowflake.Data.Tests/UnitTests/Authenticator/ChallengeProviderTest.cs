@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.That(codeVerifier.Length, Is.GreaterThanOrEqualTo(43).And.LessThanOrEqualTo(128));
-            Assert.IsTrue(_onlyDigitsOrNumbers.IsMatch(codeVerifier));
+            Assert.True(_onlyDigitsOrNumbers.IsMatch(codeVerifier));
         }
     }
 }

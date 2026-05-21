@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 IDbCommand c2 = conn.CreateCommand();
                 c2.CommandText = $"SELECT * FROM {TableName}";
                 IDataReader reader2 = c2.ExecuteReader();
-                Assert.IsFalse(reader2.Read());
+                Assert.False(reader2.Read());
             }
         }
 
