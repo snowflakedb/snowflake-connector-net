@@ -52,17 +52,17 @@ namespace Snowflake.Data.Tests.UnitTests
 
         [SFFact]
         // Parameters: status code, force retry on 404, expected retryable value
-        [TestCase(HttpStatusCode.OK, false, false)]
-        [TestCase(HttpStatusCode.BadRequest, false, false)]
-        [TestCase(HttpStatusCode.Forbidden, false, true)]
-        [TestCase(HttpStatusCode.NotFound, false, false)]
-        [TestCase(HttpStatusCode.NotFound, true, true)] // force retry on 404
-        [TestCase(HttpStatusCode.RequestTimeout, false, true)]
-        [TestCase((HttpStatusCode)429, false, true)] // HttpStatusCode.TooManyRequests is not available on .NET Framework
-        [TestCase(HttpStatusCode.InternalServerError, false, true)]
-        [TestCase(HttpStatusCode.ServiceUnavailable, false, true)]
-        [TestCase(HttpStatusCode.TemporaryRedirect, false, true)]
-        [TestCase((HttpStatusCode)308, false, true)]  // HttpStatusCode.PermanentRedirect is not available on .NET Framework
+        [InlineData(HttpStatusCode.OK, false, false)]
+        [InlineData(HttpStatusCode.BadRequest, false, false)]
+        [InlineData(HttpStatusCode.Forbidden, false, true)]
+        [InlineData(HttpStatusCode.NotFound, false, false)]
+        [InlineData(HttpStatusCode.NotFound, true, true)] // force retry on 404
+        [InlineData(HttpStatusCode.RequestTimeout, false, true)]
+        [InlineData((HttpStatusCode)429, false, true)] // HttpStatusCode.TooManyRequests is not available on .NET Framework
+        [InlineData(HttpStatusCode.InternalServerError, false, true)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, false, true)]
+        [InlineData(HttpStatusCode.TemporaryRedirect, false, true)]
+        [InlineData((HttpStatusCode)308, false, true)]  // HttpStatusCode.PermanentRedirect is not available on .NET Framework
         public async Task TestIsRetryableHTTPCode(HttpStatusCode statusCode, bool forceRetryOn404, bool expectedIsRetryable)
         {
             var mockHttp = new MockHttpMessageHandler();
@@ -77,10 +77,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         // Parameters: request url, expected value
-        [TestCase("https://test.snowflakecomputing.com/session/v1/login-request", true)]
-        [TestCase("https://test.snowflakecomputing.com/session/authenticator-request", true)]
-        [TestCase("https://test.snowflakecomputing.com/session/token-request", true)]
-        [TestCase("https://test.snowflakecomputing.com/queries/v1/query-request", false)]
+        [InlineData("https://test.snowflakecomputing.com/session/v1/login-request", true)]
+        [InlineData("https://test.snowflakecomputing.com/session/authenticator-request", true)]
+        [InlineData("https://test.snowflakecomputing.com/session/token-request", true)]
+        [InlineData("https://test.snowflakecomputing.com/queries/v1/query-request", false)]
         [SFFact]
         public void TestIsLoginUrl(string requestUrl, bool expectedIsLoginEndpoint)
         {
@@ -95,10 +95,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         // Parameters: request url, expected value
-        [TestCase("https://dev.okta.com/sso/saml", true)]
-        [TestCase("https://test.snowflakecomputing.com/session/v1/login-request", false)]
-        [TestCase("https://test.snowflakecomputing.com/session/authenticator-request", false)]
-        [TestCase("https://test.snowflakecomputing.com/session/token-request", false)]
+        [InlineData("https://dev.okta.com/sso/saml", true)]
+        [InlineData("https://test.snowflakecomputing.com/session/v1/login-request", false)]
+        [InlineData("https://test.snowflakecomputing.com/session/authenticator-request", false)]
+        [InlineData("https://test.snowflakecomputing.com/session/token-request", false)]
         [SFFact]
         public void TestIsOktaSSORequest(string requestUrl, bool expectedIsOktaSSORequest)
         {
@@ -113,12 +113,12 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         // Parameters: time in seconds
-        [TestCase(4)]
-        [TestCase(8)]
-        [TestCase(16)]
-        [TestCase(32)]
-        [TestCase(64)]
-        [TestCase(128)]
+        [InlineData(4)]
+        [InlineData(8)]
+        [InlineData(16)]
+        [InlineData(32)]
+        [InlineData(64)]
+        [InlineData(128)]
         [SFFact]
         public void TestGetJitter(int seconds)
         {

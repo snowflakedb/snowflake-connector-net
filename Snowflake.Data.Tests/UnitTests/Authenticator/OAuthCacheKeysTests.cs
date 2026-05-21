@@ -12,12 +12,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string Token = "abc";
 
         [SFFact]
-        [TestCase("testUser", true, true)]
-        [TestCase("", true, false)]
-        [TestCase(null, true, false)]
-        [TestCase("testUser", false, false)]
-        [TestCase("", false, false)]
-        [TestCase(null, false, false)]
+        [InlineData("testUser", true, true)]
+        [InlineData("", true, false)]
+        [InlineData(null, true, false)]
+        [InlineData("testUser", false, false)]
+        [InlineData("", false, false)]
+        [InlineData(null, false, false)]
         public void TestCacheAvailableForAuthorizationCodeFlow(string user, bool clientStoreTemporaryCredentials, bool expectedIsAvailable)
         {
             // arrange

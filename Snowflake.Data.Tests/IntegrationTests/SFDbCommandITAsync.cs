@@ -1296,9 +1296,9 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
         }
 
-        [TestCase("ExecuteNonQuery", TestName = "ExecuteNonQuery emits telemetry")]
-        [TestCase("ExecuteScalar", TestName = "ExecuteScalar emits telemetry")]
-        [TestCase("ExecuteReader", TestName = "ExecuteDbDataReader emits telemetry")]
+        [InlineData("ExecuteNonQuery", TestName = "ExecuteNonQuery emits telemetry")]
+        [InlineData("ExecuteScalar", TestName = "ExecuteScalar emits telemetry")]
+        [InlineData("ExecuteReader", TestName = "ExecuteDbDataReader emits telemetry")]
         public void TestSyncCommandExecutionEmitsTelemetry(string method)
         {
             using var conn = new SnowflakeDbConnection();
@@ -1340,9 +1340,9 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             AssertSingleTelemetryActivity(capturedActivities, expectedOp);
         }
 
-        [TestCase("ExecuteNonQueryAsync", TestName = "ExecuteNonQueryAsync emits telemetry")]
-        [TestCase("ExecuteScalarAsync", TestName = "ExecuteScalarAsync emits telemetry")]
-        [TestCase("ExecuteReaderAsync", TestName = "ExecuteDbDataReaderAsync emits telemetry")]
+        [InlineData("ExecuteNonQueryAsync", TestName = "ExecuteNonQueryAsync emits telemetry")]
+        [InlineData("ExecuteScalarAsync", TestName = "ExecuteScalarAsync emits telemetry")]
+        [InlineData("ExecuteReaderAsync", TestName = "ExecuteDbDataReaderAsync emits telemetry")]
         public async Task TestAsyncCommandExecutionEmitsTelemetry(string method)
         {
             using var conn = new SnowflakeDbConnection();
@@ -1384,8 +1384,8 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             AssertSingleTelemetryActivity(capturedActivities, expectedOp);
         }
 
-        [TestCase("ExecuteInAsyncMode", TestName = "ExecuteInAsyncMode emits telemetry")]
-        [TestCase("ExecuteAsyncInAsyncMode", TestName = "ExecuteAsyncInAsyncMode emits telemetry")]
+        [InlineData("ExecuteInAsyncMode", TestName = "ExecuteInAsyncMode emits telemetry")]
+        [InlineData("ExecuteAsyncInAsyncMode", TestName = "ExecuteAsyncInAsyncMode emits telemetry")]
         public async Task TestAsyncModeExecutionEmitsTelemetry(string method)
         {
             using var conn = new SnowflakeDbConnection();

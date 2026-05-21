@@ -54,9 +54,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase(1)]
-        [TestCase(10)]
-        [TestCase(100)]
+        [InlineData(1)]
+        [InlineData(10)]
+        [InlineData(100)]
         public void TestSettingConnectionLimitProperty(int expectedConnectionLimit)
         {
             // arrange
@@ -113,11 +113,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("abc")]
-        [TestCase("1.5")]
-        [TestCase("true")]
-        [TestCase("-2.3")]
-        [TestCase("null")]
+        [InlineData("abc")]
+        [InlineData("1.5")]
+        [InlineData("true")]
+        [InlineData("-2.3")]
+        [InlineData("null")]
         public void TestThrowsExceptionWhenSettingConnectionLimitPropertyToNonIntegerValue(string nonIntegerValue)
         {
             // arrange
@@ -134,8 +134,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase(100)]
-        [TestCase(20971520)]
+        [InlineData(100)]
+        [InlineData(20971520)]
         public void TestValidCrlDownloadMaxSize(long validMaxSize)
         {
             // arrange
@@ -175,10 +175,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("enabled", true, false)]
-        [TestCase("disabled", false, false)]
-        [TestCase("advisory", true, false)]
-        [TestCase("native", false, true)]
+        [InlineData("enabled", true, false)]
+        [InlineData("disabled", false, false)]
+        [InlineData("advisory", true, false)]
+        [InlineData("native", false, true)]
         public void TestIsCustomCrlCheckConfigured(string certCheckMode, bool expectedCustomCrlCheck, bool expectedDotnetCrlCheck)
         {
             // arrange
@@ -224,10 +224,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("account=test;user=test;password=test;minTls=tls13;maxTls=tls13", "tls13", "tls13")]
-        [TestCase("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", "tls12", "tls13")]
-        [TestCase("account=test;user=test;password=test;minTls=tls12;maxTls=tls12", "tls12", "tls12")]
-        [TestCase("account=test;user=test;password=test", "tls12", "tls13")]
+        [InlineData("account=test;user=test;password=test;minTls=tls13;maxTls=tls13", "tls13", "tls13")]
+        [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", "tls12", "tls13")]
+        [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls12", "tls12", "tls12")]
+        [InlineData("account=test;user=test;password=test", "tls12", "tls13")]
         public void TestSslProperties(string connectionString, string expectedMinTls, string expectedMaxTls)
         {
             // arrange

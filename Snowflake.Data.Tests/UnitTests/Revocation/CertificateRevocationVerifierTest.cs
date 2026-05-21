@@ -18,9 +18,9 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
     public class CertificateRevocationVerifierTest : RevocationTests
     {
         [SFFact]
-        [TestCase("Enabled", false)]
-        [TestCase("Advisory", true)]
-        [TestCase("Disabled", true)]
+        [InlineData("Enabled", false)]
+        [InlineData("Advisory", true)]
+        [InlineData("Disabled", true)]
         public void TestRevocationResultForErrorsBasedOnCheckMode(string checkMode, bool expectedResult)
         {
             // arrange
@@ -222,8 +222,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [SFFact]
-        [TestCase(true)]
-        [TestCase(false)]
+        [InlineData(true)]
+        [InlineData(false)]
         public void TestVerifyCrlSignatureForEllipticCurveCertificates(bool signCrlWithCaPrivateKey)
         {
             // arrange
@@ -251,8 +251,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [SFFact]
-        [TestCase(30, "ChainError")]
-        [TestCase(3, "ChainUnrevoked")]
+        [InlineData(30, "ChainError")]
+        [InlineData(3, "ChainUnrevoked")]
         public void TestSkipShortLivedCertificate(int offsetDays, string expectedResultString)
         {
             // arrange
@@ -277,11 +277,11 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [SFFact]
-        [TestCase("2024-03-14 23:59:59Z", "2024-03-16 00:00:00Z", false)]
-        [TestCase("2024-03-15 00:00:00Z", "2024-03-25 00:00:00Z", true)]
-        [TestCase("2024-03-15 00:00:00Z", "2024-03-25 00:01:00Z", false)]
-        [TestCase("2026-03-15 00:00:00Z", "2026-03-22 00:00:00Z", true)]
-        [TestCase("2026-03-15 00:00:00Z", "2026-03-22 00:01:00Z", false)]
+        [InlineData("2024-03-14 23:59:59Z", "2024-03-16 00:00:00Z", false)]
+        [InlineData("2024-03-15 00:00:00Z", "2024-03-25 00:00:00Z", true)]
+        [InlineData("2024-03-15 00:00:00Z", "2024-03-25 00:01:00Z", false)]
+        [InlineData("2026-03-15 00:00:00Z", "2026-03-22 00:00:00Z", true)]
+        [InlineData("2026-03-15 00:00:00Z", "2026-03-22 00:01:00Z", false)]
         public void TestCheckIfCertificateIsShortLived(string notBeforeString, string notAfterString, bool expectedResult)
         {
             // arrange
@@ -302,8 +302,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [SFFact]
-        [TestCase(true)]
-        [TestCase(false)]
+        [InlineData(true)]
+        [InlineData(false)]
         public void TestVerifyIfIssuerMatchesTheCertificateIssuer(bool expectEquivalent)
         {
             // arrange

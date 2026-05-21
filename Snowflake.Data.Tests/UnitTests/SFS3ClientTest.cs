@@ -116,11 +116,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
-        [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
-        [TestCase(SFS3Client.NO_SUCH_KEY, ResultStatus.NOT_FOUND_FILE)]
-        [TestCase(MockS3Client.AwsStatusError, ResultStatus.ERROR)] // Any error that isn't the above will return ResultStatus.ERROR
-        [TestCase("", ResultStatus.ERROR)] // For non-AWS exception will return ResultStatus.ERROR
+        [InlineData(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
+        [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
+        [InlineData(SFS3Client.NO_SUCH_KEY, ResultStatus.NOT_FOUND_FILE)]
+        [InlineData(MockS3Client.AwsStatusError, ResultStatus.ERROR)] // Any error that isn't the above will return ResultStatus.ERROR
+        [InlineData("", ResultStatus.ERROR)] // For non-AWS exception will return ResultStatus.ERROR
         public void TestGetFileHeader(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -138,11 +138,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
-        [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
-        [TestCase(SFS3Client.NO_SUCH_KEY, ResultStatus.NOT_FOUND_FILE)]
-        [TestCase(MockS3Client.AwsStatusError, ResultStatus.ERROR)] // Any error that isn't the above will return ResultStatus.ERROR
-        [TestCase("", ResultStatus.ERROR)] // For non-AWS exception will return ResultStatus.ERROR
+        [InlineData(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
+        [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
+        [InlineData(SFS3Client.NO_SUCH_KEY, ResultStatus.NOT_FOUND_FILE)]
+        [InlineData(MockS3Client.AwsStatusError, ResultStatus.ERROR)] // Any error that isn't the above will return ResultStatus.ERROR
+        [InlineData("", ResultStatus.ERROR)] // For non-AWS exception will return ResultStatus.ERROR
         public async Task TestGetFileHeaderAsync(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -178,10 +178,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
-        [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
-        [TestCase(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
-        [TestCase("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
+        [InlineData(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
+        [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
+        [InlineData(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
+        [InlineData("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
         public void TestUploadFile(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -268,10 +268,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
-        [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
-        [TestCase(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
-        [TestCase("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
+        [InlineData(MockS3Client.AwsStatusOk, ResultStatus.UPLOADED)]
+        [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
+        [InlineData(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
+        [InlineData("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
         public async Task TestUploadFileAsync(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -306,10 +306,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(MockS3Client.AwsStatusOk, ResultStatus.DOWNLOADED)]
-        [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
-        [TestCase(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
-        [TestCase("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
+        [InlineData(MockS3Client.AwsStatusOk, ResultStatus.DOWNLOADED)]
+        [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
+        [InlineData(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
+        [InlineData("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
         public void TestDownloadFile(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange
@@ -327,10 +327,10 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        [TestCase(MockS3Client.AwsStatusOk, ResultStatus.DOWNLOADED)]
-        [TestCase(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
-        [TestCase(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
-        [TestCase("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
+        [InlineData(MockS3Client.AwsStatusOk, ResultStatus.DOWNLOADED)]
+        [InlineData(SFS3Client.EXPIRED_TOKEN, ResultStatus.RENEW_TOKEN)]
+        [InlineData(MockS3Client.AwsStatusError, ResultStatus.NEED_RETRY)] // Any error that isn't the above will return ResultStatus.NEED_RETRY
+        [InlineData("", ResultStatus.NEED_RETRY)] // For non-AWS exception will return ResultStatus.NEED_RETRY
         public async Task TestDownloadFileAsync(string awsStatusCode, ResultStatus expectedResultStatus)
         {
             // Arrange

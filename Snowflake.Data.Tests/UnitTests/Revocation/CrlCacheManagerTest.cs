@@ -37,9 +37,9 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [SFFact]
-        [TestCase(true, false)]
-        [TestCase(false, true)]
-        [TestCase(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(true, true)]
         public void TestGetWithDifferentCacheConfigurations(bool inMemoryCacheEnabled, bool onDiskCacheEnabled)
         {
             // arrange

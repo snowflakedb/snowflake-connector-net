@@ -12,13 +12,13 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
     public class ClientFeatureFlagsTest
     {
         [SFFact]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "true", true)]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "TRUE", true)]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "false", false)]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "", false)]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, null, false)]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "not a bool value", false)]
-        [TestCase("OTHER_VARIABLE_NAME", "true", false)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "true", true)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "TRUE", true)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "false", false)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "", false)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, null, false)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "not a bool value", false)]
+        [InlineData("OTHER_VARIABLE_NAME", "true", false)]
         public void TestEnabledExperimentalAuthentication(string variableName, string variableValue, bool expectedValue)
         {
             // arrange

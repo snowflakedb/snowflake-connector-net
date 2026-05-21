@@ -34,8 +34,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [SFFact]
-        [TestCase(null)]
-        [TestCase("640")]
+        [InlineData(null)]
+        [InlineData("640")]
         public void TestThatParsesConfigFile(string logFileUnixPermissions)
         {
             // arrange
@@ -108,8 +108,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         }
 
         [SFFact]
-        [TestCase(null)]
-        [TestCase("")]
+        [InlineData(null)]
+        [InlineData("")]
         public void TestThatReturnsNullWhenNothingToParse(string noFilePath)
         {
             // arrange

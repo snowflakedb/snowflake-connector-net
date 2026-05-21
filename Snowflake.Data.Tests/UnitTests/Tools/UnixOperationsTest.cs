@@ -144,8 +144,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
         }
 
-        [TestCase("true", false)]
-        [TestCase("false", true)]
+        [InlineData("true", false)]
+        [InlineData("false", true)]
         public void TestTomlPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
@@ -160,8 +160,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
 
-        [TestCase("true", false)]
-        [TestCase("false", true)]
+        [InlineData("true", false)]
+        [InlineData("false", true)]
         public void TestCredentialManagerPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, "random text");

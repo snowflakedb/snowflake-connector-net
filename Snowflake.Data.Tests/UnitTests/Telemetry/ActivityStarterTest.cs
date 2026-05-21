@@ -199,9 +199,9 @@ internal sealed class ActivityStarterTest
         Assert.Equal(inner.ErrorCode.ToString(), errorCode);
     }
 
-    [TestCase(1)]
-    [TestCase(2)]
-    [TestCase(3)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
     public void TestSetExceptionUnwrapsNestedAggregateExceptions(int nestingLevel)
     {
         var session = CreateSession("s1", "wh", "role", "db", true);

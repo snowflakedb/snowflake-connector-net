@@ -144,15 +144,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
         [SFFact]
         [Platform(Exclude = "Win")]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute)]
-        [TestCase(FileAccessPermissions.AllPermissions)]
-        [TestCase(FileAccessPermissions.GroupReadWriteExecute)]
-        [TestCase(FileAccessPermissions.OtherReadWriteExecute)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
-        [TestCase(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute)]
+        [InlineData(FileAccessPermissions.AllPermissions)]
+        [InlineData(FileAccessPermissions.GroupReadWriteExecute)]
+        [InlineData(FileAccessPermissions.OtherReadWriteExecute)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
+        [InlineData(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
         public void TestThatThrowsErrorWhenLogDirectoryHasInvalidPermissions(FileAccessPermissions invalidPermissions)
         {
             // arrange

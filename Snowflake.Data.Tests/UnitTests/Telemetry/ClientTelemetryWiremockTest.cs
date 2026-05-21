@@ -53,9 +53,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
         }
 
         [SFFact]
-        [TestCase("ExecuteNonQuery", TestName = "ExecuteNonQuery telemetry sent to server")]
-        [TestCase("ExecuteScalar", TestName = "ExecuteScalar telemetry sent to server")]
-        [TestCase("ExecuteReader", TestName = "ExecuteDbDataReader telemetry sent to server")]
+        [InlineData("ExecuteNonQuery", TestName = "ExecuteNonQuery telemetry sent to server")]
+        [InlineData("ExecuteScalar", TestName = "ExecuteScalar telemetry sent to server")]
+        [InlineData("ExecuteReader", TestName = "ExecuteDbDataReader telemetry sent to server")]
         public void TestSyncCommandSendsTelemetryToServer(string method)
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
@@ -80,9 +80,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
         }
 
         [SFFact]
-        [TestCase("ExecuteNonQueryAsync", TestName = "ExecuteNonQueryAsync telemetry sent to server")]
-        [TestCase("ExecuteScalarAsync", TestName = "ExecuteScalarAsync telemetry sent to server")]
-        [TestCase("ExecuteReaderAsync", TestName = "ExecuteDbDataReaderAsync telemetry sent to server")]
+        [InlineData("ExecuteNonQueryAsync", TestName = "ExecuteNonQueryAsync telemetry sent to server")]
+        [InlineData("ExecuteScalarAsync", TestName = "ExecuteScalarAsync telemetry sent to server")]
+        [InlineData("ExecuteReaderAsync", TestName = "ExecuteDbDataReaderAsync telemetry sent to server")]
         public async Task TestAsyncCommandSendsTelemetryToServer(string method)
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);

@@ -46,9 +46,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("wrong_value")]
-        [TestCase("0")]
-        [TestCase("-1")]
+        [InlineData("wrong_value")]
+        [InlineData("0")]
+        [InlineData("-1")]
         public void TestExtractFailsForWrongValueOfMaxPoolSize(string maxPoolSize)
         {
             // arrange
@@ -62,9 +62,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("0", 0)]
-        [TestCase("7", 7)]
-        [TestCase("10", 10)]
+        [InlineData("0", 0)]
+        [InlineData("7", 7)]
+        [InlineData("10", 10)]
         public void TestExtractMinPoolSize(string propertyValue, int expectedMinPoolSize)
         {
             // arrange
@@ -78,8 +78,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("wrong_value")]
-        [TestCase("-1")]
+        [InlineData("wrong_value")]
+        [InlineData("-1")]
         public void TestExtractFailsForWrongValueOfMinPoolSize(string minPoolSize)
         {
             // arrange
@@ -203,10 +203,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("true", true)]
-        [TestCase("TRUE", true)]
-        [TestCase("false", false)]
-        [TestCase("FALSE", false)]
+        [InlineData("true", true)]
+        [InlineData("TRUE", true)]
+        [InlineData("false", false)]
+        [InlineData("FALSE", false)]
         public void TestExtractPoolingEnabled(string propertyValue, bool poolingEnabled)
         {
             // arrange
@@ -220,18 +220,18 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("account=test;user=test;password=test;", true)]
-        [TestCase("authenticator=externalbrowser;account=test;user=test;", false)]
-        [TestCase("authenticator=externalbrowser;account=test;user=test;poolingEnabled=true;", true)]
-        [TestCase("authenticator=externalbrowser;account=test;user=test;poolingEnabled=false;", false)]
-        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key", false)]
-        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;poolingEnabled=true;", true)]
-        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;poolingEnabled=false;", false)]
-        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey", true)]
-        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey;poolingEnabled=true;", true)]
-        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey;poolingEnabled=false;", false)]
-        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;private_key_pwd=secretPwd", true)]
-        [TestCase("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;private_key_pwd=", false)]
+        [InlineData("account=test;user=test;password=test;", true)]
+        [InlineData("authenticator=externalbrowser;account=test;user=test;", false)]
+        [InlineData("authenticator=externalbrowser;account=test;user=test;poolingEnabled=true;", true)]
+        [InlineData("authenticator=externalbrowser;account=test;user=test;poolingEnabled=false;", false)]
+        [InlineData("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key", false)]
+        [InlineData("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;poolingEnabled=true;", true)]
+        [InlineData("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;poolingEnabled=false;", false)]
+        [InlineData("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey", true)]
+        [InlineData("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey;poolingEnabled=true;", true)]
+        [InlineData("authenticator=snowflake_jwt;account=test;user=test;private_key=secretKey;poolingEnabled=false;", false)]
+        [InlineData("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;private_key_pwd=secretPwd", true)]
+        [InlineData("authenticator=snowflake_jwt;account=test;user=test;private_key_file=/some/file.key;private_key_pwd=", false)]
         public void TestDisablePoolingDefaultWhenSecretsProvidedExternally(string connectionString, bool poolingEnabled)
         {
             // act
@@ -242,8 +242,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("wrong_value")]
-        [TestCase("15")]
+        [InlineData("wrong_value")]
+        [InlineData("15")]
         public void TestExtractFailsForWrongValueOfPoolingEnabled(string propertyValue)
         {
             // arrange
@@ -257,11 +257,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        [TestCase("OriginalPool", ChangedSessionBehavior.OriginalPool)]
-        [TestCase("originalpool", ChangedSessionBehavior.OriginalPool)]
-        [TestCase("ORIGINALPOOL", ChangedSessionBehavior.OriginalPool)]
-        [TestCase("Destroy", ChangedSessionBehavior.Destroy)]
-        [TestCase("DESTROY", ChangedSessionBehavior.Destroy)]
+        [InlineData("OriginalPool", ChangedSessionBehavior.OriginalPool)]
+        [InlineData("originalpool", ChangedSessionBehavior.OriginalPool)]
+        [InlineData("ORIGINALPOOL", ChangedSessionBehavior.OriginalPool)]
+        [InlineData("Destroy", ChangedSessionBehavior.Destroy)]
+        [InlineData("DESTROY", ChangedSessionBehavior.Destroy)]
         public void TestExtractChangedSessionBehaviour(string propertyValue, ChangedSessionBehavior expectedChangedSession)
         {
             // arrange

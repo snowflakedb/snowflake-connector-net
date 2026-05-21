@@ -8,9 +8,9 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
     class EasyLoggingLogLevelTest
     {
         [SFFact]
-        [TestCase("OFF", EasyLoggingLogLevel.Off)]
-        [TestCase("off", EasyLoggingLogLevel.Off)]
-        [TestCase("iNfO", EasyLoggingLogLevel.Info)]
+        [InlineData("OFF", EasyLoggingLogLevel.Off)]
+        [InlineData("off", EasyLoggingLogLevel.Off)]
+        [InlineData("iNfO", EasyLoggingLogLevel.Info)]
         public void TestThatGetsLogLevelValueIgnoringLetterCase(string loglevelString, EasyLoggingLogLevel expectedLogLevel)
         {
             // act

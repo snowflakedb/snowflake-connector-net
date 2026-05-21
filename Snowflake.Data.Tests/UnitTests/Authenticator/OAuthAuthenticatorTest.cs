@@ -7,9 +7,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     public class OAuthAuthenticatorTest
     {
         [SFFact]
-        [TestCase("oauth", true)]
-        [TestCase("OAUTH", true)]
-        [TestCase("username_password_mfa", false)]
+        [InlineData("oauth", true)]
+        [InlineData("OAUTH", true)]
+        [InlineData("username_password_mfa", false)]
         public void TestRecognizeOAuthAuthenticator(string authenticator, bool expectedResult)
         {
             // act

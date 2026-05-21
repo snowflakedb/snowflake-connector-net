@@ -7,12 +7,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     public class OktaAuthenticatorTest
     {
         [SFFact]
-        [TestCase("https://xxxxxx.okta.com", true)]
-        [TestCase("https://xxxxxx.oktapreview.com", true)]
-        [TestCase("https://vanity.url/snowflake/okta", true)]
-        [TestCase("http://xxxxxx.okta.com", false)]
-        [TestCase("https://xxxxxx.com", false)]
-        [TestCase("username_password_mfa", false)]
+        [InlineData("https://xxxxxx.okta.com", true)]
+        [InlineData("https://xxxxxx.oktapreview.com", true)]
+        [InlineData("https://vanity.url/snowflake/okta", true)]
+        [InlineData("http://xxxxxx.okta.com", false)]
+        [InlineData("https://xxxxxx.com", false)]
+        [InlineData("username_password_mfa", false)]
         public void TestRecognizeOktaAuthenticator(string authenticator, bool expectedResult)
         {
             // act

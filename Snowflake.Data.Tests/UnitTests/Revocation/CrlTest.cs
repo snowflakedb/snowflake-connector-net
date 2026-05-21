@@ -43,8 +43,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [SFFact]
-        [TestCase("2025-07-25T16:57:00.0000000Z", false)]
-        [TestCase("2025-08-02T16:57:00.0000000Z", true)]
+        [InlineData("2025-07-25T16:57:00.0000000Z", false)]
+        [InlineData("2025-08-02T16:57:00.0000000Z", true)]
         public void TestCrlExpiredDependingOnNextUpdate(string nowString, bool expectedIsExpired)
         {
             // arrange
@@ -113,8 +113,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [SFFact]
-        [TestCase("127", "7F")]
-        [TestCase("32768", "008000")]
+        [InlineData("127", "7F")]
+        [InlineData("32768", "008000")]
         public void TestConvertBigIntegerToHexString(string stringValue, string expectedHexString)
         {
             // arrange

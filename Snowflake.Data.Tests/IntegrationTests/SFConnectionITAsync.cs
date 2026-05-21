@@ -160,8 +160,8 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    [TestCase(true)]
-    [TestCase(false)]
+    [InlineData(true)]
+    [InlineData(false)]
     public void TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
     {
         for (int i = 0; i < 2; ++i)
@@ -643,14 +643,14 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    [TestCase("*")]
-    [TestCase("*{0}*")]
-    [TestCase("^*{0}*")]
-    [TestCase("*{0}*$")]
-    [TestCase("^*{0}*$")]
-    [TestCase("^nonmatch*{0}$|*")]
-    [TestCase("*a*", "a")]
-    [TestCase("*la*", "la")]
+    [InlineData("*")]
+    [InlineData("*{0}*")]
+    [InlineData("^*{0}*")]
+    [InlineData("*{0}*$")]
+    [InlineData("^*{0}*$")]
+    [InlineData("^nonmatch*{0}$|*")]
+    [InlineData("*a*", "a")]
+    [InlineData("*la*", "la")]
     [Retry(3)]
     public void TestNonProxyHostShouldBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
     {
@@ -672,12 +672,12 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    [TestCase("invalid{0}")]
-    [TestCase("*invalid{0}*")]
-    [TestCase("^invalid{0}$")]
-    [TestCase("*a.b")]
-    [TestCase("a", "a")]
-    [TestCase("la", "la")]
+    [InlineData("invalid{0}")]
+    [InlineData("*invalid{0}*")]
+    [InlineData("^invalid{0}$")]
+    [InlineData("*a.b")]
+    [InlineData("a", "a")]
+    [InlineData("la", "la")]
     [Retry(3)]
     public void TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
     {
@@ -1204,8 +1204,8 @@ class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    [TestCase("connection_timeout=5;")]
-    [TestCase("")]
+    [InlineData("connection_timeout=5;")]
+    [InlineData("")]
     public void TestOpenAsyncThrowExceptionWhenConnectToUnreachableHost(string extraParameters)
     {
         // arrange
