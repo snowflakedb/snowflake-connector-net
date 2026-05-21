@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola NUMBER" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola NUMBER" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola NUMBER" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola NUMBER" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { $"cola {columnType}" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { $"cola {columnType}" });
 
                 var cmd = conn.CreateCommand();
                 cmd.CommandText = $"INSERT INTO {tableName} SELECT 1.23";
@@ -192,7 +192,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola DOUBLE" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola DOUBLE" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -321,7 +321,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Insert data
                 int fractionalPartIndex = inputTimeStr.IndexOf('.');
                 var precision = fractionalPartIndex > 0 ? inputTimeStr.Length - (inputTimeStr.IndexOf('.') + 1) : 0;
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     $"cola TIME{ (precision > 0 ? string.Empty : $"({precision})")}"
                 });
@@ -364,7 +364,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "C1 NUMBER",
                     "C2 FLOAT",
@@ -461,7 +461,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     $"cola {dataType}{ (precision == null ? string.Empty : $"({precision})" )}"
                 });
@@ -568,7 +568,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola TIMESTAMP_TZ" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola TIMESTAMP_TZ" });
 
                 DateTimeOffset now = DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(timezoneOffsetInHours));
 
@@ -613,7 +613,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 setTimezoneCmd.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
                 await setTimezoneCmd.ExecuteNonQueryAsync();
 
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola TIMESTAMP_LTZ" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola TIMESTAMP_LTZ" });
 
                 DateTimeOffset insertValue = new DateTimeOffset(2024, 1, 15, 18, 30, 45, 123, TimeSpan.Zero);
 
@@ -655,7 +655,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola BOOLEAN" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola BOOLEAN" });
 
                 IDbCommand cmd = conn.CreateCommand();
 
@@ -694,7 +694,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None);
 
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "col1 NUMBER(3)",
                 });
@@ -732,7 +732,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "col1 BINARY",
                     "col2 VARCHAR(50)",
@@ -879,7 +879,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None);
 
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "col1 VARCHAR(50)",
                 });
@@ -907,7 +907,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "col1 VARCHAR(50)",
                     "col2 BINARY",
@@ -1056,7 +1056,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None);
 
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "col1 VARCHAR(50)",
                     "col2 BINARY",
@@ -1097,7 +1097,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "col1 VARCHAR(50)",
                     "col2 BINARY",
@@ -1274,7 +1274,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "a INTEGER",
                     "b STRING"
@@ -1311,7 +1311,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola STRING" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 string insertCommand = $"insert into {tableName} values (?)";
@@ -1357,7 +1357,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var stageName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola STRING" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = $"create or replace stage {stageName}";
@@ -1390,7 +1390,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var stageName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola STRING" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola STRING" });
 
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = $"create or replace stage {stageName}";
@@ -1432,7 +1432,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                     {
                         "cola VARIANT",
                         "colb ARRAY",
@@ -1463,7 +1463,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola VARIANT" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola VARIANT" });
 
                 var cmd = conn.CreateCommand();
                 var insertCommand = $"insert into {tableName} (cola) select parse_json( (?) )";
@@ -1501,7 +1501,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "c1 NUMBER(20, 4)",
                     "c2 STRING(100)",
@@ -1783,7 +1783,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 var colName = "c1";
                 var expectedVal = "id:1";
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { $"{colName} {type}" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { $"{colName} {type}" });
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -1811,7 +1811,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionWithHonorSessionTimezoneAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "val TIMESTAMP_LTZ" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "val TIMESTAMP_LTZ" });
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -1865,7 +1865,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionWithHonorSessionTimezoneAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "val TIMESTAMP_LTZ" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "val TIMESTAMP_LTZ" });
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -1916,7 +1916,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = await CreateAndOpenConnectionAsync())
             {
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "val TIMESTAMP_LTZ" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "val TIMESTAMP_LTZ" });
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -1954,7 +1954,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        private async Task<DbConnection> CreateAndOpenConnectionAsync()
+        private async Task<SnowflakeDbConnection> CreateAndOpenConnectionAsync()
         {
             var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
             await conn.OpenAsync(CancellationToken.None);
@@ -1962,7 +1962,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return conn;
         }
 
-        private async Task<DbConnection> CreateAndOpenConnectionWithHonorSessionTimezoneAsync()
+        private async Task<SnowflakeDbConnection> CreateAndOpenConnectionWithHonorSessionTimezoneAsync()
         {
             var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "HonorSessionTimezone=true;");
             await conn.OpenAsync(CancellationToken.None);

@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync(CancellationToken.None);
 
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" });
 
                 using (IDbTransaction t1 = await conn.BeginTransactionAsync())
                 {
@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.ConnectionString = _fixture.ConnectionString;
             await conn.OpenAsync(CancellationToken.None);
 
-            _fixture.CreateOrReplaceTable(conn, tableName, new[]
+            await _fixture.CreateOrReplaceTable(conn, tableName, new[]
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.ConnectionString = _fixture.ConnectionString;
             await conn.OpenAsync(CancellationToken.None);
 
-            _fixture.CreateOrReplaceTable(conn, tableName, new[]
+            await _fixture.CreateOrReplaceTable(conn, tableName, new[]
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"

@@ -525,7 +525,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" });
+            await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" });
             var t1 = await conn.BeginTransactionAsync();
             var t1c1 = conn.CreateCommand();
             t1c1.Transaction = t1;

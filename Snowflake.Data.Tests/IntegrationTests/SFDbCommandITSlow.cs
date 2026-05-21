@@ -59,7 +59,7 @@ public sealed class SFDbCommandITSlowB : SFBaseTestAsync
         {
             await conn.OpenAsync(CancellationToken.None);
 
-            _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c1 NUMBER" });
+            await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c1 NUMBER" });
 
             using (IDbCommand command = conn.CreateCommand())
             {

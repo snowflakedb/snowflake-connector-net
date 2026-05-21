@@ -826,7 +826,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (var command = conn.CreateCommand())
                 {
-                    _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c1 NUMBER" });
+                    await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c1 NUMBER" });
 
                     command.CommandText = $"insert into {tableName} values(1), (2), (3), (4), (5), (6)";
                     await command.ExecuteNonQueryAsync();
@@ -860,12 +860,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             const int timeoutSeconds = 150;
             CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
-            using (DbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = connstr;
                 await conn.OpenAsync(CancellationToken.None);
 
-                _fixture.CreateOrReplaceTable(conn, tableName, new[]
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING",
@@ -1034,12 +1034,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             CancellationTokenSource externalCancel = new CancellationTokenSource();
-            using (DbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
                 await conn.OpenAsync(CancellationToken.None);
 
-                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola INTEGER" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola INTEGER" });
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
@@ -1617,7 +1617,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             File.WriteAllText(Path.Combine(tempFolder, $"{GetType().Name}_{i}.csv"), data);
                         }
-                        _fixture.CreateOrReplaceTable(conn, tableName, new[] { "COL1 STRING" });
+                        await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "COL1 STRING" });
                         cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{tableName} AUTO_COMPRESS=FALSE";
                         var reader = cmd.ExecuteReader();
 
@@ -1662,7 +1662,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             File.WriteAllText(Path.Combine(tempFolder, $"{GetType().Name}_{i}.csv"), data);
                         }
-                        _fixture.CreateOrReplaceTable(conn, tableName, new[] { "COL1 STRING" });
+                        await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "COL1 STRING" });
                         cmd.CommandText = $"PUT file://{Path.Combine(tempFolder, "*.csv")} @%{tableName} AUTO_COMPRESS=FALSE";
                         var reader = cmd.ExecuteReader();
 

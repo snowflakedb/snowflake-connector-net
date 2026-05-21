@@ -164,9 +164,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await CloseConnectionAsync(conn);
         }
 
-        private async Task CreateAndPopulateTestTableAsync(DbConnection conn, string tableName)
+        private async Task CreateAndPopulateTestTableAsync(SnowflakeDbConnection conn, string tableName)
         {
-            _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola NUMBER" });
+            await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola NUMBER" });
 
             var cmd = conn.CreateCommand();
 
@@ -175,7 +175,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await cmd.ExecuteNonQueryAsync();
         }
 
-        private async Task<DbConnection> CreateAndOpenConnectionAsync()
+        private async Task<SnowflakeDbConnection> CreateAndOpenConnectionAsync()
         {
             var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
             await conn.OpenAsync(CancellationToken.None);

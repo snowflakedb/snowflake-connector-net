@@ -20,7 +20,6 @@ using TaskOrValueTask = System.Threading.Tasks.Task;
 
 namespace Snowflake.Data.Tests
 {
-    // TODO pass around cancellationtoken
     public abstract class SFBaseTestAsync : IClassFixture<SFBaseTestAsyncFixture>
     {
         protected CancellationToken CancellationToken { get; }
@@ -106,20 +105,19 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        // TODO async
-        public void CreateOrReplaceTable(IDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
+        public Task CreateOrReplaceTable(SnowflakeDbConnection conn, string tableName, IEnumerable<string> columns, string additionalQueryStr = null)
         {
-            CreateOrReplaceTable(conn, tableName, "", columns, additionalQueryStr);
+            return CreateOrReplaceTable(conn, tableName, "", columns, additionalQueryStr);
         }
 
-        public void CreateOrReplaceTable(IDbConnection conn, string tableName, string tableType, IEnumerable<string> columns,
+        public async Task CreateOrReplaceTable(SnowflakeDbConnection conn, string tableName, string tableType, IEnumerable<string> columns,
             string additionalQueryStr = null)
         {
             var columnsStr = string.Join(", ", columns);
             var cmd = conn.CreateCommand();
             cmd.CommandText = $"CREATE OR REPLACE {tableType} TABLE {tableName}({columnsStr}) {additionalQueryStr}";
             s_logger.Debug(cmd.CommandText);
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
 
             _tablesToRemove.Push(tableName);
         }
