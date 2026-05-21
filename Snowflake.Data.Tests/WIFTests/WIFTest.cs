@@ -14,7 +14,7 @@ namespace Snowflake.Data.WIFTests
     /// 3. Run ci/test_wif.sh
     /// </summary>
     ///
-    [NonParallelizable, IgnoreOnCI]
+
     public class WifLatestTest
     {
         private static readonly string s_account = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_WIF_ACCOUNT");

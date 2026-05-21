@@ -6,7 +6,7 @@ using Snowflake.Data.Tests;
 namespace Snowflake.Data.AuthenticationTests
 {
 
-    [NonParallelizable, IgnoreOnCI]
+
     public class ExternalBrowserConnectionTest
     {
         private string _connectionString = "";
