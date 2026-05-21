@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Net;
     using Moq;
 
-    [TestFixture]
+
     class SFRemoteStorageClientTest : UnitTestBase
     {
         // Mock data for file metadata

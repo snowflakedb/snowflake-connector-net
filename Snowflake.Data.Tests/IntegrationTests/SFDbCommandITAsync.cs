@@ -12,7 +12,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests;
 
-[TestFixture]
+
 public sealed class SFDbCommandITAsync : SFBaseTestAsync
 {
     [Test]

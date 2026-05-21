@@ -6,7 +6,7 @@ using Snowflake.Data.Core.MiniCore;
 
 namespace Snowflake.Data.Tests
 {
-    [TestFixture]
+
     [Category("MiniCore")]
     [NonParallelizable]
     public class MiniCoreTest : SFBaseTest

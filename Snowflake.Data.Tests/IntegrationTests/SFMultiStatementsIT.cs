@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 {
     [TestFixture(ResultFormat.ARROW)]
     [TestFixture(ResultFormat.JSON)]
-    [TestFixture]
+
     class SFMultiStatementsIT : SFBaseTest
     {
         private readonly ResultFormat _resultFormat;

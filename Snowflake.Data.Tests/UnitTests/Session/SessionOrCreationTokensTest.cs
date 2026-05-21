@@ -6,7 +6,7 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
+
     public class SessionOrCreationTokensTest
     {
         private SFSession _session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());

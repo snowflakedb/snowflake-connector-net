@@ -11,7 +11,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     public class RestRequesterTest
     {
         [Test]

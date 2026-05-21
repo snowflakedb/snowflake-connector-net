@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.Authenticator;
 
-    [TestFixture]
+
     class SFAuthenticatorFactoryTest
     {
         IAuthenticator _authenticator;

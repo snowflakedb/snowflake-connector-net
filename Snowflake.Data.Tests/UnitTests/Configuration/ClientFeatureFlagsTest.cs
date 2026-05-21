@@ -8,7 +8,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    [TestFixture]
+
     public class ClientFeatureFlagsTest
     {
         [Test]

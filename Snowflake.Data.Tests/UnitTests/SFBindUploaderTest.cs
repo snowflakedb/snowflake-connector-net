@@ -4,7 +4,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     [SetCulture("en-US")]
     class SFBindUploaderTest
     {

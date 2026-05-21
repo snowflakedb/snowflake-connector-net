@@ -11,7 +11,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
+
     public class EasyLoggingStarterTest
     {
         private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);

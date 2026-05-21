@@ -4,7 +4,7 @@ using Snowflake.Data.Core.Revocation;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
+
     public class CrlRepositoryTest
     {
         [SetUp]

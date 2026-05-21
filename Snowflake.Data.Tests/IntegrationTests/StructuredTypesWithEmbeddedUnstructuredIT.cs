@@ -9,7 +9,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
+
     public class StructuredTypesWithEmbeddedUnstructuredIT : StructuredTypesIT
     {
         // Connection string with HonorSessionTimezone enabled for tests that use session timezone

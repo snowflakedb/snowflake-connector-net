@@ -12,7 +12,7 @@ using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
+
     public class FileCrlCacheTest : RevocationTests
     {
         const string CrlUrl = "http://snowflakecomputing.com/crl1.crl";

@@ -8,7 +8,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
-    [TestFixture]
+
     public class SFCredentialManagerFileStorageTest
     {
         private const string SnowflakeCacheLocation = "/Users/snowflake/cache";

@@ -4,7 +4,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
+
     public class SFMaxLobSizeSwitchIT : SFBaseTest
     {
         private const string SqlSelectLargeString = "select randstr(20000000, random()) as large_str";

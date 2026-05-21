@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests
     /**
      * Mock rest request test
      */
-    [TestFixture]
+
     class SFStatementTest
     {
         // Mock test for session token renew

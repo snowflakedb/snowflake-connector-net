@@ -3,7 +3,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.PackageTests
 {
-    [TestFixture]
+
     public sealed class LibcDetectorIT
     {
         [Test]

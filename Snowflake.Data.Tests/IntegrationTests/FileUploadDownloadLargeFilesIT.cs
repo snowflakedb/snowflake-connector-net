@@ -7,7 +7,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
+
     public class FileUploadDownloadLargeFilesIT : SFBaseTest
     {
         private const string FileName = "large_file_to_test_dotnet_driver.json";

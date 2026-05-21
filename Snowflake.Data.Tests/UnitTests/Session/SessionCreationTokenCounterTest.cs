@@ -6,7 +6,7 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
+
     public class SessionCreationTokenCounterTest
     {
         private static readonly TimeSpan s_longTime = TimeSpan.FromSeconds(30);

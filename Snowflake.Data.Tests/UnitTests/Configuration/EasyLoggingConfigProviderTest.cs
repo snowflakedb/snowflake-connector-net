@@ -4,7 +4,7 @@ using Snowflake.Data.Configuration;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    [TestFixture]
+
     public class EasyLoggingConfigProviderTest
     {
         private const string FilePathFromConnectionString = "/Users/dotnet/config.json";

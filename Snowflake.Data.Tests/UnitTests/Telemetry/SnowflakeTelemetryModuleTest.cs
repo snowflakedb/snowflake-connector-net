@@ -13,7 +13,7 @@ using Snowflake.Data.Telemetry;
 
 namespace Snowflake.Data.Tests.UnitTests.Telemetry;
 
-[TestFixture]
+
 public sealed class SnowflakeTelemetryModuleTest
 {
     private Mock<IMockRestRequester> _mockRestRequester;

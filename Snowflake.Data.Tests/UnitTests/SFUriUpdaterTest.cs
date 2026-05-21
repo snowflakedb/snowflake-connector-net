@@ -4,7 +4,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System;
     using Snowflake.Data.Core;
 
-    [TestFixture]
+
     class SFUriUpdaterTest
     {
         [Test]

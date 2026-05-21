@@ -10,7 +10,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture]
+
     public class OAuthAuthorizationCodeAuthenticatorTest
     {
         private const string Account = "testaccount";

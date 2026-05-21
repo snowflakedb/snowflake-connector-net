@@ -9,7 +9,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
+
     public class ConnectionPoolConfigExtractorTest
     {
         [Test]

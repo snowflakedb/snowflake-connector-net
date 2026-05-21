@@ -12,7 +12,7 @@ using Xunit;
 
 namespace Snowflake.Data.Tests.PackageTests
 {
-    [TestFixture]
+
     [Category("MiniCore")]
     public class MiniCorePackageIT
     {

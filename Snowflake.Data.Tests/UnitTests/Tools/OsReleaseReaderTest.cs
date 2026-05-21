@@ -4,7 +4,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
+
     public class OsReleaseReaderTest
     {
         [Test]

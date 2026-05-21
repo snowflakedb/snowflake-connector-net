@@ -14,7 +14,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
+
     [NonParallelizable]
     public class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync
     {

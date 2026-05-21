@@ -7,7 +7,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
+
     [Parallelizable(ParallelScope.Self)]
     public class WaitingQueueTest
     {

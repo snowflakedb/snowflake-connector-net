@@ -20,7 +20,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests;
 
-[TestFixture]
+
 class SFConnectionITAsync : SFBaseTestAsync
 {
     private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();

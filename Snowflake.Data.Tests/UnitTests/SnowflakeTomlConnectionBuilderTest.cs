@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Core.Tools;
     using Snowflake.Data.Core;
 
-    [TestFixture]
+
     class TomlConnectionBuilderTest
     {
         private const string BasicTomlConfig = @"

@@ -8,7 +8,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
+
     public class PlatformDetectionTest
     {
         private const string LambdaTaskRoot = "LAMBDA_TASK_ROOT";

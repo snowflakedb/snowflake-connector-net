@@ -5,7 +5,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Client;
     using System.Data.Common;
 
-    [TestFixture]
+
     class SFStatementTypeTest : SFBaseTest
     {
         [Test]

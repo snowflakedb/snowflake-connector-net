@@ -4,7 +4,7 @@ using Snowflake.Data.Configuration;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    [TestFixture]
+
     class EasyLoggingLogLevelTest
     {
         [Test]

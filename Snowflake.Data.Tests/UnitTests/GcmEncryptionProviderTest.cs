@@ -9,7 +9,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     public class GcmEncryptionProviderTest
     {
         private const string PlainText = "there is no rose without thorns";

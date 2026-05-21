@@ -11,7 +11,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
+
     public class SFHttpClientPropertiesTest
     {
         [Test]

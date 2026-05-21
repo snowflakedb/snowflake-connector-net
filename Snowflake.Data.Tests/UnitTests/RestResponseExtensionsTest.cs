@@ -4,7 +4,7 @@ using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     public sealed class RestResponseExtensionsTest
     {
         [Test]

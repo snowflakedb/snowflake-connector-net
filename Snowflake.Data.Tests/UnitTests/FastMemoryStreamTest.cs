@@ -4,7 +4,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using System.Linq;
 
-    [TestFixture]
+
     class FastMemoryStreamTest
     {
         FastMemoryStream _fastMemoryStream;

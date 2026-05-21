@@ -7,7 +7,7 @@ using Snowflake.Data.Tests.Mock;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
+
     class QueryResultsAwaiterTest
     {
         private const string ConnectionString = "account=test;user=test;password=test;poolingEnabled=false";

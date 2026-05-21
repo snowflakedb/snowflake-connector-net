@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Snowflake.Data.Tests.Util
 {
-    [TestFixture]
+
     public class AwaiterTest
     {
         private readonly TimeSpan _maxDurationRegardedAsImmediately = TimeSpan.FromSeconds(1);
