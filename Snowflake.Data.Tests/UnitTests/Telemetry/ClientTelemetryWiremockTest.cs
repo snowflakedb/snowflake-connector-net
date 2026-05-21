@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using Newtonsoft.Json.Linq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Telemetry;
@@ -19,10 +20,16 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
     {
         public sealed class Fixture : IDisposable
         {
-            internal WiremockRunner Runner { get; }
+            internal IWiremockRunner Runner { get; }
 
             public Fixture()
             {
+                if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
+                {
+                    Runner = new Mock<IWiremockRunner>().Object;
+                    return;
+                }
+
                 Runner = WiremockRunner.NewWiremock();
             }
 
@@ -50,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             $"account=testaccount;user=dummyuser;password=testpwd;host=localhost;port={WiremockRunner.DefaultHttpPort};scheme=http;poolingEnabled=false;CLIENT_TELEMETRY_ENABLED=false;";
         private static readonly HttpClient s_http = new();
 
-        private WiremockRunner _wiremock;
+        private IWiremockRunner _wiremock;
         private readonly ClientTelemetryWiremockTestFixture.Fixture _fixture;
 
         public ClientTelemetryWiremockTest(ClientTelemetryWiremockTestFixture.Fixture fixture)

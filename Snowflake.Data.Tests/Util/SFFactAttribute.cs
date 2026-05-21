@@ -25,7 +25,10 @@ public sealed class SFFactAttribute : FactAttribute
     {
         RetriesCount = retriesCount;
         DedicatedSessionPool = dedicatedSessionPool;
-        Skip = SkipConditionEvaluator.Evaluate(skip);
+        var skipEvaluationResult = SkipConditionEvaluator.Evaluate(skip);
+
+        if (skipEvaluationResult.ShouldSkip)
+            Skip = skipEvaluationResult.SkipMessage;
     }
 }
 
@@ -44,7 +47,10 @@ public sealed class SFTheoryAttribute : TheoryAttribute
     {
         DedicatedSessionPool = dedicatedSessionPool;
         RetriesCount = retriesCount;
-        Skip = SkipConditionEvaluator.Evaluate(skip);
+        var skipEvaluationResult = SkipConditionEvaluator.Evaluate(skip);
+
+        if (skipEvaluationResult.ShouldSkip)
+            Skip = skipEvaluationResult.SkipMessage;
     }
 }
 
@@ -56,9 +62,28 @@ public enum RetriesCount
     Thrice = 3
 }
 
+// todo tests
 internal static class SkipConditionEvaluator
 {
-    internal static string Evaluate(SkipCondition condition)
+    internal readonly struct SkipEvaluationResult
+    {
+        internal readonly string SkipMessage;
+        internal readonly bool ShouldSkip;
+
+        public SkipEvaluationResult(string skipMessage, bool shouldSkip)
+        {
+            SkipMessage = skipMessage;
+            ShouldSkip = shouldSkip;
+        }
+    }
+
+    internal static SkipEvaluationResult Evaluate(SkipCondition condition)
+    {
+        var skipMessage = EvaluateInner(condition);
+        return new(skipMessage, !string.IsNullOrEmpty(skipMessage));
+    }
+
+    private static string EvaluateInner(SkipCondition condition)
     {
         if (condition == SkipCondition.None)
             return null;

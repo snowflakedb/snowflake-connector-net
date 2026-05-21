@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using Newtonsoft.Json;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
@@ -13,10 +14,16 @@ namespace Snowflake.Data.Tests.UnitTests
     [CollectionDefinition(nameof(RestRequesterWiremockTestFixture), DisableParallelization = true)]
     public sealed class RestRequesterWiremockTestFixture : ICollectionFixture<RestRequesterWiremockTestFixture>, IDisposable
     {
-        internal WiremockRunner Runner;
+        internal IWiremockRunner Runner;
 
         public RestRequesterWiremockTestFixture()
         {
+            if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
+            {
+                Runner = new Mock<IWiremockRunner>().Object;
+                return;
+            }
+
             Runner = WiremockRunner.NewWiremock();
         }
 
@@ -29,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests
     [Collection(nameof(RestRequesterWiremockTestFixture))]
     public sealed class RestRequesterWiremockTest
     {
-        private readonly WiremockRunner _runner;
+        private readonly IWiremockRunner _runner;
         private static readonly string s_mappingPath = Path.Combine("wiremock", "RestRequester");
         private static readonly string s_loginMapping = Path.Combine(s_mappingPath, "login_success.json");
         private static readonly string s_queryTruncatedThenValid = Path.Combine(s_mappingPath, "query_truncated_then_valid.json");

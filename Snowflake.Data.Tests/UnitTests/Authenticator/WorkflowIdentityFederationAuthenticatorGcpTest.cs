@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -17,10 +18,16 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     {
         public sealed class Fixture : IDisposable
         {
-            internal readonly WiremockRunner Runner;
+            internal readonly IWiremockRunner Runner;
 
             public Fixture()
             {
+                if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
+                {
+                    Runner = new Mock<IWiremockRunner>().Object;
+                    return;
+                }
+
                 Runner = WiremockRunner.NewWiremock();
             }
 
@@ -166,7 +173,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private void AddGcpWiremockMapping(string token) =>
             AddGcpWiremockMapping(_fixture.Runner, token);
 
-        internal static void AddGcpWiremockMapping(WiremockRunner runner, string token) =>
+        internal static void AddGcpWiremockMapping(IWiremockRunner runner, string token) =>
             runner.AddMappings(s_wifGcpSuccessfulMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, token));
 
         private SFSession PrepareSessionForGcp(string connectionStringSuffix,

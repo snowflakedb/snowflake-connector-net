@@ -20,10 +20,16 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     {
         public sealed class Fixture : IDisposable
         {
-            internal readonly WiremockRunner Runner;
+            internal readonly IWiremockRunner Runner;
 
             public Fixture()
             {
+                if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
+                {
+                    Runner = new Mock<IWiremockRunner>().Object;
+                    return;
+                }
+
                 Runner = WiremockRunner.NewWiremock();
             }
 

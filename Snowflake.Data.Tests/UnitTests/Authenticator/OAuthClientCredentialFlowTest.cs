@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -18,10 +19,16 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     {
         public sealed class Fixture : IDisposable
         {
-            internal readonly WiremockRunner Runner;
+            internal readonly IWiremockRunner Runner;
 
             public Fixture()
             {
+                if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
+                {
+                    Runner = new Mock<IWiremockRunner>().Object;
+                    return;
+                }
+
                 Runner = WiremockRunner.NewWiremock();
             }
 
