@@ -13,7 +13,6 @@
         <Product>Snowflake Connector for .NET</Product>
         <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
         <LangVersion>13</LangVersion>
-        <DefineConstants>$(SEQUENTIAL_ENV)</DefineConstants>
         <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
         <OutputType Condition="'$(OldXunit)' != 'True'">Exe</OutputType>
         <!-- SNOW-3560694 !-->
@@ -30,7 +29,6 @@
         <Content Include="PackageTests\MiniCoreVerificationAppSource.cs">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        <Compile Remove="SFBaseTestAsyncFixture.cs" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="JunitXml.TestLogger" Version="3.1.12"/>
@@ -60,15 +58,6 @@
         <Copy SourceFiles="parameters.json" DestinationFolder="$(OutDir)" ContinueOnError="true"/>
         <Copy SourceFiles="App.config" DestinationFolder="$(OutDir)"/>
     </Target>
-    <ItemGroup>
-        <Folder Include="Properties\"/>
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
-        <Reference Include="System.Net.Http"/>
-        <Reference Include="System.Web"/>
-        <Reference Include="System.Net.Http.WebRequest"/>
-    </ItemGroup>
 
     <ItemGroup>
         <None Update="log4net.config">

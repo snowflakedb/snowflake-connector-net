@@ -204,8 +204,8 @@ public sealed class ArchitectureInvariantsTest
         "Snowflake.Data.Core.SFDataType",
         "Snowflake.Data.Core.SFError",
         "Snowflake.Data.Core.Session.ChangedSessionBehavior",
-#if WINDOWS
-        "Snowflake.Data.PlatformShims.FileAccessPermissions",
+#if WINDOWS_BUILD
+        "Mono.Unix.FileAccessPermissions",
 #endif
         "Snowflake.Data.Telemetry.ActivityStarter",
         "Snowflake.Data.Telemetry.SessionTelemetryModuleFacade",
