@@ -54,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             File.Create(absoluteFilePath).Close();
 
             // act and assert
-            Assert.IsTrue(s_fileOperations.IsFileSafe(absoluteFilePath));
+            Assert.True(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
     }
 }

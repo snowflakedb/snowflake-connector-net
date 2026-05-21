@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.RemoveCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
+            Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
         [Test]
@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.RemoveCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
+            Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
 
         }
 
@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.RemoveCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
+            Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
         [Test]
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.RemoveCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
+            Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
         [Test]
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var token = _credentialManager.GetCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(token));
+            Assert.True(string.IsNullOrEmpty(token));
         }
     }
 }

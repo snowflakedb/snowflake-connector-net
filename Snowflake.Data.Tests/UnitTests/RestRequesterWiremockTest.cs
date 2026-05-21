@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests
             using var reader = await cmd.ExecuteReaderAsync(CancellationToken.None);
 
             // assert
-            Assert.IsTrue(await reader.ReadAsync());
+            Assert.True(await reader.ReadAsync());
             Assert.AreEqual("1", reader.GetString(0));
         }
 

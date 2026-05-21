@@ -11,14 +11,14 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestRequestInProgressReturnsTrueForQueryInProgress()
         {
             var response = new NullDataResponse { code = 333333 };
-            Assert.IsTrue(response.IsQueryInProgress());
+            Assert.True(response.IsQueryInProgress());
         }
 
         [Test]
         public void TestRequestInProgressReturnsTrueForQueryInProgressAsync()
         {
             var response = new NullDataResponse { code = 333334 };
-            Assert.IsTrue(response.IsQueryInProgress());
+            Assert.True(response.IsQueryInProgress());
         }
 
         [Test]
@@ -31,14 +31,14 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestRequestInProgressReturnsFalseForOtherCodes(int code)
         {
             var response = new NullDataResponse { code = code };
-            Assert.IsFalse(response.IsQueryInProgress());
+            Assert.False(response.IsQueryInProgress());
         }
 
         [Test]
         public void TestSessionExpiredReturnsTrueForExpiredCode()
         {
             var response = new NullDataResponse { code = 390112 };
-            Assert.IsTrue(response.IsSessionExpired());
+            Assert.True(response.IsSessionExpired());
         }
 
         [Test]
@@ -52,14 +52,14 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionExpiredReturnsFalseForOtherCodes(int code)
         {
             var response = new NullDataResponse { code = code };
-            Assert.IsFalse(response.IsSessionExpired());
+            Assert.False(response.IsSessionExpired());
         }
 
         [Test]
         public void TestSessionNoLongerExistsReturnsTrueForNoLongerExistsCode()
         {
             var response = new NullDataResponse { code = 390111 };
-            Assert.IsTrue(response.IsSessionGone());
+            Assert.True(response.IsSessionGone());
         }
 
         [Test]
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestSessionNoLongerExistsReturnsFalseForOtherCodes(int code)
         {
             var response = new NullDataResponse { code = code };
-            Assert.IsFalse(response.IsSessionGone());
+            Assert.False(response.IsSessionGone());
         }
     }
 }

@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var allUnstructuredTypesObject = reader.GetObject<AllUnstructuredTypesClass>(0);
@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var allUnstructuredTypesObject = reader.GetObject<AllUnstructuredTypesClass>(0);
@@ -250,33 +250,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )";
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var allUnstructuredTypesObject = reader.GetObject<AllNullableUnstructuredTypesClass>(0);
 
                     // assert
                     Assert.NotNull(allUnstructuredTypesObject);
-                    Assert.IsNull(allUnstructuredTypesObject.StringValue);
-                    Assert.IsNull(allUnstructuredTypesObject.CharValue);
-                    Assert.IsNull(allUnstructuredTypesObject.ByteValue);
-                    Assert.IsNull(allUnstructuredTypesObject.SByteValue);
-                    Assert.IsNull(allUnstructuredTypesObject.ShortValue);
-                    Assert.IsNull(allUnstructuredTypesObject.UShortValue);
-                    Assert.IsNull(allUnstructuredTypesObject.IntValue);
-                    Assert.IsNull(allUnstructuredTypesObject.UIntValue);
-                    Assert.IsNull(allUnstructuredTypesObject.LongValue);
-                    Assert.IsNull(allUnstructuredTypesObject.ULongValue);
-                    Assert.IsNull(allUnstructuredTypesObject.FloatValue);
-                    Assert.IsNull(allUnstructuredTypesObject.DoubleValue);
-                    Assert.IsNull(allUnstructuredTypesObject.DecimalValue);
-                    Assert.IsNull(allUnstructuredTypesObject.BooleanValue);
-                    Assert.IsNull(allUnstructuredTypesObject.GuidValue);
-                    Assert.IsNull(allUnstructuredTypesObject.DateTimeValue);
-                    Assert.IsNull(allUnstructuredTypesObject.DateTimeOffsetValue);
-                    Assert.IsNull(allUnstructuredTypesObject.TimeSpanValue);
-                    Assert.IsNull(allUnstructuredTypesObject.BinaryValue);
-                    Assert.IsNull(allUnstructuredTypesObject.SemiStructuredValue);
+                    Assert.Null(allUnstructuredTypesObject.StringValue);
+                    Assert.Null(allUnstructuredTypesObject.CharValue);
+                    Assert.Null(allUnstructuredTypesObject.ByteValue);
+                    Assert.Null(allUnstructuredTypesObject.SByteValue);
+                    Assert.Null(allUnstructuredTypesObject.ShortValue);
+                    Assert.Null(allUnstructuredTypesObject.UShortValue);
+                    Assert.Null(allUnstructuredTypesObject.IntValue);
+                    Assert.Null(allUnstructuredTypesObject.UIntValue);
+                    Assert.Null(allUnstructuredTypesObject.LongValue);
+                    Assert.Null(allUnstructuredTypesObject.ULongValue);
+                    Assert.Null(allUnstructuredTypesObject.FloatValue);
+                    Assert.Null(allUnstructuredTypesObject.DoubleValue);
+                    Assert.Null(allUnstructuredTypesObject.DecimalValue);
+                    Assert.Null(allUnstructuredTypesObject.BooleanValue);
+                    Assert.Null(allUnstructuredTypesObject.GuidValue);
+                    Assert.Null(allUnstructuredTypesObject.DateTimeValue);
+                    Assert.Null(allUnstructuredTypesObject.DateTimeOffsetValue);
+                    Assert.Null(allUnstructuredTypesObject.TimeSpanValue);
+                    Assert.Null(allUnstructuredTypesObject.BinaryValue);
+                    Assert.Null(allUnstructuredTypesObject.SemiStructuredValue);
                 }
             }
         }
@@ -300,7 +300,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act/assert
                     if (expectedRaw != null)
@@ -431,7 +431,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act/assert
                     if (expectedRaw != null)
@@ -547,7 +547,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 command.CommandText = "show parameters like 'timezone'";
                 var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 var timeZoneString = reader.GetString(1);
                 return TimeZoneInfoConverter.FindSystemTimeZoneById(timeZoneString);
             }

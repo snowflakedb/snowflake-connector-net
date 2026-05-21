@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<ArgumentException>(() => EasyLoggingLogLevelExtensions.From("unknown"));
 
             // assert
-            Assert.IsNotNull(thrown);
+            Assert.NotNull(thrown);
             Assert.AreEqual("Requested value 'unknown' was not found.", thrown.Message);
         }
     }

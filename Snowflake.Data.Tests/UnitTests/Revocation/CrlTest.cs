@@ -32,14 +32,14 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.AreEqual(DateTimeKind.Utc, crl.NextUpdate?.Kind);
             Assert.AreEqual(DigiCertNextUpdateString, crl.NextUpdate?.ToUniversalTime().ToString("o"));
             Assert.AreEqual(DigiCertIssuer, crl.IssuerName);
-            Assert.IsNotNull(crl.IssuerNameRawData);
+            Assert.NotNull(crl.IssuerNameRawData);
             CollectionAssert.AreEqual(crl.BouncyCastleCrl.IssuerDN.GetEncoded(), crl.IssuerNameRawData);
             Assert.That(crl.IssuerDistributionPoints, Is.EquivalentTo(expectedCrlDistributionPoints));
             Assert.That(crl.RevokedCertificates, Does.Contain(DigiCertRevokedCertSerialNumber));
-            Assert.IsTrue(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
-            Assert.IsFalse(crl.RevokedCertificates.Contains(DigiCertUnrevokedCertSerialNumber));
-            Assert.IsFalse(crl.IsRevoked(DigiCertUnrevokedCertSerialNumber));
-            Assert.IsFalse(crl.NeedsReplacement(now, TimeSpan.FromDays(1)));
+            Assert.True(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
+            Assert.False(crl.RevokedCertificates.Contains(DigiCertUnrevokedCertSerialNumber));
+            Assert.False(crl.IsRevoked(DigiCertUnrevokedCertSerialNumber));
+            Assert.False(crl.NeedsReplacement(now, TimeSpan.FromDays(1)));
         }
 
         [Test]

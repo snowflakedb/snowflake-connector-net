@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
-            Assert.IsTrue(thrown.Message.Contains(expectedErrorMessage));
+            Assert.True(thrown.Message.Contains(expectedErrorMessage));
         }
 
         [Test]

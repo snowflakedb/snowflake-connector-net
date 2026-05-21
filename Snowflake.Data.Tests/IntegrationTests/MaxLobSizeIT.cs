@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = command.ExecuteReader();
 
                     // assert
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual(c1, reader.GetString(0));
                     Assert.AreEqual(c2, reader.GetString(1));
                     Assert.AreEqual(c3, reader.GetInt64(2));
@@ -201,7 +201,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = command.ExecuteReader();
 
                     // assert
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual(c1, reader.GetString(0));
                     Assert.AreEqual(c2, reader.GetString(1));
                     Assert.AreEqual(c3, reader.GetInt64(2));
@@ -254,7 +254,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var reader = command.ExecuteReader();
 
                     // assert
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual(c1, reader.GetString(0));
                     Assert.AreEqual(c2, reader.GetString(1));
                     Assert.AreEqual(c3, reader.GetInt64(2));
@@ -353,7 +353,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = command.ExecuteReader();
 
                 // assert
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 Assert.AreEqual(ResultStatus.UPLOADED.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
             }
@@ -376,7 +376,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = command.ExecuteReader();
 
                 // assert
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 AssertOnColData(reader, 0);
                 AssertOnColData(reader, 1);
                 AssertOnColData(reader, 2);
@@ -388,7 +388,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var actual = reader.GetString(index);
             var substringLength = t_colData[index].Length > 20 ? 20 : t_colData[index].Length;
-            Assert.IsTrue(t_colData[index] == actual, $"Expected strings to be equal. Expected: '{t_colData[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
+            Assert.True(t_colData[index] == actual, $"Expected strings to be equal. Expected: '{t_colData[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
         }
 
         private void GetFile(DbConnection conn)
@@ -402,7 +402,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = command.ExecuteReader();
 
                 // assert
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 Assert.AreEqual(ResultStatus.DOWNLOADED.ToString(),
                     reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
 

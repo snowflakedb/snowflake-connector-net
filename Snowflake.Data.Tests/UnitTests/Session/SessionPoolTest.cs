@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionPool(ConnectionString, null, null, null);
 
             // assert
-            Assert.IsFalse(pool.IsConfigOverridden());
+            Assert.False(pool.IsConfigOverridden());
         }
 
         [Test]
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.AreEqual(newMaxPoolSize, pool.GetMaxPoolSize());
-            Assert.IsTrue(pool.IsConfigOverridden());
+            Assert.True(pool.IsConfigOverridden());
         }
 
         [Test]
@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.AreEqual(newExpirationTimeoutSeconds, pool.GetTimeout());
-            Assert.IsTrue(pool.IsConfigOverridden());
+            Assert.True(pool.IsConfigOverridden());
         }
 
         [Test]
@@ -66,8 +66,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.SetPooling(false);
 
             // assert
-            Assert.IsFalse(pool.GetPooling());
-            Assert.IsTrue(pool.IsConfigOverridden());
+            Assert.False(pool.GetPooling());
+            Assert.True(pool.IsConfigOverridden());
         }
 
         [Test]
@@ -105,7 +105,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.MISSING_CONNECTION_PROPERTY);
-            Assert.IsTrue(exception.Message.Contains("Required property PASSWORD is not provided"));
+            Assert.True(exception.Message.Contains("Required property PASSWORD is not provided"));
         }
 
         [Test]
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var poolIdentification = pool.PoolIdentificationBasedOnInternalId;
 
             // assert
-            Assert.IsTrue(poolIdRegex.IsMatch(poolIdentification));
+            Assert.True(poolIdRegex.IsMatch(poolIdentification));
         }
 
         [Test]
@@ -279,7 +279,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
-            Assert.IsFalse(isSessionReturnedToPool);
+            Assert.False(isSessionReturnedToPool);
         }
 
         [Test]
@@ -297,7 +297,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
-            Assert.IsTrue(isSessionReturnedToPool);
+            Assert.True(isSessionReturnedToPool);
             Assert.AreEqual(0, session.GetQueryContextRequest().Entries.Count);
         }
 
@@ -317,7 +317,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
-            Assert.IsTrue(isSessionReturnedToPool);
+            Assert.True(isSessionReturnedToPool);
             Assert.AreEqual(0, session.GetQueryContextRequest().Entries.Count);
         }
 
@@ -380,7 +380,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.ExtractIdleSession(connectionString);
 
             // assert
-            Assert.IsNull(session.sessionToken);
+            Assert.Null(session.sessionToken);
         }
 
         [Test]
@@ -425,7 +425,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert - pool must be empty and second session's close should have been attempted
             Assert.AreEqual(0, pool._idleSessions.Count);
-            Assert.IsNull(normalSession.sessionToken);
+            Assert.Null(normalSession.sessionToken);
         }
 
         [Test]
@@ -444,13 +444,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 statement.Execute(0, "SELECT 1", null, false, false));
 
             // the session should now be invalidated by SFStatement's catch block
-            Assert.IsTrue(session.IsInvalidatedForPooling());
+            Assert.True(session.IsInvalidatedForPooling());
 
             // act — try to return the session to the pool
             var wasAdded = pool.AddSession(session, false);
 
             // assert — invalidated session must be rejected
-            Assert.IsFalse(wasAdded);
+            Assert.False(wasAdded);
             Assert.AreEqual(0, pool._idleSessions.Count);
         }
 
@@ -467,7 +467,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var wasAdded = pool.AddSession(session, false);
 
             // assert - valid session should be returned to pool
-            Assert.IsTrue(wasAdded);
+            Assert.True(wasAdded);
             Assert.AreEqual(1, pool._idleSessions.Count);
         }
 

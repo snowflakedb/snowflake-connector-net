@@ -46,13 +46,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestDetectAwsLambdaWhenEnvVarSet()
         {
             Environment.SetEnvironmentVariable(LambdaTaskRoot, "/var/task");
-            Assert.IsTrue(PlatformDetection.DetectAwsLambda());
+            Assert.True(PlatformDetection.DetectAwsLambda());
         }
 
         [Test]
         public void TestDetectAwsLambdaWhenEnvVarNotSet()
         {
-            Assert.IsFalse(PlatformDetection.DetectAwsLambda());
+            Assert.False(PlatformDetection.DetectAwsLambda());
         }
 
         // --- DetectGithubActions ---
@@ -61,13 +61,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestDetectGithubActionsWhenEnvVarSet()
         {
             Environment.SetEnvironmentVariable(GithubActions, "true");
-            Assert.IsTrue(PlatformDetection.DetectGithubActions());
+            Assert.True(PlatformDetection.DetectGithubActions());
         }
 
         [Test]
         public void TestDetectGithubActionsWhenEnvVarNotSet()
         {
-            Assert.IsFalse(PlatformDetection.DetectGithubActions());
+            Assert.False(PlatformDetection.DetectGithubActions());
         }
 
         // --- DetectAzureFunction ---
@@ -78,20 +78,20 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(FunctionsWorkerRuntime, "dotnet");
             Environment.SetEnvironmentVariable(FunctionsExtensionVersion, "~4");
             Environment.SetEnvironmentVariable(AzureWebJobsStorage, "DefaultEndpointsProtocol=https;...");
-            Assert.IsTrue(PlatformDetection.DetectAzureFunction());
+            Assert.True(PlatformDetection.DetectAzureFunction());
         }
 
         [Test]
         public void TestDetectAzureFunctionWhenOnlyOneEnvVarSet()
         {
             Environment.SetEnvironmentVariable(FunctionsWorkerRuntime, "dotnet");
-            Assert.IsFalse(PlatformDetection.DetectAzureFunction());
+            Assert.False(PlatformDetection.DetectAzureFunction());
         }
 
         [Test]
         public void TestDetectAzureFunctionWhenNoEnvVarsSet()
         {
-            Assert.IsFalse(PlatformDetection.DetectAzureFunction());
+            Assert.False(PlatformDetection.DetectAzureFunction());
         }
 
         // --- DetectGceCloudRunService ---
@@ -102,14 +102,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(KService, "my-service");
             Environment.SetEnvironmentVariable(KRevision, "my-service-00001-abc");
             Environment.SetEnvironmentVariable(KConfiguration, "my-service");
-            Assert.IsTrue(PlatformDetection.DetectGceCloudRunService());
+            Assert.True(PlatformDetection.DetectGceCloudRunService());
         }
 
         [Test]
         public void TestDetectGceCloudRunServiceWhenPartialEnvVarsSet()
         {
             Environment.SetEnvironmentVariable(KService, "my-service");
-            Assert.IsFalse(PlatformDetection.DetectGceCloudRunService());
+            Assert.False(PlatformDetection.DetectGceCloudRunService());
         }
 
         // --- DetectGceCloudRunJob ---
@@ -119,14 +119,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             Environment.SetEnvironmentVariable(CloudRunJob, "my-job");
             Environment.SetEnvironmentVariable(CloudRunExecution, "my-job-execution-abc");
-            Assert.IsTrue(PlatformDetection.DetectGceCloudRunJob());
+            Assert.True(PlatformDetection.DetectGceCloudRunJob());
         }
 
         [Test]
         public void TestDetectGceCloudRunJobWhenOnlyOneEnvVarSet()
         {
             Environment.SetEnvironmentVariable(CloudRunJob, "my-job");
-            Assert.IsFalse(PlatformDetection.DetectGceCloudRunJob());
+            Assert.False(PlatformDetection.DetectGceCloudRunJob());
         }
 
         // --- DetectEc2Instance ---
@@ -332,7 +332,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var names = new[] { "platform_a", "platform_b", "platform_c" };
             var results = new bool?[] { false, false, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            Assert.IsEmpty(aggregated);
+            Assert.Empty(aggregated);
         }
 
         [Test]

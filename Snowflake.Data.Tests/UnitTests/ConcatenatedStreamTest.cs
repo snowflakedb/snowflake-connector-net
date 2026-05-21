@@ -28,19 +28,19 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestCanRead()
         {
-            Assert.IsTrue(_concatStream.CanRead);
+            Assert.True(_concatStream.CanRead);
         }
 
         [Test]
         public void TestCanSeek()
         {
-            Assert.IsFalse(_concatStream.CanSeek);
+            Assert.False(_concatStream.CanSeek);
         }
 
         [Test]
         public void TestCanWrite()
         {
-            Assert.IsFalse(_concatStream.CanWrite);
+            Assert.False(_concatStream.CanWrite);
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 // NET 4.7.1 throws an ArgumentException
                 // NET 4.7.2 throws an ArgumentOutOfRangeException
-                Assert.IsTrue(ex is ArgumentException);
+                Assert.True(ex is ArgumentException);
             }
         }
     }

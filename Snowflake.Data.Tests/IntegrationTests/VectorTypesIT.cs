@@ -40,27 +40,27 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     command.CommandText = $"SELECT COUNT(*) FROM {TableName};";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual(3, reader.GetInt16(0));
 
                     command.CommandText = $"SELECT * FROM {TableName};";
                     reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual("[1,2,3]", reader.GetString(0));
                     var arr = reader.GetArray<int>(0);
                     Assert.AreEqual(1, arr[0]);
                     Assert.AreEqual(2, arr[1]);
                     Assert.AreEqual(3, arr[2]);
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual("[4,5,6]", reader.GetString(0));
                     arr = reader.GetArray<int>(0);
                     Assert.AreEqual(4, arr[0]);
                     Assert.AreEqual(5, arr[1]);
                     Assert.AreEqual(6, arr[2]);
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual("[7,8,9]", reader.GetString(0));
                     arr = reader.GetArray<int>(0);
                     Assert.AreEqual(7, arr[0]);
@@ -95,27 +95,27 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     command.CommandText = $"SELECT COUNT(*) FROM {TableName};";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual(3, reader.GetInt16(0));
 
                     command.CommandText = $"SELECT * FROM {TableName};";
                     reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual("[1.100000,2.200000,3.300000]", reader.GetString(0));
                     var arr = reader.GetArray<float>(0);
                     Assert.AreEqual(1.1f, arr[0]);
                     Assert.AreEqual(2.2f, arr[1]);
                     Assert.AreEqual(3.3f, arr[2]);
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual("[4.400000,5.500000,6.600000]", reader.GetString(0));
                     arr = reader.GetArray<float>(0);
                     Assert.AreEqual(4.4f, arr[0]);
                     Assert.AreEqual(5.5f, arr[1]);
                     Assert.AreEqual(6.6f, arr[2]);
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual("[7.700000,8.800000,9.900000]", reader.GetString(0));
                     arr = reader.GetArray<float>(0);
                     Assert.AreEqual(7.7f, arr[0]);
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = "SELECT [1, 2, 3]::VECTOR(INT, 3) as vec;";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual("[1,2,3]", reader.GetString(0));
 
                     var arr = reader.GetArray<int>(0);
@@ -167,7 +167,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = $"SELECT [{Int32.MinValue}, {Int32.MaxValue}]::VECTOR(INT, 2) as vec;";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual($"[{Int32.MinValue},{Int32.MaxValue}]", reader.GetString(0));
 
                     var arr = reader.GetArray<int>(0);
@@ -231,7 +231,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = "SELECT [1.1,2.22,3.333]::VECTOR(FLOAT, 3) as vec;";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual("[1.100000,2.220000,3.333000]", reader.GetString(0));
 
                     var arr = reader.GetArray<float>(0);
@@ -257,7 +257,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = $"SELECT [{float.MinValue}, {float.MaxValue}]::VECTOR(FLOAT, 2) as vec;";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     var arr = reader.GetArray<float>(0);
 #if NETFRAMEWORK
@@ -285,7 +285,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = "SELECT [1,2,3]::VECTOR(FLOAT, 3) as vec;";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual("[1.000000,2.000000,3.000000]", reader.GetString(0));
 
                     var arr = reader.GetArray<float>(0);
@@ -310,7 +310,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = "SELECT [1.123456789,2.123456789,3.123456789]::VECTOR(FLOAT, 3) as vec;";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
 
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual("[1.123457,2.123457,3.123457]", reader.GetString(0));
 
                     var arr = reader.GetArray<float>(0);

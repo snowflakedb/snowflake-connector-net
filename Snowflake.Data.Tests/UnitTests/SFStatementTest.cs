@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetQueryStatusByStringValueThrowsErrorForUnknownStatus(string stringValue)
         {
             var thrown = Assert.Throws<Exception>(() => QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
-            Assert.IsTrue(thrown.Message.Contains("The query status returned by the server is not recognized"));
+            Assert.True(thrown.Message.Contains("The query status returned by the server is not recognized"));
         }
 
         [Test]
@@ -287,13 +287,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
             var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
-            Assert.IsEmpty(session.GetQueryContextRequest().Entries);
+            Assert.Empty(session.GetQueryContextRequest().Entries);
             var statement = new SFStatement(session);
 
             Assert.Throws<SnowflakeDbException>(() => statement.BuildResultSet(response, CancellationToken.None));
 
             var cachedContext = session.GetQueryContextRequest();
-            Assert.IsNotNull(cachedContext);
+            Assert.NotNull(cachedContext);
             Assert.AreEqual(1, cachedContext.Entries.Count);
             Assert.AreEqual(42, cachedContext.Entries[0].Id);
         }
@@ -330,7 +330,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<SnowflakeDbException>(() => statement.BuildResultSet(response, CancellationToken.None));
 
             var cachedContext = session.GetQueryContextRequest();
-            Assert.IsNotNull(cachedContext);
+            Assert.NotNull(cachedContext);
             Assert.AreEqual(1, cachedContext.Entries.Count);
             Assert.AreEqual(99, cachedContext.Entries[0].Id);
         }
@@ -346,7 +346,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<SnowflakeDbException>(() => statement.Execute(0, "select 1", null, false, false));
 
             var cachedContext = session.GetQueryContextRequest();
-            Assert.IsNotNull(cachedContext);
+            Assert.NotNull(cachedContext);
             Assert.AreEqual(1, cachedContext.Entries.Count);
             Assert.AreEqual(42, cachedContext.Entries[0].Id);
         }
@@ -363,7 +363,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None));
 
             var cachedContext = session.GetQueryContextRequest();
-            Assert.IsNotNull(cachedContext);
+            Assert.NotNull(cachedContext);
             Assert.AreEqual(1, cachedContext.Entries.Count);
             Assert.AreEqual(42, cachedContext.Entries[0].Id);
         }
@@ -378,7 +378,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var thrown = Assert.Throws<SnowflakeDbException>(() => statement.Execute(0, "select 1", null, false, false));
             Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
-            Assert.IsTrue(sfSession.IsInvalidatedForPooling());
+            Assert.True(sfSession.IsInvalidatedForPooling());
         }
 
         [Test]
@@ -392,7 +392,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
                 await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None));
             Assert.AreEqual(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
-            Assert.IsTrue(sfSession.IsInvalidatedForPooling());
+            Assert.True(sfSession.IsInvalidatedForPooling());
         }
 
         [Test]

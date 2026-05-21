@@ -650,14 +650,14 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestCSharpValToSfValNullReturnsNull()
         {
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TEXT, null);
-            Assert.IsNull(result);
+            Assert.Null(result);
         }
 
         [Test]
         public void TestCSharpValToSfValDbNullReturnsNull()
         {
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TEXT, DBNull.Value);
-            Assert.IsNull(result);
+            Assert.Null(result);
         }
 
         [TestCase(13, 45, 30, 500, "49530500000000")]

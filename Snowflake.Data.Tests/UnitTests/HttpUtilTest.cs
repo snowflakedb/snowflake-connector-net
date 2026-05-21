@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             catch (HttpRequestException e)
             {
-                Assert.IsInstanceOf<AuthenticationException>(e.InnerException);
+                Assert.InstanceOf<AuthenticationException>(e.InnerException);
             }
             catch (Exception unexpected)
             {
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 jitter = HttpUtil.GetJitter(seconds);
 
                 // then
-                Assert.IsTrue(jitter >= lowerBound && jitter <= upperBound);
+                Assert.True(jitter >= lowerBound && jitter <= upperBound);
             }
         }
 
@@ -157,8 +157,8 @@ namespace Snowflake.Data.Tests.UnitTests
             var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
 
             // assert
-            Assert.IsTrue(handler.UseProxy);
-            Assert.IsNotNull(handler.Proxy);
+            Assert.True(handler.UseProxy);
+            Assert.NotNull(handler.Proxy);
         }
 
         [Test]
@@ -181,8 +181,8 @@ namespace Snowflake.Data.Tests.UnitTests
             var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
 
             // assert
-            Assert.IsFalse(handler.UseProxy);
-            Assert.IsNull(handler.Proxy);
+            Assert.False(handler.UseProxy);
+            Assert.Null(handler.Proxy);
         }
 
         [NonParallelizable]

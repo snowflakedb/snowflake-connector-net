@@ -75,7 +75,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             var logs = GetTelemetryLogs();
             var matching = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName && l.StatusCode == "OK").ToList();
-            Assert.IsNotEmpty(matching, $"Expected telemetry log for {method} to be sent to /telemetry/send");
+            Assert.NotEmpty(matching, $"Expected telemetry log for {method} to be sent to /telemetry/send");
             Assert.AreEqual("client_activity", matching.First().Type);
         }
 
@@ -102,7 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             var logs = GetTelemetryLogs();
             var matching = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName && l.StatusCode == "OK").ToList();
-            Assert.IsNotEmpty(matching, $"Expected telemetry log for {method} to be sent to /telemetry/send");
+            Assert.NotEmpty(matching, $"Expected telemetry log for {method} to be sent to /telemetry/send");
             Assert.AreEqual("client_activity", matching.First().Type);
         }
 
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
 
             var logs = GetTelemetryLogs();
-            Assert.IsNotEmpty(logs, "Expected at least one telemetry log");
+            Assert.NotEmpty(logs, "Expected at least one telemetry log");
 
             var log = logs.First();
             Assert.AreEqual("snowflake", log.Tag(TelemetryTags.DbSystem));
@@ -142,12 +142,12 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
 
             var logs = GetTelemetryLogs();
-            Assert.IsNotEmpty(logs);
+            Assert.NotEmpty(logs);
 
             var log = logs.First();
             Assert.AreEqual(".NET", log.DriverType);
-            Assert.IsNotNull(log.DriverVersion);
-            Assert.IsNotNull(log.Duration);
+            Assert.NotNull(log.DriverVersion);
+            Assert.NotNull(log.Duration);
         }
 
         [Test]
@@ -165,7 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
 
             var logs = GetTelemetryLogs();
-            Assert.IsNotEmpty(logs, "Server override should enable telemetry even when client disabled it");
+            Assert.NotEmpty(logs, "Server override should enable telemetry even when client disabled it");
         }
 
         [Test]
@@ -183,7 +183,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
 
             var telemetryRequests = GetWiremockRequestsTo("/telemetry/send", noRequestsExpected: true);
-            Assert.IsEmpty(telemetryRequests, "No telemetry should be sent when server disables CLIENT_TELEMETRY_ENABLED");
+            Assert.Empty(telemetryRequests, "No telemetry should be sent when server disables CLIENT_TELEMETRY_ENABLED");
         }
 
         [Test]
@@ -199,7 +199,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
 
             var telemetryRequests = GetWiremockRequestsTo("/telemetry/send");
-            Assert.IsNotEmpty(telemetryRequests);
+            Assert.NotEmpty(telemetryRequests);
 
             var authHeader = telemetryRequests.First()["headers"]?["Authorization"]?.ToString();
             Assert.AreEqual("Snowflake Token=\"session-token\"", authHeader);
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             var logs = GetTelemetryLogs();
             var errorLogs = logs.Where(l => l.StatusCode == "ERROR").ToList();
-            Assert.IsNotEmpty(errorLogs, "Expected at least one ERROR telemetry log when command fails");
+            Assert.NotEmpty(errorLogs, "Expected at least one ERROR telemetry log when command fails");
         }
 
         [Test]
@@ -249,7 +249,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             // Internal telemetry
             var internalLogs = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName).ToList();
-            Assert.IsNotEmpty(internalLogs, "Internal telemetry should still be sent");
+            Assert.NotEmpty(internalLogs, "Internal telemetry should still be sent");
             Assert.AreEqual("OK", internalLogs.First().StatusCode);
 
             // Custom telemetry — single synthetic entry (no events added → display name becomes event name)
@@ -418,7 +418,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             // Internal command telemetry
             var internalLogs = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName).ToList();
-            Assert.IsNotEmpty(internalLogs, "Internal telemetry for ExecuteNonQuery should be sent to server");
+            Assert.NotEmpty(internalLogs, "Internal telemetry for ExecuteNonQuery should be sent to server");
             Assert.AreEqual("OK", internalLogs.First().StatusCode);
 
             // Custom activities

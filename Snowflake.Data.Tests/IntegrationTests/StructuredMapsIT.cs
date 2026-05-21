@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA', 'zip', '01-234')::MAP(VARCHAR, VARCHAR)";
                     command.CommandText = $"SELECT {addressAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var map = reader.GetMap<string, string>(0);
@@ -86,10 +86,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         var arrowString = reader.GetString(0);
                         EnableStructuredTypes(connection, ResultFormat.JSON);
                         reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                        Assert.IsTrue(reader.Read());
+                        Assert.True(reader.Read());
                         var jsonString = reader.GetString(0);
 
-                        Assert.IsTrue(JToken.DeepEquals(JObject.Parse(jsonString), JObject.Parse(arrowString)));
+                        Assert.True(JToken.DeepEquals(JObject.Parse(jsonString), JObject.Parse(arrowString)));
                     }
                 }
             }
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var mapSfString = "OBJECT_CONSTRUCT('5','San Mateo', '8', 'CA', '13', '01-234')::MAP(INTEGER, VARCHAR)";
                     command.CommandText = $"SELECT {mapSfString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var map = reader.GetMap<int, string>(0);
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var mapSfString = "OBJECT_CONSTRUCT('5','San Mateo', '8', 'CA', '13', '01-234')::MAP(INTEGER, VARCHAR)";
                     command.CommandText = $"SELECT {mapSfString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var map = reader.GetMap<long, string>(0);
@@ -167,7 +167,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )::MAP(VARCHAR, OBJECT(prefix VARCHAR, postfix VARCHAR))";
                     command.CommandText = $"SELECT {mapWitObjectValueSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var map = reader.GetMap<string, Zip>(0);
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
                     command.CommandText = $"SELECT {mapWithArrayValueSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var map = reader.GetMap<string, string[]>(0);
@@ -220,7 +220,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
                     command.CommandText = $"SELECT {mapWithArrayValueSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var map = reader.GetMap<string, List<string>>(0);
@@ -246,7 +246,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var mapAsSFString = "OBJECT_CONSTRUCT('a', OBJECT_CONSTRUCT('b', 'c'))::MAP(TEXT, MAP(TEXT, TEXT))";
                     command.CommandText = $"SELECT {mapAsSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var map = reader.GetMap<string, Dictionary<string, string>>(0);
@@ -275,7 +275,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
                     command.CommandText = $"SELECT {valueSfString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var map = reader.GetMap<string, string>(0);
@@ -301,13 +301,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var nullMapSFString = "NULL::MAP(TEXT,TEXT)";
                     command.CommandText = $"SELECT {nullMapSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var nullMap = reader.GetMap<string, string>(0);
 
                     // assert
-                    Assert.IsNull(nullMap);
+                    Assert.Null(nullMap);
                 }
             }
         }
@@ -325,7 +325,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var invalidMapSFString = "OBJECT_CONSTRUCT('x', 'y')::OBJECT";
                     command.CommandText = $"SELECT {invalidMapSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetMap<string, string>(0));
@@ -354,7 +354,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )::MAP(TEXT,TEXT)";
                     command.CommandText = $"SELECT {invalidMapSFString}";
                     var reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
 
                     // act
                     var thrown = Assert.Throws<SnowflakeDbException>(() => reader.GetMap<string, Guid>(0));

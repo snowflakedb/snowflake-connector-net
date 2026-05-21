@@ -50,19 +50,19 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var applicationPath = SFEnvironment.ExtractApplicationPath();
 
-            Assert.IsNotNull(applicationPath);
-            Assert.IsNotEmpty(applicationPath);
-            Assert.IsTrue(System.IO.Path.IsPathRooted(applicationPath),
+            Assert.NotNull(applicationPath);
+            Assert.NotEmpty(applicationPath);
+            Assert.True(System.IO.Path.IsPathRooted(applicationPath),
                 $"Application path should be absolute. Got: {applicationPath}");
 
             var lowerPath = applicationPath.ToLower();
 #if NETFRAMEWORK
-            Assert.IsTrue(
+            Assert.True(
                 lowerPath.Contains("testhost") &&
                 (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
                 $"Application path should contain 'testhost' and end with .dll or .exe. Got: {applicationPath}");
 #else
-            Assert.IsTrue(
+            Assert.True(
                 lowerPath.Contains("snowflake.data.tests") &&
                 lowerPath.Contains("bin") &&
                 lowerPath.Contains("testhost") &&
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(processName, insecurePatLoginClientEnv.processName);
             Assert.AreEqual(applicationPath, insecurePatLoginClientEnv.applicationPath);
             Assert.AreEqual("enabled", insecurePatLoginClientEnv.certRevocationCheckMode);
-            Assert.IsNull(insecurePatLoginClientEnv.oauthType);
+            Assert.Null(insecurePatLoginClientEnv.oauthType);
             // asserts that first and second client credential login produced the same json
             var firstClientCredentialEnvJson = JsonConvert.SerializeObject(clientCredentialLoginClientEnv);
             var secondClientCredentialEnvJson = JsonConvert.SerializeObject(clientCredentialLoginClientEnv2);
@@ -129,12 +129,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
             if (osDetails == null)
             {
-                Assert.IsFalse(File.Exists("/etc/os-release"),
+                Assert.False(File.Exists("/etc/os-release"),
                     "ExtractOsDetails returned null but /etc/os-release exists");
                 return;
             }
 
-            Assert.IsNotEmpty(osDetails);
+            Assert.NotEmpty(osDetails);
             var expectedKeys = new[] { "NAME", "PRETTY_NAME", "ID", "BUILD_ID", "IMAGE_ID", "IMAGE_VERSION", "VERSION", "VERSION_ID" };
             foreach (var key in osDetails.Keys)
             {
@@ -151,10 +151,10 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.AreEqual(RuntimeInformation.ProcessArchitecture.ToString().ToLower(), clientEnv.isa);
 
             // Fields NOT set by static constructor (populated in CloneForSession)
-            Assert.IsNull(clientEnv.minicoreVersion, "minicoreVersion should be null on the static ClientEnv");
-            Assert.IsNull(clientEnv.minicoreFileName, "minicoreFileName should be null on the static ClientEnv");
-            Assert.IsNull(clientEnv.minicoreLoadError, "minicoreLoadError should be null on the static ClientEnv");
-            Assert.IsNull(clientEnv.platform, "platform should be null on the static ClientEnv");
+            Assert.Null(clientEnv.minicoreVersion, "minicoreVersion should be null on the static ClientEnv");
+            Assert.Null(clientEnv.minicoreFileName, "minicoreFileName should be null on the static ClientEnv");
+            Assert.Null(clientEnv.minicoreLoadError, "minicoreLoadError should be null on the static ClientEnv");
+            Assert.Null(clientEnv.platform, "platform should be null on the static ClientEnv");
         }
 
         [Test]
@@ -163,10 +163,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var clientEnv = SFEnvironment.ClientEnv;
 
-            Assert.IsNotNull(clientEnv.libcFamily, "libcFamily should not be null on Linux");
+            Assert.NotNull(clientEnv.libcFamily, "libcFamily should not be null on Linux");
             Assert.That(clientEnv.libcFamily, Is.AnyOf("glibc", "could not determine"));
 
-            Assert.IsNotNull(clientEnv.libcVersion, "libcVersion should not be null when family is glibc");
+            Assert.NotNull(clientEnv.libcVersion, "libcVersion should not be null when family is glibc");
             Assert.That(clientEnv.libcVersion, Does.Match(@"^\d+\.\d+"),
                 $"libcVersion should be a version string, got: {clientEnv.libcVersion}");
         }
@@ -177,8 +177,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var clientEnv = SFEnvironment.ClientEnv;
 
-            Assert.IsNull(clientEnv.libcFamily, "libcFamily should be null on non-Linux");
-            Assert.IsNull(clientEnv.libcVersion, "libcVersion should be null on non-Linux");
+            Assert.Null(clientEnv.libcFamily, "libcFamily should be null on non-Linux");
+            Assert.Null(clientEnv.libcVersion, "libcVersion should be null on non-Linux");
         }
 
         [Test]
@@ -189,12 +189,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
             if (clientEnv.osDetails == null)
             {
-                Assert.IsFalse(File.Exists("/etc/os-release"),
+                Assert.False(File.Exists("/etc/os-release"),
                     "osDetails should not be null when /etc/os-release exists");
                 return;
             }
 
-            Assert.IsNotEmpty(clientEnv.osDetails);
+            Assert.NotEmpty(clientEnv.osDetails);
         }
 
         [Test]
@@ -203,7 +203,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var clientEnv = SFEnvironment.ClientEnv;
 
-            Assert.IsNull(clientEnv.osDetails, "osDetails should be null on non-Linux");
+            Assert.Null(clientEnv.osDetails, "osDetails should be null on non-Linux");
         }
 
         [Test]
@@ -211,7 +211,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestOsDetailsExtractionOnNonLinux()
         {
             var osDetails = SFEnvironment.ExtractOsDetails();
-            Assert.IsNull(osDetails, "OS details should be null on non-Linux platforms");
+            Assert.Null(osDetails, "OS details should be null on non-Linux platforms");
         }
 
         [Test]
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             if (osDetails == null)
             {
-                Assert.IsFalse(File.Exists("/etc/os-release"),
+                Assert.False(File.Exists("/etc/os-release"),
                     "ExtractOsDetails returned null but /etc/os-release exists");
                 return;
             }
@@ -230,7 +230,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var unwantedKeys = new[] { "ANSI_COLOR", "HOME_URL", "DOCUMENTATION_URL", "SUPPORT_URL", "BUG_REPORT_URL", "PRIVACY_POLICY_URL", "LOGO" };
             foreach (var unwantedKey in unwantedKeys)
             {
-                Assert.IsFalse(osDetails.ContainsKey(unwantedKey),
+                Assert.False(osDetails.ContainsKey(unwantedKey),
                     $"OS details should not contain unwanted key '{unwantedKey}'");
             }
         }

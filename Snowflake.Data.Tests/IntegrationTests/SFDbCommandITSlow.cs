@@ -20,7 +20,7 @@ class SFDbCommandITSlow : SFBaseTest
             cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v order by 1";
             IDataReader reader = cmd.ExecuteReader();
             // only one result is returned
-            Assert.IsTrue(reader.Read());
+            Assert.True(reader.Read());
 
             conn.Close();
         }
@@ -74,7 +74,7 @@ class SFDbCommandITSlow : SFBaseTest
             }
             catch (Exception e)
             {
-                Assert.IsInstanceOf<TaskCanceledException>(e.InnerException);
+                Assert.InstanceOf<TaskCanceledException>(e.InnerException);
             }
 
             stopwatch.Stop();

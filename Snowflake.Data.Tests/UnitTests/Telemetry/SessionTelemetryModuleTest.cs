@@ -92,7 +92,7 @@ internal sealed class SessionTelemetryModuleTest
         await module.FlushAsync(CancellationToken.None);
 
         // Assert
-        Assert.IsNotNull(capturedBody);
+        Assert.NotNull(capturedBody);
         Assert.AreEqual(expectedLogCount, capturedBody.Logs.Count);
         // First entry is always the synthetic activity event
         Assert.AreEqual("TestOp", capturedBody.Logs[0].Message[TelemetryField.EventName]);
@@ -131,7 +131,7 @@ internal sealed class SessionTelemetryModuleTest
         await module.FlushAsync(CancellationToken.None);
 
         // Assert
-        Assert.IsNotNull(capturedBody);
+        Assert.NotNull(capturedBody);
         Assert.AreEqual(3, capturedBody.Logs.Count);
         Assert.AreEqual("Op1", capturedBody.Logs[0].Message[TelemetryField.EventName]);
         Assert.AreEqual("Op2", capturedBody.Logs[1].Message[TelemetryField.EventName]);
@@ -169,7 +169,7 @@ internal sealed class SessionTelemetryModuleTest
         await module.FlushAsync(CancellationToken.None);
 
         // Assert
-        Assert.IsNotNull(capturedBody);
+        Assert.NotNull(capturedBody);
         Assert.AreEqual(3, capturedBody.Logs.Count);
         Assert.AreEqual("Op1", capturedBody.Logs[0].Message[TelemetryField.EventName]);
         Assert.AreEqual("Op2", capturedBody.Logs[1].Message[TelemetryField.EventName]);
@@ -195,14 +195,14 @@ internal sealed class SessionTelemetryModuleTest
         };
         ActivitySource.AddActivityListener(listener);
         var activity = source.StartActivity("CustomSourceOp");
-        Assert.IsNotNull(activity);
+        Assert.NotNull(activity);
         module.OnActivityStoppedImpl(activity);
 
         // Act
         await module.FlushAsync(CancellationToken.None);
 
         // Assert
-        Assert.IsNotNull(capturedBody);
+        Assert.NotNull(capturedBody);
         Assert.AreEqual("MyApp.Instrumentation", capturedBody.Logs.Single().Message[TelemetryField.Source]);
     }
 
@@ -493,7 +493,7 @@ internal sealed class SessionTelemetryModuleTest
         await module.FlushAsync(CancellationToken.None);
 
         // Assert
-        Assert.IsNotNull(capturedBody);
+        Assert.NotNull(capturedBody);
         var log = capturedBody.Logs.First();
         Assert.AreEqual("hello", log.Message["tag.safe.tag"]);
         // The password value should be masked by SecretDetector
@@ -524,10 +524,10 @@ internal sealed class SessionTelemetryModuleTest
         await module.FlushAsync(CancellationToken.None);
 
         // Assert
-        Assert.IsNotNull(capturedBody);
+        Assert.NotNull(capturedBody);
         var log = capturedBody.Logs.First();
-        Assert.IsTrue(log.Message.ContainsKey("tag.present"));
-        Assert.IsFalse(log.Message.ContainsKey("tag.absent"));
+        Assert.True(log.Message.ContainsKey("tag.present"));
+        Assert.False(log.Message.ContainsKey("tag.absent"));
     }
 
     [Test]
@@ -557,20 +557,20 @@ internal sealed class SessionTelemetryModuleTest
         await module.FlushAsync(CancellationToken.None);
 
         // Assert
-        Assert.IsNotNull(capturedBody);
+        Assert.NotNull(capturedBody);
         Assert.AreEqual(2, capturedBody.Logs.Count);
 
         // Synthetic event carries activity-level tags
         var syntheticLog = capturedBody.Logs[0];
         Assert.AreEqual("MyOp", syntheticLog.Message[TelemetryField.EventName]);
         Assert.AreEqual("session_value", syntheticLog.Message["tag.session.tag"]);
-        Assert.IsFalse(syntheticLog.Message.ContainsKey("tag.event.tag"));
+        Assert.False(syntheticLog.Message.ContainsKey("tag.event.tag"));
 
         // Explicit event carries its own tags
         var eventLog = capturedBody.Logs[1];
         Assert.AreEqual("Step1", eventLog.Message[TelemetryField.EventName]);
         Assert.AreEqual("event_value", eventLog.Message["tag.event.tag"]);
-        Assert.IsFalse(eventLog.Message.ContainsKey("tag.session.tag"));
+        Assert.False(eventLog.Message.ContainsKey("tag.session.tag"));
     }
 
 
@@ -639,7 +639,7 @@ internal sealed class SessionTelemetryModuleTest
             SpinWait.SpinUntil(() => flushed, TimeSpan.FromSeconds(5));
 
             // Assert
-            Assert.IsTrue(flushed);
+            Assert.True(flushed);
             module.Dispose();
         }
         finally
@@ -679,7 +679,7 @@ internal sealed class SessionTelemetryModuleTest
             var result = SpinWait.SpinUntil(() => flushedCount == 5, TimeSpan.FromSeconds(5));
 
             // Assert
-            Assert.IsTrue(result);
+            Assert.True(result);
             module.Dispose();
         }
         finally

@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Syscall.creat(absoluteFilePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
 
             // act and assert
-            Assert.IsTrue(s_fileOperations.IsFileSafe(absoluteFilePath));
+            Assert.True(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
 
         [Test]
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Syscall.creat(absoluteFilePath, (FilePermissions)permissions);
 
             // act and assert
-            Assert.IsFalse(s_fileOperations.IsFileSafe(absoluteFilePath));
+            Assert.False(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
 
         [Test]
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var fileOps = new FileOperations(mockUnixOperations);
 
             // act and assert
-            Assert.IsTrue(fileOps.IsFileOwnedByCurrentUser(absolutePath));
+            Assert.True(fileOps.IsFileOwnedByCurrentUser(absolutePath));
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var fileOps = new FileOperations(mockUnixOperations);
 
             // act and assert
-            Assert.IsFalse(fileOps.IsFileOwnedByCurrentUser(absolutePath));
+            Assert.False(fileOps.IsFileOwnedByCurrentUser(absolutePath));
         }
 
         [Test]
@@ -131,7 +131,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                 var fileOps = new FileOperations(mockUnixOperations);
 
                 // act and assert
-                Assert.IsFalse(fileOps.IsFileSafe(absolutePath));
+                Assert.False(fileOps.IsFileSafe(absolutePath));
             }
             finally
             {
@@ -155,8 +155,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             s_fileOperations.CopyFile(SrcFilePath, DestFilePath);
 
             // assert
-            Assert.IsTrue(File.Exists(DestFilePath));
-            Assert.IsTrue(s_fileOperations.IsFileSafe(DestFilePath));
+            Assert.True(File.Exists(DestFilePath));
+            Assert.True(s_fileOperations.IsFileSafe(DestFilePath));
             Assert.AreEqual(s_content, File.ReadAllText(DestFilePath));
         }
 

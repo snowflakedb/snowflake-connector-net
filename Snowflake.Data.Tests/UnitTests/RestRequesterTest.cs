@@ -42,8 +42,8 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             // assert — the production SendAsync must tag the exception with 401
-            Assert.IsNotNull(caught);
-            Assert.IsTrue(RestRequester.HasUnauthorizedStatusCode(caught));
+            Assert.NotNull(caught);
+            Assert.True(RestRequester.HasUnauthorizedStatusCode(caught));
         }
 
         [Test]
@@ -74,8 +74,8 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             // assert — 403 should NOT be detected as unauthorized
-            Assert.IsNotNull(caught);
-            Assert.IsFalse(RestRequester.HasUnauthorizedStatusCode(caught));
+            Assert.NotNull(caught);
+            Assert.False(RestRequester.HasUnauthorizedStatusCode(caught));
         }
 
         [Test]
@@ -104,13 +104,13 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestHasUnauthorizedStatusCodeReturnsFalseForNull()
         {
-            Assert.IsFalse(RestRequester.HasUnauthorizedStatusCode(null));
+            Assert.False(RestRequester.HasUnauthorizedStatusCode(null));
         }
 
         [Test]
         public void TestHasUnauthorizedStatusCodeReturnsFalseForPlainException()
         {
-            Assert.IsFalse(RestRequester.HasUnauthorizedStatusCode(new Exception("no http info")));
+            Assert.False(RestRequester.HasUnauthorizedStatusCode(new Exception("no http info")));
         }
 
         [Test]
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var result = await restRequester.PostAsync<NullDataResponse>(request, CancellationToken.None);
 
             // assert
-            Assert.IsTrue(result.success);
+            Assert.True(result.success);
             Assert.AreEqual("Some message!", result.message);
         }
 
@@ -147,7 +147,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var result = await restRequester.PostAsync<NullDataResponse>(request, CancellationToken.None);
 
             // assert
-            Assert.IsTrue(result.success);
+            Assert.True(result.success);
             Assert.AreEqual("Some message!", result.message);
         }
 
@@ -183,7 +183,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var result = await restRequester.GetAsync<NullDataResponse>(request, CancellationToken.None);
 
             // assert
-            Assert.IsTrue(result.success);
+            Assert.True(result.success);
             Assert.AreEqual("Some message!", result.message);
         }
 

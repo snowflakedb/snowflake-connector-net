@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.IsNull(filePath);
+            Assert.Null(filePath);
         }
 
         [Test]
@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.IsNull(filePath);
+            Assert.Null(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
 
@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.IsNull(filePath);
+            Assert.Null(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
 
@@ -158,7 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.IsNull(filePath);
+            Assert.Null(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
 

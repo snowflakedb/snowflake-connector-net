@@ -75,7 +75,7 @@ namespace Snowflake.Data.Tests.UnitTests
         private void AssertCacheDataWithContext(string context)
         {
             int size = _qcc.GetSize();
-            Assert.IsTrue(size == MaxCapacity);
+            Assert.True(size == MaxCapacity);
 
             // Compare elements
             SortedSet<QueryContextElement> elements = _qcc.getElements();
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestIsEmpty()
         {
             InitCache();
-            Assert.IsTrue(_qcc.GetSize() == 0);
+            Assert.True(_qcc.GetSize() == 0);
         }
 
         [Test]
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _qcc.Merge(BaseId + i, BaseReadTimestamp + i, BasePriority + i, Context);
             _qcc.SyncPriorityMap();
             _qcc.CheckCacheCapacity();
-            Assert.IsTrue(_qcc.GetSize() == MaxCapacity + 1);
+            Assert.True(_qcc.GetSize() == MaxCapacity + 1);
 
             // reduce the capacity back
             _qcc.SetCapacity(MaxCapacity);

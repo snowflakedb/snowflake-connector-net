@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.Util
     {
         public static void NotEmptyString(string actual)
         {
-            Assert.IsFalse(string.IsNullOrEmpty(actual));
+            Assert.False(string.IsNullOrEmpty(actual));
         }
     }
 }

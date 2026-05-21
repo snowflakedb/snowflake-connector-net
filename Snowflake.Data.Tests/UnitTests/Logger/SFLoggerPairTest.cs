@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestUsingSFLogger()
         {
             _loggerPair = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
-            Assert.IsInstanceOf<SFLoggerPair>(_loggerPair);
+            Assert.InstanceOf<SFLoggerPair>(_loggerPair);
         }
 
         [Test]

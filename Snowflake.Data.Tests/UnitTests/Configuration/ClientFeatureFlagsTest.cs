@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var clientFeatures = new ClientFeatureFlags(environmentOperations.Object);
 
             // assert
-            Assert.IsFalse(clientFeatures.IsEnabledExperimentalAuthentication);
+            Assert.False(clientFeatures.IsEnabledExperimentalAuthentication);
         }
 
         [Test]

@@ -46,15 +46,15 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var config = parser.Parse(configFilePath);
 
             // assert
-            Assert.IsNotNull(config);
-            Assert.IsNotNull(config.CommonProps);
+            Assert.NotNull(config);
+            Assert.NotNull(config.CommonProps);
             Assert.AreEqual(LogLevel, config.CommonProps.LogLevel);
             Assert.AreEqual(LogPath, config.CommonProps.LogPath);
             if (logFileUnixPermissions == null)
-                Assert.IsNull(config.Dotnet);
+                Assert.Null(config.Dotnet);
             else
             {
-                Assert.IsNotNull(config.Dotnet);
+                Assert.NotNull(config.Dotnet);
                 Assert.AreEqual(logFileUnixPermissions, config.Dotnet.LogFileUnixPermissions);
             }
         }
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
 
             // assert
-            Assert.IsNotNull(thrown);
+            Assert.NotNull(thrown);
             Assert.That(thrown.Message, Does.Contain($"Parsing easy logging configuration failed"));
         }
 
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
 
             // assert
-            Assert.IsNotNull(thrown);
+            Assert.NotNull(thrown);
             Assert.That(thrown.Message, Does.Contain($"Parsing easy logging configuration failed"));
         }
 
@@ -101,10 +101,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var config = parser.Parse(filePath);
 
             // assert
-            Assert.IsNotNull(config);
-            Assert.IsNotNull(config.CommonProps);
-            Assert.IsNull(config.CommonProps.LogLevel);
-            Assert.IsNull(config.CommonProps.LogPath);
+            Assert.NotNull(config);
+            Assert.NotNull(config.CommonProps);
+            Assert.Null(config.CommonProps.LogLevel);
+            Assert.Null(config.CommonProps.LogPath);
         }
 
         [Test]
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var config = parser.Parse(noFilePath);
 
             // assert
-            Assert.IsNull(config);
+            Assert.Null(config);
         }
 
         [Test]
@@ -132,8 +132,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<Exception>(() => parser.Parse(NotExistingFilePath));
 
             // assert
-            Assert.IsNotNull(thrown);
-            Assert.IsTrue(thrown.Message.Contains("Finding easy logging configuration failed"));
+            Assert.NotNull(thrown);
+            Assert.True(thrown.Message.Contains("Finding easy logging configuration failed"));
         }
 
         [Test, TestCaseSource(nameof(WrongConfigFiles))]
@@ -145,7 +145,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             // act
             var thrown = Assert.Throws<Exception>(() => parser.Parse(filePath));
             // assert
-            Assert.IsNotNull(thrown);
+            Assert.NotNull(thrown);
             Assert.AreEqual(thrown.Message, "Parsing easy logging configuration failed");
         }
 
@@ -173,7 +173,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
 
             // assert
-            Assert.IsNotNull(thrown);
+            Assert.NotNull(thrown);
             Assert.AreEqual(thrown.Message, "Finding easy logging configuration failed: Error due to other users having permission to modify the config file");
         }
 
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
 
             // assert
-            Assert.IsNotNull(thrown);
+            Assert.NotNull(thrown);
             Assert.AreEqual(thrown.Message, "Finding easy logging configuration failed: Error due to user not having ownership of the config file");
         }
 
@@ -218,7 +218,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<Exception>(() => parser.Parse(configFilePath));
 
             // assert
-            Assert.IsNotNull(thrown);
+            Assert.NotNull(thrown);
             Assert.AreEqual(thrown.Message, "Finding easy logging configuration failed: Error due to group not having ownership of the config file");
         }
 

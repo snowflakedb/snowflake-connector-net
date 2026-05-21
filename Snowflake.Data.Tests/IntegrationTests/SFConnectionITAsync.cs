@@ -109,12 +109,12 @@ class SFConnectionITAsync : SFBaseTestAsync
             var clientEnv = authenticator.BuildLoginRequestData().clientEnv;
             var lowerPath = clientEnv.applicationPath.ToLower();
 #if NETFRAMEWORK
-                Assert.IsTrue(
+                Assert.True(
                     lowerPath.Contains("testhost") &&
                     (lowerPath.EndsWith(".dll") || lowerPath.EndsWith(".exe")),
                     $"APPLICATION_PATH should contain 'testhost' and end with .dll or .exe. Got: {clientEnv.applicationPath}");
 #else
-            Assert.IsTrue(
+            Assert.True(
                 lowerPath.Contains("snowflake.data.tests") &&
                 lowerPath.Contains("bin") &&
                 lowerPath.Contains("testhost") &&
@@ -212,7 +212,7 @@ class SFConnectionITAsync : SFBaseTestAsync
     private static void AssertConnectionIsNotOpen(SnowflakeDbConnection snowflakeDbConnection)
     {
         Assert.NotNull(snowflakeDbConnection);
-        Assert.IsFalse(snowflakeDbConnection.IsOpen()); // check via public method
+        Assert.False(snowflakeDbConnection.IsOpen()); // check via public method
         Assert.AreEqual(ConnectionState.Closed, snowflakeDbConnection.State); // ensure internal state is expected
     }
 
@@ -269,7 +269,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             {
                 cmd.CommandText = $"SELECT count(*) FROM {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 Assert.AreEqual(1, reader.GetInt32(0));
             }
 
@@ -312,7 +312,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             catch (Exception e)
             {
                 // Jitter can cause the request to reach max number of retries before reaching the timeout
-                Assert.IsTrue(e.InnerException is TaskCanceledException ||
+                Assert.True(e.InnerException is TaskCanceledException ||
                               SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode ==
                               ((SnowflakeDbException)e.InnerException).ErrorCode);
             }
@@ -527,7 +527,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             IDbCommand command = conn.CreateCommand();
             command.CommandText = $"SELECT * FROM {TableName}";
             IDataReader reader = command.ExecuteReader();
-            Assert.IsFalse(reader.Read());
+            Assert.False(reader.Read());
         }
     }
 
@@ -588,9 +588,9 @@ class SFConnectionITAsync : SFBaseTestAsync
             }
             catch (Exception e)
             {
-                Assert.IsInstanceOf<SnowflakeDbException>(e);
+                Assert.InstanceOf<SnowflakeDbException>(e);
                 SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.INTERNAL_ERROR);
-                Assert.IsTrue(e.Message.Contains(
+                Assert.True(e.Message.Contains(
                     $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
                     $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
                     "while trying to authenticate through Okta"));
@@ -938,7 +938,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             }
 
             Assert.AreEqual(ConnectionState.Closed, conn.State);
-            Assert.IsTrue(connectTask.IsFaulted);
+            Assert.True(connectTask.IsFaulted);
         }
     }
 
@@ -1097,7 +1097,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             }
             catch (Exception e)
             {
-                Assert.IsInstanceOf<SnowflakeDbException>(e.InnerException);
+                Assert.InstanceOf<SnowflakeDbException>(e.InnerException);
                 SnowflakeDbExceptionAssert.HasErrorCode(e.InnerException, SFError.INTERNAL_ERROR);
                 Exception oktaException;
 #if NETFRAMEWORK
@@ -1105,7 +1105,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 #else
                 oktaException = e.InnerException.InnerException;
 #endif
-                Assert.IsTrue(oktaException.Message.Contains(
+                Assert.True(oktaException.Message.Contains(
                     $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
                     $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
                     "while trying to authenticate through Okta"));
@@ -1217,7 +1217,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync().Wait());
 
             // assert
-            Assert.IsTrue(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
+            Assert.True(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
             if (thrown.InnerException is SnowflakeDbException)
                 SnowflakeDbExceptionAssert.HasErrorCode(thrown.InnerException, SFError.INTERNAL_ERROR);
             Assert.AreEqual(ConnectionState.Closed, connection.State);
@@ -1237,7 +1237,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             var thrown = Assert.Throws<AggregateException>(() => connection.OpenAsync(shortCancellation.Token).Wait());
 
             // assert
-            Assert.IsInstanceOf<TaskCanceledException>(thrown.InnerException);
+            Assert.InstanceOf<TaskCanceledException>(thrown.InnerException);
             Assert.AreEqual(ConnectionState.Closed, connection.State);
         }
     }
@@ -1294,7 +1294,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         Awaiter.WaitUntilConditionOrTimeout(() => session.sessionToken == null, TimeSpan.FromSeconds(15));
 
         // assert
-        Assert.IsNull(session.sessionToken);
+        Assert.Null(session.sessionToken);
     }
 
     private SFSession GetSessionFromForgottenConnection()

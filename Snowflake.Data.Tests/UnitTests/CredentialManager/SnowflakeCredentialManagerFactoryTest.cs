@@ -27,11 +27,11 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // assert
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Assert.IsInstanceOf<SFCredentialManagerWindowsNativeImpl>(credentialManager);
+                Assert.InstanceOf<SFCredentialManagerWindowsNativeImpl>(credentialManager);
             }
             else
             {
-                Assert.IsInstanceOf<SFCredentialManagerFileImpl>(credentialManager);
+                Assert.InstanceOf<SFCredentialManagerFileImpl>(credentialManager);
             }
         }
 
@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // assert
-            Assert.IsInstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
+            Assert.InstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
         }
 
         [Test]
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
 
             // assert
-            Assert.IsInstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
+            Assert.InstanceOf<SFCredentialManagerInMemoryImpl>(credentialManager);
         }
 
         [Test]

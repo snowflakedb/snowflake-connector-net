@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var isInfinite = TimeoutHelper.IsInfinite(infiniteTimeout);
 
             // assert
-            Assert.IsTrue(isInfinite);
+            Assert.True(isInfinite);
         }
 
         [Test]
@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var isInfinite = TimeoutHelper.IsInfinite(finiteTimeout);
 
             // assert
-            Assert.IsFalse(isInfinite);
+            Assert.False(isInfinite);
         }
 
         [Test]
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var isZeroLength = TimeoutHelper.IsZeroLength(zeroTimeout);
 
             // assert
-            Assert.IsTrue(isZeroLength);
+            Assert.True(isZeroLength);
         }
 
         [Test]
@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var isZeroLength = TimeoutHelper.IsZeroLength(nonZeroTimeout);
 
             // assert
-            Assert.IsFalse(isZeroLength);
+            Assert.False(isZeroLength);
         }
 
         [Test]
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var isExpired = TimeoutHelper.IsExpired(startedAtMillis, nowMillis, TimeoutHelper.Infinity());
 
             // assert
-            Assert.IsFalse(isExpired);
+            Assert.False(isExpired);
         }
 
         [Test]
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var isExpired = TimeoutHelper.IsExpired(1000, TimeoutHelper.Infinity());
 
             // assert
-            Assert.IsFalse(isExpired);
+            Assert.False(isExpired);
         }
 
         [Test]

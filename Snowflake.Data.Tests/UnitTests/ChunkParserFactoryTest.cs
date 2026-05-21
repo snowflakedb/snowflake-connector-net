@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     else
                     {
                         parser = ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream);
-                        Assert.IsTrue(parser is ReusableChunkParser);
+                        Assert.True(parser is ReusableChunkParser);
                     }
                 }
             }

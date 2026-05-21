@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
+            Assert.False(result);
             Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
         }
 
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
+            Assert.False(result);
             Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
         }
 
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsTrue(result);
+            Assert.True(result);
             Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
         }
 
@@ -80,7 +80,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isWaitingEnabled = queue.IsWaitingEnabled();
 
             // assert
-            Assert.IsTrue(isWaitingEnabled);
+            Assert.True(isWaitingEnabled);
         }
 
         [Test]
@@ -93,7 +93,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isAnyoneWaiting = queue.IsAnyoneWaiting();
 
             // assert
-            Assert.IsFalse(isAnyoneWaiting);
+            Assert.False(isAnyoneWaiting);
         }
 
         [Test]
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isAnyoneWaiting = queue.IsAnyoneWaiting();
 
             // assert
-            Assert.IsTrue(isAnyoneWaiting);
+            Assert.True(isAnyoneWaiting);
         }
 
         [Test]
@@ -135,7 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
+            Assert.False(result);
             Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
         }
     }

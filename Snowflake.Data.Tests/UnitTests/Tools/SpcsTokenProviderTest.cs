@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
             t_fileOperations.Verify(f => f.ReadAllText(It.IsAny<string>()), Times.Never);
         }
 
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
             t_fileOperations.Verify(f => f.ReadAllText(It.IsAny<string>()), Times.Never);
         }
 
@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
         }
 
         [Test]
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
         }
 
         [Test]
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
         }
     }
 }

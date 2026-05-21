@@ -344,7 +344,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 config, TimeProvider.Instance, restRequester.Object,
                 CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
-            Assert.IsTrue(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+            Assert.True(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
         }
 
         [Test]
@@ -370,7 +370,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 config, TimeProvider.Instance, restRequester.Object,
                 CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
-            Assert.IsTrue(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+            Assert.True(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
         }
 
         [Test]
@@ -397,7 +397,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 config, TimeProvider.Instance, restRequester.Object,
                 CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
-            Assert.IsFalse(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+            Assert.False(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
         }
 
         [Test]
@@ -424,7 +424,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 config, TimeProvider.Instance, restRequester.Object,
                 CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
-            Assert.IsTrue(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+            Assert.True(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
         }
 
         private static HttpRequestException NotFoundHttpExceptionProvider() =>

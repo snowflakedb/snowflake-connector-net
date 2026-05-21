@@ -185,7 +185,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             using (IDataReader reader = command.ExecuteReader())
                             {
                                 reader.Read();
-                                Assert.IsTrue(reader.IsDBNull(0));
+                                Assert.True(reader.IsDBNull(0));
                                 reader.Close();
                             }
                         }
@@ -340,7 +340,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             using (IDataReader reader = command.ExecuteReader())
                             {
                                 reader.Read();
-                                Assert.IsTrue(!reader.IsDBNull(0));
+                                Assert.True(!reader.IsDBNull(0));
                                 reader.Close();
                             }
                         }
@@ -467,7 +467,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                 using (IDataReader reader = command.ExecuteReader())
                                 {
                                     reader.Read();
-                                    Assert.IsTrue(!reader.IsDBNull(0));
+                                    Assert.True(!reader.IsDBNull(0));
                                     reader.Close();
                                 }
                             }
@@ -513,8 +513,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         () => { cmd.Parameters.CopyTo(parameters, 5); });
 
                     Assert.AreEqual(3, cmd.Parameters.Count);
-                    Assert.IsTrue(cmd.Parameters.Contains(p2));
-                    Assert.IsTrue(cmd.Parameters.Contains("2"));
+                    Assert.True(cmd.Parameters.Contains(p2));
+                    Assert.True(cmd.Parameters.Contains("2"));
                     Assert.AreEqual(1, cmd.Parameters.IndexOf(p2));
                     Assert.AreEqual(1, cmd.Parameters.IndexOf("2"));
 
@@ -656,7 +656,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Clear();
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                 }
 
                 conn.Close();
@@ -729,7 +729,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                 }
 
                 conn.Close();
@@ -772,7 +772,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     cmd.CommandText = $"SELECT * FROM {TableName}";
                     IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                 }
                 conn.Close();
             }
@@ -1001,7 +1001,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 // Assert
                 Assert.AreEqual(1, rowsAffected);
-                Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
+                Assert.Null(((SnowflakeDbCommand)insert).GetBindStage());
             }
         }
 
@@ -1041,9 +1041,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Assert
                 Assert.AreEqual(rowsCount, rowsAffected);
                 if (shouldUseBinding)
-                    Assert.IsNotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
+                    Assert.NotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
                 else
-                    Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
+                    Assert.Null(((SnowflakeDbCommand)insert).GetBindStage());
             }
         }
 

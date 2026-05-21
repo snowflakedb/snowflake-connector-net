@@ -40,12 +40,12 @@ namespace Snowflake.Data.Tests
             var clientEnv = SFEnvironment.ClientEnv.CloneForSession();
             var loadError = SfMiniCore.GetLoadError();
 
-            Assert.IsNotNull(clientEnv.minicoreVersion,
+            Assert.NotNull(clientEnv.minicoreVersion,
                 $"minicoreVersion should not be null. LoadError: {loadError}, FileName: {clientEnv.minicoreFileName}");
             Assert.That(clientEnv.minicoreVersion, Does.Match(@"^\d+\.\d+\.\d+"),
                 $"Version should be semver, got: {clientEnv.minicoreVersion}");
-            Assert.IsNotNull(clientEnv.minicoreFileName, "minicoreFileName should not be null");
-            Assert.IsNull(clientEnv.minicoreLoadError, $"minicoreLoadError should be null on success, got: {clientEnv.minicoreLoadError}");
+            Assert.NotNull(clientEnv.minicoreFileName, "minicoreFileName should not be null");
+            Assert.Null(clientEnv.minicoreLoadError, $"minicoreLoadError should be null on success, got: {clientEnv.minicoreLoadError}");
         }
 
         [Test]
@@ -54,8 +54,8 @@ namespace Snowflake.Data.Tests
             SFEnvironment.MinicoreDisabled = true;
             var clientEnv = SFEnvironment.ClientEnv.CloneForSession();
 
-            Assert.IsNull(clientEnv.minicoreVersion, "Version should be null when disabled");
-            Assert.IsNull(clientEnv.minicoreFileName, "FileName should be null when disabled");
+            Assert.Null(clientEnv.minicoreVersion, "Version should be null when disabled");
+            Assert.Null(clientEnv.minicoreFileName, "FileName should be null when disabled");
             Assert.AreEqual(SfMiniCore.DISABLED_MESSAGE,
                 clientEnv.minicoreLoadError, "Should report disabled message");
         }
@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests
         {
             var name = SfMiniCore.GetExpectedLibraryName();
 
-            Assert.IsNotNull(name);
+            Assert.NotNull(name);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 Assert.AreEqual("sf_mini_core.dll", name);

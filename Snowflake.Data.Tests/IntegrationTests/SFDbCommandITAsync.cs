@@ -39,7 +39,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             catch
             {
                 // assert that cancel is not triggered by timeout, but external cancellation
-                Assert.IsTrue(externalCancel.IsCancellationRequested);
+                Assert.True(externalCancel.IsCancellationRequested);
             }
 
             await Task.Delay(2000).ConfigureAwait(false);
@@ -69,15 +69,15 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                 // Assert
-                Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
-                Assert.IsFalse(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
+                Assert.True(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
+                Assert.False(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
 
                 // Act
                 DbDataReader reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
                 queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                 // Assert
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
                 Assert.AreEqual(QueryStatus.Success, queryStatus);
             }
@@ -110,7 +110,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
             // Assert
-            Assert.IsTrue(connections[0].IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
+            Assert.True(connections[0].IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
         }
 
         // Execute a normal query
@@ -134,7 +134,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
             // Assert
-            Assert.IsTrue(reader.Read());
+            Assert.True(reader.Read());
             Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
             Assert.AreEqual(QueryStatus.Success, queryStatus);
         }
@@ -164,7 +164,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
 
                 // Assert
-                Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
+                Assert.True(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
 
                 // Act
                 cancelToken.Cancel();
@@ -172,7 +172,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     await cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token).ConfigureAwait(false));
 
                 // Assert
-                Assert.IsTrue(thrown.Message.Contains("The operation was canceled"));
+                Assert.True(thrown.Message.Contains("The operation was canceled"));
             }
 
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -197,7 +197,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
 
                 queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
                 var queryStatus = await cmd.GetQueryStatusAsync(queryId, CancellationToken.None).ConfigureAwait(false);
-                Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
+                Assert.True(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
 
                 // Act: cancel while polling for results
                 cancelToken.CancelAfter(TimeSpan.FromSeconds(3));
@@ -266,7 +266,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false));
 
                 // Assert
-                Assert.IsTrue(thrown.Message.Contains("'FAKE_TABLE' does not exist"));
+                Assert.True(thrown.Message.Contains("'FAKE_TABLE' does not exist"));
             }
 
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -318,7 +318,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 Assert.AreEqual(270009, e.ErrorCode);
             }
 
-            Assert.IsFalse(((SnowflakeDbCommand)cmd).DesignTimeVisible);
+            Assert.False(((SnowflakeDbCommand)cmd).DesignTimeVisible);
             try
             {
                 ((SnowflakeDbCommand)cmd).DesignTimeVisible = true;
@@ -552,8 +552,8 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
 
                 command.CommandText = $"show tables like '{TableName}'";
                 IDataReader reader = command.ExecuteReader();
-                Assert.IsTrue(reader.Read());
-                Assert.IsFalse(reader.Read());
+                Assert.True(reader.Read());
+                Assert.False(reader.Read());
 
                 // start another transaction to test rollback
                 tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);
@@ -563,14 +563,14 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 command.ExecuteNonQuery();
                 command.CommandText = $"select * from {TableName}";
                 reader = command.ExecuteReader();
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 Assert.AreEqual("test", reader.GetString(0));
                 command.Transaction.Rollback();
 
                 // no value will be in table since it has been rollbacked
                 command.CommandText = $"select * from {TableName}";
                 reader = command.ExecuteReader();
-                Assert.IsFalse(reader.Read());
+                Assert.False(reader.Read());
 
                 conn.Close();
             }
@@ -659,7 +659,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 }
                 catch (Exception e)
                 {
-                    Assert.IsInstanceOf<TaskCanceledException>(e.InnerException);
+                    Assert.InstanceOf<TaskCanceledException>(e.InnerException);
                 }
 
                 stopwatch.Stop();
@@ -864,7 +864,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
 
                     cmd.CommandText = "SELECT * FROM " + tableName;
                     IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                 }
 
                 conn.Close();
@@ -985,60 +985,60 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 // query id is null when no query executed
                 SnowflakeDbCommand command = (SnowflakeDbCommand)conn.CreateCommand();
                 string queryId = command.GetQueryId();
-                Assert.IsNull(queryId);
+                Assert.Null(queryId);
 
                 // query id from ExecuteNonQuery
                 command.CommandText = "create or replace temporary table testgetqueryid(cola string)";
                 command.ExecuteNonQuery();
                 queryId = command.GetQueryId();
-                Assert.IsNotEmpty(queryId);
+                Assert.NotEmpty(queryId);
 
                 // query id from ExecuteReader
                 command.CommandText = "show tables like 'testgetqueryid'";
                 SnowflakeDbDataReader reader = (SnowflakeDbDataReader)command.ExecuteReader();
                 queryId = command.GetQueryId();
-                Assert.IsNotEmpty(queryId);
+                Assert.NotEmpty(queryId);
                 Assert.AreEqual(queryId, reader.GetQueryId());
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
 
                 // query id from insert query
                 command.CommandText = "insert into testgetqueryid values('test')";
                 command.ExecuteNonQuery();
                 queryId = command.GetQueryId();
-                Assert.IsNotEmpty(queryId);
+                Assert.NotEmpty(queryId);
 
                 // query id from select query
                 command.CommandText = "select * from testgetqueryid";
                 reader = (SnowflakeDbDataReader)command.ExecuteReader();
                 queryId = command.GetQueryId();
-                Assert.IsNotEmpty(queryId);
+                Assert.NotEmpty(queryId);
                 Assert.AreEqual(queryId, reader.GetQueryId());
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 Assert.AreEqual("test", reader.GetString(0));
 
                 // query id from different DbCommand instance
                 SnowflakeDbCommand command2 = (SnowflakeDbCommand)conn.CreateCommand();
                 string queryId2 = command2.GetQueryId();
-                Assert.IsNull(queryId2);
+                Assert.Null(queryId2);
                 command2.CommandText = "select 'test2'";
                 SnowflakeDbDataReader reader2 = (SnowflakeDbDataReader)command2.ExecuteReader();
                 queryId2 = command2.GetQueryId();
-                Assert.IsNotEmpty(queryId2);
+                Assert.NotEmpty(queryId2);
                 Assert.AreEqual(queryId2, reader2.GetQueryId());
                 // each DbCommand instance has it's own query Id.
                 Assert.AreNotEqual(queryId2, queryId);
-                Assert.IsTrue(reader2.Read());
+                Assert.True(reader2.Read());
                 Assert.AreEqual("test2", reader2.GetString(0));
 
                 // use query Id to get the result
                 command.CommandText = $"select * from table(result_scan('{queryId}'))";
                 reader = (SnowflakeDbDataReader)command.ExecuteReader();
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 Assert.AreEqual("test", reader.GetString(0));
 
                 command2.CommandText = $"select * from table(result_scan('{queryId2}'))";
                 reader2 = (SnowflakeDbDataReader)command2.ExecuteReader();
-                Assert.IsTrue(reader2.Read());
+                Assert.True(reader2.Read());
                 Assert.AreEqual("test2", reader2.GetString(0));
 
                 // query id from failed query
@@ -1054,7 +1054,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 }
 
                 queryId = command.GetQueryId();
-                Assert.IsNotEmpty(queryId);
+                Assert.NotEmpty(queryId);
 
                 conn.Close();
             }
@@ -1082,14 +1082,14 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     var queryStatus = cmd.GetQueryStatus(queryId);
 
                     // Assert
-                    Assert.IsTrue(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
-                    Assert.IsFalse(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
+                    Assert.True(conn.IsStillRunning(queryStatus), $"Expected query to still be running but status was: {queryStatus}");
+                    Assert.False(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
 
                     // Act
                     DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
 
                     // Assert
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                     Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
                     Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
                 }
@@ -1121,7 +1121,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 queryId = cmd.ExecuteInAsyncMode();
 
                 // Assert
-                Assert.IsTrue(connections[0].IsStillRunning(cmd.GetQueryStatus(queryId)));
+                Assert.True(connections[0].IsStillRunning(cmd.GetQueryStatus(queryId)));
             }
 
             // Execute a normal query
@@ -1144,7 +1144,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
 
                 // Assert
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
                 Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
             }
@@ -1187,7 +1187,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     var thrown = Assert.Throws<SnowflakeDbException>(() => cmd.GetResultsFromQueryId(queryId));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains("'FAKE_TABLE' does not exist"));
+                    Assert.True(thrown.Message.Contains("'FAKE_TABLE' does not exist"));
                 }
 
                 conn.Close();
@@ -1211,7 +1211,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     var thrown = Assert.Throws<NotImplementedException>(() => cmd.ExecuteInAsyncMode());
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
+                    Assert.True(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
 
                     // Arrange
                     cmd.CommandText = "GET @~ file://C:\\tmp\\;";
@@ -1220,7 +1220,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     thrown = Assert.Throws<NotImplementedException>(() => cmd.ExecuteInAsyncMode());
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
+                    Assert.True(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
                 }
 
                 conn.Close();
@@ -1243,7 +1243,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     var thrown = Assert.Throws<Exception>(() => cmd.GetQueryStatus(fakeQueryId));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.True(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
                 }
 
                 conn.Close();
@@ -1266,7 +1266,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(fakeQueryId));
 
                     // Assert
-                    Assert.IsTrue(thrown.InnerException.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.True(thrown.InnerException.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
                 }
 
                 conn.Close();
@@ -1511,10 +1511,10 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             Assert.AreEqual(ActivityKind.Client, activity.Kind);
             Assert.AreEqual("OK", activity.GetTagItem(TelemetryTags.StatusCode));
             Assert.AreEqual("snowflake", activity.GetTagItem(TelemetryTags.DbSystem));
-            Assert.IsNotNull(activity.GetTagItem(TelemetryTags.SessionId));
-            Assert.IsNotNull(activity.GetTagItem(TelemetryTags.DbWarehouse));
-            Assert.IsNotNull(activity.GetTagItem(TelemetryTags.DbRole));
-            Assert.IsNotNull(activity.GetTagItem(TelemetryTags.DbName));
+            Assert.NotNull(activity.GetTagItem(TelemetryTags.SessionId));
+            Assert.NotNull(activity.GetTagItem(TelemetryTags.DbWarehouse));
+            Assert.NotNull(activity.GetTagItem(TelemetryTags.DbRole));
+            Assert.NotNull(activity.GetTagItem(TelemetryTags.DbName));
         }
 
         [Test]
@@ -1534,7 +1534,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(unknownQueryId));
 
                     // Assert
-                    Assert.IsTrue(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
+                    Assert.True(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
                 }
 
                 conn.Close();
@@ -1564,7 +1564,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     var thrown = Assert.Throws<AggregateException>(() => task.Wait());
 
                     // Assert
-                    Assert.IsTrue(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
+                    Assert.True(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
                 }
 
                 conn.Close();
@@ -1602,7 +1602,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 command.CommandText = "\r\nselect '--'\r\n";
                 var reader = command.ExecuteReader();
 
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
                 Assert.AreEqual("--", reader.GetString(0));
             }
         }
@@ -1618,7 +1618,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 command.CommandText = "\r\nselect '--'\r\n";
                 var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
-                Assert.IsTrue(await reader.ReadAsync().ConfigureAwait(false));
+                Assert.True(await reader.ReadAsync().ConfigureAwait(false));
                 Assert.AreEqual("--", reader.GetString(0));
             }
         }

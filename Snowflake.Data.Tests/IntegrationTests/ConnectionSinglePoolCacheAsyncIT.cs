@@ -366,7 +366,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn1.Open();
             var session = conn1.SfSession;
             conn1.Close();
-            Assert.IsTrue(session.IsEstablished());
+            Assert.True(session.IsEstablished());
             await Task.Delay(SessionTimeoutSeconds * 1000).ConfigureAwait(false); // wait until the session is expired
             var conn2 = new SnowflakeDbConnection(ConnectionString);
 
@@ -376,7 +376,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Awaiter.WaitUntilConditionOrTimeout(() => !session.IsEstablished(), TimeSpan.FromMilliseconds(TimeForBackgroundSessionCloseMillis));
 
             // assert
-            Assert.IsFalse(session.IsEstablished());
+            Assert.False(session.IsEstablished());
 
             // cleanup
             conn2.Close();

@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true));
 
             // Assert
-            Assert.IsTrue(mockRequester.CancelRequestSent,
+            Assert.True(mockRequester.CancelRequestSent,
                 "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested");
             Assert.AreEqual(ValidQueryId, mockRequester.CancelledQueryId,
                 "Expected the cancelled query ID to match the in-flight query");
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             // Assert
-            Assert.IsTrue(mockRequester.CancelRequestSent,
+            Assert.True(mockRequester.CancelRequestSent,
                 "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested during polling");
             Assert.AreEqual(ValidQueryId, mockRequester.CancelledQueryId,
                 "Expected the cancelled query ID to match the in-flight query");
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
 
             // Assert
-            Assert.IsTrue(mockRequester.CancelRequestSent,
+            Assert.True(mockRequester.CancelRequestSent,
                 "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested");
             Assert.AreEqual(ValidQueryId, mockRequester.CancelledQueryId,
                 "Expected the cancelled query ID to match the in-flight query");
@@ -115,7 +115,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
 
             // Assert
-            Assert.IsTrue(mockRequester.CancelRequestSent,
+            Assert.True(mockRequester.CancelRequestSent,
                 "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested during sync polling");
             Assert.AreEqual(ValidQueryId, mockRequester.CancelledQueryId,
                 "Expected the cancelled query ID to match the in-flight query");
@@ -137,7 +137,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Act & Assert
             Assert.ThrowsAsync<OperationCanceledException>(async () =>
                 await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true));
-            Assert.IsFalse(mockRequester.CancelRequestSent,
+            Assert.False(mockRequester.CancelRequestSent,
                 "Cancel request should not have succeeded since the mock was configured to throw");
         }
 
@@ -157,7 +157,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Act & Assert
             var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, false);
             Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
-            Assert.IsFalse(mockRequester.CancelRequestSent,
+            Assert.False(mockRequester.CancelRequestSent,
                 "Cancel request should not have succeeded since the mock was configured to throw");
         }
 
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, CancellationToken.None, true);
 
-            Assert.IsFalse(mockRequester.CancelRequestSent,
+            Assert.False(mockRequester.CancelRequestSent,
                 "No cancel request should be sent when query completes normally");
         }
 
@@ -192,7 +192,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, CancellationToken.None, false);
             Assert.DoesNotThrowAsync(async () => await task);
 
-            Assert.IsFalse(mockRequester.CancelRequestSent,
+            Assert.False(mockRequester.CancelRequestSent,
                 "No cancel request should be sent when query completes normally");
         }
 
@@ -200,9 +200,9 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestNoCancelRequestWhenNotCancelled()
         {
             var mockRequester = new MockRestRequesterForQueryCancellation();
-            Assert.IsFalse(mockRequester.CancelRequestSent,
+            Assert.False(mockRequester.CancelRequestSent,
                 "No cancel request should be sent before any operations");
-            Assert.IsNull(mockRequester.CancelledQueryId);
+            Assert.Null(mockRequester.CancelledQueryId);
         }
     }
 }

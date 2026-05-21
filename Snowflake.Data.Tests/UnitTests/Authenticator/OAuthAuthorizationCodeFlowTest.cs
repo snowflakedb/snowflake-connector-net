@@ -313,7 +313,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.NotNull(authenticator.AccessToken);
             Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
             Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.IsEmpty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Empty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -333,7 +333,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.NotNull(authenticator.AccessToken);
             Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
             Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.IsEmpty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Empty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 

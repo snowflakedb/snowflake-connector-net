@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests
 
             SnowflakeDbParameter parameter = new SnowflakeDbParameter(paramName, SFDataType);
             _parameterCollection.Add(parameter);
-            Assert.IsTrue(_parameterCollection.Contains(paramName));
+            Assert.True(_parameterCollection.Contains(paramName));
         }
 
         [Test]
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests
 
             SnowflakeDbParameter parameter = new SnowflakeDbParameter(paramName, SFDataType);
             _parameterCollection.Add(parameter);
-            Assert.IsTrue(_parameterCollection.Contains(parameter));
+            Assert.True(_parameterCollection.Contains(parameter));
         }
 
 
@@ -122,9 +122,9 @@ namespace Snowflake.Data.Tests
             IEnumerator parameterEnumerator = _parameterCollection.GetEnumerator();
 
             parameterEnumerator.Reset();
-            Assert.IsTrue(parameterEnumerator.MoveNext());
+            Assert.True(parameterEnumerator.MoveNext());
             Assert.AreEqual(parameter, (SnowflakeDbParameter)parameterEnumerator.Current);
-            Assert.IsFalse(parameterEnumerator.MoveNext());
+            Assert.False(parameterEnumerator.MoveNext());
         }
 
         [Test]
@@ -300,7 +300,7 @@ namespace Snowflake.Data.Tests
         [Test]
         public void TestDbParameterCollectionTryCastWrongType()
         {
-            Assert.IsFalse(_parameterCollection.Contains(new SnowflakeDbCommand()));
+            Assert.False(_parameterCollection.Contains(new SnowflakeDbCommand()));
         }
 
         [Test]

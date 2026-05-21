@@ -40,9 +40,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         using (DbDataReader reader = t.Result)
                         {
-                            Assert.IsTrue(reader.Read());
+                            Assert.True(reader.Read());
                             queryResult = reader.GetInt64(0);
-                            Assert.IsFalse(reader.Read());
+                            Assert.False(reader.Read());
                         }
                     });
                     // query is not finished yet, result is still 0;
@@ -82,9 +82,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             {
                                 using (DbDataReader reader = t.Result)
                                 {
-                                    Assert.IsTrue(reader.Read());
+                                    Assert.True(reader.Read());
                                     queryResult = reader.GetInt64(0);
-                                    Assert.IsFalse(reader.Read());
+                                    Assert.False(reader.Read());
                                 }
                             });
                             // query is not finished yet, result is still 0;
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         await cmd.GetQueryStatusAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.True(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         await cmd.GetResultsFromQueryIdAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.True(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         await cmd.GetResultsFromQueryIdAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains($"Max retry for no data is reached"));
+                    Assert.True(thrown.Message.Contains($"Max retry for no data is reached"));
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             .ConfigureAwait(false));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains($"Max retry for no data is reached"));
+                    Assert.True(thrown.Message.Contains($"Max retry for no data is reached"));
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);

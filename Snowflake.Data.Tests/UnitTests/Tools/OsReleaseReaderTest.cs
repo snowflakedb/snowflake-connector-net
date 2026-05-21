@@ -35,9 +35,9 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.AreEqual("arch", result["ID"]);
             Assert.AreEqual("rolling", result["BUILD_ID"]);
             Assert.AreEqual("20251019.0.436919", result["VERSION_ID"]);
-            Assert.IsFalse(result.ContainsKey("ANSI_COLOR"));
-            Assert.IsFalse(result.ContainsKey("HOME_URL"));
-            Assert.IsFalse(result.ContainsKey("LOGO"));
+            Assert.False(result.ContainsKey("ANSI_COLOR"));
+            Assert.False(result.ContainsKey("HOME_URL"));
+            Assert.False(result.ContainsKey("LOGO"));
         }
 
         [Test]
@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.AreEqual("22.04", result["VERSION_ID"]);
             Assert.AreEqual("22.04.3 LTS (Jammy Jellyfish)", result["VERSION"]);
             Assert.AreEqual("ubuntu", result["ID"]);
-            Assert.IsFalse(result.ContainsKey("ID_LIKE"));
+            Assert.False(result.ContainsKey("ID_LIKE"));
         }
 
         [Test]
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents("");
 
             // assert
-            Assert.IsNotNull(result);
+            Assert.NotNull(result);
             Assert.AreEqual(0, result.Count);
         }
 
@@ -115,7 +115,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(null);
 
             // assert
-            Assert.IsNotNull(result);
+            Assert.NotNull(result);
             Assert.AreEqual(0, result.Count);
         }
 
@@ -258,14 +258,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.AreEqual("valid", result["BUILD_ID"]);
             Assert.AreEqual("valid", result["IMAGE_ID"]);
             Assert.AreEqual("Valid", result["PRETTY_NAME"]);
-            Assert.IsFalse(result.ContainsKey("NAMES"));
-            Assert.IsFalse(result.ContainsKey("USERNAME"));
-            Assert.IsFalse(result.ContainsKey("USER_ID"));
-            Assert.IsFalse(result.ContainsKey("ID_LIKE"));
-            Assert.IsFalse(result.ContainsKey("VERSION_IDENTIFIER"));
-            Assert.IsFalse(result.ContainsKey("BUILD_IDS"));
-            Assert.IsFalse(result.ContainsKey("IMAGE_IDENTIFIER"));
-            Assert.IsFalse(result.ContainsKey("PRETTY_NAMES"));
+            Assert.False(result.ContainsKey("NAMES"));
+            Assert.False(result.ContainsKey("USERNAME"));
+            Assert.False(result.ContainsKey("USER_ID"));
+            Assert.False(result.ContainsKey("ID_LIKE"));
+            Assert.False(result.ContainsKey("VERSION_IDENTIFIER"));
+            Assert.False(result.ContainsKey("BUILD_IDS"));
+            Assert.False(result.ContainsKey("IMAGE_IDENTIFIER"));
+            Assert.False(result.ContainsKey("PRETTY_NAMES"));
         }
 
         [Test]

@@ -24,28 +24,28 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetAuthenticatorBasic()
         {
             _authenticator = GetAuthenticator(BasicAuthenticator.AUTH_NAME);
-            Assert.IsInstanceOf<BasicAuthenticator>(_authenticator);
+            Assert.InstanceOf<BasicAuthenticator>(_authenticator);
         }
 
         [Test]
         public void TestGetAuthenticatorExternalBrowser()
         {
             _authenticator = GetAuthenticator(ExternalBrowserAuthenticator.AUTH_NAME);
-            Assert.IsInstanceOf<ExternalBrowserAuthenticator>(_authenticator);
+            Assert.InstanceOf<ExternalBrowserAuthenticator>(_authenticator);
         }
 
         [Test]
         public void TestGetAuthenticatorKeyPairWithPrivateKey()
         {
             _authenticator = GetAuthenticator(KeyPairAuthenticator.AUTH_NAME, "private_key=xxxx");
-            Assert.IsInstanceOf<KeyPairAuthenticator>(_authenticator);
+            Assert.InstanceOf<KeyPairAuthenticator>(_authenticator);
         }
 
         [Test]
         public void TestGetAuthenticatorKeyPairWithPrivateKeyFile()
         {
             _authenticator = GetAuthenticator(KeyPairAuthenticator.AUTH_NAME, "private_key_file=xxxx");
-            Assert.IsInstanceOf<KeyPairAuthenticator>(_authenticator);
+            Assert.InstanceOf<KeyPairAuthenticator>(_authenticator);
         }
 
         [Test]
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetAuthenticatorOAuth()
         {
             _authenticator = GetAuthenticator(OAuthAuthenticator.AUTH_NAME, "token=xxxx");
-            Assert.IsInstanceOf<OAuthAuthenticator>(_authenticator);
+            Assert.InstanceOf<OAuthAuthenticator>(_authenticator);
         }
 
         [Test]
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetAuthenticatorOkta()
         {
             _authenticator = GetAuthenticator("https://xxxxxx.okta.com");
-            Assert.IsInstanceOf<OktaAuthenticator>(_authenticator);
+            Assert.InstanceOf<OktaAuthenticator>(_authenticator);
         }
 
         [Test]

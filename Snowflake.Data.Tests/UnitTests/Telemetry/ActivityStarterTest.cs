@@ -49,7 +49,7 @@ internal sealed class ActivityStarterTest
         using var activity = session.StartActivity("TestOperation");
 
         // Assert
-        Assert.IsNotNull(activity);
+        Assert.NotNull(activity);
         Assert.AreEqual("TestOperation", activity.OperationName);
         Assert.AreEqual(ActivityKind.Client, activity.Kind);
         Assert.AreEqual("snowflake", activity.GetTagItem(TelemetryTags.DbSystem));
@@ -104,7 +104,7 @@ internal sealed class ActivityStarterTest
         Assert.AreEqual("ERROR", _sessionIdCapturedActivitiesMap[session.sessionId].GetTagItem(TelemetryTags.StatusCode));
 
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "exception");
-        Assert.IsNotNull(exceptionEvent);
+        Assert.NotNull(exceptionEvent);
         Assert.AreEqual(typeof(AbandonedMutexException).FullName,
             exceptionEvent.Tags.First(t => t.Key == TelemetryTags.Exception).Value);
     }
@@ -133,7 +133,7 @@ internal sealed class ActivityStarterTest
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         Assert.AreEqual("ERROR", _sessionIdCapturedActivitiesMap[session.sessionId].GetTagItem(TelemetryTags.StatusCode));
-        Assert.IsEmpty(_sessionIdCapturedActivitiesMap[session.sessionId].Events);
+        Assert.Empty(_sessionIdCapturedActivitiesMap[session.sessionId].Events);
     }
 
     [Test]
@@ -164,7 +164,7 @@ internal sealed class ActivityStarterTest
         Assert.AreEqual(typeof(SnowflakeDbException).FullName,
             exceptionEvent.Tags.First(t => t.Key == TelemetryTags.Exception).Value);
         var errorCode = exceptionEvent.Tags.FirstOrDefault(t => t.Key == TelemetryTags.ExceptionErrorCode).Value;
-        Assert.IsNotNull(errorCode);
+        Assert.NotNull(errorCode);
         Assert.AreEqual(exception.ErrorCode.ToString(), errorCode);
     }
 
@@ -179,7 +179,7 @@ internal sealed class ActivityStarterTest
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.First(e => e.Name == "exception");
-        Assert.IsFalse(exceptionEvent.Tags.Any(t => t.Key == TelemetryTags.ExceptionErrorCode));
+        Assert.False(exceptionEvent.Tags.Any(t => t.Key == TelemetryTags.ExceptionErrorCode));
     }
 
     [Test]
@@ -195,7 +195,7 @@ internal sealed class ActivityStarterTest
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.First(e => e.Name == "exception");
         var errorCode = exceptionEvent.Tags.FirstOrDefault(t => t.Key == TelemetryTags.ExceptionErrorCode).Value;
-        Assert.IsNotNull(errorCode);
+        Assert.NotNull(errorCode);
         Assert.AreEqual(inner.ErrorCode.ToString(), errorCode);
     }
 
@@ -214,7 +214,7 @@ internal sealed class ActivityStarterTest
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.First(e => e.Name == "exception");
         var errorCode = exceptionEvent.Tags.FirstOrDefault(t => t.Key == TelemetryTags.ExceptionErrorCode).Value;
-        Assert.IsNotNull(errorCode);
+        Assert.NotNull(errorCode);
         Assert.AreEqual(((SnowflakeDbException)snowflakeEx).ErrorCode.ToString(), errorCode);
     }
 
@@ -231,7 +231,7 @@ internal sealed class ActivityStarterTest
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.First(e => e.Name == "exception");
         var errorCode = exceptionEvent.Tags.FirstOrDefault(t => t.Key == TelemetryTags.ExceptionErrorCode).Value;
-        Assert.IsNull(errorCode);
+        Assert.Null(errorCode);
     }
 
     [Test]
@@ -250,7 +250,7 @@ internal sealed class ActivityStarterTest
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.First(e => e.Name == "exception");
         var errorCode = exceptionEvent.Tags.FirstOrDefault(t => t.Key == TelemetryTags.ExceptionErrorCode).Value;
-        Assert.IsNull(errorCode);
+        Assert.Null(errorCode);
     }
 
     [Test]
@@ -264,7 +264,7 @@ internal sealed class ActivityStarterTest
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.First(e => e.Name == "exception");
-        Assert.IsFalse(exceptionEvent.Tags.Any(t => t.Key == TelemetryTags.ExceptionErrorCode));
+        Assert.False(exceptionEvent.Tags.Any(t => t.Key == TelemetryTags.ExceptionErrorCode));
     }
 
     [Test]
@@ -279,14 +279,14 @@ internal sealed class ActivityStarterTest
     {
         var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
         var activity = session.StartActivity("Op");
-        Assert.IsNotNull(activity);
+        Assert.NotNull(activity);
 
         activity.AddTelemetryEvent("TestEvent");
         activity.Stop();
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var evt = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "TestEvent");
-        Assert.IsNotNull(evt);
+        Assert.NotNull(evt);
     }
 
     [Test]
@@ -294,7 +294,7 @@ internal sealed class ActivityStarterTest
     {
         var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
         var activity = session.StartActivity("Op");
-        Assert.IsNotNull(activity);
+        Assert.NotNull(activity);
 
         activity.AddTelemetryEvent("StepComplete",
             new KeyValuePair<string, object>("step.name", "validation"),
@@ -303,7 +303,7 @@ internal sealed class ActivityStarterTest
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var evt = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "StepComplete");
-        Assert.IsNotNull(evt);
+        Assert.NotNull(evt);
         Assert.AreEqual("validation", evt.Tags.First(t => t.Key == "step.name").Value);
         Assert.AreEqual(42, evt.Tags.First(t => t.Key == "step.duration_ms").Value);
     }
@@ -313,15 +313,15 @@ internal sealed class ActivityStarterTest
     {
         var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
         var activity = session.StartActivity("Op");
-        Assert.IsNotNull(activity);
+        Assert.NotNull(activity);
 
         activity.AddTelemetryEvent("SimpleEvent");
         activity.Stop();
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var evt = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "SimpleEvent");
-        Assert.IsNotNull(evt);
-        Assert.IsFalse(evt.Tags.Any());
+        Assert.NotNull(evt);
+        Assert.False(evt.Tags.Any());
     }
 
     [Test]
@@ -329,7 +329,7 @@ internal sealed class ActivityStarterTest
     {
         var session = CreateSession("s1", "wh", "role", "db", telemetryEnabled: true);
         var activity = session.StartActivity("Op");
-        Assert.IsNotNull(activity);
+        Assert.NotNull(activity);
 
         activity.AddTelemetryEvent("",
             new KeyValuePair<string, object>("key", "value"));
@@ -338,7 +338,7 @@ internal sealed class ActivityStarterTest
         activity.Stop();
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
-        Assert.IsEmpty(_sessionIdCapturedActivitiesMap[session.sessionId].Events);
+        Assert.Empty(_sessionIdCapturedActivitiesMap[session.sessionId].Events);
     }
 
     [Test]
@@ -394,7 +394,7 @@ internal sealed class ActivityStarterTest
 
         using var activity = command.StartActivity("CustomOp");
 
-        Assert.IsNotNull(activity);
+        Assert.NotNull(activity);
         Assert.AreEqual(ActivityStarter.ClientDefinedTelemetrySourceName, activity.Source.Name);
         Assert.AreEqual("CustomOp", activity.OperationName);
         Assert.AreEqual(session.sessionId, activity.GetTagItem(TelemetryTags.SessionId));

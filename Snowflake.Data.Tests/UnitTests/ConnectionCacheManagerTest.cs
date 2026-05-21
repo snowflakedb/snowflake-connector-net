@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var pool = _connectionCacheManager.GetPool(ConnectionString + "poolingEnabled=false");
 
             // assert
-            Assert.IsTrue(pool.GetPooling());
+            Assert.True(pool.GetPooling());
         }
     }
 }

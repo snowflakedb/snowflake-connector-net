@@ -225,7 +225,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // conn.Open(); // intentionally closed
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => ProcessFile(command, conn));
                 Assert.NotNull(snowflakeDbException);
-                Assert.IsNull(snowflakeDbException.QueryId);
+                Assert.Null(snowflakeDbException.QueryId);
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
             }
         }
@@ -261,8 +261,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 conn.Open();
                 var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
-                Assert.IsNotNull(snowflakeDbException);
-                Assert.IsNotNull(snowflakeDbException.QueryId);
+                Assert.NotNull(snowflakeDbException);
+                Assert.NotNull(snowflakeDbException.QueryId);
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
             }
         }
@@ -283,7 +283,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var queryId = snowflakeDbException.QueryId;
 
                 // Assert
-                Assert.IsNotEmpty(queryId);
+                Assert.NotEmpty(queryId);
                 Assert.DoesNotThrow(() => Guid.Parse(queryId));
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
             }
@@ -305,7 +305,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var queryId = snowflakeDbException.QueryId;
 
                 // Assert
-                Assert.IsNotEmpty(queryId);
+                Assert.NotEmpty(queryId);
                 Assert.DoesNotThrow(() => Guid.Parse(queryId));
                 Assert.That(snowflakeDbException.ErrorCode, Is.EqualTo(1003));
                 Assert.That(snowflakeDbException.InnerException, Is.Null);
@@ -328,7 +328,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var queryId = PutFile(conn);
 
                 // Assert
-                Assert.IsNotNull(queryId);
+                Assert.NotNull(queryId);
                 Assert.DoesNotThrow(() => Guid.Parse(queryId));
                 VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
             }
@@ -652,7 +652,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var reader = command.ExecuteReader();
                 try
                 {
-                    Assert.IsTrue(reader.Read());
+                    Assert.True(reader.Read());
                 }
                 catch (SnowflakeDbException e)
                 {
@@ -682,7 +682,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.AreEqual(SFFileCompressionTypes.NONE.Name,
                         reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
                 }
-                Assert.IsNull(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
+                Assert.Null(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
             }
             return queryId;
         }
@@ -736,7 +736,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Download file
                 command.CommandText = getQuery;
                 var reader = command.ExecuteReader();
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
 
                 // Check file status
                 Assert.AreEqual(ResultStatus.DOWNLOADED.ToString(),

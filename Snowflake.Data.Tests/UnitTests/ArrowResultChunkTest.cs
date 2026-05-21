@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestNextReturnsFalseIfNoData()
         {
             var chunk = new ArrowResultChunk(0);
-            Assert.IsFalse(chunk.Next());
+            Assert.False(chunk.Next());
         }
 
         [Test]
@@ -59,9 +59,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             for (var i = 0; i < RowCountBatchOne; ++i)
             {
-                Assert.IsTrue(chunk.Next());
+                Assert.True(chunk.Next());
             }
-            Assert.IsFalse(chunk.Next());
+            Assert.False(chunk.Next());
         }
 
         [Test]
@@ -72,9 +72,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
             {
-                Assert.IsTrue(chunk.Next());
+                Assert.True(chunk.Next());
             }
-            Assert.IsFalse(chunk.Next());
+            Assert.False(chunk.Next());
         }
 
         [Test]
@@ -101,19 +101,19 @@ namespace Snowflake.Data.Tests.UnitTests
             chunk.AddRecordBatch(batch3);
 
             // Process batch 1
-            Assert.IsTrue(chunk.Next());
+            Assert.True(chunk.Next());
             Assert.AreEqual("row0", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
-            Assert.IsTrue(chunk.Next());
+            Assert.True(chunk.Next());
             Assert.AreEqual("row1", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
 
             // With the fix: Next() should skip the empty batch and go to batch 3
             // With the bug: Next() returns true for empty batch, ExtractCell throws IndexOutOfRangeException
-            Assert.IsTrue(chunk.Next(), "Next() should skip empty batch and return true for batch3");
+            Assert.True(chunk.Next(), "Next() should skip empty batch and return true for batch3");
             Assert.AreEqual("row2", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc), "Should read from batch3 after skipping empty batch");
-            Assert.IsTrue(chunk.Next());
+            Assert.True(chunk.Next());
             Assert.AreEqual("row3", chunk.ExtractCell(0, SFDataType.TEXT, 0, TimeZoneInfo.Utc));
 
-            Assert.IsFalse(chunk.Next());
+            Assert.False(chunk.Next());
         }
 
         [Test]
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Build();
 
             var chunk = new ArrowResultChunk(batch);
-            Assert.IsTrue(chunk.Next(), "Should move to first row");
+            Assert.True(chunk.Next(), "Should move to first row");
 
             var val1 = chunk.ExtractCell(0, SFDataType.FIXED, 0, TimeZoneInfo.Utc);
             var val2 = chunk.ExtractCell(1, SFDataType.TEXT, 0, TimeZoneInfo.Utc);
@@ -201,12 +201,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
             for (int i = 0; i < 5; i++)
             {
-                Assert.IsTrue(chunk.Next(), $"Should be able to read row {i}");
+                Assert.True(chunk.Next(), $"Should be able to read row {i}");
                 var val = chunk.ExtractCell(0, SFDataType.FIXED, 0, TimeZoneInfo.Utc);
                 Assert.AreEqual(i + 1, val);
             }
 
-            Assert.IsFalse(chunk.Next(), "Should be no more rows after reading all 5");
+            Assert.False(chunk.Next(), "Should be no more rows after reading all 5");
         }
 
         [Test]
@@ -219,9 +219,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             for (var i = 0; i < RowCountBatchOne; ++i)
             {
-                Assert.IsTrue(chunk.Rewind());
+                Assert.True(chunk.Rewind());
             }
-            Assert.IsFalse(chunk.Rewind());
+            Assert.False(chunk.Rewind());
         }
 
         [Test]
@@ -235,9 +235,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             for (var i = 0; i < RowCountBatchOne + RowCountBatchTwo; ++i)
             {
-                Assert.IsTrue(chunk.Rewind());
+                Assert.True(chunk.Rewind());
             }
-            Assert.IsFalse(chunk.Rewind());
+            Assert.False(chunk.Rewind());
         }
 
         [Test]

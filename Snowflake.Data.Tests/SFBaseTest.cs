@@ -301,7 +301,7 @@ namespace Snowflake.Data.Tests
             log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
 #endif
             var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
-            Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
+            Assert.True(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
             TestConfig = ReadTestConfig();
 
