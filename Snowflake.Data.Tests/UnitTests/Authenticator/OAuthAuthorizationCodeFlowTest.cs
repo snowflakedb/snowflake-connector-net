@@ -64,9 +64,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -84,9 +84,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -104,9 +104,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -124,9 +124,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -149,9 +149,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
                 // assert
                 Assert.NotNull(authenticator.AccessToken);
-                Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-                Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-                Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+                Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+                Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+                Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
                 AssertSessionSuccessfullyCreated(session);
             }
             finally
@@ -175,9 +175,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -195,9 +195,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -215,9 +215,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -235,8 +235,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(0, InMemoryCacheCount());
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(0, InMemoryCacheCount());
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -254,8 +254,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(0, InMemoryCacheCount());
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(0, InMemoryCacheCount());
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -273,8 +273,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(0, InMemoryCacheCount());
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(0, InMemoryCacheCount());
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -292,8 +292,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(0, InMemoryCacheCount());
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(0, InMemoryCacheCount());
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -311,8 +311,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
             Assert.Empty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
@@ -331,8 +331,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
             Assert.Empty(ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
@@ -353,9 +353,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -375,9 +375,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
-            Assert.AreEqual(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
             AssertSessionSuccessfullyCreated(session);
         }
 
@@ -394,8 +394,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
             Assert.That(thrown.Message, Does.Contain("Invalid response from browser: Authorization code response has error 'invalid_scope' and description 'One or more scopes are not configured for the authorization server resource.'"));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         [Test]
@@ -411,8 +411,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
             Assert.That(thrown.Message, Does.Contain("Invalid response from browser: Authorization code response has error 'invalid_scope' and description 'One or more scopes are not configured for the authorization server resource.'"));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         [Test]
@@ -428,8 +428,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
             Assert.That(thrown.Message, Does.Contain("Invalid response from browser: State mismatch for authorization code request and response."));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         [Test]
@@ -445,8 +445,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.BROWSER_RESPONSE_ERROR.GetAttribute<SFErrorAttr>().errorCode));
             Assert.That(thrown.Message, Does.Contain("Invalid response from browser: State mismatch for authorization code request and response."));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         [Test]
@@ -462,8 +462,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode));
             Assert.That(thrown.Message, Does.Contain("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)"));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         [Test]
@@ -479,8 +479,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             Assert.That(thrown.ErrorCode, Is.EqualTo(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode));
             Assert.That(thrown.Message, Does.Contain("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)"));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
-            Assert.AreEqual(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+            Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
         }
 
         private SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")

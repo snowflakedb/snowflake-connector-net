@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.SaveCredentials(key, expectedToken);
 
             // assert
-            Assert.AreEqual(expectedToken, _credentialManager.GetCredentials(key));
+            Assert.Equal(expectedToken, _credentialManager.GetCredentials(key));
 
             // act
             _credentialManager.RemoveCredentials(key);
@@ -39,13 +39,13 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.SaveCredentials(key, firstExpectedToken);
 
             // assert
-            Assert.AreEqual(firstExpectedToken, _credentialManager.GetCredentials(key));
+            Assert.Equal(firstExpectedToken, _credentialManager.GetCredentials(key));
 
             // act
             _credentialManager.SaveCredentials(key, secondExpectedToken);
 
             // assert
-            Assert.AreEqual(secondExpectedToken, _credentialManager.GetCredentials(key));
+            Assert.Equal(secondExpectedToken, _credentialManager.GetCredentials(key));
 
             // act
             _credentialManager.RemoveCredentials(key);
@@ -83,7 +83,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var result = _credentialManager.GetCredentials(key);
 
             // assert
-            Assert.AreEqual(token, result);
+            Assert.Equal(token, result);
         }
 
         [Test]
@@ -97,7 +97,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.SaveCredentials(key, expectedToken);
 
             // assert
-            Assert.AreEqual(expectedToken, _credentialManager.GetCredentials(key));
+            Assert.Equal(expectedToken, _credentialManager.GetCredentials(key));
 
             // act
             _credentialManager.RemoveCredentials(key);

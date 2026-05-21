@@ -47,10 +47,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var parameterMap = properties.ToParameterMap();
 
             // assert
-            Assert.AreEqual(3, parameterMap.Count);
-            Assert.AreEqual(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
-            Assert.AreEqual(clientSessionKeepAlive, parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
-            Assert.AreEqual(clientStoreTemporaryCredential, parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
+            Assert.Equal(3, parameterMap.Count);
+            Assert.Equal(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
+            Assert.Equal(clientSessionKeepAlive, parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
+            Assert.Equal(clientStoreTemporaryCredential, parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
         }
 
         [Test]
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(expectedConnectionLimit, extractedProperties._servicePointConnectionLimit);
+            Assert.Equal(expectedConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
         [Test]
@@ -81,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
         [Test]
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
         [Test]
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
         [Test]
@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
 
             // assert
-            Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Equal(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
             Assert.True(thrown.Message.Contains(expectedErrorMessage));
         }
 
@@ -147,7 +147,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var config = extractedProperties.BuildHttpClientConfig();
 
             // assert
-            Assert.AreEqual(validMaxSize, config.CrlDownloadMaxSize);
+            Assert.Equal(validMaxSize, config.CrlDownloadMaxSize);
         }
 
         [Test]
@@ -160,18 +160,18 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var config = properties.BuildHttpClientConfig();
 
             // assert
-            Assert.AreEqual(properties._certRevocationCheckMode, config.CertRevocationCheckMode);
-            Assert.AreEqual(properties._enableCrlDiskCaching, config.EnableCRLDiskCaching);
-            Assert.AreEqual(properties._enableCrlInMemoryCaching, config.EnableCRLInMemoryCaching);
-            Assert.AreEqual(properties._allowCertificatesWithoutCrlUrl, config.AllowCertificatesWithoutCrlUrl);
-            Assert.AreEqual(properties.proxyProperties.proxyHost, config.ProxyHost);
-            Assert.AreEqual(properties.proxyProperties.proxyPort, config.ProxyPort);
-            Assert.AreEqual(properties.proxyProperties.proxyUser, config.ProxyUser);
-            Assert.AreEqual(properties.proxyProperties.proxyPassword, config.ProxyPassword);
-            Assert.AreEqual(properties.proxyProperties.nonProxyHosts, config.NoProxyList);
-            Assert.AreEqual(properties.disableRetry, config.DisableRetry);
-            Assert.AreEqual(properties.forceRetryOn404, config.ForceRetryOn404);
-            Assert.AreEqual(properties.maxHttpRetries, config.MaxHttpRetries);
+            Assert.Equal(properties._certRevocationCheckMode, config.CertRevocationCheckMode);
+            Assert.Equal(properties._enableCrlDiskCaching, config.EnableCRLDiskCaching);
+            Assert.Equal(properties._enableCrlInMemoryCaching, config.EnableCRLInMemoryCaching);
+            Assert.Equal(properties._allowCertificatesWithoutCrlUrl, config.AllowCertificatesWithoutCrlUrl);
+            Assert.Equal(properties.proxyProperties.proxyHost, config.ProxyHost);
+            Assert.Equal(properties.proxyProperties.proxyPort, config.ProxyPort);
+            Assert.Equal(properties.proxyProperties.proxyUser, config.ProxyUser);
+            Assert.Equal(properties.proxyProperties.proxyPassword, config.ProxyPassword);
+            Assert.Equal(properties.proxyProperties.nonProxyHosts, config.NoProxyList);
+            Assert.Equal(properties.disableRetry, config.DisableRetry);
+            Assert.Equal(properties.forceRetryOn404, config.ForceRetryOn404);
+            Assert.Equal(properties.maxHttpRetries, config.MaxHttpRetries);
         }
 
         [Test]
@@ -191,8 +191,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isDotnetCrlCheck = config.IsDotnetCrlCheckEnabled();
 
             // assert
-            Assert.AreEqual(expectedCustomCrlCheck, isCustomCrlCheck);
-            Assert.AreEqual(expectedDotnetCrlCheck, isDotnetCrlCheck);
+            Assert.Equal(expectedCustomCrlCheck, isCustomCrlCheck);
+            Assert.Equal(expectedDotnetCrlCheck, isDotnetCrlCheck);
         }
 
         private SFSessionHttpClientProperties RandomSFSessionHttpClientProperties()
@@ -235,8 +235,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // act
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
             // assert
-            Assert.AreEqual(extractedProperties._minTlsProtocol, expectedMinTls);
-            Assert.AreEqual(extractedProperties._maxTlsProtocol, expectedMaxTls);
+            Assert.Equal(extractedProperties._minTlsProtocol, expectedMinTls);
+            Assert.Equal(extractedProperties._maxTlsProtocol, expectedMaxTls);
         }
 
         [Test]
@@ -266,18 +266,18 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(testCase.expectedProperties.validateDefaultParameters, extractedProperties.validateDefaultParameters);
-            Assert.AreEqual(testCase.expectedProperties.clientSessionKeepAlive, extractedProperties.clientSessionKeepAlive);
-            Assert.AreEqual(testCase.expectedProperties.connectionTimeout, extractedProperties.connectionTimeout);
-            Assert.AreEqual(testCase.expectedProperties._clientStoreTemporaryCredential, extractedProperties._clientStoreTemporaryCredential);
-            Assert.AreEqual(testCase.expectedProperties._certRevocationCheckMode, extractedProperties._certRevocationCheckMode);
-            Assert.AreEqual(testCase.expectedProperties._enableCrlDiskCaching, extractedProperties._enableCrlDiskCaching);
-            Assert.AreEqual(testCase.expectedProperties._enableCrlInMemoryCaching, extractedProperties._enableCrlInMemoryCaching);
-            Assert.AreEqual(testCase.expectedProperties._allowCertificatesWithoutCrlUrl, extractedProperties._allowCertificatesWithoutCrlUrl);
-            Assert.AreEqual(testCase.expectedProperties.disableRetry, extractedProperties.disableRetry);
-            Assert.AreEqual(testCase.expectedProperties.forceRetryOn404, extractedProperties.forceRetryOn404);
-            Assert.AreEqual(testCase.expectedProperties.retryTimeout, extractedProperties.retryTimeout);
-            Assert.AreEqual(testCase.expectedProperties.maxHttpRetries, extractedProperties.maxHttpRetries);
+            Assert.Equal(testCase.expectedProperties.validateDefaultParameters, extractedProperties.validateDefaultParameters);
+            Assert.Equal(testCase.expectedProperties.clientSessionKeepAlive, extractedProperties.clientSessionKeepAlive);
+            Assert.Equal(testCase.expectedProperties.connectionTimeout, extractedProperties.connectionTimeout);
+            Assert.Equal(testCase.expectedProperties._clientStoreTemporaryCredential, extractedProperties._clientStoreTemporaryCredential);
+            Assert.Equal(testCase.expectedProperties._certRevocationCheckMode, extractedProperties._certRevocationCheckMode);
+            Assert.Equal(testCase.expectedProperties._enableCrlDiskCaching, extractedProperties._enableCrlDiskCaching);
+            Assert.Equal(testCase.expectedProperties._enableCrlInMemoryCaching, extractedProperties._enableCrlInMemoryCaching);
+            Assert.Equal(testCase.expectedProperties._allowCertificatesWithoutCrlUrl, extractedProperties._allowCertificatesWithoutCrlUrl);
+            Assert.Equal(testCase.expectedProperties.disableRetry, extractedProperties.disableRetry);
+            Assert.Equal(testCase.expectedProperties.forceRetryOn404, extractedProperties.forceRetryOn404);
+            Assert.Equal(testCase.expectedProperties.retryTimeout, extractedProperties.retryTimeout);
+            Assert.Equal(testCase.expectedProperties.maxHttpRetries, extractedProperties.maxHttpRetries);
             Assert.NotNull(proxyProperties);
         }
 

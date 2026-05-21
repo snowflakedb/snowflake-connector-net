@@ -111,7 +111,7 @@ namespace Snowflake.Data.Tests.Util
             chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllFlags;
             var isBuilt = chain.Build(certificates.First());
             Assert.True(isBuilt);
-            Assert.AreEqual(certificates.Count(), chain.ChainElements.Count);
+            Assert.Equal(certificates.Count(), chain.ChainElements.Count);
             return chain;
         }
 

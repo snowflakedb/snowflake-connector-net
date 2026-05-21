@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var state = _challengeProvider.GenerateState();
 
             // assert
-            Assert.AreEqual(32, state.Length);
+            Assert.Equal(32, state.Length);
             Assert.True(_onlyDigitsOrNumbers.IsMatch(state));
         }
 

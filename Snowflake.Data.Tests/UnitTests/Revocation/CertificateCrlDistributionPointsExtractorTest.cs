@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlUrls = crlExtractor.Extract(certificate);
 
             // assert
-            Assert.AreEqual(testCase.ExpectedCrlUrls.Length, crlUrls.Length);
+            Assert.Equal(testCase.ExpectedCrlUrls.Length, crlUrls.Length);
             Assert.That(testCase.ExpectedCrlUrls, Is.EquivalentTo(crlUrls));
         }
 

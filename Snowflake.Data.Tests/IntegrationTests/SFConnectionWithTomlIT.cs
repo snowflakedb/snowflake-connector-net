@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.Open();
-                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    Assert.Equal(ConnectionState.Open, conn.State);
                 }
             }
             finally

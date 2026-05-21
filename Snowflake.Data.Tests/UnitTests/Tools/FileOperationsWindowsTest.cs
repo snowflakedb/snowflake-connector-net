@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(s_content, result);
+            Assert.Equal(s_content, result);
         }
 
         [Test]

@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser
             var thrown = Assert.Throws<SnowflakeDbException>(() => webBrowserStarter.StartBrowser(url));
 
             // assert
-            Assert.AreEqual(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Equal(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
             runner.Verify(r => r.Run(It.IsAny<Uri>()), Times.Never);
         }
     }

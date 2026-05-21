@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(InputConfigFilePath);
 
             // assert
-            Assert.AreEqual(InputConfigFilePath, filePath);
+            Assert.Equal(InputConfigFilePath, filePath);
             t_fileOperations.VerifyNoOtherCalls();
             t_environmentOperations.VerifyNoOtherCalls();
         }
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(inputFilePath);
 
             // assert
-            Assert.AreEqual(EnvironmentalConfigFilePath, filePath);
+            Assert.Equal(EnvironmentalConfigFilePath, filePath);
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.AreEqual(s_driverConfigFilePath, filePath);
+            Assert.Equal(s_driverConfigFilePath, filePath);
         }
 
         [Test]
@@ -93,7 +93,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.AreEqual(s_homeConfigFilePath, filePath);
+            Assert.Equal(s_homeConfigFilePath, filePath);
         }
 
         [Test]
@@ -106,7 +106,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.AreEqual(s_homeConfigFilePath, filePath);
+            Assert.Equal(s_homeConfigFilePath, filePath);
         }
 
         [Test]

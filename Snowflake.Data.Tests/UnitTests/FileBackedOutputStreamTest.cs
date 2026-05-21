@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests
 
             // assert
             var allTextFromStream = Encoding.ASCII.GetString(memoryStream.ToArray());
-            Assert.AreEqual(ShortText + s_longText, allTextFromStream);
+            Assert.Equal(ShortText + s_longText, allTextFromStream);
         }
 
         [Test]

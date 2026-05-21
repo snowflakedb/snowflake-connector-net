@@ -82,13 +82,13 @@ namespace Snowflake.Data.Tests.UnitTests
             int i = 0;
             foreach (QueryContextElement elem in elements)
             {
-                Assert.AreEqual(_expectedIDs[i], elem.Id);
-                Assert.AreEqual(_expectedReadTimestamp[i], elem.ReadTimestamp);
-                Assert.AreEqual(_expectedPriority[i], elem.Priority);
-                Assert.AreEqual(context, elem.Context);
+                Assert.Equal(_expectedIDs[i], elem.Id);
+                Assert.Equal(_expectedReadTimestamp[i], elem.ReadTimestamp);
+                Assert.Equal(_expectedPriority[i], elem.Priority);
+                Assert.Equal(context, elem.Context);
                 i++;
             }
-            Assert.AreEqual(i, MaxCapacity);
+            Assert.Equal(i, MaxCapacity);
         }
 
         [Test]
@@ -233,7 +233,7 @@ namespace Snowflake.Data.Tests.UnitTests
             InitCacheWithData();
 
             _qcc.Update(null);
-            Assert.AreEqual(_qcc.GetSize(), 0);
+            Assert.Equal(_qcc.GetSize(), 0);
         }
 
         [Test]
@@ -243,7 +243,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>("", JsonUtils.JsonSettings);
             _qcc.Update(rsp);
-            Assert.AreEqual(_qcc.GetSize(), 0);
+            Assert.Equal(_qcc.GetSize(), 0);
         }
 
         [Test]
@@ -257,7 +257,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Clear _qcc
             _qcc.ClearCache();
-            Assert.AreEqual(_qcc.GetSize(), 0);
+            Assert.Equal(_qcc.GetSize(), 0);
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
             _qcc.Update(rsp);
@@ -275,7 +275,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Clear _qcc
             _qcc.ClearCache();
-            Assert.AreEqual(_qcc.GetSize(), 0);
+            Assert.Equal(_qcc.GetSize(), 0);
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
             _qcc.Update(rsp);

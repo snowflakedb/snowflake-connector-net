@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var count = counter.Count();
 
             // assert
-            Assert.AreEqual(0, count);
+            Assert.Equal(0, count);
         }
 
         [Test]
@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             counter.Increase();
 
             // assert
-            Assert.AreEqual(0, counter.Count());
+            Assert.Equal(0, counter.Count());
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             counter.Decrease();
 
             // assert
-            Assert.AreEqual(0, counter.Count());
+            Assert.Equal(0, counter.Count());
         }
 
         [Test]
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             counter.Reset();
 
             // assert
-            Assert.AreEqual(0, counter.Count());
+            Assert.Equal(0, counter.Count());
         }
     }
 }

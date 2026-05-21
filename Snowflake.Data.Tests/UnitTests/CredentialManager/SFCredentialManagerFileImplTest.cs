@@ -249,7 +249,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 var result = _credentialManager.GetCredentials("key");
 
                 // assert
-                Assert.AreEqual(string.Empty, result);
+                Assert.Equal(string.Empty, result);
             }
             finally
             {
@@ -277,8 +277,8 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 var result = _credentialManager.GetCredentials("key");
 
                 // assert
-                Assert.AreEqual("token", result);
-                Assert.AreEqual(insecurePermissions, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
+                Assert.Equal("token", result);
+                Assert.Equal(insecurePermissions, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
             }
             finally
             {
@@ -302,8 +302,8 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
                 var result = _credentialManager.GetCredentials("key");
 
                 // assert
-                Assert.AreEqual("token", result);
-                Assert.AreEqual(FileAccessPermissions.UserReadWriteExecute, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
+                Assert.Equal("token", result);
+                Assert.Equal(FileAccessPermissions.UserReadWriteExecute, UnixOperations.Instance.GetDirectoryInfo(tempDirectory).Permissions);
             }
             finally
             {

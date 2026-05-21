@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var isExpired = TimeoutHelper.IsExpired(startedAtMillis, nowMillis, timeout);
 
             // assert
-            Assert.AreEqual(expectedIsExpired, isExpired);
+            Assert.Equal(expectedIsExpired, isExpired);
         }
 
         [Test]
@@ -107,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var isExpired = TimeoutHelper.IsExpired(durationMillis, timeout);
 
             // assert
-            Assert.AreEqual(expectedIsExpired, isExpired);
+            Assert.Equal(expectedIsExpired, isExpired);
         }
 
         [Test]
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var millisLeft = TimeoutHelper.FiniteTimeoutLeftMillis(startedAtMillis, nowMillis, timeout);
 
             // assert
-            Assert.AreEqual(expectedMillisLeft, millisLeft);
+            Assert.Equal(expectedMillisLeft, millisLeft);
         }
 
         public static IEnumerable<TimeSpan> InfiniteTimeouts()

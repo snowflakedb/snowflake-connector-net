@@ -89,16 +89,16 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestReadZeroByte()
         {
             byte[] buffer = new byte[0];
-            Assert.AreEqual(0, _concatStream.Read(buffer, 0, 0)); // Read 0 byte
+            Assert.Equal(0, _concatStream.Read(buffer, 0, 0)); // Read 0 byte
         }
 
         [Test]
         public void TestReadBytes()
         {
             byte[] buffer = new byte[3];
-            Assert.AreEqual(1, _concatStream.Read(buffer, 0, 1)); // Read 1 byte
-            Assert.AreEqual(2, _concatStream.Read(buffer, 0, 2)); // Read 2 bytes
-            Assert.AreEqual(3, _concatStream.Read(buffer, 0, 3)); // Read 3 bytes
+            Assert.Equal(1, _concatStream.Read(buffer, 0, 1)); // Read 1 byte
+            Assert.Equal(2, _concatStream.Read(buffer, 0, 2)); // Read 2 bytes
+            Assert.Equal(3, _concatStream.Read(buffer, 0, 3)); // Read 3 bytes
         }
 
         [Test]

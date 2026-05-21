@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [Test]
         public void TestResultFormatIsArrow()
         {
-            Assert.AreEqual(ResultFormat.ARROW, _arrowResultSet.ResultFormat);
+            Assert.Equal(ResultFormat.ARROW, _arrowResultSet.ResultFormat);
         }
 
         [Test]
@@ -138,8 +138,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             arrowResultSet.Next();
 
-            Assert.AreEqual(true, arrowResultSet.IsDBNull(0));
-            Assert.AreEqual(DBNull.Value, arrowResultSet.GetValue(0));
+            Assert.Equal(true, arrowResultSet.IsDBNull(0));
+            Assert.Equal(DBNull.Value, arrowResultSet.GetValue(0));
         }
 
         [Test]
@@ -193,27 +193,27 @@ namespace Snowflake.Data.Tests.UnitTests
                     _arrowResultSet.Next();
 
                     var expectedValue = Convert.ToDecimal(testValue) / (decimal)Math.Pow(10, scale);
-                    Assert.AreEqual(expectedValue, _arrowResultSet.GetValue(ColumnIndex));
-                    Assert.AreEqual(expectedValue, _arrowResultSet.GetDecimal(ColumnIndex));
-                    Assert.AreEqual(expectedValue, _arrowResultSet.GetDouble(ColumnIndex));
-                    Assert.AreEqual(expectedValue, _arrowResultSet.GetFloat(ColumnIndex));
+                    Assert.Equal(expectedValue, _arrowResultSet.GetValue(ColumnIndex));
+                    Assert.Equal(expectedValue, _arrowResultSet.GetDecimal(ColumnIndex));
+                    Assert.Equal(expectedValue, _arrowResultSet.GetDouble(ColumnIndex));
+                    Assert.Equal(expectedValue, _arrowResultSet.GetFloat(ColumnIndex));
 
                     if (expectedValue >= Int64.MinValue && expectedValue <= Int64.MaxValue)
                     {
                         // get integer value
                         long expectedInteger = (long)expectedValue;
 
-                        Assert.AreEqual(expectedInteger, _arrowResultSet.GetInt64(ColumnIndex));
+                        Assert.Equal(expectedInteger, _arrowResultSet.GetInt64(ColumnIndex));
                         if (expectedInteger >= Int32.MinValue && expectedInteger <= Int32.MaxValue)
-                            Assert.AreEqual(expectedInteger, _arrowResultSet.GetInt32(ColumnIndex));
+                            Assert.Equal(expectedInteger, _arrowResultSet.GetInt32(ColumnIndex));
                         else
                             Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt32(ColumnIndex));
                         if (expectedInteger >= Int16.MinValue && expectedInteger <= Int16.MaxValue)
-                            Assert.AreEqual(expectedInteger, _arrowResultSet.GetInt16(ColumnIndex));
+                            Assert.Equal(expectedInteger, _arrowResultSet.GetInt16(ColumnIndex));
                         else
                             Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt16(ColumnIndex));
                         if (expectedInteger >= 0 && expectedInteger <= 255)
-                            Assert.AreEqual(expectedInteger, _arrowResultSet.GetByte(ColumnIndex));
+                            Assert.Equal(expectedInteger, _arrowResultSet.GetByte(ColumnIndex));
                         else
                             Assert.Throws<OverflowException>(() => _arrowResultSet.GetByte(ColumnIndex));
                     }
@@ -231,8 +231,8 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.AreEqual(testValue, _arrowResultSet.GetBoolean(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetBoolean(ColumnIndex));
             }
         }
 
@@ -246,8 +246,8 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.AreEqual(testValue, _arrowResultSet.GetDouble(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetDouble(ColumnIndex));
             }
         }
 
@@ -265,8 +265,8 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.AreEqual(testValue, _arrowResultSet.GetString(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetString(ColumnIndex));
             }
         }
 
@@ -291,7 +291,7 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetChar(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetChar(ColumnIndex));
             }
         }
 
@@ -309,12 +309,12 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
                 char[] buffer = new char[1000];
                 var len = _arrowResultSet.GetChars(ColumnIndex, 0, buffer, 0, buffer.Length);
                 var str = new String(buffer, 0, (int)len);
-                Assert.AreEqual(testValue, str);
-                Assert.AreEqual(testValue.Length, str.Length);
+                Assert.Equal(testValue, str);
+                Assert.Equal(testValue.Length, str.Length);
             }
         }
 
@@ -331,12 +331,12 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
                 byte[] buffer = new byte[100];
                 var len = _arrowResultSet.GetBytes(ColumnIndex, 0, buffer, 0, buffer.Length);
-                Assert.AreEqual(testValue.Length, len);
+                Assert.Equal(testValue.Length, len);
                 for (var j = 0; j < len; ++j)
-                    Assert.AreEqual(testValue[j], buffer[j], "position " + j);
+                    Assert.Equal(testValue[j], buffer[j], "position " + j);
             }
         }
 
@@ -355,8 +355,8 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.AreEqual(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
             }
         }
 
@@ -378,8 +378,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 foreach (var testValue in values)
                 {
                     _arrowResultSet.Next();
-                    Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                    Assert.AreEqual(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
                 }
             }
         }
@@ -405,7 +405,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 foreach (var testValue in values)
                 {
                     _arrowResultSet.Next();
-                    Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
                 }
             }
         }
@@ -428,7 +428,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 foreach (var testValue in values)
                 {
                     _arrowResultSet.Next();
-                    Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
                 }
             }
         }
@@ -451,8 +451,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 foreach (var testValue in values)
                 {
                     _arrowResultSet.Next();
-                    Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                    Assert.AreEqual(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
                 }
             }
         }

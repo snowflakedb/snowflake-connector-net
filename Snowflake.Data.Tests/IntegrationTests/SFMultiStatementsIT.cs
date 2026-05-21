@@ -43,33 +43,33 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 IDataReader reader = cmd.ExecuteReader();
 
                 Assert.True(reader.Read());
-                Assert.AreEqual(1, reader.GetDouble(0));
-                Assert.AreEqual(1, reader.GetFloat(0));
-                Assert.AreEqual(1, reader.GetInt64(0));
-                Assert.AreEqual(1, reader.GetInt32(0));
-                Assert.AreEqual(1, reader.GetInt16(0));
-                Assert.AreEqual(1, reader.GetByte(0));
-                Assert.AreEqual(1, reader.GetValue(0));
+                Assert.Equal(1, reader.GetDouble(0));
+                Assert.Equal(1, reader.GetFloat(0));
+                Assert.Equal(1, reader.GetInt64(0));
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.Equal(1, reader.GetInt16(0));
+                Assert.Equal(1, reader.GetByte(0));
+                Assert.Equal(1, reader.GetValue(0));
                 Assert.False(reader.Read());
 
                 Assert.True(reader.NextResult());
                 Assert.True(reader.Read());
-                Assert.AreEqual(2, reader.GetInt32(0));
-                Assert.AreEqual(3, reader.GetInt32(1));
+                Assert.Equal(2, reader.GetInt32(0));
+                Assert.Equal(3, reader.GetInt32(1));
                 Assert.False(reader.Read());
 
                 Assert.True(reader.NextResult());
                 Assert.True(reader.Read());
-                Assert.AreEqual(4, reader.GetInt32(0));
-                Assert.AreEqual(5, reader.GetInt32(1));
-                Assert.AreEqual(6, reader.GetInt32(2));
+                Assert.Equal(4, reader.GetInt32(0));
+                Assert.Equal(5, reader.GetInt32(1));
+                Assert.Equal(6, reader.GetInt32(2));
                 Assert.False(reader.Read());
 
                 Assert.True(reader.NextResult());
                 Assert.True(reader.Read());
-                Assert.AreEqual(true, reader.GetBoolean(0));
-                Assert.AreEqual(false, reader.GetBoolean(1));
-                Assert.AreEqual(DBNull.Value, reader.GetValue(2));
+                Assert.Equal(true, reader.GetBoolean(0));
+                Assert.Equal(false, reader.GetBoolean(1));
+                Assert.Equal(DBNull.Value, reader.GetValue(2));
                 Assert.False(reader.IsDBNull(0));
                 Assert.False(reader.IsDBNull(1));
                 Assert.True(reader.IsDBNull(2));
@@ -77,9 +77,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Assert.True(reader.NextResult());
                 Assert.True(reader.Read());
-                Assert.AreEqual(DateTime.Parse(testDate).ToUniversalTime(), reader.GetDateTime(0));
-                Assert.AreEqual(DateTimeOffset.Parse(testDate).ToUniversalTime(), ((SnowflakeDbDataReader)reader).GetValue(1));
-                Assert.AreEqual(TimeSpan.Parse(testTime), ((SnowflakeDbDataReader)reader).GetTimeSpan(2));
+                Assert.Equal(DateTime.Parse(testDate).ToUniversalTime(), reader.GetDateTime(0));
+                Assert.Equal(DateTimeOffset.Parse(testDate).ToUniversalTime(), ((SnowflakeDbDataReader)reader).GetValue(1));
+                Assert.Equal(TimeSpan.Parse(testTime), ((SnowflakeDbDataReader)reader).GetTimeSpan(2));
                 Assert.False(reader.Read());
 
                 Assert.False(reader.NextResult());
@@ -109,19 +109,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
                 Assert.True(await reader.ReadAsync().ConfigureAwait(false));
-                Assert.AreEqual(1, reader.GetDouble(0));
-                Assert.AreEqual(1, reader.GetFloat(0));
-                Assert.AreEqual(1, reader.GetInt64(0));
-                Assert.AreEqual(1, reader.GetInt32(0));
-                Assert.AreEqual(1, reader.GetInt16(0));
-                Assert.AreEqual(1, reader.GetByte(0));
-                Assert.AreEqual(1, reader.GetValue(0));
+                Assert.Equal(1, reader.GetDouble(0));
+                Assert.Equal(1, reader.GetFloat(0));
+                Assert.Equal(1, reader.GetInt64(0));
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.Equal(1, reader.GetInt16(0));
+                Assert.Equal(1, reader.GetByte(0));
+                Assert.Equal(1, reader.GetValue(0));
                 Assert.False(await reader.ReadAsync().ConfigureAwait(false));
 
                 Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                 Assert.True(await reader.ReadAsync().ConfigureAwait(false));
-                Assert.AreEqual(2, reader.GetInt32(0));
-                Assert.AreEqual(3, reader.GetInt32(1));
+                Assert.Equal(2, reader.GetInt32(0));
+                Assert.Equal(3, reader.GetInt32(1));
                 Assert.False(await reader.ReadAsync().ConfigureAwait(false));
 
                 Assert.False(await reader.NextResultAsync().ConfigureAwait(false));
@@ -162,20 +162,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 IDataReader reader = cmd.ExecuteReader();
 
                 Assert.True(reader.Read());
-                Assert.AreEqual(1, reader.GetInt32(0));
+                Assert.Equal(1, reader.GetInt32(0));
                 Assert.False(reader.Read());
 
                 Assert.True(reader.NextResult());
                 Assert.True(reader.Read());
-                Assert.AreEqual(2, reader.GetInt32(0));
-                Assert.AreEqual(3, reader.GetInt32(1));
+                Assert.Equal(2, reader.GetInt32(0));
+                Assert.Equal(3, reader.GetInt32(1));
                 Assert.False(reader.Read());
 
                 Assert.True(reader.NextResult());
                 Assert.True(reader.Read());
-                Assert.AreEqual(4, reader.GetInt32(0));
-                Assert.AreEqual(5, reader.GetInt32(1));
-                Assert.AreEqual(6, reader.GetInt32(2));
+                Assert.Equal(4, reader.GetInt32(0));
+                Assert.Equal(5, reader.GetInt32(1));
+                Assert.Equal(6, reader.GetInt32(2));
                 Assert.False(reader.Read());
 
                 Assert.False(reader.NextResult());
@@ -250,37 +250,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // result of create
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of insert #1
                     Assert.True(reader.NextResult());
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(1, reader.RecordsAffected);
+                    Assert.Equal(1, reader.RecordsAffected);
 
                     // result of insert #2
                     Assert.True(reader.NextResult());
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(2, reader.RecordsAffected);
+                    Assert.Equal(2, reader.RecordsAffected);
 
                     // result of select
                     Assert.True(reader.NextResult());
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(-1, reader.RecordsAffected);
+                    Assert.Equal(-1, reader.RecordsAffected);
                     Assert.True(reader.Read());
-                    Assert.AreEqual(1, reader.GetInt32(0));
-                    Assert.AreEqual("str1", reader.GetString(1));
+                    Assert.Equal(1, reader.GetInt32(0));
+                    Assert.Equal("str1", reader.GetString(1));
                     Assert.True(reader.Read());
-                    Assert.AreEqual(2, reader.GetInt32(0));
-                    Assert.AreEqual("str2", reader.GetString(1));
+                    Assert.Equal(2, reader.GetInt32(0));
+                    Assert.Equal("str2", reader.GetString(1));
                     Assert.True(reader.Read());
-                    Assert.AreEqual(3, reader.GetInt32(0));
-                    Assert.AreEqual("str3", reader.GetString(1));
+                    Assert.Equal(3, reader.GetInt32(0));
+                    Assert.Equal("str3", reader.GetString(1));
                     Assert.False(reader.Read());
 
                     // result of drop
                     Assert.True(reader.NextResult());
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     Assert.False(reader.NextResult());
                     reader.Close();
@@ -352,7 +352,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(p6);
 
                     int count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(3, count);
+                    Assert.Equal(3, count);
                 }
 
                 conn.Close();
@@ -393,12 +393,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // result of select
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(-1, reader.RecordsAffected);
+                    Assert.Equal(-1, reader.RecordsAffected);
 
                     // result of create
                     Assert.True(reader.NextResult());
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of explain
                     Assert.True(reader.NextResult());
@@ -411,32 +411,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // result of show
                     Assert.True(reader.NextResult());
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of insert
                     Assert.True(reader.NextResult());
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(1, reader.RecordsAffected);
+                    Assert.Equal(1, reader.RecordsAffected);
 
                     // result of describe
                     Assert.True(reader.NextResult());
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of list
                     Assert.True(reader.NextResult());
                     Assert.False(reader.HasRows); // no files staged for table t1
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of remove
                     Assert.True(reader.NextResult());
                     Assert.False(reader.HasRows); // no files staged for table t1
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of create
                     Assert.True(reader.NextResult());
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     // result of call
                     Assert.True(reader.NextResult());
@@ -450,7 +450,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // result of use
                     Assert.True(reader.NextResult());
                     Assert.True(reader.HasRows);
-                    Assert.AreEqual(0, reader.RecordsAffected);
+                    Assert.Equal(0, reader.RecordsAffected);
 
                     Assert.False(reader.NextResult());
                     reader.Close();

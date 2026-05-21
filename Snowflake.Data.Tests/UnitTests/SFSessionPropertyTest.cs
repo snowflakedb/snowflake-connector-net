@@ -49,8 +49,8 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(expectedAccountName, properties[SFSessionProperty.ACCOUNT]);
-            Assert.AreEqual(expectedHost, properties[SFSessionProperty.HOST]);
+            Assert.Equal(expectedAccountName, properties[SFSessionProperty.ACCOUNT]);
+            Assert.Equal(expectedHost, properties[SFSessionProperty.HOST]);
         }
 
         [Test]
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests
             );
 
             // assert
-            Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+            Assert.Equal(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
             Assert.True(exception.Message.Contains(expectedErrorMessagePart));
         }
 
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests
             );
 
             // assert
-            Assert.AreEqual(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+            Assert.Equal(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
         }
 
         [Test]
@@ -105,7 +105,7 @@ namespace Snowflake.Data.Tests.UnitTests
             );
 
             // assert
-            Assert.AreEqual(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+            Assert.Equal(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
             Assert.That(exception.Message, Does.Contain("Required property PASSWORD is not provided"));
         }
 
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
+            Assert.Equal(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
         }
 
         [Test]
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, propertiesContext);
 
             // assert
-            Assert.AreEqual(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
+            Assert.Equal(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
         }
 
         [Test]
@@ -165,7 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.True(properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPassword));
-            Assert.AreEqual(expectedPasscodeInPassword, passcodeInPassword);
+            Assert.Equal(expectedPasscodeInPassword, passcodeInPassword);
         }
 
         [Test]
@@ -200,8 +200,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
                 // assert
-                Assert.AreEqual("snowflake", properties[SFSessionProperty.AUTHENTICATOR]);
-                Assert.AreEqual("dummykey", properties[SFSessionProperty.PRIVATE_KEY]);
+                Assert.Equal("snowflake", properties[SFSessionProperty.AUTHENTICATOR]);
+                Assert.Equal("dummykey", properties[SFSessionProperty.PRIVATE_KEY]);
             }
             finally
             {
@@ -232,7 +232,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 var cultureInvariant = testString.ToUpperInvariant(); // Always "AUTHENTICATOR"
 
                 // Verify the Turkish culture issue exists
-                Assert.AreNotEqual(cultureDependent, cultureInvariant, "Turkish culture should produce different casing");
+                Assert.NotEqual(cultureDependent, cultureInvariant, "Turkish culture should produce different casing");
                 Assert.True(cultureDependent.Contains("İ"), "Turkish ToUpper() should contain Turkish dotted capital I");
                 Assert.True(cultureInvariant.Contains("I"), "Invariant ToUpper() should contain ASCII capital I");
 
@@ -243,9 +243,9 @@ namespace Snowflake.Data.Tests.UnitTests
                 var properties = SFSessionProperties.ParseConnectionString(invalidConnectionString, new SessionPropertiesContext());
 
                 // Verify valid properties are still parsed correctly
-                Assert.AreEqual("testaccount", properties[SFSessionProperty.ACCOUNT]);
-                Assert.AreEqual("testuser", properties[SFSessionProperty.USER]);
-                Assert.AreEqual("testpassword", properties[SFSessionProperty.PASSWORD]);
+                Assert.Equal("testaccount", properties[SFSessionProperty.ACCOUNT]);
+                Assert.Equal("testuser", properties[SFSessionProperty.USER]);
+                Assert.Equal("testpassword", properties[SFSessionProperty.PASSWORD]);
 
                 // Verify invalid property is not present (can't use Enum.Parse here as it would throw)
                 Assert.False(properties.Any(p => p.Key.ToString().Equals("INVALIDPROPERTY", StringComparison.OrdinalIgnoreCase)),
@@ -270,7 +270,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(value, properties[SFSessionProperty.CLIENT_TELEMETRY_ENABLED]);
+            Assert.Equal(value, properties[SFSessionProperty.CLIENT_TELEMETRY_ENABLED]);
         }
 
         [Test]
@@ -287,7 +287,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(value, properties[sessionProperty]);
+            Assert.Equal(value, properties[sessionProperty]);
         }
 
         [Test]
@@ -305,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(expectedValue, properties[sessionProperty]);
+            Assert.Equal(expectedValue, properties[sessionProperty]);
         }
 
         [Test]
@@ -320,7 +320,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(expectedDisableSamlUrlCheck, properties[SFSessionProperty.DISABLE_SAML_URL_CHECK]);
+            Assert.Equal(expectedDisableSamlUrlCheck, properties[SFSessionProperty.DISABLE_SAML_URL_CHECK]);
         }
 
         [Test]
@@ -332,7 +332,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var message = SFSessionProperties.ResolveConnectionAreaMessage(host);
 
             // assert
-            Assert.AreEqual(expectedMessage, message);
+            Assert.Equal(expectedMessage, message);
         }
 
         [Test]
@@ -347,7 +347,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(expectedClientStoreTemporaryCredential, properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
+            Assert.Equal(expectedClientStoreTemporaryCredential, properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
         }
 
         [Test]
@@ -376,7 +376,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext { OAuthClientSecret = secureOAuthClientSecret });
 
             // assert
-            Assert.AreEqual(oauthClientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.Equal(oauthClientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
         }
 
         [Test]
@@ -414,13 +414,13 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
-            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
-            Assert.AreEqual(scope, properties[SFSessionProperty.OAUTHSCOPE]);
-            Assert.AreEqual(redirectUri, properties[SFSessionProperty.OAUTHREDIRECTURI]);
-            Assert.AreEqual(authorizationUrl, properties[SFSessionProperty.OAUTHAUTHORIZATIONURL]);
-            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
-            Assert.AreEqual(enableSingleUseRefreshTokens, properties[SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS]);
+            Assert.Equal(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.Equal(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.Equal(scope, properties[SFSessionProperty.OAUTHSCOPE]);
+            Assert.Equal(redirectUri, properties[SFSessionProperty.OAUTHREDIRECTURI]);
+            Assert.Equal(authorizationUrl, properties[SFSessionProperty.OAUTHAUTHORIZATIONURL]);
+            Assert.Equal(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
+            Assert.Equal(enableSingleUseRefreshTokens, properties[SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS]);
         }
 
         [Test]
@@ -437,10 +437,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
-            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
-            Assert.AreEqual(scope, properties[SFSessionProperty.OAUTHSCOPE]);
-            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
+            Assert.Equal(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.Equal(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.Equal(scope, properties[SFSessionProperty.OAUTHSCOPE]);
+            Assert.Equal(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
         }
 
         [Test]
@@ -455,8 +455,8 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
-            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.Equal(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.Equal(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
         }
 
         [Test]
@@ -472,8 +472,8 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(ExpectedClientIdAndSecret, properties[SFSessionProperty.OAUTHCLIENTID]);
-            Assert.AreEqual(ExpectedClientIdAndSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.Equal(ExpectedClientIdAndSecret, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.Equal(ExpectedClientIdAndSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
         }
 
         [Test]
@@ -489,9 +489,9 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
-            Assert.AreEqual(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
-            Assert.AreEqual(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
+            Assert.Equal(clientId, properties[SFSessionProperty.OAUTHCLIENTID]);
+            Assert.Equal(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
+            Assert.Equal(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
         }
 
 
@@ -614,7 +614,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(token, properties[SFSessionProperty.TOKEN]);
+            Assert.Equal(token, properties[SFSessionProperty.TOKEN]);
         }
 
         [Test]
@@ -629,7 +629,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext { Token = secureToken });
 
             // assert
-            Assert.AreEqual(token, properties[SFSessionProperty.TOKEN]);
+            Assert.Equal(token, properties[SFSessionProperty.TOKEN]);
         }
 
         [Test]
@@ -682,10 +682,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(expectedCertRevocationCheckMode, properties[SFSessionProperty.CERTREVOCATIONCHECKMODE]);
-            Assert.AreEqual(expectedEnableCrlDiskCaching, properties[SFSessionProperty.ENABLECRLDISKCACHING]);
-            Assert.AreEqual(expectedEnableCrlInMemoryCaching, properties[SFSessionProperty.ENABLECRLINMEMORYCACHING]);
-            Assert.AreEqual(expectedAllowCertificatesWithoutCrlUrl, properties[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]);
+            Assert.Equal(expectedCertRevocationCheckMode, properties[SFSessionProperty.CERTREVOCATIONCHECKMODE]);
+            Assert.Equal(expectedEnableCrlDiskCaching, properties[SFSessionProperty.ENABLECRLDISKCACHING]);
+            Assert.Equal(expectedEnableCrlInMemoryCaching, properties[SFSessionProperty.ENABLECRLINMEMORYCACHING]);
+            Assert.Equal(expectedAllowCertificatesWithoutCrlUrl, properties[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]);
         }
 
         [Test]
@@ -720,7 +720,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // assert
-            Assert.AreEqual(expectedTimeout, properties[SFSessionProperty.CRLDOWNLOADTIMEOUT]);
+            Assert.Equal(expectedTimeout, properties[SFSessionProperty.CRLDOWNLOADTIMEOUT]);
         }
 
         public static IEnumerable<TestCase> ConnectionStringTestCases()

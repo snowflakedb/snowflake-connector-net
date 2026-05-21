@@ -18,8 +18,8 @@ namespace Snowflake.Data.Tests.UnitTests
             // assert
             var sessionPool1 = SnowflakeDbConnectionPool.GetPoolInternal(_connectionString1);
             var sessionPool2 = SnowflakeDbConnectionPool.GetPoolInternal(_connectionString2);
-            Assert.AreEqual(ConnectionPoolType.SingleConnectionCache, SnowflakeDbConnectionPool.GetConnectionPoolVersion());
-            Assert.AreEqual(sessionPool1, sessionPool2);
+            Assert.Equal(ConnectionPoolType.SingleConnectionCache, SnowflakeDbConnectionPool.GetConnectionPoolVersion());
+            Assert.Equal(sessionPool1, sessionPool2);
         }
     }
 }

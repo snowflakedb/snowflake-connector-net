@@ -154,7 +154,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             var authenticator = (OAuthClientCredentialsAuthenticator)session.GetAuthenticator();
             Assert.NotNull(authenticator.AccessToken);
-            Assert.AreEqual(expectedAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+            Assert.Equal(expectedAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
         }
 
         private SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")

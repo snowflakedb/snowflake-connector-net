@@ -140,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/latest/dynamic/instance-identity/document")
                 .Respond(HttpStatusCode.OK, "application/json", "{}");
 
-            Assert.AreEqual(true, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(true, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
         }
 
         [Test]
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Put, "http://169.254.169.254/latest/api/token")
                 .Respond(HttpStatusCode.Forbidden);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
         }
 
         [Test]
@@ -162,7 +162,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/latest/dynamic/instance-identity/document")
                 .Respond(HttpStatusCode.NotFound);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
         }
 
         [Test]
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Put, "http://169.254.169.254/latest/api/token")
                 .Throw(new HttpRequestException("Connection refused"));
 
-            Assert.AreEqual(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
         }
 
         // --- DetectAzureVm ---
@@ -184,7 +184,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/metadata/instance?api-version=2021-02-01")
                 .Respond(HttpStatusCode.OK, "application/json", "{}");
 
-            Assert.AreEqual(true, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(true, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
         }
 
         [Test]
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/metadata/instance?api-version=2021-02-01")
                 .Respond(HttpStatusCode.NotFound);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
         }
 
         [Test]
@@ -204,7 +204,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/metadata/instance?api-version=2021-02-01")
                 .Throw(new HttpRequestException("Connection refused"));
 
-            Assert.AreEqual(false, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
         }
 
         // --- DetectAzureManagedIdentity ---
@@ -217,7 +217,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(AzureWebJobsStorage, "DefaultEndpointsProtocol=https;...");
             Environment.SetEnvironmentVariable(IdentityHeader, "some-value");
 
-            Assert.AreEqual(true, await PlatformDetection.DetectAzureManagedIdentityAsync());
+            Assert.Equal(true, await PlatformDetection.DetectAzureManagedIdentityAsync());
         }
 
         [Test]
@@ -228,7 +228,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(FunctionsExtensionVersion, "~4");
             Environment.SetEnvironmentVariable(AzureWebJobsStorage, "DefaultEndpointsProtocol=https;...");
 
-            Assert.AreEqual(false, await PlatformDetection.DetectAzureManagedIdentityAsync());
+            Assert.Equal(false, await PlatformDetection.DetectAzureManagedIdentityAsync());
         }
 
         [Test]
@@ -238,7 +238,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/metadata/identity/oauth2/token*")
                 .Respond(HttpStatusCode.OK, "application/json", "{}");
 
-            Assert.AreEqual(true, await PlatformDetection.DetectAzureManagedIdentityAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(true, await PlatformDetection.DetectAzureManagedIdentityAsync(mockHttp.ToHttpClient()));
         }
 
         [Test]
@@ -248,7 +248,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/metadata/identity/oauth2/token*")
                 .Respond(HttpStatusCode.BadRequest);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectAzureManagedIdentityAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectAzureManagedIdentityAsync(mockHttp.ToHttpClient()));
         }
 
         // --- DetectGceVm ---
@@ -265,7 +265,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                     return response;
                 });
 
-            Assert.AreEqual(true, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(true, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
         }
 
         [Test]
@@ -275,7 +275,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://metadata.google.internal")
                 .Respond(HttpStatusCode.OK);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
         }
 
         [Test]
@@ -285,7 +285,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://metadata.google.internal")
                 .Throw(new HttpRequestException("Host not found"));
 
-            Assert.AreEqual(false, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
         }
 
         // --- RunDetectionAsync (disable env var) ---
@@ -295,7 +295,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             Environment.SetEnvironmentVariable(PlatformDetection.DisableEnvVar, "true");
             var result = await PlatformDetection.RunDetectionAsync();
-            CollectionAssert.AreEqual(new[] { "disabled" }, result);
+            CollectionAssert.Equal(new[] { "disabled" }, result);
         }
 
         [Test]
@@ -303,7 +303,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             Environment.SetEnvironmentVariable(PlatformDetection.DisableEnvVar, "TRUE");
             var result = await PlatformDetection.RunDetectionAsync();
-            CollectionAssert.AreEqual(new[] { "disabled" }, result);
+            CollectionAssert.Equal(new[] { "disabled" }, result);
         }
 
         // --- AggregateResults ---
@@ -314,7 +314,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var names = new[] { "platform_a", "platform_b" };
             var results = new bool?[] { true, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            CollectionAssert.AreEqual(new[] { "platform_a" }, aggregated);
+            CollectionAssert.Equal(new[] { "platform_a" }, aggregated);
         }
 
         [Test]
@@ -323,7 +323,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var names = new[] { "platform_a", "platform_b" };
             var results = new bool?[] { null, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            CollectionAssert.AreEqual(new[] { "platform_a_timeout" }, aggregated);
+            CollectionAssert.Equal(new[] { "platform_a_timeout" }, aggregated);
         }
 
         [Test]
@@ -341,7 +341,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var names = new[] { "platform_a", "platform_b", "platform_c" };
             var results = new bool?[] { true, null, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            CollectionAssert.AreEqual(new[] { "platform_a", "platform_b_timeout" }, aggregated);
+            CollectionAssert.Equal(new[] { "platform_a", "platform_b_timeout" }, aggregated);
         }
 
         // --- DetectGcpIdentity ---
@@ -353,7 +353,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email")
                 .Respond(HttpStatusCode.OK, "text/plain", "sa@project.iam.gserviceaccount.com");
 
-            Assert.AreEqual(true, await PlatformDetection.DetectGcpIdentityAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(true, await PlatformDetection.DetectGcpIdentityAsync(mockHttp.ToHttpClient()));
         }
 
         [Test]
@@ -363,7 +363,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email")
                 .Respond(HttpStatusCode.NotFound);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectGcpIdentityAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectGcpIdentityAsync(mockHttp.ToHttpClient()));
         }
     }
 }

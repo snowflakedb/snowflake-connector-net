@@ -42,11 +42,11 @@ namespace Snowflake.Data.Tests.UnitTests
             task.Wait();
 
             // Assert
-            Assert.AreEqual(numberOfRecordBatch, chunk.RecordBatch.Count);
+            Assert.Equal(numberOfRecordBatch, chunk.RecordBatch.Count);
             for (var i = 0; i < numberOfRecordBatch; i++)
             {
                 var numberOfRecordsInBatch = 10 * i;
-                Assert.AreEqual(numberOfRecordsInBatch, chunk.RecordBatch[i].Length);
+                Assert.Equal(numberOfRecordsInBatch, chunk.RecordBatch[i].Length);
             }
         }
     }

@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _byte = Encoding.UTF8.GetBytes(expectedLongValue.ToString());
 
             long actualLongValue = FastParser.FastParseInt64(_byte, 0, _byte.Length);
-            Assert.AreEqual(expectedLongValue, actualLongValue);
+            Assert.Equal(expectedLongValue, actualLongValue);
         }
 
         [Test]
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _byte = Encoding.UTF8.GetBytes(expectedIntValue.ToString());
 
             int actualIntValue = FastParser.FastParseInt32(_byte, 0, _byte.Length);
-            Assert.AreEqual(expectedIntValue, actualIntValue);
+            Assert.Equal(expectedIntValue, actualIntValue);
         }
 
         [Test]
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _byte = Encoding.UTF8.GetBytes(int64MaxValuePlusOne.ToString());
 
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
-            Assert.AreEqual(int64MaxValuePlusOne, actualDecimalValue);
+            Assert.Equal(int64MaxValuePlusOne, actualDecimalValue);
         }
 
         [Test]
@@ -110,7 +110,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _byte = Encoding.UTF8.GetBytes(int64MaxValuePlusOneWithDecimalString);
 
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
-            Assert.AreEqual(int64MaxValuePlusOneWithDecimal, actualDecimalValue);
+            Assert.Equal(int64MaxValuePlusOneWithDecimal, actualDecimalValue);
         }
 
         [Test]
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _byte = Encoding.UTF8.GetBytes(expectedDecimalValue.ToString());
 
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
-            Assert.AreEqual(expectedDecimalValue, actualDecimalValue);
+            Assert.Equal(expectedDecimalValue, actualDecimalValue);
         }
 
         [Test]
@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _byte = Encoding.UTF8.GetBytes(expectedDecimalValue.ToString());
 
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
-            Assert.AreEqual(expectedDecimalValue, actualDecimalValue);
+            Assert.Equal(expectedDecimalValue, actualDecimalValue);
         }
 
         [Test]
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _byte = Encoding.UTF8.GetBytes(expectedDecimalValue.ToString());
 
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
-            Assert.AreEqual(expectedDecimalValue, actualDecimalValue);
+            Assert.Equal(expectedDecimalValue, actualDecimalValue);
         }
 
         [Test]

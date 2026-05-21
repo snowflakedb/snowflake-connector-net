@@ -46,14 +46,14 @@ internal sealed class SessionTelemetryModuleTest
         var activity = new Activity("whatever");
         activity.Start();
         module.OnActivityStoppedImpl(activity);
-        Assert.AreEqual(1, ((ISessionTelemetryModule)module).CurrentBufferSize);
+        Assert.Equal(1, ((ISessionTelemetryModule)module).CurrentBufferSize);
         GC.KeepAlive(module);
 
         // Act - double dispose should not throw
         Assert.DoesNotThrow(() =>
         {
             module.Dispose();
-            Assert.AreEqual(0, ((ISessionTelemetryModule)module).CurrentBufferSize);
+            Assert.Equal(0, ((ISessionTelemetryModule)module).CurrentBufferSize);
             module.Dispose();
         });
     }
@@ -93,20 +93,20 @@ internal sealed class SessionTelemetryModuleTest
 
         // Assert
         Assert.NotNull(capturedBody);
-        Assert.AreEqual(expectedLogCount, capturedBody.Logs.Count);
+        Assert.Equal(expectedLogCount, capturedBody.Logs.Count);
         // First entry is always the synthetic activity event
-        Assert.AreEqual("TestOp", capturedBody.Logs[0].Message[TelemetryField.EventName]);
+        Assert.Equal("TestOp", capturedBody.Logs[0].Message[TelemetryField.EventName]);
         foreach (var log in capturedBody.Logs)
         {
-            Assert.AreEqual("client_activity", log.Message[TelemetryField.Type]);
-            Assert.AreEqual(".NET", log.Message[TelemetryField.DriverType]);
-            Assert.AreEqual(expectedStatus, log.Message[TelemetryField.StatusCode]);
+            Assert.Equal("client_activity", log.Message[TelemetryField.Type]);
+            Assert.Equal(".NET", log.Message[TelemetryField.DriverType]);
+            Assert.Equal(expectedStatus, log.Message[TelemetryField.StatusCode]);
             Assert.NotNull(log.Message[TelemetryField.DriverVersion]);
         }
         if (event1 != null)
-            Assert.AreEqual(event1, capturedBody.Logs[1].Message[TelemetryField.EventName]);
+            Assert.Equal(event1, capturedBody.Logs[1].Message[TelemetryField.EventName]);
         if (event2 != null)
-            Assert.AreEqual(event2, capturedBody.Logs[2].Message[TelemetryField.EventName]);
+            Assert.Equal(event2, capturedBody.Logs[2].Message[TelemetryField.EventName]);
     }
 
     [Test]
@@ -132,10 +132,10 @@ internal sealed class SessionTelemetryModuleTest
 
         // Assert
         Assert.NotNull(capturedBody);
-        Assert.AreEqual(3, capturedBody.Logs.Count);
-        Assert.AreEqual("Op1", capturedBody.Logs[0].Message[TelemetryField.EventName]);
-        Assert.AreEqual("Op2", capturedBody.Logs[1].Message[TelemetryField.EventName]);
-        Assert.AreEqual("Op3", capturedBody.Logs[2].Message[TelemetryField.EventName]);
+        Assert.Equal(3, capturedBody.Logs.Count);
+        Assert.Equal("Op1", capturedBody.Logs[0].Message[TelemetryField.EventName]);
+        Assert.Equal("Op2", capturedBody.Logs[1].Message[TelemetryField.EventName]);
+        Assert.Equal("Op3", capturedBody.Logs[2].Message[TelemetryField.EventName]);
     }
 
     [Test]
@@ -170,10 +170,10 @@ internal sealed class SessionTelemetryModuleTest
 
         // Assert
         Assert.NotNull(capturedBody);
-        Assert.AreEqual(3, capturedBody.Logs.Count);
-        Assert.AreEqual("Op1", capturedBody.Logs[0].Message[TelemetryField.EventName]);
-        Assert.AreEqual("Op2", capturedBody.Logs[1].Message[TelemetryField.EventName]);
-        Assert.AreEqual("Op3", capturedBody.Logs[2].Message[TelemetryField.EventName]);
+        Assert.Equal(3, capturedBody.Logs.Count);
+        Assert.Equal("Op1", capturedBody.Logs[0].Message[TelemetryField.EventName]);
+        Assert.Equal("Op2", capturedBody.Logs[1].Message[TelemetryField.EventName]);
+        Assert.Equal("Op3", capturedBody.Logs[2].Message[TelemetryField.EventName]);
     }
 
     [Test]
@@ -203,7 +203,7 @@ internal sealed class SessionTelemetryModuleTest
 
         // Assert
         Assert.NotNull(capturedBody);
-        Assert.AreEqual("MyApp.Instrumentation", capturedBody.Logs.Single().Message[TelemetryField.Source]);
+        Assert.Equal("MyApp.Instrumentation", capturedBody.Logs.Single().Message[TelemetryField.Source]);
     }
 
     [Test]
@@ -495,9 +495,9 @@ internal sealed class SessionTelemetryModuleTest
         // Assert
         Assert.NotNull(capturedBody);
         var log = capturedBody.Logs.First();
-        Assert.AreEqual("hello", log.Message["tag.safe.tag"]);
+        Assert.Equal("hello", log.Message["tag.safe.tag"]);
         // The password value should be masked by SecretDetector
-        Assert.AreEqual("password=****", log.Message["tag.credential"]);
+        Assert.Equal("password=****", log.Message["tag.credential"]);
     }
 
     [Test]
@@ -558,18 +558,18 @@ internal sealed class SessionTelemetryModuleTest
 
         // Assert
         Assert.NotNull(capturedBody);
-        Assert.AreEqual(2, capturedBody.Logs.Count);
+        Assert.Equal(2, capturedBody.Logs.Count);
 
         // Synthetic event carries activity-level tags
         var syntheticLog = capturedBody.Logs[0];
-        Assert.AreEqual("MyOp", syntheticLog.Message[TelemetryField.EventName]);
-        Assert.AreEqual("session_value", syntheticLog.Message["tag.session.tag"]);
+        Assert.Equal("MyOp", syntheticLog.Message[TelemetryField.EventName]);
+        Assert.Equal("session_value", syntheticLog.Message["tag.session.tag"]);
         Assert.False(syntheticLog.Message.ContainsKey("tag.event.tag"));
 
         // Explicit event carries its own tags
         var eventLog = capturedBody.Logs[1];
-        Assert.AreEqual("Step1", eventLog.Message[TelemetryField.EventName]);
-        Assert.AreEqual("event_value", eventLog.Message["tag.event.tag"]);
+        Assert.Equal("Step1", eventLog.Message[TelemetryField.EventName]);
+        Assert.Equal("event_value", eventLog.Message["tag.event.tag"]);
         Assert.False(eventLog.Message.ContainsKey("tag.session.tag"));
     }
 

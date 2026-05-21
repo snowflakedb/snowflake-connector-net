@@ -32,21 +32,21 @@ class SFConnectionITAsync : SFBaseTestAsync
         {
             conn.ConnectionString = ConnectionString;
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
             // Data source is empty string for now
-            Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
+            Assert.Equal("", ((SnowflakeDbConnection)conn).DataSource);
 
             string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
             if (!string.Equals(serverVersion, "Dev"))
             {
                 string[] versionElements = serverVersion.Split('.');
-                Assert.AreEqual(3, versionElements.Length);
+                Assert.Equal(3, versionElements.Length);
             }
 
             conn.Close();
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
 
@@ -64,10 +64,10 @@ class SFConnectionITAsync : SFBaseTestAsync
                 conn.ConnectionString = ConnectionString;
                 conn.ConnectionString += $"application={appName}";
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
 
                 conn.Close();
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -91,7 +91,7 @@ class SFConnectionITAsync : SFBaseTestAsync
                     AssertIsConnectionFailure(e);
                 }
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
     }
@@ -142,7 +142,7 @@ class SFConnectionITAsync : SFBaseTestAsync
                 "unknown",
                 testConfig.password);
 
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
             try
             {
                 conn.Open();
@@ -155,7 +155,7 @@ class SFConnectionITAsync : SFBaseTestAsync
                 AssertIsConnectionFailure(e);
             }
 
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
 
@@ -213,12 +213,12 @@ class SFConnectionITAsync : SFBaseTestAsync
     {
         Assert.NotNull(snowflakeDbConnection);
         Assert.False(snowflakeDbConnection.IsOpen()); // check via public method
-        Assert.AreEqual(ConnectionState.Closed, snowflakeDbConnection.State); // ensure internal state is expected
+        Assert.Equal(ConnectionState.Closed, snowflakeDbConnection.State); // ensure internal state is expected
     }
 
     private static void AssertIsConnectionFailure(SnowflakeDbException e)
     {
-        Assert.AreEqual(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
+        Assert.Equal(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, e.SqlState);
     }
 
     [Test]
@@ -262,7 +262,7 @@ class SFConnectionITAsync : SFBaseTestAsync
                 testConfig.warehouse,
                 testConfig.user,
                 testConfig.password);
-            Assert.AreEqual(conn1.State, ConnectionState.Closed);
+            Assert.Equal(conn1.State, ConnectionState.Closed);
 
             conn1.Open();
             using (IDbCommand cmd = conn1.CreateCommand())
@@ -270,12 +270,12 @@ class SFConnectionITAsync : SFBaseTestAsync
                 cmd.CommandText = $"SELECT count(*) FROM {TableName}";
                 IDataReader reader = cmd.ExecuteReader();
                 Assert.True(reader.Read());
-                Assert.AreEqual(1, reader.GetInt32(0));
+                Assert.Equal(1, reader.GetInt32(0));
             }
 
             conn1.Close();
 
-            Assert.AreEqual(ConnectionState.Closed, conn1.State);
+            Assert.Equal(ConnectionState.Closed, conn1.State);
         }
 
         using (IDbCommand cmd = conn.CreateCommand())
@@ -302,7 +302,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 
             conn.ConnectionString = maxRetryConnStr;
 
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
             {
@@ -354,7 +354,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(390201, e.ErrorCode);
+                Assert.Equal(390201, e.ErrorCode);
             }
         }
 
@@ -392,7 +392,7 @@ class SFConnectionITAsync : SFBaseTestAsync
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(expectedErrorCode[i], e.ErrorCode);
+                    Assert.Equal(expectedErrorCode[i], e.ErrorCode);
                 }
             }
         }
@@ -407,7 +407,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             conn.ConnectionString = ConnectionString + ";invalidProperty=invalidvalue;";
 
             conn.Open();
-            Assert.AreEqual(conn.State, ConnectionState.Open);
+            Assert.Equal(conn.State, ConnectionState.Open);
             conn.Close();
         }
     }
@@ -421,17 +421,17 @@ class SFConnectionITAsync : SFBaseTestAsync
         {
             conn.ConnectionString = ConnectionString;
 
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
 
             conn.Open();
 
-            Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
-            Assert.AreEqual(conn.State, ConnectionState.Open);
+            Assert.Equal(testConfig.database.ToUpper(), conn.Database);
+            Assert.Equal(conn.State, ConnectionState.Open);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 conn.ChangeDatabase("SNOWFLAKE_SAMPLE_DATA");
-                Assert.AreEqual("SNOWFLAKE_SAMPLE_DATA", conn.Database);
+                Assert.Equal("SNOWFLAKE_SAMPLE_DATA", conn.Database);
             }
 
             conn.ChangeDatabase(testConfig.database);
@@ -451,7 +451,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             if (string.IsNullOrEmpty(testConfig.host))
             {
                 conn.Open();
-                Assert.AreEqual(conn.State, ConnectionState.Open);
+                Assert.Equal(conn.State, ConnectionState.Open);
                 conn.Close();
             }
         }
@@ -481,12 +481,12 @@ class SFConnectionITAsync : SFBaseTestAsync
                 testConfig.account
             );
             conn.Open();
-            Assert.AreEqual(conn.State, ConnectionState.Open);
+            Assert.Equal(conn.State, ConnectionState.Open);
 
             using (IDbCommand command = conn.CreateCommand())
             {
                 command.CommandText = "select current_role()";
-                Assert.AreEqual(command.ExecuteScalar().ToString(), "PUBLIC");
+                Assert.Equal(command.ExecuteScalar().ToString(), "PUBLIC");
 
                 command.CommandText = "select current_database()";
                 CollectionAssert.Contains(new[] { "SNOWFLAKE_SAMPLE_DATA", "" }, command.ExecuteScalar().ToString());
@@ -496,7 +496,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 
                 command.CommandText = "select current_warehouse()";
                 // Command will return empty string if the hardcoded warehouse does not exist.
-                Assert.AreEqual("", command.ExecuteScalar().ToString());
+                Assert.Equal("", command.ExecuteScalar().ToString());
             }
 
             conn.Close();
@@ -609,14 +609,14 @@ class SFConnectionITAsync : SFBaseTestAsync
                     = ConnectionStringWithoutAuth
                       + ";authenticator=oauth;token=notAValidOAuthToken";
                 conn.Open();
-                Assert.AreEqual(ConnectionState.Open, conn.State);
+                Assert.Equal(ConnectionState.Open, conn.State);
                 Assert.Fail();
             }
         }
         catch (SnowflakeDbException e)
         {
             // Invalid OAuth access token
-            Assert.AreEqual(390303, e.ErrorCode);
+            Assert.Equal(390303, e.ErrorCode);
         }
     }
 
@@ -636,7 +636,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             {
                 // Expected
                 s_logger.Debug("Failed opening connection ", e);
-                Assert.AreEqual(270001, e.ErrorCode); //Internal error
+                Assert.Equal(270001, e.ErrorCode); //Internal error
                 AssertIsConnectionFailure(e);
             }
         }
@@ -667,7 +667,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 
             // Assert
             // The connection would fail to open if the web proxy would be used because the proxy is configured to a non-existent host.
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -693,7 +693,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             var exception = Assert.Throws<SnowflakeDbException>(() => conn.Open());
 
             // Assert
-            Assert.AreEqual(270001, exception.ErrorCode);
+            Assert.Equal(270001, exception.ErrorCode);
             AssertIsConnectionFailure(exception);
         }
     }
@@ -771,12 +771,12 @@ class SFConnectionITAsync : SFBaseTestAsync
 
             conn.ConnectionString = infiniteLoginTimeOut;
 
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
 
             CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
             Task connectTask = conn.OpenAsync(connectionCancelToken.Token);
 
-            Assert.AreEqual(ConnectionState.Connecting, conn.State);
+            Assert.Equal(ConnectionState.Connecting, conn.State);
 
             logger.Debug("connectionCancelToken.Cancel ");
             connectionCancelToken.Cancel();
@@ -787,13 +787,13 @@ class SFConnectionITAsync : SFBaseTestAsync
             }
             catch (AggregateException e)
             {
-                Assert.AreEqual(
+                Assert.Equal(
                     "System.Threading.Tasks.TaskCanceledException",
                     e.InnerException.GetType().ToString());
             }
 
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
-            Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
+            Assert.Equal(ConnectionState.Closed, conn.State);
+            Assert.Equal(timeoutSec, conn.ConnectionTimeout);
         }
     }
 
@@ -808,7 +808,7 @@ class SFConnectionITAsync : SFBaseTestAsync
                 timeoutSec);
             conn.ConnectionString = loginTimeOut5sec;
 
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
@@ -829,8 +829,8 @@ class SFConnectionITAsync : SFBaseTestAsync
             // But never more than 3 sec (buffer time) after the defined timeout
             Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (timeoutSec + 3) * 1000);
 
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
-            Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
+            Assert.Equal(ConnectionState.Closed, conn.State);
+            Assert.Equal(timeoutSec, conn.ConnectionTimeout);
         }
     }
 
@@ -847,7 +847,7 @@ class SFConnectionITAsync : SFBaseTestAsync
                 connectionTimeout, retryTimeout);
             conn.ConnectionString = loginTimeOut5sec;
 
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
@@ -868,8 +868,8 @@ class SFConnectionITAsync : SFBaseTestAsync
             // But never more than 2 sec (buffer time) after the defined timeout
             Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (retryTimeout + 2) * 1000);
 
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
-            Assert.AreEqual(retryTimeout, conn.ConnectionTimeout);
+            Assert.Equal(ConnectionState.Closed, conn.State);
+            Assert.Equal(retryTimeout, conn.ConnectionTimeout);
         }
     }
 
@@ -882,7 +882,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             // unlimited retry count to trigger the timeout
             conn.ConnectionString = ConnectionString + "maxHttpRetries=0";
 
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
@@ -903,8 +903,8 @@ class SFConnectionITAsync : SFBaseTestAsync
             // But never more because there's no connection timeout remaining (with 2 seconds margin)
             Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (conn.ConnectionTimeout + 2) * 1000);
 
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+            Assert.Equal(ConnectionState.Closed, conn.State);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
         }
     }
 
@@ -919,7 +919,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 
             conn.ConnectionString = invalidConnectionString;
 
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
             Task connectTask = null;
             try
             {
@@ -937,7 +937,7 @@ class SFConnectionITAsync : SFBaseTestAsync
                 Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
             }
 
-            Assert.AreEqual(ConnectionState.Closed, conn.State);
+            Assert.Equal(ConnectionState.Closed, conn.State);
             Assert.True(connectTask.IsFaulted);
         }
     }
@@ -952,28 +952,28 @@ class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = ConnectionString;
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
             Task task = null;
 
             // Close the connection. It's not opened yet, but it should not have any issue
             task = conn.CloseAsync(CancellationToken.None);
             task.Wait();
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
 
             // Open the connection
             task = conn.OpenAsync(CancellationToken.None);
             task.Wait();
-            Assert.AreEqual(conn.State, ConnectionState.Open);
+            Assert.Equal(conn.State, ConnectionState.Open);
 
             // Close the opened connection
             task = conn.CloseAsync(CancellationToken.None);
             task.Wait();
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
 
             // Close the connection again.
             task = conn.CloseAsync(CancellationToken.None);
             task.Wait();
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
         }
     }
 
@@ -988,28 +988,28 @@ class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = ConnectionString;
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
             Task task = null;
 
             // Close the connection. It's not opened yet, but it should not have any issue
             task = conn.CloseAsync();
             task.Wait();
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
 
             // Open the connection
             task = conn.OpenAsync();
             task.Wait();
-            Assert.AreEqual(conn.State, ConnectionState.Open);
+            Assert.Equal(conn.State, ConnectionState.Open);
 
             // Close the opened connection
             task = conn.CloseAsync();
             task.Wait();
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
 
             // Close the connection again.
             task = conn.CloseAsync();
             task.Wait();
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
         }
     }
 #endif
@@ -1020,13 +1020,13 @@ class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
         {
             conn.ConnectionString = ConnectionString;
-            Assert.AreEqual(conn.State, ConnectionState.Closed);
+            Assert.Equal(conn.State, ConnectionState.Closed);
             Task task = null;
 
             // Open the connection
             task = conn.OpenAsync(CancellationToken.None);
             task.Wait();
-            Assert.AreEqual(conn.State, ConnectionState.Open);
+            Assert.Equal(conn.State, ConnectionState.Open);
 
             // Close the opened connection
             task = conn.CloseAsync(CancellationToken.None);
@@ -1037,10 +1037,10 @@ class SFConnectionITAsync : SFBaseTestAsync
             }
             catch (AggregateException e)
             {
-                Assert.AreEqual(MockCloseSessionException.SESSION_CLOSE_ERROR,
+                Assert.Equal(MockCloseSessionException.SESSION_CLOSE_ERROR,
                     ((SnowflakeDbException)(e.InnerException).InnerException).ErrorCode);
             }
-            Assert.AreEqual(conn.State, ConnectionState.Open);
+            Assert.Equal(conn.State, ConnectionState.Open);
         }
     }
 
@@ -1050,18 +1050,18 @@ class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection(ConnectionString))
         {
             conn.Open();
-            Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
+            Assert.Equal(false, conn.HasActiveExplicitTransaction());
 
             var trans = conn.BeginTransaction();
-            Assert.AreEqual(true, conn.HasActiveExplicitTransaction());
+            Assert.Equal(true, conn.HasActiveExplicitTransaction());
             trans.Rollback();
-            Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
+            Assert.Equal(false, conn.HasActiveExplicitTransaction());
 
             conn.BeginTransaction().Rollback();
-            Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
+            Assert.Equal(false, conn.HasActiveExplicitTransaction());
 
             conn.BeginTransaction().Commit();
-            Assert.AreEqual(false, conn.HasActiveExplicitTransaction());
+            Assert.Equal(false, conn.HasActiveExplicitTransaction());
         }
     }
 
@@ -1125,7 +1125,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             conn.ConnectionString = ConnectionStringWithoutAuth +
                                     $";authenticator={oktaUrl};user={oktaUser};password={oktaPassword};";
             conn.Open();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -1143,7 +1143,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             command.CommandText = "SELECT QUERY_TAG FROM table(information_schema.query_history_by_session())";
             var queryTag = command.ExecuteScalar();
 
-            Assert.AreEqual(expectedQueryTag, queryTag);
+            Assert.Equal(expectedQueryTag, queryTag);
         }
     }
 
@@ -1154,7 +1154,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         var poolVersion = SnowflakeDbConnectionPool.GetConnectionPoolVersion();
 
         // assert
-        Assert.AreEqual(ConnectionPoolType.MultipleConnectionPool, poolVersion);
+        Assert.Equal(ConnectionPoolType.MultipleConnectionPool, poolVersion);
     }
 
     [Test]
@@ -1175,7 +1175,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             // Authenticate to retrieve and store the token if doesn't exist or invalid
             Task connectTask = conn.OpenAsync(CancellationToken.None);
             connectTask.Wait();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -1199,7 +1199,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             connectTask.Wait();
 
             // assert
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -1220,7 +1220,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             Assert.True(thrown.InnerException is TaskCanceledException || thrown.InnerException is SnowflakeDbException);
             if (thrown.InnerException is SnowflakeDbException)
                 SnowflakeDbExceptionAssert.HasErrorCode(thrown.InnerException, SFError.INTERNAL_ERROR);
-            Assert.AreEqual(ConnectionState.Closed, connection.State);
+            Assert.Equal(ConnectionState.Closed, connection.State);
         }
     }
 
@@ -1238,7 +1238,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 
             // assert
             Assert.InstanceOf<TaskCanceledException>(thrown.InnerException);
-            Assert.AreEqual(ConnectionState.Closed, connection.State);
+            Assert.Equal(ConnectionState.Closed, connection.State);
         }
     }
 
@@ -1265,7 +1265,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             // Authenticate to retrieve and store the token if doesn't exist or invalid
             Task connectTask = conn.OpenAsync(CancellationToken.None);
             connectTask.Wait();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
 
         using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
@@ -1275,7 +1275,7 @@ class SFConnectionITAsync : SFBaseTestAsync
             // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
             Task connectTask = conn.OpenAsync(CancellationToken.None);
             connectTask.Wait();
-            Assert.AreEqual(ConnectionState.Open, conn.State);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
 
     }
@@ -1324,7 +1324,7 @@ class SFConnectionITAsync : SFBaseTestAsync
         watchClosedFinished.Stop();
 
         // assert
-        Assert.AreEqual(1, restRequester.CloseRequests.Count);
+        Assert.Equal(1, restRequester.CloseRequests.Count);
         Assert.Less(watchClose.Elapsed.Duration(), TimeSpan.FromSeconds(5)); // close executed immediately
         Assert.GreaterOrEqual(watchClosedFinished.Elapsed.Duration(), TimeSpan.FromSeconds(10)); // while background task took more time
     }

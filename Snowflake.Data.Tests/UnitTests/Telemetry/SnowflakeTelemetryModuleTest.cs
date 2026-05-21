@@ -52,7 +52,7 @@ public sealed class SnowflakeTelemetryModuleTest
         // Act & Assert - should not throw
         Assert.DoesNotThrow(() => SnowflakeTelemetryModule.Register(session));
         SnowflakeTelemetryModule.TryGetSession(session.sessionId, out var sessionModule);
-        Assert.AreEqual(session.sessionToken, sessionModule.SessionToken);
+        Assert.Equal(session.sessionToken, sessionModule.SessionToken);
 
         // Cleanup
         SnowflakeTelemetryModule.Unregister(sessionId);
@@ -70,12 +70,12 @@ public sealed class SnowflakeTelemetryModuleTest
         // Update token on session
         session.sessionToken = $"new-token-456-{Guid.NewGuid()}";
         SnowflakeTelemetryModule.TryGetSession(session.sessionId, out var sessionModule);
-        Assert.AreEqual(staleSessionToken, sessionModule.SessionToken);
+        Assert.Equal(staleSessionToken, sessionModule.SessionToken);
 
         // Act - second register should update token, not create new module
         Assert.DoesNotThrow(() => SnowflakeTelemetryModule.Register(session));
         SnowflakeTelemetryModule.TryGetSession(session.sessionId, out var sessionModule2);
-        Assert.AreEqual(sessionModule, sessionModule2);
+        Assert.Equal(sessionModule, sessionModule2);
 
         // Cleanup
         SnowflakeTelemetryModule.Unregister(sessionId);
@@ -121,10 +121,10 @@ public sealed class SnowflakeTelemetryModuleTest
         sessionModule.OnActivityStopped(activity);
 
         // Act
-        Assert.AreEqual(1, sessionModule.CurrentBufferSize);
+        Assert.Equal(1, sessionModule.CurrentBufferSize);
         await SnowflakeTelemetryModule.UnregisterAsync(sessionId, CancellationToken.None);
         Assert.True(sessionModule.IsDisposed);
-        Assert.AreEqual(0, sessionModule.CurrentBufferSize);
+        Assert.Equal(0, sessionModule.CurrentBufferSize);
 
         // Assert - calling again should be no-op
         await SnowflakeTelemetryModule.UnregisterAsync(sessionId, CancellationToken.None);
@@ -161,7 +161,7 @@ public sealed class SnowflakeTelemetryModuleTest
         if (!SpinWait.SpinUntil(() => sessionModule.CurrentBufferSize == 1, TimeSpan.FromMinutes(1)))
             Assert.Fail("Expected to observe activity!");
 
-        Assert.AreEqual(0, sessionModule2.CurrentBufferSize);
+        Assert.Equal(0, sessionModule2.CurrentBufferSize);
 
         // Cleanup
         SnowflakeTelemetryModule.Unregister(sessionId);

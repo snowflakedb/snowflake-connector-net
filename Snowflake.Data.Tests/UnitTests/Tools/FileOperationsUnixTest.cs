@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(s_content, result);
+            Assert.Equal(s_content, result);
         }
 
         [Test]
@@ -157,7 +157,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // assert
             Assert.True(File.Exists(DestFilePath));
             Assert.True(s_fileOperations.IsFileSafe(DestFilePath));
-            Assert.AreEqual(s_content, File.ReadAllText(DestFilePath));
+            Assert.Equal(s_content, File.ReadAllText(DestFilePath));
         }
 
         [Test]

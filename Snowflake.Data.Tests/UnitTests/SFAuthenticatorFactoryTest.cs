@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetAuthenticatorKeyPairWithMissingKey()
         {
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator(KeyPairAuthenticator.AUTH_NAME));
-            Assert.AreEqual(SFError.INVALID_CONNECTION_STRING.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
+            Assert.Equal(SFError.INVALID_CONNECTION_STRING.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
         }
 
         [Test]
@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetAuthenticatorOAuthWithMissingToken()
         {
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator(OAuthAuthenticator.AUTH_NAME));
-            Assert.AreEqual(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
+            Assert.Equal(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetAuthenticatorUnknown()
         {
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator("Unknown"));
-            Assert.AreEqual(SFError.UNKNOWN_AUTHENTICATOR.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
+            Assert.Equal(SFError.UNKNOWN_AUTHENTICATOR.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
         }
     }
 }

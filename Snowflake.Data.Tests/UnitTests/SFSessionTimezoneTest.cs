@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             session.ParameterMap[SFSessionParameter.TIMEZONE] = "Asia/Tokyo";
 
-            Assert.AreEqual(TimeZoneInfo.Local, session.GetSessionTimezone());
+            Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
         }
 
         [Test]
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 "account=test;user=test;password=test;HonorSessionTimezone=true",
                 new SessionPropertiesContext());
 
-            Assert.AreEqual(TimeZoneInfo.Local, session.GetSessionTimezone());
+            Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
         }
 
         [Test]
@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             session.ParameterMap[SFSessionParameter.TIMEZONE] = "Invalid/Nowhere";
 
-            Assert.AreEqual(TimeZoneInfo.Local, session.GetSessionTimezone());
+            Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
         }
 
         [Test]
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var first = session.GetSessionTimezone();
             var second = session.GetSessionTimezone();
 
-            Assert.AreSame(first, second);
+            Assert.Same(first, second);
         }
 
         [Test]
@@ -76,8 +76,8 @@ namespace Snowflake.Data.Tests.UnitTests
             var afterUpdate = session.GetSessionTimezone();
             var expectedTokyo = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Asia/Tokyo");
 
-            Assert.AreNotEqual(beforeUpdate, afterUpdate);
-            Assert.AreEqual(expectedTokyo, afterUpdate);
+            Assert.NotEqual(beforeUpdate, afterUpdate);
+            Assert.Equal(expectedTokyo, afterUpdate);
         }
 
         [Test]
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var result = session.GetSessionTimezone();
             var expected = TimeZoneConverter.TZConvert.GetTimeZoneInfo(tzName);
-            Assert.AreEqual(expected, result);
+            Assert.Equal(expected, result);
         }
     }
 }

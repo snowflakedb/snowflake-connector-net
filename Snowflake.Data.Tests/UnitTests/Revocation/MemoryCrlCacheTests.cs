@@ -19,14 +19,14 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Null(cache.Get(CrlUrl1));
             Assert.Null(cache.Get(CrlUrl2));
             cache.Set(CrlUrl1, _crl1);
-            Assert.AreSame(_crl1, cache.Get(CrlUrl1));
+            Assert.Same(_crl1, cache.Get(CrlUrl1));
             Assert.Null(cache.Get(CrlUrl2));
             cache.Set(CrlUrl1, _crl2);
-            Assert.AreSame(_crl2, cache.Get(CrlUrl1));
+            Assert.Same(_crl2, cache.Get(CrlUrl1));
             Assert.Null(cache.Get(CrlUrl2));
             cache.Set(CrlUrl2, _crl1);
-            Assert.AreSame(_crl2, cache.Get(CrlUrl1));
-            Assert.AreSame(_crl1, cache.Get(CrlUrl2));
+            Assert.Same(_crl2, cache.Get(CrlUrl1));
+            Assert.Same(_crl1, cache.Get(CrlUrl2));
         }
     }
 }

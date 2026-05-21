@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.AreEqual("my-spcs-token", token);
+            Assert.Equal("my-spcs-token", token);
         }
 
         [Test]
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.AreEqual("my-spcs-token", token);
+            Assert.Equal("my-spcs-token", token);
         }
 
         [Test]

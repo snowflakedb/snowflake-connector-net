@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.True(response.IsSuccessStatusCode);
-            Assert.AreEqual(expectedQueryId, result.data.queryId);
+            Assert.Equal(expectedQueryId, result.data.queryId);
         }
     }
 

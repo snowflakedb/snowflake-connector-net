@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (IDbTransaction t1 = conn.BeginTransaction())
                 {
                     // Assert
-                    Assert.AreEqual(conn, t1.Connection);
+                    Assert.Equal(conn, t1.Connection);
                 }
             }
         }
@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (IDbTransaction t1 = conn.BeginTransaction())
                 {
                     // Assert
-                    Assert.AreEqual(IsolationLevel.ReadCommitted, t1.IsolationLevel);
+                    Assert.Equal(IsolationLevel.ReadCommitted, t1.IsolationLevel);
                 }
             }
         }
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Console.Write("Row %d: %s, %d", row, dataDate.ToString(), dataInt);
                 row++;
             }
-            Assert.AreEqual(row, 4);
+            Assert.Equal(row, 4);
 
             conn.Close();
         }
@@ -169,7 +169,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Console.Write("Row %d: %s, %d", row, dataDate.ToString(), dataInt);
                 row++;
             }
-            Assert.AreEqual(row, 3);
+            Assert.Equal(row, 3);
 
             conn.Close();
         }

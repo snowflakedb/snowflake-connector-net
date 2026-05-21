@@ -17,7 +17,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var logLevel = EasyLoggingLogLevelExtensions.From(loglevelString);
 
             // assert
-            Assert.AreEqual(expectedLogLevel, logLevel);
+            Assert.Equal(expectedLogLevel, logLevel);
         }
 
         [Test]
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.NotNull(thrown);
-            Assert.AreEqual("Requested value 'unknown' was not found.", thrown.Message);
+            Assert.Equal("Requested value 'unknown' was not found.", thrown.Message);
         }
     }
 }

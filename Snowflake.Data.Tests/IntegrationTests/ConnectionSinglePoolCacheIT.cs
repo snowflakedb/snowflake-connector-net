@@ -45,11 +45,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             var conn1 = new SnowflakeDbConnection(ConnectionString);
             conn1.Open();
-            Assert.AreEqual(ConnectionState.Open, conn1.State);
+            Assert.Equal(ConnectionState.Open, conn1.State);
             conn1.Close();
 
-            Assert.AreEqual(ConnectionState.Closed, conn1.State);
-            Assert.AreEqual(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
+            Assert.Equal(ConnectionState.Closed, conn1.State);
+            Assert.Equal(1, SnowflakeDbConnectionPool.GetPool(ConnectionString).GetCurrentPoolSize());
         }
 
         [Test]
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             const int PoolTimeout = 1;
 
             // reset to default settings in case it changed by other test cases
-            Assert.AreEqual(true, SnowflakeDbConnectionPool.GetPool(connectionString).GetPooling()); // to instantiate pool
+            Assert.Equal(true, SnowflakeDbConnectionPool.GetPool(connectionString).GetPooling()); // to instantiate pool
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             SnowflakeDbConnectionPool.SetTimeout(PoolTimeout);
 

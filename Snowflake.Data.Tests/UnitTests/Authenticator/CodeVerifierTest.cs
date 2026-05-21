@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var result = new CodeVerifier(codeVerifier + illegalCharacters);
 
             // assert
-            Assert.AreEqual(codeVerifier, result.Value);
+            Assert.Equal(codeVerifier, result.Value);
         }
     }
 }

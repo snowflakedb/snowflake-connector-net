@@ -91,8 +91,8 @@ namespace Snowflake.Data.Tests.UnitTests
             RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
 
             // Assert
-            Assert.AreEqual(bucketAndKey[0], location.bucket);
-            Assert.AreEqual(bucketAndKey[1], location.key);
+            Assert.Equal(bucketAndKey[0], location.bucket);
+            Assert.Equal(bucketAndKey[1], location.key);
         }
 
         [Test]
@@ -173,16 +173,16 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (expectedResultStatus == ResultStatus.UPLOADED)
             {
-                Assert.AreEqual(MockAzureClient.ContentLength, fileHeader.contentLength);
-                Assert.AreEqual(MockAzureClient.SFCDigest, fileHeader.digest);
-                Assert.AreEqual(MockAzureClient.AzureIV, fileHeader.encryptionMetadata.iv);
-                Assert.AreEqual(MockAzureClient.AzureKey, fileHeader.encryptionMetadata.key);
-                Assert.AreEqual(MockAzureClient.AzureMatdesc, fileHeader.encryptionMetadata.matDesc);
+                Assert.Equal(MockAzureClient.ContentLength, fileHeader.contentLength);
+                Assert.Equal(MockAzureClient.SFCDigest, fileHeader.digest);
+                Assert.Equal(MockAzureClient.AzureIV, fileHeader.encryptionMetadata.iv);
+                Assert.Equal(MockAzureClient.AzureKey, fileHeader.encryptionMetadata.key);
+                Assert.Equal(MockAzureClient.AzureMatdesc, fileHeader.encryptionMetadata.matDesc);
             }
             else
             {
                 Assert.Null(fileHeader);
-                Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+                Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
             }
         }
 
@@ -283,10 +283,10 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             if (expectedResultStatus == ResultStatus.UPLOADED)
             {
-                Assert.AreEqual(_fileMetadata.uploadSize, _fileMetadata.destFileSize);
+                Assert.Equal(_fileMetadata.uploadSize, _fileMetadata.destFileSize);
             }
 
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -335,7 +335,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _client.DownloadFile(_fileMetadata, t_downloadFileName, Parallel);
 
             // Assert
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
 
@@ -385,7 +385,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await _client.DownloadFileAsync(_fileMetadata, t_downloadFileName, Parallel, _cancellationToken).ConfigureAwait(false);
 
             // Assert
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]
@@ -414,10 +414,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
 
             // assert
-            Assert.AreEqual("something", fileHeader.digest);
-            Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
-            Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
-            Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
+            Assert.Equal("something", fileHeader.digest);
+            Assert.Equal("initVector", fileHeader.encryptionMetadata.iv);
+            Assert.Equal("key", fileHeader.encryptionMetadata.key);
+            Assert.Equal("description", fileHeader.encryptionMetadata.matDesc);
         }
 
         [Test]
@@ -446,9 +446,9 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.Null(fileHeader.digest);
-            Assert.AreEqual("initVector", fileHeader.encryptionMetadata.iv);
-            Assert.AreEqual("key", fileHeader.encryptionMetadata.key);
-            Assert.AreEqual("description", fileHeader.encryptionMetadata.matDesc);
+            Assert.Equal("initVector", fileHeader.encryptionMetadata.iv);
+            Assert.Equal("key", fileHeader.encryptionMetadata.key);
+            Assert.Equal("description", fileHeader.encryptionMetadata.matDesc);
         }
 
         [Test]
@@ -477,7 +477,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
 
             // assert - DOWNLOADED must not be overwritten with UPLOADED
-            Assert.AreEqual(ResultStatus.DOWNLOADED.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(ResultStatus.DOWNLOADED.ToString(), _fileMetadata.resultStatus);
         }
 
         [Test]

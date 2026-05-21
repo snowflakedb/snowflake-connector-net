@@ -89,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(content, result);
+            Assert.Equal(content, result);
         }
 
         [Test]
@@ -111,7 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(content, result);
+            Assert.Equal(content, result);
             var logLines = File.ReadLines(Logger.EasyLoggerManagerTest.FindLogFilePath(logPath));
             Assert.That(logLines, Has.Exactly(0).Matches<string>(s => s.Contains("File is readable by someone other than the owner")));
 
@@ -137,7 +137,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(content, result);
+            Assert.Equal(content, result);
             var logLines = File.ReadLines(Logger.EasyLoggerManagerTest.FindLogFilePath(logPath));
             Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains("File is readable by someone other than the owner")));
 
@@ -305,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
-            Assert.AreEqual(0, bytes.Length);
+            Assert.Equal(0, bytes.Length);
         }
 
         [Test]
@@ -321,7 +321,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
-            CollectionAssert.AreEqual(randomBytes, bytes);
+            CollectionAssert.Equal(randomBytes, bytes);
         }
 
         [Test]
@@ -335,7 +335,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
-            CollectionAssert.AreEqual(expectedBytes, bytes);
+            CollectionAssert.Equal(expectedBytes, bytes);
         }
 
         public static IEnumerable<FileAccessPermissions> UserPermissions()

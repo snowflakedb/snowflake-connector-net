@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             bool actualIsRetryable = HttpUtil.isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
 
-            Assert.AreEqual(expectedIsRetryable, actualIsRetryable);
+            Assert.Equal(expectedIsRetryable, actualIsRetryable);
         }
 
         // Parameters: request url, expected value
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests.UnitTests
             bool isLoginEndpoint = HttpUtil.IsLoginEndpoint(uri.AbsolutePath);
 
             // then
-            Assert.AreEqual(expectedIsLoginEndpoint, isLoginEndpoint);
+            Assert.Equal(expectedIsLoginEndpoint, isLoginEndpoint);
         }
 
         // Parameters: request url, expected value
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests
             bool isOktaSSORequest = HttpUtil.IsOktaSSORequest(uri.Host, uri.AbsolutePath);
 
             // then
-            Assert.AreEqual(expectedIsOktaSSORequest, isOktaSSORequest);
+            Assert.Equal(expectedIsOktaSSORequest, isOktaSSORequest);
         }
 
         // Parameters: time in seconds
@@ -200,7 +200,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
 
                 // assert
-                Assert.AreEqual(expectedLimit, ServicePointManager.DefaultConnectionLimit);
+                Assert.Equal(expectedLimit, ServicePointManager.DefaultConnectionLimit);
             }
             finally
             {
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
 
                 // assert
-                Assert.AreEqual(HttpUtil.DefaultConnectionLimit, ServicePointManager.DefaultConnectionLimit);
+                Assert.Equal(HttpUtil.DefaultConnectionLimit, ServicePointManager.DefaultConnectionLimit);
             }
             finally
             {

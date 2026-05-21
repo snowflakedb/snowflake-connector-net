@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.True(result.success);
-            Assert.AreEqual("Some message!", result.message);
+            Assert.Equal("Some message!", result.message);
         }
 
         [Test]
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.True(result.success);
-            Assert.AreEqual("Some message!", result.message);
+            Assert.Equal("Some message!", result.message);
         }
 
         [Test]
@@ -184,7 +184,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.True(result.success);
-            Assert.AreEqual("Some message!", result.message);
+            Assert.Equal("Some message!", result.message);
         }
 
         [Test]

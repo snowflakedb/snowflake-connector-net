@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var isAvailable = cacheKeys.IsAvailable();
 
             // assert
-            Assert.AreEqual(expectedIsAvailable, isAvailable);
+            Assert.Equal(expectedIsAvailable, isAvailable);
         }
 
         [Test]
@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var isAvailable = cacheKeys.IsAvailable();
 
             // assert
-            Assert.AreEqual(false, isAvailable);
+            Assert.Equal(false, isAvailable);
         }
 
         [Test]
@@ -91,11 +91,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // act/assert
             Assert.True(cacheKeys.IsAvailable());
-            Assert.AreEqual(string.Empty, cacheKeys.GetAccessToken());
+            Assert.Equal(string.Empty, cacheKeys.GetAccessToken());
             cacheKeys.SaveAccessToken(Token);
-            Assert.AreEqual(Token, cacheKeys.GetAccessToken());
+            Assert.Equal(Token, cacheKeys.GetAccessToken());
             cacheKeys.RemoveAccessToken();
-            Assert.AreEqual(string.Empty, cacheKeys.GetAccessToken());
+            Assert.Equal(string.Empty, cacheKeys.GetAccessToken());
         }
 
         [Test]
@@ -107,11 +107,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // act/assert
             Assert.True(cacheKeys.IsAvailable());
-            Assert.AreEqual(string.Empty, cacheKeys.GetRefreshToken());
+            Assert.Equal(string.Empty, cacheKeys.GetRefreshToken());
             cacheKeys.SaveRefreshToken(Token);
-            Assert.AreEqual(Token, cacheKeys.GetRefreshToken());
+            Assert.Equal(Token, cacheKeys.GetRefreshToken());
             cacheKeys.RemoveRefreshToken();
-            Assert.AreEqual(string.Empty, cacheKeys.GetRefreshToken());
+            Assert.Equal(string.Empty, cacheKeys.GetRefreshToken());
         }
     }
 }

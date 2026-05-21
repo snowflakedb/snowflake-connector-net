@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
             var host = WorkflowIdentityAwsAttestationRetriever.GetStsHostName(region);
 
             // assert
-            Assert.AreEqual(expectedHost, host);
+            Assert.Equal(expectedHost, host);
         }
     }
 }

@@ -135,9 +135,9 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 // assert
                 AssertCrlsAreEqual(crl, crlRead);
                 var filePermissions = UnixOperations.Instance.GetFilePermissions(fileName);
-                Assert.AreEqual(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite, filePermissions);
+                Assert.Equal(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite, filePermissions);
                 var dirPermissions = UnixOperations.Instance.GetDirPermissions(tempDirectory);
-                Assert.AreEqual(FileAccessPermissions.UserReadWriteExecute, dirPermissions);
+                Assert.Equal(FileAccessPermissions.UserReadWriteExecute, dirPermissions);
             }
             finally
             {
@@ -528,12 +528,12 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
         private void AssertCrlsAreEqual(Crl expected, Crl actual)
         {
-            Assert.AreEqual(expected.DownloadTime, actual.DownloadTime);
-            Assert.AreEqual(expected.ThisUpdate, actual.ThisUpdate);
-            Assert.AreEqual(expected.NextUpdate, actual.NextUpdate);
-            Assert.AreEqual(expected.IssuerName, actual.IssuerName);
-            CollectionAssert.AreEqual(expected.IssuerDistributionPoints, actual.IssuerDistributionPoints);
-            CollectionAssert.AreEqual(expected.RevokedCertificates, actual.RevokedCertificates);
+            Assert.Equal(expected.DownloadTime, actual.DownloadTime);
+            Assert.Equal(expected.ThisUpdate, actual.ThisUpdate);
+            Assert.Equal(expected.NextUpdate, actual.NextUpdate);
+            Assert.Equal(expected.IssuerName, actual.IssuerName);
+            CollectionAssert.Equal(expected.IssuerDistributionPoints, actual.IssuerDistributionPoints);
+            CollectionAssert.Equal(expected.RevokedCertificates, actual.RevokedCertificates);
         }
     }
 }

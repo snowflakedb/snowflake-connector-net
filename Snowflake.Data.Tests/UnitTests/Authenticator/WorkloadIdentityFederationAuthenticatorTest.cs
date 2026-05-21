@@ -103,9 +103,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         internal void AssertSessionSuccessfullyCreated(SFSession session)
         {
-            Assert.AreEqual(SessionId, session.sessionId);
-            Assert.AreEqual(MasterToken, session.masterToken);
-            Assert.AreEqual(SessionToken, session.sessionToken);
+            Assert.Equal(SessionId, session.sessionId);
+            Assert.Equal(MasterToken, session.masterToken);
+            Assert.Equal(SessionToken, session.sessionToken);
         }
     }
 }

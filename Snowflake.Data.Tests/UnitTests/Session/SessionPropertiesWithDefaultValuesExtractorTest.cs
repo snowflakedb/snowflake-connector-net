@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             );
 
             // assert
-            Assert.AreEqual(15, value);
+            Assert.Equal(15, value);
         }
 
         [Test]
@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             );
 
             // assert
-            Assert.AreEqual(defaultValue, value);
+            Assert.Equal(defaultValue, value);
         }
 
         [Test]
@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             );
 
             // assert
-            Assert.AreEqual(defaultValue, value);
+            Assert.Equal(defaultValue, value);
         }
 
         [Test]
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 i => true);
 
             // assert
-            Assert.AreEqual(defaultValue, value);
+            Assert.Equal(defaultValue, value);
         }
 
         [Test]
@@ -123,7 +123,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             );
 
             // assert
-            Assert.AreEqual(defaultValue, value);
+            Assert.Equal(defaultValue, value);
         }
 
         [Test]
@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             );
 
             // assert
-            Assert.AreEqual(defaultValue, value);
+            Assert.Equal(defaultValue, value);
         }
 
         [Test]

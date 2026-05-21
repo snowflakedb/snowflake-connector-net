@@ -81,9 +81,9 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         private void AssertFileStorageForLocation(string directory, SFCredentialManagerFileStorage fileStorage)
         {
             Assert.NotNull(fileStorage);
-            Assert.AreEqual(directory, fileStorage.JsonCacheDirectory);
-            Assert.AreEqual(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheFileName), fileStorage.JsonCacheFilePath);
-            Assert.AreEqual(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheLockName), fileStorage.JsonCacheLockPath);
+            Assert.Equal(directory, fileStorage.JsonCacheDirectory);
+            Assert.Equal(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheFileName), fileStorage.JsonCacheFilePath);
+            Assert.Equal(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheLockName), fileStorage.JsonCacheLockPath);
         }
 
         private void MockSnowflakeCacheEnvironmentVariable()

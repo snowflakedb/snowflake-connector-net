@@ -40,8 +40,8 @@ namespace Snowflake.Data.Tests.UnitTests
             var actualVersion = SFEnvironment.ExtractVersion();
 
             // Assert
-            Assert.AreEqual(expectedRuntime, actualRuntime);
-            Assert.AreEqual(expectedVersion, actualVersion);
+            Assert.Equal(expectedRuntime, actualRuntime);
+            Assert.Equal(expectedVersion, actualVersion);
         }
 
         [Test]
@@ -89,36 +89,36 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             // asserts for client credential first login
-            Assert.AreEqual(osVersion, clientCredentialLoginClientEnv.osVersion);
-            Assert.AreEqual(netRuntime, clientCredentialLoginClientEnv.netRuntime);
-            Assert.AreEqual(netVersion, clientCredentialLoginClientEnv.netVersion);
-            Assert.AreEqual(processName, clientCredentialLoginClientEnv.application);
-            Assert.AreEqual(processName, clientCredentialLoginClientEnv.processName);
-            Assert.AreEqual(applicationPath, clientCredentialLoginClientEnv.applicationPath);
-            Assert.AreEqual("disabled", clientCredentialLoginClientEnv.certRevocationCheckMode);
-            Assert.AreEqual("oauth_client_credentials", clientCredentialLoginClientEnv.oauthType);
+            Assert.Equal(osVersion, clientCredentialLoginClientEnv.osVersion);
+            Assert.Equal(netRuntime, clientCredentialLoginClientEnv.netRuntime);
+            Assert.Equal(netVersion, clientCredentialLoginClientEnv.netVersion);
+            Assert.Equal(processName, clientCredentialLoginClientEnv.application);
+            Assert.Equal(processName, clientCredentialLoginClientEnv.processName);
+            Assert.Equal(applicationPath, clientCredentialLoginClientEnv.applicationPath);
+            Assert.Equal("disabled", clientCredentialLoginClientEnv.certRevocationCheckMode);
+            Assert.Equal("oauth_client_credentials", clientCredentialLoginClientEnv.oauthType);
             // asserts for client credential second login
-            Assert.AreEqual(osVersion, clientCredentialLoginClientEnv2.osVersion);
-            Assert.AreEqual(netRuntime, clientCredentialLoginClientEnv2.netRuntime);
-            Assert.AreEqual(netVersion, clientCredentialLoginClientEnv2.netVersion);
-            Assert.AreEqual(processName, clientCredentialLoginClientEnv2.application);
-            Assert.AreEqual(processName, clientCredentialLoginClientEnv2.processName);
-            Assert.AreEqual(applicationPath, clientCredentialLoginClientEnv2.applicationPath);
-            Assert.AreEqual("disabled", clientCredentialLoginClientEnv2.certRevocationCheckMode);
-            Assert.AreEqual("oauth_client_credentials", clientCredentialLoginClientEnv2.oauthType);
+            Assert.Equal(osVersion, clientCredentialLoginClientEnv2.osVersion);
+            Assert.Equal(netRuntime, clientCredentialLoginClientEnv2.netRuntime);
+            Assert.Equal(netVersion, clientCredentialLoginClientEnv2.netVersion);
+            Assert.Equal(processName, clientCredentialLoginClientEnv2.application);
+            Assert.Equal(processName, clientCredentialLoginClientEnv2.processName);
+            Assert.Equal(applicationPath, clientCredentialLoginClientEnv2.applicationPath);
+            Assert.Equal("disabled", clientCredentialLoginClientEnv2.certRevocationCheckMode);
+            Assert.Equal("oauth_client_credentials", clientCredentialLoginClientEnv2.oauthType);
             // asserts for PAT login
-            Assert.AreEqual(osVersion, insecurePatLoginClientEnv.osVersion);
-            Assert.AreEqual(netRuntime, insecurePatLoginClientEnv.netRuntime);
-            Assert.AreEqual(netVersion, insecurePatLoginClientEnv.netVersion);
-            Assert.AreEqual("MyApp", insecurePatLoginClientEnv.application);
-            Assert.AreEqual(processName, insecurePatLoginClientEnv.processName);
-            Assert.AreEqual(applicationPath, insecurePatLoginClientEnv.applicationPath);
-            Assert.AreEqual("enabled", insecurePatLoginClientEnv.certRevocationCheckMode);
+            Assert.Equal(osVersion, insecurePatLoginClientEnv.osVersion);
+            Assert.Equal(netRuntime, insecurePatLoginClientEnv.netRuntime);
+            Assert.Equal(netVersion, insecurePatLoginClientEnv.netVersion);
+            Assert.Equal("MyApp", insecurePatLoginClientEnv.application);
+            Assert.Equal(processName, insecurePatLoginClientEnv.processName);
+            Assert.Equal(applicationPath, insecurePatLoginClientEnv.applicationPath);
+            Assert.Equal("enabled", insecurePatLoginClientEnv.certRevocationCheckMode);
             Assert.Null(insecurePatLoginClientEnv.oauthType);
             // asserts that first and second client credential login produced the same json
             var firstClientCredentialEnvJson = JsonConvert.SerializeObject(clientCredentialLoginClientEnv);
             var secondClientCredentialEnvJson = JsonConvert.SerializeObject(clientCredentialLoginClientEnv2);
-            Assert.AreEqual(firstClientCredentialEnvJson, secondClientCredentialEnvJson);
+            Assert.Equal(firstClientCredentialEnvJson, secondClientCredentialEnvJson);
         }
 
         [Test]
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var clientEnv = SFEnvironment.ClientEnv;
 
             // Fields set by static constructor
-            Assert.AreEqual(RuntimeInformation.ProcessArchitecture.ToString().ToLower(), clientEnv.isa);
+            Assert.Equal(RuntimeInformation.ProcessArchitecture.ToString().ToLower(), clientEnv.isa);
 
             // Fields NOT set by static constructor (populated in CloneForSession)
             Assert.Null(clientEnv.minicoreVersion, "minicoreVersion should be null on the static ClientEnv");

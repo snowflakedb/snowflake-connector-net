@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.NotNull(thrown);
-            Assert.AreEqual(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
+            Assert.Equal(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
         }
 
         [Test]
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.NotNull(thrown);
-            Assert.AreEqual(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
+            Assert.Equal(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
         }
 
 
@@ -357,7 +357,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerStarter.Init(ConfigPath);
 
             // assert
-            Assert.AreEqual(ExpectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
+            Assert.Equal(ExpectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
         }
     }
 }

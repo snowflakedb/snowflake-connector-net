@@ -53,8 +53,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.Password = password;
                 conn.Open();
 
-                Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
-                Assert.AreEqual(conn.State, ConnectionState.Open);
+                Assert.Equal(testConfig.database.ToUpper(), conn.Database);
+                Assert.Equal(conn.State, ConnectionState.Open);
 
                 conn.Close();
             }
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = loginTimeOut5sec;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
@@ -94,7 +94,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Should timeout after the defined timeout since retry count is infinite
                 Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta);
 
-                Assert.AreEqual(timeoutSec, conn.ConnectionTimeout);
+                Assert.Equal(timeoutSec, conn.ConnectionTimeout);
             }
         }
 
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = maxRetryConnStr;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
@@ -146,7 +146,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = loginTimeOut5sec;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 // Should timeout after the defined timeout since retry count is infinite
                 Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta);
 
-                Assert.AreEqual(retryTimeout, conn.ConnectionTimeout);
+                Assert.Equal(retryTimeout, conn.ConnectionTimeout);
             }
         }
 
@@ -181,9 +181,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = ConnectionString;
 
                 // Default timeout is 300 sec
-                Assert.AreEqual(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
+                Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
@@ -219,7 +219,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = invalidConnectionString;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 try
                 {
                     conn.Open();
@@ -235,7 +235,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
                 }
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -248,7 +248,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true;certRevocationCheckMode=enabled;";
                 conn.ConnectionString = invalidConnectionString;
 
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(conn.State, ConnectionState.Closed);
                 try
                 {
                     conn.Open();
@@ -264,7 +264,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Fail($"Unexpected {unexpected.GetType()} exception occurred");
                 }
 
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 

@@ -78,8 +78,8 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
 
                 // Assert
                 Assert.True(reader.Read());
-                Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
-                Assert.AreEqual(QueryStatus.Success, queryStatus);
+                Assert.Equal($"waited {expectedWaitTime} seconds", reader.GetString(0));
+                Assert.Equal(QueryStatus.Success, queryStatus);
             }
 
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -123,7 +123,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             var row = cmd.ExecuteScalar();
 
             // Assert
-            Assert.AreEqual(1, row);
+            Assert.Equal(1, row);
         }
 
         // Get results of the async exec query
@@ -135,8 +135,8 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
 
             // Assert
             Assert.True(reader.Read());
-            Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
-            Assert.AreEqual(QueryStatus.Success, queryStatus);
+            Assert.Equal($"waited {expectedWaitTime} seconds", reader.GetString(0));
+            Assert.Equal(QueryStatus.Success, queryStatus);
         }
 
         for (int i = 0; i < connections.Length; i++)
@@ -259,7 +259,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 }
 
                 // Assert
-                Assert.AreEqual(QueryStatus.FailedWithError, queryStatus);
+                Assert.Equal(QueryStatus.FailedWithError, queryStatus);
 
                 // Act
                 var thrown = Assert.ThrowsAsync<SnowflakeDbException>(async () =>
@@ -285,7 +285,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             cmd.CommandText = "select 1";
 
             // command type can only be text, stored procedure are not supported.
-            Assert.AreEqual(CommandType.Text, cmd.CommandType);
+            Assert.Equal(CommandType.Text, cmd.CommandType);
             try
             {
                 cmd.CommandType = CommandType.StoredProcedure;
@@ -293,10 +293,10 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(270009, e.ErrorCode);
+                Assert.Equal(270009, e.ErrorCode);
             }
 
-            Assert.AreEqual(UpdateRowSource.None, cmd.UpdatedRowSource);
+            Assert.Equal(UpdateRowSource.None, cmd.UpdatedRowSource);
             try
             {
                 cmd.UpdatedRowSource = UpdateRowSource.FirstReturnedRecord;
@@ -304,10 +304,10 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(270009, e.ErrorCode);
+                Assert.Equal(270009, e.ErrorCode);
             }
 
-            Assert.AreSame(conn, cmd.Connection);
+            Assert.Same(conn, cmd.Connection);
             try
             {
                 cmd.Connection = null;
@@ -315,7 +315,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(270009, e.ErrorCode);
+                Assert.Equal(270009, e.ErrorCode);
             }
 
             Assert.False(((SnowflakeDbCommand)cmd).DesignTimeVisible);
@@ -326,11 +326,11 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(270009, e.ErrorCode);
+                Assert.Equal(270009, e.ErrorCode);
             }
 
             object val = cmd.ExecuteScalar();
-            Assert.AreEqual(1L, (long)val);
+            Assert.Equal(1L, (long)val);
 
             conn.Close();
         }
@@ -352,12 +352,12 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 int counter = 0;
                 while (reader.Read())
                 {
-                    Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                    Assert.Equal(counter.ToString(), reader.GetString(0));
                     // don't test the second column as it has random values just to increase the response size
                     counter++;
                 }
 
-                Assert.AreEqual(200000, counter);
+                Assert.Equal(200000, counter);
             }
 
             conn.Close();
@@ -380,12 +380,12 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             int counter = 0;
             while (reader.Read())
             {
-                Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                Assert.Equal(counter.ToString(), reader.GetString(0));
                 // don't test the second column as it has random values just to increase the response size
                 counter++;
             }
 
-            Assert.AreEqual(10000, counter);
+            Assert.Equal(10000, counter);
         }
     }
 
@@ -405,12 +405,12 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             int counter = 0;
             while (reader.Read())
             {
-                Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                Assert.Equal(counter.ToString(), reader.GetString(0));
                 // don't test the second column as it has random values just to increase the response size
                 counter++;
             }
 
-            Assert.AreEqual(10000, counter);
+            Assert.Equal(10000, counter);
         }
     }
 
@@ -432,12 +432,12 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             int counter = 0;
             while (reader.Read())
             {
-                Assert.AreEqual(counter.ToString(), reader.GetString(0));
+                Assert.Equal(counter.ToString(), reader.GetString(0));
                 // don't test the second column as it has random values just to increase the response size
                 counter++;
             }
 
-            Assert.AreEqual(10000, counter);
+            Assert.Equal(10000, counter);
             conn.Close();
         }
     }
@@ -460,8 +460,8 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(2003, e.ErrorCode);
-                Assert.AreNotEqual("", e.QueryId);
+                Assert.Equal(2003, e.ErrorCode);
+                Assert.NotEqual("", e.QueryId);
             }
 
             conn.Close();
@@ -508,7 +508,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
             {
                 if (e.InnerException.GetType() != typeof(NUnit.Framework.AssertionException))
                 {
-                    Assert.AreEqual(
+                    Assert.Equal(
                         "System.Threading.Tasks.TaskCanceledException",
                         e.InnerException.GetType().ToString());
                 }
@@ -538,7 +538,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(270009, e.ErrorCode);
+                    Assert.Equal(270009, e.ErrorCode);
                 }
 
                 IDbTransaction tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);
@@ -564,7 +564,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 command.CommandText = $"select * from {TableName}";
                 reader = command.ExecuteReader();
                 Assert.True(reader.Read());
-                Assert.AreEqual("test", reader.GetString(0));
+                Assert.Equal("test", reader.GetString(0));
                 command.Transaction.Rollback();
 
                 // no value will be in table since it has been rollbacked
@@ -608,7 +608,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                         command.CommandText = testCommands[i];
                         rowsAffected = command.ExecuteNonQuery();
 
-                        Assert.AreEqual(expectedResult[i], rowsAffected);
+                        Assert.Equal(expectedResult[i], rowsAffected);
                     }
                 }
             }
@@ -627,7 +627,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     command.CommandText = "select 1 where 2 > 3";
                     object val = command.ExecuteScalar();
 
-                    Assert.AreEqual(DBNull.Value, val);
+                    Assert.Equal(DBNull.Value, val);
                 }
 
                 conn.Close();
@@ -713,7 +713,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     command.CommandText = $"copy into @my_unload_stage/unload/ from {TableName};";
                     int affected = command.ExecuteNonQuery();
 
-                    Assert.AreEqual(6, affected);
+                    Assert.Equal(6, affected);
 
                     command.CommandText = "drop stage if exists my_unload_stage";
                     command.ExecuteNonQuery();
@@ -860,7 +860,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                         Assert.Fail($"Array bind operation timed out after {timeoutSeconds} seconds");
                     }
 
-                    Assert.AreEqual(total * 3, task.Result);
+                    Assert.Equal(total * 3, task.Result);
 
                     cmd.CommandText = "SELECT * FROM " + tableName;
                     IDataReader reader = cmd.ExecuteReader();
@@ -945,7 +945,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     Task<object> task = cmd.ExecuteScalarAsync(externalCancel.Token);
 
                     task.Wait();
-                    Assert.AreEqual(total, task.Result);
+                    Assert.Equal(total, task.Result);
                 }
 
                 conn.Close();
@@ -967,7 +967,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 using (IDbCommand command = conn.CreateCommand())
                 {
                     command.CommandText = $"SELECT COUNT(*) FROM (select seq4() from table(generator(rowcount => {rowCount})))";
-                    Assert.AreEqual(rowCount, command.ExecuteScalar());
+                    Assert.Equal(rowCount, command.ExecuteScalar());
                 }
 
                 conn.Close();
@@ -998,7 +998,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 SnowflakeDbDataReader reader = (SnowflakeDbDataReader)command.ExecuteReader();
                 queryId = command.GetQueryId();
                 Assert.NotEmpty(queryId);
-                Assert.AreEqual(queryId, reader.GetQueryId());
+                Assert.Equal(queryId, reader.GetQueryId());
                 Assert.True(reader.Read());
 
                 // query id from insert query
@@ -1012,9 +1012,9 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 reader = (SnowflakeDbDataReader)command.ExecuteReader();
                 queryId = command.GetQueryId();
                 Assert.NotEmpty(queryId);
-                Assert.AreEqual(queryId, reader.GetQueryId());
+                Assert.Equal(queryId, reader.GetQueryId());
                 Assert.True(reader.Read());
-                Assert.AreEqual("test", reader.GetString(0));
+                Assert.Equal("test", reader.GetString(0));
 
                 // query id from different DbCommand instance
                 SnowflakeDbCommand command2 = (SnowflakeDbCommand)conn.CreateCommand();
@@ -1024,22 +1024,22 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 SnowflakeDbDataReader reader2 = (SnowflakeDbDataReader)command2.ExecuteReader();
                 queryId2 = command2.GetQueryId();
                 Assert.NotEmpty(queryId2);
-                Assert.AreEqual(queryId2, reader2.GetQueryId());
+                Assert.Equal(queryId2, reader2.GetQueryId());
                 // each DbCommand instance has it's own query Id.
-                Assert.AreNotEqual(queryId2, queryId);
+                Assert.NotEqual(queryId2, queryId);
                 Assert.True(reader2.Read());
-                Assert.AreEqual("test2", reader2.GetString(0));
+                Assert.Equal("test2", reader2.GetString(0));
 
                 // use query Id to get the result
                 command.CommandText = $"select * from table(result_scan('{queryId}'))";
                 reader = (SnowflakeDbDataReader)command.ExecuteReader();
                 Assert.True(reader.Read());
-                Assert.AreEqual("test", reader.GetString(0));
+                Assert.Equal("test", reader.GetString(0));
 
                 command2.CommandText = $"select * from table(result_scan('{queryId2}'))";
                 reader2 = (SnowflakeDbDataReader)command2.ExecuteReader();
                 Assert.True(reader2.Read());
-                Assert.AreEqual("test2", reader2.GetString(0));
+                Assert.Equal("test2", reader2.GetString(0));
 
                 // query id from failed query
                 command.CommandText = "select * from table_not_exists";
@@ -1050,7 +1050,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 }
                 catch (SnowflakeDbException e)
                 {
-                    Assert.AreEqual(2003, e.ErrorCode);
+                    Assert.Equal(2003, e.ErrorCode);
                 }
 
                 queryId = command.GetQueryId();
@@ -1090,8 +1090,8 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
 
                     // Assert
                     Assert.True(reader.Read());
-                    Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
-                    Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
+                    Assert.Equal($"waited {expectedWaitTime} seconds", reader.GetString(0));
+                    Assert.Equal(QueryStatus.Success, cmd.GetQueryStatus(queryId));
                 }
 
                 conn.Close();
@@ -1134,7 +1134,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 var row = cmd.ExecuteScalar();
 
                 // Assert
-                Assert.AreEqual(1, row);
+                Assert.Equal(1, row);
             }
 
             // Get results of the async exec query
@@ -1145,8 +1145,8 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
 
                 // Assert
                 Assert.True(reader.Read());
-                Assert.AreEqual($"waited {expectedWaitTime} seconds", reader.GetString(0));
-                Assert.AreEqual(QueryStatus.Success, cmd.GetQueryStatus(queryId));
+                Assert.Equal($"waited {expectedWaitTime} seconds", reader.GetString(0));
+                Assert.Equal(QueryStatus.Success, cmd.GetQueryStatus(queryId));
             }
 
             for (int i = 0; i < connections.Length; i++)
@@ -1181,7 +1181,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     }
 
                     // Assert
-                    Assert.AreEqual(QueryStatus.FailedWithError, cmd.GetQueryStatus(queryId));
+                    Assert.Equal(QueryStatus.FailedWithError, cmd.GetQueryStatus(queryId));
 
                     // Act
                     var thrown = Assert.Throws<SnowflakeDbException>(() => cmd.GetResultsFromQueryId(queryId));
@@ -1289,7 +1289,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                     var queryStatus = cmd.GetQueryStatus(unknownQueryId);
 
                     // Assert
-                    Assert.AreEqual(QueryStatus.NoData, queryStatus);
+                    Assert.Equal(QueryStatus.NoData, queryStatus);
                 }
 
                 conn.Close();
@@ -1475,25 +1475,25 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
 
             // Assert
             SpinWait.SpinUntil(() => capturedActivities.Count > 3, TimeSpan.FromSeconds(30));
-            Assert.AreEqual(capturedActivities.Count, 4);
+            Assert.Equal(capturedActivities.Count, 4);
             var capturedActivity1 = capturedActivities.Single(x => x.DisplayName == "Custom activity!");
             var capturedActivity2 = capturedActivities.Single(x => x.DisplayName == "Custom activity 2!");
             var capturedActivity3 = capturedActivities.Single(x => x.DisplayName == "Custom activity 3!");
 
-            Assert.AreEqual(ActivityKind.Client, capturedActivity1.Kind);
-            Assert.AreEqual(ActivityKind.Client, capturedActivity2.Kind);
-            Assert.AreEqual(ActivityKind.Client, capturedActivity3.Kind);
+            Assert.Equal(ActivityKind.Client, capturedActivity1.Kind);
+            Assert.Equal(ActivityKind.Client, capturedActivity2.Kind);
+            Assert.Equal(ActivityKind.Client, capturedActivity3.Kind);
 
-            Assert.AreEqual(2, capturedActivity1.Events.Count());
-            Assert.AreEqual(1, capturedActivity2.Events.Count());
-            Assert.AreEqual(1, capturedActivity3.Events.Count());
+            Assert.Equal(2, capturedActivity1.Events.Count());
+            Assert.Equal(1, capturedActivity2.Events.Count());
+            Assert.Equal(1, capturedActivity3.Events.Count());
 
-            Assert.AreEqual(conn.SfSession.sessionId, capturedActivity1.GetTagItem(TelemetryTags.SessionId));
-            Assert.AreEqual(conn.SfSession.sessionId, capturedActivity2.GetTagItem(TelemetryTags.SessionId));
-            Assert.AreEqual(conn.SfSession.sessionId, capturedActivity3.GetTagItem(TelemetryTags.SessionId));
+            Assert.Equal(conn.SfSession.sessionId, capturedActivity1.GetTagItem(TelemetryTags.SessionId));
+            Assert.Equal(conn.SfSession.sessionId, capturedActivity2.GetTagItem(TelemetryTags.SessionId));
+            Assert.Equal(conn.SfSession.sessionId, capturedActivity3.GetTagItem(TelemetryTags.SessionId));
 
-            Assert.AreEqual("OK", capturedActivity1.GetTagItem(TelemetryTags.StatusCode));
-            Assert.AreEqual("ERROR", capturedActivity2.GetTagItem(TelemetryTags.StatusCode));
+            Assert.Equal("OK", capturedActivity1.GetTagItem(TelemetryTags.StatusCode));
+            Assert.Equal("ERROR", capturedActivity2.GetTagItem(TelemetryTags.StatusCode));
             Assert.Null(capturedActivity3.GetTagItem(TelemetryTags.StatusCode));
         }
 
@@ -1503,14 +1503,14 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 .Where(a => a.OperationName == expectedOperationName)
                 .ToList();
 
-            Assert.AreEqual(1, matching.Count,
+            Assert.Equal(1, matching.Count,
                 $"Expected exactly 1 {expectedOperationName} activity but found {matching.Count}. " +
                 $"All captured: [{string.Join(", ", capturedActivities.Select(a => a.OperationName))}]");
 
             var activity = matching.Single();
-            Assert.AreEqual(ActivityKind.Client, activity.Kind);
-            Assert.AreEqual("OK", activity.GetTagItem(TelemetryTags.StatusCode));
-            Assert.AreEqual("snowflake", activity.GetTagItem(TelemetryTags.DbSystem));
+            Assert.Equal(ActivityKind.Client, activity.Kind);
+            Assert.Equal("OK", activity.GetTagItem(TelemetryTags.StatusCode));
+            Assert.Equal("snowflake", activity.GetTagItem(TelemetryTags.DbSystem));
             Assert.NotNull(activity.GetTagItem(TelemetryTags.SessionId));
             Assert.NotNull(activity.GetTagItem(TelemetryTags.DbWarehouse));
             Assert.NotNull(activity.GetTagItem(TelemetryTags.DbRole));
@@ -1587,7 +1587,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 command.CommandText = "SELECT QUERY_TAG FROM table(information_schema.query_history_by_session())";
                 var queryTag = command.ExecuteScalar();
 
-                Assert.AreEqual(expectedQueryTag, queryTag);
+                Assert.Equal(expectedQueryTag, queryTag);
             }
         }
 
@@ -1603,7 +1603,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 var reader = command.ExecuteReader();
 
                 Assert.True(reader.Read());
-                Assert.AreEqual("--", reader.GetString(0));
+                Assert.Equal("--", reader.GetString(0));
             }
         }
 
@@ -1619,7 +1619,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                 var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                 Assert.True(await reader.ReadAsync().ConfigureAwait(false));
-                Assert.AreEqual("--", reader.GetString(0));
+                Assert.Equal("--", reader.GetString(0));
             }
         }
 
@@ -1658,7 +1658,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                         int actualRowCount = cmd.ExecuteNonQuery();
 
                         // Assert
-                        Assert.AreEqual(ExpectedRowCount, actualRowCount);
+                        Assert.Equal(ExpectedRowCount, actualRowCount);
                     }
                     finally
                     {
@@ -1703,7 +1703,7 @@ public sealed class SFDbCommandITAsync : SFBaseTestAsync
                         int actualRowCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                         // Assert
-                        Assert.AreEqual(ExpectedRowCount, actualRowCount);
+                        Assert.Equal(ExpectedRowCount, actualRowCount);
                     }
                     finally
                     {

@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 conn.FillConnectionStringFromTomlConfigIfNotSet();
                 // Assert
-                Assert.AreEqual("account=testaccount;user=testuser;password=testpassword;", conn.ConnectionString);
+                Assert.Equal("account=testaccount;user=testuser;password=testpassword;", conn.ConnectionString);
             }
         }
 
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 conn.ConnectionString = connectionTest;
                 conn.FillConnectionStringFromTomlConfigIfNotSet();
                 // Assert
-                Assert.AreEqual(connectionTest, conn.ConnectionString);
+                Assert.Equal(connectionTest, conn.ConnectionString);
             }
         }
 

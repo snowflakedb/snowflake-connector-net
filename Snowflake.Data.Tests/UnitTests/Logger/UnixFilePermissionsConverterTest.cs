@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var convertedPermissions = UnixFilePermissionsConverter.ConvertFileAccessPermissionsToInt(permissions);
 
             // assert
-            Assert.AreEqual(expectedPermissions, convertedPermissions);
+            Assert.Equal(expectedPermissions, convertedPermissions);
         }
 
         public static IEnumerable<PermissionTestCase> UserPermissionTestCases()

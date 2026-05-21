@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             mask = SecretDetector.MaskSecrets(text);
             Assert.False(mask.isMasked);
-            Assert.AreEqual(text, mask.maskedText);
+            Assert.Equal(text, mask.maskedText);
             Assert.Null(mask.errStr);
         }
 
@@ -49,15 +49,15 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             mask = MockSecretDetector.MaskSecrets("This string will raise an exception");
             Assert.True(mask.isMasked);
-            Assert.AreEqual("Test exception", mask.maskedText);
-            Assert.AreEqual("Test exception", mask.errStr);
+            Assert.Equal("Test exception", mask.maskedText);
+            Assert.Equal("Test exception", mask.errStr);
         }
 
         public void BasicMasking(string text, string expectedText)
         {
             mask = SecretDetector.MaskSecrets(text);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(expectedText, mask.maskedText);
+            Assert.Equal(expectedText, mask.maskedText);
             Assert.Null(mask.errStr);
         }
 
@@ -300,7 +300,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             mask = SecretDetector.MaskSecrets(falsePositiveMessage);
             Assert.False(mask.isMasked);
-            Assert.AreEqual(falsePositiveMessage, mask.maskedText);
+            Assert.Equal(falsePositiveMessage, mask.maskedText);
             Assert.Null(mask.errStr);
         }
 
@@ -320,37 +320,37 @@ namespace Snowflake.Data.Tests.UnitTests
             string tokenStrWithPrefix = "Token =" + longToken;
             mask = SecretDetector.MaskSecrets(tokenStrWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"Token =****", mask.maskedText);
+            Assert.Equal(@"Token =****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string idTokenStrWithPrefix = "idToken : " + longToken;
             mask = SecretDetector.MaskSecrets(idTokenStrWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"idToken : ****", mask.maskedText);
+            Assert.Equal(@"idToken : ****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string sessionTokenStrWithPrefix = "sessionToken : " + longToken;
             mask = SecretDetector.MaskSecrets(sessionTokenStrWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"sessionToken : ****", mask.maskedText);
+            Assert.Equal(@"sessionToken : ****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string masterTokenStrWithPrefix = "masterToken : " + longToken;
             mask = SecretDetector.MaskSecrets(masterTokenStrWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"masterToken : ****", mask.maskedText);
+            Assert.Equal(@"masterToken : ****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string assertionStrWithPrefix = "assertion content: " + longToken;
             mask = SecretDetector.MaskSecrets(assertionStrWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"assertion content: ****", mask.maskedText);
+            Assert.Equal(@"assertion content: ****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string snowFlakeAuthToken = "Authorization: Snowflake Token=\"ver:1-hint:92019676298218-ETMsDgAAAXswwgJhABRBRVMvQ0JDL1BLQ1M1UGFkZGluZwEAABAAEF1tbNM3myWX6A9sNSK6rpIAAACA6StojDJS4q1Vi3ID+dtFEucCEvGMOte0eapK+reb39O6hTHYxLfOgSGsbvbM5grJ4dYdNJjrzDf1r07tID4I2RJJRYjS4/DWBJn98Untd3xeNnXE1/45HgvwKVHlmZQLVwfWAxI7ifl2MVDwJlcXBufLZoVMYhUd4np121d7zFwAFGQzKyzUYQwI3M9Nqja9syHgaotG\"";
             mask = SecretDetector.MaskSecrets(snowFlakeAuthToken);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"Authorization: Snowflake Token=****", mask.maskedText);
+            Assert.Equal(@"Authorization: Snowflake Token=****", mask.maskedText);
             Assert.Null(mask.errStr);
         }
 
@@ -363,7 +363,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             mask = SecretDetector.MaskSecrets(falsePositiveToken);
             Assert.False(mask.isMasked);
-            Assert.AreEqual(falsePositiveToken, mask.maskedText);
+            Assert.Equal(falsePositiveToken, mask.maskedText);
             Assert.Null(mask.errStr);
         }
 
@@ -375,43 +375,43 @@ namespace Snowflake.Data.Tests.UnitTests
             string randomPasswordWithPrefix = "password:" + randomPassword;
             mask = SecretDetector.MaskSecrets(randomPasswordWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"password:****", mask.maskedText);
+            Assert.Equal(@"password:****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string randomPasswordCaps = "PASSWORD:" + randomPassword;
             mask = SecretDetector.MaskSecrets(randomPasswordCaps);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"PASSWORD:****", mask.maskedText);
+            Assert.Equal(@"PASSWORD:****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string randomPasswordMixCase = "PassWorD:" + randomPassword;
             mask = SecretDetector.MaskSecrets(randomPasswordMixCase);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"PassWorD:****", mask.maskedText);
+            Assert.Equal(@"PassWorD:****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string randomPasswordEqualSign = "password = " + randomPassword;
             mask = SecretDetector.MaskSecrets(randomPasswordEqualSign);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"password =****", mask.maskedText);
+            Assert.Equal(@"password =****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string randomPwdWithPrefix = "pwd:" + randomPassword;
             mask = SecretDetector.MaskSecrets(randomPwdWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"pwd:****", mask.maskedText);
+            Assert.Equal(@"pwd:****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string randomClientSecretUppercaseWithPrefix = "CLIENT_SECRET:" + randomPassword;
             mask = SecretDetector.MaskSecrets(randomClientSecretUppercaseWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"CLIENT_SECRET:****", mask.maskedText);
+            Assert.Equal(@"CLIENT_SECRET:****", mask.maskedText);
             Assert.Null(mask.errStr);
 
             string randomOAuthClientSecretUppercaseWithPrefix = "OAUTHCLIENTSECRET:" + randomPassword;
             mask = SecretDetector.MaskSecrets(randomOAuthClientSecretUppercaseWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(@"OAUTHCLIENTSECRET:****", mask.maskedText);
+            Assert.Equal(@"OAUTHCLIENTSECRET:****", mask.maskedText);
             Assert.Null(mask.errStr);
         }
 
@@ -443,7 +443,7 @@ namespace Snowflake.Data.Tests.UnitTests
                            "password:" + randomPwd;
             mask = SecretDetector.MaskSecrets(testStringWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(
+            Assert.Equal(
                 "token=****",
                 mask.maskedText);
             Assert.Null(mask.errStr);
@@ -454,7 +454,7 @@ namespace Snowflake.Data.Tests.UnitTests
                "token=" + longToken;
             mask = SecretDetector.MaskSecrets(testStringWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(
+            Assert.Equal(
                 "password:****" +
                 " random giberish " +
                 "token=****",
@@ -469,7 +469,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 "idToken:" + longToken2;
             mask = SecretDetector.MaskSecrets(testStringWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(
+            Assert.Equal(
                 "token=****",
                 mask.maskedText);
             Assert.Null(mask.errStr);
@@ -480,7 +480,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 "pwd:" + randomPwd2;
             mask = SecretDetector.MaskSecrets(testStringWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(
+            Assert.Equal(
                 "password=****", mask.maskedText);
             Assert.Null(mask.errStr);
 
@@ -492,7 +492,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 "password=" + randomPwd;
             mask = SecretDetector.MaskSecrets(testStringWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(
+            Assert.Equal(
                 "password=****",
                 mask.maskedText);
             Assert.Null(mask.errStr);
@@ -530,26 +530,26 @@ namespace Snowflake.Data.Tests.UnitTests
             string testString = "testCustomPattern: \"abcdefghijklmnop\"";
             mask = SecretDetector.MaskSecrets(testString);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(masks[0], mask.maskedText);
+            Assert.Equal(masks[0], mask.maskedText);
             Assert.Null(mask.errStr);
 
             testString = "testCustomPattern: \"1234567890\"";
             mask = SecretDetector.MaskSecrets(testString);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(masks[1], mask.maskedText);
+            Assert.Equal(masks[1], mask.maskedText);
             Assert.Null(mask.errStr);
 
             // Mask password and custom pattern
             testString = "password: abcdefghijklmnop testCustomPattern: \"abcdefghijklmnop\"";
             mask = SecretDetector.MaskSecrets(testString);
             Assert.True(mask.isMasked);
-            Assert.AreEqual("password: **** " + masks[0], mask.maskedText);
+            Assert.Equal("password: **** " + masks[0], mask.maskedText);
             Assert.Null(mask.errStr);
 
             testString = "password: abcdefghijklmnop testCustomPattern: \"1234567890\"";
             mask = SecretDetector.MaskSecrets(testString);
             Assert.True(mask.isMasked);
-            Assert.AreEqual("password: **** " + masks[1], mask.maskedText);
+            Assert.Equal("password: **** " + masks[1], mask.maskedText);
             Assert.Null(mask.errStr);
         }
 
@@ -565,7 +565,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string testString = "testCustomPattern: \"abcdefghijklmnop\"";
             mask = SecretDetector.MaskSecrets(testString);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(masks[0], mask.maskedText);
+            Assert.Equal(masks[0], mask.maskedText);
             Assert.Null(mask.errStr);
 
             // Clear custom patterns
@@ -573,7 +573,7 @@ namespace Snowflake.Data.Tests.UnitTests
             testString = "testCustomPattern: \"abcdefghijklmnop\"";
             mask = SecretDetector.MaskSecrets(testString);
             Assert.False(mask.isMasked);
-            Assert.AreEqual(testString, mask.maskedText);
+            Assert.Equal(testString, mask.maskedText);
             Assert.Null(mask.errStr);
         }
 
@@ -590,7 +590,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             catch (Exception ex)
             {
-                Assert.AreEqual("Regex count and mask count must be equal.", ex.Message);
+                Assert.Equal("Regex count and mask count must be equal.", ex.Message);
             }
 
             // Regex count is greater than masks
@@ -605,7 +605,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             catch (Exception ex)
             {
-                Assert.AreEqual("Regex count and mask count must be equal.", ex.Message);
+                Assert.Equal("Regex count and mask count must be equal.", ex.Message);
             }
         }
 
@@ -624,7 +624,7 @@ namespace Snowflake.Data.Tests.UnitTests
             string randomHttpResponseWithPrefix = "Post response: " + randomHttpResponse;
             mask = SecretDetector.MaskSecrets(randomHttpResponseWithPrefix);
             Assert.True(mask.isMasked);
-            Assert.AreEqual(
+            Assert.Equal(
                 "Post response: " +
                 "\"data\" : {" +
                 "\"masterToken\" : \"****" +
