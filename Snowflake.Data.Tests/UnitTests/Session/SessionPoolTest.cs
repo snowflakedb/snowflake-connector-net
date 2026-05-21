@@ -11,7 +11,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
     public class SessionPoolTest
     {
         private const string ConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;";
@@ -147,7 +146,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionPool(ConnectionString, securePassword, null, null);
 
             // act
-            Assert.DoesNotThrow(() => pool.ValidateSecurePassword(securePassword));
+            pool.ValidateSecurePassword(securePassword);
         }
 
         [SFTheory]
@@ -161,7 +160,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionPool(ConnectionString, null, secureOAuthClientSecret, null);
 
             // act
-            Assert.DoesNotThrow(() => pool.ValidateSecureOAuthClientSecret(secureOAuthClientSecret));
+            pool.ValidateSecureOAuthClientSecret(secureOAuthClientSecret);
         }
 
         [SFTheory]
@@ -175,7 +174,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionPool(ConnectionString, null, null, secureToken);
 
             // act
-            Assert.DoesNotThrow(() => pool.ValidateSecureToken(secureToken));
+            pool.ValidateSecureToken(secureToken);
         }
 
         [SFTheory]
@@ -195,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => pool.ValidateSecurePassword(notMatchingSecurePassword));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of password mismatch"));
+            Assert.Contains("Could not get a pool because of password mismatch", thrown.Message);
         }
 
         [SFTheory]
@@ -215,7 +214,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => pool.ValidateSecureOAuthClientSecret(notMatchingSecureOAuthClientSecret));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of oauth client secret mismatch"));
+            Assert.Contains("Could not get a pool because of oauth client secret mismatch", thrown.Message);
         }
 
         [SFTheory]
@@ -235,7 +234,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => pool.ValidateSecureToken(notMatchingSecureToken));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of token mismatch"));
+            Assert.Contains("Could not get a pool because of token mismatch", thrown.Message);
         }
 
         [SFTheory]
@@ -440,7 +439,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act — execute a query through SFStatement (the real production code path)
             var statement = new SFStatement(session);
-            Assert.Catch<Exception>(() =>
+            Assert.ThrowsAny<Exception>(() =>
                 statement.Execute(0, "SELECT 1", null, false, false));
 
             // the session should now be invalidated by SFStatement's catch block
@@ -483,7 +482,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool._idleSessions.Add(session);
 
             // act & assert - DestroyPool should not throw even if session.close() fails
-            Assert.DoesNotThrow(() => pool.DestroyPool());
+            pool.DestroyPool();
             Assert.Equal(0, pool._idleSessions.Count);
         }
 
@@ -499,7 +498,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool._idleSessions.Add(session);
 
             // act & assert - ClearSessions should not throw even if session.close() fails
-            Assert.DoesNotThrow(() => pool.ClearSessions());
+            pool.ClearSessions();
             Assert.Equal(0, pool._idleSessions.Count);
         }
 

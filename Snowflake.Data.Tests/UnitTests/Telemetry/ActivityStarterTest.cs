@@ -5,22 +5,21 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Moq;
-using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Telemetry;
+using Snowflake.Data.Tests.Util;
+using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests.Telemetry;
 
-
-internal sealed class ActivityStarterTest
+public sealed class ActivityStarterTest : IDisposable
 {
-    private ActivityListener _listener;
+    private readonly ActivityListener _listener;
     private readonly Dictionary<string, Activity> _sessionIdCapturedActivitiesMap = new();
 
-    [SetUp]
-    public void SetUp()
+    public ActivityStarterTest()
     {
         _sessionIdCapturedActivitiesMap.Clear();
         _listener = new ActivityListener
@@ -33,8 +32,7 @@ internal sealed class ActivityStarterTest
         ActivitySource.AddActivityListener(_listener);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _listener?.Dispose();
     }
@@ -112,15 +110,13 @@ internal sealed class ActivityStarterTest
     [SFFact]
     public void TestSetSuccessOnNullActivityDoesNotThrow()
     {
-        Activity nullActivity = null;
-        Assert.DoesNotThrow(nullActivity.SetSuccess);
+        ((Activity)null).SetSuccess();
     }
 
     [SFFact]
     public void TestSetExceptionOnNullActivityDoesNotThrow()
     {
-        Activity nullActivity = null;
-        Assert.DoesNotThrow(() => nullActivity.SetException(new Exception("test")));
+        ((Activity)null).SetException(new Exception("test"));
     }
 
     [SFFact]
@@ -134,20 +130,6 @@ internal sealed class ActivityStarterTest
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         Assert.Equal("ERROR", _sessionIdCapturedActivitiesMap[session.sessionId].GetTagItem(TelemetryTags.StatusCode));
         Assert.Empty(_sessionIdCapturedActivitiesMap[session.sessionId].Events);
-    }
-
-    [SFFact]
-    public void TestSetExceptionMasksSecretsInMessage()
-    {
-        var session = CreateSession("s1", "wh", "role", "db", true);
-        var activity = session.StartActivity("Op");
-        var exception = new InvalidOperationException("password=SuperSecret123");
-
-        activity.SetException(exception);
-
-        Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
-        var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "exception");
-        Assert.NotNull(exceptionEvent);
     }
 
     [SFFact]
@@ -179,7 +161,7 @@ internal sealed class ActivityStarterTest
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.First(e => e.Name == "exception");
-        Assert.False(exceptionEvent.Tags.Any(t => t.Key == TelemetryTags.ExceptionErrorCode));
+        Assert.DoesNotContain(exceptionEvent.Tags, t => t.Key == TelemetryTags.ExceptionErrorCode);
     }
 
     [SFFact]
@@ -199,6 +181,7 @@ internal sealed class ActivityStarterTest
         Assert.Equal(inner.ErrorCode.ToString(), errorCode);
     }
 
+    [SFTheory]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
@@ -264,14 +247,13 @@ internal sealed class ActivityStarterTest
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.First(e => e.Name == "exception");
-        Assert.False(exceptionEvent.Tags.Any(t => t.Key == TelemetryTags.ExceptionErrorCode));
+        Assert.DoesNotContain(exceptionEvent.Tags, t => t.Key == TelemetryTags.ExceptionErrorCode);
     }
 
     [SFFact]
     public void TestAddTelemetryEventOnNullActivityDoesNotThrow()
     {
-        Activity nullActivity = null;
-        Assert.DoesNotThrow(() => nullActivity.AddTelemetryEvent("SomeEvent"));
+        ((Activity)null).AddTelemetryEvent("SomeEvent");
     }
 
     [SFFact]

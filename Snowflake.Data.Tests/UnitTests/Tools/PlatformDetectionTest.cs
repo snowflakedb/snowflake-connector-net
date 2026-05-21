@@ -5,11 +5,15 @@ using System.Threading.Tasks;
 using Xunit;
 using RichardSzalay.MockHttp;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
+    [CollectionDefinition(nameof(PlatformDetectionTestFixture), DisableParallelization = true)]
+    public sealed class PlatformDetectionTestFixture { }
 
-    public class PlatformDetectionTest
+    [Collection(nameof(PlatformDetectionTestFixture))]
+    public class PlatformDetectionTest : IDisposable
     {
         private const string LambdaTaskRoot = "LAMBDA_TASK_ROOT";
         private const string GithubActions = "GITHUB_ACTIONS";
@@ -22,8 +26,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         private const string KConfiguration = "K_CONFIGURATION";
         private const string CloudRunJob = "CLOUD_RUN_JOB";
         private const string CloudRunExecution = "CLOUD_RUN_EXECUTION";
-
-        [TearDown]
         public void TearDown()
         {
             Environment.SetEnvironmentVariable(LambdaTaskRoot, null);
@@ -295,7 +297,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             Environment.SetEnvironmentVariable(PlatformDetection.DisableEnvVar, "true");
             var result = await PlatformDetection.RunDetectionAsync();
-            CollectionAssert.Equal(new[] { "disabled" }, result);
+            Assert.Equal(new[] { "disabled" }, result);
         }
 
         [SFFact]
@@ -303,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             Environment.SetEnvironmentVariable(PlatformDetection.DisableEnvVar, "TRUE");
             var result = await PlatformDetection.RunDetectionAsync();
-            CollectionAssert.Equal(new[] { "disabled" }, result);
+            Assert.Equal(new[] { "disabled" }, result);
         }
 
         // --- AggregateResults ---
@@ -314,7 +316,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var names = new[] { "platform_a", "platform_b" };
             var results = new bool?[] { true, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            CollectionAssert.Equal(new[] { "platform_a" }, aggregated);
+            Assert.Equal(new[] { "platform_a" }, aggregated);
         }
 
         [SFFact]
@@ -323,7 +325,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var names = new[] { "platform_a", "platform_b" };
             var results = new bool?[] { null, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            CollectionAssert.Equal(new[] { "platform_a_timeout" }, aggregated);
+            Assert.Equal(new[] { "platform_a_timeout" }, aggregated);
         }
 
         [SFFact]
@@ -341,7 +343,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var names = new[] { "platform_a", "platform_b", "platform_c" };
             var results = new bool?[] { true, null, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            CollectionAssert.Equal(new[] { "platform_a", "platform_b_timeout" }, aggregated);
+            Assert.Equal(new[] { "platform_a", "platform_b_timeout" }, aggregated);
         }
 
         // --- DetectGcpIdentity ---
@@ -365,5 +367,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             Assert.Equal(false, await PlatformDetection.DetectGcpIdentityAsync(mockHttp.ToHttpClient()));
         }
-    }
+
+        public void Dispose()
+        {
+            TearDown();
+        }
+}
 }

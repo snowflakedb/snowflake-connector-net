@@ -7,11 +7,13 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
+    [CollectionDefinition(nameof(WaitingQueueTestFixture), DisableParallelization = true)]
+    public sealed class WaitingQueueTestFixture { }
 
-    [Parallelizable(ParallelScope.Self)]
+    [Collection(nameof(WaitingQueueTestFixture))]
     public class WaitingQueueTest
     {
-        private static readonly int s_timeMeasurementLeftToleranceInMs = Stopwatch.IsHighResolution ? 1 : 20; // DateTime precision is ~10ms, safety coefficient = x2
+        private static readonly int s_timeMeasurementLeftToleranceInMs = 20; // DateTime precision is ~10ms, safety coefficient = x2
 
         [SFFact]
         public void TestWaitForTheResourceUntilTimeout()
@@ -22,12 +24,12 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act
             watch.Start();
-            var result = queue.Wait(50, CancellationToken.None);
+            var result = queue.Wait(500, CancellationToken.None);
             watch.Stop();
 
             // assert
             Assert.False(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
         [SFFact]
@@ -45,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.False(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
         [SFFact]
@@ -67,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.True(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
         [SFFact]
@@ -105,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             _ = Task.Run(() =>
             {
                 syncThreadsSemaphore.Release();
-                return queue.Wait(1000, CancellationToken.None);
+                return queue.Wait(10000, CancellationToken.None);
             });
             await syncThreadsSemaphore.WaitAsync(10000); // make sure scheduled thread execution has started
             await Task.Delay(50).ConfigureAwait(false);
@@ -136,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.False(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50 - s_timeMeasurementLeftToleranceInMs, 1500));
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
     }
 }

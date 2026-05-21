@@ -6,10 +6,10 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
     public class ConnectionPoolConfigExtractorTest
     {
         [SFFact]
@@ -22,13 +22,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var result = ExtractConnectionPoolConfig(connectionString);
 
             // assert
-            Assert.Equal(SFSessionHttpClientProperties.DefaultMaxPoolSize, result.MaxPoolSize, "max pool size");
-            Assert.Equal(SFSessionHttpClientProperties.DefaultMinPoolSize, result.MinPoolSize, "min pool size");
-            Assert.Equal(SFSessionHttpClientProperties.DefaultChangedSession, result.ChangedSession, "changed session");
-            Assert.Equal(SFSessionHttpClientProperties.DefaultExpirationTimeout, result.ExpirationTimeout, "expiration timeout");
-            Assert.Equal(SFSessionHttpClientProperties.DefaultWaitingForIdleSessionTimeout, result.WaitingForIdleSessionTimeout, "waiting for idle session timeout");
-            Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionTimeout, result.ConnectionTimeout, "connection timeout");
-            Assert.Equal(SFSessionHttpClientProperties.DefaultPoolingEnabled, result.PoolingEnabled, "pooling enabled");
+            Assert.Equal(SFSessionHttpClientProperties.DefaultMaxPoolSize, result.MaxPoolSize);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultMinPoolSize, result.MinPoolSize);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultChangedSession, result.ChangedSession);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultExpirationTimeout, result.ExpirationTimeout);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultWaitingForIdleSessionTimeout, result.WaitingForIdleSessionTimeout);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionTimeout, result.ConnectionTimeout);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultPoolingEnabled, result.PoolingEnabled);
         }
 
         [SFFact]
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.MAXPOOLSIZE.ToString()}"));
+            Assert.Contains($"Invalid value of parameter {SFSessionProperty.MAXPOOLSIZE.ToString()}", thrown.Message);
         }
 
         [SFTheory]
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.MINPOOLSIZE.ToString()}"));
+            Assert.Contains($"Invalid value of parameter {SFSessionProperty.MINPOOLSIZE.ToString()}", thrown.Message);
         }
 
         [SFFact]
@@ -102,11 +102,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<SnowflakeDbException>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("MinPoolSize cannot be greater than MaxPoolSize"));
+            Assert.Contains("MinPoolSize cannot be greater than MaxPoolSize", thrown.Message);
         }
 
-        [SFFact]
-        [TestCaseSource(nameof(CorrectTimeoutsWithZeroUnchanged))]
+        [SFTheory]
+        [MemberData(nameof(CorrectTimeoutsWithZeroUnchanged))]
         public void TestExtractExpirationTimeout(TimeoutTestCase testCase)
         {
             // arrange
@@ -119,8 +119,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(testCase.ExpectedTimeout, result.ExpirationTimeout);
         }
 
-        [SFFact]
-        [TestCaseSource(nameof(IncorrectTimeouts))]
+        [SFTheory]
+        [MemberData(nameof(IncorrectTimeouts))]
         public void TestExtractExpirationTimeoutFailsWhenWrongValue(string propertyValue)
         {
             // arrange
@@ -130,11 +130,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.EXPIRATIONTIMEOUT.ToString()}"));
+            Assert.Contains($"Invalid value of parameter {SFSessionProperty.EXPIRATIONTIMEOUT.ToString()}", thrown.Message);
         }
 
-        [SFFact]
-        [TestCaseSource(nameof(PositiveTimeoutsAndZeroUnchanged))]
+        [SFTheory]
+        [MemberData(nameof(PositiveTimeoutsAndZeroUnchanged))]
         public void TestExtractWaitingForIdleSessionTimeout(TimeoutTestCase testCase)
         {
             // arrange
@@ -157,11 +157,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<SnowflakeDbException>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Waiting for idle session timeout cannot be infinite"));
+            Assert.Contains("Waiting for idle session timeout cannot be infinite", thrown.Message);
         }
 
-        [SFFact]
-        [TestCaseSource(nameof(IncorrectTimeouts))]
+        [SFTheory]
+        [MemberData(nameof(IncorrectTimeouts))]
         public void TestExtractWaitingForIdleSessionTimeoutFailsWhenWrongValue(string propertyValue)
         {
             // arrange
@@ -171,11 +171,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT.ToString()}"));
+            Assert.Contains($"Invalid value of parameter {SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT.ToString()}", thrown.Message);
         }
 
-        [SFFact]
-        [TestCaseSource(nameof(CorrectTimeoutsWithZeroAsInfinite))]
+        [SFTheory]
+        [MemberData(nameof(CorrectTimeoutsWithZeroAsInfinite))]
         public void TestExtractConnectionTimeout(TimeoutTestCase testCase)
         {
             // arrange
@@ -188,8 +188,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(testCase.ExpectedTimeout, result.ConnectionTimeout);
         }
 
-        [SFFact]
-        [TestCaseSource(nameof(IncorrectTimeouts))]
+        [SFTheory]
+        [MemberData(nameof(IncorrectTimeouts))]
         public void TestExtractConnectionTimeoutFailsForWrongValue(string propertyValue)
         {
             // arrange
@@ -199,7 +199,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.CONNECTION_TIMEOUT.ToString()}"));
+            Assert.Contains($"Invalid value of parameter {SFSessionProperty.CONNECTION_TIMEOUT.ToString()}", thrown.Message);
         }
 
         [SFTheory]
@@ -253,7 +253,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => ExtractConnectionPoolConfig(connectionString));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain($"Invalid value of parameter {SFSessionProperty.POOLINGENABLED.ToString()}"));
+            Assert.Contains($"Invalid value of parameter {SFSessionProperty.POOLINGENABLED.ToString()}", thrown.Message);
         }
 
         [SFTheory]
@@ -289,51 +289,51 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             }
         }
 
-        public static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithZeroUnchanged() =>
+        public static IEnumerable<object[]> CorrectTimeoutsWithZeroUnchanged() =>
             CorrectTimeoutsWithoutZero().Concat(ZeroUnchangedTimeouts());
 
-        public static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithZeroAsInfinite() =>
+        public static IEnumerable<object[]> CorrectTimeoutsWithZeroAsInfinite() =>
             CorrectTimeoutsWithoutZero().Concat(ZeroAsInfiniteTimeouts());
 
-        public static IEnumerable<TimeoutTestCase> PositiveTimeoutsAndZeroUnchanged() =>
+        public static IEnumerable<object[]> PositiveTimeoutsAndZeroUnchanged() =>
             PositiveTimeouts().Concat(ZeroUnchangedTimeouts());
 
-        private static IEnumerable<TimeoutTestCase> CorrectTimeoutsWithoutZero() =>
+        private static IEnumerable<object[]> CorrectTimeoutsWithoutZero() =>
             NegativeAsInfinityTimeouts().Concat(PositiveTimeouts());
 
-        private static IEnumerable<TimeoutTestCase> NegativeAsInfinityTimeouts()
+        private static IEnumerable<object[]> NegativeAsInfinityTimeouts()
         {
-            yield return new TimeoutTestCase("-1", TimeoutHelper.Infinity());
+            yield return new object[] { new TimeoutTestCase("-1", TimeoutHelper.Infinity()) };
         }
 
-        private static IEnumerable<TimeoutTestCase> PositiveTimeouts()
+        private static IEnumerable<object[]> PositiveTimeouts()
         {
-            yield return new TimeoutTestCase("5", TimeSpan.FromSeconds(5));
-            yield return new TimeoutTestCase("6s", TimeSpan.FromSeconds(6));
-            yield return new TimeoutTestCase("7S", TimeSpan.FromSeconds(7));
-            yield return new TimeoutTestCase("8m", TimeSpan.FromMinutes(8));
-            yield return new TimeoutTestCase("9M", TimeSpan.FromMinutes(9));
-            yield return new TimeoutTestCase("10ms", TimeSpan.FromMilliseconds(10));
-            yield return new TimeoutTestCase("11ms", TimeSpan.FromMilliseconds(11));
+            yield return new object[] { new TimeoutTestCase("5", TimeSpan.FromSeconds(5)) };
+            yield return new object[] { new TimeoutTestCase("6s", TimeSpan.FromSeconds(6)) };
+            yield return new object[] { new TimeoutTestCase("7S", TimeSpan.FromSeconds(7)) };
+            yield return new object[] { new TimeoutTestCase("8m", TimeSpan.FromMinutes(8)) };
+            yield return new object[] { new TimeoutTestCase("9M", TimeSpan.FromMinutes(9)) };
+            yield return new object[] { new TimeoutTestCase("10ms", TimeSpan.FromMilliseconds(10)) };
+            yield return new object[] { new TimeoutTestCase("11ms", TimeSpan.FromMilliseconds(11)) };
         }
 
-        private static IEnumerable<TimeoutTestCase> ZeroAsInfiniteTimeouts()
+        private static IEnumerable<object[]> ZeroAsInfiniteTimeouts()
         {
-            yield return new TimeoutTestCase("0", TimeoutHelper.Infinity());
-            yield return new TimeoutTestCase("0ms", TimeoutHelper.Infinity());
+            yield return new object[] { new TimeoutTestCase("0", TimeoutHelper.Infinity()) };
+            yield return new object[] { new TimeoutTestCase("0ms", TimeoutHelper.Infinity()) };
         }
 
-        private static IEnumerable<TimeoutTestCase> ZeroUnchangedTimeouts()
+        private static IEnumerable<object[]> ZeroUnchangedTimeouts()
         {
-            yield return new TimeoutTestCase("0", TimeSpan.Zero);
-            yield return new TimeoutTestCase("0ms", TimeSpan.Zero);
+            yield return new object[] { new TimeoutTestCase("0", TimeSpan.Zero) };
+            yield return new object[] { new TimeoutTestCase("0ms", TimeSpan.Zero) };
         }
 
-        public static IEnumerable<string> IncorrectTimeouts()
+        public static IEnumerable<object[]> IncorrectTimeouts()
         {
-            yield return "wrong value";
-            yield return "1h";
-            yield return "1s1s";
+            yield return new object[] { "wrong value" };
+            yield return new object[] { "1h" };
+            yield return new object[] { "1s1s" };
         }
     }
 }

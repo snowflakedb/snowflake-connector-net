@@ -1,12 +1,13 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
     public class SessionCreationTokenCounterTest
     {
         private static readonly TimeSpan s_longTime = TimeSpan.FromSeconds(30);
@@ -68,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        public void TestCompleteCleansExpiredTokens()
+        public async Task TestCompleteCleansExpiredTokens()
         {
             // arrange
             var tokens = new SessionCreationTokenCounter(s_shortTime);
@@ -76,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.NewToken(); // this token will be cleaned because of expiration
             Assert.Equal(2, tokens.Count());
             const int EpsilonMillis = 5;
-            Thread.Sleep((int)s_shortTime.TotalMilliseconds + EpsilonMillis);
+            await Task.Delay((int)s_shortTime.TotalMilliseconds + EpsilonMillis);
 
             // act
             tokens.RemoveToken(token);

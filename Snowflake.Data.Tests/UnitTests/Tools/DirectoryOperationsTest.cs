@@ -1,77 +1,80 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using Mono.Unix;
 using Mono.Unix.Native;
 using Xunit;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
-    public class DirectoryOperationsTest
+    public class DirectoryOperationsTest : IDisposable
     {
-        private static DirectoryOperations s_directoryOperations;
-        private static readonly string s_relativeWorkingDirectory = $"directory_operations_test_{Path.GetRandomFileName()}";
-        private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
-        private static readonly string s_dirName = "testdir";
-        private static readonly string s_dirAbsolutePath = Path.Combine(s_workingDirectory, s_dirName);
+        private readonly DirectoryOperations _directoryOperations;
+        private readonly string _workingDirectory;
+        private readonly string _dirAbsolutePath;
 
-        [SetUp]
-        public static void Before()
+        public DirectoryOperationsTest()
         {
-            if (!Directory.Exists(s_workingDirectory))
+            var relativeWorkingDirectory = $"directory_operations_test_{Path.GetRandomFileName()}";
+            _workingDirectory = Path.Combine(TempUtil.GetTempPath(), relativeWorkingDirectory);
+            _dirAbsolutePath = Path.Combine(_workingDirectory, "testdir");
+
+            if (!Directory.Exists(_workingDirectory))
             {
-                Directory.CreateDirectory(s_workingDirectory);
+                Directory.CreateDirectory(_workingDirectory);
             }
 
-            s_directoryOperations = new DirectoryOperations();
+            _directoryOperations = new DirectoryOperations();
         }
 
-        [TearDown]
-        public static void After()
+        public void Dispose()
         {
-            Directory.Delete(s_workingDirectory, true);
+            if (Directory.Exists(_workingDirectory))
+            {
+                Directory.Delete(_workingDirectory, true);
+            }
         }
 
-        [SFFact]
-        [Platform("Win")]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestDirectoryIsSafeOnWindows()
         {
             // arrange
-            var absoluteFilePath = Path.Combine(s_workingDirectory, s_dirName);
+            var absoluteFilePath = Path.Combine(_workingDirectory, "testdir");
             Directory.CreateDirectory(absoluteFilePath);
 
             // act and assert
-            Assert.True(s_directoryOperations.IsDirectorySafe(absoluteFilePath));
+            Assert.True(_directoryOperations.IsDirectorySafe(absoluteFilePath));
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(InsecurePermissionsData))]
         public void TestDirectoryIsNotSafeOnNotWindowsWhenPermissionsAreTooBroad(
-            [ValueSource(nameof(InsecurePermissions))]
             FileAccessPermissions permissions)
         {
             // arrange
-            Syscall.mkdir(s_dirAbsolutePath, (FilePermissions)permissions);
+            Syscall.mkdir(_dirAbsolutePath, (FilePermissions)permissions);
 
             // act and assert
-            Assert.False(s_directoryOperations.IsDirectorySafe(s_dirAbsolutePath));
+            Assert.False(_directoryOperations.IsDirectorySafe(_dirAbsolutePath));
         }
 
         [SFFact]
         public void TestShouldCreateDirectoryWithSafePermissions()
         {
             // act
-            s_directoryOperations.CreateDirectory(s_dirAbsolutePath);
+            _directoryOperations.CreateDirectory(_dirAbsolutePath);
 
             // assert
-            Assert.True(Directory.Exists(s_dirAbsolutePath));
-            Assert.True(s_directoryOperations.IsDirectorySafe(s_dirAbsolutePath));
+            Assert.True(Directory.Exists(_dirAbsolutePath));
+            Assert.True(_directoryOperations.IsDirectorySafe(_dirAbsolutePath));
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestOwnerIsCurrentUser()
         {
             // arrange
@@ -79,11 +82,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var dirOps = new DirectoryOperations(mockUnixOperations);
 
             // act and assert
-            Assert.True(dirOps.IsDirectoryOwnedByCurrentUser(s_dirAbsolutePath));
+            Assert.True(dirOps.IsDirectoryOwnedByCurrentUser(_dirAbsolutePath));
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
@@ -91,11 +93,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var dirOps = new DirectoryOperations(mockUnixOperations);
 
             // act and assert
-            Assert.False(dirOps.IsDirectoryOwnedByCurrentUser(s_dirAbsolutePath));
+            Assert.False(dirOps.IsDirectoryOwnedByCurrentUser(_dirAbsolutePath));
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestDirectoryIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange
@@ -103,8 +104,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var dirOps = new DirectoryOperations(mockUnixOperations);
 
             // act and assert
-            Assert.False(dirOps.IsDirectorySafe(s_dirAbsolutePath));
+            Assert.False(dirOps.IsDirectorySafe(_dirAbsolutePath));
         }
+
+        // MemberData-compatible wrapper (returns IEnumerable<object[]>)
+        public static IEnumerable<object[]> InsecurePermissionsData()
+            => InsecurePermissions().Select(p => new object[] { p });
 
         // User permissions are required for all of the tests to be able to access directory information
         public static IEnumerable<FileAccessPermissions> InsecurePermissions()

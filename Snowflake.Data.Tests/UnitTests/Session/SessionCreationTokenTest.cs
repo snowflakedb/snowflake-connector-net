@@ -1,10 +1,10 @@
 using System;
 using Xunit;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
     public class SessionCreationTokenTest
     {
         private static readonly TimeSpan s_timeout30Seconds = TimeSpan.FromSeconds(30);
