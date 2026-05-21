@@ -1,3 +1,6 @@
+using System.Threading;
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     using System.Data;
@@ -7,18 +10,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using System.Threading.Tasks;
-
-
-    class SFDbTransactionIT : SFBaseTest
+    public class SFDbTransactionIT : SFBaseTestAsync
     {
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFDbTransactionIT(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
+
         [SFFact]
-        public void TestTransactionDbConnection()
+        public async Task TestTransactionDbConnection()
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
 
                 // Act
                 using (IDbTransaction t1 = conn.BeginTransaction())
@@ -30,13 +34,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestTransactionIsolationLevel()
+        public async Task TestTransactionIsolationLevel()
         {
             using (var conn = new SnowflakeDbConnection())
             {
                 // Arrange
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
 
                 // Act
                 using (IDbTransaction t1 = conn.BeginTransaction())
@@ -49,26 +53,27 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [SFFact]
         // Test that when a transaction is disposed, rollback would be sent out
-        public void TestTransactionDispose()
+        public async Task TestTransactionDispose()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
 
-                CreateOrReplaceTable(conn, TableName, new[] { "c INT" });
+                _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" });
 
-                using (IDbTransaction t1 = conn.BeginTransaction())
+                using (IDbTransaction t1 = await conn.BeginTransactionAsync())
                 {
                     IDbCommand t1c1 = conn.CreateCommand();
                     t1c1.Transaction = t1;
-                    t1c1.CommandText = $"insert into {TableName} values (1)";
+                    t1c1.CommandText = $"insert into {tableName} values (1)";
                     t1c1.ExecuteNonQuery();
                 }
 
                 // Transaction t1 would be disposed and rollback at this point, tuple inserted is not visible
                 IDbCommand c2 = conn.CreateCommand();
-                c2.CommandText = $"SELECT * FROM {TableName}";
+                c2.CommandText = $"SELECT * FROM {tableName}";
                 IDataReader reader2 = c2.ExecuteReader();
                 Assert.False(reader2.Read());
             }
@@ -76,23 +81,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         [SFFact]
         // Test SNOW-761136 unnecessary ROLLBACK
-        public void TestTransactionRollback()
+        public async Task TestTransactionRollback()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString;
-            conn.Open();
+            conn.ConnectionString = _fixture.ConnectionString;
+            await conn.OpenAsync(CancellationToken.None);
 
-            CreateOrReplaceTable(conn, TableName, new[]
+            _fixture.CreateOrReplaceTable(conn, tableName, new[]
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
             });
 
-            using (DbTransaction transaction = conn.BeginTransaction())
+            using (DbTransaction transaction = await conn.BeginTransactionAsync())
             {
                 IDbCommand t1c1 = conn.CreateCommand();
                 t1c1.Transaction = transaction;
-                t1c1.CommandText = $"insert into {TableName} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
+                t1c1.CommandText = $"insert into {tableName} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
                 t1c1.ExecuteNonQuery();
                 t1c1.Transaction.Commit();
 
@@ -103,13 +109,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 IDbCommand t1c3 = conn.CreateCommand();
                 t1c3.Transaction = transaction;
-                t1c3.CommandText = $"insert into {TableName} values (current_timestamp(), 4)";
+                t1c3.CommandText = $"insert into {tableName} values (current_timestamp(), 4)";
                 t1c3.ExecuteNonQuery();
                 t1c3.Transaction.Rollback();
             }
 
             IDbCommand command1 = conn.CreateCommand();
-            command1.CommandText = $"Select * from {TableName}";
+            command1.CommandText = $"Select * from {tableName}";
             IDataReader reader = command1.ExecuteReader();
 
             int row = 0;
@@ -122,18 +128,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             Assert.Equal(row, 4);
 
-            conn.Close();
+            await conn.CloseAsync(CancellationToken.None);
         }
 
         [SFFact]
         // Test SNOW-761136 unnecessary ROLLBACK
-        public void TestTransactionRollbackOn2Transactions()
+        public async Task TestTransactionRollbackOn2Transactions()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = ConnectionString;
-            conn.Open();
+            conn.ConnectionString = _fixture.ConnectionString;
+            await conn.OpenAsync(CancellationToken.None);
 
-            CreateOrReplaceTable(conn, TableName, new[]
+            _fixture.CreateOrReplaceTable(conn, tableName, new[]
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
@@ -143,22 +150,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 IDbCommand t1c1 = conn.CreateCommand();
                 t1c1.Transaction = transaction;
-                t1c1.CommandText = $"insert into {TableName} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
+                t1c1.CommandText = $"insert into {tableName} values (current_timestamp(), 1), (current_timestamp(), 2), (current_timestamp(), 3)";
                 t1c1.ExecuteNonQuery();
                 t1c1.Transaction.Commit();
             }
 
-            using (DbTransaction transaction2 = conn.BeginTransaction())
+            using (DbTransaction transaction2 = await conn.BeginTransactionAsync())
             {
                 IDbCommand t2c2 = conn.CreateCommand();
                 t2c2.Transaction = transaction2;
-                t2c2.CommandText = $"insert into {TableName} values (current_timestamp(), 4)";
+                t2c2.CommandText = $"insert into {tableName} values (current_timestamp(), 4)";
                 t2c2.ExecuteNonQuery();
                 t2c2.Transaction.Rollback();
             }
 
             IDbCommand command1 = conn.CreateCommand();
-            command1.CommandText = $"Select * from {TableName}";
+            command1.CommandText = $"Select * from {tableName}";
             IDataReader reader = command1.ExecuteReader();
 
             int row = 0;
@@ -171,13 +178,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             Assert.Equal(row, 3);
 
-            conn.Close();
+            await conn.CloseAsync(CancellationToken.None);
         }
 
         [SFFact]
-        public void TestThrowsExceptionWhenBeginTransactionWithoutOpen()
+        public async Task TestThrowsExceptionWhenBeginTransactionWithoutOpen()
         {
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 Assert.Throws<SnowflakeDbException>(() => conn.BeginTransaction());
             }

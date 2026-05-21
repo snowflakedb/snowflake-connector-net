@@ -1,25 +1,28 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     using Xunit;
     using Snowflake.Data.Client;
     using System.Data;
     using System.Runtime.InteropServices;
-
-
-    class SFDbAdaptorIT : SFBaseTest
+    using System.Threading;
+    using System.Threading.Tasks;
+    public sealed class SFDbAdaptorIT : SFBaseTestAsync
     {
+        private readonly SFBaseTestAsyncFixture _fixture;
         private IDbDataAdapter _adapter;
         private SnowflakeDbCommand _command;
 
-        [SetUp]
-        public new void BeforeTest()
+        public SFDbAdaptorIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
+            _fixture = fixture;
             _adapter = new SnowflakeDbDataAdapter();
             _command = new SnowflakeDbCommand();
         }
 
         [SFFact]
-        public void TestCreatingDataAdapterWithSelectCommand()
+        public async Task TestCreatingDataAdapterWithSelectCommand()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";
             _adapter = new SnowflakeDbDataAdapter(_command);
@@ -28,10 +31,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestCreatingDataAdapterWithSelectCommandTextAndConnection()
+        public async Task TestCreatingDataAdapterWithSelectCommandTextAndConnection()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";
-            SnowflakeDbConnection conn = new SnowflakeDbConnection(ConnectionString);
+            SnowflakeDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString);
             _adapter = new SnowflakeDbDataAdapter(_command.CommandText, conn);
 
             Assert.Equal(_command.CommandText, _adapter.SelectCommand.CommandText);
@@ -39,31 +42,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestSelectStatement()
+        public async Task TestSelectStatement()
         {
             DataSet ds = new DataSet("ds");
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
 
                 _adapter = new SnowflakeDbDataAdapter("select 1 as col1, 2 AS col2", conn);
                 _adapter.Fill(ds);
-                conn.Close();
+                await conn.CloseAsync(CancellationToken.None);
             }
             Assert.Equal(ds.Tables[0].TableName, "Table");
-            Assert.Equal(ds.Tables[0].Rows[0].ItemArray[0], 1);
-            Assert.Equal(ds.Tables[0].Rows[0].ItemArray[1], 2);
+            Assert.Equal(ds.Tables[0].Rows[0].ItemArray[0], 1L);
+            Assert.Equal(ds.Tables[0].Rows[0].ItemArray[1], 2L);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Assert.Equal(ds.Tables[0].Rows[0]["col1"].ToString(), "1");
+                Assert.Equal("1", ds.Tables[0].Rows[0]["col1"].ToString());
                 Assert.Equal(ds.Tables[0].Rows[0]["col2"].ToString(), "2");
             }
         }
 
         [SFFact]
-        public void TestDataAdapterSetDeleteCommand()
+        public async Task TestDataAdapterSetDeleteCommand()
         {
             _command.CommandText = "delete from table";
             _adapter.DeleteCommand = _command;
@@ -73,7 +76,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestDataAdapterSetInsertCommand()
+        public async Task TestDataAdapterSetInsertCommand()
         {
             _command.CommandText = "insert into table values (1, 2, 3)";
             _adapter.InsertCommand = _command;
@@ -83,7 +86,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestDataAdapterSetSelectCommand()
+        public async Task TestDataAdapterSetSelectCommand()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";
             _adapter.SelectCommand = _command;
@@ -93,7 +96,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestDataAdapterSetUpdateCommand()
+        public async Task TestDataAdapterSetUpdateCommand()
         {
             _command.CommandText = "update table set col = 1 where col = 0";
             _adapter.UpdateCommand = _command;

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Xunit;
 using Snowflake.Data.Client;
@@ -9,33 +11,47 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture(ResultFormat.ARROW, false)]
-    [TestFixture(ResultFormat.ARROW, true)]
-    [TestFixture(ResultFormat.JSON, false)]
-    public class StructuredObjectIT : StructuredTypesIT
+    public sealed class StructuredObjectITJsonManaged : StructuredObjectIT
+    {
+        public StructuredObjectITJsonManaged(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.JSON, false) { }
+    }
+
+    public sealed class StructuredObjectITArrowManaged : StructuredObjectIT
+    {
+        public StructuredObjectITArrowManaged(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.ARROW, false) { }
+    }
+
+    public sealed class StructuredObjectITArrowNative : StructuredObjectIT
+    {
+        public StructuredObjectITArrowNative(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.ARROW, true) { }
+    }
+
+    public abstract class StructuredObjectIT : StructuredTypesIT
     {
         private readonly ResultFormat _resultFormat;
         private readonly bool _nativeArrow;
 
-        public StructuredObjectIT(ResultFormat resultFormat, bool nativeArrow)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public StructuredObjectIT(SFBaseTestAsyncFixture fixture, ResultFormat resultFormat, bool nativeArrow) : base(fixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
             _nativeArrow = nativeArrow;
         }
 
         [SFFact]
-        public void TestDataTableLoadOnStructuredObject()
+        public async Task TestDataTableLoadOnStructuredObject()
         {
             if (_resultFormat != ResultFormat.JSON)
-                Assert.Ignore("skip test on arrow");
+                Skip.When(true, "skip test on arrow");
 
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var key = "city";
                     var value = "San Mateo";
                     var addressAsSFString = $"OBJECT_CONSTRUCT('{key}','{value}')::OBJECT(city VARCHAR)";
@@ -43,7 +59,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = $"SELECT {addressAsSFString} AS {colName}";
 
                     // act
-                    using (var reader = command.ExecuteReader())
+                    using (var reader = await command.ExecuteReaderAsync())
                     {
                         var dt = new DataTable();
                         dt.Load(reader);
@@ -56,18 +72,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestSelectStructuredTypeObject()
+        public async Task TestSelectStructuredTypeObject()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA')::OBJECT(city VARCHAR, state VARCHAR)";
                     command.CommandText = $"SELECT {addressAsSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -81,8 +97,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     if (_nativeArrow)
                     {
                         var arrowString = reader.GetString(0);
-                        EnableStructuredTypes(connection, ResultFormat.JSON);
-                        reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                        await EnableStructuredTypesAsync(connection, ResultFormat.JSON);
+                        reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                         Assert.True(reader.Read());
                         var jsonString = reader.GetString(0);
 
@@ -93,19 +109,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestSelectNestedStructuredTypeObject()
+        public async Task TestSelectNestedStructuredTypeObject()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var addressAsSFString =
                         "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA', 'zip', OBJECT_CONSTRUCT('prefix', '00', 'postfix', '11'))::OBJECT(city VARCHAR, state VARCHAR, zip OBJECT(prefix VARCHAR, postfix VARCHAR))";
                     command.CommandText = $"SELECT {addressAsSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -122,18 +138,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestSelectObjectWithMap()
+        public async Task TestSelectObjectWithMap()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var objectWithMap = "OBJECT_CONSTRUCT('names', OBJECT_CONSTRUCT('Excellent', '6', 'Poor', '1'))::OBJECT(names MAP(VARCHAR,VARCHAR))";
                     command.CommandText = $"SELECT {objectWithMap}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -149,18 +165,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestSelectObjectWithArrays()
+        public async Task TestSelectObjectWithArrays()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var objectWithArray = "OBJECT_CONSTRUCT('names', ARRAY_CONSTRUCT('Excellent', 'Poor'))::OBJECT(names ARRAY(TEXT))";
                     command.CommandText = $"SELECT {objectWithArray}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -168,24 +184,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(grades);
-                    CollectionAssert.Equal(new[] { "Excellent", "Poor" }, grades.Names);
+                    Assert.Equal(new[] { "Excellent", "Poor" }, grades.Names);
                 }
             }
         }
 
         [SFFact]
-        public void TestSelectObjectWithList()
+        public async Task TestSelectObjectWithList()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var objectWithArray = "OBJECT_CONSTRUCT('names', ARRAY_CONSTRUCT('Excellent', 'Poor'))::OBJECT(names ARRAY(TEXT))";
                     command.CommandText = $"SELECT {objectWithArray}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -193,7 +209,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(grades);
-                    CollectionAssert.Equal(new List<string> { "Excellent", "Poor" }, grades.Names);
+                    Assert.Equal(new List<string> { "Excellent", "Poor" }, grades.Names);
                 }
             }
         }
@@ -202,17 +218,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [InlineData(@"OBJECT_CONSTRUCT('Value', OBJECT_CONSTRUCT('a', 'b'))::OBJECT(Value OBJECT)", "{\"a\": \"b\"}")]
         [InlineData(@"OBJECT_CONSTRUCT('Value', ARRAY_CONSTRUCT('a', 'b'))::OBJECT(Value ARRAY)", "[\"a\", \"b\"]")]
         [InlineData(@"OBJECT_CONSTRUCT('Value', TO_VARIANT(OBJECT_CONSTRUCT('a', 'b')))::OBJECT(Value VARIANT)", "{\"a\": \"b\"}")]
-        public void TestSelectSemiStructuredTypesInObject(string valueSfString, string expectedValue)
+        public async Task TestSelectSemiStructuredTypesInObject(string valueSfString, string expectedValue)
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     command.CommandText = $"SELECT {valueSfString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -226,15 +242,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestSelectStructuredTypesAsNulls()
+        public async Task TestSelectStructuredTypesAsNulls()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var objectSFString = @"OBJECT_CONSTRUCT_KEEP_NULL(
                         'ObjectValue', NULL,
                         'ListValue', NULL,
@@ -251,7 +267,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         IMapValue MAP(INTEGER, INTEGER)
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -270,15 +286,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestSelectNestedStructuredTypesNotNull()
+        public async Task TestSelectNestedStructuredTypesNotNull()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var objectSFString = @"OBJECT_CONSTRUCT_KEEP_NULL(
                         'ObjectValue', OBJECT_CONSTRUCT('Name', 'John'),
                         'ListValue', ARRAY_CONSTRUCT('a', 'b'),
@@ -295,7 +311,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         IMapValue MAP(INTEGER, INTEGER)
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -304,9 +320,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // assert
                     Assert.NotNull(objectWithStructuredTypes);
                     Assert.Equal(new Identity("John"), objectWithStructuredTypes.ObjectValue);
-                    CollectionAssert.Equal(new[] { "a", "b" }, objectWithStructuredTypes.ListValue);
-                    CollectionAssert.Equal(new[] { "c" }, objectWithStructuredTypes.ArrayValue);
-                    CollectionAssert.Equal(new[] { "d", "e" }, objectWithStructuredTypes.IListValue);
+                    Assert.Equal(new[] { "a", "b" }, objectWithStructuredTypes.ListValue);
+                    Assert.Equal(new[] { "c" }, objectWithStructuredTypes.ArrayValue);
+                    Assert.Equal(new[] { "d", "e" }, objectWithStructuredTypes.IListValue);
                     Assert.Equal(typeof(List<string>), objectWithStructuredTypes.IListValue.GetType());
                     Assert.Equal(1, objectWithStructuredTypes.MapValue.Count);
                     Assert.Equal(5, objectWithStructuredTypes.MapValue[3]);
@@ -318,15 +334,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestRenamePropertyForPropertiesNamesConstruction()
+        public async Task TestRenamePropertyForPropertiesNamesConstruction()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var objectSFString = @"OBJECT_CONSTRUCT(
                         'IntegerValue', '8',
                         'x', 'abc'
@@ -335,7 +351,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         x TEXT
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -351,15 +367,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestIgnorePropertyForPropertiesOrderConstruction()
+        public async Task TestIgnorePropertyForPropertiesOrderConstruction()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var objectSFString = @"OBJECT_CONSTRUCT(
                         'x', 'abc',
                         'IntegerValue', '8'
@@ -368,7 +384,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         IntegerValue INTEGER
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -384,15 +400,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestConstructorConstructionMethod()
+        public async Task TestConstructorConstructionMethod()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var objectSFString = @"OBJECT_CONSTRUCT(
                         'x', 'abc',
                         'IntegerValue', '8'
@@ -401,7 +417,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         IntegerValue INTEGER
                     )";
                     command.CommandText = $"SELECT {objectSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -417,18 +433,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestSelectNullObject()
+        public async Task TestSelectNullObject()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var nullObjectSFString = "NULL::OBJECT(Name TEXT)";
                     command.CommandText = $"SELECT {nullObjectSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -441,18 +457,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact]
-        public void TestThrowExceptionForInvalidObject()
+        public async Task TestThrowExceptionForInvalidObject()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var objectSFString = "OBJECT_CONSTRUCT('x', 'y')::OBJECT";
                     command.CommandText = $"SELECT {objectSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -460,25 +476,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
-                    Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an object"));
-                    Assert.That(thrown.Message, Does.Contain("Method GetObject<Snowflake.Data.Tests.Client.Identity> can be used only for structured object"));
+                    Assert.Contains("Failed to read structured type when getting an object", thrown.Message);
+                    Assert.Contains("Method GetObject<Snowflake.Data.Tests.Client.Identity> can be used only for structured object", thrown.Message);
                 }
             }
         }
 
         [SFFact]
-        public void TestThrowExceptionForInvalidPropertyType()
+        public async Task TestThrowExceptionForInvalidPropertyType()
         {
             // arrange
-            using (var connection = new SnowflakeDbConnection(ConnectionString))
+            using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                connection.Open();
+                await connection.OpenAsync(CancellationToken.None);
                 using (var command = connection.CreateCommand())
                 {
-                    EnableStructuredTypes(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
                     var objectSFString = "OBJECT_CONSTRUCT('x', 'a', 'y', 'b')::OBJECT(x VARCHAR, y VARCHAR)";
                     command.CommandText = $"SELECT {objectSFString}";
-                    var reader = (SnowflakeDbDataReader)command.ExecuteReader();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
                     Assert.True(reader.Read());
 
                     // act
@@ -488,13 +504,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     if (_resultFormat == ResultFormat.JSON || !_nativeArrow)
                     {
                         SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_DETAILED_ERROR);
-                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when reading path $[1]."));
-                        Assert.That(thrown.Message, Does.Contain("Could not read text type into System.Int32"));
+                        Assert.Contains("Failed to read structured type when reading path $[1].", thrown.Message);
+                        Assert.Contains("Could not read text type into System.Int32", thrown.Message);
                     }
                     else
                     {
                         SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.STRUCTURED_TYPE_READ_ERROR);
-                        Assert.That(thrown.Message, Does.Contain("Failed to read structured type when getting an object."));
+                        Assert.Contains("Failed to read structured type when getting an object.", thrown.Message);
                     }
                 }
             }
