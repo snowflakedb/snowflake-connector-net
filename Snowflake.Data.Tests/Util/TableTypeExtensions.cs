@@ -21,9 +21,9 @@ namespace Snowflake.Data.Tests.Util
             var externalVolume = Environment.GetEnvironmentVariable("ICEBERG_EXTERNAL_VOLUME");
             var catalog = Environment.GetEnvironmentVariable("ICEBERG_CATALOG");
             var baseLocation = Environment.GetEnvironmentVariable("ICEBERG_BASE_LOCATION");
-            Assert.NotNull(externalVolume, "env ICEBERG_EXTERNAL_VOLUME not set!");
-            Assert.NotNull(catalog, "env ICEBERG_CATALOG not set!");
-            Assert.NotNull(baseLocation, "env ICEBERG_BASE_LOCATION not set!");
+            Assert.NotNull(externalVolume);
+            Assert.NotNull(catalog);
+            Assert.NotNull(baseLocation);
             return $"EXTERNAL_VOLUME = '{externalVolume}' CATALOG = '{catalog}' BASE_LOCATION = '{baseLocation}'";
         }
     }
