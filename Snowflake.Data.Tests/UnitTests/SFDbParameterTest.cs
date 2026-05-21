@@ -12,14 +12,14 @@ namespace Snowflake.Data.Tests
     {
         SnowflakeDbParameter _parameter;
 
-        [Test]
+        [SFFact]
         public void TestDefaultDbParameter()
         {
             _parameter = new SnowflakeDbParameter();
             Assert.Equal(SFDataType.None, _parameter.SFDataType);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterWithNameAndDataType([Values] SFDataType expectedSFDataType)
         {
             string expectedParameterName = "1";
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedSFDataType, _parameter.SFDataType);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterWithIndexAndDataType([Values] SFDataType expectedSFDataType)
         {
             int expectedParameterIndex = 1;
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedSFDataType, _parameter.SFDataType);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterDbType([Values] DbType expectedDbType)
         {
             _parameter = new SnowflakeDbParameter();
@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedDbType, _parameter.DbType);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterDirection([Values] ParameterDirection ParameterDirection)
         {
             _parameter = new SnowflakeDbParameter();
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterIsNullable([Values] SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(true, _parameter.IsNullable);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterSize([Values] SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(1, _parameter.Size);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterSourceColumn([Values] SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -93,7 +93,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(col, _parameter.SourceColumn);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterSourceColumnNullMapping([Values] SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(true, _parameter.SourceColumnNullMapping);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterValue([Values] SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(obj, _parameter.Value);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbParameterResetDbType([Values] SFDataType expectedSFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, expectedSFDataType);
@@ -124,7 +124,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(SFDataType.None, _parameter.SFDataType);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbTypeExplicitAssignment([Values] DbType expectedDbType)
         {
             _parameter = new SnowflakeDbParameter();
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedDbType, _parameter.DbType);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbTypeExplicitAssignmentWithNullValueAndDefaultDbType()
         {
             _parameter = new SnowflakeDbParameter();
@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(default(DbType), _parameter.DbType);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbTypeExplicitAssignmentWithNullValueAndNonDefaultDbType()
         {
             var nonDefaultDbType = DbType.String;

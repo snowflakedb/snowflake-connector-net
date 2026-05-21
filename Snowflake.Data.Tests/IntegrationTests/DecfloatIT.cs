@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             return decimal.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectDecfloatLiteral()
         {
             using (var conn = CreateAndOpenConnection())
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDecfloatHighPrecision()
         {
             using (var conn = CreateAndOpenConnection())
@@ -114,7 +114,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDecfloatNull()
         {
             using (var conn = CreateAndOpenConnection())
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDecfloatNegative()
         {
             using (var conn = CreateAndOpenConnection())
@@ -166,7 +166,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDecfloatZero()
         {
             using (var conn = CreateAndOpenConnection())
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDecfloatLargePositiveExponent()
         {
             using (var conn = CreateAndOpenConnection())
@@ -220,7 +220,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDecfloatSmallNegativeExponent()
         {
             using (var conn = CreateAndOpenConnection())
@@ -247,7 +247,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDecfloatInTable()
         {
             using (var conn = CreateAndOpenConnection())
@@ -284,7 +284,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDecfloatMultipleColumns()
         {
             using (var conn = CreateAndOpenConnection())
@@ -320,7 +320,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Explicit("Diagnostic test to observe backend response with current driver version")]
         public void TestDecfloatWithCurrentDriverVersion()
         {
@@ -355,7 +355,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Explicit("Diagnostic test to observe backend response with older driver version")]
         public void TestDecfloatWithOlderDriverVersion()
         {

@@ -25,74 +25,74 @@ namespace Snowflake.Data.Tests.UnitTests
             _concatStream = new ConcatenatedStream(new Stream[3] { openBracket, stream, closeBracket });
         }
 
-        [Test]
+        [SFFact]
         public void TestCanRead()
         {
             Assert.True(_concatStream.CanRead);
         }
 
-        [Test]
+        [SFFact]
         public void TestCanSeek()
         {
             Assert.False(_concatStream.CanSeek);
         }
 
-        [Test]
+        [SFFact]
         public void TestCanWrite()
         {
             Assert.False(_concatStream.CanWrite);
         }
 
-        [Test]
+        [SFFact]
         public void TestFlush()
         {
             Assert.Throws<NotImplementedException>(() => _concatStream.Flush());
         }
 
-        [Test]
+        [SFFact]
         public void TestLength()
         {
             Assert.Throws<NotImplementedException>(() => _ = _concatStream.Length);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetPosition()
         {
             Assert.Throws<NotImplementedException>(() => _ = _concatStream.Position);
         }
 
-        [Test]
+        [SFFact]
         public void TestSetPosition()
         {
             Assert.Throws<NotImplementedException>(() => _concatStream.Position = 1);
         }
 
-        [Test]
+        [SFFact]
         public void TestSeek()
         {
             Assert.Throws<NotImplementedException>(() => _concatStream.Seek(1, new SeekOrigin()));
         }
 
-        [Test]
+        [SFFact]
         public void TestSetLength()
         {
             Assert.Throws<NotImplementedException>(() => _concatStream.SetLength(1));
         }
 
-        [Test]
+        [SFFact]
         public void TestWrite()
         {
             Assert.Throws<NotImplementedException>(() => _concatStream.Write(null, 0, 0));
         }
 
-        [Test]
+        [SFFact]
         public void TestReadZeroByte()
         {
             byte[] buffer = new byte[0];
             Assert.Equal(0, _concatStream.Read(buffer, 0, 0)); // Read 0 byte
         }
 
-        [Test]
+        [SFFact]
         public void TestReadBytes()
         {
             byte[] buffer = new byte[3];
@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(3, _concatStream.Read(buffer, 0, 3)); // Read 3 bytes
         }
 
-        [Test]
+        [SFFact]
         public void TestReadMoreBytesThanBufferSize()
         {
             byte[] buffer = new byte[3];

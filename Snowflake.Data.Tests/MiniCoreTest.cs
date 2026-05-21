@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests
                 Thread.Sleep(10);
         }
 
-        [Test]
+        [SFFact]
         public void TestMinicoreLoadsAndTelemetryIsCorrect()
         {
             WaitForMiniCoreToLoad();
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests
             Assert.Null(clientEnv.minicoreLoadError, $"minicoreLoadError should be null on success, got: {clientEnv.minicoreLoadError}");
         }
 
-        [Test]
+        [SFFact]
         public void TestMinicoreIsDisabledInTelemetry()
         {
             SFEnvironment.MinicoreDisabled = true;
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests
                 clientEnv.minicoreLoadError, "Should report disabled message");
         }
 
-        [Test]
+        [SFFact]
         public void TestGetExpectedLibraryNameReturnsCorrectName()
         {
             var name = SfMiniCore.GetExpectedLibraryName();

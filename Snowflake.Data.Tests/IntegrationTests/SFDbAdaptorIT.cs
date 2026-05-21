@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _command = new SnowflakeDbCommand();
         }
 
-        [Test]
+        [SFFact]
         public void TestCreatingDataAdapterWithSelectCommand()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";
@@ -27,7 +27,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(_command.CommandText, _adapter.SelectCommand.CommandText);
         }
 
-        [Test]
+        [SFFact]
         public void TestCreatingDataAdapterWithSelectCommandTextAndConnection()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(conn, _adapter.SelectCommand.Connection);
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectStatement()
         {
             DataSet ds = new DataSet("ds");
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDataAdapterSetDeleteCommand()
         {
             _command.CommandText = "delete from table";
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(_command.CommandText, _adapter.DeleteCommand.CommandText);
         }
 
-        [Test]
+        [SFFact]
         public void TestDataAdapterSetInsertCommand()
         {
             _command.CommandText = "insert into table values (1, 2, 3)";
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(_command.CommandText, _adapter.InsertCommand.CommandText);
         }
 
-        [Test]
+        [SFFact]
         public void TestDataAdapterSetSelectCommand()
         {
             _command.CommandText = "select 1 as col1, 2 AS col2";
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(_command.CommandText, _adapter.SelectCommand.CommandText);
         }
 
-        [Test]
+        [SFFact]
         public void TestDataAdapterSetUpdateCommand()
         {
             _command.CommandText = "update table set col = 1 where col = 0";

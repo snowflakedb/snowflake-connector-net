@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
     public class CrlTest : RevocationTests
     {
-        [Test]
+        [SFFact]
         public void TestCrlParse()
         {
             // arrange
@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.False(crl.NeedsReplacement(now, TimeSpan.FromDays(1)));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("2025-07-25T16:57:00.0000000Z", false)]
         [TestCase("2025-08-02T16:57:00.0000000Z", true)]
         public void TestCrlExpiredDependingOnNextUpdate(string nowString, bool expectedIsExpired)
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(expectedIsExpired, isExpired);
         }
 
-        [Test]
+        [SFFact]
         public void TestCrlParserDefaultValidityTime()
         {
             // arrange
@@ -75,7 +75,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(TimeSpan.FromDays(1), validityTime);
         }
 
-        [Test]
+        [SFFact]
         public void TestCrlParserCustomValidityTime()
         {
             // arrange
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equal(TimeSpan.FromDays(7), validityTime);
         }
 
-        [Test]
+        [SFFact]
         public void TestCrlIsStaleAfterValidityTime()
         {
             // arrange
@@ -112,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.True(needsReplacement);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("127", "7F")]
         [TestCase("32768", "008000")]
         public void TestConvertBigIntegerToHexString(string stringValue, string expectedHexString)

@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
     public class PutGetStageInfoTest
     {
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(TestCases))]
         public void TestGcsRegionalUrl(string region, bool useRegionalUrl, string endPoint, string expectedGcsEndpoint)
         {

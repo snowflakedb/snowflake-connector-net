@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
     public class ClientFeatureFlagsTest
     {
-        [Test]
+        [SFFact]
         [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "true", true)]
         [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "TRUE", true)]
         [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "false", false)]
@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(expectedValue, clientFeatures.IsEnabledExperimentalAuthentication);
         }
 
-        [Test]
+        [SFFact]
         public void TestDisabledExperimentalAuthenticationWhenCouldNotReadEnvVariable()
         {
             // arrange
@@ -50,7 +50,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.False(clientFeatures.IsEnabledExperimentalAuthentication);
         }
 
-        [Test]
+        [SFFact]
         public void TestFailForDisabledAuthentication()
         {
             // arrange

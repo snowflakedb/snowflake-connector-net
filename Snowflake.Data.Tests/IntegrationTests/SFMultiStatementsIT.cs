@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _resultFormat = resultFormat;
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectWithoutBinding()
         {
             var testDate = "2020-03-11 12:34:56 +0000";
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public async Task TestSelectAsync()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -132,7 +132,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectWithBinding()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -185,7 +185,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestMixedQueryTypeWithBinding()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -290,7 +290,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestWithExecuteNonQuery()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -359,7 +359,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestWithAllQueryTypes()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -460,7 +460,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMultipleStatementSetting()
         {
             using (DbConnection conn = new SnowflakeDbConnection())

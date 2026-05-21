@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         private static readonly TimeSpan s_longTime = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan s_shortTime = TimeSpan.FromMilliseconds(50);
 
-        [Test]
+        [SFFact]
         public void TestGrantSessionCreation()
         {
             // arrange
@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(2, tokens.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestCompleteSessionCreation()
         {
             // arrange
@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, tokens.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestCompleteUnknownTokenDoesNotThrowExceptions()
         {
             // arrange
@@ -67,7 +67,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(1, tokens.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestCompleteCleansExpiredTokens()
         {
             // arrange
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, tokens.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestResetTokens()
         {
             // arrange

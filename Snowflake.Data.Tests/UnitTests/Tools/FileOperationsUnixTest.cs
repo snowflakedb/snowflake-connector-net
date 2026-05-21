@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
+        [SFFact]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
             [ValueSource(nameof(UserAllowedFilePermissions))]
             FileAccessPermissions userAllowedFilePermissions)
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadConfigurationFile(
             [ValueSource(nameof(UserAllowedFilePermissions))]
             FileAccessPermissions userAllowedFilePermissions)
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
 
-        [Test]
+        [SFFact]
         public void TestFileIsSafeOnNotWindows()
         {
             // arrange
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
 
-        [Test]
+        [SFFact]
         public void TestFileIsNotSafeOnNotWindowsWhenTooBroadPermissionsAreUsed(
             [ValueSource(nameof(InsecurePermissions))]
             FileAccessPermissions permissions)
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(s_fileOperations.IsFileSafe(absoluteFilePath));
         }
 
-        [Test]
+        [SFFact]
         public void TestOwnerIsCurrentUser()
         {
             // arrange
@@ -107,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(fileOps.IsFileOwnedByCurrentUser(absolutePath));
         }
 
-        [Test]
+        [SFFact]
         public void TestOwnerIsNotCurrentUser()
         {
             // arrange
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(fileOps.IsFileOwnedByCurrentUser(absolutePath));
         }
 
-        [Test]
+        [SFFact]
         public void TestFileIsNotSecureWhenNotOwnedByCurrentUser()
         {
             // arrange
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestFileCopyUsesProperPermissions()
         {
             // arrange
@@ -160,7 +160,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, File.ReadAllText(DestFilePath));
         }
 
-        [Test]
+        [SFFact]
         public void TestFileCopyShouldThrowExecptionIfTooBroadPermissionsAreUsed()
         {
             // arrange

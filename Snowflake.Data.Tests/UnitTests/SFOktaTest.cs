@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
         const int MaxRetryCount = 15;
         const int MaxRetryTimeout = 400;
 
-        [Test]
+        [SFFact]
         public void TestSsoTokenUrlMismatch()
         {
             try
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestMissingPostbackUrl()
         {
             try
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestWrongPostbackUrl()
         {
             try
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestCorrectPostbackUrl()
         {
             try
@@ -107,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestCorrectPostbackUrlAsync()
         {
             try
@@ -130,7 +130,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDoesNotThrowErrorForWrongPostbackUrlWhenCheckIsDisabled()
         {
             try
@@ -152,7 +152,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestDoesNotThrowErrorForWrongPostbackUrlWhenCheckIsDisabledAsync()
         {
             try
@@ -175,7 +175,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestLoginRequestToString()
         {
             // Arrange
@@ -213,7 +213,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 loginRequest.ToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestAuthenticatorRequestToString()
         {
             // Arrange

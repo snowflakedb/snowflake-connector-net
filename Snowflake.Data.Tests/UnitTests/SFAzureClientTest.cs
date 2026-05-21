@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _cancellationToken = new CancellationToken();
         }
 
-        [Test]
+        [SFFact]
         public void TestExtractBucketNameAndPath()
         {
             // Arrange
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(bucketAndKey[1], location.key);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [TestCase(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
         [TestCase(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [TestCase(HttpStatusCode.BadRequest, ResultStatus.RENEW_TOKEN)]
         [TestCase(HttpStatusCode.NotFound, ResultStatus.NOT_FOUND_FILE)]
@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         [TestCase(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [TestCase(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
         [TestCase(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
@@ -232,7 +232,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
 
-        [Test]
+        [SFFact]
         [TestCase(HttpStatusCode.OK, ResultStatus.UPLOADED)]
         [TestCase(HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
         [TestCase(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
@@ -289,7 +289,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         [TestCase(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
@@ -339,7 +339,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
 
-        [Test]
+        [SFFact]
         [TestCase(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
         [TestCase(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
         [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
@@ -388,7 +388,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
+        [SFFact]
         public void TestEncryptionMetadataReadingIsCaseInsensitive()
         {
             // arrange
@@ -420,7 +420,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("description", fileHeader.encryptionMetadata.matDesc);
         }
 
-        [Test]
+        [SFFact]
         public void TestEncryptionMetadataReadingSucceedsWithoutSfcDigest()
         {
             // arrange
@@ -451,7 +451,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("description", fileHeader.encryptionMetadata.matDesc);
         }
 
-        [Test]
+        [SFFact]
         public void TestHandleFileHeaderResponseDoesNotOverwriteResultStatus()
         {
             // arrange - simulate the download path: status is already set to DOWNLOADED before GetFileHeader is called
@@ -480,7 +480,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(ResultStatus.DOWNLOADED.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
+        [SFFact]
         public void TestEncryptionMetadataReadingFailsWhenMandatoryPropertyIsMissing()
         {
             // arrange

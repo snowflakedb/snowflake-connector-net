@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
     {
         private const string Token = "abc";
 
-        [Test]
+        [SFFact]
         [TestCase("testUser", true, true)]
         [TestCase("", true, false)]
         [TestCase(null, true, false)]
@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(expectedIsAvailable, isAvailable);
         }
 
-        [Test]
+        [SFFact]
         public void TestCacheDisabledCacheIsNotAvailable()
         {
             // arrange
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(false, isAvailable);
         }
 
-        [Test]
+        [SFFact]
         public void TestNoInteractionWithCacheWhenNotAvailable()
         {
             // arrange
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             credentialManager.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestOperationsDontFailForDisabledCache()
         {
             // arrange
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             });
         }
 
-        [Test]
+        [SFFact]
         public void TestUseCacheForAccessToken()
         {
             // arrange
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(string.Empty, cacheKeys.GetAccessToken());
         }
 
-        [Test]
+        [SFFact]
         public void TestUseCacheForRefreshToken()
         {
             // arrange

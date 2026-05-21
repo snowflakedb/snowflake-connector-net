@@ -26,25 +26,25 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(mask.errStr);
         }
 
-        [Test]
+        [SFFact]
         public void TestNullString()
         {
             BasicMasking(null);
         }
 
-        [Test]
+        [SFFact]
         public void TestEmptyString()
         {
             BasicMasking("");
         }
 
-        [Test]
+        [SFFact]
         public void TestNoMasking()
         {
             BasicMasking("This string is innocuous");
         }
 
-        [Test]
+        [SFFact]
         public void TestExceptionInMasking()
         {
             mask = MockSecretDetector.MaskSecrets("This string will raise an exception");
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(mask.errStr);
         }
 
-        [Test]
+        [SFFact]
         public void TestAWSKeys()
         {
             // aws_key_id
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"aws_key_id='aaaaaaaa'", @"aws_key_id='****'");
         }
 
-        [Test]
+        [SFFact]
         public void TestAWSTokens()
         {
             // accessToken
@@ -112,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"accessToken""  :  ""aB1aaaaaaaaaaZaaaaaaaa56aaaaaaaaaa==""", @"accessToken"":""XXXX""");
         }
 
-        [Test]
+        [SFFact]
         public void TestAWSServerSide()
         {
             // amz encryption
@@ -132,7 +132,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 @"x-amz-server-side-encryptionthis-and-that:....");
         }
 
-        [Test]
+        [SFFact]
         public void TestSASTokens()
         {
             // sig
@@ -154,7 +154,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"sig=abCaa09aaa%%aaaaaaaaaa/aaaaa+aaaaa", @"sig=****");
         }
 
-        [Test]
+        [SFFact]
         public void TestPrivateKey()
         {
             // Verify that all allowed characters are correctly supported
@@ -162,7 +162,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 "-----BEGIN PRIVATE KEY-----\\\\nXXXX\\\\n-----END PRIVATE KEY-----"); // pragma: allowlist secret
         }
 
-        [Test]
+        [SFFact]
         public void TestPrivateKeyProperty()
         {
             BasicMasking(@"something=anything;private_key=aaaaaa", @"something=anything;private_key=****");
@@ -188,7 +188,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return Encoding.Default.GetString(bytes);
         }
 
-        [Test]
+        [SFFact]
         public void TestPrivateKeyData()
         {
             BasicMasking(@"""privateKeyData"": ""aaaaaaaaaa""", @"""privateKeyData"": ""XXXX""");
@@ -197,7 +197,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"""privateKeyData"": ""a/b+c=d0" + "\n" + "139\"", @"""privateKeyData"": ""XXXX""");
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionTokens()
         {
             // token
@@ -217,7 +217,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"Token:a=b/c_d-e+F:025", @"Token:****");
         }
 
-        [Test]
+        [SFFact]
         public void TestPassword()
         {
             // password
@@ -248,7 +248,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"password:a!b""c#d$e%f&g'h(i)k*k+l,m;n<o=p>q?r@s[t]u^v_w`x{y|z}Az0123", @"password:****");
         }
 
-        [Test]
+        [SFFact]
         public void TestPasswordProperty()
         {
             BasicMasking(@"somethingBefore=cccc;password=aa", @"somethingBefore=cccc;password=****");
@@ -292,7 +292,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"somethingBefore=cccc;oauthClientSecret="" 'aa", @"somethingBefore=cccc;oauthClientSecret=****");
         }
 
-        [Test]
+        [SFFact]
         [TestCase("2020-04-30 23:06:04,069 - MainThread auth.py:397 - write_temporary_credential() - DEBUG - no ID password was not given")]
         [TestCase("2020-04-30 23:06:04,069 - MainThread auth.py:397 - write_temporary_credential() - DEBUG - no ID proxyPassword was not given")]
         [TestCase("2020-04-30 23:06:04,069 - MainThread auth.py:397 - write_temporary_credential() - DEBUG - no ID private_key_pwd was not given")]
@@ -304,7 +304,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(mask.errStr);
         }
 
-        [Test]
+        [SFFact]
         public void TestMaskToken()
         {
             string longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" + // pragma: allowlist secret
@@ -354,7 +354,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(mask.errStr);
         }
 
-        [Test]
+        [SFFact]
         public void TestTokenFalsePositive()
         {
             string falsePositiveToken = "2020-04-30 23:06:04,069 - MainThread auth.py:397" +
@@ -367,7 +367,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(mask.errStr);
         }
 
-        [Test]
+        [SFFact]
         public void TestPasswords()
         {
             string randomPassword = "Fh[+2J~AcqeqW%?";
@@ -416,7 +416,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
 
-        [Test]
+        [SFFact]
         public void TestTokenPassword()
         {
             string longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" + // pragma: allowlist secret
@@ -498,7 +498,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(mask.errStr);
         }
 
-        [Test]
+        [SFFact]
         public void TestTokenProperty()
         {
             BasicMasking(@"somethingBefore=cccc;token=aa", @"somethingBefore=cccc;token=****");
@@ -510,7 +510,7 @@ namespace Snowflake.Data.Tests.UnitTests
             BasicMasking(@"somethingBefore=cccc;token="" 'aa", @"somethingBefore=cccc;token=****");
         }
 
-        [Test]
+        [SFFact]
         public void TestCustomPattern()
         {
             string[] regex = new string[2]
@@ -553,7 +553,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(mask.errStr);
         }
 
-        [Test]
+        [SFFact]
         public void TestCustomPatternClear()
         {
             string[] regex = new string[1] { @"(testCustomPattern\s*:\s*""([a-z]{8,})"")" };
@@ -577,7 +577,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(mask.errStr);
         }
 
-        [Test]
+        [SFFact]
         public void TestCustomPatternUnequalCount()
         {
             string[] regex = new string[0];
@@ -609,7 +609,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestHttpResponse()
         {
             string randomHttpResponse =

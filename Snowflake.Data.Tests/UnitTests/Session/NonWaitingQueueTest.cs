@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     [Parallelizable(ParallelScope.Self)]
     public class NonWaitingQueueTest
     {
-        [Test]
+        [SFFact]
         public void TestWaitDoesNotHangAndReturnsFalse()
         {
             // arrange
@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.LessOrEqual(watch.ElapsedMilliseconds, 50);
         }
 
-        [Test]
+        [SFFact]
         public void TestNoOneIsWaiting()
         {
             // arrange
@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.False(isAnyoneWaiting);
         }
 
-        [Test]
+        [SFFact]
         public void TestWaitingDisabled()
         {
             // arrange
@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.False(isWaitingEnabled);
         }
 
-        [Test]
+        [SFFact]
         public void TestReset()
         {
             // arrange

@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _resultFormat = resultFormat;
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectIntVectorFromTable()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectFloatVectorFromTable()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectIntVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -153,7 +153,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectIntVectorWithMinAndMax32BitValues()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -177,7 +177,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThrowExceptionForInvalidValueForIntVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -197,7 +197,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThrowExceptionForInvalidIdentifierForIntVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -217,7 +217,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectFloatVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -242,7 +242,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [IgnoreOnJenkins]
         public void TestSelectFloatVectorWithMinAndMaxFloatValues()
         {
@@ -271,7 +271,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectFloatVectorWithNoDecimals()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -296,7 +296,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSelectFloatVectorWithGreaterThanSixDigitPrecision()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
@@ -321,7 +321,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThrowExceptionForInvalidIdentifierForFloatVector()
         {
             using (DbConnection conn = new SnowflakeDbConnection())

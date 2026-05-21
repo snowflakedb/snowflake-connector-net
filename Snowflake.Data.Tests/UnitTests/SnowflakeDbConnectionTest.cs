@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
     [TestFixture, NonParallelizable]
     public class SnowflakeDbConnectionTest
     {
-        [Test]
+        [SFFact]
         public void TestFillConnectionStringFromTomlConfig()
         {
             // Arrange
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestTomlConfigurationDoesNotOverrideExistingConnectionString()
         {
             // Arrange
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestUseConfigurationProvidedOutsideOfConnectionString()
         {
             // arrange
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestUseConfigurationProvidedOutsideOfConnectionStringAsync()
         {
             // arrange

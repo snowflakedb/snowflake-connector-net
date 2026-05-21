@@ -14,7 +14,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
     public class RestRequesterTest
     {
-        [Test]
+        [SFFact]
         public void TestSendAsyncTags401OnException()
         {
             // arrange — real RestRequester with an HttpClient that returns 401
@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(RestRequester.HasUnauthorizedStatusCode(caught));
         }
 
-        [Test]
+        [SFFact]
         public void TestSendAsyncTags403OnException()
         {
             // arrange
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(RestRequester.HasUnauthorizedStatusCode(caught));
         }
 
-        [Test]
+        [SFFact]
         public void TestSendAsyncDoesNotTagOnSuccess()
         {
             // arrange
@@ -101,19 +101,19 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.DoesNotThrow(() => restRequester.Get<string>(request));
         }
 
-        [Test]
+        [SFFact]
         public void TestHasUnauthorizedStatusCodeReturnsFalseForNull()
         {
             Assert.False(RestRequester.HasUnauthorizedStatusCode(null));
         }
 
-        [Test]
+        [SFFact]
         public void TestHasUnauthorizedStatusCodeReturnsFalseForPlainException()
         {
             Assert.False(RestRequester.HasUnauthorizedStatusCode(new Exception("no http info")));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestPostAsyncDeserializesValidJsonWithoutRetry()
         {
             // arrange
@@ -131,7 +131,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("Some message!", result.message);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestPostAsyncRetriesOnTruncatedJson()
         {
             // arrange
@@ -151,7 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("Some message!", result.message);
         }
 
-        [Test]
+        [SFFact]
         public void TestPostAsyncThrowsWhenBothAttemptsReturnTruncatedJson()
         {
             // arrange
@@ -167,7 +167,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 () => restRequester.PostAsync<NullDataResponse>(request, CancellationToken.None));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestGetAsyncRetriesOnTruncatedJson()
         {
             // arrange
@@ -187,7 +187,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("Some message!", result.message);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetAsyncThrowsWhenBothAttemptsReturnTruncatedJson()
         {
             // arrange

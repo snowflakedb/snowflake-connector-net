@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
     public class ExternalBrowserAuthenticatorTest
     {
-        [Test]
+        [SFFact]
         [TestCase("externalbrowser", true)]
         [TestCase("EXTERNALBROWSER", true)]
         [TestCase("username_password_mfa", false)]

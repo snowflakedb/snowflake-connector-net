@@ -36,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             MockExecutionDirectory();
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTakesFilePathFromTheInput()
         {
             // arrange
@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             t_environmentOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTakesFilePathFromEnvironmentVariableIfInputNotPresent(
             [Values(null, "")] string inputFilePath)
         {
@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(EnvironmentalConfigFilePath, filePath);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTakesFilePathFromDriverLocationWhenNoInputParameterNorEnvironmentVariable()
         {
             // arrange
@@ -83,7 +83,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(s_driverConfigFilePath, filePath);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTakesFilePathFromHomeLocationWhenNoInputParamEnvironmentVarNorDriverLocation()
         {
             // arrange
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(s_homeConfigFilePath, filePath);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTakesFilePathFromHomeDirectoryWhenNoOtherWaysPossible()
         {
             // arrange
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Equal(s_homeConfigFilePath, filePath);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatReturnsNullIfNoWayOfGettingTheFile()
         {
             // act
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Null(filePath);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatDoesNotFailWhenSearchForOneOfDirectoriesFails()
         {
             // arrange
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatDoesNotFailWhenHomeDirectoryReturnsNull()
         {
             // arrange
@@ -147,7 +147,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatDoesNotFailWhenHomeDirectoryDoesNotExist()
         {
             // arrange

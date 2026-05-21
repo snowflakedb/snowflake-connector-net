@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
     public class StreamPairTest
     {
-        [Test]
+        [SFFact]
         public void TestCloseBothStreams()
         {
             // arrange
@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockedHelperStream.Verify(stream => stream.Close());
         }
 
-        [Test]
+        [SFFact]
         public void TestCloseMainStreamOnlyWhenHelperStreamNotGiven()
         {
             // arrange

@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
     {
         private static readonly TimeSpan s_timeout30Seconds = TimeSpan.FromSeconds(30);
 
-        [Test]
+        [SFFact]
         public void TestTokenIsNotExpired()
         {
             // arrange
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.False(isExpired);
         }
 
-        [Test]
+        [SFFact]
         public void TestTokenIsExpired()
         {
             // arrange

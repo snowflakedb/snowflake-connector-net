@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     class SFStatementTypeTest : SFBaseTest
     {
-        [Test]
+        [SFFact]
         public void TestCallStatement()
         {
             using (DbConnection conn = new SnowflakeDbConnection())

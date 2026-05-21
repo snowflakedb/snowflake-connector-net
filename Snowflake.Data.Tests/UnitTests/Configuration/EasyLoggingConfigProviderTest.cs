@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private const string FilePathFromConnectionString = "/Users/dotnet/config.json";
         private const string FilePathToUse = "/home/config.json";
 
-        [Test]
+        [SFFact]
         public void TestThatProvidesConfiguration()
         {
             // arrange
@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             Assert.Same(config, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatReturnsNullWhenNoConfigurationFound()
         {
             // arrange

@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
+        [SFFact]
         public void TestLocalDefaultConnectStringReadFromToml()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThrowExceptionIfTomlNotFoundWithOtherConnectionString()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThrowExceptionIfTomlFromNotFoundFromDbConnection()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);

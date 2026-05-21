@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
     public sealed class SFEnvironmentTest
     {
-        [Test]
+        [SFFact]
         public void TestRuntimeExtraction()
         {
             // Arrange
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedVersion, actualVersion);
         }
 
-        [Test]
+        [SFFact]
         [RunOnlyOnCI]
         public void TestApplicationPathExtraction()
         {
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests
 #endif
         }
 
-        [Test]
+        [SFFact]
         public void TestClientEnvironmentDoesNotInterfereForDifferentAuthenticators()
         {
             // arrange/act
@@ -121,7 +121,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(firstClientCredentialEnvJson, secondClientCredentialEnvJson);
         }
 
-        [Test]
+        [SFFact]
         [Platform("Linux")]
         public void TestOsDetailsExtractionOnLinux()
         {
@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestStaticConstructorSetsClientEnvCorrectly()
         {
             var clientEnv = SFEnvironment.ClientEnv;
@@ -157,7 +157,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(clientEnv.platform, "platform should be null on the static ClientEnv");
         }
 
-        [Test]
+        [SFFact]
         [Platform("Linux")]
         public void TestStaticConstructorSetsLibcFieldsOnLinux()
         {
@@ -171,7 +171,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 $"libcVersion should be a version string, got: {clientEnv.libcVersion}");
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Linux")]
         public void TestStaticConstructorSetsLibcFieldsOnNonLinux()
         {
@@ -181,7 +181,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(clientEnv.libcVersion, "libcVersion should be null on non-Linux");
         }
 
-        [Test]
+        [SFFact]
         [Platform("Linux")]
         public void TestStaticConstructorSetsOsDetailsOnLinux()
         {
@@ -197,7 +197,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.NotEmpty(clientEnv.osDetails);
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Linux")]
         public void TestStaticConstructorSetsOsDetailsOnNonLinux()
         {
@@ -206,7 +206,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(clientEnv.osDetails, "osDetails should be null on non-Linux");
         }
 
-        [Test]
+        [SFFact]
         [Platform(Exclude = "Linux")]
         public void TestOsDetailsExtractionOnNonLinux()
         {
@@ -214,7 +214,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Null(osDetails, "OS details should be null on non-Linux platforms");
         }
 
-        [Test]
+        [SFFact]
         [Platform("Linux")]
         public void TestOsDetailsFiltersUnwantedKeys()
         {

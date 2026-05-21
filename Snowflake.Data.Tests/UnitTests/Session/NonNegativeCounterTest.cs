@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
     public class NonNegativeCounterTest
     {
-        [Test]
+        [SFFact]
         public void TestInitialZero()
         {
             // arrange
@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, count);
         }
 
-        [Test]
+        [SFFact]
         public void TestIncrease()
         {
             // arrange
@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
 
-        [Test]
+        [SFFact]
         public void TestDecrease()
         {
             // arrange
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, counter.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestDecreaseDoesNotGoBelowZero()
         {
             // arrange
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, counter.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestReset()
         {
             // arrange

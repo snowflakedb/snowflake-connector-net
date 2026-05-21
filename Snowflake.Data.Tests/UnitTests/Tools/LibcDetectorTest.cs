@@ -6,21 +6,21 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
     public sealed class LibcDetectorTest
     {
-        [Test]
+        [SFFact]
         public void TestGetLibcFamilyStringForGlibc()
         {
             var result = LibcFamily.Glibc.ToPrettyString();
             Assert.That(result, Is.EqualTo("glibc"));
         }
 
-        [Test]
+        [SFFact]
         public void TestGetLibcFamilyStringForNotApplicable()
         {
             var result = LibcFamily.NotApplicable.ToPrettyString();
             Assert.That(result, Is.Null);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetLibcFamilyStringForCouldNotDetermine()
         {
             var result = LibcFamily.CouldNotDetermine.ToPrettyString();

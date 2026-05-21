@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return new UTF8Buffer(b2, 100, b1.Length);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertBindToSFValFinlandLocale()
         {
             Thread testThread = new Thread(() =>
@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests
             testThread.Join();
         }
 
-        [Test]
+        [SFFact]
         [TestCase("0", false)]
         [TestCase("t", true)]
         [TestCase("T", true)]
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("2100-12-31 23:59:59.9999999")]
         [TestCase("2200-01-01 11:22:33.4455667")]
         [TestCase("9999-12-31 23:59:59.9999999")]
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(inputTime, result);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("11:22:33.4455667")]
         [TestCase("23:59:59.9999999")]
         [TestCase("16:20:00.6666666")]
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Utc)]
         [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Local)]
         [TestCase("2100-12-31 23:59:59.9999999", DateTimeKind.Unspecified)]
@@ -154,7 +154,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(dtExpected, dtResult);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("9223372036854775807")]
         [TestCase("-9223372036854775808")]
         [TestCase("-1")]
@@ -166,7 +166,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("2147483647")]
         [TestCase("-2147483648")]
         [TestCase("-1")]
@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("32767")]
         [TestCase("-32768")]
         [TestCase("-1")]
@@ -190,7 +190,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("255")]
         [TestCase("0")]
         public void TestConvertToByte(string s)
@@ -200,7 +200,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("256")]
         [TestCase("-1")]
         public void TestOverflowByte(string s)
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte)));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("32768")]
         [TestCase("-32769")]
         public void TestOverflowInt16(string s)
@@ -216,7 +216,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int16)));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("2147483648")]
         [TestCase("-2147483649")]
         public void TestOverflowInt32(string s)
@@ -224,7 +224,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32)));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("9223372036854775808")]
         [TestCase("-9223372036854775809")]
         public void TestOverflowInt64(string s)
@@ -232,7 +232,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64)));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("9223372036854775807.9223372036854775807")]
         [TestCase("-9223372036854775807.1234567890")]
         [TestCase("-1.300")]
@@ -253,7 +253,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, actual);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("79228162514264337593543950336")] // Max decimal value + 1
         [TestCase("-79228162514264337593543950336")] // Min decimal value - 1
         [TestCase("79228162514264337593543950335.9999999999999999999999999999")] // The scaling factor range is 0 to 28. Scaling factor = 29 and fractional part > MaxValue
@@ -262,7 +262,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("9223372036854775807.9223372036854775807")]
         [TestCase("-9223372036854775807.1234567890")]
         [TestCase("-1.300")]
@@ -287,7 +287,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedFloat, actualFloat);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("thisIsNotAValidValue")]
         [TestCase("-0.999")]
         [TestCase("-1.300")]
@@ -305,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte)));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("thisIsNotAValidValue")]
         public void TestInvalidConversionInvalidFloat(string s)
         {
@@ -313,7 +313,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(double)));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("thisIsNotAValidValue")]
         [TestCase("1.5e-36")]
         [TestCase("1.5e+38")]
@@ -331,7 +331,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertTimestampLtzToDateTimeOffsetWithLocalTimezone()
         {
             var utcDateTime = new DateTime(2024, 7, 15, 10, 30, 0, DateTimeKind.Utc);
@@ -344,7 +344,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertTimestampLtzToDateTimeOffsetWithNamedTimezone()
         {
             var tokyoTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Asia/Tokyo");
@@ -358,7 +358,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(utcDateTime, result.UtcDateTime);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertTimestampLtzToDateTimeWithLocalTimezone()
         {
             var utcDateTime = new DateTime(2024, 1, 15, 18, 0, 0, DateTimeKind.Utc);
@@ -371,7 +371,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertTimestampLtzToDateTimeWithNamedTimezone()
         {
             var warsawTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Europe/Warsaw");
@@ -386,7 +386,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(DateTimeKind.Local, result.Kind);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertTimestampLtzToDateTimeOffsetWithUtcTimezone()
         {
             var utcDateTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -399,7 +399,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(utcDateTime, result.UtcDateTime);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertTimestampLtzThrowsWhenSessionTimezoneIsNull()
         {
             var wireValue = DateTimeToLtzWireFormat(new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
@@ -413,7 +413,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTime), null));
         }
 
-        [Test]
+        [SFFact]
         [TestCase(SFDataType.TIMESTAMP_LTZ, typeof(DateTime))]
         [TestCase(SFDataType.TIMESTAMP_TZ, typeof(DateTime))]
         [TestCase(SFDataType.TIMESTAMP_NTZ, typeof(DateTimeOffset))]
@@ -434,7 +434,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(DbType.AnsiStringFixedLength, "hello", "hello")]
         [TestCase(DbType.AnsiString, "hello", "hello")]
         [TestCase(DbType.String, "hello", "hello")]
@@ -446,7 +446,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedVal, result.Item2);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpTypeValToSfTypeValGuidMapsToText()
         {
             var guid = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
@@ -455,7 +455,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("a1b2c3d4-e5f6-7890-abcd-ef1234567890", result.Item2);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(DbType.Decimal, 42.4f, "42.4")]
         [TestCase(DbType.Decimal, 42.3d, "42.3")]
         [TestCase(DbType.SByte, -1, "-1")]
@@ -474,7 +474,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedVal, result.Item2);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(true, "True")]
         [TestCase(false, "False")]
         public void TestCSharpTypeValToSfTypeValBoolean(bool srcVal, string expectedVal)
@@ -484,7 +484,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedVal, result.Item2);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(DbType.Double, 1.5d, "REAL", "1.5")]
         [TestCase(DbType.Single, 1.5f, "REAL", "1.5")]
         public void TestCSharpTypeValToSfTypeValRealTypes(DbType dbType, object srcVal, string expectedType, string expectedValue)
@@ -494,7 +494,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedValue, result.Item2);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpTypeValToSfTypeValTime()
         {
             var dt = new DateTime(2024, 1, 1, 13, 45, 30, 500);
@@ -503,7 +503,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("49530500000000", result.Item2);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(DbType.DateTime)]
         [TestCase(DbType.DateTime2)]
         public void TestCSharpTypeValToSfTypeValTimestampNtz(DbType dbType)
@@ -514,7 +514,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("1721039400000000000", result.Item2);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpTypeValToSfTypeValTimestampTz()
         {
             var dto = new DateTimeOffset(2024, 7, 15, 10, 30, 0, TimeSpan.FromHours(5));
@@ -523,7 +523,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("1721021400000000000 1740", result.Item2);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpTypeValToSfTypeValBinary()
         {
             var bytes = new byte[] { 0xCA, 0xFE };
@@ -532,7 +532,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("cafe", result.Item2);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpTypeValToSfTypeValUnsupportedTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -540,21 +540,21 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.UNSUPPORTED_DOTNET_TYPE);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValNullReturnsDbNull()
         {
             var result = SFDataConverter.ConvertToCSharpVal(null, SFDataType.TEXT, typeof(string));
             Assert.Equal(DBNull.Value, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValString()
         {
             var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("hello world"), SFDataType.TEXT, typeof(string));
             Assert.Equal("hello world", result);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValGuid()
         {
             var expected = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
@@ -562,7 +562,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValByteArrayFromBinary()
         {
             var expected = new byte[] { 0xCA, 0xFE, 0xBA, 0xBE };
@@ -571,7 +571,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValByteArrayFromNonBinary()
         {
             var input = "hello";
@@ -580,7 +580,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValCharArrayFromBinary()
         {
             var hex = "68656c6c6f"; // "hello" in hex
@@ -588,7 +588,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("hello".ToCharArray(), result);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValCharArrayFromNonBinary()
         {
             var input = "hello";
@@ -596,7 +596,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("hello".ToCharArray(), result);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValDateTimeFromDate()
         {
             // DATE type: value is days since Unix epoch
@@ -606,7 +606,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(DateTimeKind.Unspecified, result.Kind);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValInvalidDestTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -614,7 +614,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INTERNAL_ERROR);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValTimeSpanWithNonTimeTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -622,7 +622,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValDateTimeWithUnsupportedSrcTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -630,7 +630,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValDateTimeOffsetWithUnsupportedSrcTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -638,7 +638,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [Test]
+        [SFFact]
         public void TestConvertToCSharpValTimestampTzMissingSpaceThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -646,14 +646,14 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INTERNAL_ERROR);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValNullReturnsNull()
         {
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TEXT, null);
             Assert.Null(result);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValDbNullReturnsNull()
         {
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TEXT, DBNull.Value);
@@ -696,7 +696,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expected, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValBinary()
         {
             var bytes = new byte[] { 0xCA, 0xFE };
@@ -704,7 +704,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("cafe", result);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValBinaryWrongTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -712,7 +712,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValUnsupportedSfTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -720,7 +720,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.UNSUPPORTED_SNOWFLAKE_TYPE_FOR_PARAM);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValTimeWrongTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -728,7 +728,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValDateWrongTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -736,7 +736,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValTimestampNtzWrongTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -744,7 +744,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValTimestampLtzWrongTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -752,7 +752,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValTimestampTzWrongTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
@@ -760,7 +760,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
-        [Test]
+        [SFFact]
         public void TestCSharpValToSfValTimeMidnight()
         {
             var dt = new DateTime(2024, 1, 1, 0, 0, 0);

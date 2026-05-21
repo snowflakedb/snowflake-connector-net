@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
     class SFSessionTest
     {
         // Mock test for session gone
-        [Test]
+        [SFFact]
         public void TestSessionGoneWhenClose()
         {
             var restRequester = new MockSessionGone();
@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.DoesNotThrow(() => sfSession.close());
         }
 
-        [Test]
+        [SFFact]
         public void TestSessionGoneWhenCloseNonBlocking()
         {
             var restRequester = new MockSessionGone();
@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.DoesNotThrow(() => sfSession.CloseNonBlocking());
         }
 
-        [Test]
+        [SFFact]
         public void TestUpdateSessionProperties()
         {
             // arrange
@@ -61,7 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(roleName, sfSession.role);
         }
 
-        [Test]
+        [SFFact]
         public void TestSkipUpdateSessionPropertiesWhenPropertiesMissing()
         {
             // arrange
@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(roleName, sfSession.role);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(null)]
         [TestCase("/some-path/config.json")]
         [TestCase("C:\\some-path\\config.json")]
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests
             easyLoggingStarter.Verify(starter => starter.Init(configPath));
         }
 
-        [Test]
+        [SFFact]
         public void TestThatIdTokenIsStoredWhenCachingIsEnabled()
         {
             // arrange
@@ -135,7 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatIdTokenIsNotStoredWhenThereIsNoUserInTheConnectionString()
         {
             // arrange
@@ -163,7 +163,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
         }
 
-        [Test]
+        [SFFact]
         [TestCase(null, "accountDefault", "accountDefault", false)]
         [TestCase("initial", "initial", "initial", false)]
         [TestCase("initial", null, "initial", false)]
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.Equal(sessionInitialValue, changedSessionValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestHandlePasswordWithQuotations()
         {
             // arrange
@@ -217,7 +217,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(loginRequest.data.password, deserializedLoginRequest.data.password);
         }
 
-        [Test]
+        [SFFact]
         public void TestHandlePasscodeParameter()
         {
             // arrange
@@ -235,7 +235,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("passcode", loginRequest.data.extAuthnDuoMethod);
         }
 
-        [Test]
+        [SFFact]
         public void TestHandlePasscodeAsSecureString()
         {
             // arrange
@@ -254,7 +254,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("passcode", loginRequest.data.extAuthnDuoMethod);
         }
 
-        [Test]
+        [SFFact]
         public void TestHandlePasscodeInPasswordParameter()
         {
             // arrange
@@ -272,7 +272,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("passcode", loginRequest.data.extAuthnDuoMethod);
         }
 
-        [Test]
+        [SFFact]
         public void TestPushWhenNoPasscodeAndPasscodeInPasswordIsFalse()
         {
             // arrange
@@ -289,7 +289,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
-        [Test]
+        [SFFact]
         public void TestPushAsDefaultSecondaryAuthentication()
         {
             // arrange
@@ -306,7 +306,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
-        [Test]
+        [SFFact]
         public void TestPushMFAWithAuthenticationCacheMFAToken()
         {
             // arrange
@@ -324,7 +324,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
-        [Test]
+        [SFFact]
         public void TestMFATokenCacheReturnedToSession()
         {
             // arrange
@@ -348,7 +348,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
-        [Test]
+        [SFFact]
         public void TestMFATokenCacheUsedInNewConnection()
         {
             // arrange
@@ -378,7 +378,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(secondLoginRequest.data.Token, testToken);
         }
 
-        [Test]
+        [SFFact]
         public void TestHeartbeatHandlesException()
         {
             // arrange

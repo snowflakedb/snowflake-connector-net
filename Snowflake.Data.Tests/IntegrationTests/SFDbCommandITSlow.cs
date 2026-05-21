@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.IntegrationTests;
 
 class SFDbCommandITSlow : SFBaseTest
 {
-    [Test]
+    [SFFact]
     public void TestLongRunningQuery()
     {
         using (IDbConnection conn = new SnowflakeDbConnection())
@@ -27,7 +27,7 @@ class SFDbCommandITSlow : SFBaseTest
 
     }
 
-    [Test]
+    [SFFact]
     [Ignore("This test case takes too much time so run it manually")]
     public void TestRowsAffectedOverflowInt()
     {
@@ -48,7 +48,7 @@ class SFDbCommandITSlow : SFBaseTest
         }
     }
 
-    [Test]
+    [SFFact]
     public void TestExecuteAsyncWithMaxRetryReached()
     {
         var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);

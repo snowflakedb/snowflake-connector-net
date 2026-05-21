@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             _resultFormat = resultFormat;
         }
 
-        [Test]
+        [SFFact]
         [Ignore("Not a scope for CICD")]
         public void TestInsertPlainText()
         {
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests.IcebergTests
         }
 
 
-        [Test]
+        [SFFact]
         [Ignore("Not a scope for CICD tests")]
         public void TestInsertWithValueBinding()
         {
@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Ignore("Not a scope for CICD")]
         public void TestUpdateWithValueBinding()
         {
@@ -187,7 +187,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Ignore("Not a scope for CICD")]
         public void TestJoin()
         {
@@ -232,7 +232,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Ignore("Not a scope for CICD")]
         public void TestDelete()
         {
@@ -256,7 +256,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Ignore("Not a scope for CICD")]
         public void TestDeleteAll()
         {
@@ -279,7 +279,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Ignore("Not a scope for CICD")]
         public void TestMultiStatement()
         {
@@ -306,7 +306,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Ignore("Not a scope for CICD")]
         public void TestBatchInsertForLargeData()
         {
@@ -335,7 +335,7 @@ namespace Snowflake.Data.Tests.IcebergTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Ignore("Not a scope for CICD")]
         public void TestStructuredTypesAsJsonString()
         {

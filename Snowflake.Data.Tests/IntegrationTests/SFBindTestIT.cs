@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
 
-        [Test]
+        [SFFact]
         public void TestArrayBind()
         {
 
@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(NullTestCases))]
         public void TestBindNullValue(object nullValue)
         {
@@ -204,7 +204,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private static IEnumerable<object?> NullTestCases() =>
             new object?[] { DBNull.Value, null };
 
-        [Test]
+        [SFFact]
         public void TestBindValue()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
@@ -356,7 +356,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestBindValueWithSFDataType()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
@@ -477,7 +477,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestParameterCollection()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -533,7 +533,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestPutArrayBind()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -663,7 +663,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
         {
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
@@ -736,7 +736,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestPutArrayIntegerBind()
         {
             using (IDbConnection conn = new SnowflakeDbConnection())
@@ -778,7 +778,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestExplicitDbTypeAssignmentForSimpleValue()
         {
 
@@ -810,7 +810,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestExplicitDbTypeAssignmentForArrayValue()
         {
 

@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
+        [SFFact]
         public void TestReadAllTextOnWindows()
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
@@ -46,7 +46,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestFileIsSafeOnWindows()
         {
             // arrange

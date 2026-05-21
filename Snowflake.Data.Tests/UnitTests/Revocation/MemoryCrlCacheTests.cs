@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         private readonly Crl _crl1 = new();
         private readonly Crl _crl2 = new();
 
-        [Test]
+        [SFFact]
         public void TestCacheOperations()
         {
             var cache = new MemoryCrlCache(TimeSpan.FromDays(1));

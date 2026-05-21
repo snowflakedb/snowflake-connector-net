@@ -54,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.Stop();
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulAzureAuthorization()
         {
             // arrange
@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestSuccessfulAzureAuthorizationAsync()
         {
             // arrange
@@ -84,7 +84,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulAzureAttestation()
         {
             // arrange
@@ -102,7 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulAzureAttestationWithClientId()
         {
             // arrange
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulAzureAttestationWithV2Issuer()
         {
             // arrange
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact]
         public void TestFailForUnparsableTokenAttestation()
         {
             AddAzureUnparsableTokenWiremockMappings();
@@ -153,7 +153,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.That(thrown.Message, Does.Contain("Retrieving attestation for AZURE failed. Reading of the token failed."));
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulAzureFunctionsAttestations()
         {
             // arrange
@@ -176,7 +176,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulAzureFunctionsAttestationWithoutClientId()
         {
             // arrange
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulAzureFunctionsAttestationWithCustomEntraResource()
         {
             // arrange
@@ -221,7 +221,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact]
         public void TestFailAzureFunctionsAttestationWithoutIdentityHeader()
         {
             // arrange
@@ -241,7 +241,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.That(thrown.Message, Does.Contain("Retrieving attestation for AZURE failed. Managed identity is not enabled on this Azure function."));
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulAzureFunctionsAttestationWithV2IssuerAuthentication()
         {
             // arrange
@@ -330,7 +330,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
             );
 
-        [Test]
+        [SFFact]
         public void TestFailAzureAttestationWhenImpersonationIsUsed()
         {
             // arrange

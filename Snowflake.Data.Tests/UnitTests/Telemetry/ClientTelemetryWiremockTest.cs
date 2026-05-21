@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             _wiremock.AddMappings(s_mappingPath);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ExecuteNonQuery", TestName = "ExecuteNonQuery telemetry sent to server")]
         [TestCase("ExecuteScalar", TestName = "ExecuteScalar telemetry sent to server")]
         [TestCase("ExecuteReader", TestName = "ExecuteDbDataReader telemetry sent to server")]
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.Equal("client_activity", matching.First().Type);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ExecuteNonQueryAsync", TestName = "ExecuteNonQueryAsync telemetry sent to server")]
         [TestCase("ExecuteScalarAsync", TestName = "ExecuteScalarAsync telemetry sent to server")]
         [TestCase("ExecuteReaderAsync", TestName = "ExecuteDbDataReaderAsync telemetry sent to server")]
@@ -106,7 +106,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.Equal("client_activity", matching.First().Type);
         }
 
-        [Test]
+        [SFFact]
         public void TestTelemetryPayloadContainsSessionTags()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.Equal("TEST_DB", log.Tag(TelemetryTags.DbName));
         }
 
-        [Test]
+        [SFFact]
         public void TestTelemetryPayloadContainsDriverMetadata()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.NotNull(log.Duration);
         }
 
-        [Test]
+        [SFFact]
         public void TestServerOverridesClientTelemetrySetting()
         {
             // Client disables telemetry, but server responds with CLIENT_TELEMETRY_ENABLED=true
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.NotEmpty(logs, "Server override should enable telemetry even when client disabled it");
         }
 
-        [Test]
+        [SFFact]
         public void TestServerDisabledTelemetrySendsNothingToServer()
         {
             _wiremock.AddMappings(s_telemetryDisabledMappingPath);
@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.Empty(telemetryRequests, "No telemetry should be sent when server disables CLIENT_TELEMETRY_ENABLED");
         }
 
-        [Test]
+        [SFFact]
         public void TestTelemetrySentWithCorrectAuthToken()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
@@ -205,7 +205,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.Equal("Snowflake Token=\"session-token\"", authHeader);
         }
 
-        [Test]
+        [SFFact]
         public void TestCommandFailureSendsTelemetryWithErrorStatus()
         {
             _wiremock.AddMappings(s_failingQueryMappingPath);
@@ -225,7 +225,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.NotEmpty(errorLogs, "Expected at least one ERROR telemetry log when command fails");
         }
 
-        [Test]
+        [SFFact]
         public void TestPublicStartActivityWithSuccessDoesNotInterfereWithInternalTelemetry()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
@@ -268,7 +268,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.Equal("snowflake", custom.Tag(TelemetryTags.DbSystem));
         }
 
-        [Test]
+        [SFFact]
         public void TestPublicStartActivityWithExceptionDoesNotCrash()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
@@ -287,7 +287,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
         }
 
-        [Test]
+        [SFFact]
         public void TestPublicStartActivityWithTelemetryEvent()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
@@ -324,7 +324,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
         }
 
-        [Test]
+        [SFFact]
         public void TestPublicStartActivityThrowsWhenTelemetryDisabled()
         {
             _wiremock.ResetMapping();
@@ -341,7 +341,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
         }
 
-        [Test]
+        [SFFact]
         public void TestPublicStartActivityEnrichesWithSessionContext()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
@@ -374,7 +374,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             conn.Close();
         }
 
-        [Test]
+        [SFFact]
         public void TestPublicStartActivityWithNestedActivitiesAndCommandExecution()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);

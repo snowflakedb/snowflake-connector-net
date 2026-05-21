@@ -39,14 +39,14 @@ namespace Snowflake.Data.Tests.UnitTests
             SFLoggerImpl.s_appenders.Remove(_testAppender);
         }
 
-        [Test]
+        [SFFact]
         public void TestUsingSFLogger()
         {
             _loggerPair = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
             Assert.InstanceOf<SFLoggerPair>(_loggerPair);
         }
 
-        [Test]
+        [SFFact]
         public void TestIsDebugEnabled(
             [Values(false, true)] bool isEnabled)
         {
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _loggerPair.Debug("debug log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFFact]
         public void TestIsInfoEnabled(
             [Values(false, true)] bool isEnabled)
         {
@@ -82,7 +82,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _loggerPair.Info("info log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFFact]
         public void TestIsWarnEnabled(
             [Values(false, true)] bool isEnabled)
         {
@@ -100,7 +100,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _loggerPair.Warn("warn log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFFact]
         public void TestIsErrorEnabled(
             [Values(false, true)] bool isEnabled)
         {
@@ -125,7 +125,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return logger;
         }
 
-        [Test]
+        [SFFact]
         public void TestMaskedExceptionWithSensitiveData()
         {
             // Arrange

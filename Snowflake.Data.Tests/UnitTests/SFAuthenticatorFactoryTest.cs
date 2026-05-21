@@ -20,63 +20,63 @@ namespace Snowflake.Data.Tests.UnitTests
             return AuthenticatorFactory.GetAuthenticator(session);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetAuthenticatorBasic()
         {
             _authenticator = GetAuthenticator(BasicAuthenticator.AUTH_NAME);
             Assert.InstanceOf<BasicAuthenticator>(_authenticator);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetAuthenticatorExternalBrowser()
         {
             _authenticator = GetAuthenticator(ExternalBrowserAuthenticator.AUTH_NAME);
             Assert.InstanceOf<ExternalBrowserAuthenticator>(_authenticator);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetAuthenticatorKeyPairWithPrivateKey()
         {
             _authenticator = GetAuthenticator(KeyPairAuthenticator.AUTH_NAME, "private_key=xxxx");
             Assert.InstanceOf<KeyPairAuthenticator>(_authenticator);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetAuthenticatorKeyPairWithPrivateKeyFile()
         {
             _authenticator = GetAuthenticator(KeyPairAuthenticator.AUTH_NAME, "private_key_file=xxxx");
             Assert.InstanceOf<KeyPairAuthenticator>(_authenticator);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetAuthenticatorKeyPairWithMissingKey()
         {
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator(KeyPairAuthenticator.AUTH_NAME));
             Assert.Equal(SFError.INVALID_CONNECTION_STRING.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetAuthenticatorOAuth()
         {
             _authenticator = GetAuthenticator(OAuthAuthenticator.AUTH_NAME, "token=xxxx");
             Assert.InstanceOf<OAuthAuthenticator>(_authenticator);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetAuthenticatorOAuthWithMissingToken()
         {
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator(OAuthAuthenticator.AUTH_NAME));
             Assert.Equal(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetAuthenticatorOkta()
         {
             _authenticator = GetAuthenticator("https://xxxxxx.okta.com");
             Assert.InstanceOf<OktaAuthenticator>(_authenticator);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetAuthenticatorUnknown()
         {
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator("Unknown"));

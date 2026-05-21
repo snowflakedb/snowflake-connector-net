@@ -26,7 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             t_provider = new SpcsTokenProvider(t_fileOperations.Object, t_environmentOperations.Object);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullWhenRunningInsideSpcsEnvVarIsNotSet()
         {
             // arrange
@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             t_fileOperations.Verify(f => f.ReadAllText(It.IsAny<string>()), Times.Never);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullWhenRunningInsideSpcsEnvVarIsEmpty()
         {
             // arrange
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             t_fileOperations.Verify(f => f.ReadAllText(It.IsAny<string>()), Times.Never);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsTokenFromDefaultPath()
         {
             // arrange
@@ -72,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal("my-spcs-token", token);
         }
 
-        [Test]
+        [SFFact]
         public void TestTrimsWhitespaceFromToken()
         {
             // arrange
@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal("my-spcs-token", token);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullWhenFileDoesNotExist()
         {
             // arrange
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Null(token);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullWhenFileIsEmpty()
         {
             // arrange
@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Null(token);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullWhenFileContainsOnlyWhitespace()
         {
             // arrange
@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Null(token);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullAndDoesNotThrowOnReadException()
         {
             // arrange

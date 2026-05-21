@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
+        [SFFact]
         public void TestDetectGroupOrOthersWritablePermissions(
             [ValueSource(nameof(GroupOrOthersWritablePermissions))] FileAccessPermissions groupOrOthersWritablePermissions,
             [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(result);
         }
 
-        [Test]
+        [SFFact]
         public void TestDetectGroupOrOthersNotWritablePermissions(
             [ValueSource(nameof(UserPermissions))] FileAccessPermissions userPermissions,
             [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result);
         }
 
-        [Test]
+        [SFFact]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
             [ValueSource(nameof(UserAllowedPermissions))] FileAccessPermissions userAllowedPermissions)
         {
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(content, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestSkipReadPermissionsWhenSkipIsEnabled()
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
         }
 
-        [Test]
+        [SFFact]
         public void TestCheckReadPermissionsWhenSkipIsDisabled()
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -176,7 +176,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
 
-        [Test]
+        [SFFact]
         public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
             [ValueSource(nameof(UserAllowedWritePermissions))] FileAccessPermissions userAllowedPermissions)
         {
@@ -188,7 +188,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
         }
 
-        [Test]
+        [SFFact]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
             [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
@@ -210,7 +210,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                 Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions), "Attempting to read a file with too broad permissions assigned");
         }
 
-        [Test]
+        [SFFact]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
             [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
@@ -230,7 +230,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions), "Attempting to read or write a file with too broad permissions assigned");
         }
 
-        [Test]
+        [SFFact]
         public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
             [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
             [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
@@ -249,7 +249,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", EasyLoggerValidator.Instance.ValidateLogFilePermissions), "Attempting to read or write to log file with too broad permissions assigned");
         }
 
-        [Test]
+        [SFFact]
         public void TestCreateFileWithUserRwPermissions()
         {
             // arrange
@@ -264,7 +264,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result);
         }
 
-        [Test]
+        [SFFact]
         public void TestCreateDirectoryWithUserRwxPermissions()
         {
             // arrange
@@ -279,7 +279,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result);
         }
 
-        [Test]
+        [SFFact]
         public void TestNestedDir()
         {
             // arrange
@@ -294,7 +294,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(result);
         }
 
-        [Test]
+        [SFFact]
         public void TestReadBytesFromEmptyFile()
         {
             // arrange
@@ -308,7 +308,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(0, bytes.Length);
         }
 
-        [Test]
+        [SFFact]
         public void TestReadBytesFromSmallFile()
         {
             // arrange
@@ -324,7 +324,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             CollectionAssert.Equal(randomBytes, bytes);
         }
 
-        [Test]
+        [SFFact]
         public void TestReadBytesFromLargeFile()
         {
             // arrange

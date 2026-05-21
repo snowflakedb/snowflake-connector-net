@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _connection.Close();
         }
 
-        [Test]
+        [SFFact]
         public void TestSimpleDbFactory()
         {
             // set commnad's connection object
@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(1, res);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbFactoryWithParameter()
         {
             int expectedIntValue = 1;
@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(expectedIntValue, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbFactoryWithConnectionStringBuilder()
         {
             DbConnectionStringBuilder builder = _factory.CreateConnectionStringBuilder();
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(1, result);
         }
 
-        [Test]
+        [SFFact]
         public void TestDbFactoryWithCommandBuilderAndAdapter()
         {
             // set command's connection object

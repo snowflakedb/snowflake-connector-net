@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
     public class DirectoryInformationTest
     {
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(OldCreatingDatesTestCases))]
         public void TestIsCreatedEarlierThanSeconds(DateTime? createdDate, DateTime utcNow)
         {
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(true, result);
         }
 
-        [Test]
+        [SFFact]
         [TestCaseSource(nameof(NewCreatingDatesTestCases))]
         public void TestIsNotCreatedEarlierThanSeconds(bool dirExists, DateTime? createdDate, DateTime utcNow)
         {

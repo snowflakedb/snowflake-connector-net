@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             _runner.Stop();
         }
 
-        [Test]
+        [SFFact]
         public void TestSuccessfulPatAuthentication()
         {
             // arrange
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestSuccessfulPatAuthenticationAsync()
         {
             // arrange
@@ -73,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact]
         public void TestInvalidPatAuthentication()
         {
             // arrange
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.That(thrown.Message, Contains.Substring("Programmatic access token is invalid."));
         }
 
-        [Test]
+        [SFFact]
         public void TestInvalidPatAuthenticationAsync()
         {
             // arrange

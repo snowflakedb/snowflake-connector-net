@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     class SFDbTransactionIT : SFBaseTest
     {
-        [Test]
+        [SFFact]
         public void TestTransactionDbConnection()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestTransactionIsolationLevel()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         // Test that when a transaction is disposed, rollback would be sent out
         public void TestTransactionDispose()
         {
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         // Test SNOW-761136 unnecessary ROLLBACK
         public void TestTransactionRollback()
         {
@@ -125,7 +125,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.Close();
         }
 
-        [Test]
+        [SFFact]
         // Test SNOW-761136 unnecessary ROLLBACK
         public void TestTransactionRollbackOn2Transactions()
         {
@@ -174,7 +174,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             conn.Close();
         }
 
-        [Test]
+        [SFFact]
         public void TestThrowsExceptionWhenBeginTransactionWithoutOpen()
         {
             using (var conn = new SnowflakeDbConnection(ConnectionString))

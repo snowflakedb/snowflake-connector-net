@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             t_environmentOperations = new Mock<EnvironmentOperations>();
         }
 
-        [Test]
+        [SFFact]
         public void TestChooseLocationFromSnowflakeCacheEnvironmentVariable()
         {
             // arrange
@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             AssertFileStorageForLocation(SnowflakeCacheLocation, fileStorage);
         }
 
-        [Test]
+        [SFFact]
         public void TestChooseLocationFromCommonCacheEnvironmentVariable()
         {
             // arrange
@@ -54,7 +54,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             AssertFileStorageForLocation(expectedLocation, fileStorage);
         }
 
-        [Test]
+        [SFFact]
         public void TestChooseLocationFromHomeFolder()
         {
             // arrange
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             AssertFileStorageForLocation(expectedLocation, fileStorage);
         }
 
-        [Test]
+        [SFFact]
         public void TestFailWhenLocationCannotBeIdentified()
         {
             // act

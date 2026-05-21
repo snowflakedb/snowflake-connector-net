@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
 
-        [Test]
+        [SFFact]
         public void TestConnectViaSecureString()
         {
             String[] connEntries = ConnectionString.Split(';');
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [TimeSensitive]
         public void TestLoginTimeout()
         {
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [TimeSensitive]
         public void TestLoginWithMaxRetryReached()
         {
@@ -132,7 +132,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Retry(2)]
         [TimeSensitive]
         public void TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [TimeSensitive]
         public void TestDefaultLoginTimeout()
         {
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionFailFastForNonRetried404OnLogin()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -239,7 +239,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestEnableLoginRetryOn404()
         {
             using (var conn = new SnowflakeDbConnection())
@@ -268,7 +268,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
+        [SFFact]
         [Ignore("Ignore this test until configuration is setup for CI integration. Can be run manually.")]
         public void testMulitpleConnectionInParallel()
         {

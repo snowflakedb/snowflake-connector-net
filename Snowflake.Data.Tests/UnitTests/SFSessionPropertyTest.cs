@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests
             CollectionAssert.SubsetOf(testcase.ExpectedProperties, properties);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("a", "a", "a.snowflakecomputing.com")]
         [TestCase("ab", "ab", "ab.snowflakecomputing.com")]
         [TestCase("a.b", "a", "a.b.snowflakecomputing.com")]
@@ -53,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedHost, properties[SFSessionProperty.HOST]);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=0;", "Error: Invalid parameter value 0 for FILE_TRANSFER_MEMORY_THRESHOLD")]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;FILE_TRANSFER_MEMORY_THRESHOLD=xyz;", "Error: Invalid parameter value xyz for FILE_TRANSFER_MEMORY_THRESHOLD")]
         [TestCase("ACCOUNT=testaccount?;USER=testuser;PASSWORD=testpassword", "Error: Invalid parameter value testaccount? for ACCOUNT")]
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.True(exception.Message.Contains(expectedErrorMessagePart));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ACCOUNT=;USER=testuser;PASSWORD=testpassword")]
         [TestCase("USER=testuser;PASSWORD=testpassword")]
         public void TestThatItFailsIfNoAccountSpecified(string connectionString)
@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=", null)]
         [TestCase("ACCOUNT=testaccount;USER=testuser;", "")]
         [TestCase("authenticator=https://okta.com;ACCOUNT=testaccount;USER=testuser;PASSWORD=", null)]
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(exception.Message, Does.Contain("Required property PASSWORD is not provided"));
         }
 
-        [Test]
+        [SFFact]
         public void TestParsePasscode()
         {
             // arrange
@@ -123,7 +123,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
         }
 
-        [Test]
+        [SFFact]
         public void TestUsePasscodeFromSecureString()
         {
             // arrange
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedPasscode, properties[SFSessionProperty.PASSCODE]);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;")]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;PASSCODE=")]
         public void TestDoNotParsePasscodeWhenNotProvided(string connectionString)
@@ -151,7 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(properties.TryGetValue(SFSessionProperty.PASSCODE, out _));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;", "false")]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;passcodeInPassword=", "false")]
         [TestCase("ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;passcodeInPassword=true", "true")]
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedPasscodeInPassword, passcodeInPassword);
         }
 
-        [Test]
+        [SFFact]
         public void TestFailWhenInvalidPasscodeInPassword()
         {
             // arrange
@@ -180,7 +180,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain("Invalid parameter value  for PASSCODEINPASSWORD"));
         }
 
-        [Test]
+        [SFFact]
         public void TestTurkishCultureInvariantPropertyParsing()
         {
             // arrange
@@ -211,7 +211,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestTurkishCultureDemonstratesProblemAndInvalidPropertiesStillFail()
         {
             // arrange
@@ -273,7 +273,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(value, properties[SFSessionProperty.CLIENT_TELEMETRY_ENABLED]);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("DB", SFSessionProperty.DB, "\"testdb\"")]
         [TestCase("SCHEMA", SFSessionProperty.SCHEMA, "\"quotedSchema\"")]
         [TestCase("ROLE", SFSessionProperty.ROLE, "\"userrole\"")]
@@ -290,7 +290,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(value, properties[sessionProperty]);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("DB", SFSessionProperty.DB, "testdb", "testdb")]
         [TestCase("DB", SFSessionProperty.DB, "\"testdb\"", "\"testdb\"")]
         [TestCase("DB", SFSessionProperty.DB, "\"\"\"testDB\"\"\"", "\"\"testDB\"\"")]
@@ -308,7 +308,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedValue, properties[sessionProperty]);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("true")]
         [TestCase("false")]
         public void TestValidateDisableSamlUrlCheckProperty(string expectedDisableSamlUrlCheck)
@@ -323,7 +323,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedDisableSamlUrlCheck, properties[SFSessionProperty.DISABLE_SAML_URL_CHECK]);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("account.snowflakecomputing.cn", "Connecting to CHINA Snowflake domain")]
         [TestCase("account.snowflakecomputing.com", "Connecting to GLOBAL Snowflake domain")]
         public void TestResolveConnectionArea(string host, string expectedMessage)
@@ -335,7 +335,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedMessage, message);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("true")]
         [TestCase("false")]
         public void TestValidateClientStoreTemporaryCredentialProperty(string expectedClientStoreTemporaryCredential)
@@ -350,7 +350,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedClientStoreTemporaryCredential, properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
         }
 
-        [Test]
+        [SFFact]
         public void TestFailWhenClientStoreTemporaryCredentialContainsInvalidValue()
         {
             // arrange
@@ -363,7 +363,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain($"Invalid parameter value  for CLIENT_STORE_TEMPORARY_CREDENTIAL"));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ACCOUNT=test;USER=test;PASSWORD=test;")]
         [TestCase("ACCOUNT=test;USER=test;PASSWORD=test;OAUTHCLIENTSECRET=ignored_value;")]
         public void TestParseOAuthClientSecretProvidedExternally(string connectionString)
@@ -379,7 +379,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(oauthClientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
         }
 
-        [Test]
+        [SFFact]
         public void TestNoOAuthPropertiesFound()
         {
             // arrange
@@ -397,7 +397,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(properties.TryGetValue(SFSessionProperty.OAUTHTOKENREQUESTURL, out var _));
         }
 
-        [Test]
+        [SFFact]
         public void TestOAuthAuthorizationCodeAllParameters()
         {
             // arrange
@@ -423,7 +423,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(enableSingleUseRefreshTokens, properties[SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS]);
         }
 
-        [Test]
+        [SFFact]
         public void TestOAuthClientCredentialsAllParameters()
         {
             // arrange
@@ -443,7 +443,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(tokenUrl, properties[SFSessionProperty.OAUTHTOKENREQUESTURL]);
         }
 
-        [Test]
+        [SFFact]
         public void TestOAuthAuthorizationCodeFlowWithMinimalParameters()
         {
             // arrange
@@ -459,7 +459,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(clientSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthAuthorizationUrl=https://test.snowflakecomputing.com/authorize;oauthTokenRequestUrl=https://test.snowflakecomputing.com/token-request;")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthAuthorizationUrl=https://test.snowflakecomputing.cn/authorize;oauthTokenRequestUrl=https://test.snowflakecomputing.cn/token-request;")]
@@ -476,7 +476,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(ExpectedClientIdAndSecret, properties[SFSessionProperty.OAUTHCLIENTSECRET]);
         }
 
-        [Test]
+        [SFFact]
         public void TestOAuthClientCredentialsWithMinimalParameters()
         {
             // arrange
@@ -495,7 +495,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
 
-        [Test]
+        [SFFact]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientSecret=def;", "Required property OAUTHCLIENTID is not provided")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;", "Required property OAUTHCLIENTSECRET is not provided")]
         [TestCase("AUTHENTICATOR=oauth_authorization_code;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;", "Required property OAUTHSCOPE or ROLE is not provided")]
@@ -515,7 +515,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain(errorMessage));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;ROLE=ANALYST;oauthClientSecret=def;oauthTokenRequestUrl=http://okta.com/token-request;", "Required property OAUTHCLIENTID is not provided")]
         [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;ROLE=ANALYST;oauthClientId=abc;oauthTokenRequestUrl=http://okta.com/token-request;", "Required property OAUTHCLIENTSECRET is not provided")]
         [TestCase("AUTHENTICATOR=oauth_client_credentials;ACCOUNT=test;oauthClientId=abc;oauthClientSecret=def;oauthTokenRequestUrl=http://okta.com/token-request;", "Required property OAUTHSCOPE or ROLE is not provided")]
@@ -603,7 +603,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestProgrammaticAccessTokenParameters()
         {
             // arrange
@@ -617,7 +617,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(token, properties[SFSessionProperty.TOKEN]);
         }
 
-        [Test]
+        [SFFact]
         public void TestProgrammaticAccessTokenProvidedExternally()
         {
             // arrange
@@ -632,7 +632,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(token, properties[SFSessionProperty.TOKEN]);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("AUTHENTICATOR=programmatic_access_token;ACCOUNT=test;USER=testUser;", "Required property TOKEN is not provided.")]
         public void TestInvalidProgrammaticAccessTokenParameters(string connectionString, string expectedErrorMessage)
         {
@@ -643,7 +643,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;PORT=abc;", "Invalid parameter value PORT for a non integer value")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;HOST=http://test.snowflakecomputing.com;", "Connection string is invalid: scheme/host/port properties do not combine into a valid uri")]
         public void TestFailOnInvalidSchemeHostPortConfiguration(string connectionString, string expectedErrorMessage)
@@ -655,7 +655,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("authenticator=workload_identity;account=test;workload_identity_provider=abc;", "Connection string is invalid: Unknown value of workload_identity_provider parameter.")]
         [TestCase("authenticator=workload_identity;account=test;workload_identity_provider=OIDC;", "Required property TOKEN is not provided.")]
         public void TestFailOnWrongWifConfiguration(string connectionString, string expectedErrorMessage)
@@ -667,7 +667,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;", "disabled", "true", "true", "false")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=enabled;enableCrlDiskCaching=false;enableCrlInMemoryCaching=false;allowCertificatesWithoutCrlUrl=true;", "enabled", "false", "false", "true")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=advisory;enableCrlDiskCaching=false;enableCrlInMemoryCaching=true;allowCertificatesWithoutCrlUrl=true;", "advisory", "false", "true", "true")]
@@ -688,7 +688,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedAllowCertificatesWithoutCrlUrl, properties[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]);
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;certRevocationCheckMode=unknown;", "Parameter CERTREVOCATIONCHECKMODE should have one of following values: ENABLED, ADVISORY, DISABLED, NATIVE.")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlDiskCaching=unknown;", "Parameter ENABLECRLDISKCACHING should have a boolean value.")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;enableCrlInMemoryCaching=unknown;", "Parameter ENABLECRLINMEMORYCACHING should have a boolean value.")]
@@ -710,7 +710,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
         }
 
-        [Test]
+        [SFFact]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;", "10")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=30;", "30")]
         [TestCase("ACCOUNT=test;USER=testUser;password=testPassword;crlDownloadTimeout=120;", "120")]

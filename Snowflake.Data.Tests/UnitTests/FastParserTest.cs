@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _byte = null;
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt64WithLongMaxValue()
         {
             long expectedLongValue = long.MaxValue;
@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedLongValue, actualLongValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt64WithPositiveOverflow()
         {
             // Int64.MaxValue + 1
@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => FastParser.FastParseInt64(_byte, 0, _byte.Length));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt64WithNegativeOverflow()
         {
             // Int64.MinValue - 1
@@ -48,13 +48,13 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => FastParser.FastParseInt64(_byte, 0, _byte.Length));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt64ThrowsWrongFormat()
         {
             Assert.Throws<FormatException>(() => FastParser.FastParseInt64(new byte[1], 0, 1));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt32WithIntMaxValue()
         {
             int expectedIntValue = int.MaxValue;
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedIntValue, actualIntValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt32WithPositiveOverflow()
         {
             // Int32.MaxValue + 1
@@ -74,7 +74,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => FastParser.FastParseInt32(_byte, 0, _byte.Length));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt32WithNegativeOverflow()
         {
             // Int32.MinValue - 1
@@ -84,13 +84,13 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => FastParser.FastParseInt32(_byte, 0, _byte.Length));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt32ThrowsWrongFormat()
         {
             Assert.Throws<FormatException>(() => FastParser.FastParseInt32(new byte[1], 0, 1));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithLongMaxValuePlusOne()
         {
             // Int64.MaxValue + 1
@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(int64MaxValuePlusOne, actualDecimalValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithLongMaxValuePlusDecimal()
         {
             // Int64.MaxValue + 1.123M
@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(int64MaxValuePlusOneWithDecimal, actualDecimalValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithPositiveDecimal()
         {
             decimal expectedDecimalValue = 1.2345678M;
@@ -123,7 +123,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedDecimalValue, actualDecimalValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithNegativeDecimal()
         {
             decimal expectedDecimalValue = -1.2345678M;
@@ -133,7 +133,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedDecimalValue, actualDecimalValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithoutDecimalInTheValue()
         {
             decimal expectedDecimalValue = 12345678;
@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(expectedDecimalValue, actualDecimalValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithNullByteArray()
         {
             UTF8Buffer srcVal = new UTF8Buffer(null, 0, 0);

@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
     public class OktaAuthenticatorTest
     {
-        [Test]
+        [SFFact]
         [TestCase("https://xxxxxx.okta.com", true)]
         [TestCase("https://xxxxxx.oktapreview.com", true)]
         [TestCase("https://vanity.url/snowflake/okta", true)]

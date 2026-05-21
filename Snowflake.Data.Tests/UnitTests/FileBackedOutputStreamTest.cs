@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests
         private const int MaxBytesInMemory = 50;
         private static readonly string s_longText = RandomJsonGenerator.GenerateRandomJsonString(5);
 
-        [Test]
+        [SFFact]
         public void TestThatSwitchesFromMemoryToFileOnGivenThresholdAndAllowsToReadAll()
         {
             // expect
@@ -49,7 +49,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(ShortText + s_longText, allTextFromStream);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatAfterDisposeNoTemporaryFileExists()
         {
             // expect
