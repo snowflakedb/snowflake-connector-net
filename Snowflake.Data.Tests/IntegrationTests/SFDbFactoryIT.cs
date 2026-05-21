@@ -1,56 +1,49 @@
+using System;
+using System.Threading.Tasks;
 using Xunit;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
-
-    class SFDbFactoryIT : SFBaseTest
+    public sealed class SFDbFactoryIT : SFBaseTestAsync, IDisposable
     {
+        private readonly SFBaseTestAsyncFixture _fixture;
         DbProviderFactory _factory;
         DbCommand _command;
         DbConnection _connection;
 
-        [SetUp]
-        public new void BeforeTest()
+        public SFDbFactoryIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
-#if NETFRAMEWORK
-            _factory = DbProviderFactories.GetFactory("Snowflake.Data");
-#else
-            // In .NET Standard, DbProviderFactories is gone.
-            // Reference https://weblog.west-wind.com/posts/2017/Nov/27/Working-around-the-lack-of-dynamic-DbProviderFactory-loading-in-NET-Core
-            // for more details
+            _fixture = fixture;
             _factory = Snowflake.Data.Client.SnowflakeDbFactory.Instance;
-#endif
-
             _command = _factory.CreateCommand();
             _connection = _factory.CreateConnection();
-
-            _connection.ConnectionString = ConnectionString;
+            _connection.ConnectionString = _fixture.ConnectionString;
             _connection.Open();
         }
 
-        [TearDown]
-        public new void AfterTest()
+        public void Dispose()
         {
             _connection.Close();
         }
 
         [SFFact]
-        public void TestSimpleDbFactory()
+        public async Task TestSimpleDbFactory()
         {
             // set commnad's connection object
             _command.Connection = _connection;
             _command.CommandText = "select 1";
 
-            object res = _command.ExecuteScalar();
+            object res = await _command.ExecuteScalarAsync();
 
-            Assert.Equal(1, res);
+            Assert.Equal(1L, res);
         }
 
         [SFFact]
-        public void TestDbFactoryWithParameter()
+        public async Task TestDbFactoryWithParameter()
         {
             int expectedIntValue = 1;
 
@@ -64,31 +57,31 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _command.Connection = _connection;
             _command.CommandText = "select ?";
 
-            var result = _command.ExecuteScalar();
+            var result = await _command.ExecuteScalarAsync();
 
-            Assert.Equal(expectedIntValue, result);
+            Assert.Equal((long)expectedIntValue, result);
         }
 
         [SFFact]
-        public void TestDbFactoryWithConnectionStringBuilder()
+        public async Task TestDbFactoryWithConnectionStringBuilder()
         {
             DbConnectionStringBuilder builder = _factory.CreateConnectionStringBuilder();
-            builder.ConnectionString = ConnectionString;
+            builder.ConnectionString = _fixture.ConnectionString;
 
             _connection.ConnectionString = builder.ConnectionString;
-            _connection.Open();
+            await _connection.OpenAsync(CancellationToken.None);
 
             // set command's connection object
             _command.Connection = _connection;
             _command.CommandText = "select 1";
 
-            var result = _command.ExecuteScalar();
+            var result = await _command.ExecuteScalarAsync();
 
-            Assert.Equal(1, result);
+            Assert.Equal(1L, result);
         }
 
         [SFFact]
-        public void TestDbFactoryWithCommandBuilderAndAdapter()
+        public async Task TestDbFactoryWithCommandBuilderAndAdapter()
         {
             // set command's connection object
             _command.Connection = _connection;
@@ -102,7 +95,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             adapter.Fill(ds);
 
-            Assert.Equal(1, ds.Tables[0].Rows[0].ItemArray[0]);
+            Assert.Equal(1L, ds.Tables[0].Rows[0].ItemArray[0]);
         }
     }
 }

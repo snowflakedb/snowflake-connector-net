@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -6,212 +9,197 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
-    [NonParallelizable]
-    public class ConnectionPoolChangedSessionIT : SFBaseTest
+    public class ConnectionPoolChangedSessionIT : SFBaseTestAsync, IDisposable
     {
-        private readonly QueryExecResponseData _queryExecResponseChangedRole = new()
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public ConnectionPoolChangedSessionIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
-            finalDatabaseName = TestEnvironment.TestConfig.database,
-            finalSchemaName = TestEnvironment.TestConfig.schema,
+            _fixture = fixture;
+            ConnectionManagerTestsFacade.RegisterDedicatedContext(this, ConnectionPoolType.MultipleConnectionPool);
+            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+
+        public void Dispose()
+        {
+            SnowflakeDbConnectionPool.ClearAllPools();
+            ConnectionManagerTestsFacade.UnregisterDedicatedContext(this);
+        }
+
+        private QueryExecResponseData _queryExecResponseChangedRole() => new()
+        {
+            finalDatabaseName = _fixture.testConfig.database,
+            finalSchemaName = _fixture.testConfig.schema,
             finalRoleName = "role change",
-            finalWarehouseName = TestEnvironment.TestConfig.warehouse
+            finalWarehouseName = _fixture.testConfig.warehouse
         };
 
-        private readonly QueryExecResponseData _queryExecResponseChangedDatabase = new()
+        private QueryExecResponseData _queryExecResponseChangedDatabase() => new()
         {
             finalDatabaseName = "database changed",
-            finalSchemaName = TestEnvironment.TestConfig.schema,
-            finalRoleName = TestEnvironment.TestConfig.role,
-            finalWarehouseName = TestEnvironment.TestConfig.warehouse
+            finalSchemaName = _fixture.testConfig.schema,
+            finalRoleName = _fixture.testConfig.role,
+            finalWarehouseName = _fixture.testConfig.warehouse
         };
 
-        private readonly QueryExecResponseData _queryExecResponseChangedSchema = new()
+        private QueryExecResponseData _queryExecResponseChangedSchema => new()
         {
-            finalDatabaseName = TestEnvironment.TestConfig.database,
+            finalDatabaseName = _fixture.testConfig.database,
             finalSchemaName = "schema changed",
-            finalRoleName = TestEnvironment.TestConfig.role,
-            finalWarehouseName = TestEnvironment.TestConfig.warehouse
+            finalRoleName = _fixture.testConfig.role,
+            finalWarehouseName = _fixture.testConfig.warehouse
         };
 
-        private readonly QueryExecResponseData _queryExecResponseChangedWarehouse = new()
+        private QueryExecResponseData _queryExecResponseChangedWarehouse() => new()
         {
-            finalDatabaseName = TestEnvironment.TestConfig.database,
-            finalSchemaName = TestEnvironment.TestConfig.schema,
-            finalRoleName = TestEnvironment.TestConfig.role,
+            finalDatabaseName = _fixture.testConfig.database,
+            finalSchemaName = _fixture.testConfig.schema,
+            finalRoleName = _fixture.testConfig.role,
             finalWarehouseName = "warehouse changed"
         };
 
-        private static PoolConfig s_previousPoolConfigRestorer;
-
-        [OneTimeSetUp]
-        public static void BeforeAllTests()
-        {
-            s_previousPoolConfigRestorer = new PoolConfig();
-            SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
-        }
-
-        [SetUp]
-        public new void BeforeTest()
-        {
-            SnowflakeDbConnectionPool.ClearAllPools();
-        }
-
-        [TearDown]
-        public new void AfterTest()
-        {
-            SnowflakeDbConnectionPool.ClearAllPools();
-        }
-
-        [OneTimeTearDown]
-        public static void AfterAllTests()
-        {
-            s_previousPoolConfigRestorer.Reset();
-        }
-
         [SFFact]
-        public void TestPoolDestroysConnectionWhenChangedSessionProperties()
+        public async Task TestPoolDestroysConnectionWhenChangedSessionProperties()
         {
-            var connectionString = ConnectionString + "application=Destroy;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=Destroy;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
-            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedDatabase);
-            connection.Close();
+            await connection.OpenAsync(CancellationToken.None);
+            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedDatabase());
+            await connection.CloseAsync(CancellationToken.None);
 
             Assert.Equal(0, pool.GetCurrentPoolSize());
         }
 
         [SFFact]
-        public void TestPoolingWhenSessionPropertiesUnchanged()
+        public async Task TestPoolingWhenSessionPropertiesUnchanged()
         {
-            var connectionString = ConnectionString + "application=NoSessionChanges;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=NoSessionChanges;ChangedSession=Destroy;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
-            connection.Close();
+            await connection.OpenAsync(CancellationToken.None);
+            await connection.CloseAsync(CancellationToken.None);
 
             Assert.Equal(1, pool.GetCurrentPoolSize());
         }
 
         [SFFact]
-        public void TestPoolingWhenConnectionPropertiesChangedForOriginalPoolMode()
+        public async Task TestPoolingWhenConnectionPropertiesChangedForOriginalPoolMode()
         {
-            var connectionString = ConnectionString + "application=OriginalPoolMode;ChangedSession=OriginalPool;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=OriginalPoolMode;ChangedSession=OriginalPool;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
-            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedWarehouse);
+            await connection.OpenAsync(CancellationToken.None);
+            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedWarehouse());
             var sessionId = connection.SfSession.sessionId;
-            connection.Close();
+            await connection.CloseAsync(CancellationToken.None);
 
             Assert.Equal(1, pool.GetCurrentPoolSize());
-            connection.Close();
+            await connection.CloseAsync(CancellationToken.None);
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            connection2.Open();
+            await connection2.OpenAsync(CancellationToken.None);
             Assert.Equal(sessionId, connection2.SfSession.sessionId);
-            connection2.Close();
+            await connection2.CloseAsync(CancellationToken.None);
         }
 
         [SFFact]
-        public void TestPoolingWhenConnectionPropertiesChangedForDefaultPoolMode()
+        public async Task TestPoolingWhenConnectionPropertiesChangedForDefaultPoolMode()
         {
-            var connectionString = ConnectionString + "application=DefaultPoolMode;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=DefaultPoolMode;minPoolSize=0;maxPoolSize=3;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
-            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedRole);
+            await connection.OpenAsync(CancellationToken.None);
+            connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedRole());
             var sessionId = connection.SfSession.sessionId;
-            connection.Close();
+            await connection.CloseAsync(CancellationToken.None);
 
             Assert.Equal(0, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            connection2.Open();
+            await connection2.OpenAsync(CancellationToken.None);
             Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
-            connection2.Close();
+            await connection2.CloseAsync(CancellationToken.None);
         }
 
         [SFFact]
-        [Retry(3)]
-        public void TestPoolDestroysAndRecreatesConnection()
+        public async Task TestPoolDestroysAndRecreatesConnection()
         {
-            var connectionString = ConnectionString + "application=DestroyRecreateSession;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=DestroyRecreateSession;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
+            await connection.OpenAsync(CancellationToken.None);
             var sessionId = connection.SfSession.sessionId;
             connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedSchema);
-            connection.Close();
+            await connection.CloseAsync(CancellationToken.None);
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            connection2.Open();
+            await connection2.OpenAsync(CancellationToken.None);
             Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
-            connection2.Close();
+            await connection2.CloseAsync(CancellationToken.None);
         }
 
         [SFFact]
-        public void TestCompareSessionChangesCaseInsensitiveWhenUnquoted()
+        public async Task TestCompareSessionChangesCaseInsensitiveWhenUnquoted()
         {
-            var connectionString = ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=CompareCaseInsensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var responseData = new QueryExecResponseData()
             {
-                finalDatabaseName = TestEnvironment.TestConfig.database.ToLower(),
-                finalSchemaName = TestEnvironment.TestConfig.schema.ToUpper(),
-                finalRoleName = $"{char.ToUpper(TestEnvironment.TestConfig.role[0])}{TestEnvironment.TestConfig.role.Substring(1).ToLower()}",
-                finalWarehouseName = TestEnvironment.TestConfig.warehouse.ToLower()
+                finalDatabaseName = _fixture.testConfig.database.ToLower(),
+                finalSchemaName = _fixture.testConfig.schema.ToUpper(),
+                finalRoleName = $"{char.ToUpper(_fixture.testConfig.role[0])}{_fixture.testConfig.role.Substring(1).ToLower()}",
+                finalWarehouseName = _fixture.testConfig.warehouse.ToLower()
             };
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
+            await connection.OpenAsync(CancellationToken.None);
             var sessionId = connection.SfSession.sessionId;
             connection.SfSession.UpdateSessionProperties(responseData);
-            connection.Close();
+            await connection.CloseAsync(CancellationToken.None);
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            connection2.Open();
+            await connection2.OpenAsync(CancellationToken.None);
             Assert.Equal(sessionId, connection2.SfSession.sessionId);
-            connection2.Close();
+            await connection2.CloseAsync(CancellationToken.None);
         }
 
         [SFFact]
-        public void TestCompareSessionChangesCaseSensitiveWhenQuoted()
+        public async Task TestCompareSessionChangesCaseSensitiveWhenQuoted()
         {
-            var connectionString = ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
+            var connectionString = _fixture.ConnectionString + "application=CompareCaseSensitive;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var responseData = new QueryExecResponseData()
             {
-                finalDatabaseName = TestEnvironment.TestConfig.database,
-                finalSchemaName = TestEnvironment.TestConfig.schema,
+                finalDatabaseName = _fixture.testConfig.database,
+                finalSchemaName = _fixture.testConfig.schema,
                 finalRoleName = $"\\\"SomeQuotedValue\\\"",
-                finalWarehouseName = TestEnvironment.TestConfig.warehouse.ToLower()
+                finalWarehouseName = _fixture.testConfig.warehouse.ToLower()
             };
 
             var connection = new SnowflakeDbConnection(connectionString);
-            connection.Open();
+            await connection.OpenAsync(CancellationToken.None);
             var sessionId = connection.SfSession.sessionId;
             connection.SfSession.UpdateSessionProperties(responseData);
-            connection.Close();
+            await connection.CloseAsync(CancellationToken.None);
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            connection2.Open();
+            await connection2.OpenAsync(CancellationToken.None);
             Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
-            connection2.Close();
+            await connection2.CloseAsync(CancellationToken.None);
         }
     }
 }

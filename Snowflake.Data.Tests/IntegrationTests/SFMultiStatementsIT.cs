@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
@@ -9,27 +10,36 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture(ResultFormat.ARROW)]
-    [TestFixture(ResultFormat.JSON)]
+    public sealed class SFMultiStatementsITJson : SFMultiStatementsIT
+    {
+        public SFMultiStatementsITJson(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.JSON) { }
+    }
 
-    class SFMultiStatementsIT : SFBaseTest
+    public sealed class SFMultiStatementsITArrow : SFMultiStatementsIT
+    {
+        public SFMultiStatementsITArrow(SFBaseTestAsyncFixture fixture) : base(fixture, ResultFormat.ARROW) { }
+    }
+
+    public abstract class SFMultiStatementsIT : SFBaseTestAsync
     {
         private readonly ResultFormat _resultFormat;
 
-        public SFMultiStatementsIT(ResultFormat resultFormat)
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFMultiStatementsIT(SFBaseTestAsyncFixture fixture, ResultFormat resultFormat) : base(fixture)
         {
+            _fixture = fixture;
             _resultFormat = resultFormat;
         }
 
         [SFFact]
-        public void TestSelectWithoutBinding()
+        public async Task TestSelectWithoutBinding()
         {
             var testDate = "2020-03-11 12:34:56 +0000";
             var testTime = "12:34:56";
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -49,7 +59,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.Equal(1, reader.GetInt32(0));
                 Assert.Equal(1, reader.GetInt16(0));
                 Assert.Equal(1, reader.GetByte(0));
-                Assert.Equal(1, reader.GetValue(0));
+                Assert.Equal(1L, reader.GetValue(0));
                 Assert.False(reader.Read());
 
                 Assert.True(reader.NextResult());
@@ -86,17 +96,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.False(reader.Read());
 
                 reader.Close();
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Once)]
         public async Task TestSelectAsync()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 DbCommand cmd = conn.CreateCommand();
@@ -115,7 +125,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.Equal(1, reader.GetInt32(0));
                 Assert.Equal(1, reader.GetInt16(0));
                 Assert.Equal(1, reader.GetByte(0));
-                Assert.Equal(1, reader.GetValue(0));
+                Assert.Equal(1L, reader.GetValue(0));
                 Assert.False(await reader.ReadAsync().ConfigureAwait(false));
 
                 Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
@@ -127,18 +137,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.False(await reader.NextResultAsync().ConfigureAwait(false));
                 Assert.False(await reader.ReadAsync().ConfigureAwait(false));
 
-                reader.Close();
-                conn.Close();
+                await reader.CloseAsync();
+                await conn.CloseAsync();
             }
         }
 
         [SFFact]
-        public void TestSelectWithBinding()
+        public async Task TestSelectWithBinding()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -181,26 +191,27 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.False(reader.NextResult());
 
                 reader.Close();
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
         [SFFact]
-        public void TestMixedQueryTypeWithBinding()
+        public async Task TestMixedQueryTypeWithBinding()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"create or replace table {TableName}(cola integer, colb string);" +
-                                      $"insert into {TableName} values (?, ?);" +
-                                      $"insert into {TableName} values (?, ?), (?, ?);" +
-                                      $"select * from {TableName};" +
-                                      $"drop table if exists {TableName}";
+                    cmd.CommandText = $"create or replace table {tableName}(cola integer, colb string);" +
+                                      $"insert into {tableName} values (?, ?);" +
+                                      $"insert into {tableName} values (?, ?), (?, ?);" +
+                                      $"select * from {tableName};" +
+                                      $"drop table if exists {tableName}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
@@ -246,7 +257,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p6.Value = "str3";
                     cmd.Parameters.Add(p6);
 
-                    DbDataReader reader = cmd.ExecuteReader();
+                    DbDataReader reader = await cmd.ExecuteReaderAsync();
 
                     // result of create
                     Assert.True(reader.HasRows);
@@ -286,26 +297,27 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     reader.Close();
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
         [SFFact]
-        public void TestWithExecuteNonQuery()
+        public async Task TestWithExecuteNonQuery()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"create or replace temporary table {TableName}(cola integer, colb string);" +
-                                      $"insert into {TableName} values (?, ?);" +
-                                      $"insert into {TableName} values (?, ?), (?, ?);" +
-                                      $"select * from {TableName};" +
-                                      $"drop table if exists {TableName}";
+                    cmd.CommandText = $"create or replace temporary table {tableName}(cola integer, colb string);" +
+                                      $"insert into {tableName} values (?, ?);" +
+                                      $"insert into {tableName} values (?, ?), (?, ?);" +
+                                      $"select * from {tableName};" +
+                                      $"drop table if exists {tableName}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
@@ -351,36 +363,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p6.Value = "str3";
                     cmd.Parameters.Add(p6);
 
-                    int count = cmd.ExecuteNonQuery();
+                    int count = await cmd.ExecuteNonQueryAsync();
                     Assert.Equal(3, count);
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
         [SFFact]
-        public void TestWithAllQueryTypes()
+        public async Task TestWithAllQueryTypes()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "select 1;" +
-                                      $"create or replace temporary table {TableName}(c1 varchar);" +
-                                      $"explain using text select * from {TableName};" +
+                                      $"create or replace temporary table {tableName}(c1 varchar);" +
+                                      $"explain using text select * from {tableName};" +
                                       "show parameters;" +
-                                      $"insert into {TableName} values ('str1');" +
-                                      $"desc table {TableName};" +
-                                      $"list @%{TableName};" +
-                                      $"remove @%{TableName};" +
-                                      $"create or replace temporary procedure P1_{TableName}() returns varchar language javascript as $$ return ''; $$;" +
-                                      $"call P1_{TableName}();" +
-                                      $"use role {testConfig.role}";
+                                      $"insert into {tableName} values ('str1');" +
+                                      $"desc table {tableName};" +
+                                      $"list @%{tableName};" +
+                                      $"remove @%{tableName};" +
+                                      $"create or replace temporary procedure P1_{tableName}() returns varchar language javascript as $$ return ''; $$;" +
+                                      $"call P1_{tableName}();" +
+                                      $"use role {_fixture.testConfig.role}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
@@ -389,19 +402,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     stmtCountParam.Value = 11;
                     cmd.Parameters.Add(stmtCountParam);
 
-                    DbDataReader reader = cmd.ExecuteReader();
+                    DbDataReader reader = await cmd.ExecuteReaderAsync();
 
                     // result of select
                     Assert.True(reader.HasRows);
                     Assert.Equal(-1, reader.RecordsAffected);
 
                     // result of create
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of explain
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     // server used to return query type of explain as select
                     // but now it could be a specific type of explain
@@ -409,37 +422,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                   (reader.RecordsAffected == -1));
 
                     // result of show
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of insert
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(1, reader.RecordsAffected);
 
                     // result of describe
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of list
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.False(reader.HasRows); // no files staged for table t1
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of remove
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.False(reader.HasRows); // no files staged for table t1
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of create
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of call
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     // The server behaivor is inconsistant for now, some of
                     // them returns procedure call as select while some of
@@ -448,25 +461,25 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                   (reader.RecordsAffected == -1));
 
                     // result of use
-                    Assert.True(reader.NextResult());
+                    Assert.True(await reader.NextResultAsync());
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
-                    Assert.False(reader.NextResult());
-                    reader.Close();
+                    Assert.False(await reader.NextResultAsync());
+                    await reader.CloseAsync();
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
         [SFFact]
-        public void TestWithMultipleStatementSetting()
+        public async Task TestWithMultipleStatementSetting()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -474,12 +487,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // MULTI_STATEMENT_COUNT=1
                     // multiple statements execution is disabled
                     cmd.CommandText = "alter session set MULTI_STATEMENT_COUNT=1";
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync();
 
                     cmd.CommandText = "select 1; select 2; select 3";
                     try
                     {
-                        cmd.ExecuteNonQuery();
+                        await cmd.ExecuteNonQueryAsync();
                         Assert.Fail();
                     }
                     catch
@@ -491,10 +504,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // MULTI_STATEMENT_COUNT=0
                     // multiple statements execution is enabled
                     cmd.CommandText = "alter session set MULTI_STATEMENT_COUNT=0";
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync();
 
                     cmd.CommandText = "select 1; select 2; select 3";
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync();
 
                     // Set MULTI_STATEMENT_COUNT per query (not match)
                     var stmtCountParam = cmd.CreateParameter();
@@ -506,7 +519,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = "select 1; select 2; select 3";
                     try
                     {
-                        cmd.ExecuteNonQuery();
+                        await cmd.ExecuteNonQueryAsync();
                         Assert.Fail();
                     }
                     catch
@@ -524,7 +537,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(stmtCountParam);
 
                     cmd.CommandText = "select 1; select 2; select 3";
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync();
 
                     // No matter how session paramter is set
                     // parameter per query always works
@@ -532,7 +545,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // multiple statements execution is enabled
                     cmd.Parameters.Clear();
                     cmd.CommandText = "alter session set MULTI_STATEMENT_COUNT=1";
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync();
 
                     stmtCountParam = cmd.CreateParameter();
                     stmtCountParam.ParameterName = "MULTI_STATEMENT_COUNT";
@@ -541,20 +554,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(stmtCountParam);
 
                     cmd.CommandText = "select 1; select 2; select 3";
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync();
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
-        [Test, NonParallelizable]
-        public void TestResultSetReturnedForAllQueryTypes()
+        [SFFact]
+        public async Task TestResultSetReturnedForAllQueryTypes()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -562,19 +576,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = "set query_tag = (select 'dummy_tag');" +
                                       "alter session set query_tag='dummy_tag';" +
                                       "select 1;" +
-                                      $"create or replace temporary table {TableName}(c1 varchar);" +
-                                      $"explain using text select * from {TableName};" +
+                                      $"create or replace temporary table {tableName}(c1 varchar);" +
+                                      $"explain using text select * from {tableName};" +
                                       "show parameters;" +
-                                      $"insert into {TableName} values ('str1');" +
-                                      $"update {TableName} set c1 = 'str2';" +
-                                      $"select * from {TableName};" +
-                                      $"desc table {TableName};" +
-                                      $"copy into @%{TableName} from {TableName};" +
-                                      $"list @%{TableName};" +
-                                      $"remove @%{TableName};" +
-                                      $"create or replace temporary procedure P1_{TableName}() returns varchar language javascript as $$ return ''; $$;" +
-                                      $"call P1_{TableName}();" +
-                                      $"use role {testConfig.role}";
+                                      $"insert into {tableName} values ('str1');" +
+                                      $"update {tableName} set c1 = 'str2';" +
+                                      $"select * from {tableName};" +
+                                      $"desc table {tableName};" +
+                                      $"copy into @%{tableName} from {tableName};" +
+                                      $"list @%{tableName};" +
+                                      $"remove @%{tableName};" +
+                                      $"create or replace temporary procedure P1_{tableName}() returns varchar language javascript as $$ return ''; $$;" +
+                                      $"call P1_{tableName}();" +
+                                      $"use role {_fixture.testConfig.role}";
 
                     var stmtCount = 16;
 
@@ -585,7 +599,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     stmtCountParam.Value = stmtCount;
                     cmd.Parameters.Add(stmtCountParam);
 
-                    DbDataReader reader = cmd.ExecuteReader();
+                    DbDataReader reader = await cmd.ExecuteReaderAsync();
 
                     // at least one row in the first result set
                     Assert.True(reader.HasRows);
@@ -603,7 +617,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     reader.Close();
                 }
 
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
     }

@@ -1,27 +1,32 @@
+using System.Threading;
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.IntegrationTests
 {
     using Xunit;
     using System.Data;
+    using System.Threading.Tasks;
     using Snowflake.Data.Client;
     using System.Data.Common;
-
-
-    class SFStatementTypeTest : SFBaseTest
+    public class SFStatementTypeTest : SFBaseTestAsync
     {
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFStatementTypeTest(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
+
         [SFFact]
-        public void TestCallStatement()
+        public async Task TestCallStatement()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     try
                     {
                         command.CommandText = "ALTER SESSION SET USE_STATEMENT_TYPE_CALL_FOR_STORED_PROC_CALLS=true";
-                        command.ExecuteNonQuery();
+                        await command.ExecuteNonQueryAsync();
                     }
                     catch (SnowflakeDbException ex)
                     {
@@ -36,7 +41,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         + "res.next();\n"
                         + "return res.getColumnValueAsString(1) + ' ' + res.getColumnValueAsString(2) + ' ' + IN2;\n"
                         + "$$;";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
 
                     command.CommandText = "call TEST_SP_CALL_STMT_ENABLED(?, to_variant(?))";
 
@@ -52,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p2.Value = "[2,3]";
                     command.Parameters.Add(p2);
 
-                    DbDataReader reader = command.ExecuteReader();
+                    DbDataReader reader = await command.ExecuteReaderAsync();
 
                     string result = "1 \"[2,3]\" [2,3]";
                     while (reader.Read())
@@ -61,9 +66,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
 
                     command.CommandText = "drop procedure if exists TEST_SP_CALL_STMT_ENABLED(float, variant)";
-                    command.ExecuteNonQuery();
+                    await command.ExecuteNonQueryAsync();
                 }
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
     }
