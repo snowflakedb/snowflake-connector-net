@@ -14,7 +14,6 @@ using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-
     public class CertificateRevocationVerifierTest : RevocationTests
     {
         [SFTheory]

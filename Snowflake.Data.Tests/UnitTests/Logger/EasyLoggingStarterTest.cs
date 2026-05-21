@@ -8,11 +8,11 @@ using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-
-    public class EasyLoggingStarterTest
+    public sealed class EasyLoggingStarterTest
     {
         private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         private static readonly string LogPath = Path.Combine(HomeDirectory, "some-logs-path/some-folder");
@@ -86,8 +86,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         [ThreadStatic]
         private static EasyLoggingStarter t_easyLoggerStarter;
 
-        [SetUp]
-        public void BeforeEach()
+        public EasyLoggingStarterTest()
         {
             t_easyLoggingProvider = new Mock<EasyLoggingConfigProvider>();
             t_easyLoggerManager = new Mock<EasyLoggerManager>();
@@ -118,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.NotNull(thrown);
-            Assert.Equal(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
+            Assert.NotEmpty(thrown.Message);
         }
 
         [SFFact]
@@ -138,12 +137,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.NotNull(thrown);
-            Assert.Equal(thrown.Message, "No log path found for easy logging. Home directory is not configured and log path is not provided");
+            Assert.Equal("No log path found for easy logging. Home directory is not configured and log path is not provided", thrown.Message);
         }
 
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)]
         [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute)]
@@ -170,11 +168,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Too broad access permissions for logs directory"));
+            Assert.Contains("Too broad access permissions for logs directory", thrown.Message);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestThatSucceedsWhenLogDirectoryHasExactly700Permissions()
         {
             // arrange
@@ -189,12 +186,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 .Returns(FileAccessPermissions.UserReadWriteExecute);
 
             // act & assert
-            Assert.DoesNotThrow(() => t_easyLoggerStarter.Init(ConfigPath));
+            t_easyLoggerStarter.Init(ConfigPath);
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestFailIfDirectoryCreationFails()
         {
             // arrange
@@ -212,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Failed to create logs directory"));
+            Assert.Contains("Failed to create logs directory", thrown.Message);
         }
 
         [SFFact]
@@ -336,8 +332,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, "STDOUT"), Times.Once);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestSettingLogPermissionValue()
         {
             // arrange

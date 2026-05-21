@@ -1,36 +1,33 @@
 using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.PackageTests
 {
-
     public sealed class LibcDetectorIT
     {
-        [SFFact]
-        [Platform(Exclude = "Linux")]
+        [SFFact(SkipCondition.SkipOnLinux)]
         public void TestDetectReturnsNotApplicableOnNonLinux()
         {
             // Act
             var (family, version) = LibcDetector.Instance.Detect();
 
             // Assert
-            Assert.That(family, Is.EqualTo(LibcFamily.NotApplicable));
-            Assert.That(version, Is.Null);
+            Assert.Equal(LibcFamily.NotApplicable, family);
+            Assert.Null(version);
         }
 
-        [SFFact]
-        [Platform(Include = "Linux")]
+        [SFFact(SkipCondition.RunOnlyOnLinux)]
         public void TestDetectReturnsKnownFamilyOnLinux()
         {
             // Act
             var (family, _) = LibcDetector.Instance.Detect();
 
             // Assert — on any Linux box we should always resolve to one of the known families
-            Assert.That(family, Is.Not.EqualTo(LibcFamily.NotApplicable));
+            Assert.NotEqual(LibcFamily.NotApplicable, family);
         }
 
-        [SFFact]
-        [Platform(Include = "Linux")]
+        [SFFact(SkipCondition.RunOnlyOnLinux)]
         public void TestDetectReturnsVersionStringOnLinuxGlibc()
         {
             // Act
@@ -38,12 +35,12 @@ namespace Snowflake.Data.Tests.PackageTests
 
             if (family == LibcFamily.Glibc)
             {
-                Assert.That(version, Is.Not.Null);
-                Assert.That(version, Is.Not.Empty);
+                Assert.NotNull(version);
+                Assert.NotEmpty(version);
             }
             else
             {
-                Assert.Pass($"System uses {family}; glibc version assertion not applicable");
+                return; // System uses non-glibc; glibc version assertion not applicable
             }
         }
 
@@ -51,23 +48,21 @@ namespace Snowflake.Data.Tests.PackageTests
         public void TestTryGetGlibcVersionDoesNotThrow()
         {
             // Act — must not throw on any platform
-            Assert.DoesNotThrow(() => LibcDetector.TryGetGlibcVersion(out _));
+            LibcDetector.TryGetGlibcVersion(out _);
         }
 
-        [SFFact]
-        [Platform(Exclude = "Linux")]
+        [SFFact(SkipCondition.SkipOnLinux)]
         public void TestTryGetGlibcVersionReturnsFalseOnNonLinux()
         {
             // Act
             var found = LibcDetector.TryGetGlibcVersion(out var version);
 
             // Assert
-            Assert.That(found, Is.False);
-            Assert.That(version, Is.Null);
+            Assert.False(found);
+            Assert.Null(version);
         }
 
-        [SFFact]
-        [Platform(Include = "Linux")]
+        [SFFact(SkipCondition.RunOnlyOnLinux)]
         public void TestTryGetGlibcVersionReturnsTrueOnLinuxGlibc()
         {
             // Act
@@ -77,12 +72,12 @@ namespace Snowflake.Data.Tests.PackageTests
             // On non-glibc systems the P/Invoke throws internally and returns false — also correct.
             if (found)
             {
-                Assert.That(version, Is.Not.Null);
-                Assert.That(version, Is.Not.Empty);
+                Assert.NotNull(version);
+                Assert.NotEmpty(version);
             }
             else
             {
-                Assert.Pass("gnu_get_libc_version not available on this Linux variant");
+                return; // gnu_get_libc_version not available on this Linux variant
             }
         }
     }

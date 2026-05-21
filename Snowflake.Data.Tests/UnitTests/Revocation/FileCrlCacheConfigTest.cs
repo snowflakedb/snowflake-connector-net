@@ -3,15 +3,14 @@ using System.Runtime.InteropServices;
 using Xunit;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-
     public class FileCrlCacheConfigTest
     {
-        [SFFact]
-        [Platform("Win")]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestConfigForWindows()
         {
             // arrange
@@ -33,8 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [SFFact]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestConfigForMacOrLinux()
         {
             // arrange

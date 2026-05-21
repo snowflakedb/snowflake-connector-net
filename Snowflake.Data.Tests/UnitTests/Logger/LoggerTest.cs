@@ -4,11 +4,13 @@ using Microsoft.Extensions.Logging;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using System.IO;
 using System;
+using System.Diagnostics;
 using Snowflake.Data.Client;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    abstract class LoggerTest
+    public abstract class LoggerTest : IDisposable
     {
         private const string InfoMessage = "Info message";
         private const string DebugMessage = "Debug message";
@@ -20,8 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         protected ILogger _logger;
         protected string _logFile;
 
-        [OneTimeTearDown]
-        public void AfterTest()
+        public virtual void Dispose()
         {
             // Return to default setting
             SnowflakeDbLoggerConfig.ResetCustomLogger();
@@ -36,19 +37,21 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         public void TestResetCustomLogger()
         {
             SnowflakeDbLoggerConfig.ResetCustomLogger();
-            Assert.InstanceOf<ILogger>(SFLoggerFactory.s_customLogger);
+            Assert.IsAssignableFrom<ILogger>(SFLoggerFactory.s_customLogger);
         }
 
         [SFFact]
         public void TestSettingCustomLogger()
         {
             SnowflakeDbLoggerConfig.SetCustomLogger(new LoggerEmptyImpl());
-            Assert.InstanceOf<LoggerEmptyImpl>(SFLoggerFactory.s_customLogger);
+            Assert.IsType<LoggerEmptyImpl>(SFLoggerFactory.s_customLogger);
         }
 
-        [SFFact]
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestBeginScope(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
 
@@ -58,41 +61,51 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             }
         }
 
-        [SFFact]
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsDebugEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
             Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Debug));
         }
 
-        [SFFact]
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsInfoEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
             Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Information));
         }
 
-        [SFFact]
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsWarnEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
             Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Warning));
         }
 
-        [SFFact]
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsErrorEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
             Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Error));
         }
 
-        [SFFact]
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsFatalEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
             _logger = GetLogger(isEnabled);
             Assert.Equal(isEnabled, _logger.IsEnabled(LogLevel.Critical));
