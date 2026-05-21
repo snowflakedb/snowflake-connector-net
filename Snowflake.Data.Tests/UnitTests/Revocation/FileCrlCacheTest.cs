@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Web;
 using Mono.Unix;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;

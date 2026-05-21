@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Snowflake.Data.Core;
 using System.Linq;
 using System.IO;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Telemetry;
 using Snowflake.Data.Tests.Mock;

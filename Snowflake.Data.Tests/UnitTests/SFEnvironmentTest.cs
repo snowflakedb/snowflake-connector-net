@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;

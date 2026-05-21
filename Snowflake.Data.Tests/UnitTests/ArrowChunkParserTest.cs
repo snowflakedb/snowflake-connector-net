@@ -4,7 +4,7 @@ using Apache.Arrow.Ipc;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Client;
     using Snowflake.Data.Configuration;
     using Snowflake.Data.Core;

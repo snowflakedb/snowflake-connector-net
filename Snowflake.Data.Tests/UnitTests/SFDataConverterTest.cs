@@ -7,7 +7,7 @@ using Snowflake.Data.Tests.Util;
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Snowflake.Data.Core;
-    using NUnit.Framework;
+    using Xunit;
     using System.Threading;
     using System.Globalization;
 

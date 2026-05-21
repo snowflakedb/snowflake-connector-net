@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Authenticator;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator

@@ -1,4 +1,4 @@
-using NUnit.Framework;
+using Xunit;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using System;

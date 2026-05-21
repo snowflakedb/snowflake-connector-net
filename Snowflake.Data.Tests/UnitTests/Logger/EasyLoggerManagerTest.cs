@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;

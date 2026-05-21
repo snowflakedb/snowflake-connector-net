@@ -4,7 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Client;

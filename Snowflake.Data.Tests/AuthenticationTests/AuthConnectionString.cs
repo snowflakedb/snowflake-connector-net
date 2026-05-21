@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using NUnit.Framework;
+using Xunit;
 using System.IO;
 using System.Net;
 using Snowflake.Data.Core;

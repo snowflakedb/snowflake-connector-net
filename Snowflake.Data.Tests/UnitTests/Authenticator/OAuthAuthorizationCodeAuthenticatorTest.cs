@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.Browser;

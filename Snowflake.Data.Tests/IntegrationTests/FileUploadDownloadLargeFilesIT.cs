@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
 

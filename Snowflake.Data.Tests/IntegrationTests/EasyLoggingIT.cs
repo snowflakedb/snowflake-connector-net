@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Mono.Unix;
 using Mono.Unix.Native;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;

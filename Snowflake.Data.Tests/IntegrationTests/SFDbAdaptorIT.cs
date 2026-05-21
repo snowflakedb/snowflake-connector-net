@@ -1,6 +1,6 @@
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Client;
     using System.Data;
     using System.Runtime.InteropServices;

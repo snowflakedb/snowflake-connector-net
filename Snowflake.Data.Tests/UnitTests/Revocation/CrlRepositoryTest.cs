@@ -1,5 +1,5 @@
 using System;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Revocation;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation

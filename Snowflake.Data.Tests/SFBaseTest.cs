@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
@@ -16,7 +16,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests
 {
-    using NUnit.Framework;
+    using Xunit;
     using NUnit.Framework.Interfaces;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;

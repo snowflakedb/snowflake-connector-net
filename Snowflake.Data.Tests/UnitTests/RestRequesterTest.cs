@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.UnitTests

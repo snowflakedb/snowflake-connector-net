@@ -4,7 +4,7 @@ using System.IO;
 using System.Security;
 using Mono.Unix;
 using Mono.Unix.Native;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;

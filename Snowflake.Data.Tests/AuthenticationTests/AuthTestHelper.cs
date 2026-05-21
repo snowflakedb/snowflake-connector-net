@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Diagnostics;
 using System.Data;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Log;

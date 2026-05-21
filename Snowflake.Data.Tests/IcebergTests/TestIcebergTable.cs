@@ -4,7 +4,7 @@ using System.Data.Common;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;

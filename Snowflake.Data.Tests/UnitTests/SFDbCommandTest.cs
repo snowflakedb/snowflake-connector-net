@@ -1,6 +1,6 @@
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Client;
     using System;
     using System.Threading;

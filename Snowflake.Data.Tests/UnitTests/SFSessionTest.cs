@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 using Snowflake.Data.Core;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;

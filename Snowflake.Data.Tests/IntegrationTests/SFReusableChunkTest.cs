@@ -1,7 +1,7 @@
 using System;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
-using NUnit.Framework;
+using Xunit;
 using System.Data;
 using System.IO;
 using System.Threading.Tasks;

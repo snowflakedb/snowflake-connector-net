@@ -8,7 +8,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using System;
     using System.IO;
     using System.Linq;

@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using Snowflake.Data.Core;
 using System.Security;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;

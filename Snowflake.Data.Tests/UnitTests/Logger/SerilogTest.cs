@@ -1,4 +1,4 @@
-using NUnit.Framework;
+using Xunit;
 using Serilog;
 using Serilog.Extensions.Logging;
 using Snowflake.Data.Client;

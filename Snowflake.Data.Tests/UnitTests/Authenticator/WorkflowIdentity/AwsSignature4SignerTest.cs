@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
 using Amazon.Runtime;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity

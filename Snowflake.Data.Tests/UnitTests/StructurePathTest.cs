@@ -1,4 +1,4 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Converter;
 
 namespace Snowflake.Data.Tests.UnitTests

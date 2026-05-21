@@ -1,4 +1,4 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Tests;
 
 namespace Snowflake.Data.AuthenticationTests

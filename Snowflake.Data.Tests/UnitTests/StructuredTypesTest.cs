@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Converter;
 

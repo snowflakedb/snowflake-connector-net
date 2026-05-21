@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Data;
 using Newtonsoft.Json.Linq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Client;

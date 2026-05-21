@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Mono.Unix;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
