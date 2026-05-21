@@ -1,3 +1,5 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Newtonsoft.Json;
@@ -5,9 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using System;
     using System.Collections.Generic;
-
-
-    class QueryContextCacheTest
+    public class QueryContextCacheTest
     {
         private QueryContextCache _qcc = null;
         private const long BaseReadTimestamp = 1668727958;

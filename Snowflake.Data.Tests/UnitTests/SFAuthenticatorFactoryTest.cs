@@ -1,4 +1,5 @@
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -6,9 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.Authenticator;
-
-
-    class SFAuthenticatorFactoryTest
+    public class SFAuthenticatorFactoryTest
     {
         IAuthenticator _authenticator;
 
@@ -24,28 +23,28 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetAuthenticatorBasic()
         {
             _authenticator = GetAuthenticator(BasicAuthenticator.AUTH_NAME);
-            Assert.InstanceOf<BasicAuthenticator>(_authenticator);
+            Assert.IsType<BasicAuthenticator>(_authenticator);
         }
 
         [SFFact]
         public void TestGetAuthenticatorExternalBrowser()
         {
             _authenticator = GetAuthenticator(ExternalBrowserAuthenticator.AUTH_NAME);
-            Assert.InstanceOf<ExternalBrowserAuthenticator>(_authenticator);
+            Assert.IsType<ExternalBrowserAuthenticator>(_authenticator);
         }
 
         [SFFact]
         public void TestGetAuthenticatorKeyPairWithPrivateKey()
         {
             _authenticator = GetAuthenticator(KeyPairAuthenticator.AUTH_NAME, "private_key=xxxx");
-            Assert.InstanceOf<KeyPairAuthenticator>(_authenticator);
+            Assert.IsType<KeyPairAuthenticator>(_authenticator);
         }
 
         [SFFact]
         public void TestGetAuthenticatorKeyPairWithPrivateKeyFile()
         {
             _authenticator = GetAuthenticator(KeyPairAuthenticator.AUTH_NAME, "private_key_file=xxxx");
-            Assert.InstanceOf<KeyPairAuthenticator>(_authenticator);
+            Assert.IsType<KeyPairAuthenticator>(_authenticator);
         }
 
         [SFFact]
@@ -59,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetAuthenticatorOAuth()
         {
             _authenticator = GetAuthenticator(OAuthAuthenticator.AUTH_NAME, "token=xxxx");
-            Assert.InstanceOf<OAuthAuthenticator>(_authenticator);
+            Assert.IsType<OAuthAuthenticator>(_authenticator);
         }
 
         [SFFact]
@@ -73,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetAuthenticatorOkta()
         {
             _authenticator = GetAuthenticator("https://xxxxxx.okta.com");
-            Assert.InstanceOf<OktaAuthenticator>(_authenticator);
+            Assert.IsType<OktaAuthenticator>(_authenticator);
         }
 
         [SFFact]

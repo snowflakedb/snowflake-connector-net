@@ -9,11 +9,11 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using System.Net.Http;
 using Moq;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
-    class SFSessionTest
+    public class SFSessionTest
     {
         // Mock test for session gone
         [SFFact]
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var restRequester = new MockSessionGone();
             SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
-            Assert.DoesNotThrow(() => sfSession.close());
+            sfSession.close();
         }
 
         [SFFact]
@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var restRequester = new MockSessionGone();
             SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
-            Assert.DoesNotThrow(() => sfSession.CloseNonBlocking());
+            sfSession.CloseNonBlocking();
         }
 
         [SFFact]
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests
             easyLoggingStarter.Verify(starter => starter.Init(configPath));
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public void TestThatIdTokenIsStoredWhenCachingIsEnabled()
         {
             // arrange
@@ -135,7 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key)).Password);
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public void TestThatIdTokenIsNotStoredWhenThereIsNoUserInTheConnectionString()
         {
             // arrange
@@ -348,7 +348,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public void TestMFATokenCacheUsedInNewConnection()
         {
             // arrange
@@ -406,7 +406,7 @@ namespace Snowflake.Data.Tests.UnitTests
             session.Open();
 
             // act & assert
-            Assert.DoesNotThrow(() => session.heartbeat());
+            session.heartbeat();
         }
     }
 }

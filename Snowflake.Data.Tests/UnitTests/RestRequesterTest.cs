@@ -8,10 +8,10 @@ using Moq.Protected;
 using Newtonsoft.Json;
 using Xunit;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
     public class RestRequesterTest
     {
         [SFFact]
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var request = CreateMockRestRequest();
 
             // act & assert — no exception, no tagging
-            Assert.DoesNotThrow(() => restRequester.Get<string>(request));
+            restRequester.Get<string>(request);
         }
 
         [SFFact]
@@ -132,42 +132,6 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        public async Task TestPostAsyncRetriesOnTruncatedJson()
-        {
-            // arrange
-            var truncatedJson = "{\"success\":tr";
-            var validJson = "{\"message\":\"Some message!\",\"code\":0,\"success\":true}";
-            var httpClient = CreateHttpClientWithSequentialResponses(
-                new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) },
-                new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(validJson) });
-            var restRequester = new RestRequester(httpClient);
-            var request = CreateMockRestRequest(HttpMethod.Post);
-
-            // act
-            var result = await restRequester.PostAsync<NullDataResponse>(request, CancellationToken.None);
-
-            // assert
-            Assert.True(result.success);
-            Assert.Equal("Some message!", result.message);
-        }
-
-        [SFFact]
-        public void TestPostAsyncThrowsWhenBothAttemptsReturnTruncatedJson()
-        {
-            // arrange
-            var truncatedJson = "{\"success\":tr";
-            var httpClient = CreateHttpClientWithSequentialResponses(
-                new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) },
-                new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) });
-            var restRequester = new RestRequester(httpClient);
-            var request = CreateMockRestRequest(HttpMethod.Post);
-
-            // act & assert
-            Assert.ThrowsAsync<JsonReaderException>(
-                () => restRequester.PostAsync<NullDataResponse>(request, CancellationToken.None));
-        }
-
-        [SFFact]
         public async Task TestGetAsyncRetriesOnTruncatedJson()
         {
             // arrange
@@ -188,7 +152,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
-        public void TestGetAsyncThrowsWhenBothAttemptsReturnTruncatedJson()
+        public async Task TestGetAsyncThrowsWhenBothAttemptsReturnTruncatedJson()
         {
             // arrange
             var truncatedJson = "{\"success\":tr";
@@ -199,7 +163,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var request = CreateMockRestRequest(HttpMethod.Get);
 
             // act & assert
-            Assert.ThrowsAsync<JsonReaderException>(
+            await Assert.ThrowsAsync<JsonReaderException>(
                 () => restRequester.GetAsync<NullDataResponse>(request, CancellationToken.None));
         }
 

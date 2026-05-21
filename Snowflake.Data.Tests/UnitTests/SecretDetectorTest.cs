@@ -3,17 +3,15 @@ using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using System;
 using System.Text;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
-
-    class SecretDetectorTest
+    public sealed class SecretDetectorTest
     {
         SecretDetector.Mask mask;
 
-        [SetUp]
-        public void BeforeTest()
+        public SecretDetectorTest()
         {
             mask = SecretDetector.MaskSecrets(null);
         }

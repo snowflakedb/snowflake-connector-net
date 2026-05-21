@@ -13,19 +13,25 @@ using System.Threading.Tasks;
 using System.Web;
 using Snowflake.Data.Core.Authenticator.Browser;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
-    class SFExternalBrowserTest
+    [CollectionDefinition(nameof(SFExternalBrowserTestCollection), DisableParallelization = true)]
+    public sealed class SFExternalBrowserTestCollection : ICollectionFixture<SFExternalBrowserTest>
     {
-        [ThreadStatic]
-        private static Mock<IWebBrowserRunner> t_browserRunner;
 
-        private static HttpClient s_httpClient = new HttpClient();
+    }
 
-        [SetUp]
-        public void BeforeEach()
+    [Collection(nameof(SFExternalBrowserTestCollection))]
+    public sealed class SFExternalBrowserTest
+    {
+
+        private readonly Mock<IWebBrowserRunner> t_browserRunner;
+
+        private static readonly HttpClient s_httpClient = new();
+
+        public SFExternalBrowserTest()
         {
             t_browserRunner = new Mock<IWebBrowserRunner>();
         }
@@ -44,7 +50,8 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ProofKey = "mockProofKey",
             };
-            var sfSession = new SFSession("account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
+            var user = $"test{Guid.NewGuid():N}";
+            var sfSession = new SFSession($"account=test;user={user};password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
             SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             sfSession.Open();
 
@@ -69,7 +76,8 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ProofKey = "mockProofKey",
             };
-            var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
+            var user = $"test{Guid.NewGuid():N}";
+            var sfSession = new SFSession($"disable_console_login=false;account=test;user={user};password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
             SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             sfSession.Open();
             Assert.False(sfSession._disableConsoleLogin);
@@ -320,7 +328,8 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ProofKey = "mockProofKey",
             };
-            var sfSession = new SFSession("account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
+            var user = $"test{Guid.NewGuid():N}";
+            var sfSession = new SFSession($"account=test;user={user};password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
             SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
@@ -346,7 +355,8 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ProofKey = "mockProofKey",
             };
-            var sfSession = new SFSession("disable_console_login=false;account=test;user=test;password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
+            var user = $"test{Guid.NewGuid():N}";
+            var sfSession = new SFSession($"disable_console_login=false;account=test;user={user};password=test;authenticator=externalbrowser;host=test.snowflakecomputing.com", new SessionPropertiesContext(), restRequester);
             SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
             Task connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();

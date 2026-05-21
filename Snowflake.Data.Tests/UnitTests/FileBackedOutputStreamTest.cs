@@ -2,6 +2,7 @@ using System.IO;
 using System.Text;
 using Xunit;
 using Snowflake.Data.Core.FileTransfer;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests
 {

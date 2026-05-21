@@ -8,11 +8,11 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
     public class AuthenticationPropertiesValidatorTest
     {
         private const string _necessaryNonAuthProperties = "account=a;";
 
+        [SFTheory]
         [InlineData("authenticator=snowflake;user=test;password=test", null)]
         [InlineData("authenticator=Snowflake;user=test", "test")]
         [InlineData("authenticator=ExternalBrowser", null)]
@@ -29,9 +29,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var propertiesContext = new SessionPropertiesContext { Password = securePassword };
 
             // Act/Assert
-            Assert.DoesNotThrow(() => SFSessionProperties.ParseConnectionString(_necessaryNonAuthProperties + connectionString, propertiesContext));
+            SFSessionProperties.ParseConnectionString(_necessaryNonAuthProperties + connectionString, propertiesContext);
         }
 
+        [SFTheory]
         [InlineData("authenticator=snowflake;", null, SFError.MISSING_CONNECTION_PROPERTY, "Error: Required property PASSWORD is not provided.")]
         [InlineData("authenticator=snowflake;", "test", SFError.MISSING_CONNECTION_PROPERTY, "Error: Required property USER is not provided")]
         [InlineData("authenticator=snowflake;user=;password=", null, SFError.MISSING_CONNECTION_PROPERTY, "Error: Required property PASSWORD is not provided.")]
@@ -61,7 +62,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             SnowflakeDbExceptionAssert.HasErrorCode(exception, expectedError);
-            Assert.That(exception.Message.Contains(expectedErrorMessage), $"Expecting:\n\t{exception.Message}\nto contain:\n\t{expectedErrorMessage}");
+            Assert.Contains(expectedErrorMessage, exception.Message);
         }
     }
 }

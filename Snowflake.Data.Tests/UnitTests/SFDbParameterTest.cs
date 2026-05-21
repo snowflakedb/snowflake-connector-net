@@ -1,16 +1,27 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests
 {
     using Xunit;
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using System;
+    using System.Collections.Generic;
     using System.Data;
+    using System.Linq;
     using System.Text;
-
-
-    class SFDbParameterTest
+    public class SFDbParameterTest
     {
         SnowflakeDbParameter _parameter;
+
+        public static IEnumerable<object[]> AllSFDataTypes() =>
+            Enum.GetValues(typeof(SFDataType)).Cast<SFDataType>().Select(v => new object[] { v });
+
+        public static IEnumerable<object[]> AllDbTypes() =>
+            Enum.GetValues(typeof(DbType)).Cast<DbType>().Select(v => new object[] { v });
+
+        public static IEnumerable<object[]> AllParameterDirections() =>
+            Enum.GetValues(typeof(ParameterDirection)).Cast<ParameterDirection>().Select(v => new object[] { v });
 
         [SFFact]
         public void TestDefaultDbParameter()
@@ -19,8 +30,9 @@ namespace Snowflake.Data.Tests
             Assert.Equal(SFDataType.None, _parameter.SFDataType);
         }
 
-        [SFFact]
-        public void TestDbParameterWithNameAndDataType([Values] SFDataType expectedSFDataType)
+        [SFTheory]
+        [MemberData(nameof(AllSFDataTypes))]
+        public void TestDbParameterWithNameAndDataType(SFDataType expectedSFDataType)
         {
             string expectedParameterName = "1";
             _parameter = new SnowflakeDbParameter(expectedParameterName, expectedSFDataType);
@@ -28,8 +40,9 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedSFDataType, _parameter.SFDataType);
         }
 
-        [SFFact]
-        public void TestDbParameterWithIndexAndDataType([Values] SFDataType expectedSFDataType)
+        [SFTheory]
+        [MemberData(nameof(AllSFDataTypes))]
+        public void TestDbParameterWithIndexAndDataType(SFDataType expectedSFDataType)
         {
             int expectedParameterIndex = 1;
 
@@ -38,16 +51,18 @@ namespace Snowflake.Data.Tests
             Assert.Equal(expectedSFDataType, _parameter.SFDataType);
         }
 
-        [SFFact]
-        public void TestDbParameterDbType([Values] DbType expectedDbType)
+        [SFTheory]
+        [MemberData(nameof(AllDbTypes))]
+        public void TestDbParameterDbType(DbType expectedDbType)
         {
             _parameter = new SnowflakeDbParameter();
             _parameter.DbType = expectedDbType;
             Assert.Equal(expectedDbType, _parameter.DbType);
         }
 
-        [SFFact]
-        public void TestDbParameterDirection([Values] ParameterDirection ParameterDirection)
+        [SFTheory]
+        [MemberData(nameof(AllParameterDirections))]
+        public void TestDbParameterDirection(ParameterDirection ParameterDirection)
         {
             _parameter = new SnowflakeDbParameter();
             if (ParameterDirection == ParameterDirection.Input)
@@ -62,8 +77,9 @@ namespace Snowflake.Data.Tests
             }
         }
 
-        [SFFact]
-        public void TestDbParameterIsNullable([Values] SFDataType SFDataType)
+        [SFTheory]
+        [MemberData(nameof(AllSFDataTypes))]
+        public void TestDbParameterIsNullable(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
             Assert.Equal(false, _parameter.IsNullable);
@@ -72,18 +88,20 @@ namespace Snowflake.Data.Tests
             Assert.Equal(true, _parameter.IsNullable);
         }
 
-        [SFFact]
-        public void TestDbParameterSize([Values] SFDataType SFDataType)
+        [SFTheory]
+        [MemberData(nameof(AllSFDataTypes))]
+        public void TestDbParameterSize(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.Zero(_parameter.Size);
+            Assert.Equal(0, _parameter.Size);
 
             _parameter.Size = 1;
             Assert.Equal(1, _parameter.Size);
         }
 
-        [SFFact]
-        public void TestDbParameterSourceColumn([Values] SFDataType SFDataType)
+        [SFTheory]
+        [MemberData(nameof(AllSFDataTypes))]
+        public void TestDbParameterSourceColumn(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
             Assert.Equal(null, _parameter.SourceColumn);
@@ -93,8 +111,9 @@ namespace Snowflake.Data.Tests
             Assert.Equal(col, _parameter.SourceColumn);
         }
 
-        [SFFact]
-        public void TestDbParameterSourceColumnNullMapping([Values] SFDataType SFDataType)
+        [SFTheory]
+        [MemberData(nameof(AllSFDataTypes))]
+        public void TestDbParameterSourceColumnNullMapping(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
             Assert.Equal(false, _parameter.SourceColumnNullMapping);
@@ -103,8 +122,9 @@ namespace Snowflake.Data.Tests
             Assert.Equal(true, _parameter.SourceColumnNullMapping);
         }
 
-        [SFFact]
-        public void TestDbParameterValue([Values] SFDataType SFDataType)
+        [SFTheory]
+        [MemberData(nameof(AllSFDataTypes))]
+        public void TestDbParameterValue(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
             Assert.Equal(null, _parameter.Value);
@@ -114,8 +134,9 @@ namespace Snowflake.Data.Tests
             Assert.Equal(obj, _parameter.Value);
         }
 
-        [SFFact]
-        public void TestDbParameterResetDbType([Values] SFDataType expectedSFDataType)
+        [SFTheory]
+        [MemberData(nameof(AllSFDataTypes))]
+        public void TestDbParameterResetDbType(SFDataType expectedSFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, expectedSFDataType);
             Assert.Equal(expectedSFDataType, _parameter.SFDataType);
@@ -124,8 +145,9 @@ namespace Snowflake.Data.Tests
             Assert.Equal(SFDataType.None, _parameter.SFDataType);
         }
 
-        [SFFact]
-        public void TestDbTypeExplicitAssignment([Values] DbType expectedDbType)
+        [SFTheory]
+        [MemberData(nameof(AllDbTypes))]
+        public void TestDbTypeExplicitAssignment(DbType expectedDbType)
         {
             _parameter = new SnowflakeDbParameter();
 

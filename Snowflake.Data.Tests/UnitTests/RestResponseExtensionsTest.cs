@@ -1,10 +1,10 @@
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Extensions;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
     public sealed class RestResponseExtensionsTest
     {
         [SFFact]

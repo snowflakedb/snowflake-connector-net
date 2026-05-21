@@ -1,9 +1,9 @@
 using Xunit;
 using Snowflake.Data.Core.Converter;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
     public class StructurePathTest
     {
         [SFFact]

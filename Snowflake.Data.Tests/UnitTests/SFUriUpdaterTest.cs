@@ -1,11 +1,11 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     using Xunit;
     using System;
     using Snowflake.Data.Core;
-
-
-    class SFUriUpdaterTest
+    public class SFUriUpdaterTest
     {
         [SFFact]
         public void TestRetryCount()

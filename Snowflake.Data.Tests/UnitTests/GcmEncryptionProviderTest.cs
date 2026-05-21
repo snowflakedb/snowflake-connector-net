@@ -9,7 +9,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-
     public class GcmEncryptionProviderTest
     {
         private const string PlainText = "there is no rose without thorns";
@@ -71,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 {
                     // assert
                     var decryptedText = ExtractContent(decryptedStream);
-                    CollectionAssert.Equal(s_plainTextBytes, decryptedText);
+                    Assert.Equal(PlainText, decryptedText);
                 }
             }
         }
@@ -105,7 +104,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 {
                     // assert
                     var decryptedText = ExtractContent(decryptedStream);
-                    CollectionAssert.Equal(s_plainTextBytes, decryptedText);
+                    Assert.Equal(PlainText, decryptedText);
                 }
             }
         }
@@ -131,15 +130,15 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                CollectionAssert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
-                CollectionAssert.Equal(s_contentAadBase64, encryptionMetadata.aad);
+                Assert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
+                Assert.Equal(s_contentAadBase64, encryptionMetadata.aad);
 
                 // act
                 using (var decryptedStream = GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration))
                 {
                     // assert
                     var decryptedText = ExtractContent(decryptedStream);
-                    CollectionAssert.Equal(s_plainTextBytes, decryptedText);
+                    Assert.Equal(PlainText, decryptedText);
                 }
             }
         }
@@ -161,7 +160,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                CollectionAssert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
+                Assert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
                 Assert.Null(encryptionMetadata.aad);
                 encryptionMetadata.keyAad = s_invalidAadBase64;
 
@@ -192,7 +191,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
                 Assert.Null(encryptionMetadata.keyAad);
-                CollectionAssert.Equal(s_contentAadBase64, encryptionMetadata.aad);
+                Assert.Equal(s_contentAadBase64, encryptionMetadata.aad);
                 encryptionMetadata.aad = s_invalidAadBase64;
 
                 // act
@@ -221,8 +220,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                CollectionAssert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
-                CollectionAssert.Equal(s_contentAadBase64, encryptionMetadata.aad);
+                Assert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
+                Assert.Equal(s_contentAadBase64, encryptionMetadata.aad);
                 encryptionMetadata.keyAad = null;
                 encryptionMetadata.aad = null;
 
@@ -257,8 +256,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                CollectionAssert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
-                CollectionAssert.Equal(s_contentAadBase64, encryptionMetadata.aad);
+                Assert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
+                Assert.Equal(s_contentAadBase64, encryptionMetadata.aad);
 
                 // act
                 string result;
@@ -273,7 +272,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
 
                 // assert
-                CollectionAssert.Equal(PlainText, result);
+                Assert.Equal(PlainText, result);
             }
             finally
             {

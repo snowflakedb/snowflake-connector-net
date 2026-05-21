@@ -1,6 +1,7 @@
 using Mono.Unix;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -10,9 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Xunit;
     using Core.Tools;
     using Snowflake.Data.Core;
-
-
-    class TomlConnectionBuilderTest
+    public class TomlConnectionBuilderTest
     {
         private const string BasicTomlConfig = @"
 [default]
@@ -213,7 +212,7 @@ password = ""defaultpassword""
             var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
 
             // Act and assert
-            Assert.Throws<Exception>(() => reader.GetConnectionStringFromToml(), "Specified connection name does not exist in connections.toml");
+            Assert.Throws<Exception>(() => reader.GetConnectionStringFromToml());
         }
 
         [SFFact]

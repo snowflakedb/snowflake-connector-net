@@ -9,11 +9,14 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
+    [CollectionDefinition(nameof(SnowflakeDbConnectionTestFixture), DisableParallelization = true)]
+    public sealed class SnowflakeDbConnectionTestFixture { }
 
-    [TestFixture, NonParallelizable]
+    [Collection(nameof(SnowflakeDbConnectionTestFixture))]
     public class SnowflakeDbConnectionTest
     {
         [SFFact]

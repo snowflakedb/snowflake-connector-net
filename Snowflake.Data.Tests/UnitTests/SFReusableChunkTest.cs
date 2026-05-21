@@ -1,4 +1,5 @@
 using System;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -9,9 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using Snowflake.Data.Core;
     using Snowflake.Data.Client;
     using System.Threading.Tasks;
-
-
-    class SFReusableChunkTest
+    public class SFReusableChunkTest
     {
         [SFFact]
         public void TestExtractCellWithRowParameterReadsAllRows()
@@ -216,8 +215,8 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(chunkInfo.url, chunk.Url);
             Assert.Equal(chunkInfo.rowCount, chunk.RowCount);
             Assert.Equal(chunkInfo.uncompressedSize, chunk.UncompressedSize);
-            Assert.Greater(chunk.data.blockCount, 0);
-            Assert.Greater(chunk.data.metaBlockCount, 0);
+            Assert.True(chunk.data.blockCount > 0);
+            Assert.True(chunk.data.metaBlockCount > 0);
         }
 
         [SFFact]
