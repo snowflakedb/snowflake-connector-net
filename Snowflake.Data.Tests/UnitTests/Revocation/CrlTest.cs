@@ -1,11 +1,17 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Moq;
 using NUnit.Framework;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Crypto.Operators;
 using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.X509;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
@@ -128,5 +134,93 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             // assert
             Assert.AreEqual(expectedHexString, hexString);
         }
+
+        [Test]
+        [TestCase("084E2808851C58174D0EF94B29571042", Description = "Uppercase - matches stored format")]
+        [TestCase("084e2808851c58174d0ef94b29571042", Description = "Lowercase - case-insensitive match")]
+        [TestCase("084E2808851c58174d0ef94B29571042", Description = "Mixed case - case-insensitive match")]
+        public void TestIsRevokedIsCaseInsensitive(string serialNumber)
+        {
+            // arrange
+            var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+            var environmentOperations = new Mock<EnvironmentOperations>();
+            var crlParser = new CrlParser(environmentOperations.Object);
+            var now = new DateTime(2010, 04, 10, 16, 57, 0, DateTimeKind.Utc);
+            var crl = crlParser.Parse(crlBytes, now);
+
+            // act
+            var isRevoked = crl.IsRevoked(serialNumber);
+
+            // assert
+            Assert.IsTrue(isRevoked);
+        }
+
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void TestIsRevokedHandlesLeadingZeroBytePadding(bool serialHasHighBitSet)
+        {
+#if !NET8_0_OR_GREATER
+            Assert.Pass();
+        }
+#else
+            // DER encodes positive integers with a leading 0x00 when the high bit is set.
+            // This test verifies CrlParser.ConvertToHexadecimalString produces a hex string
+            // consistent with X509Certificate2.SerialNumber in both cases.
+
+            // arrange
+            var rootSubject = "CN=Root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
+
+            // Generate certs until we get one with/without the 0x00 prefix (depending on test case).
+            // CreateSelfSigned uses a random 64-bit serial; roughly half will have the high bit set.
+            X509Certificate2 certificate;
+            var expectedBytesCount = serialHasHighBitSet ? 9 : 8;
+            var counter = 0;
+            do
+            {
+                certificate = BuildSelfSignedCertificate(counter);
+                Assert.Less(counter++, 20, "Gave up waiting for desired serial number form");
+            } while (certificate.SerialNumberBytes.Length != expectedBytesCount);
+            // Expected value of number of loop iterations here = 2
+
+            if (serialHasHighBitSet)
+                Assert.AreEqual("00", certificate.SerialNumber[..2], "Serial with high bit set should have leading 0x00 in hex representation");
+
+            // Build a CRL containing this serial as revoked
+            var serialAsBigInt = new BigInteger(certificate.SerialNumber, 16);
+            var crlGenerator = new X509V2CrlGenerator();
+            crlGenerator.SetIssuerDN(new X509Name(rootSubject));
+            var now = DateTime.UtcNow;
+            crlGenerator.SetThisUpdate(now.AddDays(-1));
+            crlGenerator.SetNextUpdate(now.AddDays(7));
+            crlGenerator.AddCrlEntry(serialAsBigInt, now.AddDays(-1), CrlReason.KeyCompromise);
+            var signatureFactory = new Asn1SignatureFactory(CertificateGenerator.SHA256WithRsaAlgorithm, certKeys[1].Private, new SecureRandom());
+            var bouncyCrl = crlGenerator.Generate(signatureFactory);
+
+            // Parse through production code path
+            var environmentOperations = new Mock<EnvironmentOperations>();
+            var crlParser = new CrlParser(environmentOperations.Object);
+            var crl = crlParser.Create(bouncyCrl, now);
+
+            var bouncyCastleHex = crlParser.ConvertToHexadecimalString(serialAsBigInt);
+            Assert.IsTrue(crl.RevokedCertificates.Contains(bouncyCastleHex), "CRL should contain the revoked serial");
+
+            // act
+            var isRevoked = crl.IsRevoked(certificate.SerialNumber);
+
+            // assert — both representations must match regardless of leading 0x00 presence
+            Assert.AreEqual(bouncyCastleHex, certificate.SerialNumber, $"Hex mismatch: CRL has '{bouncyCastleHex}', cert has '{certificate.SerialNumber}'");
+            Assert.IsTrue(isRevoked, "Certificate should be found in the revocation list");
+        }
+
+        private static X509Certificate2 BuildSelfSignedCertificate(int runNo)
+        {
+            var distinguishedName = new X500DistinguishedName($"CN=TestCert{runNo}, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland");
+            using var rsa = RSA.Create(2048);
+            var request = new CertificateRequest(distinguishedName, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(30));
+        }
+#endif
     }
 }

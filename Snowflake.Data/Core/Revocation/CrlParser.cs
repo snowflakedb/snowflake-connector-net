@@ -47,6 +47,8 @@ namespace Snowflake.Data.Core.Revocation
 
         public Crl Create(X509Crl crl, DateTime now)
         {
+            var revokedCertificates = crl.GetRevokedCertificates()?.Select(cert => ConvertToHexadecimalString(cert.SerialNumber)) ?? [];
+            var revokedCertificatesSet = new HashSet<string>(revokedCertificates, StringComparer.OrdinalIgnoreCase);
             return new Crl
             {
                 DownloadTime = now,
@@ -55,7 +57,7 @@ namespace Snowflake.Data.Core.Revocation
                 IssuerName = crl.IssuerDN.ToString(),
                 IssuerNameRawData = crl.IssuerDN.GetEncoded(),
                 IssuerDistributionPoints = ReadIdpFromCrl(crl),
-                RevokedCertificates = crl.GetRevokedCertificates()?.Select(cert => ConvertToHexadecimalString(cert.SerialNumber)).ToList() ?? new List<string>(),
+                RevokedCertificates = revokedCertificatesSet,
                 BouncyCastleCrl = crl
             };
         }

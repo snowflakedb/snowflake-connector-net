@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core.Revocation
 
         public string[] IssuerDistributionPoints { get; set; }
 
-        public List<string> RevokedCertificates { get; set; }
+        public HashSet<string> RevokedCertificates { get; set; }
 
         public X509Crl BouncyCastleCrl { get; set; }
 
