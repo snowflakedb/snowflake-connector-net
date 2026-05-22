@@ -35,7 +35,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [SFFact(SkipCondition.SkipOnCI)]
+        [SFFact(SkipCondition.SkipOnCI, Skip = "SNOW-3564880")]
         public void TestAuthenticateUsingExternalBrowserMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
