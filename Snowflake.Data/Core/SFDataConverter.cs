@@ -253,9 +253,10 @@ namespace Snowflake.Data.Core
                 intPart = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, dotIndex);
                 var decimalPartLength = srcVal.length - dotIndex - 1;
                 decimalPart = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset + dotIndex + 1, decimalPartLength);
+                decimalPart *= (srcVal.Buffer[srcVal.offset] == '-' ? -1 : 1);
                 // If the decimal part contained less than nine characters, we must convert the value to nanoseconds by
                 // multiplying by 10^[precision difference].
-                if (decimalPartLength < 9 && decimalPartLength > 0)
+                if (decimalPartLength is < 9 and > 0)
                 {
                     decimalPart *= powersOf10[9 - decimalPartLength];
                 }

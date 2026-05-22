@@ -62,6 +62,9 @@ namespace Snowflake.Data.Tests.UnitTests
         [TestCase("2200-01-01 11:22:33.4455667")]
         [TestCase("9999-12-31 23:59:59.9999999")]
         [TestCase("1982-01-18 16:20:00.6666666")]
+        [TestCase("1969-12-31 23:59:59.1234567")]
+        [TestCase("1960-06-15 10:30:45.5000000")]
+        [TestCase("1900-01-01 00:00:00.0000001")]
         [TestCase(null)]
         public void TestConvertDatetime(string inputTimeStr)
         {
@@ -397,6 +400,38 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Assert.AreEqual(TimeSpan.Zero, result.Offset);
             Assert.AreEqual(utcDateTime, result.UtcDateTime);
+        }
+
+        [Test]
+        [TestCase("1969-12-31 23:59:59.1234567")]
+        [TestCase("1960-06-15 10:30:45.5000000")]
+        [TestCase("1900-01-01 00:00:00.0000001")]
+        [TestCase("1969-12-31 23:59:59.9999999")]
+        public void TestConvertTimestampLtzPreEpochWithFractionalSeconds(string inputTimeStr)
+        {
+            var utcDateTime = DateTime.SpecifyKind(
+                DateTime.ParseExact(inputTimeStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture),
+                DateTimeKind.Utc);
+            var wireValue = DateTimeToLtzWireFormat(utcDateTime);
+
+            var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
+                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Utc);
+
+            Assert.AreEqual(utcDateTime, result.UtcDateTime);
+        }
+
+        [Test]
+        [TestCase("-0.876543300", "1969-12-31 23:59:59.1234567")]
+        [TestCase("-1.500000000", "1969-12-31 23:59:58.5000000")]
+        [TestCase("-0.000000100", "1969-12-31 23:59:59.9999999")]
+        public void TestConvertTimestampNtzPreEpochWithNegativeWireValue(string wireValue, string expectedStr)
+        {
+            var expected = DateTime.ParseExact(expectedStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+
+            var result = (DateTime)SFDataConverter.ConvertToCSharpVal(
+                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_NTZ, typeof(DateTime));
+
+            Assert.AreEqual(expected, result);
         }
 
         [Test]
