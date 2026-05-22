@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using Moq;
 using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -501,6 +504,31 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // act & assert - ClearSessions should not throw even if session.close() fails
             Assert.DoesNotThrow(() => pool.ClearSessions());
             Assert.AreEqual(0, pool._idleSessions.Count);
+        }
+
+        [Test]
+        public async Task TestCancelledGetSessionAsyncLeaksCreationTokens()
+        {
+            // arrange
+            var cancelledToken = new CancellationToken(canceled: true);
+            // minPoolSize=0 avoids background session creation that would interfere with the count
+            const string TestConnectionString = "ACCOUNT=testaccount;USER=testuser;password=testpwd;minPoolSize=0;";
+            var pool = SessionPool.CreateSessionPool(TestConnectionString, null, null, null);
+            const int Iterations = 5;
+            for (var i = 0; i < Iterations; i++)
+            {
+                try
+                {
+                    await pool.GetSessionAsync(TestConnectionString, new SessionPropertiesContext(), cancelledToken);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            }
+
+            Assert.AreEqual(0, pool.OngoingSessionCreationsCount(),
+                $"Expected 0 leaked tokens after {Iterations} cancelled operations, " +
+                $"but {pool.OngoingSessionCreationsCount()} token(s) remain. ");
         }
 
         private SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)

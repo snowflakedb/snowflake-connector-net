@@ -507,7 +507,7 @@ namespace Snowflake.Data.Core.Session
                         _sessionPoolEventHandler.OnSessionProvided(this);
                     }
                     return session;
-                }, TaskContinuationOptions.NotOnCanceled);
+                });
         }
 
         internal void ReleaseBusySession(SFSession session)
