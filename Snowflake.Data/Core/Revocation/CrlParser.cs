@@ -79,8 +79,12 @@ namespace Snowflake.Data.Core.Revocation
         internal string ConvertToHexadecimalString(BigInteger value)
         {
             var bytes = value.ToByteArray();
-            var hexString = BitConverter.ToString(bytes)
-                .Replace("-", string.Empty)
+            var hexString = Convert
+#if NET6_0_OR_GREATER
+                .ToHexString(bytes)
+#else
+                .ToString(bytes).Replace("-", string.Empty)
+#endif
                 .ToUpper();
             return hexString;
         }

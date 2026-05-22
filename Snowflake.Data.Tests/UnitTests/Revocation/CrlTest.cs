@@ -119,7 +119,11 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [Test]
+        [TestCase("1", "01")]
         [TestCase("127", "7F")]
+        [TestCase("128", "0080")]
+        [TestCase("255", "00FF")]
+        [TestCase("256", "0100")]
         [TestCase("32768", "008000")]
         public void TestConvertBigIntegerToHexString(string stringValue, string expectedHexString)
         {
@@ -161,7 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestIsRevokedHandlesLeadingZeroBytePadding(bool serialHasHighBitSet)
         {
 #if !NET8_0_OR_GREATER
-            Assert.Pass();
+            Assert.Inconclusive("API for x509 is outdated in older versions, there's little gain in effectively duplicating this test body to accomodate that contract.");
         }
 #else
             // DER encodes positive integers with a leading 0x00 when the high bit is set.
