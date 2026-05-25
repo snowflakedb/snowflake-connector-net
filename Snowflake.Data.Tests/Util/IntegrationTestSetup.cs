@@ -67,7 +67,7 @@ public static class IntegrationTestEnvironment
 
         try
         {
-            if (s_integrationTestsRunning-- == 0)
+            if (--s_integrationTestsRunning == 0)
             {
                 // cleanup
                 await ModifySchemaAsync(TestConfigSingleton.TestConfig.schema, SchemaAction.Drop);

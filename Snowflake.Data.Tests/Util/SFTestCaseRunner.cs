@@ -61,7 +61,7 @@ public class SFTestCaseRunner : XunitTestCaseRunnerBase<SFCaseRunnerContext, IXu
         var runCount = 0;
         var maxRetries = ctxt.MaxRetries;
 
-        if (maxRetries < 1)
+        if (maxRetries < 0)
             maxRetries = 3;
 
         for(;;)
