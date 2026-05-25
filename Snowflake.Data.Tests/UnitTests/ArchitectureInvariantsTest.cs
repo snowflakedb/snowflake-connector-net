@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -56,7 +57,7 @@ public sealed class ArchitectureInvariantsTest
     [SFFact]
     public void TestConfigureAwaitFalse_AllAwaitsInProductionCodeMustHaveConfigureAwaitFalse()
     {
-        var violations = new List<string>();
+        var violations = new ConcurrentBag<string>();
         var csFiles = Directory.GetFiles(s_productionSourceDir, "*.cs", SearchOption.AllDirectories);
 
         Parallel.ForEach(csFiles, file =>
