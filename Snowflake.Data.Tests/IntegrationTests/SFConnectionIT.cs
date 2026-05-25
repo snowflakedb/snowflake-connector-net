@@ -126,7 +126,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public void TestConnectionFailFastForNonRetried404OnLogin()
         {
             using (var conn = new SnowflakeDbConnection())

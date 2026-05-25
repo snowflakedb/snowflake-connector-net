@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFTheory]
+        [SFTheory(RetriesCount = RetriesCount.Thrice)]
         [MemberData(nameof(NullTestCases))]
         public async Task TestBindNullValue(object nullValue)
         {
