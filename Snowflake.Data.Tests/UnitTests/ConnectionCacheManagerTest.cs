@@ -17,14 +17,14 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             s_poolConfig = new PoolConfig();
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
-            SessionPool.SessionFactory = new MockSessionFactory();
+            SessionPool.s_sessionFactorySingleton = new MockSessionFactory();
         }
 
         [OneTimeTearDown]
         public static void AfterAllTests()
         {
             s_poolConfig.Reset();
-            SessionPool.SessionFactory = new SessionFactory();
+            SessionPool.s_sessionFactorySingleton = new SessionFactory();
         }
 
         [SetUp]

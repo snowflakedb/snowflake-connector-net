@@ -16,7 +16,7 @@ namespace Snowflake.Data.Core.Session
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
         private readonly object _sessionPoolLock = new object();
-        private static readonly ISessionFactory s_sessionFactorySingleton = new SessionFactory();
+        internal static ISessionFactory s_sessionFactorySingleton = new SessionFactory();
         private readonly ISessionFactory _instanceSessionFactory;
 
         private ISessionFactory SessionFactory => _instanceSessionFactory ?? s_sessionFactorySingleton;
