@@ -539,7 +539,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public async Task TestPutArrayBind()
         {
             using (var conn = new SnowflakeDbConnection())

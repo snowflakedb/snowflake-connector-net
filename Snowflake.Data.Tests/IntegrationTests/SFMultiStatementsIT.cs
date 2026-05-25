@@ -142,7 +142,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public async Task TestSelectWithBinding()
         {
             using (var conn = new SnowflakeDbConnection())

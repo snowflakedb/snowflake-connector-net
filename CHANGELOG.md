@@ -2,7 +2,7 @@
 
 # Changelog
 - v5.7.0
-  -  TODO
+  -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
 - v5.6.0
     - Added client-side telemetry instrumentation using `System.Diagnostics.Activity` (OpenTelemetry-compatible). When `CLIENT_TELEMETRY_ENABLED=true` (the default), the driver automatically instruments all command executions
       and their async variants and sends telemetry data to Snowflake's `/telemetry/send` endpoint. Activities are enriched with session context (warehouse, role, database, session id) and report success/error
