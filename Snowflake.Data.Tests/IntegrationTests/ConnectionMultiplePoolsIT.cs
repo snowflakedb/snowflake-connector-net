@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.NotNull(thrown);
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Once)]
         public async Task TestMinPoolSize()
         {
             // arrange

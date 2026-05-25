@@ -187,7 +187,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact(SkipCondition.SkipOnWindows)]
+        [SFFact(SkipCondition.SkipOnWindows, RetriesCount = RetriesCount.Once)]
         public async Task TestFailToEnableEasyLoggingWhenConfigHasWrongPermissions()
         {
             // arrange

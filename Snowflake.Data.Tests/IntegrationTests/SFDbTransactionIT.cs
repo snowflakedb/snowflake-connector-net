@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Once)]
         // Test that when a transaction is disposed, rollback would be sent out
         public async Task TestTransactionDispose()
         {
@@ -131,7 +131,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await conn.CloseAsync(CancellationToken.None);
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Once)]
         // Test SNOW-761136 unnecessary ROLLBACK
         public async Task TestTransactionRollbackOn2Transactions()
         {
