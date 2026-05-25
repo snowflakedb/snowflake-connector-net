@@ -23,9 +23,8 @@ namespace Snowflake.Data.Log
                 var appender = IsStdout(logsPath)
                     ? AddConsoleAppender()
                     : AddRollingFileAppender(logsPath);
-                RemoveOtherEasyLoggingAppenders(appender);
                 appender.ActivateOptions();
-                SFLoggerImpl.s_appenders.Add(appender);
+                SetEasyLoggingAppenders(appender);
             }
         }
 
@@ -41,7 +40,7 @@ namespace Snowflake.Data.Log
             {
                 SFLoggerImpl.SetLevel(sfLoggerLevel);
                 if (easyLoggingLogLevel == EasyLoggingLogLevel.Off)
-                    RemoveOtherEasyLoggingAppenders(null);
+                    SetEasyLoggingAppenders();
             }
         }
 
@@ -50,15 +49,9 @@ namespace Snowflake.Data.Log
             return SFLoggerImpl.s_appenders.Any();
         }
 
-        private static void RemoveOtherEasyLoggingAppenders(SFAppender appender)
+        private static void SetEasyLoggingAppenders(params SFAppender[] appenders)
         {
-            foreach (var existingAppender in SFLoggerImpl.s_appenders.ToArray())
-            {
-                if (existingAppender != appender)
-                {
-                    SFLoggerImpl.s_appenders.Remove(existingAppender);
-                }
-            }
+            SFLoggerImpl.s_appenders = appenders.ToList();
         }
 
         private static SFAppender AddRollingFileAppender(string directoryPath)

@@ -20,5 +20,7 @@ namespace Snowflake.Data.Core.Session
         bool GetPooling();
         SessionPool GetPool(string connectionString);
         SessionPool GetPool(string connectionString, SessionPropertiesContext sessionContext);
+        IConnectionManager Recycle(ConnectionPoolType requestedPoolType);
+        ConnectionPoolType Type { get; }
     }
 }
