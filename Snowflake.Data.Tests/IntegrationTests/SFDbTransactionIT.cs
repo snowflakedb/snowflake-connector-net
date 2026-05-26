@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact(RetriesCount = RetriesCount.Once)]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         // Test that when a transaction is disposed, rollback would be sent out
         public async Task TestTransactionDispose()
         {

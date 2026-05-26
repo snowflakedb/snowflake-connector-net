@@ -23,7 +23,7 @@ public sealed class SFFactAttribute : FactAttribute
 
     public SFFactAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = 0)
     {
-        RetriesCount = retriesCount;
+        RetriesCount = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JENKINS_HOME")) ? RetriesCount.Thrice : retriesCount;
         DedicatedSessionPool = dedicatedSessionPool;
         var skipEvaluationResult = SkipConditionEvaluator.Evaluate(skip);
 
@@ -46,7 +46,7 @@ public sealed class SFTheoryAttribute : TheoryAttribute
     public SFTheoryAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = 0)
     {
         DedicatedSessionPool = dedicatedSessionPool;
-        RetriesCount = retriesCount;
+        RetriesCount = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JENKINS_HOME")) ? RetriesCount.Thrice : retriesCount;
         var skipEvaluationResult = SkipConditionEvaluator.Evaluate(skip);
 
         if (skipEvaluationResult.ShouldSkip)

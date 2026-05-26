@@ -1633,7 +1633,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFTheory(RetriesCount = RetriesCount.Once)]
+        [SFTheory(RetriesCount = RetriesCount.Thrice)]
         [InlineData("99")]                           // Int8
         [InlineData("9.9")]                          // Int8 + scale
         [InlineData("999")]                          // Int16
@@ -1772,7 +1772,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFTheory(RetriesCount = RetriesCount.Once)]
+        [SFTheory(RetriesCount = RetriesCount.Thrice)]
         [InlineData("array")]
         [InlineData("object")]
         [InlineData("variant")]

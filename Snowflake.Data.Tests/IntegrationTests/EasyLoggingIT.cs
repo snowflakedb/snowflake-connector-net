@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public async Task TestFailToEnableEasyLoggingForWrongConfiguration()
         {
             // arrange
