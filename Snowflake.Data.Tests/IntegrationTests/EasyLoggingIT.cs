@@ -99,10 +99,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestFailToEnableEasyLoggingForWrongConfiguration()
         {
-#if NETFRAMEWORK
-            Skip.When(true, "Not on framework");
-#endif
-
             // arrange
             var configFilePath = CreateConfigTempFile(_classFixture.WorkingDirectory, "random config content");
             using (var conn = new SnowflakeDbConnection())
