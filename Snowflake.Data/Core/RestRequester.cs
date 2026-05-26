@@ -174,15 +174,15 @@ namespace Snowflake.Data.Core
 
         private static async Task<T> DeserializeResponseAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken)
         {
-            #if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             using var streamReader = new StreamReader(stream);
             await using var jsonReader = new JsonTextReader(streamReader);
-            #else
+#else
             using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
             using var streamReader = new StreamReader(stream);
             using var jsonReader = new JsonTextReader(streamReader);
-            #endif
+#endif
             return JsonUtils.Serializer.Deserialize<T>(jsonReader);
         }
 
