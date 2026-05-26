@@ -23,14 +23,14 @@ namespace Snowflake.Data.Tests.UnitTests
             s_poolConfig = new PoolConfig();
             s_restRequester = new MockLoginMFATokenCacheRestRequester();
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.MultipleConnectionPool);
-            SessionPool.SessionFactory = new MockSessionFactoryMFA(s_restRequester);
+            SessionPool.s_sessionFactorySingleton = new MockSessionFactoryMFA(s_restRequester);
         }
 
         [OneTimeTearDown]
         public static void AfterAllTests()
         {
             s_poolConfig.Reset();
-            SessionPool.SessionFactory = new SessionFactory();
+            SessionPool.s_sessionFactorySingleton = new SessionFactory();
         }
 
         [SetUp]
