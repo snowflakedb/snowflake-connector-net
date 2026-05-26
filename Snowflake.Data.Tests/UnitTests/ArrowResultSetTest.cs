@@ -200,28 +200,28 @@ namespace Snowflake.Data.Tests.UnitTests
                     Assert.Equal((double)expectedValue, _arrowResultSet.GetDouble(ColumnIndex));
                     Assert.Equal((float)expectedValue, _arrowResultSet.GetFloat(ColumnIndex));
 
+                    if (typeof(T) == typeof(decimal))
+                        return;
+
+                    // get integer value
+                    var expectedInteger = (long)expectedValue;
+
+                    Assert.Equal(expectedInteger, _arrowResultSet.GetInt64(ColumnIndex));
+                    if (expectedInteger >= Int32.MinValue && expectedInteger <= Int32.MaxValue)
+                        Assert.Equal(expectedInteger, _arrowResultSet.GetInt32(ColumnIndex));
+                    else
+                        Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt32(ColumnIndex));
+                    if (expectedInteger >= Int16.MinValue && expectedInteger <= Int16.MaxValue)
+                        Assert.Equal(expectedInteger, _arrowResultSet.GetInt16(ColumnIndex));
+                    else
+                        Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt16(ColumnIndex));
+                    if (expectedInteger >= 0 && expectedInteger <= 255)
+                        Assert.Equal(expectedInteger, _arrowResultSet.GetByte(ColumnIndex));
+                    else
+                        Assert.Throws<OverflowException>(() => _arrowResultSet.GetByte(ColumnIndex));
+
                     if (isLong)
-                    {
-                        // get integer value
-                        long expectedInteger = (long)expectedValue;
-
-                        Assert.Equal(expectedInteger, _arrowResultSet.GetInt64(ColumnIndex));
-                        if (expectedInteger >= Int32.MinValue && expectedInteger <= Int32.MaxValue)
-                            Assert.Equal(expectedInteger, _arrowResultSet.GetInt32(ColumnIndex));
-                        else
-                            Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt32(ColumnIndex));
-                        if (expectedInteger >= Int16.MinValue && expectedInteger <= Int16.MaxValue)
-                            Assert.Equal(expectedInteger, _arrowResultSet.GetInt16(ColumnIndex));
-                        else
-                            Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt16(ColumnIndex));
-                        if (expectedInteger >= 0 && expectedInteger <= 255)
-                            Assert.Equal(expectedInteger, _arrowResultSet.GetByte(ColumnIndex));
-                        else
-                            Assert.Throws<OverflowException>(() => _arrowResultSet.GetByte(ColumnIndex));
-
-                        if (scale == 0)
-                            Assert.Equal(expectedInteger, _arrowResultSet.GetValue(ColumnIndex));
-                    }
+                        Assert.Equal(expectedInteger, _arrowResultSet.GetValue(ColumnIndex));
                 }
             }
         }

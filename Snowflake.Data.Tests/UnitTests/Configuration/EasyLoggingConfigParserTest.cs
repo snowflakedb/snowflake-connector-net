@@ -163,7 +163,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<Exception>(() => parser.Parse(filePath));
             // assert
             Assert.NotNull(thrown);
-            Assert.NotEmpty(thrown.Message);
+            Assert.Equal("Parsing easy logging configuration failed", thrown.Message);
         }
 
         [SFFact(SkipCondition.SkipOnWindows)]
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.NotNull(thrown);
-            Assert.NotEmpty(thrown.Message);
+            Assert.Equal("Finding easy logging configuration failed: Error due to other users having permission to modify the config file", thrown.Message);
         }
 
         [SFFact(SkipCondition.SkipOnWindows)]
@@ -212,7 +212,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.NotNull(thrown);
-            Assert.NotEmpty(thrown.Message);
+            Assert.Equal("Finding easy logging configuration failed: Error due to user not having ownership of the config file", thrown.Message);
         }
 
         [SFFact(SkipCondition.SkipOnWindows)]
@@ -236,7 +236,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.NotNull(thrown);
-            Assert.NotEmpty(thrown.Message);
+            Assert.Equal("Finding easy logging configuration failed: Error due to group not having ownership of the config file", thrown.Message);
         }
 
         public static IEnumerable<object[]> ConfigFilesWithoutValues()

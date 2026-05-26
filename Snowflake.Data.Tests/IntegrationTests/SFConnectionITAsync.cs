@@ -501,7 +501,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             using (var command = conn.CreateCommand())
             {
                 command.CommandText = "select current_role()";
-                Assert.NotEmpty((await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
+                Assert.Equal("PUBLIC", (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
 
                 command.CommandText = "select current_database()";
                 Assert.Contains((await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString(), new[] { "SNOWFLAKE_SAMPLE_DATA", "" });
@@ -701,7 +701,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [InlineData("*invalid{0}*")]
     [InlineData("^invalid{0}$")]
     [InlineData("*a.b")]
-    [InlineData("a")]
+    [InlineData("a", "a")]
     [InlineData("la", "la")]
     public async Task TestNonProxyHostShouldNotBypassProxyServer(string regexHost, string proxyHost = "proxyserverhost")
     {

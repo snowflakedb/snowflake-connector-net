@@ -596,7 +596,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 if (divider == 0)
                 {
                     Assert.Equal(testValue, chunk.ExtractCell(0, sfType, scale, TimeZoneInfo.Utc));
-                    return;
+                    continue;
                 }
 
                 var expectedValue = Convert.ToDecimal(testValue) / divider;
