@@ -206,7 +206,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await command.ExecuteReaderAsync());
 
-                    Assert.Contains("Array-like value being cast to a vector has incorrect dimension", thrown.Message);
+                    AssertExtensions.AnySucceeds(
+                        () => Assert.Contains("Array-like value being cast to a vector has incorrect dimension", thrown.Message),
+                        () => Assert.Contains("Vector value being cast to a vector is not an array or vector, or has incorrect dimension or element type", thrown.Message));
                 }
             }
         }
