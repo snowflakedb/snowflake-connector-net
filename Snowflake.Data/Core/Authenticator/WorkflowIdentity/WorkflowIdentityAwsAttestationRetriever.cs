@@ -96,7 +96,8 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 // Build the AssumeRole request
                 var roleSessionName = $"snowflake-wif-{Guid.NewGuid():N}".Substring(0, 32);
                 var queryParams = $"Action=AssumeRole&Version={AmazonApiVersion}&RoleArn={Uri.EscapeDataString(targetRoleArn)}&RoleSessionName={Uri.EscapeDataString(roleSessionName)}&DurationSeconds=3600";
-                var request = BuildStsRequest(region, queryParams, credentials);
+                var audienceHeader = new KeyValuePair<string, string>("X-Snowflake-Audience", SnowflakeAudience);
+                var request = BuildStsRequest(region, queryParams, credentials, audienceHeader);
 
                 string responseXml;
                 using (var response = _restRequester.Get(new RestRequestWrapper(request)))
@@ -184,18 +185,16 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             return token;
         }
 
-        internal HttpRequestMessage BuildStsRequest(string region, string queryParams, ImmutableCredentials credentials)
+        internal HttpRequestMessage BuildStsRequest(string region, string queryParams, ImmutableCredentials credentials, params KeyValuePair<string, string>[] additionalHeaders)
         {
             var domain = region.StartsWith("cn-") ? "amazonaws.com.cn" : "amazonaws.com";
             var stsHostName = $"sts.{region}.{domain}";
             var baseUrl = string.IsNullOrEmpty(_stsHost) ? $"https://{stsHostName}" : _stsHost;
             var uri = new Uri($"{baseUrl}/?{queryParams}");
 
-            var headers = new Dictionary<string, string>
-            {
-                { "Host", stsHostName },
-                { "X-Snowflake-Audience", SnowflakeAudience }
-            };
+            var headers = additionalHeaders
+                .Concat([new ("Host", stsHostName)])
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
             var attestationRequest = new AttestationRequest
             {
