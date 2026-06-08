@@ -12,6 +12,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public void SetupIntegrationTests()
         {
             var testConfig = TestEnvironment.TestConfig;
+
+            if (testConfig?.account == null)
+                return;
+
             ModifySchema(testConfig.schema, SchemaAction.Create);
         }
 
@@ -20,7 +24,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var testConfig = TestEnvironment.TestConfig;
 
-            if (testConfig == null)
+            if (testConfig?.account == null)
                 return;
 
             ModifySchema(testConfig.schema, SchemaAction.Drop);
