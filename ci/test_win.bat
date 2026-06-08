@@ -8,6 +8,7 @@ echo [INFO] Running Unit Tests for Snowflake .NET Connector
 dotnet test Snowflake.Data.Tests/Snowflake.Data.Tests.csproj ^
     --filter "FullyQualifiedName~Snowflake.Data.Tests.UnitTests" ^
     -l "console;verbosity=normal" ^
+    -p:TargetFrameworks=net9.0 ^
     --logger:"junit;LogFilePath=%ROOT_DIR%\junit-dotnet-unit.xml"
 
 set EXIT_CODE=%ERRORLEVEL%
