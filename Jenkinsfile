@@ -43,7 +43,7 @@ timestamps {
 
     stage('Test') {
       parallel(
-        'Test': {
+        'Test Linux': {
           stage('Test') {
             build job: 'RT-LanguageDotnet-PC', parameters: params
           }
