@@ -36,7 +36,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Test, IgnoreOnCI]
+        [Test, Ignore("SNOW-3580239")]
         public void TestAuthenticateUsingExternalBrowserMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
