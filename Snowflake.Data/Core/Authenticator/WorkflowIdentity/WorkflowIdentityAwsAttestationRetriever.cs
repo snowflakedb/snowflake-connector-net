@@ -121,7 +121,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             try
             {
                 var snowflakeAudience = Uri.EscapeDataString(SnowflakeAudience);
-                var queryParams = $"Action=GetWebIdentityToken&Version={AmazonApiVersion}&Audience.member.1={snowflakeAudience}&SigningAlgorithm=ES384&DurationSeconds=3600";
+                var queryParams = $"Action=GetWebIdentityToken&Version={AmazonApiVersion}&Audience.member.1={snowflakeAudience}&SigningAlgorithm=ES384";
                 var request = BuildStsRequest(region, queryParams, credentials);
                 string responseXml;
                 using (var response = _restRequester.Get(new RestRequestWrapper(request)))
