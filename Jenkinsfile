@@ -45,7 +45,7 @@ timestamps {
       parallel(
         'Test': {
           stage('Test') {
-            build job: 'RT-LanguageDotnet-PC', parameters: params
+            build job: 'RT-LanguageDotnet-WIN-PC', parameters: params
           }
         },
         'Test Authentication': {
