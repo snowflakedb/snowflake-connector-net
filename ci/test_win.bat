@@ -6,7 +6,7 @@ pushd %ROOT_DIR%
 echo [INFO] Running Unit Tests for Snowflake .NET Connector
 
 dotnet test Snowflake.Data.Tests/Snowflake.Data.Tests.csproj ^
-    --filter "FullyQualifiedName~Snowflake.Data.Tests.UnitTests" ^
+    --filter "FullyQualifiedName~Snowflake.Data.Tests.UnitTests&FullyQualifiedName!~IntegrationTests" ^
     -l "console;verbosity=normal" ^
     -p:TargetFrameworks=net9.0 ^
     --logger:"junit;LogFilePath=%ROOT_DIR%\junit-dotnet-unit.xml"
