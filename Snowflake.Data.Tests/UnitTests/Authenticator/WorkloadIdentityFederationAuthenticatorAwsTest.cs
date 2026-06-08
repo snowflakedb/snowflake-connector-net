@@ -1,12 +1,11 @@
 using System;
-using System.Globalization;
-using System.Text;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon.Runtime;
 using Moq;
-using Newtonsoft.Json;
 using NUnit.Framework;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
@@ -22,20 +21,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string AwsAccessKey = "ABCDEFGHIJ12345KLMNO"; // pragma: allowlist secret
         private const string AwsSecretKey = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStT"; // pragma: allowlist secret
         private const string AwsToken = "HIJKLMNOPQRSTUWXYZ"; // pragma: allowlist secret
-        private const string AwsSignature = "3e46b07b306ff98878ca18aded8e79c55ddb6ddb99276f7d28bc299fe9e199ef"; // pragma: allowlist secret
-        private static readonly string s_awsRequest = new StringBuilder()
-            .Append("{\"method\":\"POST\",")
-            .Append("\"url\":\"https://sts.eu-west-1.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15\",")
-            .Append("\"headers\":{")
-            .Append("\"Host\":\"sts.eu-west-1.amazonaws.com\",")
-            .Append("\"X-Snowflake-Audience\":\"snowflakecomputing.com\",")
-            .Append("\"x-amz-date\":\"20250527T142033Z\",")
-            .Append($"\"x-amz-security-token\":\"{AwsToken}\",")
-            .Append($"\"authorization\":\"AWS4-HMAC-SHA256 Credential={AwsAccessKey}/20250527/eu-west-1/sts/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token;x-snowflake-audience, Signature={AwsSignature}\"")
-            .Append("}}")
-            .ToString();
-        private static readonly string s_awsRequestBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(s_awsRequest));
-        internal static readonly DateTime s_utcNow = new(2025, 5, 27, 14, 20, 33, 11, new GregorianCalendar(), DateTimeKind.Utc);
+        private const string FakeJwt = "fake.jwt.fake-signature";
+        private static readonly string s_wifAwsMappingPath = Path.Combine(s_wifMappingPath, "AWS");
+        private static readonly string s_wifAwsSuccessfulStsPath = Path.Combine(s_wifAwsMappingPath, "successful_get_web_identity_token.json");
+        private static readonly string s_wifAwsErrorStsPath = Path.Combine(s_wifAwsMappingPath, "error_get_web_identity_token.json");
+        private static readonly string s_wifAwsImpersonationStsPath = Path.Combine(s_wifAwsMappingPath, "successful_impersonation.json");
 
         private WiremockRunner _runner;
 
@@ -61,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestSuccessfulAwsAuthorization()
         {
             // arrange
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, s_awsRequestBase64);
+            SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, FakeJwt);
             var session = PrepareSessionForAws(NoEnvironmentSetup);
 
             // act
@@ -75,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestSuccessfulAwsAuthorizationAsync()
         {
             // arrange
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, s_awsRequestBase64);
+            SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, FakeJwt);
             var session = PrepareSessionForAws(NoEnvironmentSetup);
 
             // act
@@ -97,42 +87,112 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.AreEqual(AttestationProvider.AWS, attestation.Provider);
-            var signedJsonRequest = DecodeFromBase64(attestation.Credential);
-            var signedRequest = JsonConvert.DeserializeObject<AttestationRequest>(signedJsonRequest);
-            Assert.AreEqual("POST", signedRequest.Method);
-            Assert.AreEqual($"https://sts.{AwsRegion}.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15", signedRequest.Url);
-            Assert.AreEqual($"sts.{AwsRegion}.amazonaws.com", signedRequest.Headers["Host"]);
-            Assert.AreEqual("snowflakecomputing.com", signedRequest.Headers["X-Snowflake-Audience"]);
-            Assert.AreEqual("20250527T142033Z", signedRequest.Headers["x-amz-date"]);
-            Assert.AreEqual(AwsToken, signedRequest.Headers["x-amz-security-token"]);
-            Assert.IsTrue(signedRequest.Headers["authorization"].StartsWith($"AWS4-HMAC-SHA256 Credential={AwsAccessKey}/20250527/{AwsRegion}/sts/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token;x-snowflake-audience, Signature="));
-            Assert.AreEqual(64, ExtractSignature(signedRequest.Headers["authorization"]).Length);
-            Assert.AreEqual(5, signedRequest.Headers.Count);
+            Assert.AreEqual(FakeJwt, attestation.Credential);
+            Assert.IsNotNull(attestation.UserIdentifierComponents);
+            Assert.AreEqual(0, attestation.UserIdentifierComponents.Count);
         }
 
-        private string ExtractSignature(string authorizationHeader)
+        [Test]
+        public void TestFailAttestationWhenStsCallFails()
         {
-            var signatureLabel = "Signature=";
-            var position = authorizationHeader.IndexOf(signatureLabel);
-            return authorizationHeader.Substring(position + signatureLabel.Length);
+            // arrange - STS returns empty token
+            _runner.AddMappings(s_wifAwsErrorStsPath);
+            var session = PrepareSessionForAws(NoEnvironmentSetup, addStsMapping: false);
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
+
+            // assert
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+            Assert.That(thrown.Message, Does.Contain("Retrieving attestation for AWS failed."));
+            Assert.That(thrown.Message, Does.Contain("GetWebIdentityToken returned an empty token"));
         }
 
-        private string DecodeFromBase64(string base64String)
+        [Test]
+        public void TestFailAttestationWhenNoCredentials()
         {
-            var bytes = Convert.FromBase64String(base64String);
-            return Encoding.UTF8.GetString(bytes);
+            // arrange
+            var session = PrepareSessionForAws(NoEnvironmentSetup, awsSdkConfigurator: SetupAwsWrapperNoCredentials);
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
+
+            // assert
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+            Assert.That(thrown.Message, Does.Contain("Retrieving attestation for AWS failed."));
+            Assert.That(thrown.Message, Does.Contain("Could not find AWS credentials"));
         }
 
-        private SFSession PrepareSessionForAws(Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator) =>
-            PrepareSession(
+        [Test]
+        public void TestFailAttestationWhenNoRegion()
+        {
+            // arrange
+            var session = PrepareSessionForAws(NoEnvironmentSetup, awsSdkConfigurator: SetupAwsWrapperNoRegion);
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+
+            // act
+            var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
+
+            // assert
+            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+            Assert.That(thrown.Message, Does.Contain("Retrieving attestation for AWS failed."));
+            Assert.That(thrown.Message, Does.Contain("Could not find AWS region"));
+        }
+
+        [Test]
+        public void TestSuccessfulAwsTransitiveImpersonation()
+        {
+            // arrange
+            _runner.AddMappings(s_wifAwsImpersonationStsPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, FakeJwt));
+            SetupSnowflakeAuthentication(_runner, AttestationProvider.AWS, FakeJwt);
+            var session = PrepareSessionForAws(NoEnvironmentSetup, addStsMapping: false,
+                connectionStringSuffix: "workload_impersonation_path=arn:aws:iam::123456789012:role/TestRole");
+
+            // act
+            session.Open();
+
+            // assert
+            AssertSessionSuccessfullyCreated(session);
+        }
+
+        [Test]
+        public void TestSuccessfulAwsTransitiveImpersonationAttestation()
+        {
+            // arrange
+            _runner.AddMappings(s_wifAwsImpersonationStsPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, FakeJwt));
+            var session = PrepareSessionForAws(NoEnvironmentSetup, addStsMapping: false,
+                connectionStringSuffix: "workload_impersonation_path=arn:aws:iam::123456789012:role/TestRole");
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+
+            // act
+            var attestation = authenticator.CreateAttestation();
+
+            // assert
+            Assert.AreEqual(AttestationProvider.AWS, attestation.Provider);
+            Assert.AreEqual(FakeJwt, attestation.Credential);
+            Assert.AreEqual(0, attestation.UserIdentifierComponents.Count);
+        }
+
+        private SFSession PrepareSessionForAws(
+            Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator,
+            Action<Mock<AwsSdkWrapper>> awsSdkConfigurator = null,
+            bool addStsMapping = true,
+            string connectionStringSuffix = null)
+        {
+            if (addStsMapping)
+                _runner.AddMappings(s_wifAwsSuccessfulStsPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, FakeJwt));
+            return PrepareSession(
                 AttestationProvider.AWS,
-                null,
+                connectionStringSuffix,
                 environmentOperationsConfigurator,
-                t => SetupTime(t, s_utcNow),
-                SetupAwsWrapper
+                t => SetupTime(t, DateTime.UtcNow),
+                awsSdkConfigurator ?? SetupAwsWrapper
             );
+        }
 
-        internal static void SetupAwsWrapper(Mock<AwsSdkWrapper> awsSdkWrapper)
+        private static void SetupAwsWrapper(Mock<AwsSdkWrapper> awsSdkWrapper)
         {
             awsSdkWrapper
                 .Setup(w => w.GetAwsRegion())
@@ -140,6 +200,23 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             awsSdkWrapper
                 .Setup(w => w.GetAwsCredentials())
                 .Returns(new ImmutableCredentials(AwsAccessKey, AwsSecretKey, AwsToken));
+        }
+
+        private static void SetupAwsWrapperNoCredentials(Mock<AwsSdkWrapper> awsSdkWrapper)
+        {
+            awsSdkWrapper
+                .Setup(w => w.GetAwsRegion())
+                .Returns(AwsRegion);
+            awsSdkWrapper
+                .Setup(w => w.GetAwsCredentials())
+                .Returns((ImmutableCredentials)null);
+        }
+
+        private static void SetupAwsWrapperNoRegion(Mock<AwsSdkWrapper> awsSdkWrapper)
+        {
+            awsSdkWrapper
+                .Setup(w => w.GetAwsRegion())
+                .Returns((string)null);
         }
     }
 }
