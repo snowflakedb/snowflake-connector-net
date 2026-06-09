@@ -11,7 +11,7 @@ dotnet run ^
     -p:TargetFrameworks=net9.0 ^
     -namespace "Snowflake.Data.Tests.UnitTests" ^
     --verbosity detailed ^
-    --logger:"junit;LogFilePath=%ROOT_DIR%\junit-dotnet-unit.xml"
+    --logger "junit;LogFilePath=%ROOT_DIR%\junit-dotnet-unit.xml"
 
 set EXIT_CODE=%ERRORLEVEL%
 
