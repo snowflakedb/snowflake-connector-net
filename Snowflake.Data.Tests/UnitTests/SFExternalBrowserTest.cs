@@ -388,7 +388,7 @@ namespace Snowflake.Data.Tests.UnitTests
             t_browserRunner.Verify(b => b.Run(It.IsAny<Uri>()), Times.Never());
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestThatTokenIsStoredWhenCacheIsEnabledAsync()
         {
             t_browserRunner

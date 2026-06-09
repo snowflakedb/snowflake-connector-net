@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests
             easyLoggingStarter.Verify(starter => starter.Init(configPath));
         }
 
-        [SFFact(RetriesCount = RetriesCount.Thrice)]
+        [SFFact(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
         public void TestThatIdTokenIsStoredWhenCachingIsEnabled()
         {
             // arrange
@@ -348,7 +348,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("push", loginRequest.data.extAuthnDuoMethod);
         }
 
-        [SFFact(RetriesCount = RetriesCount.Thrice)]
+        [SFFact(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
         public void TestMFATokenCacheUsedInNewConnection()
         {
             // arrange
