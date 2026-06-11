@@ -2,6 +2,7 @@
 
 # Changelog
 - v5.7.0
+    - Fixed `OverflowException` when converting rest response with master token validity more than ~9.1h.
     - Improved input handling in `ChangeDatabase` by using parameterized queries.
     - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.
     - Bug fix: Added path traversal protection for file downloads: destination paths are now validated against the target base directory before writing.
