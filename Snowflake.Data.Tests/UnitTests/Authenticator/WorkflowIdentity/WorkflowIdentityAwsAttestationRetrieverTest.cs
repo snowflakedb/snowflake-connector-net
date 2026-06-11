@@ -206,17 +206,16 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
             var attestation = retriever.CreateAttestationData(null, null, impersonationPath: "arn:aws:iam::123456789012:role/TestRole");
 
             // assert
-            Func<string, string> expectedRoleTransform =
-#if NET462 || NET471
-            x => x;
-#else
-                Uri.EscapeDataString;
-#endif
-
             Assert.AreEqual("fake.jwt.token", attestation.Credential);
             Assert.AreEqual(2, capturedUrls.Count);
             Assert.That(capturedUrls[0], Does.Contain("Action=AssumeRole"));
-            Assert.That(capturedUrls[0], Does.Contain(expectedRoleTransform("arn:aws:iam::123456789012:role/TestRole")));
+            Assert.That(capturedUrls[0], Does.Contain(Uri.EscapeDataString(
+                #if NET462 || NET471
+                "TestRole"
+                #else
+                "arn:aws:iam::123456789012:role/TestRole"
+                #endif
+                )));
             Assert.That(capturedUrls[1], Does.Contain("Action=GetWebIdentityToken"));
         }
 
@@ -280,18 +279,22 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator.WorkflowIdentity
             // assert
             Assert.AreEqual("fake.jwt.token", attestation.Credential);
             Assert.AreEqual(3, capturedUrls.Count);
-
-            Func<string, string> expectedRoleTransform =
-#if NET462 || NET471
-            x => x;
-            #else
-            Uri.EscapeDataString;
-            #endif
-
             Assert.That(capturedUrls[0], Does.Contain("Action=AssumeRole"));
-            Assert.That(capturedUrls[0], Does.Contain(expectedRoleTransform("arn:aws:iam::111111111111:role/RoleA")));
+            Assert.That(capturedUrls[0], Does.Contain(Uri.EscapeDataString(
+                #if NET462 || NET471
+                "RoleA"
+                #else
+                "arn:aws:iam::111111111111:role/RoleA"
+                #endif
+                )));
             Assert.That(capturedUrls[1], Does.Contain("Action=AssumeRole"));
-            Assert.That(capturedUrls[1], Does.Contain(expectedRoleTransform("arn:aws:iam::222222222222:role/RoleB")));
+            Assert.That(capturedUrls[1], Does.Contain(Uri.EscapeDataString(
+                #if NET462 || NET471
+                "RoleA"
+                #else
+                "arn:aws:iam::222222222222:role/RoleB"
+                #endif
+                )));
             Assert.That(capturedUrls[2], Does.Contain("Action=GetWebIdentityToken"));
         }
 
