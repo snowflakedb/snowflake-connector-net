@@ -7,8 +7,6 @@ echo [INFO] Running Unit Tests for Snowflake .NET Connector
 
 dotnet run ^
     --project .\Snowflake.Data.Tests\Snowflake.Data.Tests.csproj ^
-    --framework net9.0 ^
-    -p:TargetFrameworks=net9.0 ^
     -namespace "Snowflake.Data.Tests.UnitTests" ^
     --verbosity detailed ^
     -junit "%%ROOT_DIR%\junit-dotnet-unit.xml"
