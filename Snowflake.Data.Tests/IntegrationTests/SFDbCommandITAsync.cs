@@ -319,7 +319,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         await cmd.GetResultsFromQueryIdAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.True(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.Contains("Invalid query id format. Expected a UUID.", thrown.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
