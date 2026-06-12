@@ -175,7 +175,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<Exception>(() => cmd.GetQueryStatus(fakeQueryId));
 
                     // Assert
-                    Assert.True(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.Contains("Invalid query id format. Expected a UUID.", thrown.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None);
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(fakeQueryId));
 
                     // Assert
-                    Assert.True(thrown.InnerException.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.Contains("Invalid query id format. Expected a UUID.", thrown.InnerException.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None);

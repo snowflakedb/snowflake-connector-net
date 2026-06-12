@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
         }
 
-        [SFFact(SkipCondition.SkipOnWindows)]
+        [SFTheory(SkipCondition.SkipOnWindows)]
         [MemberData(nameof(InsecurePermissionsData))]
         public void TestFileCopyRejectsInsecurePermissionsViaFileDescriptor(FileAccessPermissions permissions)
         {
