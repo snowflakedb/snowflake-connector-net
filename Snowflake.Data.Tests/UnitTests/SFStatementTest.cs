@@ -7,6 +7,12 @@ using System;
 using System.Threading.Tasks;
 using Snowflake.Data.Core.Session;
 
+using System.Threading;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
+using NUnit.Framework;
+using System;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
     /**

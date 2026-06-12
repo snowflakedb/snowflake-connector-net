@@ -70,111 +70,101 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                 "Attempting to read a file with too broad permissions assigned");
         }
 
-
         [Test]
-        public void TestFileIsSafeOnNotWindows()
+        public void TestFileCopyHappyPath()
         {
             // arrange
-            var absoluteFilePath = Path.Combine(s_workingDirectory, s_fileName);
-            Syscall.creat(absoluteFilePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
+            const string SrcFile = "srcfile";
+            var srcFilePath = Path.Combine(s_workingDirectory, SrcFile);
+            const string DestFile = "destfile";
+            var destFilePath = Path.Combine(s_workingDirectory, DestFile);
 
-            // act and assert
-            Assert.IsTrue(s_fileOperations.IsFileSafe(absoluteFilePath));
+            s_fileOperations.Create(srcFilePath).Close();
+            File.WriteAllText(srcFilePath, s_content);
+
+            // act
+            s_fileOperations.CopyFile(srcFilePath, destFilePath);
+
+            // assert
+            Assert.IsTrue(File.Exists(destFilePath));
+            Assert.AreEqual(s_content, File.ReadAllText(destFilePath));
         }
 
         [Test]
-        public void TestFileIsNotSafeOnNotWindowsWhenTooBroadPermissionsAreUsed(
-            [ValueSource(nameof(InsecurePermissions))]
-            FileAccessPermissions permissions)
+        public void TestFileCopyShouldThrowExceptionIfTooBroadPermissionsAreUsed([ValueSource(nameof(InsecurePermissions))] FileAccessPermissions permissions)
         {
             // arrange
-            var absoluteFilePath = Path.Combine(s_workingDirectory, s_fileName);
-            Syscall.creat(absoluteFilePath, (FilePermissions)permissions);
+            const string SrcFile = "srcfile";
+            var srcFilePath = Path.Combine(s_workingDirectory, SrcFile);
+            const string DestFile = "destfile";
+            var destFilePath = Path.Combine(s_workingDirectory, DestFile);
+
+            s_fileOperations.Create(srcFilePath).Close();
+            File.WriteAllText(srcFilePath, s_content);
+            Syscall.chmod(srcFilePath, (FilePermissions)(permissions | FileAccessPermissions.UserRead));
 
             // act and assert
-            Assert.IsFalse(s_fileOperations.IsFileSafe(absoluteFilePath));
+            Assert.Throws<SecurityException>(() => s_fileOperations.CopyFile(srcFilePath, destFilePath));
         }
 
         [Test]
-        public void TestOwnerIsCurrentUser()
+        public void TestFileCopyShouldThrowWhenFileNotOwnedByCurrentUser()
         {
-            // arrange
-            var absolutePath = Path.Combine(s_workingDirectory, s_fileName);
-            var mockUnixOperations = new MockUnixOperations { CurrentUserId = 1, FileOwnerId = 1 };
-            var fileOps = new FileOperations(mockUnixOperations);
+            // arrange - mock returns a different uid than the real file owner
+            const string SrcFile = "srcfile_owner";
+            var srcFilePath = Path.Combine(s_workingDirectory, SrcFile);
+            const string DestFile = "destfile_owner";
+            var destFilePath = Path.Combine(s_workingDirectory, DestFile);
 
-            // act and assert
-            Assert.IsTrue(fileOps.IsFileOwnedByCurrentUser(absolutePath));
-        }
-
-        [Test]
-        public void TestOwnerIsNotCurrentUser()
-        {
-            // arrange
-            var absolutePath = Path.Combine(s_workingDirectory, s_fileName);
             var mockUnixOperations = new MockUnixOperations { CurrentUserId = 1, FileOwnerId = 2 };
             var fileOps = new FileOperations(mockUnixOperations);
-
-            // act and assert
-            Assert.IsFalse(fileOps.IsFileOwnedByCurrentUser(absolutePath));
-        }
-
-        [Test]
-        public void TestFileIsNotSecureWhenNotOwnedByCurrentUser()
-        {
-            // arrange
-            var absolutePath = Path.Combine(s_workingDirectory, s_fileName);
-            File.Create(absolutePath);
+            fileOps.Create(srcFilePath).Close();
             try
             {
-                var mockUnixOperations = new MockUnixOperations { CurrentUserId = 1, FileOwnerId = 2 };
-                var fileOps = new FileOperations(mockUnixOperations);
-
-                // act and assert
-                Assert.IsFalse(fileOps.IsFileSafe(absolutePath));
+                File.WriteAllText(srcFilePath, s_content);
+                Assert.Throws<SecurityException>(() => fileOps.CopyFile(srcFilePath, destFilePath));
             }
             finally
             {
-                File.Delete(absolutePath);
+                File.Delete(srcFilePath);
             }
         }
 
         [Test]
-        public void TestFileCopyUsesProperPermissions()
+        public void TestFileCopyRejectsInsecurePermissionsViaFileDescriptor(
+            [ValueSource(nameof(InsecurePermissions))]
+            FileAccessPermissions permissions)
         {
-            // arrange
-            const string SrcFile = "srcfile";
-            var SrcFilePath = Path.Combine(s_workingDirectory, SrcFile);
-            const string DestFile = "destfile";
-            var DestFilePath = Path.Combine(s_workingDirectory, DestFile);
+            // Validates the TOCTOU fix: permission check happens on the open fd,
+            // not via a separate stat() call on the path.
+            var srcFilePath = Path.Combine(s_workingDirectory, $"srcfile_fd_{permissions}");
+            var destFilePath = Path.Combine(s_workingDirectory, $"destfile_fd_{permissions}");
 
-            s_fileOperations.Create(SrcFilePath).Close();
-            File.WriteAllText(SrcFilePath, s_content);
+            s_fileOperations.Create(srcFilePath).Close();
+            File.WriteAllText(srcFilePath, s_content);
+            Syscall.chmod(srcFilePath, (FilePermissions)(permissions | FileAccessPermissions.UserRead));
 
-            // act
-            s_fileOperations.CopyFile(SrcFilePath, DestFilePath);
-
-            // assert
-            Assert.IsTrue(File.Exists(DestFilePath));
-            Assert.IsTrue(s_fileOperations.IsFileSafe(DestFilePath));
-            Assert.AreEqual(s_content, File.ReadAllText(DestFilePath));
+            // act and assert
+            Assert.Throws<SecurityException>(() => s_fileOperations.CopyFile(srcFilePath, destFilePath));
         }
 
         [Test]
-        public void TestFileCopyShouldThrowExecptionIfTooBroadPermissionsAreUsed()
+        public void TestFileCopySucceedsWithSafePermissions()
         {
-            // arrange
-            const string SrcFile = "srcfile";
-            var SrcFilePath = Path.Combine(s_workingDirectory, SrcFile);
-            const string DestFile = "destfile";
-            var DestFilePath = Path.Combine(s_workingDirectory, DestFile);
+            const string SrcFile = "srcfile_safe";
+            var srcFilePath = Path.Combine(s_workingDirectory, SrcFile);
+            const string DestFile = "destfile_safe";
+            var destFilePath = Path.Combine(s_workingDirectory, DestFile);
 
-            s_fileOperations.Create(SrcFilePath).Close();
-            Syscall.chmod(SrcFilePath, (FilePermissions)FileAccessPermissions.AllPermissions);
-            File.WriteAllText(SrcFilePath, s_content);
+            s_fileOperations.Create(srcFilePath).Close();
+            File.WriteAllText(srcFilePath, s_content);
 
-            // act and assert
-            Assert.Throws<SecurityException>(() => s_fileOperations.CopyFile(SrcFilePath, DestFilePath), $"File ${SrcFilePath} is not safe to read.");
+            // act
+            s_fileOperations.CopyFile(srcFilePath, destFilePath);
+
+            // assert
+            Assert.IsTrue(File.Exists(destFilePath));
+            Assert.AreEqual(s_content, File.ReadAllText(destFilePath));
         }
 
 
