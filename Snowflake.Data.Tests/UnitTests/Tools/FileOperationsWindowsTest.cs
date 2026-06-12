@@ -3,7 +3,6 @@ using System.IO;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
-using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
@@ -48,14 +47,35 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [SFFact(SkipCondition.RunOnlyOnWindows)]
-        public void TestFileIsSafeOnWindows()
+        public void TestFileCopyOnWindows()
         {
             // arrange
-            var absoluteFilePath = Path.Combine(s_workingDirectory, s_fileName);
-            File.Create(absoluteFilePath).Close();
+            var srcFilePath = Path.Combine(s_workingDirectory, "src_file");
+            var dstFilePath = Path.Combine(s_workingDirectory, "dst_file");
+            File.WriteAllText(srcFilePath, s_content);
 
-            // act and assert
-            Assert.True(s_fileOperations.IsFileSafe(absoluteFilePath));
+            // act
+            s_fileOperations.CopyFile(srcFilePath, dstFilePath);
+
+            // assert
+            Assert.True(File.Exists(dstFilePath));
+            Assert.Equal(s_content, File.ReadAllText(dstFilePath));
+        }
+
+        [SFFact]
+        public void TestFileCopyOverwritesExistingDestination()
+        {
+            // arrange
+            var srcFilePath = Path.Combine(s_workingDirectory, "src_overwrite");
+            var dstFilePath = Path.Combine(s_workingDirectory, "dst_overwrite");
+            File.WriteAllText(srcFilePath, s_content);
+            File.WriteAllText(dstFilePath, "old content");
+
+            // act
+            s_fileOperations.CopyFile(srcFilePath, dstFilePath);
+
+            // assert
+            Assert.Equal(s_content, File.ReadAllText(dstFilePath));
         }
 
         public void Dispose()

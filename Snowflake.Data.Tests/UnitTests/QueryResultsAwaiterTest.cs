@@ -200,5 +200,57 @@ namespace Snowflake.Data.Tests.UnitTests
                 "No cancel request should be sent before any operations");
             Assert.Null(mockRequester.CancelledQueryId);
         }
+
+        [SFTheory]
+        [InlineData("'; DO SOMETHING ELSE; --")]
+        [InlineData("not-a-uuid")]
+        [InlineData("")]
+        [InlineData("a1b2c3d4-e5f6-7890-abcd-ef123456789")] // too short
+        [InlineData("a1b2c3d4-e5f6-7890-abcd-ef12345678901")] // too long
+        public async Task TestInvalidQueryIdDoesNotSendCancelRequest(string invalidQueryId)
+        {
+            // Arrange
+            var mockRequester = new MockRestRequesterForQueryCancellation();
+            var conn = new MockSnowflakeDbConnection(mockRequester);
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+
+            var awaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(1, new[] { 1 }));
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // Act - cancellation triggers AbortQuery which validates the query ID
+            await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                await awaiter.RetryUntilQueryResultIsAvailable(conn, invalidQueryId, cts.Token, true));
+
+            // Assert - no SQL command should have been sent
+            Assert.False(mockRequester.CancelRequestSent,
+                "Cancel request must not be sent for an invalid query ID.");
+        }
+
+        [SFTheory]
+        [InlineData("'; DO SOMETHING ELSE; --")]
+        [InlineData("not-a-uuid")]
+        [InlineData("")]
+        public async Task TestInvalidQueryIdDoesNotSendCancelRequestSync(string invalidQueryId)
+        {
+            // Arrange
+            var mockRequester = new MockRestRequesterForQueryCancellation();
+            var conn = new MockSnowflakeDbConnection(mockRequester);
+            conn.ConnectionString = ConnectionString;
+            conn.Open();
+
+            var awaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(1, new[] { 1 }));
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // Act
+            var task = awaiter.RetryUntilQueryResultIsAvailable(conn, invalidQueryId, cts.Token, false);
+            await Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+
+            // Assert
+            Assert.False(mockRequester.CancelRequestSent,
+                "Cancel request must not be sent for an invalid query ID.");
+        }
     }
 }

@@ -454,6 +454,54 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         }
     }
 
+    [SFTheory(SkipCondition.RunOnlyOnCloudAWS)]
+    [InlineData("SNOWFLAKE_SAMPLE_DAT")]
+    [InlineData("SNOWFLAKE_$$$123SAMPLE_DATA")]
+    [InlineData("\"1SNOWFLAKE_SAMPLE_DATA\"")]
+    [InlineData("_SNOWFLAKE$$1_$AMPLEDATA")]
+    [InlineData("$SNOWFLAKEAMP_LEDATA")]
+    [InlineData("$SNOWFLAKEAMP_12LEDATA")]
+    [InlineData("\"SNOWFLAKEAMPLEDATA\"")]
+    [InlineData("\"SNOWFLAKE\"\"AMPLEDATA\"")]
+    public async Task TestSwitchDbVariousIdentifiers(string databaseName)
+    {
+        using var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = _fixture.ConnectionString;
+
+        Assert.Equal(conn.State, ConnectionState.Closed);
+
+        await conn.OpenAsync(CancellationToken);
+
+        Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
+        Assert.Equal(conn.State, ConnectionState.Open);
+
+        var ex = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.ChangeDatabaseAsync(databaseName));
+        Assert.Equal(2043, ex.ErrorCode); // object does not exist
+        await conn.CloseAsync(CancellationToken);
+    }
+
+    [SFTheory(SkipCondition.RunOnlyOnCloudAWS)]
+    [InlineData("@SNOWFLAKE_SAMPLE_DATA")]
+    [InlineData("!SNOWFLAKE_SAMPLE_DATA")]
+    [InlineData("1SNOWFLAKE_SAMPLE_DATA")]
+    [InlineData("\"SNOW\"FLAKE_SAMPLE_DATA\"")]
+    public async Task TestSwitchDbWhenInvalidIdentifier(string invalidDatabaseName)
+    {
+        using var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = _fixture.ConnectionString;
+
+        Assert.Equal(conn.State, ConnectionState.Closed);
+
+        await conn.OpenAsync(CancellationToken);
+
+        Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
+        Assert.Equal(conn.State, ConnectionState.Open);
+
+        var ex = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.ChangeDatabaseAsync(invalidDatabaseName, CancellationToken));
+        Assert.Equal(1003, ex.ErrorCode); // unable to parse sql
+        await conn.CloseAsync(CancellationToken);
+    }
+
     [SFFact]
     public async Task TestConnectWithoutHost()
     {
