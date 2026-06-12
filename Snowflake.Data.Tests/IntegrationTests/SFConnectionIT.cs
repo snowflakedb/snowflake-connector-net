@@ -678,6 +678,60 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         }
 
+        [TestCase("SNOWFLAKE_SAMPLE_DAT")]
+        [TestCase("SNOWFLAKE_$$$123SAMPLE_DATA")]
+        [TestCase("\"1SNOWFLAKE_SAMPLE_DATA\"")]
+        [TestCase("_SNOWFLAKE$$1_$AMPLEDATA")]
+        [TestCase("$SNOWFLAKEAMP_LEDATA")]
+        [TestCase("$SNOWFLAKEAMP_12LEDATA")]
+        [TestCase("\"SNOWFLAKEAMPLEDATA\"")]
+        [TestCase("\"SNOWFLAKE\"\"AMPLEDATA\"")]
+        [IgnoreOnEnvIs("snowflake_cloud_env",
+                       new string[] { "AZURE", "GCP" })]
+        public void TestSwitchDbVariousIdentifiers(string databaseName)
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+                conn.Open();
+
+                Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
+                Assert.AreEqual(conn.State, ConnectionState.Open);
+
+                var ex = Assert.Throws<SnowflakeDbException>(() => conn.ChangeDatabase(databaseName));
+                Assert.AreEqual(2043, ex.ErrorCode); // object does not exist
+                conn.Close();
+            }
+        }
+
+        [TestCase("@SNOWFLAKE_SAMPLE_DATA")]
+        [TestCase("!SNOWFLAKE_SAMPLE_DATA")]
+        [TestCase("1SNOWFLAKE_SAMPLE_DATA")]
+        [TestCase("\"SNOW\"FLAKE_SAMPLE_DATA\"")]
+        [IgnoreOnEnvIs("snowflake_cloud_env",
+                       new string[] { "AZURE", "GCP" })]
+        public void TestSwitchDbWhenInvalidIdentifier(string invalidDatabaseName)
+        {
+            using (IDbConnection conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = ConnectionString;
+
+                Assert.AreEqual(conn.State, ConnectionState.Closed);
+
+                conn.Open();
+
+                Assert.AreEqual(testConfig.database.ToUpper(), conn.Database);
+                Assert.AreEqual(conn.State, ConnectionState.Open);
+
+                var ex = Assert.Throws<SnowflakeDbException>(() => conn.ChangeDatabase(invalidDatabaseName));
+                Assert.AreEqual(1003, ex.ErrorCode); // unable to parse sql
+                conn.Close();
+            }
+        }
+
         [Test]
         public void TestConnectWithoutHost()
         {
@@ -2572,5 +2626,3 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
     }
 }
-
-

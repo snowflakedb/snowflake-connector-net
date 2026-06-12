@@ -180,11 +180,14 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"ChangeDatabase to:{databaseName}");
 
-            string alterDbCommand = $"use database {databaseName}";
-
-            using (IDbCommand cmd = CreateCommand())
+            using (var cmd = CreateCommand())
             {
-                cmd.CommandText = alterDbCommand;
+                cmd.CommandText = "use database identifier(?)";
+                var dbParam = cmd.CreateParameter();
+                dbParam.ParameterName = "1";
+                dbParam.DbType = DbType.String;
+                dbParam.Value = databaseName;
+                cmd.Parameters.Add(dbParam);
                 cmd.ExecuteNonQuery();
             }
         }

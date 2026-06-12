@@ -414,7 +414,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         await cmd.GetQueryStatusAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.That(thrown.Message, Contains.Substring("Invalid query id format. Expected a UUID."));
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -438,7 +438,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         await cmd.GetResultsFromQueryIdAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.That(thrown.Message, Contains.Substring("Invalid query id format. Expected a UUID."));
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -1562,7 +1562,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<Exception>(() => cmd.GetQueryStatus(fakeQueryId));
 
                     // Assert
-                    Assert.IsTrue(thrown.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    Assert.That(thrown.Message, Contains.Substring("Invalid query id format. Expected a UUID."));
                 }
 
                 conn.Close();
@@ -1585,7 +1585,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(fakeQueryId));
 
                     // Assert
-                    Assert.IsTrue(thrown.InnerException.Message.Contains($"The given query id {fakeQueryId} is not valid uuid"));
+                    #if NETFRAMEWORK
+                    var msgs = thrown.InnerExceptions.Select(e => e.Message);
+                    Assert.That(msgs, Has.Some.Contains($"Invalid query id format. Expected a UUID."));
+                    #else
+                    Assert.That(thrown.Message, Contains.Substring("Invalid query id format. Expected a UUID."));
+                    #endif
                 }
 
                 conn.Close();

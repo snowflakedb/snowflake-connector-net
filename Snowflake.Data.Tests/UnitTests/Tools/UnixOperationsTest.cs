@@ -40,6 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestDetectGroupOrOthersWritablePermissions(
             [ValueSource(nameof(GroupOrOthersWritablePermissions))] FileAccessPermissions groupOrOthersWritablePermissions,
             [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
@@ -60,6 +61,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [Test]
+        [Platform(Exclude = "Win")]
         public void TestDetectGroupOrOthersNotWritablePermissions(
             [ValueSource(nameof(UserPermissions))] FileAccessPermissions userPermissions,
             [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
