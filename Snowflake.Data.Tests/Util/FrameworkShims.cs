@@ -35,6 +35,12 @@ public static class FrameworkShims
         return Task.CompletedTask;
     }
 
+    public static Task ChangeDatabaseAsync(this DbConnection connection, string databaseName, CancellationToken cancellationToken)
+    {
+        connection.ChangeDatabase(databaseName);
+        return Task.CompletedTask;
+    }
+
     public static Task CommitAsync(this DbTransaction transaction)
     {
         transaction.Commit();

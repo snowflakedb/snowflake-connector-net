@@ -62,7 +62,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Equal(s_content, File.ReadAllText(dstFilePath));
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestFileCopyOverwritesExistingDestination()
         {
             // arrange
