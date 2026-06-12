@@ -2,9 +2,9 @@
 
 # Changelog
 - v5.7.0
-    - Fixed `OverflowException` when converting rest response with master token validity more than ~9.1h.
     - Improved input handling in `ChangeDatabase` by using parameterized queries.
     - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.
+    - Bug fix: `OverflowException` when converting rest response with master token validity more than ~9.1h.
     - Bug fix: Added path traversal protection for file downloads: destination paths are now validated against the target base directory before writing.
     - Bug fix: Replaced use of System.Random with a cryptographically secure random number generator in the authenticator challenge/proof key generation and file transfer encryption key/IV generation.
 - v5.6.0
