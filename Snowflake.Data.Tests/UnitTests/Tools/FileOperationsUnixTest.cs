@@ -1,27 +1,31 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security;
 using Mono.Unix;
 using Mono.Unix.Native;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Mock;
+using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
-    [Platform(Exclude = "Win")]
-    public class FileOperationsUnixTest
+    public class FileOperationsUnixTest : IDisposable
     {
+        public FileOperationsUnixTest()
+        {
+            Before();
+        }
+
         private static FileOperations s_fileOperations;
         private static readonly string s_relativeWorkingDirectory = $"file_operations_test_{Path.GetRandomFileName()}";
         private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
         private static readonly string s_content = "random text";
         private static readonly string s_fileName = "testfile";
-
-        [SetUp]
         public static void Before()
         {
             if (!Directory.Exists(s_workingDirectory))
@@ -31,16 +35,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             s_fileOperations = new FileOperations();
         }
-
-        [TearDown]
         public static void After()
         {
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(UserAllowedFilePermissionsData))]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
-            [ValueSource(nameof(UserAllowedFilePermissions))]
             FileAccessPermissions userAllowedFilePermissions)
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
@@ -52,12 +54,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(s_content, result);
+            Assert.Equal(s_content, result);
         }
 
-        [Test]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(UserAllowedFilePermissionsData))]
         public void TestShouldThrowExceptionIfOtherPermissionsIsSetWhenReadConfigurationFile(
-            [ValueSource(nameof(UserAllowedFilePermissions))]
             FileAccessPermissions userAllowedFilePermissions)
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
@@ -66,11 +68,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions),
-                "Attempting to read a file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
         }
 
-        [Test]
+
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestFileCopyHappyPath()
         {
             // arrange
@@ -86,12 +88,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             s_fileOperations.CopyFile(srcFilePath, destFilePath);
 
             // assert
-            Assert.IsTrue(File.Exists(destFilePath));
-            Assert.AreEqual(s_content, File.ReadAllText(destFilePath));
+            Assert.True(File.Exists(destFilePath));
+            Assert.Equal(s_content, File.ReadAllText(destFilePath));
         }
 
-        [Test]
-        public void TestFileCopyShouldThrowExceptionIfTooBroadPermissionsAreUsed([ValueSource(nameof(InsecurePermissions))] FileAccessPermissions permissions)
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(InsecurePermissionsData))]
+        public void TestFileCopyShouldThrowExceptionIfTooBroadPermissionsAreUsed(
+            FileAccessPermissions permissions)
         {
             // arrange
             const string SrcFile = "srcfile";
@@ -107,7 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Throws<SecurityException>(() => s_fileOperations.CopyFile(srcFilePath, destFilePath));
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestFileCopyShouldThrowWhenFileNotOwnedByCurrentUser()
         {
             // arrange - mock returns a different uid than the real file owner
@@ -130,10 +134,9 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
         }
 
-        [Test]
-        public void TestFileCopyRejectsInsecurePermissionsViaFileDescriptor(
-            [ValueSource(nameof(InsecurePermissions))]
-            FileAccessPermissions permissions)
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(InsecurePermissionsData))]
+        public void TestFileCopyRejectsInsecurePermissionsViaFileDescriptor(FileAccessPermissions permissions)
         {
             // Validates the TOCTOU fix: permission check happens on the open fd,
             // not via a separate stat() call on the path.
@@ -148,7 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.Throws<SecurityException>(() => s_fileOperations.CopyFile(srcFilePath, destFilePath));
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestFileCopySucceedsWithSafePermissions()
         {
             const string SrcFile = "srcfile_safe";
@@ -163,8 +166,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             s_fileOperations.CopyFile(srcFilePath, destFilePath);
 
             // assert
-            Assert.IsTrue(File.Exists(destFilePath));
-            Assert.AreEqual(s_content, File.ReadAllText(destFilePath));
+            Assert.True(File.Exists(destFilePath));
+            Assert.Equal(s_content, File.ReadAllText(destFilePath));
         }
 
 
@@ -186,6 +189,17 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             yield return FileAccessPermissions.OtherReadWriteExecute;
             yield return FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherReadWriteExecute;
             yield return FileAccessPermissions.AllPermissions;
+        }
+
+        public static IEnumerable<object[]> UserAllowedFilePermissionsData() =>
+            UserAllowedFilePermissions().Select(x => new object[] { x });
+
+        public static IEnumerable<object[]> InsecurePermissionsData() =>
+            InsecurePermissions().Select(x => new object[] { x });
+
+        public void Dispose()
+        {
+            After();
         }
     }
 }

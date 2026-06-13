@@ -1,22 +1,25 @@
+using System;
 using System.IO;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
-    [Platform("Win")]
-    public class FileOperationsWindowsTest
+    public class FileOperationsWindowsTest : IDisposable
     {
+        public FileOperationsWindowsTest()
+        {
+            Before();
+        }
+
         private static FileOperations s_fileOperations;
         private static readonly string s_relativeWorkingDirectory = $"file_operations_test_{Path.GetRandomFileName()}";
         private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
         private static readonly string s_content = "random text";
         private static readonly string s_fileName = "testfile";
-
-        [SetUp]
         public static void Before()
         {
             if (!Directory.Exists(s_workingDirectory))
@@ -26,14 +29,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             s_fileOperations = new FileOperations();
         }
-
-        [TearDown]
         public static void After()
         {
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestReadAllTextOnWindows()
         {
             var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
@@ -42,10 +43,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(s_content, result);
+            Assert.Equal(s_content, result);
         }
 
-        [Test]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestFileCopyOnWindows()
         {
             // arrange
@@ -57,11 +58,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             s_fileOperations.CopyFile(srcFilePath, dstFilePath);
 
             // assert
-            Assert.IsTrue(File.Exists(dstFilePath));
-            Assert.AreEqual(s_content, File.ReadAllText(dstFilePath));
+            Assert.True(File.Exists(dstFilePath));
+            Assert.Equal(s_content, File.ReadAllText(dstFilePath));
         }
 
-        [Test]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestFileCopyOverwritesExistingDestination()
         {
             // arrange
@@ -74,7 +75,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             s_fileOperations.CopyFile(srcFilePath, dstFilePath);
 
             // assert
-            Assert.AreEqual(s_content, File.ReadAllText(dstFilePath));
+            Assert.Equal(s_content, File.ReadAllText(dstFilePath));
+        }
+
+        public void Dispose()
+        {
+            After();
         }
     }
 }

@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
     public class CertificateCrlDistributionPointsExtractorTest
     {
-        [Test]
-        [TestCaseSource(nameof(CrlsTestCases))]
+        [SFTheory]
+        [MemberData(nameof(CrlsTestCases))]
         public void TestExtractCertificateDistributionPoints(CrlExtractionTestCase testCase)
         {
             // arrange
@@ -21,32 +20,32 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlUrls = crlExtractor.Extract(certificate);
 
             // assert
-            Assert.AreEqual(testCase.ExpectedCrlUrls.Length, crlUrls.Length);
-            Assert.That(testCase.ExpectedCrlUrls, Is.EquivalentTo(crlUrls));
+            Assert.Equal(testCase.ExpectedCrlUrls.Length, crlUrls.Length);
+            Assert.Equivalent(crlUrls, testCase.ExpectedCrlUrls);
         }
 
-        public static IEnumerable<CrlExtractionTestCase> CrlsTestCases()
+        public static IEnumerable<object[]> CrlsTestCases()
         {
-            yield return new CrlExtractionTestCase
+            yield return new object[] { new CrlExtractionTestCase
             {
                 CrlDistributionPoints = new[] { new[] { "http://snowflake.com/crl1.crl" }, new[] { "http://snowflake.com/crl2.crl" } },
                 ExpectedCrlUrls = new[] { "http://snowflake.com/crl1.crl", "http://snowflake.com/crl2.crl" }
-            };
+            } };
 
-            yield return new CrlExtractionTestCase
+            yield return new object[] { new CrlExtractionTestCase
             {
                 CrlDistributionPoints = new[] {
                     new[] { "http://snowflake.com/crl1.crl", "ftp://snowflake.com/crl1.crl" },
                     new[] { "ftp://snowflake.com/crl2.crl", "http://snowflake.com/crl2.crl" }
                 },
                 ExpectedCrlUrls = new[] { "http://snowflake.com/crl1.crl", "http://snowflake.com/crl2.crl" }
-            };
+            } };
 
-            yield return new CrlExtractionTestCase
+            yield return new object[] { new CrlExtractionTestCase
             {
                 CrlDistributionPoints = new string[][] { },
                 ExpectedCrlUrls = new string[] { }
-            };
+            } };
         }
 
         public class CrlExtractionTestCase

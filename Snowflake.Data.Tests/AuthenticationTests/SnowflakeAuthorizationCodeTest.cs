@@ -1,33 +1,30 @@
 using System.Threading;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
-using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class SnowflakeAuthorizationCodeTest
     {
-        private string _connectionString = "";
-        private SFSessionProperties login_credentials;
+        private string _connectionString;
         private string _login;
         private string _password;
 
-
-        [SetUp, IgnoreOnCI]
-        public void SetUp()
+        public SnowflakeAuthorizationCodeTest(AuthenticationTestsCollectionFixture fixture)
         {
-            AuthTestHelper authTestHelper = new AuthTestHelper();
-
-            login_credentials = AuthConnectionString.GetSnowflakeLoginCredentials();
-            _login = login_credentials[SFSessionProperty.USER];
-            _password = login_credentials[SFSessionProperty.PASSWORD];
+            var authTestHelper = new AuthTestHelper();
             authTestHelper.CleanBrowserProcess();
+            _login = fixture.Login;
+            _password = fixture.Password;
+
             var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeConnectionParameters();
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeSuccessful()
 
         {
@@ -39,7 +36,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -56,7 +53,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token.");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -75,7 +72,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeTimeout()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -88,7 +85,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWithTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -119,7 +116,7 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateSnowflakeAuthorizationCodeWithoutTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

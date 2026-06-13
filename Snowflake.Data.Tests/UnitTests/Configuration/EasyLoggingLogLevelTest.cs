@@ -1,34 +1,34 @@
 using System;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    [TestFixture]
-    class EasyLoggingLogLevelTest
+    public class EasyLoggingLogLevelTest
     {
-        [Test]
-        [TestCase("OFF", EasyLoggingLogLevel.Off)]
-        [TestCase("off", EasyLoggingLogLevel.Off)]
-        [TestCase("iNfO", EasyLoggingLogLevel.Info)]
-        public void TestThatGetsLogLevelValueIgnoringLetterCase(string loglevelString, EasyLoggingLogLevel expectedLogLevel)
+        [SFTheory]
+        [InlineData("OFF", 0)]
+        [InlineData("off", 0)]
+        [InlineData("iNfO", 3)]
+        public void TestThatGetsLogLevelValueIgnoringLetterCase(string loglevelString, int expectedLogLevel)
         {
             // act
             var logLevel = EasyLoggingLogLevelExtensions.From(loglevelString);
 
             // assert
-            Assert.AreEqual(expectedLogLevel, logLevel);
+            Assert.Equal((EasyLoggingLogLevel)expectedLogLevel, logLevel);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatFailsToParseLogLevelFromUnknownValue()
         {
             // act
             var thrown = Assert.Throws<ArgumentException>(() => EasyLoggingLogLevelExtensions.From("unknown"));
 
             // assert
-            Assert.IsNotNull(thrown);
-            Assert.AreEqual("Requested value 'unknown' was not found.", thrown.Message);
+            Assert.NotNull(thrown);
+            Assert.Equal("Requested value 'unknown' was not found.", thrown.Message);
         }
     }
 }

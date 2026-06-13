@@ -41,7 +41,7 @@ namespace MinicoreVerifyApp
 
             try
             {
-                var openTask = conn.OpenAsync();
+                var openTask = conn.OpenAsync(CancellationToken.None);
                 var completed = await Task.WhenAny(openTask, Task.Delay(TimeSpan.FromSeconds(6)));
 
                 if (completed == openTask)

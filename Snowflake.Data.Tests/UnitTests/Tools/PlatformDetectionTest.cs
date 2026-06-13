@@ -2,14 +2,18 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using RichardSzalay.MockHttp;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
-    public class PlatformDetectionTest
+    [CollectionDefinition(nameof(PlatformDetectionTestFixture), DisableParallelization = true)]
+    public sealed class PlatformDetectionTestFixture { }
+
+    [Collection(nameof(PlatformDetectionTestFixture))]
+    public class PlatformDetectionTest : IDisposable
     {
         private const string LambdaTaskRoot = "LAMBDA_TASK_ROOT";
         private const string GithubActions = "GITHUB_ACTIONS";
@@ -22,8 +26,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         private const string KConfiguration = "K_CONFIGURATION";
         private const string CloudRunJob = "CLOUD_RUN_JOB";
         private const string CloudRunExecution = "CLOUD_RUN_EXECUTION";
-
-        [TearDown]
         public void TearDown()
         {
             Environment.SetEnvironmentVariable(LambdaTaskRoot, null);
@@ -42,96 +44,96 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
         // --- DetectAwsLambda ---
 
-        [Test]
+        [SFFact]
         public void TestDetectAwsLambdaWhenEnvVarSet()
         {
             Environment.SetEnvironmentVariable(LambdaTaskRoot, "/var/task");
-            Assert.IsTrue(PlatformDetection.DetectAwsLambda());
+            Assert.True(PlatformDetection.DetectAwsLambda());
         }
 
-        [Test]
+        [SFFact]
         public void TestDetectAwsLambdaWhenEnvVarNotSet()
         {
-            Assert.IsFalse(PlatformDetection.DetectAwsLambda());
+            Assert.False(PlatformDetection.DetectAwsLambda());
         }
 
         // --- DetectGithubActions ---
 
-        [Test]
+        [SFFact]
         public void TestDetectGithubActionsWhenEnvVarSet()
         {
             Environment.SetEnvironmentVariable(GithubActions, "true");
-            Assert.IsTrue(PlatformDetection.DetectGithubActions());
+            Assert.True(PlatformDetection.DetectGithubActions());
         }
 
-        [Test]
+        [SFFact]
         public void TestDetectGithubActionsWhenEnvVarNotSet()
         {
-            Assert.IsFalse(PlatformDetection.DetectGithubActions());
+            Assert.False(PlatformDetection.DetectGithubActions());
         }
 
         // --- DetectAzureFunction ---
 
-        [Test]
+        [SFFact]
         public void TestDetectAzureFunctionWhenAllEnvVarsSet()
         {
             Environment.SetEnvironmentVariable(FunctionsWorkerRuntime, "dotnet");
             Environment.SetEnvironmentVariable(FunctionsExtensionVersion, "~4");
             Environment.SetEnvironmentVariable(AzureWebJobsStorage, "DefaultEndpointsProtocol=https;...");
-            Assert.IsTrue(PlatformDetection.DetectAzureFunction());
+            Assert.True(PlatformDetection.DetectAzureFunction());
         }
 
-        [Test]
+        [SFFact]
         public void TestDetectAzureFunctionWhenOnlyOneEnvVarSet()
         {
             Environment.SetEnvironmentVariable(FunctionsWorkerRuntime, "dotnet");
-            Assert.IsFalse(PlatformDetection.DetectAzureFunction());
+            Assert.False(PlatformDetection.DetectAzureFunction());
         }
 
-        [Test]
+        [SFFact]
         public void TestDetectAzureFunctionWhenNoEnvVarsSet()
         {
-            Assert.IsFalse(PlatformDetection.DetectAzureFunction());
+            Assert.False(PlatformDetection.DetectAzureFunction());
         }
 
         // --- DetectGceCloudRunService ---
 
-        [Test]
+        [SFFact]
         public void TestDetectGceCloudRunServiceWhenAllEnvVarsSet()
         {
             Environment.SetEnvironmentVariable(KService, "my-service");
             Environment.SetEnvironmentVariable(KRevision, "my-service-00001-abc");
             Environment.SetEnvironmentVariable(KConfiguration, "my-service");
-            Assert.IsTrue(PlatformDetection.DetectGceCloudRunService());
+            Assert.True(PlatformDetection.DetectGceCloudRunService());
         }
 
-        [Test]
+        [SFFact]
         public void TestDetectGceCloudRunServiceWhenPartialEnvVarsSet()
         {
             Environment.SetEnvironmentVariable(KService, "my-service");
-            Assert.IsFalse(PlatformDetection.DetectGceCloudRunService());
+            Assert.False(PlatformDetection.DetectGceCloudRunService());
         }
 
         // --- DetectGceCloudRunJob ---
 
-        [Test]
+        [SFFact]
         public void TestDetectGceCloudRunJobWhenAllEnvVarsSet()
         {
             Environment.SetEnvironmentVariable(CloudRunJob, "my-job");
             Environment.SetEnvironmentVariable(CloudRunExecution, "my-job-execution-abc");
-            Assert.IsTrue(PlatformDetection.DetectGceCloudRunJob());
+            Assert.True(PlatformDetection.DetectGceCloudRunJob());
         }
 
-        [Test]
+        [SFFact]
         public void TestDetectGceCloudRunJobWhenOnlyOneEnvVarSet()
         {
             Environment.SetEnvironmentVariable(CloudRunJob, "my-job");
-            Assert.IsFalse(PlatformDetection.DetectGceCloudRunJob());
+            Assert.False(PlatformDetection.DetectGceCloudRunJob());
         }
 
         // --- DetectEc2Instance ---
 
-        [Test]
+        [SFFact]
         public async Task TestDetectEc2InstanceWhenBothRequestsSucceed()
         {
             var mockHttp = new MockHttpMessageHandler();
@@ -140,20 +142,20 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/latest/dynamic/instance-identity/document")
                 .Respond(HttpStatusCode.OK, "application/json", "{}");
 
-            Assert.AreEqual(true, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(true, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectEc2InstanceWhenTokenRequestFails()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Put, "http://169.254.169.254/latest/api/token")
                 .Respond(HttpStatusCode.Forbidden);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectEc2InstanceWhenDocumentRequestFails()
         {
             var mockHttp = new MockHttpMessageHandler();
@@ -162,54 +164,54 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/latest/dynamic/instance-identity/document")
                 .Respond(HttpStatusCode.NotFound);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectEc2InstanceReturnsFalseOnHttpException()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Put, "http://169.254.169.254/latest/api/token")
                 .Throw(new HttpRequestException("Connection refused"));
 
-            Assert.AreEqual(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectEc2InstanceAsync(mockHttp.ToHttpClient()));
         }
 
         // --- DetectAzureVm ---
 
-        [Test]
+        [SFFact]
         public async Task TestDetectAzureVmWhenMetadataEndpointReturns200()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/metadata/instance?api-version=2021-02-01")
                 .Respond(HttpStatusCode.OK, "application/json", "{}");
 
-            Assert.AreEqual(true, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(true, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectAzureVmWhenMetadataEndpointReturnsNon200()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/metadata/instance?api-version=2021-02-01")
                 .Respond(HttpStatusCode.NotFound);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectAzureVmReturnsFalseOnHttpException()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/metadata/instance?api-version=2021-02-01")
                 .Throw(new HttpRequestException("Connection refused"));
 
-            Assert.AreEqual(false, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectAzureVmAsync(mockHttp.ToHttpClient()));
         }
 
         // --- DetectAzureManagedIdentity ---
 
-        [Test]
+        [SFFact]
         public async Task TestDetectAzureManagedIdentityOnFunctionWithIdentityHeader()
         {
             Environment.SetEnvironmentVariable(FunctionsWorkerRuntime, "dotnet");
@@ -217,10 +219,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(AzureWebJobsStorage, "DefaultEndpointsProtocol=https;...");
             Environment.SetEnvironmentVariable(IdentityHeader, "some-value");
 
-            Assert.AreEqual(true, await PlatformDetection.DetectAzureManagedIdentityAsync());
+            Assert.Equal(true, await PlatformDetection.DetectAzureManagedIdentityAsync());
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectAzureManagedIdentityOnFunctionWithoutIdentityHeader()
         {
             // Azure Function without IDENTITY_HEADER: NOT detected, no HTTP fallback
@@ -228,32 +230,32 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(FunctionsExtensionVersion, "~4");
             Environment.SetEnvironmentVariable(AzureWebJobsStorage, "DefaultEndpointsProtocol=https;...");
 
-            Assert.AreEqual(false, await PlatformDetection.DetectAzureManagedIdentityAsync());
+            Assert.Equal(false, await PlatformDetection.DetectAzureManagedIdentityAsync());
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectAzureManagedIdentityOnVmWhenEndpointReturns200()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/metadata/identity/oauth2/token*")
                 .Respond(HttpStatusCode.OK, "application/json", "{}");
 
-            Assert.AreEqual(true, await PlatformDetection.DetectAzureManagedIdentityAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(true, await PlatformDetection.DetectAzureManagedIdentityAsync(mockHttp.ToHttpClient()));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectAzureManagedIdentityOnVmWhenEndpointReturnsNon200()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Get, "http://169.254.169.254/metadata/identity/oauth2/token*")
                 .Respond(HttpStatusCode.BadRequest);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectAzureManagedIdentityAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectAzureManagedIdentityAsync(mockHttp.ToHttpClient()));
         }
 
         // --- DetectGceVm ---
 
-        [Test]
+        [SFFact]
         public async Task TestDetectGceVmWhenMetadataFlavorIsGoogle()
         {
             var mockHttp = new MockHttpMessageHandler();
@@ -265,105 +267,110 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
                     return response;
                 });
 
-            Assert.AreEqual(true, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(true, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectGceVmWhenMetadataFlavorIsMissing()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Get, "http://metadata.google.internal")
                 .Respond(HttpStatusCode.OK);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectGceVmReturnsFalseOnHttpException()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Get, "http://metadata.google.internal")
                 .Throw(new HttpRequestException("Host not found"));
 
-            Assert.AreEqual(false, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectGceVmAsync(mockHttp.ToHttpClient()));
         }
 
         // --- RunDetectionAsync (disable env var) ---
 
-        [Test]
+        [SFFact]
         public async Task TestRunDetectionAsyncReturnsDisabledWhenEnvVarSetToTrue()
         {
             Environment.SetEnvironmentVariable(PlatformDetection.DisableEnvVar, "true");
             var result = await PlatformDetection.RunDetectionAsync();
-            CollectionAssert.AreEqual(new[] { "disabled" }, result);
+            Assert.Equal(new[] { "disabled" }, result);
         }
 
-        [Test]
+        [SFFact]
         public async Task TestRunDetectionAsyncReturnsDisabledWhenEnvVarSetCaseInsensitive()
         {
             Environment.SetEnvironmentVariable(PlatformDetection.DisableEnvVar, "TRUE");
             var result = await PlatformDetection.RunDetectionAsync();
-            CollectionAssert.AreEqual(new[] { "disabled" }, result);
+            Assert.Equal(new[] { "disabled" }, result);
         }
 
         // --- AggregateResults ---
 
-        [Test]
+        [SFFact]
         public void TestAggregateResultsIncludesNameWhenTrue()
         {
             var names = new[] { "platform_a", "platform_b" };
             var results = new bool?[] { true, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            CollectionAssert.AreEqual(new[] { "platform_a" }, aggregated);
+            Assert.Equal(new[] { "platform_a" }, aggregated);
         }
 
-        [Test]
+        [SFFact]
         public void TestAggregateResultsAddsTimeoutSuffixWhenNull()
         {
             var names = new[] { "platform_a", "platform_b" };
             var results = new bool?[] { null, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            CollectionAssert.AreEqual(new[] { "platform_a_timeout" }, aggregated);
+            Assert.Equal(new[] { "platform_a_timeout" }, aggregated);
         }
 
-        [Test]
+        [SFFact]
         public void TestAggregateResultsSkipsFalseResults()
         {
             var names = new[] { "platform_a", "platform_b", "platform_c" };
             var results = new bool?[] { false, false, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            Assert.IsEmpty(aggregated);
+            Assert.Empty(aggregated);
         }
 
-        [Test]
+        [SFFact]
         public void TestAggregateResultsMixedDetectedAndTimeout()
         {
             var names = new[] { "platform_a", "platform_b", "platform_c" };
             var results = new bool?[] { true, null, false };
             var aggregated = PlatformDetection.AggregateResults(names, results);
-            CollectionAssert.AreEqual(new[] { "platform_a", "platform_b_timeout" }, aggregated);
+            Assert.Equal(new[] { "platform_a", "platform_b_timeout" }, aggregated);
         }
 
         // --- DetectGcpIdentity ---
 
-        [Test]
+        [SFFact]
         public async Task TestDetectGcpIdentityWhenEndpointReturns200()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Get, "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email")
                 .Respond(HttpStatusCode.OK, "text/plain", "sa@project.iam.gserviceaccount.com");
 
-            Assert.AreEqual(true, await PlatformDetection.DetectGcpIdentityAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(true, await PlatformDetection.DetectGcpIdentityAsync(mockHttp.ToHttpClient()));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDetectGcpIdentityWhenEndpointReturnsNon200()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Get, "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email")
                 .Respond(HttpStatusCode.NotFound);
 
-            Assert.AreEqual(false, await PlatformDetection.DetectGcpIdentityAsync(mockHttp.ToHttpClient()));
+            Assert.Equal(false, await PlatformDetection.DetectGcpIdentityAsync(mockHttp.ToHttpClient()));
+        }
+
+        public void Dispose()
+        {
+            TearDown();
         }
     }
 }
