@@ -66,6 +66,7 @@ namespace Snowflake.Data.Tests.Mock
                     {
                         _connectionState = ConnectionState.Closed;
                         logger.Debug("Connection canceled");
+                        throw new SnowflakeDbException(SFError.REQUEST_TIMEOUT, "Unable to connect");
                     }
                     else
                     {

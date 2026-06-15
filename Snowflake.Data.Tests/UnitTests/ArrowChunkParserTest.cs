@@ -1,10 +1,11 @@
 using System.Linq;
 using Apache.Arrow;
 using Apache.Arrow.Ipc;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Client;
     using Snowflake.Data.Configuration;
     using Snowflake.Data.Core;
@@ -12,12 +13,13 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
-
-    [TestFixture, NonParallelizable]
-    class ArrowChunkParserTest
+    public class ArrowChunkParserTest
     {
-        [Test]
-        public void TestParseChunkReadsRecordBatches([Values(1, 2, 4)] int numberOfRecordBatch)
+        [SFTheory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(4)]
+        public void TestParseChunkReadsRecordBatches(int numberOfRecordBatch)
         {
             // Arrange
             MemoryStream stream = new MemoryStream();
@@ -42,11 +44,11 @@ namespace Snowflake.Data.Tests.UnitTests
             task.Wait();
 
             // Assert
-            Assert.AreEqual(numberOfRecordBatch, chunk.RecordBatch.Count);
+            Assert.Equal(numberOfRecordBatch, chunk.RecordBatch.Count);
             for (var i = 0; i < numberOfRecordBatch; i++)
             {
                 var numberOfRecordsInBatch = 10 * i;
-                Assert.AreEqual(numberOfRecordsInBatch, chunk.RecordBatch[i].Length);
+                Assert.Equal(numberOfRecordsInBatch, chunk.RecordBatch[i].Length);
             }
         }
     }

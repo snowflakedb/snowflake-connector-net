@@ -3,43 +3,46 @@
 using System;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using System.Text;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Threading;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
-    [TestFixture]
-    class SFBindTestIT : SFBaseTest
+    public class SFBindTestIT : SFBaseTestAsync
     {
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFBindTestIT(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
+
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBindTestIT>();
 
-        [Test]
-        public void TestArrayBind()
+        [SFFact]
+        public async Task TestArrayBind()
         {
-
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+                await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING"
                 });
 
-                using (IDbCommand cmd = conn.CreateCommand())
+                using (var cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} values (?, ?)";
+                    string insertCommand = $"insert into {fixtureTableName} values (?, ?)";
                     cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
@@ -54,23 +57,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p2.Value = new string[] { "str1", "str2", "str3" };
                     cmd.Parameters.Add(p2);
 
-                    var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(3, count);
+                    var count = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    Assert.Equal(3, count);
                 }
 
-                conn.Close();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
-        [Test]
-        [TestCaseSource(nameof(NullTestCases))]
-        public void TestBindNullValue(object nullValue)
+        [SFTheory(RetriesCount = RetriesCount.Thrice)]
+        [MemberData(nameof(NullTestCases))]
+        public async Task TestBindNullValue(object nullValue)
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
-                dbConnection.ConnectionString = ConnectionString;
+                dbConnection.ConnectionString = _fixture.ConnectionString;
                 dbConnection.Open();
-                CreateOrReplaceTable(dbConnection, TableName, new[]
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+                await _fixture.CreateOrReplaceTable(dbConnection, fixtureTableName, new[]
                 {
                     "intData NUMBER",
                     "fixedNumericData NUMBER(10,1)",
@@ -87,7 +91,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     bool isTypeSupported = true;
                     string colName;
-                    using (IDbCommand command = dbConnection.CreateCommand())
+                    using (var command = dbConnection.CreateCommand())
                     {
                         var param = command.CreateParameter();
                         param.ParameterName = "p0";
@@ -155,24 +159,24 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         if (isTypeSupported)
                         {
-                            command.CommandText = $"insert into {TableName}({colName}) values(:p0)";
+                            command.CommandText = $"insert into {fixtureTableName}({colName}) values(:p0)";
                             param.Value = nullValue;
                             command.Parameters.Add(param);
-                            int rowsInserted = command.ExecuteNonQuery();
-                            Assert.AreEqual(1, rowsInserted);
+                            int rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                            Assert.Equal(1, rowsInserted);
                         }
                         else
                         {
                             try
                             {
-                                command.CommandText = $"insert into {TableName}(stringData) values(:p0)";
+                                command.CommandText = $"insert into {fixtureTableName}(stringData) values(:p0)";
                                 param.Value = nullValue;
                                 command.Parameters.Add(param);
-                                int rowsInserted = command.ExecuteNonQuery();
+                                int rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                             }
                             catch (SnowflakeDbException e)
                             {
-                                Assert.AreEqual(270053, e.ErrorCode);
+                                Assert.Equal(270053, e.ErrorCode);
                             }
                         }
                     }
@@ -181,11 +185,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         using (IDbCommand command = dbConnection.CreateCommand())
                         {
-                            command.CommandText = $"select {colName} from {TableName};";
+                            command.CommandText = $"select {colName} from {fixtureTableName};";
                             using (IDataReader reader = command.ExecuteReader())
                             {
                                 reader.Read();
-                                Assert.IsTrue(reader.IsDBNull(0));
+                                Assert.True(reader.IsDBNull(0));
                                 reader.Close();
                             }
                         }
@@ -194,25 +198,26 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Clean up between each case
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
-                        command.CommandText = $"DELETE FROM {TableName}";
+                        command.CommandText = $"DELETE FROM {fixtureTableName}";
                         command.ExecuteNonQuery();
                     }
                 }
             }
         }
 
-        private static IEnumerable<object?> NullTestCases() =>
-            new object?[] { DBNull.Value, null };
+        public static IEnumerable<object?[]> NullTestCases() =>
+            new[] { new object?[] { DBNull.Value }, new object?[] { null } };
 
-        [Test]
-        public void TestBindValue()
+        [SFFact]
+        public async Task TestBindValue()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
-                dbConnection.ConnectionString = ConnectionString;
+                dbConnection.ConnectionString = _fixture.ConnectionString;
                 dbConnection.Open();
 
-                CreateOrReplaceTable(dbConnection, TableName, new[]
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+                await _fixture.CreateOrReplaceTable(dbConnection, fixtureTableName, new[]
                 {
                     "intData NUMBER",
                     "fixedNumericData NUMBER(10,1)",
@@ -230,7 +235,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     bool isTypeSupported = true;
                     string colName;
-                    using (IDbCommand command = dbConnection.CreateCommand())
+                    using (var command = dbConnection.CreateCommand())
                     {
                         var param = command.CreateParameter();
                         param.ParameterName = "p0";
@@ -311,36 +316,36 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                         if (isTypeSupported)
                         {
-                            command.CommandText = $"insert into {TableName}({colName}) values(:p0)";
+                            command.CommandText = $"insert into {fixtureTableName}({colName}) values(:p0)";
                             command.Parameters.Add(param);
-                            int rowsInserted = command.ExecuteNonQuery();
-                            Assert.AreEqual(1, rowsInserted);
+                            int rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                            Assert.Equal(1, rowsInserted);
                         }
                         else
                         {
                             try
                             {
-                                command.CommandText = $"insert into {TableName}(stringData) values(:p0)";
+                                command.CommandText = $"insert into {fixtureTableName}(stringData) values(:p0)";
                                 param.Value = DBNull.Value;
                                 command.Parameters.Add(param);
-                                command.ExecuteNonQuery();
+                                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                             }
                             catch (SnowflakeDbException e)
                             {
-                                Assert.AreEqual(270053, e.ErrorCode);
+                                Assert.Equal(270053, e.ErrorCode);
                             }
                         }
                     }
 
                     if (isTypeSupported)
                     {
-                        using (IDbCommand command = dbConnection.CreateCommand())
+                        using (var command = dbConnection.CreateCommand())
                         {
-                            command.CommandText = $"select {colName} from {TableName};";
-                            using (IDataReader reader = command.ExecuteReader())
+                            command.CommandText = $"select {colName} from {fixtureTableName};";
+                            using (IDataReader reader = await command.ExecuteReaderAsync())
                             {
                                 reader.Read();
-                                Assert.IsTrue(!reader.IsDBNull(0));
+                                Assert.True(!reader.IsDBNull(0));
                                 reader.Close();
                             }
                         }
@@ -349,19 +354,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Clean up between each case
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
-                        command.CommandText = $"DELETE FROM {TableName}";
+                        command.CommandText = $"DELETE FROM {fixtureTableName}";
                         command.ExecuteNonQuery();
                     }
                 }
             }
         }
 
-        [Test]
-        public void TestBindValueWithSFDataType()
+        [SFFact]
+        public async Task TestBindValueWithSFDataType()
         {
             using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
             {
-                dbConnection.ConnectionString = ConnectionString;
+                dbConnection.ConnectionString = _fixture.ConnectionString;
                 dbConnection.Open();
                 foreach (SFDataType type in Enum.GetValues(typeof(SFDataType)))
                 {
@@ -386,9 +391,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             };
                         }
 
-                        CreateOrReplaceTable(dbConnection, TableName, columns);
+                        var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+                        await _fixture.CreateOrReplaceTable(dbConnection, fixtureTableName, columns);
 
-                        using (IDbCommand command = dbConnection.CreateCommand())
+                        using (var command = dbConnection.CreateCommand())
                         {
                             SnowflakeDbParameter param = (SnowflakeDbParameter)command.CreateParameter();
                             param.ParameterName = "p0";
@@ -435,10 +441,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             {
                                 // Set to an unsupported DB type to check that SFDataType has precedence
                                 param.DbType = DbType.Object;
-                                command.CommandText = $"insert into {TableName}(data) values(:p0)";
+                                command.CommandText = $"insert into {fixtureTableName}(data) values(:p0)";
                                 command.Parameters.Add(param);
-                                int rowsInserted = command.ExecuteNonQuery();
-                                Assert.AreEqual(1, rowsInserted);
+                                int rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                                Assert.Equal(1, rowsInserted);
                             }
                             // DB rejects query if param type is VARIANT, OBJECT or ARRAY
                             else if (!type.Equals(SFDataType.VARIANT) &&
@@ -447,14 +453,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                             {
                                 try
                                 {
-                                    command.CommandText = $"insert into {TableName}(unsupportedType) values(:p0)";
+                                    command.CommandText = $"insert into {fixtureTableName}(unsupportedType) values(:p0)";
                                     param.Value = DBNull.Value;
                                     command.Parameters.Add(param);
-                                    command.ExecuteNonQuery();
+                                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                                 }
                                 catch (SnowflakeDbException e)
                                 {
-                                    Assert.AreEqual(270054, e.ErrorCode);
+                                    Assert.Equal(270054, e.ErrorCode);
                                 }
                             }
                         }
@@ -463,11 +469,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         {
                             using (IDbCommand command = dbConnection.CreateCommand())
                             {
-                                command.CommandText = $"select data from {TableName};";
+                                command.CommandText = $"select data from {fixtureTableName};";
                                 using (IDataReader reader = command.ExecuteReader())
                                 {
                                     reader.Read();
-                                    Assert.IsTrue(!reader.IsDBNull(0));
+                                    Assert.True(!reader.IsDBNull(0));
                                     reader.Close();
                                 }
                             }
@@ -477,15 +483,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        public void TestParameterCollection()
+        [SFFact]
+        public async Task TestParameterCollection()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                using (IDbCommand cmd = conn.CreateCommand())
+                using (var cmd = conn.CreateCommand())
                 {
                     var p1 = cmd.CreateParameter();
                     p1.ParameterName = "1";
@@ -512,36 +518,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Throws<NotImplementedException>(
                         () => { cmd.Parameters.CopyTo(parameters, 5); });
 
-                    Assert.AreEqual(3, cmd.Parameters.Count);
-                    Assert.IsTrue(cmd.Parameters.Contains(p2));
-                    Assert.IsTrue(cmd.Parameters.Contains("2"));
-                    Assert.AreEqual(1, cmd.Parameters.IndexOf(p2));
-                    Assert.AreEqual(1, cmd.Parameters.IndexOf("2"));
+                    Assert.Equal(3, cmd.Parameters.Count);
+                    Assert.True(cmd.Parameters.Contains(p2));
+                    Assert.True(cmd.Parameters.Contains("2"));
+                    Assert.Equal(1, cmd.Parameters.IndexOf(p2));
+                    Assert.Equal(1, cmd.Parameters.IndexOf("2"));
 
                     cmd.Parameters.Remove(p2);
-                    Assert.AreEqual(2, cmd.Parameters.Count);
-                    Assert.AreSame(p1, cmd.Parameters[0]);
+                    Assert.Equal(2, cmd.Parameters.Count);
+                    Assert.Same(p1, cmd.Parameters[0]);
 
                     cmd.Parameters.RemoveAt(0);
-                    Assert.AreSame(p3, cmd.Parameters[0]);
+                    Assert.Same(p3, cmd.Parameters[0]);
 
                     cmd.Parameters.Clear();
-                    Assert.AreEqual(0, cmd.Parameters.Count);
+                    Assert.Equal(0, cmd.Parameters.Count);
                 }
 
-                conn.Close();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
-        [Test]
-        public void TestPutArrayBind()
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
+        public async Task TestPutArrayBind()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                var fixtureTableName = _fixture.TableNameBaseName + System.Guid.NewGuid().ToString("N");
+                await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER",
                     "colb STRING",
@@ -551,9 +558,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     "colf TIMESTAMP_TZ"
                 });
 
-                using (IDbCommand cmd = conn.CreateCommand())
+                using (var cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} values (?, ?, ?, ?, ?, ?)";
+                    string insertCommand = $"insert into {fixtureTableName} values (?, ?, ?, ?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
                     int total = 250000;
@@ -650,41 +657,42 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p6.Value = arrTz.ToArray();
                     cmd.Parameters.Add(p6);
 
-                    var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(total * 3, count);
+                    var count = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    Assert.Equal(total * 3, count);
 
                     cmd.Parameters.Clear();
-                    cmd.CommandText = $"SELECT * FROM {TableName}";
-                    IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    cmd.CommandText = $"SELECT * FROM {fixtureTableName}";
+                    IDataReader reader = await cmd.ExecuteReaderAsync();
+                    Assert.True(reader.Read());
                 }
 
-                conn.Close();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
-        [Test]
-        public void TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
+        [SFFact]
+        public async Task TestPutArrayBindWorkDespiteOtTypeNameHandlingAuto()
         {
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Auto
             };
 
-            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+                await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola REAL",
                     "colb TEXT",
                     "colc NUMBER(38,0)"
                 });
 
-                using (IDbCommand cmd = conn.CreateCommand())
+                using (var cmd = conn.CreateCommand())
                 {
-                    var insertCommand = $"insert into {TableName} values (?, ?, ?)";
+                    var insertCommand = $"insert into {fixtureTableName} values (?, ?, ?)";
                     cmd.CommandText = insertCommand;
 
                     var total = 250;
@@ -724,34 +732,35 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p3.Value = arrint.ToArray();
                     cmd.Parameters.Add(p3);
 
-                    var rowsCount = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(total * 3, rowsCount);
+                    var rowsCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    Assert.Equal(total * 3, rowsCount);
 
-                    cmd.CommandText = $"SELECT * FROM {TableName}";
-                    IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    cmd.CommandText = $"SELECT * FROM {fixtureTableName}";
+                    IDataReader reader = await cmd.ExecuteReaderAsync();
+                    Assert.True(reader.Read());
                 }
 
-                conn.Close();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
-        [Test]
-        public void TestPutArrayIntegerBind()
+        [SFFact]
+        public async Task TestPutArrayIntegerBind()
         {
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+                await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER"
                 });
 
-                using (IDbCommand cmd = conn.CreateCommand())
+                using (var cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} values (?)";
+                    string insertCommand = $"insert into {fixtureTableName} values (?)";
                     cmd.CommandText = insertCommand;
 
                     int total = 70000;
@@ -767,34 +776,35 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p1.Value = arrint.ToArray();
                     cmd.Parameters.Add(p1);
 
-                    var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(70000, count);
+                    var count = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    Assert.Equal(70000, count);
 
-                    cmd.CommandText = $"SELECT * FROM {TableName}";
-                    IDataReader reader = cmd.ExecuteReader();
-                    Assert.IsTrue(reader.Read());
+                    cmd.CommandText = $"SELECT * FROM {fixtureTableName}";
+                    IDataReader reader = await cmd.ExecuteReaderAsync();
+                    Assert.True(reader.Read());
                 }
-                conn.Close();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
-        [Test]
-        public void TestExplicitDbTypeAssignmentForSimpleValue()
+        [SFFact]
+        public async Task TestExplicitDbTypeAssignmentForSimpleValue()
         {
 
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+                await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER",
                 });
 
-                using (IDbCommand cmd = conn.CreateCommand())
+                using (var cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} values (?)";
+                    string insertCommand = $"insert into {fixtureTableName} values (?)";
                     cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
@@ -802,31 +812,32 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p1.Value = 1;
                     cmd.Parameters.Add(p1);
 
-                    var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(1, count);
+                    var count = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    Assert.Equal(1, count);
                 }
 
-                conn.Close();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
-        [Test]
-        public void TestExplicitDbTypeAssignmentForArrayValue()
+        [SFFact]
+        public async Task TestExplicitDbTypeAssignmentForArrayValue()
         {
 
-            using (IDbConnection conn = new SnowflakeDbConnection())
+            using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+                conn.ConnectionString = _fixture.ConnectionString;
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                CreateOrReplaceTable(conn, TableName, new[]
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+                await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER",
                 });
 
-                using (IDbCommand cmd = conn.CreateCommand())
+                using (var cmd = conn.CreateCommand())
                 {
-                    string insertCommand = $"insert into {TableName} values (?)";
+                    string insertCommand = $"insert into {fixtureTableName} values (?)";
                     cmd.CommandText = insertCommand;
 
                     var p1 = cmd.CreateParameter();
@@ -834,11 +845,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p1.Value = new int[] { 1, 2, 3 };
                     cmd.Parameters.Add(p1);
 
-                    var count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(3, count);
+                    var count = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    Assert.Equal(3, count);
                 }
 
-                conn.Close();
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 
@@ -849,53 +860,54 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private const string FormatYmdHmsZ = "yyyy/MM/dd HH\\:mm\\:ss zzz";
 
         // STANDARD Tables
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [SFTheory]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         /* TODO: Enable when features available on the automated tests environment
         // HYBRID Tables
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Hybrid, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         // ICEBERG Tables; require env variables: ICEBERG_EXTERNAL_VOLUME, ICEBERG_CATALOG, ICEBERG_BASE_LOCATION.
-        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        // [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)] // Unsupported data type 'TIMESTAMP_TZ(6)' for iceberg tables
-        [TestCase(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
-        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
-        // [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTime, FormatYmdHmsZ, null)] // Unsupported data type 'TIMESTAMP_TZ(6)' for iceberg tables
-        [TestCase(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        // [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)] // Unsupported data type 'TIMESTAMP_TZ(6)' for iceberg tables
+        [InlineData(ResultFormat.JSON, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.DATE, null, DbType.Date, FormatYmd, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIME, null, DbType.Time, FormatHms, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIME, 6, DbType.Time, FormatHmsf, null)]
+        [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_NTZ, 6, DbType.DateTime, FormatYmdHms, null)]
+        // [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_TZ, 6, DbType.DateTime, FormatYmdHmsZ, null)] // Unsupported data type 'TIMESTAMP_TZ(6)' for iceberg tables
+        [InlineData(ResultFormat.ARROW, SFTableType.Iceberg, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, null)]
         */
         // Session TimeZone cases
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
-        [TestCase(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
-        [TestCase(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
-        [Test, NonParallelizable]
-        public void TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
+        [InlineData(ResultFormat.JSON, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
+        [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
+
+        public async Task TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
         {
             // Arrange
             string[] timestamps =
@@ -912,9 +924,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var bigBatchRowCount = bindingThreshold / 2;
             s_logger.Info(testCase);
 
-            using (IDbConnection conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
             {
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 conn.ExecuteNonQuery($"alter session set DOTNET_QUERY_RESULT_FORMAT = {resultFormat}");
                 if (!timeZone.IsNullOrEmpty()) // Driver ignores this setting and relies on local environment timezone
@@ -933,21 +945,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     sql_values += ",?";
                 }
 
-                CreateOrReplaceTable(conn,
-                    TableName,
+                var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
+                await _fixture.CreateOrReplaceTable(conn,
+                    fixtureTableName,
                     tableType.TableDDLCreationPrefix(),
                     columns,
                     tableType.TableDDLCreationFlags());
 
                 // Act+Assert
-                var sqlInsert = $"insert into {TableName} ({sql_columns}) values ({sql_values})";
+                var sqlInsert = $"insert into {fixtureTableName} ({sql_columns}) values ({sql_values})";
                 InsertSingleRecord(conn, sqlInsert, bindingType, 1, expected);
                 InsertMultipleRecords(conn, sqlInsert, bindingType, 2, expected, smallBatchRowCount, false);
                 InsertMultipleRecords(conn, sqlInsert, bindingType, smallBatchRowCount + 2, expected, bigBatchRowCount, true);
 
                 // Assert
                 var row = 0;
-                using (var select = conn.CreateCommand($"select {sql_columns} from {TableName} order by id"))
+                using (var select = conn.CreateCommand($"select {sql_columns} from {fixtureTableName} order by id"))
                 {
                     s_logger.Debug(select.CommandText);
                     var reader = select.ExecuteReader();
@@ -955,7 +968,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     {
                         ++row;
                         string faultMessage = $"Mismatch for row: {row}, {testCase}";
-                        Assert.AreEqual(row, reader.GetInt32(0));
+                        Assert.Equal(row, reader.GetInt32(0));
 
                         for (int i = 0; i < timestamps.Length; ++i)
                         {
@@ -963,7 +976,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         }
                     }
                 }
-                Assert.AreEqual(1 + smallBatchRowCount + bigBatchRowCount, row);
+                Assert.Equal(1 + smallBatchRowCount + bigBatchRowCount, row);
             }
         }
 
@@ -1000,8 +1013,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var rowsAffected = insert.ExecuteNonQuery();
 
                 // Assert
-                Assert.AreEqual(1, rowsAffected);
-                Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
+                Assert.Equal(1, rowsAffected);
+                Assert.Null(((SnowflakeDbCommand)insert).GetBindStage());
             }
         }
 
@@ -1039,11 +1052,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 var rowsAffected = insert.ExecuteNonQuery();
 
                 // Assert
-                Assert.AreEqual(rowsCount, rowsAffected);
+                Assert.Equal(rowsCount, rowsAffected);
                 if (shouldUseBinding)
-                    Assert.IsNotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
+                    Assert.NotEmpty(((SnowflakeDbCommand)insert).GetBindStage());
                 else
-                    Assert.IsNull(((SnowflakeDbCommand)insert).GetBindStage());
+                    Assert.Null(((SnowflakeDbCommand)insert).GetBindStage());
             }
         }
 
@@ -1097,13 +1110,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             switch (_columnType)
             {
                 case SFDataType.TIMESTAMP_TZ:
-                    Assert.AreEqual(GetDateTimeOffsets()[index].ToString(comparisonFormat), ((DateTimeOffset)actual).ToString(comparisonFormat), faultMessage);
+                    Assert.Equal(GetDateTimeOffsets()[index].ToString(comparisonFormat), ((DateTimeOffset)actual).ToString(comparisonFormat));
                     break;
                 case SFDataType.TIMESTAMP_LTZ:
-                    Assert.AreEqual(GetDateTimeOffsets()[index].ToUniversalTime().ToString(comparisonFormat), ((DateTimeOffset)actual).ToUniversalTime().ToString(comparisonFormat), faultMessage);
+                    Assert.Equal(GetDateTimeOffsets()[index].ToUniversalTime().ToString(comparisonFormat), ((DateTimeOffset)actual).ToUniversalTime().ToString(comparisonFormat));
                     break;
                 default:
-                    Assert.AreEqual(GetDateTimes()[index].ToString(comparisonFormat), ((DateTime)actual).ToString(comparisonFormat), faultMessage);
+                    Assert.Equal(GetDateTimes()[index].ToString(comparisonFormat), ((DateTime)actual).ToString(comparisonFormat));
                     break;
             }
         }

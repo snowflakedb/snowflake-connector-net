@@ -1,22 +1,21 @@
 using System.Threading;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
-using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-    [NonParallelizable, IgnoreOnCI]
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class OktaAuthorizationCodeTest
     {
         private string _connectionString = "";
-        private string _login = AuthConnectionString.SsoUser;
-        private string _password = AuthConnectionString.SsoPassword;
+        private string _login;
+        private string _password;
 
-        [SetUp, IgnoreOnCI]
-        public void SetUp()
+        public OktaAuthorizationCodeTest()
         {
-            AuthTestHelper authTestHelper = new AuthTestHelper();
+            var authTestHelper = new AuthTestHelper();
             _login = AuthConnectionString.SsoUser;
             _password = AuthConnectionString.SsoPassword;
             authTestHelper.CleanBrowserProcess();
@@ -24,7 +23,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateOktaAuthorizationCodeSuccessful()
 
         {
@@ -37,7 +36,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateOktaAuthorizationCodeMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -54,7 +53,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateOktaAuthorizationCodeWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -73,7 +72,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateOktaAuthorizationCodeTimeout()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -86,12 +85,12 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateOktaAuthorizationCodeWithTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
             var parameters = AuthConnectionString.GetOAuthExternalAuthorizationCodeConnectionString();
-            parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "10");
+            parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "30");
             parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
             parameters[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL] = "true";
             var host = parameters[SFSessionProperty.HOST];

@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Revocation;
@@ -11,14 +12,21 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
     public class SFHttpClientPropertiesTest
     {
-        [Test]
+        [SFTheory]
+        [InlineData(false, false, false)]
+        [InlineData(false, false, true)]
+        [InlineData(false, true, false)]
+        [InlineData(false, true, true)]
+        [InlineData(true, false, false)]
+        [InlineData(true, false, true)]
+        [InlineData(true, true, false)]
+        [InlineData(true, true, true)]
         public void TestConvertToMapOnly2Properties(
-            [Values(true, false)] bool validateDefaultParameters,
-            [Values(true, false)] bool clientSessionKeepAlive,
-            [Values(true, false)] bool clientStoreTemporaryCredential)
+            bool validateDefaultParameters,
+            bool clientSessionKeepAlive,
+            bool clientStoreTemporaryCredential)
         {
             // arrange
             var proxyProperties = new SFSessionHttpClientProxyProperties()
@@ -47,16 +55,16 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var parameterMap = properties.ToParameterMap();
 
             // assert
-            Assert.AreEqual(3, parameterMap.Count);
-            Assert.AreEqual(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
-            Assert.AreEqual(clientSessionKeepAlive, parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
-            Assert.AreEqual(clientStoreTemporaryCredential, parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
+            Assert.Equal(3, parameterMap.Count);
+            Assert.Equal(validateDefaultParameters, parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS]);
+            Assert.Equal(clientSessionKeepAlive, parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE]);
+            Assert.Equal(clientStoreTemporaryCredential, parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
         }
 
-        [Test]
-        [TestCase(1)]
-        [TestCase(10)]
-        [TestCase(100)]
+        [SFTheory]
+        [InlineData(1)]
+        [InlineData(10)]
+        [InlineData(100)]
         public void TestSettingConnectionLimitProperty(int expectedConnectionLimit)
         {
             // arrange
@@ -67,10 +75,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(expectedConnectionLimit, extractedProperties._servicePointConnectionLimit);
+            Assert.Equal(expectedConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
-        [Test]
+        [SFFact]
         public void TestSettingConnectionLimitPropertyToLessThan1()
         {
             // arrange
@@ -81,10 +89,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
-        [Test]
+        [SFFact]
         public void TestSettingConnectionLimitPropertyToGreaterThanMaxConnectionLimit()
         {
             // arrange
@@ -95,10 +103,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
-        [Test]
+        [SFFact]
         public void TestSettingConnectionLimitPropertyToNoValue()
         {
             // arrange
@@ -109,15 +117,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
+            Assert.Equal(SFSessionHttpClientProperties.DefaultConnectionLimit, extractedProperties._servicePointConnectionLimit);
         }
 
-        [Test]
-        [TestCase("abc")]
-        [TestCase("1.5")]
-        [TestCase("true")]
-        [TestCase("-2.3")]
-        [TestCase("null")]
+        [SFTheory]
+        [InlineData("abc")]
+        [InlineData("1.5")]
+        [InlineData("true")]
+        [InlineData("-2.3")]
+        [InlineData("null")]
         public void TestThrowsExceptionWhenSettingConnectionLimitPropertyToNonIntegerValue(string nonIntegerValue)
         {
             // arrange
@@ -129,13 +137,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()));
 
             // assert
-            Assert.AreEqual(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
-            Assert.IsTrue(thrown.Message.Contains(expectedErrorMessage));
+            Assert.Equal(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.True(thrown.Message.Contains(expectedErrorMessage));
         }
 
-        [Test]
-        [TestCase(100)]
-        [TestCase(20971520)]
+        [SFTheory]
+        [InlineData(100)]
+        [InlineData(20971520)]
         public void TestValidCrlDownloadMaxSize(long validMaxSize)
         {
             // arrange
@@ -147,10 +155,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var config = extractedProperties.BuildHttpClientConfig();
 
             // assert
-            Assert.AreEqual(validMaxSize, config.CrlDownloadMaxSize);
+            Assert.Equal(validMaxSize, config.CrlDownloadMaxSize);
         }
 
-        [Test]
+        [SFFact]
         public void TestBuildHttpClientConfig()
         {
             // arrange
@@ -160,25 +168,25 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var config = properties.BuildHttpClientConfig();
 
             // assert
-            Assert.AreEqual(properties._certRevocationCheckMode, config.CertRevocationCheckMode);
-            Assert.AreEqual(properties._enableCrlDiskCaching, config.EnableCRLDiskCaching);
-            Assert.AreEqual(properties._enableCrlInMemoryCaching, config.EnableCRLInMemoryCaching);
-            Assert.AreEqual(properties._allowCertificatesWithoutCrlUrl, config.AllowCertificatesWithoutCrlUrl);
-            Assert.AreEqual(properties.proxyProperties.proxyHost, config.ProxyHost);
-            Assert.AreEqual(properties.proxyProperties.proxyPort, config.ProxyPort);
-            Assert.AreEqual(properties.proxyProperties.proxyUser, config.ProxyUser);
-            Assert.AreEqual(properties.proxyProperties.proxyPassword, config.ProxyPassword);
-            Assert.AreEqual(properties.proxyProperties.nonProxyHosts, config.NoProxyList);
-            Assert.AreEqual(properties.disableRetry, config.DisableRetry);
-            Assert.AreEqual(properties.forceRetryOn404, config.ForceRetryOn404);
-            Assert.AreEqual(properties.maxHttpRetries, config.MaxHttpRetries);
+            Assert.Equal(properties._certRevocationCheckMode, config.CertRevocationCheckMode);
+            Assert.Equal(properties._enableCrlDiskCaching, config.EnableCRLDiskCaching);
+            Assert.Equal(properties._enableCrlInMemoryCaching, config.EnableCRLInMemoryCaching);
+            Assert.Equal(properties._allowCertificatesWithoutCrlUrl, config.AllowCertificatesWithoutCrlUrl);
+            Assert.Equal(properties.proxyProperties.proxyHost, config.ProxyHost);
+            Assert.Equal(properties.proxyProperties.proxyPort, config.ProxyPort);
+            Assert.Equal(properties.proxyProperties.proxyUser, config.ProxyUser);
+            Assert.Equal(properties.proxyProperties.proxyPassword, config.ProxyPassword);
+            Assert.Equal(properties.proxyProperties.nonProxyHosts, config.NoProxyList);
+            Assert.Equal(properties.disableRetry, config.DisableRetry);
+            Assert.Equal(properties.forceRetryOn404, config.ForceRetryOn404);
+            Assert.Equal(properties.maxHttpRetries, config.MaxHttpRetries);
         }
 
-        [Test]
-        [TestCase("enabled", true, false)]
-        [TestCase("disabled", false, false)]
-        [TestCase("advisory", true, false)]
-        [TestCase("native", false, true)]
+        [SFTheory]
+        [InlineData("enabled", true, false)]
+        [InlineData("disabled", false, false)]
+        [InlineData("advisory", true, false)]
+        [InlineData("native", false, true)]
         public void TestIsCustomCrlCheckConfigured(string certCheckMode, bool expectedCustomCrlCheck, bool expectedDotnetCrlCheck)
         {
             // arrange
@@ -191,8 +199,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isDotnetCrlCheck = config.IsDotnetCrlCheckEnabled();
 
             // assert
-            Assert.AreEqual(expectedCustomCrlCheck, isCustomCrlCheck);
-            Assert.AreEqual(expectedDotnetCrlCheck, isDotnetCrlCheck);
+            Assert.Equal(expectedCustomCrlCheck, isCustomCrlCheck);
+            Assert.Equal(expectedDotnetCrlCheck, isDotnetCrlCheck);
         }
 
         private SFSessionHttpClientProperties RandomSFSessionHttpClientProperties()
@@ -223,11 +231,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             };
         }
 
-        [Test]
-        [TestCase("account=test;user=test;password=test;minTls=tls13;maxTls=tls13", "tls13", "tls13")]
-        [TestCase("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", "tls12", "tls13")]
-        [TestCase("account=test;user=test;password=test;minTls=tls12;maxTls=tls12", "tls12", "tls12")]
-        [TestCase("account=test;user=test;password=test", "tls12", "tls13")]
+        [SFTheory]
+        [InlineData("account=test;user=test;password=test;minTls=tls13;maxTls=tls13", "tls13", "tls13")]
+        [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", "tls12", "tls13")]
+        [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls12", "tls12", "tls12")]
+        [InlineData("account=test;user=test;password=test", "tls12", "tls13")]
         public void TestSslProperties(string connectionString, string expectedMinTls, string expectedMaxTls)
         {
             // arrange
@@ -235,27 +243,27 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // act
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
             // assert
-            Assert.AreEqual(extractedProperties._minTlsProtocol, expectedMinTls);
-            Assert.AreEqual(extractedProperties._maxTlsProtocol, expectedMaxTls);
+            Assert.Equal(extractedProperties._minTlsProtocol, expectedMinTls);
+            Assert.Equal(extractedProperties._maxTlsProtocol, expectedMaxTls);
         }
 
-        [Test]
+        [SFFact]
         public void TestSslPropertiesFailure()
         {
             // act & assert
             var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;minTls=tls13;maxTls=tls12", new SessionPropertiesContext()));
-            Assert.That(exception.Message.Contains("Connection string is invalid: Parameter MINTLS value cannot be higher than MAXTLS value."));
+            Assert.True(exception.Message.Contains("Connection string is invalid: Parameter MINTLS value cannot be higher than MAXTLS value."));
         }
 
-        [Test]
+        [SFFact]
         public void TestSslInvalidPropertyFailure()
         {
             // act & assert
             var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;minTls=tls11;maxTls=tls11", new SessionPropertiesContext()));
-            Assert.That(exception.Message.Contains("Connection string is invalid: Parameter MINTLS should have one of the following values: TLS12, TLS13."));
+            Assert.True(exception.Message.Contains("Connection string is invalid: Parameter MINTLS should have one of the following values: TLS12, TLS13."));
         }
 
-        [Test, TestCaseSource(nameof(PropertiesProvider))]
+        [SFTheory, MemberData(nameof(PropertiesProvider))]
         public void TestExtractProperties(PropertiesTestCase testCase)
         {
             // arrange
@@ -266,22 +274,22 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
 
             // assert
-            Assert.AreEqual(testCase.expectedProperties.validateDefaultParameters, extractedProperties.validateDefaultParameters);
-            Assert.AreEqual(testCase.expectedProperties.clientSessionKeepAlive, extractedProperties.clientSessionKeepAlive);
-            Assert.AreEqual(testCase.expectedProperties.connectionTimeout, extractedProperties.connectionTimeout);
-            Assert.AreEqual(testCase.expectedProperties._clientStoreTemporaryCredential, extractedProperties._clientStoreTemporaryCredential);
-            Assert.AreEqual(testCase.expectedProperties._certRevocationCheckMode, extractedProperties._certRevocationCheckMode);
-            Assert.AreEqual(testCase.expectedProperties._enableCrlDiskCaching, extractedProperties._enableCrlDiskCaching);
-            Assert.AreEqual(testCase.expectedProperties._enableCrlInMemoryCaching, extractedProperties._enableCrlInMemoryCaching);
-            Assert.AreEqual(testCase.expectedProperties._allowCertificatesWithoutCrlUrl, extractedProperties._allowCertificatesWithoutCrlUrl);
-            Assert.AreEqual(testCase.expectedProperties.disableRetry, extractedProperties.disableRetry);
-            Assert.AreEqual(testCase.expectedProperties.forceRetryOn404, extractedProperties.forceRetryOn404);
-            Assert.AreEqual(testCase.expectedProperties.retryTimeout, extractedProperties.retryTimeout);
-            Assert.AreEqual(testCase.expectedProperties.maxHttpRetries, extractedProperties.maxHttpRetries);
+            Assert.Equal(testCase.expectedProperties.validateDefaultParameters, extractedProperties.validateDefaultParameters);
+            Assert.Equal(testCase.expectedProperties.clientSessionKeepAlive, extractedProperties.clientSessionKeepAlive);
+            Assert.Equal(testCase.expectedProperties.connectionTimeout, extractedProperties.connectionTimeout);
+            Assert.Equal(testCase.expectedProperties._clientStoreTemporaryCredential, extractedProperties._clientStoreTemporaryCredential);
+            Assert.Equal(testCase.expectedProperties._certRevocationCheckMode, extractedProperties._certRevocationCheckMode);
+            Assert.Equal(testCase.expectedProperties._enableCrlDiskCaching, extractedProperties._enableCrlDiskCaching);
+            Assert.Equal(testCase.expectedProperties._enableCrlInMemoryCaching, extractedProperties._enableCrlInMemoryCaching);
+            Assert.Equal(testCase.expectedProperties._allowCertificatesWithoutCrlUrl, extractedProperties._allowCertificatesWithoutCrlUrl);
+            Assert.Equal(testCase.expectedProperties.disableRetry, extractedProperties.disableRetry);
+            Assert.Equal(testCase.expectedProperties.forceRetryOn404, extractedProperties.forceRetryOn404);
+            Assert.Equal(testCase.expectedProperties.retryTimeout, extractedProperties.retryTimeout);
+            Assert.Equal(testCase.expectedProperties.maxHttpRetries, extractedProperties.maxHttpRetries);
             Assert.NotNull(proxyProperties);
         }
 
-        public static IEnumerable<PropertiesTestCase> PropertiesProvider()
+        public static IEnumerable<object[]> PropertiesProvider()
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             var defaultProperties = new PropertiesTestCase()
@@ -572,7 +580,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                     _allowCertificatesWithoutCrlUrl = false
                 }
             };
-            return new[]
+            return new PropertiesTestCase[]
             {
                 defaultProperties,
                 propertiesWithValidateDefaultParametersChanged,
@@ -589,7 +597,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
                 propertiesWithMaxHttpRetriesChangedToAValueAbove7,
                 propertiesWithMaxHttpRetriesChangedToAValueBelow7,
                 propertiesWithMaxHttpRetriesChangedToZero
-            };
+            }.Select(tc => new object[] { tc });
         }
 
         public class PropertiesTestCase

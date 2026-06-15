@@ -1,34 +1,38 @@
 using System.Data;
-using NUnit.Framework;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
-    public class SFMaxLobSizeSwitchIT : SFBaseTest
+    public class SFMaxLobSizeSwitchIT : SFBaseTestAsync
     {
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public SFMaxLobSizeSwitchIT(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
+
         private const string SqlSelectLargeString = "select randstr(20000000, random()) as large_str";
 
-        [Test]
-        [Ignore("TODO: Enable when Max LOB size is available on the automated tests environment")]
-        public void TestIncreaseMaxLobSizeParameterSwitchSelect()
+        [SFFact(Skip = "TODO: Enable when Max LOB size is available on the automated tests environment")]
+        public async Task TestIncreaseMaxLobSizeParameterSwitchSelect()
         {
-            using (var conn = new SnowflakeDbConnection(ConnectionString + "poolingEnabled=false"))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
             {
-                conn.Open();
+                await conn.OpenAsync(CancellationToken.None);
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "alter session set ENABLE_LARGE_VARCHAR_AND_BINARY_IN_RESULT=false";
                 cmd.ExecuteNonQuery();
 
                 cmd.CommandText = SqlSelectLargeString;
                 var thrown = Assert.Throws<SnowflakeDbException>(() => cmd.ExecuteReader());
-                Assert.That(thrown.Message, Does.Contain("exceeds supported length"));
+                Assert.Contains("exceeds supported length", thrown.Message);
 
                 cmd.CommandText = "alter session set ENABLE_LARGE_VARCHAR_AND_BINARY_IN_RESULT=true";
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = SqlSelectLargeString;
                 var reader = cmd.ExecuteReader();
-                Assert.IsTrue(reader.Read());
+                Assert.True(reader.Read());
             }
         }
     }

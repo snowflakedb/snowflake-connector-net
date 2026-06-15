@@ -1,24 +1,24 @@
 using System;
-using NUnit.Framework;
+using Xunit;
 using Moq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    [TestFixture]
     public class ClientFeatureFlagsTest
     {
-        [Test]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "true", true)]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "TRUE", true)]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "false", false)]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "", false)]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, null, false)]
-        [TestCase(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "not a bool value", false)]
-        [TestCase("OTHER_VARIABLE_NAME", "true", false)]
+        [SFTheory]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "true", true)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "TRUE", true)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "false", false)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "", false)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, null, false)]
+        [InlineData(ClientFeatureFlags.EnabledExperimentalAuthenticationVariableName, "not a bool value", false)]
+        [InlineData("OTHER_VARIABLE_NAME", "true", false)]
         public void TestEnabledExperimentalAuthentication(string variableName, string variableValue, bool expectedValue)
         {
             // arrange
@@ -31,10 +31,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var clientFeatures = new ClientFeatureFlags(environmentOperations.Object);
 
             // assert
-            Assert.AreEqual(expectedValue, clientFeatures.IsEnabledExperimentalAuthentication);
+            Assert.Equal(expectedValue, clientFeatures.IsEnabledExperimentalAuthentication);
         }
 
-        [Test]
+        [SFFact]
         public void TestDisabledExperimentalAuthenticationWhenCouldNotReadEnvVariable()
         {
             // arrange
@@ -47,10 +47,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var clientFeatures = new ClientFeatureFlags(environmentOperations.Object);
 
             // assert
-            Assert.IsFalse(clientFeatures.IsEnabledExperimentalAuthentication);
+            Assert.False(clientFeatures.IsEnabledExperimentalAuthentication);
         }
 
-        [Test]
+        [SFFact]
         public void TestFailForDisabledAuthentication()
         {
             // arrange
@@ -64,8 +64,8 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var thrown = Assert.Throws<SnowflakeDbException>(() => clientFeatures.VerifyIfExperimentalAuthenticationEnabled("workload_identity"));
 
             // assert
-            Assert.AreEqual(SFError.EXPERIMENTAL_AUTHENTICATION_DISABLED.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
-            Assert.That(thrown.Message, Does.Contain("Experimental authentication of 'workload_identity' is disabled. You can enable it by SF_ENABLE_EXPERIMENTAL_AUTHENTICATION environmental variable."));
+            Assert.Equal(SFError.EXPERIMENTAL_AUTHENTICATION_DISABLED.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.Contains("Experimental authentication of 'workload_identity' is disabled. You can enable it by SF_ENABLE_EXPERIMENTAL_AUTHENTICATION environmental variable.", thrown.Message);
         }
     }
 }

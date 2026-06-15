@@ -1,5 +1,5 @@
 using System;
-using System.Threading;
+using System.Threading.Tasks;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Tests.Util
@@ -8,18 +8,18 @@ namespace Snowflake.Data.Tests.Util
     {
         private static readonly TimeSpan s_defaultDelay = TimeSpan.FromMilliseconds(200);
 
-        public static void WaitUntilConditionOrTimeout(Func<bool> condition, TimeSpan timeout)
+        public static Task WaitUntilConditionOrTimeout(Func<bool> condition, TimeSpan timeout)
         {
-            WaitUntilConditionOrTimeout(condition, timeout, s_defaultDelay);
+            return WaitUntilConditionOrTimeout(condition, timeout, s_defaultDelay);
         }
 
-        public static void WaitUntilConditionOrTimeout(Func<bool> condition, TimeSpan timeout, TimeSpan delay)
+        public static async Task WaitUntilConditionOrTimeout(Func<bool> condition, TimeSpan timeout, TimeSpan delay)
         {
             var startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var breakTime = TimeoutHelper.IsInfinite(timeout) ? long.MaxValue : startTime + timeout.TotalMilliseconds;
             while (!condition() && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < breakTime)
             {
-                Thread.Sleep(delay);
+                await Task.Delay(delay);
             }
         }
     }
