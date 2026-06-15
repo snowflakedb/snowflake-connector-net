@@ -1,21 +1,23 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using NUnit.Framework;
+using System.Threading.Tasks;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
-    [IgnoreOnJenkins]
-    public class CertificateRevocationIT : SFBaseTest
+    public class CertificateRevocationIT : SFBaseTestAsync
     {
-        [Test]
-        [Ignore("Temporarily ignored")]
-        public void TestCertificate()
+        private readonly SFBaseTestAsyncFixture _fixture;
+        public CertificateRevocationIT(SFBaseTestAsyncFixture fixture) : base(fixture) { _fixture = fixture; }
+
+        [SFFact(SkipCondition.SkipOnJenkins, Skip = "Temporarily ignored")]
+        public async Task TestCertificate()
         {
             // arrange
             var config = new HttpClientConfig(
@@ -41,12 +43,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var thrown = Assert.Throws<AggregateException>(() => restRequester.Get(new RestRequestWrapper(request)));
 
             // assert
-            Assert.That(thrown.InnerException, Is.TypeOf<HttpRequestException>());
+            Assert.IsType<HttpRequestException>(thrown.InnerException);
             var innerException = (HttpRequestException)thrown.InnerException;
 #if NETFRAMEWORK
-            Assert.That(innerException.Message, Does.Contain("Unauthorized"));
+            Assert.Contains("Unauthorized", innerException.Message);
 #else
-            Assert.AreEqual(HttpStatusCode.Unauthorized, innerException.StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, innerException.StatusCode);
 #endif
             // In case of failed revocation check the StatusCode would be null
             // and HttpRequestException would contain an inner exception of type AuthenticationException
@@ -56,7 +58,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private HttpRequestMessage CreateRequest()
         {
-            var host = string.IsNullOrEmpty(testConfig.host) ? $"{testConfig.account}.snowflakecomputing.com" : testConfig.host;
+            var host = string.IsNullOrEmpty(_fixture.testConfig.host) ? $"{_fixture.testConfig.account}.snowflakecomputing.com" : _fixture.testConfig.host;
             var request = new HttpRequestMessage(HttpMethod.Post, $"https://{host}/queries/v1/abort-request");
             var timeout = TimeSpan.FromSeconds(30);
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, timeout);

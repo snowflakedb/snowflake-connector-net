@@ -1,5 +1,6 @@
+using System;
 using System.IO;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
@@ -8,7 +9,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public abstract class BaseOAuthFlowTest
+    public abstract class BaseOAuthFlowTest : IDisposable
     {
         protected static readonly string s_oauthMappingPath = Path.Combine("wiremock", "OAuth");
         protected static readonly string s_oauthSnowflakeLoginSuccessMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_successful_login.json");
@@ -32,23 +33,21 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         protected const string TokenHost = "localhost";
         protected const string ClientSecret = "123";
 
-        [SetUp]
-        public void SetUp()
+        protected BaseOAuthFlowTest()
         {
             Runner = WiremockRunner.NewWiremock();
         }
 
-        [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             Runner.Stop();
         }
 
         internal void AssertSessionSuccessfullyCreated(SFSession session)
         {
-            Assert.AreEqual(SessionId, session.sessionId);
-            Assert.AreEqual(MasterToken, session.masterToken);
-            Assert.AreEqual(SessionToken, session.sessionToken);
+            Assert.Equal(SessionId, session.sessionId);
+            Assert.Equal(MasterToken, session.masterToken);
+            Assert.Equal(SessionToken, session.sessionToken);
         }
 
         protected int InMemoryCacheCount()

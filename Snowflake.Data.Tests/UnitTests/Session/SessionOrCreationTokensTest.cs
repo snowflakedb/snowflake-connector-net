@@ -1,17 +1,17 @@
 using System;
 using System.Linq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
     public class SessionOrCreationTokensTest
     {
         private SFSession _session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
 
-        [Test]
+        [SFFact]
         public void TestNoBackgroundSessionsToCreateWhenInitialisedWithSession()
         {
             // arrange
@@ -20,10 +20,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // act
             var backgroundCreationTokens = sessionOrTokens.BackgroundSessionCreationTokens();
 
-            Assert.AreEqual(0, backgroundCreationTokens.Count);
+            Assert.Equal(0, backgroundCreationTokens.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnFirstCreationToken()
         {
             // arrange
@@ -37,10 +37,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var token = sessionOrTokens.SessionCreationToken();
 
             // assert
-            Assert.AreSame(tokens[0], token);
+            Assert.Same(tokens[0], token);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnCreationTokensFromTheSecondOneForBackgroundExecution()
         {
             // arrange
@@ -54,9 +54,9 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var backgroundTokens = sessionOrTokens.BackgroundSessionCreationTokens();
 
             // assert
-            Assert.AreEqual(2, backgroundTokens.Count);
-            Assert.AreSame(tokens[1], backgroundTokens[0]);
-            Assert.AreSame(tokens[2], backgroundTokens[1]);
+            Assert.Equal(2, backgroundTokens.Count);
+            Assert.Same(tokens[1], backgroundTokens[0]);
+            Assert.Same(tokens[2], backgroundTokens[1]);
         }
     }
 }

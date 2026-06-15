@@ -1,63 +1,62 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Client;
-
-    [TestFixture]
-    class SFDbCommandBuilderTest
+    public sealed class SFDbCommandBuilderTest
     {
         SnowflakeDbCommandBuilder builder;
 
-        [SetUp]
-        public void BeforeTest()
+        public SFDbCommandBuilderTest()
         {
             builder = new SnowflakeDbCommandBuilder();
         }
 
-        [Test]
+        [SFFact]
         public void TestDefaultCommandBuilder()
         {
-            Assert.AreEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
-            Assert.AreEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
+            Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
+            Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
         }
 
-        [Test]
+        [SFFact]
         public void TestCommandBuilderWithoutAdapter()
         {
             builder = new SnowflakeDbCommandBuilder();
-            Assert.AreEqual(null, builder.DataAdapter);
+            Assert.Equal(null, builder.DataAdapter);
         }
 
-        [Test]
+        [SFFact]
         public void TestCommandBuilderWithAdapter()
         {
             SnowflakeDbDataAdapter adapter = new SnowflakeDbDataAdapter();
             builder = new SnowflakeDbCommandBuilder(adapter);
-            Assert.AreEqual(adapter, builder.DataAdapter);
-            Assert.AreEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
-            Assert.AreEqual(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
+            Assert.Equal(adapter, builder.DataAdapter);
+            Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
+            Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
         }
 
-        [Test]
+        [SFFact]
         public void TestCommandBuilderSetPrefix()
         {
             string newQuotePrefix = "\'";
 
-            Assert.AreNotEqual(newQuotePrefix, builder.QuotePrefix);
+            Assert.NotEqual(newQuotePrefix, builder.QuotePrefix);
 
             builder.QuotePrefix = newQuotePrefix;
-            Assert.AreEqual(newQuotePrefix, builder.QuotePrefix);
+            Assert.Equal(newQuotePrefix, builder.QuotePrefix);
         }
 
-        [Test]
+        [SFFact]
         public void TestCommandBuilderSetSuffix()
         {
             string newQuoteSuffix = "\'";
 
-            Assert.AreNotEqual(newQuoteSuffix, builder.QuoteSuffix);
+            Assert.NotEqual(newQuoteSuffix, builder.QuoteSuffix);
 
             builder.QuoteSuffix = newQuoteSuffix;
-            Assert.AreEqual(newQuoteSuffix, builder.QuoteSuffix);
+            Assert.Equal(newQuoteSuffix, builder.QuoteSuffix);
         }
     }
 }

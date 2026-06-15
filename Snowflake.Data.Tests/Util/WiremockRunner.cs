@@ -17,13 +17,22 @@ using WireMock.Settings;
 
 namespace Snowflake.Data.Tests.Util
 {
-    public sealed class WiremockRunner : IDisposable
+    public interface IWiremockRunner : IDisposable
+    {
+        string WiremockBaseHttpUrl { get; }
+        void Stop();
+        void ResetMapping();
+        void AddMappings(string file, StringTransformations transformations = null);
+    }
+
+    public sealed class WiremockRunner : IWiremockRunner
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WiremockRunner>();
         private WireMockServer _server;
 
         public string Url => _server.Urls.First(u => u.StartsWith("http://"));
         public string SslUrl => _server.Urls.First(u => u.StartsWith("https://"));
+        public string WiremockBaseHttpUrl => Url;
 
         public static WiremockRunner NewWiremock(string[] mappingFiles = null)
         {

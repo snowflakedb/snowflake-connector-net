@@ -1,22 +1,22 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture]
     public class MFACacheAuthenticatorTest
     {
-        [Test]
-        [TestCase("username_password_mfa", true)]
-        [TestCase("USERNAME_PASSWORD_MFA", true)]
-        [TestCase("snowflake", false)]
+        [SFTheory]
+        [InlineData("username_password_mfa", true)]
+        [InlineData("USERNAME_PASSWORD_MFA", true)]
+        [InlineData("snowflake", false)]
         public void TestRecognizeMfaAuthenticator(string authenticator, bool expectedResult)
         {
             // act
             var result = MFACacheAuthenticator.IsMfaCacheAuthenticator(authenticator);
 
             // assert
-            Assert.AreEqual(expectedResult, result);
+            Assert.Equal(expectedResult, result);
         }
     }
 }

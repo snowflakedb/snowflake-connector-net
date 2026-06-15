@@ -12,7 +12,7 @@ namespace Snowflake.Data.Logger
         {
             ValidatorOperations.Instance.ValidateUserAndGroupPermissions(stream);
             if ((stream.FileAccessPermissions & ~EasyLoggingStarter.Instance._logFileUnixPermissions) != 0)
-                ValidatorOperations.Instance.ThrowSecurityException("Attempting to read or write to log file with too broad permissions assigned");
+                ValidatorOperations.Instance.ThrowSecurityException("Attempting to read or write to log file with too broad permissions assigned", false);
         }
     }
 }

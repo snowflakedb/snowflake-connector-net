@@ -1,15 +1,34 @@
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
+    [CollectionDefinition(nameof(WiremockRunnerTestFixture), DisableParallelization = true)]
+    public sealed class WiremockRunnerTestFixture : ICollectionFixture<WiremockRunnerTestFixture.Fixture>
+    {
+        public sealed class Fixture : IDisposable
+        {
+            internal WiremockRunner _runner { get; set; }
+
+            public Fixture()
+            {
+                _runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                _runner.Stop();
+            }
+        }
+    }
+
+    [Collection(nameof(WiremockRunnerTestFixture))]
     public class WiremockRunnerTest
     {
-        private WiremockRunner _runner;
         private readonly HttpClient _httpClient = new(
             new HttpClientHandler
             {
@@ -18,48 +37,43 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
         );
 
-        [SetUp]
-        public void SetUp()
+        private readonly WiremockRunner _runner;
+
+        public WiremockRunnerTest(WiremockRunnerTestFixture.Fixture fixture)
         {
-            _runner = WiremockRunner.NewWiremock();
+            _runner = fixture._runner;
+            _runner.ResetMapping();
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            _runner.Dispose();
-        }
-
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestRunnerAddMapping()
         {
             // arrange
             _runner.AddMappings("wiremock/test_mapping.json");
 
             //act
-            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.SslUrl + "/test")).Result;
+            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.Url + "/test")).Result;
 
             // assert
             Assert.True(response.IsSuccessStatusCode);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestWiremockResetMapping()
         {
             // arrange
             _runner.AddMappings("wiremock/test_mapping.json");
-            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.SslUrl + "/test")).Result;
+            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.Url + "/test")).Result;
             Assert.True(response.IsSuccessStatusCode);
 
             // act
             _runner.ResetMapping();
-            response = Task.Run(async () => await _httpClient.GetAsync(_runner.Url + "/__admin/mappings")).Result;
+            response = Task.Run(async () => await _httpClient.GetAsync(_runner.WiremockBaseHttpUrl + "/__admin/mappings")).Result;
 
             // assert
             Assert.True(response.IsSuccessStatusCode);
-            var json = Task.Run(async () => await response.Content.ReadAsStringAsync()).Result;
-            var mappings = JsonConvert.DeserializeObject<dynamic[]>(json);
-            Assert.AreEqual(0, mappings.Length);
+            dynamic jsonObject = JsonConvert.DeserializeObject(Task.Run(async () => await response.Content.ReadAsStringAsync()).Result);
+            Assert.Equal("0", jsonObject?.meta.total.ToString());
         }
     }
 }

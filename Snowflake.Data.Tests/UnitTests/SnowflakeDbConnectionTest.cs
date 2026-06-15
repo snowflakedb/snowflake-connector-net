@@ -4,19 +4,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using Mono.Unix;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
+    [CollectionDefinition(nameof(SnowflakeDbConnectionTestFixture), DisableParallelization = true)]
+    public sealed class SnowflakeDbConnectionTestFixture { }
 
-    [TestFixture, NonParallelizable]
+    [Collection(nameof(SnowflakeDbConnectionTestFixture))]
     public class SnowflakeDbConnectionTest
     {
-        [Test]
+        [SFFact]
         public void TestFillConnectionStringFromTomlConfig()
         {
             // Arrange
@@ -34,11 +37,11 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 conn.FillConnectionStringFromTomlConfigIfNotSet();
                 // Assert
-                Assert.AreEqual("account=testaccount;user=testuser;password=testpassword;", conn.ConnectionString);
+                Assert.Equal("account=testaccount;user=testuser;password=testpassword;", conn.ConnectionString);
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestTomlConfigurationDoesNotOverrideExistingConnectionString()
         {
             // Arrange
@@ -56,11 +59,11 @@ namespace Snowflake.Data.Tests.UnitTests
                 conn.ConnectionString = connectionTest;
                 conn.FillConnectionStringFromTomlConfigIfNotSet();
                 // Assert
-                Assert.AreEqual(connectionTest, conn.ConnectionString);
+                Assert.Equal(connectionTest, conn.ConnectionString);
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestUseConfigurationProvidedOutsideOfConnectionString()
         {
             // arrange
@@ -109,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestUseConfigurationProvidedOutsideOfConnectionStringAsync()
         {
             // arrange

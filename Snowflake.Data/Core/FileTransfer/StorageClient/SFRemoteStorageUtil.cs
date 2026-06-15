@@ -310,6 +310,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="fileMetadata">The file metadata of the file to download</param>
         internal static void DownloadOneFile(SFFileMetadata fileMetadata)
         {
+            PathValidator.ValidateFileDestinationPath(fileMetadata.localLocation, fileMetadata.destFileName);
             string fullDstPath = fileMetadata.localLocation;
             fullDstPath = Path.Combine(fullDstPath, fileMetadata.destFileName);
 
@@ -394,6 +395,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="fileMetadata">The file metadata of the file to download</param>
         internal static async Task DownloadOneFileAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
+            PathValidator.ValidateFileDestinationPath(fileMetadata.localLocation, fileMetadata.destFileName);
             string fullDstPath = fileMetadata.localLocation;
             fullDstPath = Path.Combine(fullDstPath, fileMetadata.destFileName);
 

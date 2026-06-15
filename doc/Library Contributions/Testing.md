@@ -16,6 +16,9 @@ Before running tests, create a parameters.json file under Snowflake.Data.Tests\ 
   }
 }
 ```
+## IDE
+
+Tests can be run under IDE of your choice (Visual Studio, Rider, VS Code). Open the solution file and run tests using Test Explorer.
 
 ## Command Prompt
 
@@ -23,32 +26,29 @@ The build solution file builds the connector and tests binaries. Issue the follo
 
 ```{r, engine='bash', code_block_name}
 cd Snowflake.Data.Tests
-dotnet test -f net6.0 -l "console;verbosity=normal"
+dotnet test -f net10.0 -l "console;verbosity=normal"
 ```
 
 Tests can also be run under code coverage:
 
 ```{r, engine='bash', code_block_name}
-dotnet-coverage collect "dotnet test --framework net6.0 --no-build -l console;verbosity=normal" --output net6.0_coverage.xml --output-format cobertura --settings coverage.config
+dotnet-coverage collect "dotnet test --framework net10.0 --no-build -l console;verbosity=normal" --output net10.0_coverage.xml --output-format cobertura --settings coverage.config
 ```
 
-You can run only specific suite of tests (integration or unit).
+You can run tests from specific namespace
 
 Running unit tests:
 
 ```bash
 cd Snowflake.Data.Tests
-dotnet test -l "console;verbosity=normal" --filter FullyQualifiedName~UnitTests -l console;verbosity=normal
+dotnet test -l "console;verbosity=normal" -namespace "Snowflake.Data.Tests.UnitTests" -l console;verbosity=normal
 ```
 
 Running integration tests:
 
 ```bash
 cd Snowflake.Data.Tests
-dotnet test -l "console;verbosity=normal" --filter FullyQualifiedName~IntegrationTests
+dotnet test -l "console;verbosity=normal" -namespace "Snowflake.Data.Tests.IntegrationTests"
 ```
 
-## Visual Studio 2017
-
-Tests can also be run under Visual Studio 2017. Open the solution file in Visual Studio 2017 and run tests using Test Explorer.
 

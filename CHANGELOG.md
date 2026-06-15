@@ -1,11 +1,25 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- v5.8.0
+  -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
+- v5.7.0
+    - Improved input handling in `ChangeDatabase` by using parameterized queries.
+    - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.
+    - Bug fix: `OverflowException` when converting rest response with master token validity more than ~9.1h.
+    - Bug fix: Added path traversal protection for file downloads: destination paths are now validated against the target base directory before writing.
+    - Bug fix: Replaced use of System.Random with a cryptographically secure random number generator in the authenticator challenge/proof key generation and file transfer encryption key/IV generation.
 - v5.6.0
+    - Added client-side telemetry instrumentation using `System.Diagnostics.Activity` (OpenTelemetry-compatible). When `CLIENT_TELEMETRY_ENABLED=true` (the default), the driver automatically instruments all command executions
+      and their async variants and sends telemetry data to Snowflake's `/telemetry/send` endpoint. Activities are enriched with session context (warehouse, role, database, session id) and report success/error
+      status with exception details.
+    - Added public `StartActivity` extension method on `SnowflakeDbCommand` for creating custom client-defined
+      telemetry activities. Custom activities use a separate activity source (`Client_custom_activity`).
     - Added .NET 10 support. Changed LangVersion to C#13.
     - Added `DbType.AnsiStringFixedLength` to the set of types mapped to Snowflake `TEXT`, matching existing support for `AnsiString`, `String`, and `StringFixedLength`.
     - Extended login-request telemetry with libc detection (`LIBC_FAMILY`, `LIBC_VERSION`). On Linux, the driver now reports whether the runtime uses glibc and includes the library version.
     - Limited default maximal CRL size for download to 20MB.
+    - Bug fix: Fixed handling of transient server issues resulting in sending truncated JSON response.
     - Bug fix: Connections with sessions that no longer exist on the server are now detected and removed from the pool instead of being reused, which previously caused repeated failures until the connection expired on its own.
 - v5.5.0
     - Include `SPCS_TOKEN` in login requests when running inside an SPCS container (`SNOWFLAKE_RUNNING_INSIDE_SPCS` env var set).

@@ -2,16 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using NUnit.Framework;
+using Xunit;
 using System.IO;
 using System.Net;
 using Snowflake.Data.Core;
 using System.Net.Http;
 using System.Security.Authentication;
-using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.AuthenticationTests
-
 {
     static class AuthConnectionString
     {
@@ -20,7 +18,6 @@ namespace Snowflake.Data.AuthenticationTests
         public static readonly string SsoPassword = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_OKTA_PASS");
         public static readonly string SnowflakeUser = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_SNOWFLAKE_USER");
         public static readonly string SnowflakeRole = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_ROLE");
-
 
         private static SFSessionProperties GetBaseConnectionParameters()
         {
@@ -182,9 +179,9 @@ namespace Snowflake.Data.AuthenticationTests
         public static string GetPrivateKeyContentForKeypairAuth(string fileLocation)
         {
             string filePath = Environment.GetEnvironmentVariable(fileLocation);
-            Assert.IsNotNull(filePath);
+            Assert.NotNull(filePath);
             string pemKey = File.ReadAllText(Path.Combine("..", "..", "..", "..", filePath));
-            Assert.IsNotNull(pemKey, $"Failed to read file: {filePath}");
+            Assert.NotNull(pemKey);
             return pemKey;
 
         }
@@ -192,7 +189,7 @@ namespace Snowflake.Data.AuthenticationTests
         public static string GetPrivateKeyPathForKeypairAuth(string relativeFileLocationEnvVariable)
         {
             string filePath = Environment.GetEnvironmentVariable(relativeFileLocationEnvVariable);
-            Assert.IsNotNull(filePath);
+            Assert.NotNull(filePath);
             return Path.Combine("..", "..", "..", "..", filePath);
         }
 
@@ -230,7 +227,7 @@ namespace Snowflake.Data.AuthenticationTests
 
                     var fullResponse = response.Content.ReadAsStringAsync().Result;
                     var responseObject = JObject.Parse(fullResponse);
-                    Assert.IsNotNull(responseObject["access_token"]);
+                    Assert.NotNull(responseObject["access_token"]);
                     return responseObject["access_token"].ToString();
                 }
             }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
@@ -11,22 +11,21 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
     public class SessionPoolTest
     {
         private const string ConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;";
 
-        [Test]
+        [SFFact]
         public void TestPoolParametersAreNotOverriden()
         {
             // act
             var pool = SessionPool.CreateSessionPool(ConnectionString, null, null, null);
 
             // assert
-            Assert.IsFalse(pool.IsConfigOverridden());
+            Assert.False(pool.IsConfigOverridden());
         }
 
-        [Test]
+        [SFFact]
         public void TestOverrideMaxPoolSize()
         {
             // arrange
@@ -37,11 +36,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.SetMaxPoolSize(newMaxPoolSize);
 
             // assert
-            Assert.AreEqual(newMaxPoolSize, pool.GetMaxPoolSize());
-            Assert.IsTrue(pool.IsConfigOverridden());
+            Assert.Equal(newMaxPoolSize, pool.GetMaxPoolSize());
+            Assert.True(pool.IsConfigOverridden());
         }
 
-        [Test]
+        [SFFact]
         public void TestOverrideExpirationTimeout()
         {
             // arrange
@@ -52,11 +51,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.SetTimeout(newExpirationTimeoutSeconds);
 
             // assert
-            Assert.AreEqual(newExpirationTimeoutSeconds, pool.GetTimeout());
-            Assert.IsTrue(pool.IsConfigOverridden());
+            Assert.Equal(newExpirationTimeoutSeconds, pool.GetTimeout());
+            Assert.True(pool.IsConfigOverridden());
         }
 
-        [Test]
+        [SFFact]
         public void TestOverrideSetPooling()
         {
             // arrange
@@ -66,19 +65,19 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.SetPooling(false);
 
             // assert
-            Assert.IsFalse(pool.GetPooling());
-            Assert.IsTrue(pool.IsConfigOverridden());
+            Assert.False(pool.GetPooling());
+            Assert.True(pool.IsConfigOverridden());
         }
 
-        [Test]
-        [TestCase("account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443", "somePassword", "someSecret", "someToken", " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key=SomePrivateKey;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;token=someToken;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key_pwd=somePrivateKeyPwd;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;proxyPassword=someProxyPassword;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("ACCOUNT=someAccount;DB=someDb;HOST=someHost;PASSWORD=somePassword;passcode=123;USER=SomeUser;PORT=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
-        [TestCase("ACCOUNT=\"someAccount\";DB=\"someDb\";HOST=\"someHost\";PASSWORD=\"somePassword\";PASSCODE=\"123\";USER=\"SomeUser\";PORT=\"443\"", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [SFTheory]
+        [InlineData("account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443", "somePassword", "someSecret", "someToken", " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key=SomePrivateKey;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;token=someToken;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;private_key_pwd=somePrivateKeyPwd;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("account=someAccount;db=someDb;host=someHost;password=somePassword;passcode=123;user=SomeUser;proxyPassword=someProxyPassword;port=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("ACCOUNT=someAccount;DB=someDb;HOST=someHost;PASSWORD=somePassword;passcode=123;USER=SomeUser;PORT=443", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
+        [InlineData("ACCOUNT=\"someAccount\";DB=\"someDb\";HOST=\"someHost\";PASSWORD=\"somePassword\";PASSCODE=\"123\";USER=\"SomeUser\";PORT=\"443\"", null, null, null, " [pool: account=someAccount;db=someDb;host=someHost;user=SomeUser;port=443;]")]
         public void TestPoolIdentificationBasedOnConnectionString(string connectionString, string password, string clientSecret, string token, string expectedPoolIdentification)
         {
             // arrange
@@ -91,10 +90,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var poolIdentification = pool.PoolIdentificationBasedOnConnectionString;
 
             // assert
-            Assert.AreEqual(expectedPoolIdentification, poolIdentification);
+            Assert.Equal(expectedPoolIdentification, poolIdentification);
         }
 
-        [Test]
+        [SFFact]
         public void TestRetrievePoolFailureForInvalidConnectionString()
         {
             // arrange
@@ -105,10 +104,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.MISSING_CONNECTION_PROPERTY);
-            Assert.IsTrue(exception.Message.Contains("Required property PASSWORD is not provided"));
+            Assert.True(exception.Message.Contains("Required property PASSWORD is not provided"));
         }
 
-        [Test]
+        [SFFact]
         public void TestPoolIdentificationBasedOnInternalId()
         {
             // arrange
@@ -120,10 +119,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var poolIdentification = pool.PoolIdentificationBasedOnInternalId;
 
             // assert
-            Assert.IsTrue(poolIdRegex.IsMatch(poolIdentification));
+            Assert.True(poolIdRegex.IsMatch(poolIdentification));
         }
 
-        [Test]
+        [SFFact]
         public void TestPoolIdentificationForOldPool()
         {
             // arrange
@@ -133,13 +132,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var poolIdentification = pool.PoolIdentification();
 
             // assert
-            Assert.AreEqual("", poolIdentification);
+            Assert.Equal("", poolIdentification);
         }
 
-        [Test]
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase("anyPassword")]
+        [SFTheory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("anyPassword")]
         public void TestValidateValidSecurePassword(string password)
         {
             // arrange
@@ -147,13 +146,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionPool(ConnectionString, securePassword, null, null);
 
             // act
-            Assert.DoesNotThrow(() => pool.ValidateSecurePassword(securePassword));
+            pool.ValidateSecurePassword(securePassword);
         }
 
-        [Test]
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase("anySecret")]
+        [SFTheory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("anySecret")]
         public void TestValidateValidSecureClientCredentials(string oauthClientSecret)
         {
             // arrange
@@ -161,13 +160,13 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionPool(ConnectionString, null, secureOAuthClientSecret, null);
 
             // act
-            Assert.DoesNotThrow(() => pool.ValidateSecureOAuthClientSecret(secureOAuthClientSecret));
+            pool.ValidateSecureOAuthClientSecret(secureOAuthClientSecret);
         }
 
-        [Test]
-        [TestCase(null)]
-        [TestCase("")]
-        [TestCase("anySecret")]
+        [SFTheory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("anySecret")]
         public void TestValidateValidSecureToken(string token)
         {
             // arrange
@@ -175,15 +174,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionPool(ConnectionString, null, null, secureToken);
 
             // act
-            Assert.DoesNotThrow(() => pool.ValidateSecureToken(secureToken));
+            pool.ValidateSecureToken(secureToken);
         }
 
-        [Test]
-        [TestCase("somePassword", null)]
-        [TestCase("somePassword", "")]
-        [TestCase("somePassword", "anotherPassword")]
-        [TestCase("", "anotherPassword")]
-        [TestCase(null, "anotherPassword")]
+        [SFTheory]
+        [InlineData("somePassword", null)]
+        [InlineData("somePassword", "")]
+        [InlineData("somePassword", "anotherPassword")]
+        [InlineData("", "anotherPassword")]
+        [InlineData(null, "anotherPassword")]
         public void TestFailToValidateNotMatchingSecurePassword(string poolPassword, string notMatchingPassword)
         {
             // arrange
@@ -195,15 +194,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => pool.ValidateSecurePassword(notMatchingSecurePassword));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of password mismatch"));
+            Assert.Contains("Could not get a pool because of password mismatch", thrown.Message);
         }
 
-        [Test]
-        [TestCase("someSecret", null)]
-        [TestCase("someSecret", "")]
-        [TestCase("someSecret", "anotherSecret")]
-        [TestCase("", "anotherSecret")]
-        [TestCase(null, "anotherSecret")]
+        [SFTheory]
+        [InlineData("someSecret", null)]
+        [InlineData("someSecret", "")]
+        [InlineData("someSecret", "anotherSecret")]
+        [InlineData("", "anotherSecret")]
+        [InlineData(null, "anotherSecret")]
         public void TestFailToValidateNotMatchingSecureClientCredentials(string poolOAuthClientSecret, string notMatchingOAuthClientSecret)
         {
             // arrange
@@ -215,15 +214,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => pool.ValidateSecureOAuthClientSecret(notMatchingSecureOAuthClientSecret));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of oauth client secret mismatch"));
+            Assert.Contains("Could not get a pool because of oauth client secret mismatch", thrown.Message);
         }
 
-        [Test]
-        [TestCase("someToken", null)]
-        [TestCase("someToken", "")]
-        [TestCase("someToken", "anotherToken")]
-        [TestCase("", "anotherToken")]
-        [TestCase(null, "anotherToken")]
+        [SFTheory]
+        [InlineData("someToken", null)]
+        [InlineData("someToken", "")]
+        [InlineData("someToken", "anotherToken")]
+        [InlineData("", "anotherToken")]
+        [InlineData(null, "anotherToken")]
         public void TestFailToValidateNotMatchingSecureToken(string poolToken, string notMatchingToken)
         {
             // arrange
@@ -235,14 +234,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var thrown = Assert.Throws<Exception>(() => pool.ValidateSecureToken(notMatchingSecureToken));
 
             // assert
-            Assert.That(thrown.Message, Does.Contain("Could not get a pool because of token mismatch"));
+            Assert.Contains("Could not get a pool because of token mismatch", thrown.Message);
         }
 
-        [Test]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;", true)]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;", false)]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;", false)]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;", false)]
+        [SFTheory]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;", true)]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;", false)]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;", false)]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;", false)]
         public void TestConnectionPoolPoolingForOAuthAuthorizationCode(string connectionString, bool expectedPoolingEnabled)
         {
             // arrange
@@ -250,22 +249,22 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var session = CreateSessionWithCurrentStartTime(connectionString);
 
             // assert
-            Assert.AreEqual(expectedPoolingEnabled, pool.GetPooling());
+            Assert.Equal(expectedPoolingEnabled, pool.GetPooling());
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
-            Assert.AreEqual(expectedPoolingEnabled, isSessionReturnedToPool);
+            Assert.Equal(expectedPoolingEnabled, isSessionReturnedToPool);
         }
 
-        [Test]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;")]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;")]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;")]
-        [TestCase("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;")]
-        [TestCase("authenticator=oauth_client_credentials;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;oauthTokenRequestUrl=https://okta.com/token-request;")]
-        [TestCase("authenticator=programmatic_access_token;account=test;token=patToken")]
+        [SFTheory]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=true;")]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;poolingEnabled=false;")]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;user=testUser;")]
+        [InlineData("authenticator=oauth_authorization_code;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;")]
+        [InlineData("authenticator=oauth_client_credentials;account=test;role=ANALYST;oauthClientId=abc;oauthClientSecret=def;oauthTokenRequestUrl=https://okta.com/token-request;")]
+        [InlineData("authenticator=programmatic_access_token;account=test;token=patToken")]
         public void TestConnectionCachePoolingDisabledForNewAuthenticators(string connectionString)
         {
             // arrange
@@ -273,16 +272,16 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionCache();
 
             // assert
-            Assert.AreEqual(true, pool.GetPooling()); // for the old connection cache pooling is always enabled
+            Assert.Equal(true, pool.GetPooling()); // for the old connection cache pooling is always enabled
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
-            Assert.IsFalse(isSessionReturnedToPool);
+            Assert.False(isSessionReturnedToPool);
         }
 
-        [Test]
+        [SFFact]
         public void TestShouldClearQueryContextCacheOnReturningToConnectionCache()
         {
             // arrange
@@ -291,17 +290,17 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var contextElement = new QueryContextElement(123, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 1, "context");
             var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new(contextElement) } };
             session.UpdateQueryContextCache(context);
-            Assert.AreEqual(1, session.GetQueryContextRequest().Entries.Count);
+            Assert.Equal(1, session.GetQueryContextRequest().Entries.Count);
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
-            Assert.IsTrue(isSessionReturnedToPool);
-            Assert.AreEqual(0, session.GetQueryContextRequest().Entries.Count);
+            Assert.True(isSessionReturnedToPool);
+            Assert.Equal(0, session.GetQueryContextRequest().Entries.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestShouldClearQueryContextCacheOnReturningToConnectionPool()
         {
             // arrange
@@ -311,17 +310,17 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var contextElement = new QueryContextElement(123, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 1, "context");
             var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new(contextElement) } };
             session.UpdateQueryContextCache(context);
-            Assert.AreEqual(1, session.GetQueryContextRequest().Entries.Count);
+            Assert.Equal(1, session.GetQueryContextRequest().Entries.Count);
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
-            Assert.IsTrue(isSessionReturnedToPool);
-            Assert.AreEqual(0, session.GetQueryContextRequest().Entries.Count);
+            Assert.True(isSessionReturnedToPool);
+            Assert.Equal(0, session.GetQueryContextRequest().Entries.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestShouldRenewSessionIfKeepAliveIsEnabled()
         {
             // arrange
@@ -336,10 +335,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.ExtractIdleSession(connectionString);
 
             // assert
-            Assert.AreEqual(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
+            Assert.Equal(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
         }
 
-        [Test]
+        [SFFact]
         public void TestShouldContinueExecutionIfRenewingFails()
         {
             // arrange
@@ -362,10 +361,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             }
 
             // assert
-            Assert.AreNotEqual(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
+            Assert.NotEqual(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
         }
 
-        [Test]
+        [SFFact]
         public void TestShouldNotRenewSessionIfKeepAliveIsDisabled()
         {
             // arrange
@@ -380,10 +379,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.ExtractIdleSession(connectionString);
 
             // assert
-            Assert.IsNull(session.sessionToken);
+            Assert.Null(session.sessionToken);
         }
 
-        [Test]
+        [SFFact]
         public void TestClearIdleSessionsShouldEvictAllSessionsEvenWhenCloseThrows()
         {
             // arrange
@@ -396,16 +395,16 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
             pool._idleSessions.Add(session1);
             pool._idleSessions.Add(session2);
-            Assert.AreEqual(2, pool._idleSessions.Count);
+            Assert.Equal(2, pool._idleSessions.Count);
 
             // act
             pool.ClearIdleSessions();
 
             // assert - pool must be empty even though close() threw for each session
-            Assert.AreEqual(0, pool._idleSessions.Count);
+            Assert.Equal(0, pool._idleSessions.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestClearIdleSessionsShouldCloseRemainingSessionsAfterOneCloseThrows()
         {
             // arrange
@@ -424,11 +423,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.ClearIdleSessions();
 
             // assert - pool must be empty and second session's close should have been attempted
-            Assert.AreEqual(0, pool._idleSessions.Count);
-            Assert.IsNull(normalSession.sessionToken);
+            Assert.Equal(0, pool._idleSessions.Count);
+            Assert.Null(normalSession.sessionToken);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnSessionToPoolShouldRejectSessionAfter401QueryFailure()
         {
             // arrange — session with a mock that throws 401-tagged exception on query
@@ -440,21 +439,21 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act — execute a query through SFStatement (the real production code path)
             var statement = new SFStatement(session);
-            Assert.Catch<Exception>(() =>
+            Assert.ThrowsAny<Exception>(() =>
                 statement.Execute(0, "SELECT 1", null, false, false));
 
             // the session should now be invalidated by SFStatement's catch block
-            Assert.IsTrue(session.IsInvalidatedForPooling());
+            Assert.True(session.IsInvalidatedForPooling());
 
             // act — try to return the session to the pool
             var wasAdded = pool.AddSession(session, false);
 
             // assert — invalidated session must be rejected
-            Assert.IsFalse(wasAdded);
-            Assert.AreEqual(0, pool._idleSessions.Count);
+            Assert.False(wasAdded);
+            Assert.Equal(0, pool._idleSessions.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnSessionToPoolShouldAcceptValidSession()
         {
             // arrange
@@ -467,11 +466,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var wasAdded = pool.AddSession(session, false);
 
             // assert - valid session should be returned to pool
-            Assert.IsTrue(wasAdded);
-            Assert.AreEqual(1, pool._idleSessions.Count);
+            Assert.True(wasAdded);
+            Assert.Equal(1, pool._idleSessions.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestDestroyPoolShouldSucceedEvenWhenSessionCloseThrows()
         {
             // arrange
@@ -483,11 +482,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool._idleSessions.Add(session);
 
             // act & assert - DestroyPool should not throw even if session.close() fails
-            Assert.DoesNotThrow(() => pool.DestroyPool());
-            Assert.AreEqual(0, pool._idleSessions.Count);
+            pool.DestroyPool();
+            Assert.Equal(0, pool._idleSessions.Count);
         }
 
-        [Test]
+        [SFFact]
         public void TestClearSessionsShouldSucceedEvenWhenSessionCloseThrows()
         {
             // arrange
@@ -499,8 +498,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool._idleSessions.Add(session);
 
             // act & assert - ClearSessions should not throw even if session.close() fails
-            Assert.DoesNotThrow(() => pool.ClearSessions());
-            Assert.AreEqual(0, pool._idleSessions.Count);
+            pool.ClearSessions();
+            Assert.Equal(0, pool._idleSessions.Count);
         }
 
         private SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)

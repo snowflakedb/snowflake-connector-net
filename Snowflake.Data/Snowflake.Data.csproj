@@ -13,13 +13,15 @@
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Authors>Snowflake</Authors>
-    <Version>5.5.0</Version>
+    <Version>5.7.0</Version>
     <DebugType>Full</DebugType>
     <LangVersion>13</LangVersion>
+      <!-- SNOW-3560694 !-->
+    <NoWarn>$(NoWarn);CA2022</NoWarn>
   </PropertyGroup>
 
   <!-- Define WINDOWS_BUILD for all Windows-specific targets -->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows' OR '$(TargetFramework)' == 'net9.0-windows' OR '$(TargetFramework)' == 'net10.0-windows'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net471' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481' OR '$(TargetFramework)' == 'net8.0-windows' OR '$(TargetFramework)' == 'net9.0-windows' OR '$(TargetFramework)' == 'net10.0-windows'">
     <DefineConstants>$(DefineConstants);WINDOWS_BUILD</DefineConstants>
     <WindowsBuild>True</WindowsBuild>
   </PropertyGroup>
@@ -40,7 +42,7 @@
   </ItemGroup>
 
   <!-- Mono.Unix dependency ONLY for Unix/Linux platforms (netstandard2.0, net8.0 and net10.0) -->
-  <!-- NOT included for versions Windows targets: net481, net8.0-windows, net10.0-windows -->
+  <!-- NOT included for versions Windows targets: net462, net471, net472, net481, net6.0-windows, net7.0-windows, net8.0-windows, net9.0-windows, net10.0-windows -->
   <!-- Mono is required as long as there's no System.IO support for file ownership changes -->
   <ItemGroup Condition="'$(WindowsBuild)' != 'True'">
     <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
