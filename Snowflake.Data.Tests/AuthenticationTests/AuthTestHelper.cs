@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Diagnostics;
 using System.Data;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Log;
@@ -45,13 +45,13 @@ namespace Snowflake.Data.AuthenticationTests
                     conn.ConnectionString = connectionString;
 
                     conn.Open();
-                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    Assert.Equal(ConnectionState.Open, conn.State);
 
                     using (IDbCommand command = conn.CreateCommand())
                     {
                         command.CommandText = "SELECT 1";
                         var result = command.ExecuteScalar();
-                        Assert.AreEqual("1", result.ToString());
+                        Assert.Equal("1", result.ToString());
                         s_logger.Info(result.ToString());
                     }
                 }
@@ -118,7 +118,7 @@ namespace Snowflake.Data.AuthenticationTests
                     var parameters = AuthConnectionString.GetOktaConnectionString();
                     conn.ConnectionString = AuthConnectionString.ConvertToConnectionString(parameters);
                     conn.Open();
-                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    Assert.Equal(ConnectionState.Open, conn.State);
                     using (IDbCommand dbCommand = conn.CreateCommand())
                     {
                         dbCommand.CommandText = command;
@@ -151,13 +151,13 @@ namespace Snowflake.Data.AuthenticationTests
 
         public void VerifyExceptionIsNotThrown()
         {
-            Assert.That(_exception, Is.Null, "Unexpected exception thrown");
+            Assert.Null(_exception);
         }
 
         public void VerifyExceptionIsThrown(string error)
         {
-            Assert.That(_exception, Is.Not.Null, "Expected exception was not thrown");
-            Assert.That(_exception.Message, Does.Contain(error), "Unexpected exception message.");
+            Assert.NotNull(_exception);
+            Assert.Contains(error, _exception.Message);
 
         }
 

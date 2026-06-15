@@ -1,15 +1,15 @@
 using System;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
     public class SessionCreationTokenTest
     {
         private static readonly TimeSpan s_timeout30Seconds = TimeSpan.FromSeconds(30);
 
-        [Test]
+        [SFFact]
         public void TestTokenIsNotExpired()
         {
             // arrange
@@ -19,10 +19,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
             // assert
-            Assert.IsFalse(isExpired);
+            Assert.False(isExpired);
         }
 
-        [Test]
+        [SFFact]
         public void TestTokenIsExpired()
         {
             // arrange
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + timeout30SecondsAsMillis + 1);
 
             // assert
-            Assert.IsTrue(isExpired);
+            Assert.True(isExpired);
         }
     }
 }

@@ -1,20 +1,19 @@
 using System.Threading;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
-using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
 
-    [NonParallelizable, IgnoreOnCI]
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class ExternalBrowserConnectionTest
     {
-        private string _connectionString = "";
-        private string _login = AuthConnectionString.SsoUser;
-        private string _password = AuthConnectionString.SsoPassword;
+        private string _connectionString;
+        private string _login;
+        private string _password;
 
-        [SetUp, IgnoreOnCI]
-        public void SetUp()
+        public ExternalBrowserConnectionTest()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
             _login = AuthConnectionString.SsoUser;
@@ -24,7 +23,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingExternalBrowserSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -36,7 +35,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI, Skip = "SNOW-3564880")]
         public void TestAuthenticateUsingExternalBrowserMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -50,10 +49,10 @@ namespace Snowflake.Data.AuthenticationTests
             Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
 
             authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
-            authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user currently logged in at the IDP");
+            authTestHelper.VerifyExceptionIsThrown("Error: The user authenticated by the Identity Provider does not match the user specified in the Login UI. Please log out from the Identity Provider and try again.");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingExternalBrowserWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -72,7 +71,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingExternalBrowserTimeout()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

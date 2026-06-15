@@ -22,7 +22,7 @@ namespace Snowflake.Data.Core
         public const bool DefaultPoolingEnabled = true;
         public const int DefaultMaxHttpRetries = 7;
         public const int DefaultConnectionLimit = 20;
-        public static readonly TimeSpan DefaultRetryTimeout = TimeSpan.FromSeconds(300);
+        public static TimeSpan DefaultRetryTimeout { get; internal set; } = TimeSpan.FromSeconds(300);
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFSessionHttpClientProperties>();
         internal static readonly int MaxConnectionLimit = 1000;
 

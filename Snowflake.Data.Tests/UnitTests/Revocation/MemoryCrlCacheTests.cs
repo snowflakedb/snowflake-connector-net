@@ -1,10 +1,10 @@
 using System;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
     public class MemoryCrlCacheTests
     {
         const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";
@@ -12,21 +12,21 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         private readonly Crl _crl1 = new();
         private readonly Crl _crl2 = new();
 
-        [Test]
+        [SFFact]
         public void TestCacheOperations()
         {
             var cache = new MemoryCrlCache(TimeSpan.FromDays(1));
             Assert.Null(cache.Get(CrlUrl1));
             Assert.Null(cache.Get(CrlUrl2));
             cache.Set(CrlUrl1, _crl1);
-            Assert.AreSame(_crl1, cache.Get(CrlUrl1));
+            Assert.Same(_crl1, cache.Get(CrlUrl1));
             Assert.Null(cache.Get(CrlUrl2));
             cache.Set(CrlUrl1, _crl2);
-            Assert.AreSame(_crl2, cache.Get(CrlUrl1));
+            Assert.Same(_crl2, cache.Get(CrlUrl1));
             Assert.Null(cache.Get(CrlUrl2));
             cache.Set(CrlUrl2, _crl1);
-            Assert.AreSame(_crl2, cache.Get(CrlUrl1));
-            Assert.AreSame(_crl1, cache.Get(CrlUrl2));
+            Assert.Same(_crl2, cache.Get(CrlUrl1));
+            Assert.Same(_crl1, cache.Get(CrlUrl2));
         }
     }
 }

@@ -1,4 +1,4 @@
-using NUnit.Framework;
+using Xunit;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using System;
@@ -6,13 +6,14 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    [TestFixture, NonParallelizable]
-    class NlogTest : LoggerTest
+    [CollectionDefinition(nameof(NlogTestCollection), DisableParallelization = true)]
+    public sealed class NlogTestCollection : ICollectionFixture<NlogTestCollection> { }
+
+    [Collection(nameof(NlogTestCollection))]
+    public sealed class NlogTest : LoggerTest
     {
         private const string NlogFileName = "test_nlog.log";
-
-        [OneTimeSetUp]
-        public void SetUp()
+        public NlogTest()
         {
             Environment.SetEnvironmentVariable("TEST_NLOG_FILE_NAME", NlogFileName);
             var factory = LoggerFactory.Create(

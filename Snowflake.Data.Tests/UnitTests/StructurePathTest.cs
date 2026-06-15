@@ -1,22 +1,22 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Converter;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
     public class StructurePathTest
     {
-        [Test]
+        [SFFact]
         public void TestRootPath()
         {
             // act
             var value = new StructurePath().ToString();
 
             // assert
-            Assert.AreEqual("$", value);
+            Assert.Equal("$", value);
         }
 
-        [Test]
+        [SFFact]
         public void TestAddPropertyIndex()
         {
             // arrange
@@ -26,10 +26,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithPropertyIndex(2);
 
             // assert
-            Assert.AreEqual("$[2]", value.ToString());
+            Assert.Equal("$[2]", value.ToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestAddPropertyIndexToComplexPath()
         {
             // arrange
@@ -39,10 +39,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithPropertyIndex(1);
 
             // assert
-            Assert.AreEqual("$[2][1]", value.ToString());
+            Assert.Equal("$[2][1]", value.ToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestAddArrayIndex()
         {
             // arrange
@@ -52,10 +52,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithArrayIndex(2);
 
             // assert
-            Assert.AreEqual("$[2]", value.ToString());
+            Assert.Equal("$[2]", value.ToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestAddArrayIndexToComplexPath()
         {
             // arrange
@@ -65,10 +65,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithArrayIndex(1);
 
             // assert
-            Assert.AreEqual("$[2][1]", value.ToString());
+            Assert.Equal("$[2][1]", value.ToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestAddMapIndex()
         {
             // arrange
@@ -78,10 +78,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithMapIndex(2);
 
             // assert
-            Assert.AreEqual("$[2]", value.ToString());
+            Assert.Equal("$[2]", value.ToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestAddMapIndexToComplexPath()
         {
             // arrange
@@ -91,7 +91,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var value = path.WithMapIndex(1);
 
             // assert
-            Assert.AreEqual("$[2][1]", value.ToString());
+            Assert.Equal("$[2][1]", value.ToString());
         }
     }
 }

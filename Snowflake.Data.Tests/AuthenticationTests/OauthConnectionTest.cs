@@ -1,33 +1,32 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.AuthenticationTests
 {
-
-    [NonParallelizable, IgnoreOnCI]
+    [Collection(nameof(AuthenticationTestsCollectionFixture))]
     public class OauthConnectionTest
     {
-        private string _connectionString = "";
+        private string _connectionString;
 
-        [SetUp, IgnoreOnCI]
-        public void SetUp()
+        public OauthConnectionTest()
         {
             string token = AuthConnectionString.GetOauthToken();
             var parameters = AuthConnectionString.GetOauthConnectionString(token);
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingOauthSuccessful()
         {
-            AuthTestHelper authTestHelper = new AuthTestHelper();
+            var authTestHelper = new AuthTestHelper();
 
             authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [Test, IgnoreOnCI]
+        [SFFact(SkipCondition.SkipOnCI)]
         public void TestAuthenticateUsingOauthInvalidToken()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -40,7 +39,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
         }
 
-        [Test, Ignore("Skipped, waits for SNOW-1893041")]
+        [SFFact(Skip = "Skipped, waits for SNOW-1893041")]
         public void TestAuthenticateUsingOauthMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
