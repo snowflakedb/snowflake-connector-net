@@ -485,30 +485,30 @@ namespace Snowflake.Data.Core.Session
                         }
                     }
 
-                    if (previousTask.IsFaulted && previousTask.Exception != null)
+                    if (previousTask.IsCanceled)
+                        throw previousTask.Exception as Exception ?? new TaskCanceledException();
+
+                    if (previousTask is { IsFaulted: true, Exception: not null })
                         throw previousTask.Exception;
 
                     if (previousTask.IsFaulted)
-                        throw new SnowflakeDbException(
-                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                            SFError.INTERNAL_ERROR,
-                            "Failure while opening session async");
+                        throw new SnowflakeDbException(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Failure while opening session async");
 
-                    if (!previousTask.IsCanceled)
+                    if (previousTask.IsCanceled)
+                        return session;
+
+                    if (GetPooling() && !_underDestruction)
                     {
-                        if (GetPooling() && !_underDestruction)
+                        lock (_sessionPoolLock)
                         {
-                            lock (_sessionPoolLock)
-                            {
-                                _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
-                                _busySessionsCounter.Increase();
-                                s_logger.Debug($"Pool state after creating a session {GetCurrentState()}" + PoolIdentification());
-                            }
+                            _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
+                            _busySessionsCounter.Increase();
+                            s_logger.Debug($"Pool state after creating a session {GetCurrentState()}" + PoolIdentification());
                         }
-
-                        _sessionPoolEventHandler.OnNewSessionCreated(this);
-                        _sessionPoolEventHandler.OnSessionProvided(this);
                     }
+
+                    _sessionPoolEventHandler.OnNewSessionCreated(this);
+                    _sessionPoolEventHandler.OnSessionProvided(this);
                     return session;
                 });
         }
