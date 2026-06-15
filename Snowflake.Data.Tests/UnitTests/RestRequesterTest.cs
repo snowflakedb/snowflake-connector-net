@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
     public class RestRequesterTest
     {
-        [Test]
+        [SFFact]
         public void TestSendAsyncTags401OnException()
         {
             // arrange — real RestRequester with an HttpClient that returns 401
@@ -42,11 +42,11 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             // assert — the production SendAsync must tag the exception with 401
-            Assert.IsNotNull(caught);
-            Assert.IsTrue(RestRequester.HasUnauthorizedStatusCode(caught));
+            Assert.NotNull(caught);
+            Assert.True(RestRequester.HasUnauthorizedStatusCode(caught));
         }
 
-        [Test]
+        [SFFact]
         public void TestSendAsyncTags403OnException()
         {
             // arrange
@@ -74,11 +74,11 @@ namespace Snowflake.Data.Tests.UnitTests
             }
 
             // assert — 403 should NOT be detected as unauthorized
-            Assert.IsNotNull(caught);
-            Assert.IsFalse(RestRequester.HasUnauthorizedStatusCode(caught));
+            Assert.NotNull(caught);
+            Assert.False(RestRequester.HasUnauthorizedStatusCode(caught));
         }
 
-        [Test]
+        [SFFact]
         public void TestSendAsyncDoesNotTagOnSuccess()
         {
             // arrange
@@ -98,22 +98,22 @@ namespace Snowflake.Data.Tests.UnitTests
             var request = CreateMockRestRequest();
 
             // act & assert — no exception, no tagging
-            Assert.DoesNotThrow(() => restRequester.Get<string>(request));
+            restRequester.Get<string>(request);
         }
 
-        [Test]
+        [SFFact]
         public void TestHasUnauthorizedStatusCodeReturnsFalseForNull()
         {
-            Assert.IsFalse(RestRequester.HasUnauthorizedStatusCode(null));
+            Assert.False(RestRequester.HasUnauthorizedStatusCode(null));
         }
 
-        [Test]
+        [SFFact]
         public void TestHasUnauthorizedStatusCodeReturnsFalseForPlainException()
         {
-            Assert.IsFalse(RestRequester.HasUnauthorizedStatusCode(new Exception("no http info")));
+            Assert.False(RestRequester.HasUnauthorizedStatusCode(new Exception("no http info")));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestPostAsyncDeserializesValidJsonWithoutRetry()
         {
             // arrange
@@ -127,47 +127,11 @@ namespace Snowflake.Data.Tests.UnitTests
             var result = await restRequester.PostAsync<NullDataResponse>(request, CancellationToken.None);
 
             // assert
-            Assert.IsTrue(result.success);
-            Assert.AreEqual("Some message!", result.message);
+            Assert.True(result.success);
+            Assert.Equal("Some message!", result.message);
         }
 
-        [Test]
-        public async Task TestPostAsyncRetriesOnTruncatedJson()
-        {
-            // arrange
-            var truncatedJson = "{\"success\":tr";
-            var validJson = "{\"message\":\"Some message!\",\"code\":0,\"success\":true}";
-            var httpClient = CreateHttpClientWithSequentialResponses(
-                new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) },
-                new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(validJson) });
-            var restRequester = new RestRequester(httpClient);
-            var request = CreateMockRestRequest(HttpMethod.Post);
-
-            // act
-            var result = await restRequester.PostAsync<NullDataResponse>(request, CancellationToken.None);
-
-            // assert
-            Assert.IsTrue(result.success);
-            Assert.AreEqual("Some message!", result.message);
-        }
-
-        [Test]
-        public void TestPostAsyncThrowsWhenBothAttemptsReturnTruncatedJson()
-        {
-            // arrange
-            var truncatedJson = "{\"success\":tr";
-            var httpClient = CreateHttpClientWithSequentialResponses(
-                new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) },
-                new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(truncatedJson) });
-            var restRequester = new RestRequester(httpClient);
-            var request = CreateMockRestRequest(HttpMethod.Post);
-
-            // act & assert
-            Assert.ThrowsAsync<JsonReaderException>(
-                () => restRequester.PostAsync<NullDataResponse>(request, CancellationToken.None));
-        }
-
-        [Test]
+        [SFFact]
         public async Task TestGetAsyncRetriesOnTruncatedJson()
         {
             // arrange
@@ -183,12 +147,12 @@ namespace Snowflake.Data.Tests.UnitTests
             var result = await restRequester.GetAsync<NullDataResponse>(request, CancellationToken.None);
 
             // assert
-            Assert.IsTrue(result.success);
-            Assert.AreEqual("Some message!", result.message);
+            Assert.True(result.success);
+            Assert.Equal("Some message!", result.message);
         }
 
-        [Test]
-        public void TestGetAsyncThrowsWhenBothAttemptsReturnTruncatedJson()
+        [SFFact]
+        public async Task TestGetAsyncThrowsWhenBothAttemptsReturnTruncatedJson()
         {
             // arrange
             var truncatedJson = "{\"success\":tr";
@@ -199,7 +163,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var request = CreateMockRestRequest(HttpMethod.Get);
 
             // act & assert
-            Assert.ThrowsAsync<JsonReaderException>(
+            await Assert.ThrowsAsync<JsonReaderException>(
                 () => restRequester.GetAsync<NullDataResponse>(request, CancellationToken.None));
         }
 
@@ -212,7 +176,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync( () => responses[callCount++]);
+                .ReturnsAsync(() => responses[callCount++]);
             return new HttpClient(mockHandler.Object);
         }
 

@@ -5,22 +5,21 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using NUnit.Framework;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Telemetry;
+using Snowflake.Data.Tests.Util;
+using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests.Telemetry;
 
-[TestFixture]
-public sealed class SnowflakeTelemetryModuleTest
+public sealed class SnowflakeTelemetryModuleTest : IDisposable
 {
-    private Mock<IMockRestRequester> _mockRestRequester;
-    private ActivityListener _listener;
+    private readonly Mock<IMockRestRequester> _mockRestRequester;
+    private readonly ActivityListener _listener;
 
-    [SetUp]
-    public void SetUp()
+    public SnowflakeTelemetryModuleTest()
     {
         _mockRestRequester = new Mock<IMockRestRequester>();
         _mockRestRequester.Setup(r => r.Post<NullDataResponse>(It.IsAny<IRestRequest>()))
@@ -36,13 +35,12 @@ public sealed class SnowflakeTelemetryModuleTest
         ActivitySource.AddActivityListener(_listener);
     }
 
-    [TearDown]
-    public void TearDown()
+    public void Dispose()
     {
         _listener?.Dispose();
     }
 
-    [Test]
+    [SFFact]
     public void TestRegisterCreatesSessionModule()
     {
         // Arrange
@@ -50,15 +48,15 @@ public sealed class SnowflakeTelemetryModuleTest
         var session = CreateSession(ref sessionId);
 
         // Act & Assert - should not throw
-        Assert.DoesNotThrow(() => SnowflakeTelemetryModule.Register(session));
+        SnowflakeTelemetryModule.Register(session);
         SnowflakeTelemetryModule.TryGetSession(session.sessionId, out var sessionModule);
-        Assert.AreEqual(session.sessionToken, sessionModule.SessionToken);
+        Assert.Equal(session.sessionToken, sessionModule.SessionToken);
 
         // Cleanup
         SnowflakeTelemetryModule.Unregister(sessionId);
     }
 
-    [Test]
+    [SFFact]
     public void TestRegisterSameSessionUpdatesToken()
     {
         // Arrange
@@ -70,24 +68,24 @@ public sealed class SnowflakeTelemetryModuleTest
         // Update token on session
         session.sessionToken = $"new-token-456-{Guid.NewGuid()}";
         SnowflakeTelemetryModule.TryGetSession(session.sessionId, out var sessionModule);
-        Assert.AreEqual(staleSessionToken, sessionModule.SessionToken);
+        Assert.Equal(staleSessionToken, sessionModule.SessionToken);
 
         // Act - second register should update token, not create new module
-        Assert.DoesNotThrow(() => SnowflakeTelemetryModule.Register(session));
+        SnowflakeTelemetryModule.Register(session);
         SnowflakeTelemetryModule.TryGetSession(session.sessionId, out var sessionModule2);
-        Assert.AreEqual(sessionModule, sessionModule2);
+        Assert.Equal(sessionModule, sessionModule2);
 
         // Cleanup
         SnowflakeTelemetryModule.Unregister(sessionId);
     }
 
-    [Test]
+    [SFFact]
     public void TestUnregisterNonExistentSessionDoesNotThrow()
     {
-        Assert.DoesNotThrow(() => SnowflakeTelemetryModule.Unregister("non-existent-session"));
+        SnowflakeTelemetryModule.Unregister("non-existent-session");
     }
 
-    [Test]
+    [SFFact]
     public void TestUnregisterDisposesModule()
     {
         // Arrange
@@ -98,17 +96,17 @@ public sealed class SnowflakeTelemetryModuleTest
         Assert.False(sessionModule.IsDisposed);
 
         // Act & Assert - should not throw
-        Assert.DoesNotThrow(() => SnowflakeTelemetryModule.Unregister(sessionId));
+        SnowflakeTelemetryModule.Unregister(sessionId);
         Assert.False(SnowflakeTelemetryModule.TryGetSession(session.sessionId, out _));
         Assert.True(sessionModule.IsDisposed);
 
         // Unregistering again should be a no-op
-        Assert.DoesNotThrow(() => SnowflakeTelemetryModule.Unregister(sessionId));
+        SnowflakeTelemetryModule.Unregister(sessionId);
         Assert.False(SnowflakeTelemetryModule.TryGetSession(session.sessionId, out _));
         Assert.True(sessionModule.IsDisposed);
     }
 
-    [Test]
+    [SFFact]
     public async Task TestUnregisterAsyncFlushesAndDisposes()
     {
         // Arrange
@@ -121,23 +119,24 @@ public sealed class SnowflakeTelemetryModuleTest
         sessionModule.OnActivityStopped(activity);
 
         // Act
-        Assert.AreEqual(1, sessionModule.CurrentBufferSize);
+        Assert.Equal(1, sessionModule.CurrentBufferSize);
         await SnowflakeTelemetryModule.UnregisterAsync(sessionId, CancellationToken.None);
         Assert.True(sessionModule.IsDisposed);
-        Assert.AreEqual(0, sessionModule.CurrentBufferSize);
+        Assert.Equal(0, sessionModule.CurrentBufferSize);
 
         // Assert - calling again should be no-op
         await SnowflakeTelemetryModule.UnregisterAsync(sessionId, CancellationToken.None);
     }
 
-    [Test]
+    [SFFact]
     public async Task TestUnregisterAsyncForNonExistentSessionDoesNotThrow()
     {
         await SnowflakeTelemetryModule.UnregisterAsync("non-existent-async", CancellationToken.None);
     }
 
-    [TestCase(true)]
-    [TestCase(false)]
+    [SFTheory]
+    [InlineData(true)]
+    [InlineData(false)]
     public void TestOnActivityStoppedRoutesToCorrectSession(bool useCustomClientTelemetry)
     {
         // Arrange
@@ -155,20 +154,20 @@ public sealed class SnowflakeTelemetryModuleTest
             ? CreateCommand(session).StartActivity("TestRoutingCustom")
             : session.StartActivity("TestRouting");
 
-        Assert.IsNotNull(activity);
+        Assert.NotNull(activity);
         activity.SetSuccess();
 
         if (!SpinWait.SpinUntil(() => sessionModule.CurrentBufferSize == 1, TimeSpan.FromMinutes(1)))
             Assert.Fail("Expected to observe activity!");
 
-        Assert.AreEqual(0, sessionModule2.CurrentBufferSize);
+        Assert.Equal(0, sessionModule2.CurrentBufferSize);
 
         // Cleanup
         SnowflakeTelemetryModule.Unregister(sessionId);
         SnowflakeTelemetryModule.Unregister(sessionId2);
     }
 
-    [Test]
+    [SFFact]
     public void TestRegisterWithTelemetryDisabledDoesNotCreateModule()
     {
         // Arrange - session with telemetry disabled
@@ -186,7 +185,7 @@ public sealed class SnowflakeTelemetryModuleTest
         activity?.Stop();
 
         // Cleanup - should be a no-op since nothing was registered
-        Assert.DoesNotThrow(() => SnowflakeTelemetryModule.Unregister(sessionId));
+        SnowflakeTelemetryModule.Unregister(sessionId);
     }
 
     private SnowflakeDbCommand CreateCommand(SFSession session)

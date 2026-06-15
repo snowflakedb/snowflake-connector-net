@@ -1,41 +1,50 @@
-using NUnit.Framework;
+using System;
+using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
-using System;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture, NonParallelizable]
-    class SFLoggerTest
+    [CollectionDefinition(nameof(SFLoggerTestFixture), DisableParallelization = true)]
+    public sealed class SFLoggerTestFixture : ICollectionFixture<SFLoggerTestFixture.Fixture>
     {
-        private SFLogger _logger;
-
-        [OneTimeSetUp]
-        public static void BeforeTest()
+        public sealed class Fixture : IDisposable
         {
-            // Log level defaults to Warn on net6.0 builds in github actions
-            // Set the root level to Debug
+            public Fixture()
+            {
+            }
+
+            public void Dispose()
+            {
+                EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
+            }
+        }
+    }
+
+    [Collection(nameof(SFLoggerTestFixture))]
+    public class SFLoggerTest
+    {
+        private readonly SFLogger _logger;
+
+        public SFLoggerTest(SFLoggerTestFixture.Fixture fixture)
+        {
+            // Per-test setup: reconfigure easy logging for each test
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, "STDOUT");
+            _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
         }
 
-        [OneTimeTearDown]
-        public static void AfterAll()
-        {
-            EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
-        }
-
-        [Test]
+        [SFFact]
         public void TestUsingSFLogger()
         {
-            _logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
-            Assert.IsInstanceOf<SFLoggerImpl>(_logger);
+            Assert.IsType<SFLoggerImpl>(_logger);
         }
 
-        [Test]
-        public void TestIsTraceEnabled(
-            [Values(false, true)] bool isEnabled)
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestIsTraceEnabled(bool isEnabled)
         {
-            _logger = GetLogger();
             if (isEnabled)
             {
                 SFLoggerImpl.SetLevel(LoggingEvent.TRACE);
@@ -45,15 +54,15 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _logger.IsTraceEnabled());
+            Assert.Equal(isEnabled, _logger.IsTraceEnabled());
             _logger.Trace("trace log message", new Exception("test exception"));
         }
 
-        [Test]
-        public void TestIsDebugEnabled(
-            [Values(false, true)] bool isEnabled)
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestIsDebugEnabled(bool isEnabled)
         {
-            _logger = GetLogger();
             if (isEnabled)
             {
                 SFLoggerImpl.SetLevel(LoggingEvent.DEBUG);
@@ -63,15 +72,16 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _logger.IsDebugEnabled());
+            Assert.Equal(isEnabled, _logger.IsDebugEnabled());
             _logger.Debug("debug log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsInfoEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
-            _logger = GetLogger();
             if (isEnabled)
             {
                 SFLoggerImpl.SetLevel(LoggingEvent.INFO);
@@ -81,15 +91,16 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _logger.IsInfoEnabled());
+            Assert.Equal(isEnabled, _logger.IsInfoEnabled());
             _logger.Info("info log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsWarnEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
-            _logger = GetLogger();
             if (isEnabled)
             {
                 SFLoggerImpl.SetLevel(LoggingEvent.WARN);
@@ -99,15 +110,16 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _logger.IsWarnEnabled());
+            Assert.Equal(isEnabled, _logger.IsWarnEnabled());
             _logger.Warn("warn log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFTheory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestIsErrorEnabled(
-            [Values(false, true)] bool isEnabled)
+            bool isEnabled)
         {
-            _logger = GetLogger();
             if (isEnabled)
             {
                 SFLoggerImpl.SetLevel(LoggingEvent.ERROR);
@@ -117,76 +129,82 @@ namespace Snowflake.Data.Tests.UnitTests
                 SFLoggerImpl.SetLevel(LoggingEvent.OFF);
             }
 
-            Assert.AreEqual(isEnabled, _logger.IsErrorEnabled());
+            Assert.Equal(isEnabled, _logger.IsErrorEnabled());
             _logger.Error("error log message", new Exception("test exception"));
         }
 
-        [Test]
+        [SFTheory]
+        [InlineData(false, 0)] // OFF
+        [InlineData(false, 1)] // TRACE
+        [InlineData(false, 2)] // DEBUG
+        [InlineData(false, 3)] // INFO
+        [InlineData(false, 4)] // WARN
+        [InlineData(false, 5)] // ERROR
+        [InlineData(true, 0)] // OFF
+        [InlineData(true, 1)] // TRACE
+        [InlineData(true, 2)] // DEBUG
+        [InlineData(true, 3)] // INFO
+        [InlineData(true, 4)] // WARN
+        [InlineData(true, 5)] // ERROR
         public void TestSetLevel(
-            [Values(false, true)] bool isEnabled,
-            [Values] LoggingEvent logLevel)
+            bool isEnabled,
+            int logLevelInt)
         {
-            _logger = GetLogger();
+            var logLevel = (LoggingEvent)logLevelInt;
             if (isEnabled)
             {
                 SFLoggerImpl.SetLevel(logLevel);
-                Assert.AreEqual(logLevel, SFLoggerImpl.s_level);
+                Assert.Equal(logLevel, SFLoggerImpl.s_level);
 
                 if (logLevel == LoggingEvent.OFF)
                 {
-                    Assert.IsFalse(_logger.IsTraceEnabled());
-                    Assert.IsFalse(_logger.IsDebugEnabled());
-                    Assert.IsFalse(_logger.IsInfoEnabled());
-                    Assert.IsFalse(_logger.IsWarnEnabled());
-                    Assert.IsFalse(_logger.IsErrorEnabled());
+                    Assert.False(_logger.IsTraceEnabled());
+                    Assert.False(_logger.IsDebugEnabled());
+                    Assert.False(_logger.IsInfoEnabled());
+                    Assert.False(_logger.IsWarnEnabled());
+                    Assert.False(_logger.IsErrorEnabled());
                 }
                 else if (logLevel == LoggingEvent.TRACE)
                 {
-                    Assert.IsTrue(_logger.IsTraceEnabled());
-                    Assert.IsTrue(_logger.IsDebugEnabled());
-                    Assert.IsTrue(_logger.IsInfoEnabled());
-                    Assert.IsTrue(_logger.IsWarnEnabled());
-                    Assert.IsTrue(_logger.IsErrorEnabled());
+                    Assert.True(_logger.IsTraceEnabled());
+                    Assert.True(_logger.IsDebugEnabled());
+                    Assert.True(_logger.IsInfoEnabled());
+                    Assert.True(_logger.IsWarnEnabled());
+                    Assert.True(_logger.IsErrorEnabled());
                 }
                 else if (logLevel == LoggingEvent.DEBUG)
                 {
-                    Assert.IsFalse(_logger.IsTraceEnabled());
-                    Assert.IsTrue(_logger.IsDebugEnabled());
-                    Assert.IsTrue(_logger.IsInfoEnabled());
-                    Assert.IsTrue(_logger.IsWarnEnabled());
-                    Assert.IsTrue(_logger.IsErrorEnabled());
+                    Assert.False(_logger.IsTraceEnabled());
+                    Assert.True(_logger.IsDebugEnabled());
+                    Assert.True(_logger.IsInfoEnabled());
+                    Assert.True(_logger.IsWarnEnabled());
+                    Assert.True(_logger.IsErrorEnabled());
                 }
                 else if (logLevel == LoggingEvent.INFO)
                 {
-                    Assert.IsFalse(_logger.IsTraceEnabled());
-                    Assert.IsFalse(_logger.IsDebugEnabled());
-                    Assert.IsTrue(_logger.IsInfoEnabled());
-                    Assert.IsTrue(_logger.IsWarnEnabled());
-                    Assert.IsTrue(_logger.IsErrorEnabled());
+                    Assert.False(_logger.IsTraceEnabled());
+                    Assert.False(_logger.IsDebugEnabled());
+                    Assert.True(_logger.IsInfoEnabled());
+                    Assert.True(_logger.IsWarnEnabled());
+                    Assert.True(_logger.IsErrorEnabled());
                 }
                 else if (logLevel == LoggingEvent.WARN)
                 {
-                    Assert.IsFalse(_logger.IsTraceEnabled());
-                    Assert.IsFalse(_logger.IsDebugEnabled());
-                    Assert.IsFalse(_logger.IsInfoEnabled());
-                    Assert.IsTrue(_logger.IsWarnEnabled());
-                    Assert.IsTrue(_logger.IsErrorEnabled());
+                    Assert.False(_logger.IsTraceEnabled());
+                    Assert.False(_logger.IsDebugEnabled());
+                    Assert.False(_logger.IsInfoEnabled());
+                    Assert.True(_logger.IsWarnEnabled());
+                    Assert.True(_logger.IsErrorEnabled());
                 }
                 else if (logLevel == LoggingEvent.ERROR)
                 {
-                    Assert.IsFalse(_logger.IsTraceEnabled());
-                    Assert.IsFalse(_logger.IsDebugEnabled());
-                    Assert.IsFalse(_logger.IsInfoEnabled());
-                    Assert.IsFalse(_logger.IsWarnEnabled());
-                    Assert.IsTrue(_logger.IsErrorEnabled());
+                    Assert.False(_logger.IsTraceEnabled());
+                    Assert.False(_logger.IsDebugEnabled());
+                    Assert.False(_logger.IsInfoEnabled());
+                    Assert.False(_logger.IsWarnEnabled());
+                    Assert.True(_logger.IsErrorEnabled());
                 }
             }
-        }
-
-        private SFLogger GetLogger()
-        {
-            var logger = SFLoggerFactory.GetSFLogger<SFLoggerTest>();
-            return logger;
         }
     }
 }

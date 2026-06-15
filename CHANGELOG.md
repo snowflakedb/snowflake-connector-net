@@ -1,9 +1,16 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
-- v5.7.0
-    - Switched AWS Workload Identity Federation attestation from a SigV4-presigned `GetCallerIdentity` request to STS
+- v5.8.0
+  -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
+  -  Switched AWS Workload Identity Federation attestation from a SigV4-presigned `GetCallerIdentity` request to STS
       `GetWebIdentityToken`, returning a signed JWT directly.
+- v5.7.0
+    - Improved input handling in `ChangeDatabase` by using parameterized queries.
+    - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.
+    - Bug fix: `OverflowException` when converting rest response with master token validity more than ~9.1h.
+    - Bug fix: Added path traversal protection for file downloads: destination paths are now validated against the target base directory before writing.
+    - Bug fix: Replaced use of System.Random with a cryptographically secure random number generator in the authenticator challenge/proof key generation and file transfer encryption key/IV generation.
 - v5.6.0
     - Added client-side telemetry instrumentation using `System.Diagnostics.Activity` (OpenTelemetry-compatible). When `CLIENT_TELEMETRY_ENABLED=true` (the default), the driver automatically instruments all command executions
       and their async variants and sends telemetry data to Snowflake's `/telemetry/send` endpoint. Activities are enriched with session context (warehouse, role, database, session id) and report success/error

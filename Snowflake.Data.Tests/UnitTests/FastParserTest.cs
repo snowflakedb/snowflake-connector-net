@@ -1,34 +1,32 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Client;
     using Snowflake.Data.Core;
     using System;
     using System.Text;
-
-    [TestFixture]
-    [SetCulture("en-US")]
-    class FastParserTest
+    public sealed class FastParserTest : IDisposable
     {
         byte[] _byte;
 
-        [SetUp]
-        public void AfterTest()
+        public void Dispose()
         {
             _byte = null;
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt64WithLongMaxValue()
         {
             long expectedLongValue = long.MaxValue;
             _byte = Encoding.UTF8.GetBytes(expectedLongValue.ToString());
 
             long actualLongValue = FastParser.FastParseInt64(_byte, 0, _byte.Length);
-            Assert.AreEqual(expectedLongValue, actualLongValue);
+            Assert.Equal(expectedLongValue, actualLongValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt64WithPositiveOverflow()
         {
             // Int64.MaxValue + 1
@@ -38,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => FastParser.FastParseInt64(_byte, 0, _byte.Length));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt64WithNegativeOverflow()
         {
             // Int64.MinValue - 1
@@ -48,23 +46,23 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => FastParser.FastParseInt64(_byte, 0, _byte.Length));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt64ThrowsWrongFormat()
         {
             Assert.Throws<FormatException>(() => FastParser.FastParseInt64(new byte[1], 0, 1));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt32WithIntMaxValue()
         {
             int expectedIntValue = int.MaxValue;
             _byte = Encoding.UTF8.GetBytes(expectedIntValue.ToString());
 
             int actualIntValue = FastParser.FastParseInt32(_byte, 0, _byte.Length);
-            Assert.AreEqual(expectedIntValue, actualIntValue);
+            Assert.Equal(expectedIntValue, actualIntValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt32WithPositiveOverflow()
         {
             // Int32.MaxValue + 1
@@ -74,7 +72,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => FastParser.FastParseInt32(_byte, 0, _byte.Length));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt32WithNegativeOverflow()
         {
             // Int32.MinValue - 1
@@ -84,13 +82,13 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Throws<OverflowException>(() => FastParser.FastParseInt32(_byte, 0, _byte.Length));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseInt32ThrowsWrongFormat()
         {
             Assert.Throws<FormatException>(() => FastParser.FastParseInt32(new byte[1], 0, 1));
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithLongMaxValuePlusOne()
         {
             // Int64.MaxValue + 1
@@ -98,10 +96,10 @@ namespace Snowflake.Data.Tests.UnitTests
             _byte = Encoding.UTF8.GetBytes(int64MaxValuePlusOne.ToString());
 
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
-            Assert.AreEqual(int64MaxValuePlusOne, actualDecimalValue);
+            Assert.Equal(int64MaxValuePlusOne, actualDecimalValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithLongMaxValuePlusDecimal()
         {
             // Int64.MaxValue + 1.123M
@@ -110,46 +108,46 @@ namespace Snowflake.Data.Tests.UnitTests
             _byte = Encoding.UTF8.GetBytes(int64MaxValuePlusOneWithDecimalString);
 
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
-            Assert.AreEqual(int64MaxValuePlusOneWithDecimal, actualDecimalValue);
+            Assert.Equal(int64MaxValuePlusOneWithDecimal, actualDecimalValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithPositiveDecimal()
         {
             decimal expectedDecimalValue = 1.2345678M;
             _byte = Encoding.UTF8.GetBytes(expectedDecimalValue.ToString());
 
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
-            Assert.AreEqual(expectedDecimalValue, actualDecimalValue);
+            Assert.Equal(expectedDecimalValue, actualDecimalValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithNegativeDecimal()
         {
             decimal expectedDecimalValue = -1.2345678M;
             _byte = Encoding.UTF8.GetBytes(expectedDecimalValue.ToString());
 
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
-            Assert.AreEqual(expectedDecimalValue, actualDecimalValue);
+            Assert.Equal(expectedDecimalValue, actualDecimalValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithoutDecimalInTheValue()
         {
             decimal expectedDecimalValue = 12345678;
             _byte = Encoding.UTF8.GetBytes(expectedDecimalValue.ToString());
 
             decimal actualDecimalValue = FastParser.FastParseDecimal(_byte, 0, _byte.Length);
-            Assert.AreEqual(expectedDecimalValue, actualDecimalValue);
+            Assert.Equal(expectedDecimalValue, actualDecimalValue);
         }
 
-        [Test]
+        [SFFact]
         public void TestFastParseDecimalWithNullByteArray()
         {
             UTF8Buffer srcVal = new UTF8Buffer(null, 0, 0);
 
             Exception ex = Assert.Throws<SnowflakeDbException>(() => FastParser.FastParseDecimal(srcVal.Buffer, srcVal.offset, srcVal.length));
-            Assert.That(ex.Message, Does.Match(".*Cannot parse a null buffer.*"));
+            Assert.Matches(".*Cannot parse a null buffer.*", ex.Message);
         }
     }
 }

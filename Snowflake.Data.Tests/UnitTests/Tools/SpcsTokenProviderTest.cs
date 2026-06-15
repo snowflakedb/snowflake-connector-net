@@ -1,14 +1,19 @@
 using System;
 using System.IO;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
     public class SpcsTokenProviderTest
     {
+        public SpcsTokenProviderTest()
+        {
+            Setup();
+        }
+
         [ThreadStatic]
         private static Mock<FileOperations> t_fileOperations;
 
@@ -17,8 +22,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
         [ThreadStatic]
         private static SpcsTokenProvider t_provider;
-
-        [SetUp]
         public void Setup()
         {
             t_fileOperations = new Mock<FileOperations>();
@@ -26,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             t_provider = new SpcsTokenProvider(t_fileOperations.Object, t_environmentOperations.Object);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullWhenRunningInsideSpcsEnvVarIsNotSet()
         {
             // arrange
@@ -37,11 +40,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
             t_fileOperations.Verify(f => f.ReadAllText(It.IsAny<string>()), Times.Never);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullWhenRunningInsideSpcsEnvVarIsEmpty()
         {
             // arrange
@@ -52,11 +55,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
             t_fileOperations.Verify(f => f.ReadAllText(It.IsAny<string>()), Times.Never);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsTokenFromDefaultPath()
         {
             // arrange
@@ -69,10 +72,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.AreEqual("my-spcs-token", token);
+            Assert.Equal("my-spcs-token", token);
         }
 
-        [Test]
+        [SFFact]
         public void TestTrimsWhitespaceFromToken()
         {
             // arrange
@@ -85,10 +88,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.AreEqual("my-spcs-token", token);
+            Assert.Equal("my-spcs-token", token);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullWhenFileDoesNotExist()
         {
             // arrange
@@ -101,10 +104,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullWhenFileIsEmpty()
         {
             // arrange
@@ -117,10 +120,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullWhenFileContainsOnlyWhitespace()
         {
             // arrange
@@ -133,10 +136,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
         }
 
-        [Test]
+        [SFFact]
         public void TestReturnsNullAndDoesNotThrowOnReadException()
         {
             // arrange
@@ -149,7 +152,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var token = t_provider.GetSpcsToken();
 
             // assert
-            Assert.IsNull(token);
+            Assert.Null(token);
         }
     }
 }

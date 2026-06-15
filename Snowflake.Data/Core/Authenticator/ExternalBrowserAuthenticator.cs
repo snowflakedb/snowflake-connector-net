@@ -7,6 +7,7 @@ using Snowflake.Data.Client;
 using System.Collections.Generic;
 using Snowflake.Data.Core.CredentialManager;
 using System.Security;
+using System.Security.Cryptography;
 using Snowflake.Data.Core.Authenticator.Browser;
 using Snowflake.Data.Core.Tools;
 
@@ -295,9 +296,11 @@ namespace Snowflake.Data.Core.Authenticator
 
         private string GenerateProofKey()
         {
-            Random rnd = new Random();
             Byte[] randomness = new Byte[32];
-            rnd.NextBytes(randomness);
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomness);
+            }
             return Convert.ToBase64String(randomness);
         }
     }

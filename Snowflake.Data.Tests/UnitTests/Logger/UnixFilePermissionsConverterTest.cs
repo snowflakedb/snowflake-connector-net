@@ -1,19 +1,20 @@
 using Mono.Unix;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Util;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Snowflake.Data.Tests.UnitTests.Logger
 {
-    [TestFixture]
-    [Platform(Exclude = "Win")]
     public class UnixFilePermissionsConverterTest
     {
-        [Test]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(TestConversionForAllPermissionCombinationsData))]
         public void TestConversionForAllPermissionCombinations(
-            [ValueSource(nameof(UserPermissionTestCases))] PermissionTestCase userTestCase,
-            [ValueSource(nameof(GroupPermissionTestCases))] PermissionTestCase groupTestCase,
-            [ValueSource(nameof(OtherPermissionTestCases))] PermissionTestCase otherTestCase)
+            PermissionTestCase userTestCase,
+            PermissionTestCase groupTestCase,
+            PermissionTestCase otherTestCase)
         {
             // arrange
             var permissions = userTestCase.permissions | groupTestCase.permissions | otherTestCase.permissions;
@@ -23,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
             var convertedPermissions = UnixFilePermissionsConverter.ConvertFileAccessPermissionsToInt(permissions);
 
             // assert
-            Assert.AreEqual(expectedPermissions, convertedPermissions);
+            Assert.Equal(expectedPermissions, convertedPermissions);
         }
 
         public static IEnumerable<PermissionTestCase> UserPermissionTestCases()
@@ -211,6 +212,12 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
                 allPermissionsTestCase
             };
         }
+
+        public static IEnumerable<object[]> TestConversionForAllPermissionCombinationsData() =>
+            from u in UserPermissionTestCases()
+            from g in GroupPermissionTestCases()
+            from o in OtherPermissionTestCases()
+            select new object[] { u, g, o };
 
         public class PermissionTestCase
         {

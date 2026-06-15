@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography;
 
 namespace Snowflake.Data.Core.Authenticator
 {
@@ -11,9 +12,11 @@ namespace Snowflake.Data.Core.Authenticator
 
         public virtual CodeVerifier GenerateCodeVerifier()
         {
-            Random random = new Random();
             byte[] randomness = new byte[48];
-            random.NextBytes(randomness);
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomness);
+            }
             var codeVerifierInput = Convert.ToBase64String(randomness);
             return new CodeVerifier(codeVerifierInput);
         }
