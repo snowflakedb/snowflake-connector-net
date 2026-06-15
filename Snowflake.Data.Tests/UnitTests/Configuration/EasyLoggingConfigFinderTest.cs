@@ -1,13 +1,13 @@
 using System;
 using System.IO;
 using Moq;
-using NUnit.Framework;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
+using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests.Configuration
 {
-    [TestFixture]
     public class EasyLoggingConfigFinderTest
     {
         private const string InputConfigFilePath = "input_config.json";
@@ -26,8 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         [ThreadStatic]
         private static EasyLoggingConfigFinder t_finder;
 
-        [SetUp]
-        public void Setup()
+        public EasyLoggingConfigFinderTest()
         {
             t_fileOperations = new Mock<FileOperations>();
             t_environmentOperations = new Mock<EnvironmentOperations>();
@@ -36,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             MockExecutionDirectory();
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTakesFilePathFromTheInput()
         {
             // arrange
@@ -48,14 +47,15 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(InputConfigFilePath);
 
             // assert
-            Assert.AreEqual(InputConfigFilePath, filePath);
+            Assert.Equal(InputConfigFilePath, filePath);
             t_fileOperations.VerifyNoOtherCalls();
             t_environmentOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
-        public void TestThatTakesFilePathFromEnvironmentVariableIfInputNotPresent(
-            [Values(null, "")] string inputFilePath)
+        [SFTheory]
+        [InlineData(null)]
+        [InlineData("")]
+        public void TestThatTakesFilePathFromEnvironmentVariableIfInputNotPresent(string inputFilePath)
         {
             // arrange
             MockFileFromEnvironmentalVariable();
@@ -66,10 +66,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(inputFilePath);
 
             // assert
-            Assert.AreEqual(EnvironmentalConfigFilePath, filePath);
+            Assert.Equal(EnvironmentalConfigFilePath, filePath);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTakesFilePathFromDriverLocationWhenNoInputParameterNorEnvironmentVariable()
         {
             // arrange
@@ -80,10 +80,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.AreEqual(s_driverConfigFilePath, filePath);
+            Assert.Equal(s_driverConfigFilePath, filePath);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTakesFilePathFromHomeLocationWhenNoInputParamEnvironmentVarNorDriverLocation()
         {
             // arrange
@@ -93,10 +93,10 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.AreEqual(s_homeConfigFilePath, filePath);
+            Assert.Equal(s_homeConfigFilePath, filePath);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatTakesFilePathFromHomeDirectoryWhenNoOtherWaysPossible()
         {
             // arrange
@@ -106,20 +106,20 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.AreEqual(s_homeConfigFilePath, filePath);
+            Assert.Equal(s_homeConfigFilePath, filePath);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatReturnsNullIfNoWayOfGettingTheFile()
         {
             // act
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.IsNull(filePath);
+            Assert.Null(filePath);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatDoesNotFailWhenSearchForOneOfDirectoriesFails()
         {
             // arrange
@@ -129,11 +129,11 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.IsNull(filePath);
+            Assert.Null(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatDoesNotFailWhenHomeDirectoryReturnsNull()
         {
             // arrange
@@ -143,11 +143,11 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.IsNull(filePath);
+            Assert.Null(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
 
-        [Test]
+        [SFFact]
         public void TestThatDoesNotFailWhenHomeDirectoryDoesNotExist()
         {
             // arrange
@@ -158,7 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
             var filePath = t_finder.FindConfigFilePath(null);
 
             // assert
-            Assert.IsNull(filePath);
+            Assert.Null(filePath);
             t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
         }
 

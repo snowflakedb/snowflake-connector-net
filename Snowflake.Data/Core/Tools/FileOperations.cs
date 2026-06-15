@@ -7,7 +7,6 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Tools
 {
-
     internal class FileOperations
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<FileOperations>();
@@ -84,52 +83,36 @@ namespace Snowflake.Data.Core.Tools
 
         public virtual void CopyFile(string src, string dst)
         {
-            File.Delete(dst);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
+                File.Delete(dst);
                 File.Copy(src, dst);
                 return;
             }
 
-            if (!IsFileSafe(src))
+            var fileInfo = new UnixFileInfo(src);
+            using (var srcStream = fileInfo.OpenRead())
             {
-                throw new SecurityException($"File ${src} is not safe to read.");
-            }
+                if (!IsFileStreamSafe(srcStream))
+                    throw new SecurityException($"File {src} is not safe to read.");
 
-            using (var srcStream = File.OpenRead(src))
-            using (var dstStream = Create(dst))
-            {
-                srcStream.CopyTo(dstStream);
+                File.Delete(dst);
+                using (var dstStream = Create(dst))
+                {
+                    srcStream.CopyTo(dstStream);
+                }
             }
         }
 
-        public virtual bool IsFileSafe(string path)
+        private bool IsFileStreamSafe(UnixStream stream)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return true;
-            }
-
-            var fileInfo = new UnixFileInfo(path);
-            if (_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, NotSafePermissions))
-            {
-                s_logger.Warn($"File '{path}' permissions are too broad. It could be potentially accessed by group or others.");
+            if (_unixOperations.CheckFileHasAnyOfPermissions(stream.FileAccessPermissions, NotSafePermissions))
                 return false;
-            }
 
-            if (!IsFileOwnedByCurrentUser(path))
-            {
-                s_logger.Warn($"File '{path}' is not owned by the current user.");
+            if (stream.OwnerUser.UserId != _unixOperations.GetCurrentUserId())
                 return false;
-            }
 
             return true;
-        }
-
-        public virtual bool IsFileOwnedByCurrentUser(string path)
-        {
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
-                   _unixOperations.GetOwnerIdOfFile(path) == _unixOperations.GetCurrentUserId();
         }
 
         public virtual void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)

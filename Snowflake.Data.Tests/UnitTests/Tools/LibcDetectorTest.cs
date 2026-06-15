@@ -1,30 +1,30 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
     public sealed class LibcDetectorTest
     {
-        [Test]
+        [SFFact]
         public void TestGetLibcFamilyStringForGlibc()
         {
             var result = LibcFamily.Glibc.ToPrettyString();
-            Assert.That(result, Is.EqualTo("glibc"));
+            Assert.Equal("glibc", result);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetLibcFamilyStringForNotApplicable()
         {
             var result = LibcFamily.NotApplicable.ToPrettyString();
-            Assert.That(result, Is.Null);
+            Assert.Null(result);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetLibcFamilyStringForCouldNotDetermine()
         {
             var result = LibcFamily.CouldNotDetermine.ToPrettyString();
-            Assert.That(result, Is.EqualTo("could not determine"));
+            Assert.Equal("could not determine", result);
         }
     }
 }

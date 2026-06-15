@@ -16,7 +16,10 @@ namespace Snowflake.Data.Core.Session
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
         private readonly object _sessionPoolLock = new object();
-        private static ISessionFactory s_sessionFactory = new SessionFactory();
+        private static readonly ISessionFactory s_sessionFactorySingleton = new SessionFactory();
+        private readonly ISessionFactory _instanceSessionFactory;
+
+        private ISessionFactory SessionFactory => _instanceSessionFactory ?? s_sessionFactorySingleton;
 
         private readonly Guid _id = Guid.NewGuid();
         internal readonly List<SFSession> _idleSessions;
@@ -44,9 +47,10 @@ namespace Snowflake.Data.Core.Session
             _waitingForIdleSessionQueue = new NonWaitingQueue();
             _sessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
             _poolConfig = new ConnectionPoolConfig();
+            _instanceSessionFactory = null;
         }
 
-        private SessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets)
+        private SessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets, ISessionFactory sessionFactory)
         {
             // acquiring a lock not needed because one is already acquired in ConnectionPoolManager
             _idleSessions = new List<SFSession>();
@@ -59,17 +63,21 @@ namespace Snowflake.Data.Core.Session
             _waitingForIdleSessionQueue = new WaitingQueue();
             _poolConfig = poolConfig;
             _sessionCreationTokenCounter = new SessionCreationTokenCounter(_poolConfig.ConnectionTimeout);
+            _instanceSessionFactory = sessionFactory;
         }
 
-        internal static SessionPool CreateSessionCache() => new SessionPool();
+        internal static SessionPool CreateSessionCache() => new();
 
-        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token)
+        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token) =>
+            CreateSessionPool(connectionString, password, oauthClientSecret, token, null);
+
+        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token, ISessionFactory sessionFactory)
         {
             s_logger.Debug("Creating a connection pool");
             var propertiesContext = new SessionPropertiesContext { Password = password, OAuthClientSecret = oauthClientSecret, Token = token };
             var extracted = ExtractConfig(connectionString, propertiesContext);
             s_logger.Debug("Creating a connection pool identified by: " + extracted.Item2);
-            return new SessionPool(connectionString, password, oauthClientSecret, token, extracted.Item1, extracted.Item2);
+            return new SessionPool(connectionString, password, oauthClientSecret, token, extracted.Item1, extracted.Item2, sessionFactory);
         }
 
         ~SessionPool()
@@ -82,11 +90,6 @@ namespace Snowflake.Data.Core.Session
         public void Dispose()
         {
             DestroyPool();
-        }
-
-        internal static ISessionFactory SessionFactory
-        {
-            set => s_sessionFactory = value;
         }
 
         private void CleanExpiredSessions()
@@ -419,7 +422,7 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("SessionPool::NewSession" + PoolIdentification());
             try
             {
-                var session = s_sessionFactory.NewSession(connectionString, sessionContext);
+                var session = SessionFactory.NewSession(connectionString, sessionContext);
                 session.Open();
                 s_logger.Debug("SessionPool::NewSession - opened" + PoolIdentification());
                 if (GetPooling() && !_underDestruction)
@@ -465,7 +468,7 @@ namespace Snowflake.Data.Core.Session
         private Task<SFSession> NewSessionAsync(String connectionString, SessionPropertiesContext sessionContext, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::NewSessionAsync" + PoolIdentification());
-            var session = s_sessionFactory.NewSession(connectionString, sessionContext);
+            var session = SessionFactory.NewSession(connectionString, sessionContext);
             return session
                 .OpenAsync(cancellationToken)
                 .ContinueWith(previousTask =>

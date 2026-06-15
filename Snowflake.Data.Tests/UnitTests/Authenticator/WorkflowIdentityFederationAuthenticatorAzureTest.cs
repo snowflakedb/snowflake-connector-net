@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
@@ -13,8 +13,27 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
-    public class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadIdentityFederationAuthenticatorTest
+    [CollectionDefinition(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture), DisableParallelization = true)]
+    public sealed class WorkflowIdentityFederationAuthenticatorAzureTestFixture : ICollectionFixture<WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture>
+    {
+        public sealed class Fixture : IDisposable
+        {
+            internal readonly WiremockRunner Runner;
+
+            public Fixture()
+            {
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
+        }
+    }
+
+    [Collection(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture))]
+    public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private static readonly string s_wifAzureMappingPath = Path.Combine(s_wifMappingPath, "Azure");
         private static readonly string s_wifAzureBasicSuccessfulMapping = Path.Combine(s_wifAzureMappingPath, "successful_flow_basic.json");
@@ -34,32 +53,20 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_entraResourceReplacement = "%ENTRA_RESOURCE%";
         private static readonly string s_identityHeaderReplacement = "%IDENTITY_HEADER%";
 
-        private WiremockRunner _runner;
+        private readonly WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture _fixture;
 
-        [OneTimeSetUp]
-        public void BeforeAll()
+        public WorkflowIdentityFederationAuthenticatorAzureTest(WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture fixture)
         {
-            _runner = WiremockRunner.NewWiremock();
+            _fixture = fixture;
+            _fixture.Runner.ResetMapping();
         }
 
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
-        }
-
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureAuthorization()
         {
             // arrange
             AddAzureBasicWiremockMappings();
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.AZURE, s_JWTAccessToken);
+            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, s_JWTAccessToken);
             var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
 
             // act
@@ -69,12 +76,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestSuccessfulAzureAuthorizationAsync()
         {
             // arrange
             AddAzureBasicWiremockMappings();
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.AZURE, s_JWTAccessToken);
+            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, s_JWTAccessToken);
             var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
 
             // act
@@ -84,7 +91,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureAttestation()
         {
             // arrange
@@ -96,13 +103,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureAttestationWithClientId()
         {
             // arrange
@@ -114,13 +121,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureAttestationWithV2Issuer()
         {
             // arrange
@@ -132,13 +139,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailForUnparsableTokenAttestation()
         {
             AddAzureUnparsableTokenWiremockMappings();
@@ -150,10 +157,10 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.That(thrown.Message, Does.Contain("Retrieving attestation for AZURE failed. Reading of the token failed."));
+            Assert.Contains("Retrieving attestation for AZURE failed. Reading of the token failed.", thrown.Message);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureFunctionsAttestations()
         {
             // arrange
@@ -170,13 +177,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureFunctionsAttestationWithoutClientId()
         {
             // arrange
@@ -192,13 +199,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureFunctionsAttestationWithCustomEntraResource()
         {
             // arrange
@@ -215,13 +222,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailAzureFunctionsAttestationWithoutIdentityHeader()
         {
             // arrange
@@ -238,10 +245,10 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.That(thrown.Message, Does.Contain("Retrieving attestation for AZURE failed. Managed identity is not enabled on this Azure function."));
+            Assert.Contains("Retrieving attestation for AZURE failed. Managed identity is not enabled on this Azure function.", thrown.Message);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureFunctionsAttestationWithV2IssuerAuthentication()
         {
             // arrange
@@ -258,13 +265,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.AZURE, attestation.Provider);
-            Assert.AreEqual(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
-            Assert.AreEqual(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+            Assert.Equal(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
+            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        private void AddAzureBasicWiremockMappings() => AddAzureBasicWiremockMappings(_runner);
+        private void AddAzureBasicWiremockMappings() => AddAzureBasicWiremockMappings(_fixture.Runner);
 
         internal static void AddAzureBasicWiremockMappings(WiremockRunner runner) =>
             runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
@@ -274,21 +281,21 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             );
 
         private void AddAzureBasicV2IssuerWiremockMappings() =>
-            _runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
+            _fixture.Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessTokenV2)
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
             );
 
         private void AddAzureUnparsableTokenWiremockMappings() =>
-            _runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
+            _fixture.Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, "unparsable.token")
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
             );
 
         private void AddAzureFunctionsWiremockMappings() =>
-            _runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
+            _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
                     .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
@@ -297,7 +304,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             );
 
         private void AddAzureFunctionsWithV2IssuerWiremockMappings() =>
-            _runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
+            _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessTokenV2)
                     .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
@@ -306,7 +313,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             );
 
         private void AddAzureFunctionsWithCustomEntraResourceWiremockMappings() =>
-            _runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
+            _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
                     .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
@@ -315,7 +322,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             );
 
         private void AddAzureFunctionsWithoutClientIdWiremockMappings() =>
-            _runner.AddMappings(s_wifAzureFunctionsNoClientIdSuccessfulMappingPath,
+            _fixture.Runner.AddMappings(s_wifAzureFunctionsNoClientIdSuccessfulMappingPath,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
@@ -323,14 +330,14 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             );
 
         private void AddAzureBasicWithClientIdWiremockMappings() =>
-            _runner.AddMappings(s_wifAzureBasicWithClientIdSuccessfulMapping,
+            _fixture.Runner.AddMappings(s_wifAzureBasicWithClientIdSuccessfulMapping,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
                     .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
             );
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailAzureAttestationWhenImpersonationIsUsed()
         {
             // arrange
@@ -342,7 +349,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.That(thrown.Message, Does.Contain("Impersonation is not supported for Azure workload identity provider"));
+            Assert.Contains("Impersonation is not supported for Azure workload identity provider", thrown.Message);
         }
 
         private SFSession PrepareSessionForAzure(string connectionStringSuffix,

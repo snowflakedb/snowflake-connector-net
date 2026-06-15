@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Web;
 using Mono.Unix;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
@@ -12,7 +12,6 @@ using Moq;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
     public class FileCrlCacheTest : RevocationTests
     {
         const string CrlUrl = "http://snowflakecomputing.com/crl1.crl";
@@ -26,7 +25,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         private static readonly CrlParser s_crlParser = new(TimeSpan.FromDays(10));
         private static readonly TimeSpan s_removalDelay = TimeSpan.FromDays(7);
 
-        [Test]
+        [SFFact]
         public void TestGetAndSetCacheOperations()
         {
             // arrange
@@ -41,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 var crlReadFromNotExistingFile = cache.Get(CrlUrl);
 
                 // assert
-                Assert.IsNull(crlReadFromNotExistingFile);
+                Assert.Null(crlReadFromNotExistingFile);
 
                 // act
                 cache.Set(CrlUrl, crl);
@@ -56,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestSetOverridesExistingFile()
         {
             // arrange
@@ -84,8 +83,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestDontReadFromInsecureFile()
         {
             // arrange
@@ -105,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 var crlReadFromTooPermissiveFile = cache.Get(CrlUrl);
 
                 // assert
-                Assert.IsNull(crlReadFromTooPermissiveFile);
+                Assert.Null(crlReadFromTooPermissiveFile);
             }
             finally
             {
@@ -113,8 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestSetSecurePermissionsWhenSavingCrlCache()
         {
             // arrange
@@ -139,9 +136,9 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
                 // assert
                 AssertCrlsAreEqual(crl, crlRead);
                 var filePermissions = UnixOperations.Instance.GetFilePermissions(fileName);
-                Assert.AreEqual(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite, filePermissions);
+                Assert.Equal(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite, filePermissions);
                 var dirPermissions = UnixOperations.Instance.GetDirPermissions(tempDirectory);
-                Assert.AreEqual(FileAccessPermissions.UserReadWriteExecute, dirPermissions);
+                Assert.Equal(FileAccessPermissions.UserReadWriteExecute, dirPermissions);
             }
             finally
             {
@@ -149,7 +146,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMocksWindowsGetCrl()
         {
             // arrange
@@ -180,7 +177,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMocksWindowsGetCrlForNotExistingFile()
         {
             // arrange
@@ -200,15 +197,15 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlRead = cache.Get(CrlUrl);
 
             // assert
-            Assert.IsNull(crlRead);
+            Assert.Null(crlRead);
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMocksWindowsGetCrlForReadingError()
         {
             // arrange
-            var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
+            var tempDirectory = Path.Combine(Path.GetTempPath());
             var fileName = Path.Combine(tempDirectory, HttpUtility.UrlEncode(CrlUrl, Encoding.UTF8));
             var cacheConfig = new FileCrlCacheConfig(tempDirectory, true, 0, 0);
             var fileOperations = new Mock<FileOperations>();
@@ -227,16 +224,16 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlRead = cache.Get(CrlUrl);
 
             // assert
-            Assert.IsNull(crlRead);
+            Assert.Null(crlRead);
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMocksWindowsSaveCrl()
         {
             // arrange
             var crl = CreateCrl();
-            var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
+            var tempDirectory = Path.Combine(Path.GetTempPath());
             var fileName = Path.Combine(tempDirectory, HttpUtility.UrlEncode(CrlUrl, Encoding.UTF8));
             var cacheConfig = new FileCrlCacheConfig(tempDirectory, true, 0, 0);
             var fileOperations = new Mock<FileOperations>();
@@ -255,7 +252,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
+        [SFFact]
         public void TestWithMocksWindowsSaveCrlError()
         {
             // arrange
@@ -282,8 +279,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
-        [Platform("Win")]
+        [SFFact(SkipCondition.RunOnlyOnWindows)]
         public void TestWithMocksWindowsSaveCrlWithDirectoryCreation()
         {
             // arrange
@@ -311,8 +307,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixGetCrl()
         {
             // arrange
@@ -342,8 +337,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             AssertCrlsAreEqual(crl, crlRead);
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixGetCrlFailsForReadingError()
         {
             // arrange
@@ -366,16 +360,15 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crlRead = cache.Get(CrlUrl);
 
             // assert
-            Assert.IsNull(crlRead);
+            Assert.Null(crlRead);
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixSaveCrl()
         {
             // arrange
             var crl = CreateCrl();
-            var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
+            var tempDirectory = Path.Combine(Path.GetTempPath());
             var fileName = Path.Combine(tempDirectory, HttpUtility.UrlEncode(CrlUrl, Encoding.UTF8));
             var cacheConfig = new FileCrlCacheConfig(tempDirectory, false, UnixUserId, UnixGroupId);
             var fileOperations = new Mock<FileOperations>();
@@ -401,8 +394,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixSaveCrlWithDirectoryCreation()
         {
             // arrange
@@ -434,8 +426,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestWithMocksUnixSaveCrlShouldFixIncorrectPermissions()
         {
             // arrange
@@ -472,14 +463,12 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             unixOperations.VerifyNoOtherCalls();
         }
 
-        [Test]
-        [Platform(Exclude = "Win")]
-        [TestCase(1, 0, 0, 0)]
-        [TestCase(0, 1, 0, 0)]
-        [TestCase(0, 0, 1, 0)]
-        [TestCase(0, 0, 1, 1)]
-        public void TestWithMocksUnixCrlShouldNotBeSavedIfFailedToSetSecurePermissions(long changeDirOwnerResult, long changeDirPermissionsResult,
-            long changeFileOwnerResult, long changeFilePermissionsResult)
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [InlineData(1, 0, 0, 0)]
+        [InlineData(0, 1, 0, 0)]
+        [InlineData(0, 0, 1, 0)]
+        [InlineData(0, 0, 1, 1)]
+        public void TestWithMocksUnixCrlShouldNotBeSavedIfFailedToSetSecurePermissions(long changeDirOwnerResult, long changeDirPermissionsResult, long changeFileOwnerResult, long changeFilePermissionsResult)
         {
             // arrange
             var crl = CreateCrl();
@@ -550,12 +539,12 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
         private void AssertCrlsAreEqual(Crl expected, Crl actual)
         {
-            Assert.AreEqual(expected.DownloadTime, actual.DownloadTime);
-            Assert.AreEqual(expected.ThisUpdate, actual.ThisUpdate);
-            Assert.AreEqual(expected.NextUpdate, actual.NextUpdate);
-            Assert.AreEqual(expected.IssuerName, actual.IssuerName);
-            CollectionAssert.AreEqual(expected.IssuerDistributionPoints, actual.IssuerDistributionPoints);
-            CollectionAssert.AreEqual(expected.RevokedCertificates, actual.RevokedCertificates);
+            Assert.Equal(expected.DownloadTime, actual.DownloadTime);
+            Assert.Equal(expected.ThisUpdate, actual.ThisUpdate);
+            Assert.Equal(expected.NextUpdate, actual.NextUpdate);
+            Assert.Equal(expected.IssuerName, actual.IssuerName);
+            Assert.Equal(expected.IssuerDistributionPoints, actual.IssuerDistributionPoints);
+            Assert.Equal(expected.RevokedCertificates, actual.RevokedCertificates);
         }
     }
 }

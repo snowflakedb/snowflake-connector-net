@@ -3,9 +3,9 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Moq;
-using NUnit.Framework;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto.Operators;
+using Xunit;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
@@ -15,10 +15,9 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
-    [TestFixture]
-    public class CrlTest : RevocationTests
+    public sealed class CrlTest : RevocationTests
     {
-        [Test]
+        [SFFact]
         public void TestCrlParse()
         {
             // arrange
@@ -32,25 +31,25 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crl = crlParser.Parse(crlBytes, now);
 
             // assert
-            Assert.AreEqual(now, crl.DownloadTime);
-            Assert.AreEqual(DateTimeKind.Utc, crl.ThisUpdate.Kind);
-            Assert.AreEqual(DigiCertThisUpdateString, crl.ThisUpdate.ToUniversalTime().ToString("o"));
-            Assert.AreEqual(DateTimeKind.Utc, crl.NextUpdate?.Kind);
-            Assert.AreEqual(DigiCertNextUpdateString, crl.NextUpdate?.ToUniversalTime().ToString("o"));
-            Assert.AreEqual(DigiCertIssuer, crl.IssuerName);
-            Assert.IsNotNull(crl.IssuerNameRawData);
-            CollectionAssert.AreEqual(crl.BouncyCastleCrl.IssuerDN.GetEncoded(), crl.IssuerNameRawData);
-            Assert.That(crl.IssuerDistributionPoints, Is.EquivalentTo(expectedCrlDistributionPoints));
-            Assert.That(crl.RevokedCertificates, Does.Contain(DigiCertRevokedCertSerialNumber));
-            Assert.IsTrue(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
-            Assert.IsFalse(crl.RevokedCertificates.Contains(DigiCertUnrevokedCertSerialNumber));
-            Assert.IsFalse(crl.IsRevoked(DigiCertUnrevokedCertSerialNumber));
-            Assert.IsFalse(crl.NeedsReplacement(now, TimeSpan.FromDays(1)));
+            Assert.Equal(now, crl.DownloadTime);
+            Assert.Equal(DateTimeKind.Utc, crl.ThisUpdate.Kind);
+            Assert.Equal(DigiCertThisUpdateString, crl.ThisUpdate.ToUniversalTime().ToString("o"));
+            Assert.Equal(DateTimeKind.Utc, crl.NextUpdate?.Kind);
+            Assert.Equal(DigiCertNextUpdateString, crl.NextUpdate?.ToUniversalTime().ToString("o"));
+            Assert.Equal(DigiCertIssuer, crl.IssuerName);
+            Assert.NotNull(crl.IssuerNameRawData);
+            Assert.Equal(crl.BouncyCastleCrl.IssuerDN.GetEncoded(), crl.IssuerNameRawData);
+            Assert.Equivalent(expectedCrlDistributionPoints, crl.IssuerDistributionPoints);
+            Assert.Contains(DigiCertRevokedCertSerialNumber, crl.RevokedCertificates);
+            Assert.True(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
+            Assert.False(crl.RevokedCertificates.Contains(DigiCertUnrevokedCertSerialNumber));
+            Assert.False(crl.IsRevoked(DigiCertUnrevokedCertSerialNumber));
+            Assert.False(crl.NeedsReplacement(now, TimeSpan.FromDays(1)));
         }
 
-        [Test]
-        [TestCase("2025-07-25T16:57:00.0000000Z", false)]
-        [TestCase("2025-08-02T16:57:00.0000000Z", true)]
+        [SFTheory]
+        [InlineData("2025-07-25T16:57:00.0000000Z", false)]
+        [InlineData("2025-08-02T16:57:00.0000000Z", true)]
         public void TestCrlExpiredDependingOnNextUpdate(string nowString, bool expectedIsExpired)
         {
             // arrange
@@ -64,10 +63,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var isExpired = crl.NeedsReplacement(now, TimeSpan.FromDays(365));
 
             // assert
-            Assert.AreEqual(expectedIsExpired, isExpired);
+            Assert.Equal(expectedIsExpired, isExpired);
         }
 
-        [Test]
+        [SFFact]
         public void TestCrlParserDefaultValidityTime()
         {
             // arrange
@@ -78,10 +77,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var validityTime = crlParser.GetCacheValidityTime();
 
             // assert
-            Assert.AreEqual(TimeSpan.FromDays(1), validityTime);
+            Assert.Equal(TimeSpan.FromDays(1), validityTime);
         }
 
-        [Test]
+        [SFFact]
         public void TestCrlParserCustomValidityTime()
         {
             // arrange
@@ -95,10 +94,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var validityTime = crlParser.GetCacheValidityTime();
 
             // assert
-            Assert.AreEqual(TimeSpan.FromDays(7), validityTime);
+            Assert.Equal(TimeSpan.FromDays(7), validityTime);
         }
 
-        [Test]
+        [SFFact]
         public void TestCrlIsStaleAfterValidityTime()
         {
             // arrange
@@ -118,13 +117,13 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.True(needsReplacement);
         }
 
-        [Test]
-        [TestCase("1", "01")]
-        [TestCase("127", "7F")]
-        [TestCase("128", "0080")]
-        [TestCase("255", "00FF")]
-        [TestCase("256", "0100")]
-        [TestCase("32768", "008000")]
+        [SFTheory]
+        [InlineData("1", "01")]
+        [InlineData("127", "7F")]
+        [InlineData("128", "0080")]
+        [InlineData("255", "00FF")]
+        [InlineData("256", "0100")]
+        [InlineData("32768", "008000")]
         public void TestConvertBigIntegerToHexString(string stringValue, string expectedHexString)
         {
             // arrange
@@ -136,13 +135,13 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var hexString = crlParser.ConvertToHexadecimalString(bigInt);
 
             // assert
-            Assert.AreEqual(expectedHexString, hexString);
+            Assert.Equal(expectedHexString, hexString);
         }
 
-        [Test]
-        [TestCase("084E2808851C58174D0EF94B29571042", Description = "Uppercase - matches stored format")]
-        [TestCase("084e2808851c58174d0ef94b29571042", Description = "Lowercase - case-insensitive match")]
-        [TestCase("084E2808851c58174d0ef94B29571042", Description = "Mixed case - case-insensitive match")]
+        [SFTheory]
+        [InlineData("084E2808851C58174D0EF94B29571042")] //Uppercase - matches stored format
+        [InlineData("084e2808851c58174d0ef94b29571042")] // Lowercase - case-insensitive match
+        [InlineData("084E2808851c58174d0ef94B29571042")] // Mixed case - case-insensitive match
         public void TestIsRevokedIsCaseInsensitive(string serialNumber)
         {
             // arrange
@@ -156,16 +155,16 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var isRevoked = crl.IsRevoked(serialNumber);
 
             // assert
-            Assert.IsTrue(isRevoked);
+            Assert.True(isRevoked);
         }
 
-        [Test]
-        [TestCase(true)]
-        [TestCase(false)]
+        [SFTheory]
+        [InlineData(true)]
+        [InlineData(false)]
         public void TestIsRevokedHandlesLeadingZeroBytePadding(bool serialHasHighBitSet)
         {
 #if !NET8_0_OR_GREATER
-            Assert.Inconclusive("API for x509 is outdated in older versions, there's little gain in effectively duplicating this test body to accomodate that contract.");
+            Skip.When(true, "API for x509 is outdated in older versions, there's little gain in effectively duplicating this test body to accomodate that contract.");
         }
 #else
             // DER encodes positive integers with a leading 0x00 when the high bit is set.
@@ -184,12 +183,11 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             do
             {
                 certificate = BuildSelfSignedCertificate(counter);
-                Assert.Less(counter++, 20, "Gave up waiting for desired serial number form");
-            } while (certificate.SerialNumberBytes.Length != expectedBytesCount);
-            // Expected value of number of loop iterations here = 2
+                Assert.InRange(counter++, int.MinValue, 20);
+            } while (certificate.SerialNumberBytes.Length != expectedBytesCount); // Expected value of number of loop iterations here = 2
 
             if (serialHasHighBitSet)
-                Assert.AreEqual("00", certificate.SerialNumber[..2], "Serial with high bit set should have leading 0x00 in hex representation");
+                AssertExtensions.Equal("00", certificate.SerialNumber[..2], "Serial with high bit set should have leading 0x00 in hex representation");
 
             // Build a CRL containing this serial as revoked
             var serialAsBigInt = new BigInteger(certificate.SerialNumber, 16);
@@ -208,14 +206,14 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var crl = crlParser.Create(bouncyCrl, now);
 
             var bouncyCastleHex = crlParser.ConvertToHexadecimalString(serialAsBigInt);
-            Assert.IsTrue(crl.RevokedCertificates.Contains(bouncyCastleHex), "CRL should contain the revoked serial");
+            Assert.True(crl.RevokedCertificates.Contains(bouncyCastleHex), "CRL should contain the revoked serial");
 
             // act
             var isRevoked = crl.IsRevoked(certificate.SerialNumber);
 
             // assert — both representations must match regardless of leading 0x00 presence
-            Assert.AreEqual(bouncyCastleHex, certificate.SerialNumber, $"Hex mismatch: CRL has '{bouncyCastleHex}', cert has '{certificate.SerialNumber}'");
-            Assert.IsTrue(isRevoked, "Certificate should be found in the revocation list");
+            AssertExtensions.Equal(bouncyCastleHex, certificate.SerialNumber, $"Hex mismatch: CRL has '{bouncyCastleHex}', cert has '{certificate.SerialNumber}'");
+            Assert.True(isRevoked, "Certificate should be found in the revocation list");
         }
 
         private static X509Certificate2 BuildSelfSignedCertificate(int runNo)

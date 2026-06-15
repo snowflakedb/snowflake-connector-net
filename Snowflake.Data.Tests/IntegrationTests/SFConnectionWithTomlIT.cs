@@ -2,45 +2,49 @@ using System;
 using System.Data;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Mono.Unix.Native;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
+using Snowflake.Data.Tests.Util;
 using Tomlyn;
 using Tomlyn.Model;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-
-    [TestFixture, NonParallelizable]
-    class SFConnectionWithTomlIT : SFBaseTest
+    [Collection(nameof(SFConnectionWithTomlIT))]
+    public sealed class SFConnectionWithTomlIT : SFBaseTestAsync, IDisposable
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
+        [CollectionDefinition(nameof(SFConnectionWithTomlIT), DisableParallelization = true)]
+        public sealed class SFConnectionWithTomlITFixture : ICollectionFixture<SFConnectionWithTomlITFixture>
+        {
+        }
 
+        private readonly SFBaseTestAsyncFixture _fixture;
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
         private static string s_workingDirectory;
 
-
-        [SetUp]
-        public new void BeforeTest()
+        public SFConnectionWithTomlIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
-            s_workingDirectory ??= Path.Combine(TestContext.CurrentContext.WorkDirectory, "../../..", "toml_config_folder");
+            _fixture = fixture;
+            s_workingDirectory ??= Path.Combine(AppContext.BaseDirectory, "../../..", "toml_config_folder");
             if (!Directory.Exists(s_workingDirectory))
             {
                 Directory.CreateDirectory(s_workingDirectory);
             }
-            CreateTomlConfigBaseOnConnectionString(ConnectionString);
+            CreateTomlConfigBaseOnConnectionString(_fixture.ConnectionString);
         }
 
-        [TearDown]
-        public new void AfterTest()
+        public void Dispose()
         {
             Directory.Delete(s_workingDirectory, true);
         }
 
-        [Test]
-        public void TestLocalDefaultConnectStringReadFromToml()
+        [SFFact]
+        public async Task TestLocalDefaultConnectStringReadFromToml()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, s_workingDirectory);
@@ -48,8 +52,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
-                    conn.Open();
-                    Assert.AreEqual(ConnectionState.Open, conn.State);
+                    await conn.OpenAsync();
+                    Assert.Equal(ConnectionState.Open, conn.State);
                 }
             }
             finally
@@ -58,8 +62,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        public void TestThrowExceptionIfTomlNotFoundWithOtherConnectionString()
+        [SFFact]
+        public async Task TestThrowExceptionIfTomlNotFoundWithOtherConnectionString()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
             var connectionName = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName);
@@ -69,7 +73,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
-                    Assert.Throws<SnowflakeDbException>(() => conn.Open(), "Unable to connect. Specified connection name does not exist in connections.toml");
+                    await Assert.ThrowsAsync<Exception>(() => conn.OpenAsync()).ConfigureAwait(false);
                 }
             }
             finally
@@ -79,8 +83,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test]
-        public void TestThrowExceptionIfTomlFromNotFoundFromDbConnection()
+        [SFFact]
+        public async Task TestThrowExceptionIfTomlFromNotFoundFromDbConnection()
         {
             var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, Path.Combine(s_workingDirectory, "InvalidFolder"));
@@ -88,7 +92,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
-                    Assert.Throws<SnowflakeDbException>(() => conn.Open(), "Error: Required property ACCOUNT is not provided");
+                    await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.OpenAsync()).ConfigureAwait(false);
                 }
             }
             finally

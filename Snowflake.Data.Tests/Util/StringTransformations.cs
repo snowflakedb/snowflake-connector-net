@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.Util
 {
-    internal class StringTransformations
+    public class StringTransformations
     {
         private List<StringTransformation> _transformations = new();
 
