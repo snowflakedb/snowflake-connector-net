@@ -37,11 +37,11 @@ public abstract class NumberOverflowAsStringIT : SFBaseTestAsync
     // and System.Decimal.MaxValue (29 digits, Arrow Decimal128 path).
     // Snowflake stores it exactly in a NUMBER(38,0) column.
     private const string BigNumber = "99999999999999999999999999999999";
-    private const string BigNonIntNumber = "99999999999999999999.9999999999";
+    private const string BigNonIntNumber = "9999999999999999999999999999999.9";
 
     [SFTheory]
     [InlineData(BigNumber, 38, 0)]
-    [InlineData(BigNonIntNumber, 28, 10)]
+    [InlineData(BigNonIntNumber, 37, 1)]
     public async Task TestGetValueReturnsStringForOverflowWhenFlagIsSet(string insert, int precision, int scale)
     {
         var tableNameSuffix = Guid.NewGuid().ToString("N");
