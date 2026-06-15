@@ -14,7 +14,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    public class SessionPoolTest
+    public sealed class SessionPoolTest
     {
         private const string ConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;";
 
