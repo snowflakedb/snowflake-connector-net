@@ -1,0 +1,17 @@
+{
+    "mappings": [
+        {
+            "request": {
+                "urlPathPattern": "/queries/v1/query-request",
+                "method": "POST"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": "{\"data\":{\"queryId\":\"fail-q"
+            }
+        }
+    ]
+}

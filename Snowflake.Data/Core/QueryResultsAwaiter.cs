@@ -7,7 +7,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core
 {
-    internal class QueryResultsRetryConfig
+    internal sealed class QueryResultsRetryConfig
     {
         private const int DefaultAsyncNoDataMaxRetry = 24;
 
@@ -30,11 +30,11 @@ namespace Snowflake.Data.Core
         }
     }
 
-    internal class QueryResultsAwaiter
+    internal sealed class QueryResultsAwaiter
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<QueryResultsAwaiter>();
 
-        private static readonly Regex UuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+        private static readonly Regex s_uuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
         private QueryResultsRetryConfig _queryResultsRetryConfig;
 
@@ -52,32 +52,16 @@ namespace Snowflake.Data.Core
 
         internal QueryStatus GetQueryStatus(SnowflakeDbConnection connection, string queryId)
         {
-            if (UuidRegex.IsMatch(queryId))
-            {
-                var sfStatement = new SFStatement(connection.SfSession);
-                return sfStatement.GetQueryStatus(queryId);
-            }
-            else
-            {
-                var errorMessage = $"The given query id {queryId} is not valid uuid";
-                s_logger.Error(errorMessage);
-                throw new Exception(errorMessage);
-            }
+            ValidateQueryId(queryId);
+            var sfStatement = new SFStatement(connection.SfSession);
+            return sfStatement.GetQueryStatus(queryId);
         }
 
         internal async Task<QueryStatus> GetQueryStatusAsync(SnowflakeDbConnection connection, string queryId, CancellationToken cancellationToken)
         {
-            if (UuidRegex.IsMatch(queryId))
-            {
-                var sfStatement = new SFStatement(connection.SfSession);
-                return await sfStatement.GetQueryStatusAsync(queryId, cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                var errorMessage = $"The given query id {queryId} is not valid uuid";
-                s_logger.Error(errorMessage);
-                throw new Exception(errorMessage);
-            }
+            ValidateQueryId(queryId);
+            var sfStatement = new SFStatement(connection.SfSession);
+            return await sfStatement.GetQueryStatusAsync(queryId, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -174,6 +158,7 @@ namespace Snowflake.Data.Core
 
         private async Task CancelQueryByIdAsync(SnowflakeDbConnection connection, string queryId)
         {
+            ValidateQueryId(queryId);
             s_logger.Debug($"Sending cancel query request for query id {queryId}");
             using var cmd = (SnowflakeDbCommand)connection.CreateCommand();
             cmd.CommandText = $"SELECT SYSTEM$CANCEL_QUERY('{queryId}')";
@@ -183,11 +168,21 @@ namespace Snowflake.Data.Core
 
         private void CancelQueryById(SnowflakeDbConnection connection, string queryId)
         {
+            ValidateQueryId(queryId);
             s_logger.Debug($"Sending cancel query request for query id {queryId}");
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"SELECT SYSTEM$CANCEL_QUERY('{queryId}')";
             cmd.ExecuteNonQuery();
             s_logger.Debug($"Cancel query request sent successfully for query id {queryId}");
+        }
+
+        private static void ValidateQueryId(string queryId)
+        {
+            if (!string.IsNullOrEmpty(queryId) && s_uuidRegex.IsMatch(queryId))
+                return;
+
+            s_logger.Error($"The given query id {queryId} is not valid uuid");
+            throw new Exception("Invalid query id format. Expected a UUID.");
         }
     }
 }

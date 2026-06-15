@@ -14,6 +14,15 @@ namespace Snowflake.Data.Log
             _snowflakeLogger = snowflakeLogger;
         }
 
+        public void Trace(string message, Exception ex = null)
+        {
+            if (!IsTraceEnabled())
+                return;
+            message = SecretDetector.MaskSecrets(message).maskedText;
+            _snowflakeLogger.Trace(message, new MaskedException(ex));
+            SFLoggerFactory.s_customLogger.LogTrace(FormatBrackets(message), new MaskedException(ex));
+        }
+
         public void Debug(string message, Exception ex = null)
         {
             if (!IsDebugEnabled())
@@ -48,6 +57,12 @@ namespace Snowflake.Data.Log
             message = SecretDetector.MaskSecrets(message).maskedText;
             _snowflakeLogger.Error(message, new MaskedException(ex));
             SFLoggerFactory.s_customLogger.LogError(FormatBrackets(message), new MaskedException(ex));
+        }
+
+        public bool IsTraceEnabled()
+        {
+            return _snowflakeLogger.IsTraceEnabled() ||
+                   SFLoggerFactory.s_customLogger.IsEnabled(LogLevel.Trace);
         }
 
         public bool IsDebugEnabled()

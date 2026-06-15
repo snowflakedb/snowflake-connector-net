@@ -1,12 +1,12 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
     public class NonNegativeCounterTest
     {
-        [Test]
+        [SFFact]
         public void TestInitialZero()
         {
             // arrange
@@ -16,10 +16,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var count = counter.Count();
 
             // assert
-            Assert.AreEqual(0, count);
+            Assert.Equal(0, count);
         }
 
-        [Test]
+        [SFFact]
         public void TestIncrease()
         {
             // arrange
@@ -29,17 +29,17 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             counter.Increase();
 
             // assert
-            Assert.AreEqual(1, counter.Count());
+            Assert.Equal(1, counter.Count());
 
             // act
             counter.Increase();
 
             // assert
-            Assert.AreEqual(2, counter.Count());
+            Assert.Equal(2, counter.Count());
         }
 
 
-        [Test]
+        [SFFact]
         public void TestDecrease()
         {
             // arrange
@@ -51,16 +51,16 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             counter.Decrease();
 
             // assert
-            Assert.AreEqual(1, counter.Count());
+            Assert.Equal(1, counter.Count());
 
             // act
             counter.Decrease();
 
             // assert
-            Assert.AreEqual(0, counter.Count());
+            Assert.Equal(0, counter.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestDecreaseDoesNotGoBelowZero()
         {
             // arrange
@@ -70,10 +70,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             counter.Decrease();
 
             // assert
-            Assert.AreEqual(0, counter.Count());
+            Assert.Equal(0, counter.Count());
         }
 
-        [Test]
+        [SFFact]
         public void TestReset()
         {
             // arrange
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             counter.Reset();
 
             // assert
-            Assert.AreEqual(0, counter.Count());
+            Assert.Equal(0, counter.Count());
         }
     }
 }

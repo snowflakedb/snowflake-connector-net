@@ -9,6 +9,7 @@ namespace Snowflake.Data.Log
         internal static List<SFAppender> s_appenders = new List<SFAppender>();
         internal static LoggingEvent s_level = LoggingEvent.OFF;
         private static readonly object s_lock = new object();
+        private static bool s_isTraceEnabled = false;
         private static bool s_isDebugEnabled = false;
         private static bool s_isInfoEnabled = false;
         private static bool s_isWarnEnabled = false;
@@ -31,6 +32,7 @@ namespace Snowflake.Data.Log
         private static void SetEnableValues()
         {
             var enabled = s_level != LoggingEvent.OFF;
+            var isTraceEnabled = enabled;
             var isDebugEnabled = enabled;
             var isInfoEnabled = enabled;
             var isWarnEnabled = enabled;
@@ -41,27 +43,38 @@ namespace Snowflake.Data.Log
                 switch (s_level)
                 {
                     case LoggingEvent.TRACE:
+                        break;
                     case LoggingEvent.DEBUG:
+                        isTraceEnabled = false;
+                        break;
+                    case LoggingEvent.INFO:
+                        isDebugEnabled = false;
+                        isTraceEnabled = false;
+                        break;
+                    case LoggingEvent.WARN:
+                        isInfoEnabled = false;
+                        isDebugEnabled = false;
+                        isTraceEnabled = false;
                         break;
                     case LoggingEvent.ERROR:
                         isWarnEnabled = false;
                         isInfoEnabled = false;
                         isDebugEnabled = false;
-                        break;
-                    case LoggingEvent.WARN:
-                        isInfoEnabled = false;
-                        isDebugEnabled = false;
-                        break;
-                    case LoggingEvent.INFO:
-                        isDebugEnabled = false;
+                        isTraceEnabled = false;
                         break;
                 }
             }
 
+            s_isTraceEnabled = isTraceEnabled;
             s_isDebugEnabled = isDebugEnabled;
             s_isInfoEnabled = isInfoEnabled;
             s_isWarnEnabled = isWarnEnabled;
             s_isErrorEnabled = isErrorEnabled;
+        }
+
+        public bool IsTraceEnabled()
+        {
+            return s_isTraceEnabled;
         }
 
         public bool IsDebugEnabled()
@@ -82,6 +95,14 @@ namespace Snowflake.Data.Log
         public bool IsErrorEnabled()
         {
             return s_isErrorEnabled;
+        }
+
+        public void Trace(string msg, Exception ex = null)
+        {
+            if (IsTraceEnabled())
+            {
+                Log(LoggingEvent.TRACE.ToString(), msg, ex);
+            }
         }
 
         public void Debug(string msg, Exception ex = null)

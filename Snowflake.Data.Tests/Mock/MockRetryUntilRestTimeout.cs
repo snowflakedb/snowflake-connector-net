@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public void setHttpClient(HttpClient httpClient)
         {
-            base._HttpClient = httpClient;
+            HttpClient = httpClient;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,

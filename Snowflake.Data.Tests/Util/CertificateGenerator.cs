@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using NUnit.Framework;
+using Xunit;
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
@@ -110,8 +110,8 @@ namespace Snowflake.Data.Tests.Util
             chain.ChainPolicy.ExtraStore.AddRange(certCollection);
             chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllFlags;
             var isBuilt = chain.Build(certificates.First());
-            Assert.IsTrue(isBuilt);
-            Assert.AreEqual(certificates.Count(), chain.ChainElements.Count);
+            Assert.True(isBuilt);
+            Assert.Equal(certificates.Count(), chain.ChainElements.Count);
             return chain;
         }
 

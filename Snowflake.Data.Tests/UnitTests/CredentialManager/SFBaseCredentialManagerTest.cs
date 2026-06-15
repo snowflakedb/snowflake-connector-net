@@ -1,4 +1,4 @@
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager
@@ -7,8 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
     {
         protected ISnowflakeCredentialManager _credentialManager;
 
-        [Test]
-        public void TestSavingAndRemovingCredentials()
+        public virtual void TestSavingAndRemovingCredentials()
         {
             // arrange
             var key = "mockKey";
@@ -18,17 +17,16 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.SaveCredentials(key, expectedToken);
 
             // assert
-            Assert.AreEqual(expectedToken, _credentialManager.GetCredentials(key));
+            Assert.Equal(expectedToken, _credentialManager.GetCredentials(key));
 
             // act
             _credentialManager.RemoveCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
+            Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
-        [Test]
-        public void TestSavingCredentialsForAnExistingKey()
+        public virtual void TestSavingCredentialsForAnExistingKey()
         {
             // arrange
             var key = "mockKey";
@@ -39,24 +37,23 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.SaveCredentials(key, firstExpectedToken);
 
             // assert
-            Assert.AreEqual(firstExpectedToken, _credentialManager.GetCredentials(key));
+            Assert.Equal(firstExpectedToken, _credentialManager.GetCredentials(key));
 
             // act
             _credentialManager.SaveCredentials(key, secondExpectedToken);
 
             // assert
-            Assert.AreEqual(secondExpectedToken, _credentialManager.GetCredentials(key));
+            Assert.Equal(secondExpectedToken, _credentialManager.GetCredentials(key));
 
             // act
             _credentialManager.RemoveCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
+            Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
 
         }
 
-        [Test]
-        public void TestRemovingCredentialsForKeyThatDoesNotExist()
+        public virtual void TestRemovingCredentialsForKeyThatDoesNotExist()
         {
             // arrange
             var key = "mockKey";
@@ -65,11 +62,10 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.RemoveCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
+            Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
-        [Test]
-        public void TestGetCredentialsForProperKey()
+        public virtual void TestGetCredentialsForProperKey()
         {
             // arrange
             var key = "key";
@@ -83,11 +79,10 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var result = _credentialManager.GetCredentials(key);
 
             // assert
-            Assert.AreEqual(token, result);
+            Assert.Equal(token, result);
         }
 
-        [Test]
-        public void TestGetCredentialsForTokenWithManyCharacters()
+        public virtual void TestGetCredentialsForTokenWithManyCharacters()
         {
             // arrange
             var key = "mockKey";
@@ -97,17 +92,16 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             _credentialManager.SaveCredentials(key, expectedToken);
 
             // assert
-            Assert.AreEqual(expectedToken, _credentialManager.GetCredentials(key));
+            Assert.Equal(expectedToken, _credentialManager.GetCredentials(key));
 
             // act
             _credentialManager.RemoveCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
+            Assert.True(string.IsNullOrEmpty(_credentialManager.GetCredentials(key)));
         }
 
-        [Test]
-        public void TestGetCredentialsForCredentialsThatDoesNotExist()
+        public virtual void TestGetCredentialsForCredentialsThatDoesNotExist()
         {
             // arrange
             var key = "fakeKey";
@@ -117,7 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var token = _credentialManager.GetCredentials(key);
 
             // assert
-            Assert.IsTrue(string.IsNullOrEmpty(token));
+            Assert.True(string.IsNullOrEmpty(token));
         }
     }
 }

@@ -1,8 +1,15 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- v5.8.0
+  -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
+  -  Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
 - v5.7.0
-    - Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
+    - Improved input handling in `ChangeDatabase` by using parameterized queries.
+    - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.
+    - Bug fix: `OverflowException` when converting rest response with master token validity more than ~9.1h.
+    - Bug fix: Added path traversal protection for file downloads: destination paths are now validated against the target base directory before writing.
+    - Bug fix: Replaced use of System.Random with a cryptographically secure random number generator in the authenticator challenge/proof key generation and file transfer encryption key/IV generation.
 - v5.6.0
     - Added .NET 10 support. Changed LangVersion to C#13.
     - Added `DbType.AnsiStringFixedLength` to the set of types mapped to Snowflake `TEXT`, matching existing support for `AnsiString`, `String`, and `StringFixedLength`.

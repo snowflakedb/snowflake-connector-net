@@ -14,6 +14,7 @@ using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Telemetry;
 
 namespace Snowflake.Data.Core
 {
@@ -100,6 +101,8 @@ namespace Snowflake.Data.Core
 
         internal SecureString _mfaToken;
 
+        private bool _isClientTelemetryEnabled;
+
         private bool _honorSessionTimezone = false;
 
         private readonly bool _allowNumberOverflowAsStringEnabled = false;
@@ -140,6 +143,7 @@ namespace Snowflake.Data.Core
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 _timeSinceLastRenew = _startTime;
+                SnowflakeTelemetryModule.Register(this);
             }
             else
             {
@@ -206,6 +210,7 @@ namespace Snowflake.Data.Core
             _honorSessionTimezone = bool.Parse(properties[SFSessionProperty.HONORSESSIONTIMEZONE]);
             _allowNumberOverflowAsStringEnabled = bool.Parse(properties[SFSessionProperty.ALLOW_NUMBER_OVERFLOW_AS_STRING]);
             properties.TryGetValue(SFSessionProperty.USER, out _user);
+            _isClientTelemetryEnabled = !bool.TryParse(properties[SFSessionProperty.CLIENT_TELEMETRY_ENABLED], out var clientTelemetryFlag) || clientTelemetryFlag;
             ValidateApplicationName(properties);
             try
             {
@@ -331,6 +336,7 @@ namespace Snowflake.Data.Core
             if (!IsEstablished()) return;
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
+            SnowflakeTelemetryModule.Unregister(sessionId);
             var closeSessionRequest = PrepareCloseSessionRequest();
             PostCloseSession(closeSessionRequest, restRequester);
             sessionToken = null;
@@ -343,7 +349,11 @@ namespace Snowflake.Data.Core
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
             var closeSessionRequest = PrepareCloseSessionRequest();
-            Task.Run(() => PostCloseSession(closeSessionRequest, restRequester));
+            Task.Run(() =>
+            {
+                SnowflakeTelemetryModule.Unregister(sessionId);
+                PostCloseSession(closeSessionRequest, restRequester);
+            });
             sessionToken = null;
         }
 
@@ -353,7 +363,7 @@ namespace Snowflake.Data.Core
             if (!IsEstablished()) return;
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
-
+            await SnowflakeTelemetryModule.UnregisterAsync(sessionId, cancellationToken).ConfigureAwait(false);
             var closeSessionRequest = PrepareCloseSessionRequest();
 
             logger.Debug($"Closing session async");
@@ -420,6 +430,7 @@ namespace Snowflake.Data.Core
                 _timeSinceLastRenew = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 sessionToken = response.data.sessionToken;
                 masterToken = response.data.masterToken;
+                SnowflakeTelemetryModule.Register(this);
             }
         }
 
@@ -442,6 +453,7 @@ namespace Snowflake.Data.Core
             {
                 sessionToken = response.data.sessionToken;
                 masterToken = response.data.masterToken;
+                SnowflakeTelemetryModule.Register(this);
             }
         }
 
@@ -538,6 +550,11 @@ namespace Snowflake.Data.Core
                 string val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
                 _queryContextCacheSize = Int32.Parse(val);
                 _queryContextCache.SetCapacity(_queryContextCacheSize);
+            }
+
+            if (ParameterMap.TryGetValue(SFSessionParameter.CLIENT_TELEMETRY_ENABLED, out var clientTelemetryEnabledObj) && bool.TryParse(clientTelemetryEnabledObj.ToString(), out var clientTelemetryEnabled))
+            {
+                _isClientTelemetryEnabled = clientTelemetryEnabled;
             }
         }
 
@@ -800,5 +817,7 @@ namespace Snowflake.Data.Core
         }
 
         internal virtual bool IsInvalidatedForPooling() => _invalidatedForPooling;
+
+        internal virtual bool IsClientTelemetryEnabled() => !string.IsNullOrEmpty(sessionId) && _isClientTelemetryEnabled;
     }
 }

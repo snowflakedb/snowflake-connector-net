@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security;
 using Mono.Unix;
 using Mono.Unix.Native;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
@@ -16,83 +17,98 @@ using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGener
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
-    [Platform(Exclude = "Win")]
+    [CollectionDefinition(nameof(UnixOperationsTestFixture), DisableParallelization = true)]
+    public sealed class UnixOperationsTestFixture : ICollectionFixture<UnixOperationsTestFixture.Fixture>
+    {
+        public sealed class Fixture : IDisposable
+        {
+            public string WorkingDirectory { get; }
+            internal UnixOperations UnixOperations { get; }
+
+            public Fixture()
+            {
+                WorkingDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+                if (!Directory.Exists(WorkingDirectory))
+                {
+                    Directory.CreateDirectory(WorkingDirectory);
+                }
+                UnixOperations = new UnixOperations();
+            }
+
+            public void Dispose()
+            {
+                Directory.Delete(WorkingDirectory, true);
+            }
+        }
+    }
+
+    [Collection(nameof(UnixOperationsTestFixture))]
     public class UnixOperationsTest
     {
-        private static UnixOperations s_unixOperations;
-        private static readonly string s_workingDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        private readonly UnixOperationsTestFixture.Fixture _fixture;
 
-        [OneTimeSetUp]
-        public static void BeforeAll()
+        public UnixOperationsTest(UnixOperationsTestFixture.Fixture fixture)
         {
-            if (!Directory.Exists(s_workingDirectory))
-            {
-                Directory.CreateDirectory(s_workingDirectory);
-            }
-            s_unixOperations = new UnixOperations();
+            _fixture = fixture;
         }
 
-        [OneTimeTearDown]
-        public static void AfterAll()
-        {
-            Directory.Delete(s_workingDirectory, true);
-        }
-
-        [Test]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(TestDetectGroupOrOthersWritablePermissionsData))]
         public void TestDetectGroupOrOthersWritablePermissions(
-            [ValueSource(nameof(GroupOrOthersWritablePermissions))] FileAccessPermissions groupOrOthersWritablePermissions,
-            [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
-            [ValueSource(nameof(OtherNotWritablePermissions))] FileAccessPermissions otherNotWritablePermissions)
+            FileAccessPermissions groupOrOthersWritablePermissions,
+            FileAccessPermissions groupNotWritablePermissions,
+            FileAccessPermissions otherNotWritablePermissions)
         {
             // arrange
-            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, "random text");
             var readWriteUserPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
             var filePermissions = readWriteUserPermissions | groupOrOthersWritablePermissions | groupNotWritablePermissions | otherNotWritablePermissions;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
             var fileInfo = new UnixFileInfo(filePath);
 
             // act
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
+            var result = _fixture.UnixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
 
             // assert
-            Assert.IsTrue(result);
+            Assert.True(result);
         }
 
-        [Test]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(TestDetectGroupOrOthersNotWritablePermissionsData))]
         public void TestDetectGroupOrOthersNotWritablePermissions(
-            [ValueSource(nameof(UserPermissions))] FileAccessPermissions userPermissions,
-            [ValueSource(nameof(GroupNotWritablePermissions))] FileAccessPermissions groupNotWritablePermissions,
-            [ValueSource(nameof(OtherNotWritablePermissions))] FileAccessPermissions otherNotWritablePermissions)
+            FileAccessPermissions userPermissions,
+            FileAccessPermissions groupNotWritablePermissions,
+            FileAccessPermissions otherNotWritablePermissions)
         {
-            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, "random text");
             var filePermissions = userPermissions | groupNotWritablePermissions | otherNotWritablePermissions;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
             var fileInfo = new UnixFileInfo(filePath);
 
             // act
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
+            var result = _fixture.UnixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite);
 
             // assert
-            Assert.IsFalse(result);
+            Assert.False(result);
         }
 
-        [Test]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(UserAllowedPermissionsData))]
         public void TestReadAllTextCheckingPermissionsUsingTomlConfigurationFileValidations(
-            [ValueSource(nameof(UserAllowedPermissions))] FileAccessPermissions userAllowedPermissions)
+            FileAccessPermissions userAllowedPermissions)
         {
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
             Syscall.chmod(filePath, (FilePermissions)userAllowedPermissions);
 
             // act
-            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
+            var result = _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(content, result);
+            Assert.Equal(content, result);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestSkipReadPermissionsWhenSkipIsEnabled()
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -101,24 +117,24 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, logPath);
 
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
 
             var filePermissions = FileAccessPermissions.UserWrite | FileAccessPermissions.UserRead |
                 FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
-            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
+            var result = _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(content, result);
+            Assert.Equal(content, result);
             var logLines = File.ReadLines(Logger.EasyLoggerManagerTest.FindLogFilePath(logPath));
-            Assert.That(logLines, Has.Exactly(0).Matches<string>(s => s.Contains("File is readable by someone other than the owner")));
+            Assert.Equal(0, logLines.Count(s => s.Contains("File is readable by someone other than the owner")));
 
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestCheckReadPermissionsWhenSkipIsDisabled()
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -127,79 +143,84 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, logPath);
 
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
 
             var filePermissions = FileAccessPermissions.UserWrite | FileAccessPermissions.UserRead |
                 FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act
-            var result = s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
+            var result = _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             // assert
-            Assert.AreEqual(content, result);
+            Assert.Equal(content, result);
             var logLines = File.ReadLines(Logger.EasyLoggerManagerTest.FindLogFilePath(logPath));
-            Assert.That(logLines, Has.Exactly(1).Matches<string>(s => s.Contains("File is readable by someone other than the owner")));
+            Assert.Equal(1, logLines.Count(s => s.Contains("File is readable by someone other than the owner")));
 
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
         }
 
-        [TestCase("true", false)]
-        [TestCase("false", true)]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [InlineData("true", false)]
+        [InlineData("false", true)]
         public void TestTomlPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
         {
-            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, "random text");
             Syscall.chmod(filePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupWrite));
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, skipValue);
 
             if (shouldThrow)
-                Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
+                Assert.Throws<SecurityException>(() => _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
             else
-                Assert.DoesNotThrow(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
+                _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
 
-        [TestCase("true", false)]
-        [TestCase("false", true)]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [InlineData("true", false)]
+        [InlineData("false", true)]
         public void TestCredentialManagerPermissionChecksWithSkipTokenFileVerification(string skipValue, bool shouldThrow)
         {
-            var filePath = CreateConfigTempFile(s_workingDirectory, "random text");
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, "random text");
             Syscall.chmod(filePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupWrite));
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, skipValue);
 
             if (shouldThrow)
-                Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+                Assert.Throws<SecurityException>(() => _fixture.UnixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
             else
-                Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+                _fixture.UnixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
 
             Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
         }
 
-        [Test]
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(UserAllowedWritePermissionsData))]
         public void TestWriteAllTextCheckingPermissionsUsingSFCredentialManagerFileValidations(
-            [ValueSource(nameof(UserAllowedWritePermissions))] FileAccessPermissions userAllowedPermissions)
+            FileAccessPermissions userAllowedPermissions)
         {
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
             Syscall.chmod(filePath, (FilePermissions)userAllowedPermissions);
 
             // act and assert
-            Assert.DoesNotThrow(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
+            _fixture.UnixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
         }
 
-        [Test]
-        public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
-            [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
-            [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidationsData))]
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidations(FileAccessPermissions userPermissions,
+            FileAccessPermissions groupPermissions,
+            FileAccessPermissions othersPermissions)
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Assert.Ignore("Skip test when group and others have no permissions");
+                // Skip test when group and others have no permissions
+                return;
             }
 
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
 
             var filePermissions = userPermissions | groupPermissions | othersPermissions;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
@@ -207,124 +228,128 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // act and assert
             if ((groupPermissions & (FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)) != 0 ||
                 (othersPermissions & (FileAccessPermissions.OtherWrite | FileAccessPermissions.OtherExecute)) != 0)
-                Assert.Throws<SecurityException>(() => s_unixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions), "Attempting to read a file with too broad permissions assigned");
+                Assert.Throws<SecurityException>(() => _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
         }
 
-        [Test]
-        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
-            [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
-            [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFileData))]
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFile(FileAccessPermissions userPermissions,
+            FileAccessPermissions groupPermissions,
+            FileAccessPermissions othersPermissions)
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Assert.Ignore("Skip test when group and others have no permissions");
+                // Skip test when group and others have no permissions
+                return;
             }
 
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
 
             var filePermissions = userPermissions | groupPermissions | othersPermissions;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions), "Attempting to read or write a file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => _fixture.UnixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
         }
 
-        [Test]
-        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFile([ValueSource(nameof(UserReadWritePermissions))] FileAccessPermissions userPermissions,
-            [ValueSource(nameof(GroupPermissions))] FileAccessPermissions groupPermissions,
-            [ValueSource(nameof(OthersPermissions))] FileAccessPermissions othersPermissions)
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [MemberData(nameof(TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFileData))]
+        public void TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFile(FileAccessPermissions userPermissions,
+            FileAccessPermissions groupPermissions,
+            FileAccessPermissions othersPermissions)
         {
             if (groupPermissions == 0 && othersPermissions == 0)
             {
-                Assert.Ignore("Skip test when group and others have no permissions");
+                // Skip test when group and others have no permissions
+                return;
             }
             var content = "random text";
-            var filePath = CreateConfigTempFile(s_workingDirectory, content);
+            var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, content);
 
             var filePermissions = userPermissions | groupPermissions | othersPermissions;
             Syscall.chmod(filePath, (FilePermissions)filePermissions);
 
             // act and assert
-            Assert.Throws<SecurityException>(() => s_unixOperations.WriteAllText(filePath, "test", EasyLoggerValidator.Instance.ValidateLogFilePermissions), "Attempting to read or write to log file with too broad permissions assigned");
+            Assert.Throws<SecurityException>(() => _fixture.UnixOperations.WriteAllText(filePath, "test", EasyLoggerValidator.Instance.ValidateLogFilePermissions));
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestCreateFileWithUserRwPermissions()
         {
             // arrange
-            var filePath = Path.Combine(s_workingDirectory, "testfile");
+            var filePath = Path.Combine(_fixture.WorkingDirectory, "testfile");
 
             // act
-            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+            _fixture.UnixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
 
             // assert
             var fileInfo = new UnixFileInfo(filePath);
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
-            Assert.IsFalse(result);
+            var result = _fixture.UnixOperations.CheckFileHasAnyOfPermissions(fileInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite));
+            Assert.False(result);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestCreateDirectoryWithUserRwxPermissions()
         {
             // arrange
-            var dirPath = Path.Combine(s_workingDirectory, "testdir");
+            var dirPath = Path.Combine(_fixture.WorkingDirectory, "testdir");
 
             // act
-            s_unixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
+            _fixture.UnixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
 
             // assert
             var dirInfo = new UnixDirectoryInfo(dirPath);
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
-            Assert.IsFalse(result);
+            var result = _fixture.UnixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
+            Assert.False(result);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestNestedDir()
         {
             // arrange
-            var dirPath = Path.Combine(s_workingDirectory, "testdir", "a", "b", "c");
-            s_unixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
+            var dirPath = Path.Combine(_fixture.WorkingDirectory, "testdir", "a", "b", "c");
+            _fixture.UnixOperations.CreateDirectoryWithPermissions(dirPath, FileAccessPermissions.UserReadWriteExecute);
 
             // act
             var dirInfo = new UnixDirectoryInfo(dirPath);
-            var result = s_unixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
+            var result = _fixture.UnixOperations.CheckFileHasAnyOfPermissions(dirInfo.FileAccessPermissions, FileAccessPermissions.AllPermissions & ~FileAccessPermissions.UserReadWriteExecute);
 
             // assert
-            Assert.IsFalse(result);
+            Assert.False(result);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestReadBytesFromEmptyFile()
         {
             // arrange
-            var filePath = Path.Combine(s_workingDirectory, $"empty_file_{Path.GetRandomFileName()}");
-            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+            var filePath = Path.Combine(_fixture.WorkingDirectory, $"empty_file_{Path.GetRandomFileName()}");
+            _fixture.UnixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
 
             // act
-            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+            var bytes = _fixture.UnixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
-            Assert.AreEqual(0, bytes.Length);
+            Assert.Equal(0, bytes.Length);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestReadBytesFromSmallFile()
         {
             // arrange
             var randomBytes = TestDataGenarator.NextBytes(19);
-            var filePath = Path.Combine(s_workingDirectory, $"small_file_{Path.GetRandomFileName()}");
-            s_unixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
-            s_unixOperations.WriteAllBytes(filePath, randomBytes, _ => { });
+            var filePath = Path.Combine(_fixture.WorkingDirectory, $"small_file_{Path.GetRandomFileName()}");
+            _fixture.UnixOperations.CreateFileWithPermissions(filePath, FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
+            _fixture.UnixOperations.WriteAllBytes(filePath, randomBytes, _ => { });
 
             // act
-            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+            var bytes = _fixture.UnixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
-            CollectionAssert.AreEqual(randomBytes, bytes);
+            Assert.Equal(randomBytes, bytes);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestReadBytesFromLargeFile()
         {
             // arrange
@@ -332,10 +357,10 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var expectedBytes = File.ReadAllBytes(filePath);
 
             // act
-            var bytes = s_unixOperations.ReadAllBytes(filePath, s => { });
+            var bytes = _fixture.UnixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
-            CollectionAssert.AreEqual(expectedBytes, bytes);
+            Assert.Equal(expectedBytes, bytes);
         }
 
         public static IEnumerable<FileAccessPermissions> UserPermissions()
@@ -410,5 +435,53 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             yield return FileAccessPermissions.OtherRead;
             yield return FileAccessPermissions.GroupRead | FileAccessPermissions.OtherRead;
         }
+
+        public static IEnumerable<object[]> TestDetectGroupOrOthersWritablePermissionsData() =>
+            from a in GroupOrOthersWritablePermissions()
+            from b in GroupNotWritablePermissions()
+            from c in OtherNotWritablePermissions()
+            select new object[] { a, b, c };
+
+        public static IEnumerable<object[]> TestDetectGroupOrOthersNotWritablePermissionsData() =>
+            from a in UserPermissions()
+            from b in GroupNotWritablePermissions()
+            from c in OtherNotWritablePermissions()
+            select new object[] { a, b, c };
+
+        public static IEnumerable<object[]> UserAllowedPermissionsData() =>
+            UserAllowedPermissions().Select(x => new object[] { x });
+
+        public static IEnumerable<object[]> UserAllowedWritePermissionsData() =>
+            UserAllowedWritePermissions().Select(x => new object[] { x });
+
+        public static IEnumerable<FileAccessPermissions> UserPermissionsWithRead()
+        {
+            yield return FileAccessPermissions.UserRead;
+            yield return FileAccessPermissions.UserReadWriteExecute;
+        }
+
+        public static IEnumerable<FileAccessPermissions> UserPermissionsWithReadWrite()
+        {
+            yield return FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
+            yield return FileAccessPermissions.UserReadWriteExecute;
+        }
+
+        public static IEnumerable<object[]> TestFailIfGroupOrOthersHavePermissionsToFileWithTomlConfigurationValidationsData() =>
+            from a in UserPermissionsWithRead()
+            from b in GroupPermissions()
+            from c in OthersPermissions()
+            select new object[] { a, b, c };
+
+        public static IEnumerable<object[]> TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForCredentialManagerFileData() =>
+            from a in UserPermissionsWithReadWrite()
+            from b in GroupPermissions()
+            from c in OthersPermissions()
+            select new object[] { a, b, c };
+
+        public static IEnumerable<object[]> TestFailIfGroupOrOthersHavePermissionsToFileWhileWritingWithUnixValidationsForLogFileData() =>
+            from a in UserPermissionsWithReadWrite()
+            from b in GroupPermissions()
+            from c in OthersPermissions()
+            select new object[] { a, b, c };
     }
 }
