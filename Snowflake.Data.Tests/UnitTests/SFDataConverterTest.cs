@@ -415,7 +415,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var wireValue = DateTimeToLtzWireFormat(utcDateTime);
 
             var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
-                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Utc);
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Utc));
 
             Assert.Equal(utcDateTime, result.UtcDateTime);
         }
@@ -429,7 +429,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expected = DateTime.ParseExact(expectedStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
 
             var result = (DateTime)SFDataConverter.ConvertToCSharpVal(
-                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_NTZ, typeof(DateTime));
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_NTZ, typeof(DateTime)));
 
             Assert.Equal(expected, result);
         }
