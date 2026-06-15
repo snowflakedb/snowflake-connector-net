@@ -193,7 +193,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             var uri = new Uri($"{baseUrl}/?{queryParams}");
 
             var headers = additionalHeaders
-                .Concat([new ("Host", stsHostName)])
+                .Concat([new("Host", stsHostName)])
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
             var attestationRequest = new AttestationRequest

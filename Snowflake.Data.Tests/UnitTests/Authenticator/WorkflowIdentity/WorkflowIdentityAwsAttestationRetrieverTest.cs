@@ -210,7 +210,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Equal(2, capturedUrls.Count);
         Assert.Contains("Action=AssumeRole", capturedUrls[0]);
         Assert.Contains(Uri.EscapeDataString(
-#if NET462 || NET471
+#if NET462 || NET471 || NET481
                 "TestRole"
 #else
             "arn:aws:iam::123456789012:role/TestRole"
@@ -281,7 +281,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Equal(3, capturedUrls.Count);
         Assert.Contains("Action=AssumeRole", capturedUrls[0]);
         Assert.Contains(Uri.EscapeDataString(
-#if NET462 || NET471
+#if NET462 || NET471 || NET481
                 "RoleA"
 #else
             "arn:aws:iam::111111111111:role/RoleA"
@@ -289,7 +289,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         ), capturedUrls[0]);
         Assert.Contains("Action=AssumeRole", capturedUrls[1]);
         Assert.Contains(Uri.EscapeDataString(
-#if NET462 || NET471
+#if NET462 || NET471 || NET481
                 "RoleA"
 #else
             "arn:aws:iam::222222222222:role/RoleB"
