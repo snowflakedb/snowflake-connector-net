@@ -164,9 +164,8 @@ namespace Snowflake.Data.Tests
             Assert.Equal(PARAM_COUNT - 1, _parameterCollection.IndexOf(paramName));
         }
 
-        [SFTheory]
-        [MemberData(nameof(AllSFDataTypes))]
-        public void TestDbParameterCollectionIndexOfNameNotExists(SFDataType SFDataType)
+        [SFFact]
+        public void TestDbParameterCollectionIndexOfNameNotExists()
         {
             int expectedParameterIndex = -1;
             string paramName = "1";

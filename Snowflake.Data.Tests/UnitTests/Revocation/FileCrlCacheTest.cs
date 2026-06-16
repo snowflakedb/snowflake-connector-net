@@ -447,11 +447,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         }
 
         [SFTheory(SkipCondition.SkipOnWindows)]
-        [InlineData(1, 0, 0, 0)]
-        [InlineData(0, 1, 0, 0)]
-        [InlineData(0, 0, 1, 0)]
-        [InlineData(0, 0, 1, 1)]
-        public void TestWithMocksUnixCrlShouldNotBeSavedIfFailedToSetSecurePermissions(long changeDirOwnerResult, long changeDirPermissionsResult, long changeFileOwnerResult, long changeFilePermissionsResult)
+        [InlineData(1, 0, 0)]
+        [InlineData(0, 1, 0)]
+        [InlineData(0, 0, 1)]
+        public void TestWithMocksUnixCrlShouldNotBeSavedIfFailedToSetSecurePermissions(long changeDirOwnerResult, long changeDirPermissionsResult, long changeFileOwnerResult)
         {
             // arrange
             var crl = CreateCrl();
