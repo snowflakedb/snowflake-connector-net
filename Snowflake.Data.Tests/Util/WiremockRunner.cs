@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -34,7 +33,6 @@ namespace Snowflake.Data.Tests.Util
         private WireMockServer _server;
 
         public string Url => _server.Urls.First(u => u.StartsWith("http://"));
-        public string SslUrl => _server.Urls.First(u => u.StartsWith("https://"));
         public string WiremockBaseHttpUrl => Url;
 
         public static WiremockRunner NewWiremock(string[] mappingFiles = null) =>
@@ -50,10 +48,10 @@ namespace Snowflake.Data.Tests.Util
             var httpsPort = FindFreePort();
             runner._server = WireMockServer.Start(new WireMockServerSettings
             {
-                Urls = [$"http://{Localhost}:{httpPort}", $"https://{Localhost}:{httpsPort}"],
+                Urls = [$"http://{Localhost}:{httpPort}"],
                 StartAdminInterface = true
             });
-            s_logger.Debug($"WireMock started at {runner.Url} and {runner.SslUrl}.");
+            s_logger.Debug($"WireMock started at {runner.Url}.");
 
             if (mappingFiles == null)
                 return runner;
