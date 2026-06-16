@@ -88,7 +88,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.Equal(context, elem.Context);
                 i++;
             }
-            Assert.Equal(i, MaxCapacity);
+            Assert.Equal(MaxCapacity, i);
         }
 
         [SFFact]
