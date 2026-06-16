@@ -1230,16 +1230,14 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     {
         // arrange
         var connectionString = "account=testAccount;user=testUser;password=testPassword;useProxy=true;proxyHost=no.such.pro.xy;proxyPort=8080;certRevocationCheckMode=enabled;";
-        using (var connection = new SnowflakeDbConnection(connectionString))
-        {
-            var shortCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var connection = new SnowflakeDbConnection(connectionString);
+        var shortCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            // act
-            await Assert.ThrowsAsync<TaskCanceledException>(() => connection.OpenAsync(shortCancellation.Token)).ConfigureAwait(false);
+        // act
+        await Assert.ThrowsAsync<TaskCanceledException>(() => connection.OpenAsync(shortCancellation.Token)).ConfigureAwait(false);
 
-            // assert
-            Assert.Equal(ConnectionState.Closed, connection.State);
-        }
+        // assert
+        Assert.Equal(ConnectionState.Closed, connection.State);
     }
 
     [SFFact(RetriesCount = RetriesCount.Thrice)]
