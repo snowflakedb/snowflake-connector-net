@@ -370,7 +370,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.NotFound, null, 0)]
+        [InlineData(HttpStatusCode.NotFound, default(HttpStatusCode), 0)]
         public async Task TestUploadOneFileAsyncThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange

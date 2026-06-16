@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterSourceColumn(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.Equal(null, _parameter.SourceColumn);
+            Assert.Null(_parameter.SourceColumn);
 
             string col = "col";
             _parameter.SourceColumn = col;
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterValue(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.Equal(null, _parameter.Value);
+            Assert.Null(_parameter.Value);
 
             object obj = new object();
             _parameter.Value = obj;
