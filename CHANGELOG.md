@@ -3,13 +3,11 @@
 # Changelog
 - v5.8.0
   -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
-<<<<<<< mcepiga/snow-3411970-aws-wif
   -  Switched AWS Workload Identity Federation attestation from a SigV4-presigned `GetCallerIdentity` request to STS
       `GetWebIdentityToken`, returning a signed JWT directly.
-=======
+  -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
   -  Bug fix: Fixed incorrect DateTime conversion for timestamps preceding Unix epoch (1970-01-01) when fractional seconds are
     present.
->>>>>>> master
 - v5.7.0
     - Improved input handling in `ChangeDatabase` by using parameterized queries.
     - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.
