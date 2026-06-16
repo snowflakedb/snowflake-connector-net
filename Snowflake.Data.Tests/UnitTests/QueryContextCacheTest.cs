@@ -233,7 +233,7 @@ namespace Snowflake.Data.Tests.UnitTests
             InitCacheWithData();
 
             _qcc.Update(null);
-            Assert.Equal(_qcc.GetSize(), 0);
+            Assert.Equal(0, _qcc.GetSize());
         }
 
         [SFFact]
@@ -243,7 +243,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>("", JsonUtils.JsonSettings);
             _qcc.Update(rsp);
-            Assert.Equal(_qcc.GetSize(), 0);
+            Assert.Equal(0, _qcc.GetSize());
         }
 
         [SFFact]
@@ -257,7 +257,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Clear _qcc
             _qcc.ClearCache();
-            Assert.Equal(_qcc.GetSize(), 0);
+            Assert.Equal(0, _qcc.GetSize());
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
             _qcc.Update(rsp);
@@ -275,7 +275,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Clear _qcc
             _qcc.ClearCache();
-            Assert.Equal(_qcc.GetSize(), 0);
+            Assert.Equal(0, _qcc.GetSize());
 
             ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
             _qcc.Update(rsp);
