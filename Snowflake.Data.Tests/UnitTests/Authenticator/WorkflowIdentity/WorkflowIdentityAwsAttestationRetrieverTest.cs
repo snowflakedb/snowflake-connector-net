@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Amazon.Runtime;
 using Moq;
 using Snowflake.Data.Client;
@@ -60,7 +62,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
     }
 
     [SFFact]
-    public void TestGetWebIdentityTokenReturnsJwt()
+    public async Task TestGetWebIdentityTokenReturnsJwt()
     {
         // arrange
         var restRequester = CreateMockRestRequester(ValidGetIdentityTokenResponseXml);
@@ -68,14 +70,14 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
 
         // act
         var credentials = new ImmutableCredentials("akid", "secret", "session-token");
-        var jwt = retriever.GetWebIdentityToken("us-east-1", credentials);
+        var jwt = await retriever.GetWebIdentityTokenAsync("us-east-1", credentials, CancellationToken.None);
 
         // assert
         Assert.Equal("fake.jwt.token", jwt);
     }
 
     [SFFact]
-    public void TestGetWebIdentityTokenThrowsWhenTokenIsEmpty()
+    public async Task TestGetWebIdentityTokenThrowsWhenTokenIsEmpty()
     {
         // arrange
         var restRequester = CreateMockRestRequester(EmptyGetIdentityTokenResponseXml);
@@ -83,12 +85,12 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
 
         // act/assert
         var credentials = new ImmutableCredentials("akid", "secret", "session-token");
-        var exception = Assert.Throws<SnowflakeDbException>(() => retriever.GetWebIdentityToken("us-east-1", credentials));
+        var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => retriever.GetWebIdentityTokenAsync("us-east-1", credentials, CancellationToken.None));
         Assert.Contains("GetWebIdentityToken returned an empty token", exception.Message);
     }
 
     [SFFact]
-    public void TestGetWebIdentityTokenThrowsWhenStsCallFails()
+    public async Task TestGetWebIdentityTokenThrowsWhenStsCallFails()
     {
         // arrange
         var restRequester = new Mock<IRestRequester>();
@@ -99,7 +101,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
 
         // act/assert
         var credentials = new ImmutableCredentials("akid", "secret", "session-token");
-        var exception = Assert.Throws<SnowflakeDbException>(() => retriever.GetWebIdentityToken("us-east-1", credentials));
+        var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => retriever.GetWebIdentityTokenAsync("us-east-1", credentials, CancellationToken.None));
         Assert.Contains("Failed to call AWS STS GetWebIdentityToken", exception.Message);
         Assert.Contains("connection refused", exception.Message);
     }
@@ -209,13 +211,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Equal("fake.jwt.token", attestation.Credential);
         Assert.Equal(2, capturedUrls.Count);
         Assert.Contains("Action=AssumeRole", capturedUrls[0]);
-        Assert.Contains(Uri.EscapeDataString(
-#if NET462 || NET471 || NET481
-                "TestRole"
-#else
-            "arn:aws:iam::123456789012:role/TestRole"
-#endif
-        ), capturedUrls[0]);
+        Assert.Contains("RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole", capturedUrls[0]);
         Assert.Contains("Action=GetWebIdentityToken", capturedUrls[1]);
     }
 
@@ -280,21 +276,9 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Equal("fake.jwt.token", attestation.Credential);
         Assert.Equal(3, capturedUrls.Count);
         Assert.Contains("Action=AssumeRole", capturedUrls[0]);
-        Assert.Contains(Uri.EscapeDataString(
-#if NET462 || NET471 || NET481
-                "RoleA"
-#else
-            "arn:aws:iam::111111111111:role/RoleA"
-#endif
-        ), capturedUrls[0]);
+        Assert.Contains("arn%3Aaws%3Aiam%3A%3A111111111111%3Arole%2FRoleA", capturedUrls[0]);
         Assert.Contains("Action=AssumeRole", capturedUrls[1]);
-        Assert.Contains(Uri.EscapeDataString(
-#if NET462 || NET471 || NET481
-                "RoleA"
-#else
-            "arn:aws:iam::222222222222:role/RoleB"
-#endif
-        ), capturedUrls[1]);
+        Assert.Contains("arn%3Aaws%3Aiam%3A%3A222222222222%3Arole%2FRoleB", capturedUrls[1]);
         Assert.Contains("Action=GetWebIdentityToken", capturedUrls[2]);
     }
 

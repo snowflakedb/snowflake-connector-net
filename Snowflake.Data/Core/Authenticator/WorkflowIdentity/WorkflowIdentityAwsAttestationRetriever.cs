@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using Amazon.Runtime;
 using Snowflake.Data.Core.Rest;
@@ -45,7 +48,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                     .Select(r => r.Trim()).ToArray();
 
                 s_logger.Debug($"Using transitive role assumption through chain: {string.Join(" -> ", roleArns)}");
-                credentials = AssumeRoleChain(roleArns, region);
+                credentials = AssumeRoleChainAsync(roleArns, region, CancellationToken.None).GetAwaiter().GetResult();
             }
             else
             {
@@ -53,7 +56,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 credentials = GetAwsCredentials();
             }
 
-            var jwt = GetWebIdentityToken(region, credentials);
+            var jwt = GetWebIdentityTokenAsync(region, credentials, CancellationToken.None).GetAwaiter().GetResult();
 
             return new WorkloadIdentityAttestationData
             {
@@ -69,14 +72,15 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
         /// </summary>
         /// <param name="roleArns">Array of IAM role ARNs to assume in sequence.</param>
         /// <param name="region">The AWS region.</param>
+        /// <param name="cancellationToken">Cancellation support.</param>
         /// <returns>Temporary credentials for the final role in the chain.</returns>
-        private ImmutableCredentials AssumeRoleChain(string[] roleArns, string region)
+        private async Task<ImmutableCredentials> AssumeRoleChainAsync(string[] roleArns, string region, CancellationToken cancellationToken)
         {
             var credentials = GetAwsCredentials();
 
             foreach (var roleArn in roleArns)
             {
-                credentials = AssumeRole(roleArn, region, credentials);
+                credentials = await AssumeRoleAsync(roleArn, region, credentials, cancellationToken).ConfigureAwait(false);
             }
 
             return credentials;
@@ -88,8 +92,9 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
         /// <param name="targetRoleArn">The ARN of the IAM role to assume (e.g., arn:aws:iam::123456789012:role/TargetRole)</param>
         /// <param name="region">The AWS region</param>
         /// <param name="credentials">The credentials to use for assuming the role.</param>
+        /// <param name="cancellationToken">Cancellation support.</param>
         /// <returns>Temporary credentials for the assumed role</returns>
-        private ImmutableCredentials AssumeRole(string targetRoleArn, string region, ImmutableCredentials credentials)
+        private async Task<ImmutableCredentials> AssumeRoleAsync(string targetRoleArn, string region, ImmutableCredentials credentials, CancellationToken cancellationToken)
         {
             try
             {
@@ -97,13 +102,13 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 var roleSessionName = $"snowflake-wif-{Guid.NewGuid():N}".Substring(0, 32);
                 var queryParams = $"Action=AssumeRole&Version={AmazonApiVersion}&RoleArn={Uri.EscapeDataString(targetRoleArn)}&RoleSessionName={Uri.EscapeDataString(roleSessionName)}&DurationSeconds=3600";
                 var audienceHeader = new KeyValuePair<string, string>("X-Snowflake-Audience", SnowflakeAudience);
-                var request = BuildStsRequest(region, queryParams, credentials, audienceHeader);
+                using var request = BuildStsRequest(region, queryParams, credentials, audienceHeader);
+                using var response = await _restRequester.GetAsync(new RestRequestWrapper(request), cancellationToken).ConfigureAwait(false);
 
-                string responseXml;
-                using (var response = _restRequester.Get(new RestRequestWrapper(request)))
-                {
-                    responseXml = response.Content.ReadAsStringAsync().Result;
-                }
+                if (!response.IsSuccessStatusCode)
+                    throw new WebException("Failed to call AssumeRole: " + response.StatusCode);
+
+                var responseXml = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                 // Parse the XML response to extract credentials
                 return ParseAssumeRoleResponse(responseXml, targetRoleArn);
@@ -116,18 +121,19 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             }
         }
 
-        internal string GetWebIdentityToken(string region, ImmutableCredentials credentials)
+        internal async Task<string> GetWebIdentityTokenAsync(string region, ImmutableCredentials credentials, CancellationToken cancellationToken)
         {
             try
             {
                 var snowflakeAudience = Uri.EscapeDataString(SnowflakeAudience);
                 var queryParams = $"Action=GetWebIdentityToken&Version={AmazonApiVersion}&Audience.member.1={snowflakeAudience}&SigningAlgorithm=ES384";
-                var request = BuildStsRequest(region, queryParams, credentials);
-                string responseXml;
-                using (var response = _restRequester.Get(new RestRequestWrapper(request)))
-                {
-                    responseXml = response.Content.ReadAsStringAsync().Result;
-                }
+                using var request = BuildStsRequest(region, queryParams, credentials);
+                using var response = await _restRequester.GetAsync(new RestRequestWrapper(request), cancellationToken).ConfigureAwait(false);
+
+                if (!response.IsSuccessStatusCode)
+                    throw new WebException("Failed to call GetWebIdentityToken: " + response.StatusCode);
+
+                var responseXml = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                 return ParseGetWebIdentityTokenResponse(responseXml);
             }
@@ -203,7 +209,6 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 Headers = headers
             };
 
-            // Sign the request with the credentials
             var awsConfiguration = new AwsConfiguration
             {
                 Region = region,
@@ -213,7 +218,6 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             var utcNow = _timeProvider.UtcNow();
             AwsSignature4Signer.AddTokenAndSignatureHeaders(attestationRequest, awsConfiguration, utcNow);
 
-            // Make the HTTP request
             var request = new HttpRequestMessage(HttpMethod.Post, uri);
             foreach (var header in attestationRequest.Headers)
             {
