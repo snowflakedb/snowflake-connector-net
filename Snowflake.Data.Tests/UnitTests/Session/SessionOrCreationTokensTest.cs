@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // act
             var backgroundCreationTokens = sessionOrTokens.BackgroundSessionCreationTokens();
 
-            Assert.Equal(0, backgroundCreationTokens.Count);
+            Assert.Empty(backgroundCreationTokens);
         }
 
         [SFFact]
