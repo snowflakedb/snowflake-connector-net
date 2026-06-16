@@ -212,7 +212,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Equal("fake.jwt.token", attestation.Credential);
         Assert.Equal(2, capturedUrls.Count);
         Assert.Contains("Action=AssumeRole", capturedUrls[0]);
-        Assert.Contains("RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole", capturedUrls[0]);
+        Assert.Equal("RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole", capturedUrls[0]);
         Assert.Contains("Action=GetWebIdentityToken", capturedUrls[1]);
     }
 
