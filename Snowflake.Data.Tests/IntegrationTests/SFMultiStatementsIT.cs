@@ -77,8 +77,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 Assert.True(reader.NextResult());
                 Assert.True(reader.Read());
-                Assert.Equal(true, reader.GetBoolean(0));
-                Assert.Equal(false, reader.GetBoolean(1));
+                Assert.True(reader.GetBoolean(0));
+                Assert.False(reader.GetBoolean(1));
                 Assert.Equal(DBNull.Value, reader.GetValue(2));
                 Assert.False(reader.IsDBNull(0));
                 Assert.False(reader.IsDBNull(1));
