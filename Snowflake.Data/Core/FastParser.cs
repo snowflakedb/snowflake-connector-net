@@ -123,7 +123,7 @@ namespace Snowflake.Data.Core
                 catch (OverflowException)
                 {
                     // Fallback to regular decimal constructor from string instead.
-                    return decimal.Parse(UTF8Buffer.UTF8.GetString(s, offset, len),  CultureInfo.InvariantCulture);
+                    return decimal.Parse(UTF8Buffer.UTF8.GetString(s, offset, len), CultureInfo.InvariantCulture);
                 }
             }
             else
