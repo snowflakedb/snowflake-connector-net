@@ -17,9 +17,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         protected static readonly string s_oauthAuthorizationCodeMappingPath = Path.Combine(s_oauthMappingPath, "AuthorizationCode");
         protected static readonly string s_refreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "refresh_token.json");
 
-        protected WiremockRunner Runner;
+        protected abstract IWiremockRunner Runner { get; }
 
-        protected string ExternalTokenRequestUrl => $"{Runner.Url}/oauth/token-request";
+        protected string ExternalTokenRequestUrl => $"{Runner.WiremockBaseHttpUrl}/oauth/token-request";
 
         protected const string MasterToken = "masterToken123";
         protected const string SessionToken = "sessionToken123";
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         protected BaseOAuthFlowTest()
         {
-            Runner = WiremockRunner.NewWiremock();
+            Runner.ResetMapping();
         }
 
         public void Dispose()

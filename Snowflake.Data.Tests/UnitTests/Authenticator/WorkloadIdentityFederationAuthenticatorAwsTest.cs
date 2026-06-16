@@ -15,32 +15,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [CollectionDefinition(nameof(WorkloadIdentityFederationAuthenticatorAwsTestFixture), DisableParallelization = true)]
-    public sealed class WorkloadIdentityFederationAuthenticatorAwsTestFixture : ICollectionFixture<WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture>
-    {
-        public sealed class Fixture : IDisposable
-        {
-            internal readonly IWiremockRunner Runner;
-
-            public Fixture()
-            {
-                if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
-                {
-                    Runner = new Mock<IWiremockRunner>().Object;
-                    return;
-                }
-
-                Runner = WiremockRunner.NewWiremock();
-            }
-
-            public void Dispose()
-            {
-                Runner.Stop();
-            }
-        }
-    }
-
-    [Collection(nameof(WorkloadIdentityFederationAuthenticatorAwsTestFixture))]
     public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private const string AwsRegion = "eu-west-1";
@@ -62,19 +36,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_awsRequestBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(s_awsRequest));
         internal static readonly DateTime s_utcNow = new(2025, 5, 27, 14, 20, 33, 11, new GregorianCalendar(), DateTimeKind.Utc);
 
-        private readonly WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture _fixture;
-
-        public WorkloadIdentityFederationAuthenticatorAwsTest(WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture fixture)
-        {
-            _fixture = fixture;
-            _fixture.Runner.ResetMapping();
-        }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAwsAuthorization()
         {
             // arrange
-            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AWS, s_awsRequestBase64);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.AWS, s_awsRequestBase64);
             var session = PrepareSessionForAws(NoEnvironmentSetup);
 
             // act
@@ -88,7 +55,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestSuccessfulAwsAuthorizationAsync()
         {
             // arrange
-            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AWS, s_awsRequestBase64);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.AWS, s_awsRequestBase64);
             var session = PrepareSessionForAws(NoEnvironmentSetup);
 
             // act

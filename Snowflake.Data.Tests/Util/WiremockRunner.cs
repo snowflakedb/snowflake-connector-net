@@ -9,11 +9,13 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util.WiremockModels;
+using WireMock;
 using WireMock.Matchers;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 using WireMock.Settings;
+using Mapping = Snowflake.Data.Tests.Util.WiremockModels.Mapping;
 
 namespace Snowflake.Data.Tests.Util
 {
@@ -23,6 +25,7 @@ namespace Snowflake.Data.Tests.Util
         void Stop();
         void ResetMapping();
         void AddMappings(string file, StringTransformations transformations = null);
+        IRequestMessage[] GetCapturedRequests();
     }
 
     public sealed class WiremockRunner : IWiremockRunner
@@ -34,10 +37,10 @@ namespace Snowflake.Data.Tests.Util
         public string SslUrl => _server.Urls.First(u => u.StartsWith("https://"));
         public string WiremockBaseHttpUrl => Url;
 
-        public static WiremockRunner NewWiremock(string[] mappingFiles = null)
-        {
-            return NewWiremockAsync(mappingFiles).GetAwaiter().GetResult();
-        }
+        public static WiremockRunner NewWiremock(string[] mappingFiles = null) =>
+            NewWiremockAsync(mappingFiles).GetAwaiter().GetResult();
+
+        public IRequestMessage[] GetCapturedRequests() => _server.LogEntries.Select(x => x.RequestMessage).ToArray();
 
         private static async Task<WiremockRunner> NewWiremockAsync(string[] mappingFiles = null)
         {
@@ -51,8 +54,6 @@ namespace Snowflake.Data.Tests.Util
                 StartAdminInterface = true
             });
             s_logger.Debug($"WireMock started at {runner.Url} and {runner.SslUrl}.");
-
-           await WaitForSslReadyAsync(runner.SslUrl);
 
             if (mappingFiles == null)
                 return runner;
@@ -209,29 +210,6 @@ namespace Snowflake.Data.Tests.Util
         }
 
         public void Dispose() => Stop();
-
-        private static async Task WaitForSslReadyAsync(string sslUrl)
-        {
-            using var handler = new HttpClientHandler();
-            handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
-            using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(2) };
-
-            for (var i = 0; i < 10; i++)
-            {
-                try
-                {
-                    var response = await client.GetAsync(sslUrl + "/__admin/mappings");
-                    if (response.IsSuccessStatusCode)
-                        return;
-                }
-                catch
-                {
-                    await Task.Delay(500);
-                }
-            }
-
-            throw new InvalidOperationException($"WireMock SSL endpoint did not become ready: {sslUrl}");
-        }
 
         private static int FindFreePort()
         {

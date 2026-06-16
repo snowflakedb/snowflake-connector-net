@@ -1,7 +1,8 @@
 {
     "mappings": [
         {
-            "name": "Successful password login",
+            "scenarioName": "Successful password login",
+            "setStateTo": "Session opened",
             "request": {
                 "urlPathPattern": "/session/v1/login-request",
                 "method": "POST"
@@ -104,6 +105,7 @@
         },
         {
             "name": "Session close",
+            "whenStateIs": "Session opened",
             "request": {
                 "urlPathPattern": "/session",
                 "method": "POST"

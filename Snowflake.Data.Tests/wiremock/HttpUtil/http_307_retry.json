@@ -4,7 +4,7 @@
             "scenarioName": "HTTP 307 retry",
             "setStateTo": "Query attempt with HTTP 307 response",
             "request": {
-                "urlPathPattern": "/queries/v1/query-request",
+                "urlPathPattern": "/queries/v1/query-request.*",
                 "method": "POST"
             },
             "response": {
@@ -17,8 +17,9 @@
         {
             "scenarioName": "HTTP 307 retry",
             "whenStateIs": "Query attempt with HTTP 307 response",
+            "setStateTo": "Query attempt with HTTP 307 response",
             "request": {
-                "urlPathPattern": "/temp-redirect-1",
+                "urlPathPattern": "/temp-redirect-1.*",
                 "method": "POST"
             },
             "response": {
@@ -30,7 +31,7 @@
             "whenStateIs": "Query attempt with HTTP 307 response",
             "setStateTo": "Retry attempt successful",
             "request": {
-                "urlPathPattern": "/queries/v1/query-request",
+                "urlPathPattern": "/queries/v1/query-request.*",
                 "method": "POST"
             },
             "response": {

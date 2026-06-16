@@ -12,29 +12,9 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [CollectionDefinition(nameof(ProgrammaticAccessTokenAuthenticationTestFixture), DisableParallelization = true)]
-    public sealed class ProgrammaticAccessTokenAuthenticationTestFixture : ICollectionFixture<ProgrammaticAccessTokenAuthenticationTestFixture.Fixture>
+    public sealed class ProgrammaticAccessTokenAuthenticationTest : IDisposable
     {
-        public sealed class Fixture : IDisposable
-        {
-            internal readonly WiremockRunner Runner;
-
-            public Fixture()
-            {
-                Runner = WiremockRunner.NewWiremock();
-            }
-
-            public void Dispose()
-            {
-                Runner.Stop();
-            }
-        }
-    }
-
-    [Collection(nameof(ProgrammaticAccessTokenAuthenticationTestFixture))]
-    public class ProgrammaticAccessTokenAuthenticationTest
-    {
-        private readonly ProgrammaticAccessTokenAuthenticationTestFixture.Fixture _fixture;
+        private readonly IWiremockRunner _runner;
         private static readonly string s_patMappingPath = Path.Combine("wiremock", "PAT");
         private static readonly string s_successfulPatFlowMappingPath = Path.Combine(s_patMappingPath, "successful_flow.json");
         private static readonly string s_invalidPatFlowMappingPath = Path.Combine(s_patMappingPath, "invalid_pat_token.json");
@@ -46,17 +26,16 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string Account = "MOCK_ACCOUNT_NAME";
         private const string Token = "MOCK_TOKEN";
 
-        public ProgrammaticAccessTokenAuthenticationTest(ProgrammaticAccessTokenAuthenticationTestFixture.Fixture fixture)
+        public ProgrammaticAccessTokenAuthenticationTest()
         {
-            _fixture = fixture;
-            _fixture.Runner.ResetMapping();
+            _runner = WiremockRunner.NewWiremock();
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulPatAuthentication()
         {
             // arrange
-            _fixture.Runner.AddMappings(s_successfulPatFlowMappingPath);
+            _runner.AddMappings(s_successfulPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
@@ -70,7 +49,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestSuccessfulPatAuthenticationAsync()
         {
             // arrange
-            _fixture.Runner.AddMappings(s_successfulPatFlowMappingPath);
+            _runner.AddMappings(s_successfulPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
@@ -84,7 +63,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestInvalidPatAuthentication()
         {
             // arrange
-            _fixture.Runner.AddMappings(s_invalidPatFlowMappingPath);
+            _runner.AddMappings(s_invalidPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
@@ -98,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public async Task TestInvalidPatAuthenticationAsync()
         {
             // arrange
-            _fixture.Runner.AddMappings(s_invalidPatFlowMappingPath);
+            _runner.AddMappings(s_invalidPatFlowMappingPath);
             var session = PrepareSession();
 
             // act
@@ -121,7 +100,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var db = "testDb";
             var role = "ANALYST";
             var warehouse = "testWarehouse";
-            var uri = new Uri(_fixture.Runner.Url);
+            var uri = new Uri(_runner.WiremockBaseHttpUrl);
 
             return new StringBuilder()
                 .Append($"authenticator={authenticator};account={Account};user={User};")
@@ -135,6 +114,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal(SessionId, session.sessionId);
             Assert.Equal(MasterToken, session.masterToken);
             Assert.Equal(SessionToken, session.sessionToken);
+        }
+
+        public void Dispose()
+        {
+            _runner?.Dispose();
         }
     }
 }

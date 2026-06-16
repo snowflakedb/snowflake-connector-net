@@ -13,26 +13,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [CollectionDefinition(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture), DisableParallelization = true)]
-    public sealed class WorkflowIdentityFederationAuthenticatorAzureTestFixture : ICollectionFixture<WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture>
-    {
-        public sealed class Fixture : IDisposable
-        {
-            internal readonly WiremockRunner Runner;
-
-            public Fixture()
-            {
-                Runner = WiremockRunner.NewWiremock();
-            }
-
-            public void Dispose()
-            {
-                Runner.Stop();
-            }
-        }
-    }
-
-    [Collection(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture))]
     public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadIdentityFederationAuthenticatorTest
     {
         private static readonly string s_wifAzureMappingPath = Path.Combine(s_wifMappingPath, "Azure");
@@ -51,22 +31,14 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private static readonly string s_clientIdReplacement = "%CLIENT_ID%";
         private static readonly string s_entraResourceReplacement = "%ENTRA_RESOURCE%";
         private static readonly string s_identityHeaderReplacement = "%IDENTITY_HEADER%";
-        private string AzureIdentityEndpoint => $"{_fixture.Runner.Url}/metadata/identity/endpoint/from/env";
-
-        private readonly WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture _fixture;
-
-        public WorkflowIdentityFederationAuthenticatorAzureTest(WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture fixture)
-        {
-            _fixture = fixture;
-            _fixture.Runner.ResetMapping();
-        }
+        private string AzureIdentityEndpoint => $"{Runner.Url}/metadata/identity/endpoint/from/env";
 
         [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAzureAuthorization()
         {
             // arrange
             AddAzureBasicWiremockMappings();
-            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, s_JWTAccessToken);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.AZURE, s_JWTAccessToken);
             var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
 
             // act
@@ -81,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             AddAzureBasicWiremockMappings();
-            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, s_JWTAccessToken);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.AZURE, s_JWTAccessToken);
             var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
 
             // act
@@ -271,7 +243,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertExtensions.NotEmptyString(attestation.Credential);
         }
 
-        private void AddAzureBasicWiremockMappings() => AddAzureBasicWiremockMappings(_fixture.Runner);
+        private void AddAzureBasicWiremockMappings() => AddAzureBasicWiremockMappings(Runner);
 
         internal static void AddAzureBasicWiremockMappings(WiremockRunner runner) =>
             runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
@@ -281,21 +253,21 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             );
 
         private void AddAzureBasicV2IssuerWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
+            Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessTokenV2)
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
             );
 
         private void AddAzureUnparsableTokenWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
+            Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, "unparsable.token")
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
             );
 
         private void AddAzureFunctionsWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
+            Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
                     .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
@@ -304,7 +276,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             );
 
         private void AddAzureFunctionsWithV2IssuerWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
+            Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessTokenV2)
                     .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
@@ -313,7 +285,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             );
 
         private void AddAzureFunctionsWithCustomEntraResourceWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
+            Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
                     .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
@@ -322,7 +294,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             );
 
         private void AddAzureFunctionsWithoutClientIdWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureFunctionsNoClientIdSuccessfulMappingPath,
+            Runner.AddMappings(s_wifAzureFunctionsNoClientIdSuccessfulMappingPath,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
                     .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
@@ -330,7 +302,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             );
 
         private void AddAzureBasicWithClientIdWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureBasicWithClientIdSuccessfulMapping,
+            Runner.AddMappings(s_wifAzureBasicWithClientIdSuccessfulMapping,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
                     .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)

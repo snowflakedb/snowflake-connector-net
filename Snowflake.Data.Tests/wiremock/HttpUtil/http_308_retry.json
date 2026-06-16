@@ -17,8 +17,9 @@
         {
             "scenarioName": "HTTP 308 retry",
             "whenStateIs": "Query attempt with HTTP 308 response",
+            "setStateTo": "Query attempt with HTTP 308 response",
             "request": {
-                "urlPathPattern": "/temp-redirect-1",
+                "urlPathPattern": "/temp-redirect-1.*",
                 "method": "POST"
             },
             "response": {
