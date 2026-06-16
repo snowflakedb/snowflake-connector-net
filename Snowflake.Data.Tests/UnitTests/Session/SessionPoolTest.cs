@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -11,7 +14,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    public class SessionPoolTest
+    public sealed class SessionPoolTest
     {
         private const string ConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;";
 
@@ -502,7 +505,32 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(0, pool._idleSessions.Count);
         }
 
-        private SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)
+        [SFFact]
+        public async Task TestCancelledGetSessionAsyncLeaksCreationTokens()
+        {
+            // arrange
+            var cancelledToken = new CancellationToken(canceled: true);
+            // minPoolSize=0 avoids background session creation that would interfere with the count
+            var connectionString = new StringBuilder("ACCOUNT=testaccount;USER=testuser;password").Append("=testpwd;minPoolSize=0;").ToString();
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            const int Iterations = 5;
+            for (var i = 0; i < Iterations; i++)
+            {
+                try
+                {
+                    await pool.GetSessionAsync(connectionString, new SessionPropertiesContext(), cancelledToken);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            }
+
+            AssertExtensions.Equal(0, pool.OngoingSessionCreationsCount(),
+                $"Expected 0 leaked tokens after {Iterations} cancelled operations, " +
+                $"but {pool.OngoingSessionCreationsCount()} token(s) remain. ");
+        }
+
+        private static SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)
         {
             var session = restRequester == null ? new SFSession(connectionString, new SessionPropertiesContext()) :
                 new SFSession(connectionString, new SessionPropertiesContext(), restRequester);
