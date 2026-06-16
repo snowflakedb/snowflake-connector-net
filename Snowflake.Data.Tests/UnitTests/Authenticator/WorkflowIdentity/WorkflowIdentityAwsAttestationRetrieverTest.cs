@@ -95,7 +95,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         // arrange
         var restRequester = new Mock<IRestRequester>();
         restRequester
-            .Setup(r => r.Get(It.IsAny<IRestRequest>()))
+            .Setup(r => r.GetAsync(It.IsAny<IRestRequest>(), CancellationToken.None))
             .Throws(new HttpRequestException("connection refused"));
         var retriever = CreateRetriever(restRequester.Object);
 
@@ -190,13 +190,14 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         var capturedUrls = new List<string>();
         var restRequester = new Mock<IRestRequester>();
         restRequester
-            .Setup(r => r.Get(It.IsAny<IRestRequest>()))
-            .Returns<IRestRequest>(r =>
+            .Setup(r => r.GetAsync(It.IsAny<IRestRequest>(), CancellationToken.None))
+            .Returns<IRestRequest, CancellationToken>((r, ct) =>
             {
                 var url = ((RestRequestWrapper)r).ToRequestMessage(HttpMethod.Post).RequestUri.ToString();
                 capturedUrls.Add(url);
                 var body = url.Contains("AssumeRole") ? AssumeRoleResponseXml : ValidGetIdentityTokenResponseXml;
-                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) };
+                var httpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) };
+                return Task.FromResult(httpResponseMessage);
             });
 
         var awsSdkWrapper = new Mock<AwsSdkWrapper>();
@@ -245,8 +246,8 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         var assumeRoleCount = 0;
         var restRequester = new Mock<IRestRequester>();
         restRequester
-            .Setup(r => r.Get(It.IsAny<IRestRequest>()))
-            .Returns<IRestRequest>(r =>
+            .Setup(r => r.GetAsync(It.IsAny<IRestRequest>(), CancellationToken.None))
+            .Returns<IRestRequest, CancellationToken>((r, _) =>
             {
                 var url = ((RestRequestWrapper)r).ToRequestMessage(HttpMethod.Post).RequestUri.ToString();
                 capturedUrls.Add(url);
@@ -260,7 +261,8 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
                 {
                     body = ValidGetIdentityTokenResponseXml;
                 }
-                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) };
+                var result = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) };
+                return Task.FromResult(result);
             });
 
         var awsSdkWrapper = new Mock<AwsSdkWrapper>();
@@ -302,12 +304,12 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
     {
         var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent(responseBody)
+            Content = new StringContent(responseBody),
         };
         var restRequester = new Mock<IRestRequester>();
         restRequester
-            .Setup(r => r.Get(It.IsAny<IRestRequest>()))
-            .Returns(httpResponse);
+            .Setup(r => r.GetAsync(It.IsAny<IRestRequest>(), CancellationToken.None))
+            .Returns(Task.FromResult(httpResponse));
         return restRequester;
     }
 

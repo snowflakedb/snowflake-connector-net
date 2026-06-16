@@ -106,7 +106,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 using var response = await _restRequester.GetAsync(new RestRequestWrapper(request), cancellationToken).ConfigureAwait(false);
 
                 if (!response.IsSuccessStatusCode)
-                    throw new WebException("Failed to call AssumeRole: " + response.StatusCode);
+                    throw new WebException($"Failed to call AssumeRole: {response.StatusCode}");
 
                 var responseXml = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
@@ -115,9 +115,8 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             }
             catch (Exception exception) when (exception is not Client.SnowflakeDbException)
             {
-                var realException = HttpUtil.UnpackAggregateException(exception);
-                s_logger.Error($"Failed to assume role {targetRoleArn}: {realException.Message}");
-                throw AttestationError($"Failed to assume role {targetRoleArn}: {realException.Message}");
+                s_logger.Error($"Failed to assume role {targetRoleArn}: {exception.Message}");
+                throw AttestationError($"Failed to assume role {targetRoleArn}: {exception.Message}");
             }
         }
 
@@ -131,7 +130,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 using var response = await _restRequester.GetAsync(new RestRequestWrapper(request), cancellationToken).ConfigureAwait(false);
 
                 if (!response.IsSuccessStatusCode)
-                    throw new WebException("Failed to call GetWebIdentityToken: " + response.StatusCode);
+                    throw new WebException($"Failed to call GetWebIdentityToken: {response.StatusCode}");
 
                 var responseXml = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
@@ -139,9 +138,8 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             }
             catch (Exception exception) when (exception is not Client.SnowflakeDbException)
             {
-                var realException = HttpUtil.UnpackAggregateException(exception);
-                s_logger.Error($"Failed to call AWS STS GetWebIdentityToken: {realException.Message}");
-                throw AttestationError($"Failed to call AWS STS GetWebIdentityToken: {realException.Message}");
+                s_logger.Error($"Failed to call AWS STS GetWebIdentityToken: {exception.Message}");
+                throw AttestationError($"Failed to call AWS STS GetWebIdentityToken: {exception.Message}");
             }
         }
 
