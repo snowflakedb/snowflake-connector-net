@@ -416,7 +416,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.NotNull(header);
-            Assert.Equal(1, header.Count());
+            Assert.Single(header);
             Assert.Equal(HeaderValue, header.First());
         }
 
@@ -435,7 +435,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.NotNull(header);
-            Assert.Equal(1, header.Count());
+            Assert.Single(header);
             Assert.Equal(HeaderValue, header.First());
         }
 
