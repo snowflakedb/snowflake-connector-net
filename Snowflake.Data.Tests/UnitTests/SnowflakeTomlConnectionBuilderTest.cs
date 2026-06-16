@@ -336,7 +336,7 @@ token_file_path = ""{tokenFilePath}""");
 
             // Act and assert
             var exception = Assert.Throws<SnowflakeDbException>(() => reader.GetConnectionStringFromToml());
-            Assert.True(exception.Message.StartsWith("Error: Invalid parameter value /Users/testuser/token for token_file_path"));
+            Assert.StartsWith("Error: Invalid parameter value /Users/testuser/token for token_file_path", exception.Message);
         }
 
         [SFFact]
