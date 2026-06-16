@@ -107,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.MISSING_CONNECTION_PROPERTY);
-            Assert.True(exception.Message.Contains("Required property PASSWORD is not provided"));
+            Assert.Contains("Required property PASSWORD is not provided", exception.Message);
         }
 
         [SFFact]

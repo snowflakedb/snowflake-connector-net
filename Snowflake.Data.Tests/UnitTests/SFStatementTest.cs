@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetQueryStatusByStringValueThrowsErrorForUnknownStatus(string stringValue)
         {
             var thrown = Assert.Throws<Exception>(() => QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
-            Assert.True(thrown.Message.Contains("The query status returned by the server is not recognized"));
+            Assert.Contains("The query status returned by the server is not recognized", thrown.Message);
         }
 
         [SFTheory]
