@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = directoryInformation.IsCreatedEarlierThanSeconds(60, utcNow);
 
             // assert
-            Assert.Equal(true, result);
+            Assert.True(result);
         }
 
         [SFTheory]
@@ -33,7 +33,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = directoryInformation.IsCreatedEarlierThanSeconds(60, utcNow);
 
             // assert
-            Assert.Equal(false, result);
+            Assert.False(result);
         }
 
         public static IEnumerable<object[]> OldCreatingDatesTestCases()
