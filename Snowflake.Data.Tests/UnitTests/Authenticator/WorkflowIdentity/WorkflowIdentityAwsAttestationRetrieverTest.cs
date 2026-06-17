@@ -123,7 +123,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Equal(AttestationProvider.AWS, attestation.Provider);
         Assert.Equal("fake.jwt.token", attestation.Credential);
         Assert.NotNull(attestation.UserIdentifierComponents);
-        Assert.Equal(0, attestation.UserIdentifierComponents.Count);
+        Assert.Empty(attestation.UserIdentifierComponents);
     }
 
     [SFFact]

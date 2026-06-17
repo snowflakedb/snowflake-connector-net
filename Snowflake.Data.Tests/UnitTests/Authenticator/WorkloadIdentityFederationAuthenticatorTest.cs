@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Moq;
 using Xunit;
 using Snowflake.Data.Client;
@@ -57,13 +59,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
+        public async Task TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
         {
             // arrange: throws exception with "Not available" message
             var session = PrepareSession(AttestationProvider.AWS, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled);
 
             // act
-            var exception = Assert.Throws<SnowflakeDbException>(() => session.Open());
+            var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
 
             // assert
             Assert.Contains("Retrieving attestation for AWS failed. Not available", exception?.Message);
