@@ -1527,8 +1527,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(ActivityKind.Client, capturedActivity3.Kind);
 
             Assert.Equal(2, capturedActivity1.Events.Count());
-            Assert.Equal(1, capturedActivity2.Events.Count());
-            Assert.Equal(1, capturedActivity3.Events.Count());
+            Assert.Single(capturedActivity2.Events);
+            Assert.Single(capturedActivity3.Events);
 
             Assert.Equal(conn.SfSession.sessionId, capturedActivity1.GetTagItem(TelemetryTags.SessionId));
             Assert.Equal(conn.SfSession.sessionId, capturedActivity2.GetTagItem(TelemetryTags.SessionId));
