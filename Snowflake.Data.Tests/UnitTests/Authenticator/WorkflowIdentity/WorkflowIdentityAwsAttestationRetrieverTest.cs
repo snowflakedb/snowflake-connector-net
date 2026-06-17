@@ -214,6 +214,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Contains("Action=AssumeRole", capturedUrls[0]);
         AssertExtensions.AnySucceeds(
                 () => Assert.Contains("RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole", capturedUrls[0]),
+                () => Assert.Contains("RoleArn=arn:aws:iam::123456789012:role%2FTestRole", capturedUrls[0]),
                 () => Assert.Contains("RoleArn=arn:aws:iam::123456789012:role/TestRole", capturedUrls[0]));
         Assert.Contains("Action=GetWebIdentityToken", capturedUrls[1]);
     }
@@ -281,12 +282,14 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Equal(3, capturedUrls.Count);
         Assert.Contains("Action=AssumeRole", capturedUrls[0]);
         AssertExtensions.AnySucceeds(
-                () => Assert.Contains("arn%3Aaws%3Aiam%3A%3A111111111111%3Arole%2FRoleA", capturedUrls[0]),
-                () => Assert.Contains("arn:aws:iam::111111111111:role/RoleA", capturedUrls[0]));
+            () => Assert.Contains("arn%3Aaws%3Aiam%3A%3A111111111111%3Arole%2FRoleA", capturedUrls[0]),
+            () => Assert.Contains("arn:aws:iam::111111111111:role%2FRoleA", capturedUrls[0]),
+            () => Assert.Contains("arn:aws:iam::111111111111:role/RoleA", capturedUrls[0]));
         Assert.Contains("Action=AssumeRole", capturedUrls[1]);
         AssertExtensions.AnySucceeds(
-                () => Assert.Contains("arn%3Aaws%3Aiam%3A%3A222222222222%3Arole%2FRoleB", capturedUrls[1]),
-                () => Assert.Contains("arn:aws:iam::222222222222:role/RoleB", capturedUrls[1]));
+            () => Assert.Contains("arn%3Aaws%3Aiam%3A%3A222222222222%3Arole%2FRoleB", capturedUrls[1]),
+            () => Assert.Contains("arn:aws:iam::222222222222:role%2FRoleB", capturedUrls[1]),
+            () => Assert.Contains("arn:aws:iam::222222222222:role/RoleB", capturedUrls[1]));
         Assert.Contains("Action=GetWebIdentityToken", capturedUrls[2]);
     }
 
