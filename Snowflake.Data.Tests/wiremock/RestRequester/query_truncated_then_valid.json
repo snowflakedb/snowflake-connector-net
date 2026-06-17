@@ -2,8 +2,8 @@
     "mappings": [
         {
             "scenarioName": "truncated-json-retry",
-            "requiredScenarioState": "Started",
-            "newScenarioState": "first-attempt-failed",
+            "whenStateIs": "Started",
+            "setStateTo": "first-attempt-failed",
             "request": {
                 "urlPathPattern": "/queries/v1/query-request",
                 "method": "POST"
@@ -18,7 +18,7 @@
         },
         {
             "scenarioName": "truncated-json-retry",
-            "requiredScenarioState": "first-attempt-failed",
+            "whenStateIs": "first-attempt-failed",
             "request": {
                 "urlPathPattern": "/queries/v1/query-request",
                 "method": "POST"
