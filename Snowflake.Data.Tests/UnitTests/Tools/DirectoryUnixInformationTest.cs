@@ -14,13 +14,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         static readonly string s_directoryFullName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
         [SFTheory(SkipCondition.SkipOnWindows)]
-        [InlineData(FileAccessPermissions.UserWrite)]
-        [InlineData(FileAccessPermissions.UserRead)]
-        [InlineData(FileAccessPermissions.UserExecute)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute)]
-        public void TestSafeDirectory(FileAccessPermissions securePermissions)
+        [InlineData(FileAccessPermissions.UserWrite, "User W")]
+        [InlineData(FileAccessPermissions.UserRead, "User R")]
+        [InlineData(FileAccessPermissions.UserExecute, "User X")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute, "User RWX")]
+        public void TestSafeDirectory(FileAccessPermissions securePermissions, string log)
         {
             // arrange
+            Console.WriteLine($@"Executing {nameof(TestSafeDirectory)} with {log}..");
             var dirInfo = new DirectoryUnixInformation(s_directoryFullName, true, securePermissions, UserId);
 
             // act
