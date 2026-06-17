@@ -356,7 +356,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.ConnectionString = _fixture.ConnectionString;
             await connection.OpenAsync(CancellationToken.None);
             connection.BeginTransaction();
-            Assert.Equal(true, connection.HasActiveExplicitTransaction());
+            Assert.True(connection.HasActiveExplicitTransaction());
             // no Rollback or Commit; during internal Rollback while closing a connection a mocked exception will be thrown
 
             // act

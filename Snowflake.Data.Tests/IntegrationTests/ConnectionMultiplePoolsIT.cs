@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.ConnectionString = connectionString;
             await connection.OpenAsync(CancellationToken.None);
             await connection.BeginTransactionAsync();
-            Assert.Equal(true, connection.HasActiveExplicitTransaction());
+            Assert.True(connection.HasActiveExplicitTransaction());
 
             // act
             connection.Close();

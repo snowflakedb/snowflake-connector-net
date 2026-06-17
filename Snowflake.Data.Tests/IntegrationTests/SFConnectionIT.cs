@@ -231,18 +231,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
 
                 var trans = conn.BeginTransaction();
-                Assert.Equal(true, conn.HasActiveExplicitTransaction());
+                Assert.True(conn.HasActiveExplicitTransaction());
                 trans.Rollback();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
 
                 conn.BeginTransaction().Rollback();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
 
                 conn.BeginTransaction().Commit();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
             }
         }
     }

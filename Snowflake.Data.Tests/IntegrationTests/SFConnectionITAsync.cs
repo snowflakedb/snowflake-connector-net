@@ -1096,18 +1096,18 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(false, conn.HasActiveExplicitTransaction());
+            Assert.False(conn.HasActiveExplicitTransaction());
 
             var trans = await conn.BeginTransactionAsync();
-            Assert.Equal(true, conn.HasActiveExplicitTransaction());
+            Assert.True(conn.HasActiveExplicitTransaction());
             await trans.RollbackAsync();
-            Assert.Equal(false, conn.HasActiveExplicitTransaction());
+            Assert.False(conn.HasActiveExplicitTransaction());
 
             await (await conn.BeginTransactionAsync()).RollbackAsync();
-            Assert.Equal(false, conn.HasActiveExplicitTransaction());
+            Assert.False(conn.HasActiveExplicitTransaction());
 
             await (await conn.BeginTransactionAsync()).CommitAsync();
-            Assert.Equal(false, conn.HasActiveExplicitTransaction());
+            Assert.False(conn.HasActiveExplicitTransaction());
         }
     }
 

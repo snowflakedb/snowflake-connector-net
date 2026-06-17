@@ -136,7 +136,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             arrowResultSet.Next();
 
-            Assert.Equal(true, arrowResultSet.IsDBNull(0));
+            Assert.True(arrowResultSet.IsDBNull(0));
             Assert.Equal(DBNull.Value, arrowResultSet.GetValue(0));
         }
 
