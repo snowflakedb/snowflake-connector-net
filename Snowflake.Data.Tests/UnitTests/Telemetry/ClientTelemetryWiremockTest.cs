@@ -456,7 +456,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
         private async Task<List<IRequestMessage>> GetWiremockRequestsToAsync(string urlPath, int alreadyRetriedCount = 0, bool noRequestsExpected = false)
         {
-            for (;;)
+            for (; ; )
             {
                 if (alreadyRetriedCount++ == 3) throw new TimeoutException("Wiremock returns no data!");
 
