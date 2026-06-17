@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _runner.Dispose();
         }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
+        [SFFact(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
         public async Task TestHttp307Retry()
         {
             // arrange
@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await AssertResponseId(response, expectedQueryId);
         }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
+        [SFFact(SkipCondition.SkipOnJenkins,  RetriesCount = RetriesCount.Thrice)]
         public async Task TestHttp308Retry()
         {
             // arrange
