@@ -286,7 +286,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Contains("Action=AssumeRole", capturedUrls[1]);
         AssertExtensions.AnySucceeds(
                 () => Assert.Contains("arn%3Aaws%3Aiam%3A%3A222222222222%3Arole%2FRoleB", capturedUrls[1]),
-                () => Assert.Contains("arn:aws:iam::3A222222222222:role/RoleB", capturedUrls[1]));
+                () => Assert.Contains("arn:aws:iam::222222222222:role/RoleB", capturedUrls[1]));
         Assert.Contains("Action=GetWebIdentityToken", capturedUrls[2]);
     }
 
