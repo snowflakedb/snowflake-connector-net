@@ -2,7 +2,6 @@
     "mappings": [
         {
             "scenarioName": "truncated-json-retry",
-            "whenStateIs": "Started",
             "setStateTo": "first-attempt-failed",
             "request": {
                 "urlPathPattern": "/queries/v1/query-request",
