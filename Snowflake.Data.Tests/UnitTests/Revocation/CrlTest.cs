@@ -216,6 +216,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 #endif
         }
 
+#if NET8_0_OR_GREATER
         private static X509Certificate2 BuildSelfSignedCertificate(int runNo)
         {
             var distinguishedName = new X500DistinguishedName($"CN=TestCert{runNo}, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland");
@@ -223,5 +224,6 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var request = new CertificateRequest(distinguishedName, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(30));
         }
+#endif
     }
 }
