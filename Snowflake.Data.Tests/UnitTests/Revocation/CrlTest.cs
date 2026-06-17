@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.Equivalent(expectedCrlDistributionPoints, crl.IssuerDistributionPoints);
             Assert.Contains(DigiCertRevokedCertSerialNumber, crl.RevokedCertificates);
             Assert.True(crl.IsRevoked(DigiCertRevokedCertSerialNumber));
-            Assert.False(crl.RevokedCertificates.Contains(DigiCertUnrevokedCertSerialNumber));
+            Assert.DoesNotContain(DigiCertUnrevokedCertSerialNumber, crl.RevokedCertificates);
             Assert.False(crl.IsRevoked(DigiCertUnrevokedCertSerialNumber));
             Assert.False(crl.NeedsReplacement(now, TimeSpan.FromDays(1)));
         }

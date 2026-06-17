@@ -907,7 +907,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
         [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
 
-        public async Task TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string timeZone)
+        public async Task TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string? timeZone)
         {
             // Arrange
             string[] timestamps =
