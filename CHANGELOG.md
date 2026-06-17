@@ -3,6 +3,9 @@
 # Changelog
 - v5.8.0
   -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
+  -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
+  -  Bug fix: Fixed incorrect DateTime conversion for timestamps preceding Unix epoch (1970-01-01) when fractional seconds are
+    present.
 - v5.7.0
     - Improved input handling in `ChangeDatabase` by using parameterized queries.
     - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.

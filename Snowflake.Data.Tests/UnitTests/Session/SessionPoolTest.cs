@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -11,7 +14,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    public class SessionPoolTest
+    public sealed class SessionPoolTest
     {
         private const string ConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;";
 
@@ -104,7 +107,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.MISSING_CONNECTION_PROPERTY);
-            Assert.True(exception.Message.Contains("Required property PASSWORD is not provided"));
+            Assert.Contains("Required property PASSWORD is not provided", exception.Message);
         }
 
         [SFFact]
@@ -290,14 +293,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var contextElement = new QueryContextElement(123, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 1, "context");
             var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new(contextElement) } };
             session.UpdateQueryContextCache(context);
-            Assert.Equal(1, session.GetQueryContextRequest().Entries.Count);
+            Assert.Single(session.GetQueryContextRequest().Entries);
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
             Assert.True(isSessionReturnedToPool);
-            Assert.Equal(0, session.GetQueryContextRequest().Entries.Count);
+            Assert.Empty(session.GetQueryContextRequest().Entries);
         }
 
         [SFFact]
@@ -310,14 +313,14 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var contextElement = new QueryContextElement(123, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 1, "context");
             var context = new ResponseQueryContext { Entries = new List<ResponseQueryContextElement> { new(contextElement) } };
             session.UpdateQueryContextCache(context);
-            Assert.Equal(1, session.GetQueryContextRequest().Entries.Count);
+            Assert.Single(session.GetQueryContextRequest().Entries);
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);
 
             // assert
             Assert.True(isSessionReturnedToPool);
-            Assert.Equal(0, session.GetQueryContextRequest().Entries.Count);
+            Assert.Empty(session.GetQueryContextRequest().Entries);
         }
 
         [SFFact]
@@ -401,7 +404,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.ClearIdleSessions();
 
             // assert - pool must be empty even though close() threw for each session
-            Assert.Equal(0, pool._idleSessions.Count);
+            Assert.Empty(pool._idleSessions);
         }
 
         [SFFact]
@@ -423,7 +426,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             pool.ClearIdleSessions();
 
             // assert - pool must be empty and second session's close should have been attempted
-            Assert.Equal(0, pool._idleSessions.Count);
+            Assert.Empty(pool._idleSessions);
             Assert.Null(normalSession.sessionToken);
         }
 
@@ -450,7 +453,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert — invalidated session must be rejected
             Assert.False(wasAdded);
-            Assert.Equal(0, pool._idleSessions.Count);
+            Assert.Empty(pool._idleSessions);
         }
 
         [SFFact]
@@ -467,7 +470,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert - valid session should be returned to pool
             Assert.True(wasAdded);
-            Assert.Equal(1, pool._idleSessions.Count);
+            Assert.Single(pool._idleSessions);
         }
 
         [SFFact]
@@ -483,7 +486,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act & assert - DestroyPool should not throw even if session.close() fails
             pool.DestroyPool();
-            Assert.Equal(0, pool._idleSessions.Count);
+            Assert.Empty(pool._idleSessions);
         }
 
         [SFFact]
@@ -499,10 +502,35 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act & assert - ClearSessions should not throw even if session.close() fails
             pool.ClearSessions();
-            Assert.Equal(0, pool._idleSessions.Count);
+            Assert.Empty(pool._idleSessions);
         }
 
-        private SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)
+        [SFFact]
+        public async Task TestCancelledGetSessionAsyncLeaksCreationTokens()
+        {
+            // arrange
+            var cancelledToken = new CancellationToken(canceled: true);
+            // minPoolSize=0 avoids background session creation that would interfere with the count
+            var connectionString = new StringBuilder("ACCOUNT=testaccount;USER=testuser;password").Append("=testpwd;minPoolSize=0;").ToString();
+            var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+            const int Iterations = 5;
+            for (var i = 0; i < Iterations; i++)
+            {
+                try
+                {
+                    await pool.GetSessionAsync(connectionString, new SessionPropertiesContext(), cancelledToken);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            }
+
+            AssertExtensions.Equal(0, pool.OngoingSessionCreationsCount(),
+                $"Expected 0 leaked tokens after {Iterations} cancelled operations, " +
+                $"but {pool.OngoingSessionCreationsCount()} token(s) remain. ");
+        }
+
+        private static SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)
         {
             var session = restRequester == null ? new SFSession(connectionString, new SessionPropertiesContext()) :
                 new SFSession(connectionString, new SessionPropertiesContext(), restRequester);

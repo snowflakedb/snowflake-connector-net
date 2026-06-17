@@ -305,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
                 activity?.SetSuccess();
             }
 
-            Assert.Equal(1, customActivities.Count);
+            Assert.Single(customActivities);
             var captured = customActivities.Single();
             Assert.Equal("MultiStepOp", captured.OperationName);
             Assert.Equal(ActivityStarter.ClientDefinedTelemetrySourceName, captured.Source.Name);
@@ -356,7 +356,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
                 activity?.SetSuccess();
             }
 
-            Assert.Equal(1, customActivities.Count);
+            Assert.Single(customActivities);
             var captured = customActivities.Single();
             Assert.Equal("snowflake", captured.GetTagItem(TelemetryTags.DbSystem));
             Assert.Equal("telemetry-test-session", captured.GetTagItem(TelemetryTags.SessionId));

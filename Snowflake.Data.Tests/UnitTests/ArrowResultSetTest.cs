@@ -479,7 +479,7 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), new CancellationToken()));
-            Assert.True(exception.Message.Contains($"Unknown column type: {UnknownDataType}"));
+            Assert.Contains($"Unknown column type: {UnknownDataType}", exception.Message);
         }
 
         [SFFact]
@@ -497,8 +497,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
 
-            var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), new CancellationToken()));
-            Assert.True(exception.Message.Contains($"Unknown column type: {SFDataType.None.ToString()}"));
+            var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), CancellationToken.None));
+            Assert.Contains($"Unknown column type: {nameof(SFDataType.None)}", exception.Message);
         }
 
         private void PrepareTestCase(SFDataType sfType, long scale, object values)
@@ -507,7 +507,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var responseData = PrepareResponseData(_recordBatch, sfType, scale);
             var sfStatement = PrepareStatement();
 
-            _arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
+            _arrowResultSet = new ArrowResultSet(responseData, sfStatement, CancellationToken.None);
         }
 
         private QueryExecResponseData PrepareResponseData(RecordBatch recordBatch, SFDataType sfType, long scale)

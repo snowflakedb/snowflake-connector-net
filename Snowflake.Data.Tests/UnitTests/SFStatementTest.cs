@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestGetQueryStatusByStringValueThrowsErrorForUnknownStatus(string stringValue)
         {
             var thrown = Assert.Throws<Exception>(() => QueryStatusExtensions.GetQueryStatusByStringValue(stringValue));
-            Assert.True(thrown.Message.Contains("The query status returned by the server is not recognized"));
+            Assert.Contains("The query status returned by the server is not recognized", thrown.Message);
         }
 
         [SFTheory]
@@ -294,7 +294,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
-            Assert.Equal(1, cachedContext.Entries.Count);
+            Assert.Single(cachedContext.Entries);
             Assert.Equal(42, cachedContext.Entries[0].Id);
         }
 
@@ -310,7 +310,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
             session.UpdateQueryContextCache(preExistingContext);
-            Assert.Equal(1, session.GetQueryContextRequest().Entries.Count);
+            Assert.Single(session.GetQueryContextRequest().Entries);
 
             var response = new QueryExecResponse
             {
@@ -331,7 +331,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
-            Assert.Equal(1, cachedContext.Entries.Count);
+            Assert.Single(cachedContext.Entries);
             Assert.Equal(99, cachedContext.Entries[0].Id);
         }
 
@@ -347,7 +347,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
-            Assert.Equal(1, cachedContext.Entries.Count);
+            Assert.Single(cachedContext.Entries);
             Assert.Equal(42, cachedContext.Entries[0].Id);
         }
 
@@ -364,7 +364,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
-            Assert.Equal(1, cachedContext.Entries.Count);
+            Assert.Single(cachedContext.Entries);
             Assert.Equal(42, cachedContext.Entries[0].Id);
         }
 

@@ -359,8 +359,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 // Assert the file is uploaded
                 Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check the name of the source file and destination file are the same
-                Assert.True(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName).Contains(mockFileName));
-                Assert.True(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName).Contains(mockFileName));
+                Assert.Contains(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+                Assert.Contains(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
 
                 File.Delete($"{mockFileName}{index}.{extension}");
             }
