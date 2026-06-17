@@ -330,7 +330,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var bytes = _fixture.UnixOperations.ReadAllBytes(filePath, s => { });
 
             // assert
-            Assert.Equal(0, bytes.Length);
+            Assert.Empty(bytes);
         }
 
         [SFFact(SkipCondition.SkipOnWindows)]
