@@ -82,10 +82,10 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterIsNullable(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.Equal(false, _parameter.IsNullable);
+            Assert.False(_parameter.IsNullable);
 
             _parameter.IsNullable = true;
-            Assert.Equal(true, _parameter.IsNullable);
+            Assert.True(_parameter.IsNullable);
         }
 
         [SFTheory]
@@ -116,10 +116,10 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterSourceColumnNullMapping(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.Equal(false, _parameter.SourceColumnNullMapping);
+            Assert.False(_parameter.SourceColumnNullMapping);
 
             _parameter.SourceColumnNullMapping = true;
-            Assert.Equal(true, _parameter.SourceColumnNullMapping);
+            Assert.True(_parameter.SourceColumnNullMapping);
         }
 
         [SFTheory]

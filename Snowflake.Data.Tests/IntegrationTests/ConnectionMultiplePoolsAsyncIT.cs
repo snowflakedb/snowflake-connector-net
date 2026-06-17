@@ -168,7 +168,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.ConnectionString = connectionString;
             await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await connection.BeginTransactionAsync();
-            Assert.Equal(true, connection.HasActiveExplicitTransaction());
+            Assert.True(connection.HasActiveExplicitTransaction());
 
             // act
             await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -422,7 +422,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // assert
             Assert.Equal(2, pool.GetCurrentPoolSize()); // 1 idle session and 1 busy
             var sessionStartTimes = pool.GetIdleSessionsStartTimes();
-            Assert.Equal(1, sessionStartTimes.Count);
+            Assert.Single(sessionStartTimes);
             Assert.True(sessionStartTimes.First() > beforeSleepMillis);
             Assert.True(conn5.SfSession.GetStartTime() > beforeSleepMillis);
         }

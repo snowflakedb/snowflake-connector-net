@@ -217,10 +217,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (Exception e)
                 {
                     SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.INTERNAL_ERROR);
-                    Assert.True(e.Message.Contains(
+                    Assert.Contains(
                         $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
                         $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
-                        "while trying to authenticate through Okta"));
+                        "while trying to authenticate through Okta", e.Message);
                 }
             }
         }
@@ -231,18 +231,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
 
                 var trans = conn.BeginTransaction();
-                Assert.Equal(true, conn.HasActiveExplicitTransaction());
+                Assert.True(conn.HasActiveExplicitTransaction());
                 trans.Rollback();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
 
                 conn.BeginTransaction().Rollback();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
 
                 conn.BeginTransaction().Commit();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
             }
         }
     }

@@ -103,7 +103,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             Assert.Equal(ConnectionState.Open, conn.State);
 
             // connection pooling is disabled for external browser by default
-            Assert.Equal(false, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
+            Assert.False(SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
             using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
@@ -123,7 +123,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                   + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;POOLINGENABLED=TRUE";
             await conn.OpenAsync(CancellationToken.None);
             Assert.Equal(ConnectionState.Open, conn.State);
-            Assert.Equal(true, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
+            Assert.True(SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
             using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";

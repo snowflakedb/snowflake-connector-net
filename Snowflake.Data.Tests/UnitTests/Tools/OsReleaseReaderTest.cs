@@ -105,7 +105,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             // assert
             Assert.NotNull(result);
-            Assert.Equal(0, result.Count);
+            Assert.Empty(result);
         }
 
         [SFFact]
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             // assert
             Assert.NotNull(result);
-            Assert.Equal(0, result.Count);
+            Assert.Empty(result);
         }
 
         [SFFact]
@@ -170,7 +170,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.Equal(1, result.Count);
+            Assert.Single(result);
             Assert.Equal("Valid", result["NAME"]);
         }
 
@@ -205,7 +205,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.Equal(1, result.Count);
+            Assert.Single(result);
             Assert.Equal("", result["NAME"]);
         }
 
@@ -224,7 +224,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = OsReleaseReader.ParseOsReleaseContents(contents);
 
             // assert
-            Assert.Equal(0, result.Count);
+            Assert.Empty(result);
         }
 
         [SFFact]
