@@ -340,11 +340,11 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData("us-central1", null, null, "https://storage.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
-        [InlineData("us-central1", "example.com", null, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
-        [InlineData("us-central1", "https://example.com", null, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [InlineData("us-central1", null, false, "https://storage.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [InlineData("us-central1", "example.com", false, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [InlineData("us-central1", "https://example.com", false, "https://example.com/mock-customer-stage/mock-id/tables/mock-key/")]
         [InlineData("us-central1", null, true, "https://storage.us-central1.rep.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
-        [InlineData("me-central2", null, null, "https://storage.me-central2.rep.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
+        [InlineData("me-central2", null, false, "https://storage.me-central2.rep.googleapis.com/mock-customer-stage/mock-id/tables/mock-key/")]
         public void TestUseUriWithRegionsWhenNeeded(string region, string endPoint, bool useRegionalUrl, string expectedRequestUri)
         {
             var fileMetadata = new SFFileMetadata()
