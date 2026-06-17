@@ -3,6 +3,7 @@
 # Changelog
 - v5.8.0
   -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
+  -  Improved handling of certificates serial number matching and performance of CRL checkup.
   -  Switched AWS Workload Identity Federation attestation from a SigV4-presigned `GetCallerIdentity` request to STS
       `GetWebIdentityToken`, returning a signed JWT directly.
   -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
