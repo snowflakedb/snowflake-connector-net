@@ -102,7 +102,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         Assert.Equal(AttestationProvider.AWS, attestation.Provider);
         Assert.Equal(FakeJwt, attestation.Credential);
         Assert.NotNull(attestation.UserIdentifierComponents);
-        Assert.Equal(0, attestation.UserIdentifierComponents.Count);
+        Assert.Empty(attestation.UserIdentifierComponents);
     }
 
     [SFFact]
@@ -186,7 +186,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         Assert.Equal(AttestationProvider.AWS, attestation.Provider);
         Assert.Equal(FakeJwt, attestation.Credential);
         Assert.NotNull(attestation.UserIdentifierComponents);
-        Assert.Equal(0, attestation.UserIdentifierComponents.Count);
+        Assert.Empty(attestation.UserIdentifierComponents);
     }
 
     private SFSession PrepareSessionForAws(
