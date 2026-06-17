@@ -422,7 +422,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // assert
             Assert.Equal(2, pool.GetCurrentPoolSize()); // 1 idle session and 1 busy
             var sessionStartTimes = pool.GetIdleSessionsStartTimes();
-            Assert.Equal(1, sessionStartTimes.Count);
+            Assert.Single(sessionStartTimes);
             Assert.True(sessionStartTimes.First() > beforeSleepMillis);
             Assert.True(conn5.SfSession.GetStartTime() > beforeSleepMillis);
         }

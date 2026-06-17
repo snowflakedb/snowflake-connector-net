@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         await cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token).ConfigureAwait(false));
 
                     // Assert
-                    Assert.True(thrown.Message.Contains("The operation was canceled"));
+                    Assert.Contains("The operation was canceled", thrown.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -271,7 +271,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.True(thrown.Message.Contains("'FAKE_TABLE' does not exist"));
+                    Assert.Contains("'FAKE_TABLE' does not exist", thrown.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -366,7 +366,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         await cmd.GetResultsFromQueryIdAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false));
 
                     // Assert
-                    Assert.True(thrown.Message.Contains($"Max retry for no data is reached"));
+                    Assert.Contains("Max retry for no data is reached", thrown.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -395,7 +395,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         await queryResultsAwaiter.RetryUntilQueryResultIsAvailable(conn, unknownQueryId, CancellationToken.None, true).ConfigureAwait(false));
 
                     // Assert
-                    Assert.True(thrown.Message.Contains($"Max retry for no data is reached"));
+                    Assert.Contains("Max retry for no data is reached", thrown.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -1299,7 +1299,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<SnowflakeDbException>(() => cmd.GetResultsFromQueryId(queryId));
 
                     // Assert
-                    Assert.True(thrown.Message.Contains("'FAKE_TABLE' does not exist"));
+                    Assert.Contains("'FAKE_TABLE' does not exist", thrown.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None);
@@ -1323,7 +1323,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<NotImplementedException>(() => cmd.ExecuteInAsyncMode());
 
                     // Assert
-                    Assert.True(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
+                    Assert.Contains("Get and Put are not supported in async execution mode", thrown.Message);
 
                     // Arrange
                     cmd.CommandText = "GET @~ file://C:\\tmp\\;";
@@ -1332,7 +1332,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     thrown = Assert.Throws<NotImplementedException>(() => cmd.ExecuteInAsyncMode());
 
                     // Assert
-                    Assert.True(thrown.Message.Contains("Get and Put are not supported in async execution mode"));
+                    Assert.Contains("Get and Put are not supported in async execution mode", thrown.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None);
@@ -1527,8 +1527,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(ActivityKind.Client, capturedActivity3.Kind);
 
             Assert.Equal(2, capturedActivity1.Events.Count());
-            Assert.Equal(1, capturedActivity2.Events.Count());
-            Assert.Equal(1, capturedActivity3.Events.Count());
+            Assert.Single(capturedActivity2.Events);
+            Assert.Single(capturedActivity3.Events);
 
             Assert.Equal(conn.SfSession.sessionId, capturedActivity1.GetTagItem(TelemetryTags.SessionId));
             Assert.Equal(conn.SfSession.sessionId, capturedActivity2.GetTagItem(TelemetryTags.SessionId));
