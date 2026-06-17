@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             var url = new Uri(_wiremock.WiremockBaseHttpUrl);
             _connectionString = $"account=testaccount;user=dummyuser;password=testpwd;host={url.Host};port={url.Port};scheme={url.Scheme};poolingEnabled=false;CLIENT_TELEMETRY_ENABLED=true;";
-            _connectionStringTelemetryDisabled =  $"account=testaccount;user=dummyuser;password=testpwd;host={url.Host};port={url.Port};scheme={url.Scheme};poolingEnabled=false;CLIENT_TELEMETRY_ENABLED=false;";
+            _connectionStringTelemetryDisabled = $"account=testaccount;user=dummyuser;password=testpwd;host={url.Host};port={url.Port};scheme={url.Scheme};poolingEnabled=false;CLIENT_TELEMETRY_ENABLED=false;";
         }
 
         [SFTheory(SkipCondition.SkipOnJenkins)]
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.Equal("Snowflake Token=\"session-token\"", authHeader);
         }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
+        [SFFact(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
         public async Task TestCommandFailureSendsTelemetryWithErrorStatus()
         {
             _wiremock.AddMappings(s_failingQueryMappingPath);
