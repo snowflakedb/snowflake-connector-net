@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
             var statement = new SFStatement(sfSession);
             var resultSet = statement.Execute(0, "select 1", null, false, false);
-            Assert.Equal(true, resultSet.Next());
+            Assert.True(resultSet.Next());
             Assert.Equal("1", resultSet.GetString(0));
             Assert.Equal("new_session_token", sfSession.sessionToken);
             Assert.Equal("new_master_token", sfSession.masterToken);
@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
             var statement = new SFStatement(sfSession);
             var resultSet = statement.GetResultWithId("mockId");
-            Assert.Equal(true, resultSet.Next());
+            Assert.True(resultSet.Next());
             Assert.Equal("abc", resultSet.GetString(0));
             Assert.Equal("new_session_token", sfSession.sessionToken);
             Assert.Equal("new_master_token", sfSession.masterToken);
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await sfSession.OpenAsync(CancellationToken.None);
             var statement = new SFStatement(sfSession);
             var resultSet = await statement.GetResultWithIdAsync("mockId", CancellationToken.None);
-            Assert.Equal(true, resultSet.Next());
+            Assert.True(resultSet.Next());
             Assert.Equal("abc", resultSet.GetString(0));
             Assert.Equal("new_session_token", sfSession.sessionToken);
             Assert.Equal("new_master_token", sfSession.masterToken);
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
             var statement = new SFStatement(sfSession);
             var resultSet = statement.Execute(0, "select 1", null, false, false);
-            Assert.Equal(true, resultSet.Next());
+            Assert.True(resultSet.Next());
             Assert.Equal("1", resultSet.GetString(0));
         }
 

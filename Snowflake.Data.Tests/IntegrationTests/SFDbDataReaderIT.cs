@@ -1400,7 +1400,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var rdr = cmd.ExecuteReader())
                 {
                     // Can read the first row
-                    Assert.Equal(true, rdr.Read());
+                    Assert.True(rdr.Read());
                 }
 
                 // test rows_loaded exists
@@ -1408,14 +1408,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var rdr = cmd.ExecuteReader())
                 {
                     // Can read the first row
-                    Assert.Equal(true, rdr.Read());
+                    Assert.True(rdr.Read());
                 }
 
                 cmd.CommandText = $"copy into {tableName}";
                 using (var rdr = cmd.ExecuteReader())
                 {
                     // Can read the first row
-                    Assert.Equal(true, rdr.Read());
+                    Assert.True(rdr.Read());
                 }
 
                 // clean up
@@ -1447,7 +1447,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     ValidateResultFormat(reader);
 
-                    Assert.Equal(true, reader.Read());
+                    Assert.True(reader.Read());
                     Assert.Equal("[\n  \"1\",\n  \"2\"\n]", reader.GetString(0));
                     Assert.Equal("[\n  \"1\",\n  \"2\"\n]", reader.GetString(1));
                     Assert.Equal("{\n  \"key\": \"value\"\n}", reader.GetString(2));
@@ -1528,20 +1528,20 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(20, row[SchemaTableColumn.NumericPrecision]);
                     Assert.Equal(4, row[SchemaTableColumn.NumericScale]);
                     Assert.Equal(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.Equal(true, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.True((bool)row[SchemaTableColumn.AllowDBNull]);
 
                     row = dataTable.Rows[1];
                     Assert.Equal("C2", row[SchemaTableColumn.ColumnName]);
                     Assert.Equal(1, row[SchemaTableColumn.ColumnOrdinal]);
                     Assert.Equal(100, row[SchemaTableColumn.ColumnSize]);
                     Assert.Equal(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.Equal(true, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.True((bool)row[SchemaTableColumn.AllowDBNull]);
 
                     row = dataTable.Rows[2];
                     Assert.Equal("C3", row[SchemaTableColumn.ColumnName]);
                     Assert.Equal(2, row[SchemaTableColumn.ColumnOrdinal]);
                     Assert.Equal(SFDataType.REAL, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.Equal(true, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.True((bool)row[SchemaTableColumn.AllowDBNull]);
 
                     row = dataTable.Rows[3];
                     Assert.Equal("C4", row[SchemaTableColumn.ColumnName]);
@@ -1549,19 +1549,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(0, row[SchemaTableColumn.NumericPrecision]);
                     Assert.Equal(9, row[SchemaTableColumn.NumericScale]);
                     Assert.Equal(SFDataType.TIMESTAMP_NTZ, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.Equal(true, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.True((bool)row[SchemaTableColumn.AllowDBNull]);
 
                     row = dataTable.Rows[4];
                     Assert.Equal("C5", row[SchemaTableColumn.ColumnName]);
                     Assert.Equal(4, row[SchemaTableColumn.ColumnOrdinal]);
                     Assert.Equal(SFDataType.VARIANT, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.Equal(false, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.False((bool)row[SchemaTableColumn.AllowDBNull]);
 
                     row = dataTable.Rows[5];
                     Assert.Equal("C6", row[SchemaTableColumn.ColumnName]);
                     Assert.Equal(5, row[SchemaTableColumn.ColumnOrdinal]);
                     Assert.Equal(SFDataType.BOOLEAN, (SFDataType)row[SchemaTableColumn.ProviderType]);
-                    Assert.Equal(true, row[SchemaTableColumn.AllowDBNull]);
+                    Assert.True((bool)row[SchemaTableColumn.AllowDBNull]);
                 }
 
                 await CloseConnectionAsync(conn);

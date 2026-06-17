@@ -103,7 +103,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             Assert.Equal(ConnectionState.Open, conn.State);
 
             // connection pooling is disabled for external browser by default
-            Assert.Equal(false, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
+            Assert.False(SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
             using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
@@ -123,7 +123,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                   + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;POOLINGENABLED=TRUE";
             await conn.OpenAsync(CancellationToken.None);
             Assert.Equal(ConnectionState.Open, conn.State);
-            Assert.Equal(true, SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
+            Assert.True(SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
             using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
@@ -728,7 +728,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var command = conn.CreateCommand())
         {
             command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-            Assert.Equal(await command.ExecuteScalarAsync(), 46);
+            Assert.Equal(46, await command.ExecuteScalarAsync());
         }
 
         await conn.CloseAsync(CancellationToken);
@@ -755,7 +755,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var command = conn.CreateCommand())
         {
             command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-            Assert.Equal(await command.ExecuteScalarAsync(), 46);
+            Assert.Equal(46, await command.ExecuteScalarAsync());
         }
 
         await conn1.CloseAsync(CancellationToken);
@@ -783,7 +783,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                 "",
                 "externalbrowser");
 
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
             await conn.OpenAsync(CancellationToken);
             await conn.CloseAsync(CancellationToken);
             Assert.Equal(ConnectionState.Closed, conn.State);
