@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.Util
         public static void HasHttpErrorCodeInExceptionChain(Exception exception, HttpStatusCode expected)
         {
             var exceptions = CollectExceptions(exception);
-            Assert.Equal(true, exceptions.Any(e =>
+            Assert.Contains(exceptions, e =>
                 {
                     switch (e)
                     {
@@ -52,13 +52,13 @@ namespace Snowflake.Data.Tests.Util
                         default:
                             return false;
                     }
-                }));
+                });
         }
 
         public static void HasMessageInExceptionChain(Exception exception, string expected)
         {
             var exceptions = CollectExceptions(exception);
-            Assert.Equal(true, exceptions.Any(e => e.Message.Contains(expected)));
+            Assert.Contains(exceptions, e => e.Message.Contains(expected));
         }
 
         private static List<Exception> CollectExceptions(Exception exception)

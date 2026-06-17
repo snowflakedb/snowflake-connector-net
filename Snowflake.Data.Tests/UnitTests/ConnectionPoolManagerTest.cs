@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.Equal(ConnectionString1, sessionPool.ConnectionString);
-            Assert.Equal(null, sessionPool.Password);
+            Assert.Null(sessionPool.Password);
         }
 
         [SFFact]
@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.Equal(ConnectionString1, sfSession.ConnectionString);
-            Assert.Equal(null, sfSession.PropertiesContext.Password);
+            Assert.Null(sfSession.PropertiesContext.Password);
         }
 
         [SFFact]
@@ -124,7 +124,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.Equal(ConnectionString1, sfSession.ConnectionString);
-            Assert.Equal(null, sfSession.PropertiesContext.Password);
+            Assert.Null(sfSession.PropertiesContext.Password);
         }
 
         [SFFact]

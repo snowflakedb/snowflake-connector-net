@@ -276,7 +276,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.OK, null, 4)]
+        [InlineData(HttpStatusCode.OK, default(HttpStatusCode), 4)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, 1)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, 6)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, 5)]
@@ -298,7 +298,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.OK, null, 4)]
+        [InlineData(HttpStatusCode.OK, default(HttpStatusCode), 4)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, 1)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, 6)]
         [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, 5)]
@@ -355,7 +355,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
 
         [SFTheory]
-        [InlineData(HttpStatusCode.NotFound, null, 0)]
+        [InlineData(HttpStatusCode.NotFound, default(HttpStatusCode), 0)]
         public void TestUploadOneFileThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
@@ -370,7 +370,7 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
-        [InlineData(HttpStatusCode.NotFound, null, 0)]
+        [InlineData(HttpStatusCode.NotFound, default(HttpStatusCode), 0)]
         public async Task TestUploadOneFileAsyncThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange

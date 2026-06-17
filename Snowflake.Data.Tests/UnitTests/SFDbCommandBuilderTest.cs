@@ -24,7 +24,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestCommandBuilderWithoutAdapter()
         {
             builder = new SnowflakeDbCommandBuilder();
-            Assert.Equal(null, builder.DataAdapter);
+            Assert.Null(builder.DataAdapter);
         }
 
         [SFFact]

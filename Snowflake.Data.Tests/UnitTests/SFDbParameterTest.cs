@@ -82,10 +82,10 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterIsNullable(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.Equal(false, _parameter.IsNullable);
+            Assert.False(_parameter.IsNullable);
 
             _parameter.IsNullable = true;
-            Assert.Equal(true, _parameter.IsNullable);
+            Assert.True(_parameter.IsNullable);
         }
 
         [SFTheory]
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterSourceColumn(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.Equal(null, _parameter.SourceColumn);
+            Assert.Null(_parameter.SourceColumn);
 
             string col = "col";
             _parameter.SourceColumn = col;
@@ -116,10 +116,10 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterSourceColumnNullMapping(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.Equal(false, _parameter.SourceColumnNullMapping);
+            Assert.False(_parameter.SourceColumnNullMapping);
 
             _parameter.SourceColumnNullMapping = true;
-            Assert.Equal(true, _parameter.SourceColumnNullMapping);
+            Assert.True(_parameter.SourceColumnNullMapping);
         }
 
         [SFTheory]
@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests
         public void TestDbParameterValue(SFDataType SFDataType)
         {
             _parameter = new SnowflakeDbParameter(1, SFDataType);
-            Assert.Equal(null, _parameter.Value);
+            Assert.Null(_parameter.Value);
 
             object obj = new object();
             _parameter.Value = obj;
