@@ -275,7 +275,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var pool = SessionPool.CreateSessionCache();
 
             // assert
-            Assert.Equal(true, pool.GetPooling()); // for the old connection cache pooling is always enabled
+            Assert.True(pool.GetPooling()); // for the old connection cache pooling is always enabled
 
             // act
             var isSessionReturnedToPool = pool.AddSession(session, false);

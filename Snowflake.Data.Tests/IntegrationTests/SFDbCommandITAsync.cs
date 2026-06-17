@@ -678,7 +678,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (SnowflakeDbException e)
                 {
                     // 604 is error code from server meaning query has been canceled
-                    Assert.Equal(e.ErrorCode, 604);
+                    Assert.Equal(604, e.ErrorCode);
                 }
 
                 await conn.CloseAsync(CancellationToken.None);
@@ -1517,7 +1517,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             // Assert
             SpinWait.SpinUntil(() => capturedActivities.Count > 3, TimeSpan.FromSeconds(30));
-            Assert.Equal(capturedActivities.Count, 4);
+            Assert.Equal(4, capturedActivities.Count);
             var capturedActivity1 = capturedActivities.Single(x => x.DisplayName == "Custom activity!");
             var capturedActivity2 = capturedActivities.Single(x => x.DisplayName == "Custom activity 2!");
             var capturedActivity3 = capturedActivities.Single(x => x.DisplayName == "Custom activity 3!");

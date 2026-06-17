@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = loginTimeOut5sec;
 
-                Assert.Equal(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
                 {
@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     conn.ConnectionString = loginTimeOut5sec;
 
-                    Assert.Equal(conn.State, ConnectionState.Closed);
+                    Assert.Equal(ConnectionState.Closed, conn.State);
                     Stopwatch stopwatch = Stopwatch.StartNew();
                     try
                     {
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // Default timeout is 300 sec
                 Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
-                Assert.Equal(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
             }
         }
 
@@ -137,7 +137,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 conn.ConnectionString = invalidConnectionString;
 
-                Assert.Equal(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
                 try
                 {
                     conn.Open();
@@ -166,7 +166,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                                  + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true;certRevocationCheckMode=enabled;";
                 conn.ConnectionString = invalidConnectionString;
 
-                Assert.Equal(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
                 try
                 {
                     conn.Open();
@@ -231,18 +231,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 conn.Open();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
 
                 var trans = conn.BeginTransaction();
-                Assert.Equal(true, conn.HasActiveExplicitTransaction());
+                Assert.True(conn.HasActiveExplicitTransaction());
                 trans.Rollback();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
 
                 conn.BeginTransaction().Rollback();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
 
                 conn.BeginTransaction().Commit();
-                Assert.Equal(false, conn.HasActiveExplicitTransaction());
+                Assert.False(conn.HasActiveExplicitTransaction());
             }
         }
     }

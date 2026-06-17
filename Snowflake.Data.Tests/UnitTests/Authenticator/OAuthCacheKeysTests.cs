@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var isAvailable = cacheKeys.IsAvailable();
 
             // assert
-            Assert.Equal(false, isAvailable);
+            Assert.False(isAvailable);
         }
 
         [SFFact]

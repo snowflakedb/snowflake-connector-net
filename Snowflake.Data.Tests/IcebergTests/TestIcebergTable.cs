@@ -229,11 +229,11 @@ namespace Snowflake.Data.Tests.IcebergTests
                                     nu number(10,0),
                                     tx2 varchar(100)".Split('\n');
                 var reader = (DbDataReader)conn.ExecuteReader(sql);
-                Assert.Equal(true, reader.Read());
+                Assert.True(reader.Read());
                 AssertRowValuesEqual(reader, resultSetColumns, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi, Id1, I32, Txt1);
-                Assert.Equal(true, reader.Read());
+                Assert.True(reader.Read());
                 AssertRowValuesEqual(reader, resultSetColumns, I32, I64, Dec, Dbl, Flt, Txt, B1, B0, _dt, _tm, _ntz, _ltz, _bi, Id2, I32, Txt2);
-                Assert.Equal(false, reader.Read());
+                Assert.False(reader.Read());
             }
         }
 
@@ -255,7 +255,7 @@ namespace Snowflake.Data.Tests.IcebergTests
                 // Assert
                 Assert.Equal(1, removed.RecordsAffected);
                 var left = conn.ExecuteReader($"select count(*) from {TableNameIceberg} where nu1 <> {I32}");
-                Assert.Equal(true, left.Read());
+                Assert.True(left.Read());
                 Assert.Equal(99, left.GetInt32(0));
             }
         }
@@ -277,7 +277,7 @@ namespace Snowflake.Data.Tests.IcebergTests
                 // Assert
                 Assert.Equal(100, removed.RecordsAffected);
                 var left = conn.ExecuteReader($"select count(*) from {TableNameIceberg}");
-                Assert.Equal(true, left.Read());
+                Assert.True(left.Read());
                 Assert.Equal(0, left.GetInt32(0));
             }
         }
