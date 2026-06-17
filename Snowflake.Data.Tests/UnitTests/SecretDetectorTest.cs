@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mask = SecretDetector.MaskSecrets(null);
         }
 
-        public void BasicMasking(string text)
+        private void BasicMasking(string text)
         {
             mask = SecretDetector.MaskSecrets(text);
             Assert.False(mask.isMasked);
@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal("Test exception", mask.errStr);
         }
 
-        public void BasicMasking(string text, string expectedText)
+        private void BasicMasking(string text, string expectedText)
         {
             mask = SecretDetector.MaskSecrets(text);
             Assert.True(mask.isMasked);

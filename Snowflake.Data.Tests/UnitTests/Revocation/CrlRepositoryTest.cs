@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             SetUp();
         }
 
-        public void SetUp()
+        private void SetUp()
         {
             Environment.SetEnvironmentVariable("SF_CRL_CACHE_REMOVAL_DELAY", null);
         }

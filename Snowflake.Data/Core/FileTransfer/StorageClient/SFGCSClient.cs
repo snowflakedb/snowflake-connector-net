@@ -133,7 +133,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 generateFileURL(fileMetadata.stageInfo, fileMetadata.RemoteFileName()) :
                 fileMetadata.presignedUrl;
 
+#pragma warning disable SYSLIB0014 // TODO SNOW-3662960
             WebRequest request = WebRequest.Create(url);
+#pragma warning restore SYSLIB0014
             request.Headers.Add("Authorization", $"Bearer {AccessToken}");
             request.Method = method;
 

@@ -36,7 +36,8 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         private static readonly string s_customLockPath = Path.Combine(CustomJsonDir, SFCredentialManagerFileStorage.CredentialCacheLockName);
 
         private const int UserId = 1;
-        public void SetUp()
+
+        private void SetUp()
         {
             t_fileOperations = new Mock<FileOperations>();
             t_directoryOperations = new Mock<DirectoryOperations>();

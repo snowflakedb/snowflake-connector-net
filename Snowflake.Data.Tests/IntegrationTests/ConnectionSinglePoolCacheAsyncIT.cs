@@ -393,7 +393,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await conn2.CloseAsync(CancellationToken.None);
         }
 
-        public static Task ConcurrentPoolingAsyncHelper(string connectionString, bool closeConnection, int tasksCount, int connectionsInTask, int abandonedConnectionsCount)
+        internal static Task ConcurrentPoolingAsyncHelper(string connectionString, bool closeConnection, int tasksCount, int connectionsInTask, int abandonedConnectionsCount)
         {
             var tasks = new Task[tasksCount + 1];
             for (int i = 0; i < tasksCount; i++)

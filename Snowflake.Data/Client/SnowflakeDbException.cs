@@ -6,10 +6,10 @@ using Snowflake.Data.Core;
 namespace Snowflake.Data.Client
 {
     /// <summary>
-    ///     Wraps the exception. 
-    ///     If the exception is thrown in the client side, error code from 
+    ///     Wraps the exception.
+    ///     If the exception is thrown in the client side, error code from
     ///     270000 to 279999 will be used. Otherwise, server side error code
-    ///     will be used. 
+    ///     will be used.
     /// </summary>
     public sealed class SnowflakeDbException : DbException
     {
@@ -19,7 +19,9 @@ namespace Snowflake.Data.Client
         static private ResourceManager rm = new ResourceManager("Snowflake.Data.Core.ErrorMessages",
             typeof(SnowflakeDbException).Assembly);
 
+#pragma warning disable CS0108, CS0114 // TODO SNOW-3662960
         public string SqlState { get; private set; }
+#pragma warning restore CS0108, CS0114
         private int VendorCode;
 
         public string QueryId { get; set; }
