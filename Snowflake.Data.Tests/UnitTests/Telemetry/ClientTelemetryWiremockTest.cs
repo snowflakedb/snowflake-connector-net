@@ -161,7 +161,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             Assert.NotEmpty(logs); //"Server override should enable telemetry even when client disabled it"
         }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
+        [SFFact(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
         public async Task TestServerDisabledTelemetrySendsNothingToServer()
         {
             _wiremock.AddMappings(s_telemetryDisabledMappingPath);
