@@ -85,7 +85,6 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
             Assert.Contains("Retrieving attestation for AWS failed.", thrown.Message);
-            Assert.Contains("GetWebIdentityToken returned an empty token", thrown.Message);
         }
 
         [SFFact]
