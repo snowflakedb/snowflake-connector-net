@@ -86,7 +86,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return _provider switch
                 {
-                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentOperations, _timeProvider, _awsSdkWrapper, session.restRequester)
+                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_timeProvider, _awsSdkWrapper, session.restRequester, _metadataHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
                     AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentOperations, session.restRequester, _metadataHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
@@ -97,7 +97,7 @@ namespace Snowflake.Data.Core.Authenticator
                     _ => throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, $"Unsupported attestation provider: {_provider}"),
                 };
             }
-            catch (Exception e) when (!(e is SnowflakeDbException))
+            catch (Exception e) when (e is not SnowflakeDbException)
             {
                 var errorMessage = $"Failed to create attestation data for provider {_provider}: {e.Message}";
                 s_logger.Error(errorMessage);
