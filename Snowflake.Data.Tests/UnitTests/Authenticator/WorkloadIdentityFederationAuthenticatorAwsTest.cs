@@ -1,158 +1,235 @@
 using System;
-using System.Globalization;
-using System.Text;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon.Runtime;
 using Moq;
-using Newtonsoft.Json;
-using Xunit;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
+using Xunit;
 
-namespace Snowflake.Data.Tests.UnitTests.Authenticator
+namespace Snowflake.Data.Tests.UnitTests.Authenticator;
+
+[CollectionDefinition(nameof(WorkloadIdentityFederationAuthenticatorAwsTestFixture), DisableParallelization = true)]
+public sealed class WorkloadIdentityFederationAuthenticatorAwsTestFixture : ICollectionFixture<WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture>
 {
-    [CollectionDefinition(nameof(WorkloadIdentityFederationAuthenticatorAwsTestFixture), DisableParallelization = true)]
-    public sealed class WorkloadIdentityFederationAuthenticatorAwsTestFixture : ICollectionFixture<WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture>
+    public sealed class Fixture : IDisposable
     {
-        public sealed class Fixture : IDisposable
+        internal readonly IWiremockRunner Runner;
+
+        public Fixture()
         {
-            internal readonly IWiremockRunner Runner;
-
-            public Fixture()
+            if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
             {
-                if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
-                {
-                    Runner = new Mock<IWiremockRunner>().Object;
-                    return;
-                }
-
-                Runner = WiremockRunner.NewWiremock();
+                Runner = new Mock<IWiremockRunner>().Object;
+                return;
             }
 
-            public void Dispose()
-            {
-                Runner.Stop();
-            }
+            Runner = WiremockRunner.NewWiremock();
+        }
+
+        public void Dispose()
+        {
+            Runner.Stop();
         }
     }
+}
 
-    [Collection(nameof(WorkloadIdentityFederationAuthenticatorAwsTestFixture))]
-    public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIdentityFederationAuthenticatorTest
+[Collection(nameof(WorkloadIdentityFederationAuthenticatorAwsTestFixture))]
+public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIdentityFederationAuthenticatorTest
+{
+    private const string AwsRegion = "eu-west-1";
+    private const string AwsAccessKey = "ABCDEFGHIJ12345KLMNO"; // pragma: allowlist secret
+    private const string AwsSecretKey = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStT"; // pragma: allowlist secret
+    private const string AwsToken = "HIJKLMNOPQRSTUWXYZ"; // pragma: allowlist secret
+    private const string FakeJwt = "fake.jwt.fake-signature";
+    private static readonly string s_wifAwsMappingPath = Path.Combine(s_wifMappingPath, "AWS");
+    private static readonly string s_wifAwsSuccessfulStsPath = Path.Combine(s_wifAwsMappingPath, "successful_get_web_identity_token.json");
+    private static readonly string s_wifAwsErrorStsPath = Path.Combine(s_wifAwsMappingPath, "error_get_web_identity_token.json");
+    private static readonly string s_wifAwsImpersonationStsPath = Path.Combine(s_wifAwsMappingPath, "successful_impersonation.json");
+
+    private readonly WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture _fixture;
+
+    public WorkloadIdentityFederationAuthenticatorAwsTest(WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture fixture)
     {
-        private const string AwsRegion = "eu-west-1";
-        private const string AwsAccessKey = "ABCDEFGHIJ12345KLMNO"; // pragma: allowlist secret
-        private const string AwsSecretKey = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStT"; // pragma: allowlist secret
-        private const string AwsToken = "HIJKLMNOPQRSTUWXYZ"; // pragma: allowlist secret
-        private const string AwsSignature = "3e46b07b306ff98878ca18aded8e79c55ddb6ddb99276f7d28bc299fe9e199ef"; // pragma: allowlist secret
-        private static readonly string s_awsRequest = new StringBuilder()
-            .Append("{\"method\":\"POST\",")
-            .Append("\"url\":\"https://sts.eu-west-1.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15\",")
-            .Append("\"headers\":{")
-            .Append("\"Host\":\"sts.eu-west-1.amazonaws.com\",")
-            .Append("\"X-Snowflake-Audience\":\"snowflakecomputing.com\",")
-            .Append("\"x-amz-date\":\"20250527T142033Z\",")
-            .Append($"\"x-amz-security-token\":\"{AwsToken}\",")
-            .Append($"\"authorization\":\"AWS4-HMAC-SHA256 Credential={AwsAccessKey}/20250527/eu-west-1/sts/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token;x-snowflake-audience, Signature={AwsSignature}\"")
-            .Append("}}")
-            .ToString();
-        private static readonly string s_awsRequestBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(s_awsRequest));
-        internal static readonly DateTime s_utcNow = new(2025, 5, 27, 14, 20, 33, 11, new GregorianCalendar(), DateTimeKind.Utc);
+        _fixture = fixture;
+        _fixture.Runner.ResetMapping();
+    }
 
-        private readonly WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture _fixture;
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulAwsAuthorization()
+    {
+        // arrange
+        SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AWS, FakeJwt);
+        var session = PrepareSessionForAws(NoEnvironmentSetup);
 
-        public WorkloadIdentityFederationAuthenticatorAwsTest(WorkloadIdentityFederationAuthenticatorAwsTestFixture.Fixture fixture)
-        {
-            _fixture = fixture;
-            _fixture.Runner.ResetMapping();
-        }
+        // act
+        session.Open();
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulAwsAuthorization()
-        {
-            // arrange
-            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AWS, s_awsRequestBase64);
-            var session = PrepareSessionForAws(NoEnvironmentSetup);
+        // assert
+        AssertSessionSuccessfullyCreated(session);
+    }
 
-            // act
-            session.Open();
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestSuccessfulAwsAuthorizationAsync()
+    {
+        // arrange
+        SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AWS, FakeJwt);
+        var session = PrepareSessionForAws(NoEnvironmentSetup);
 
-            // assert
-            AssertSessionSuccessfullyCreated(session);
-        }
+        // act
+        await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public async Task TestSuccessfulAwsAuthorizationAsync()
-        {
-            // arrange
-            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AWS, s_awsRequestBase64);
-            var session = PrepareSessionForAws(NoEnvironmentSetup);
+        // assert
+        AssertSessionSuccessfullyCreated(session);
+    }
 
-            // act
-            await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulAwsAttestation()
+    {
+        // arrange
+        var session = PrepareSessionForAws(NoEnvironmentSetup);
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
-            // assert
-            AssertSessionSuccessfullyCreated(session);
-        }
+        // act
+        var attestation = authenticator.CreateAttestation();
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulAwsAttestation()
-        {
-            // arrange
-            var session = PrepareSessionForAws(NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+        // assert
+        Assert.Equal(AttestationProvider.AWS, attestation.Provider);
+        Assert.Equal(FakeJwt, attestation.Credential);
+        Assert.NotNull(attestation.UserIdentifierComponents);
+        Assert.Empty(attestation.UserIdentifierComponents);
+    }
 
-            // act
-            var attestation = authenticator.CreateAttestation();
+    [SFFact]
+    public void TestFailAttestationWhenStsCallFails()
+    {
+        // arrange - STS returns empty token
+        _fixture.Runner.AddMappings(s_wifAwsErrorStsPath);
+        var session = PrepareSessionForAws(NoEnvironmentSetup, addStsMapping: false);
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
-            // assert
-            Assert.Equal(AttestationProvider.AWS, attestation.Provider);
-            var signedJsonRequest = DecodeFromBase64(attestation.Credential);
-            var signedRequest = JsonConvert.DeserializeObject<AttestationRequest>(signedJsonRequest);
-            Assert.Equal("POST", signedRequest.Method);
-            Assert.Equal($"https://sts.{AwsRegion}.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15", signedRequest.Url);
-            Assert.Equal($"sts.{AwsRegion}.amazonaws.com", signedRequest.Headers["Host"]);
-            Assert.Equal("snowflakecomputing.com", signedRequest.Headers["X-Snowflake-Audience"]);
-            Assert.Equal("20250527T142033Z", signedRequest.Headers["x-amz-date"]);
-            Assert.Equal(AwsToken, signedRequest.Headers["x-amz-security-token"]);
-            Assert.StartsWith($"AWS4-HMAC-SHA256 Credential={AwsAccessKey}/20250527/{AwsRegion}/sts/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token;x-snowflake-audience, Signature=", signedRequest.Headers["authorization"]);
-            Assert.Equal(64, ExtractSignature(signedRequest.Headers["authorization"]).Length);
-            Assert.Equal(5, signedRequest.Headers.Count);
-        }
+        // act
+        var thrown = Assert.Throws<SnowflakeDbException>(authenticator.CreateAttestation);
 
-        private string ExtractSignature(string authorizationHeader)
-        {
-            var signatureLabel = "Signature=";
-            var position = authorizationHeader.IndexOf(signatureLabel);
-            return authorizationHeader.Substring(position + signatureLabel.Length);
-        }
+        // assert
+        SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+        Assert.Contains("Retrieving attestation for AWS failed.", thrown.Message);
+        Assert.Contains("GetWebIdentityToken returned an empty token", thrown.Message);
+    }
 
-        private string DecodeFromBase64(string base64String)
-        {
-            var bytes = Convert.FromBase64String(base64String);
-            return Encoding.UTF8.GetString(bytes);
-        }
+    [SFFact]
+    public void TestFailAttestationWhenNoCredentials()
+    {
+        // arrange
+        var session = PrepareSessionForAws(NoEnvironmentSetup, awsSdkConfigurator: SetupAwsWrapperNoCredentials);
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
-        private SFSession PrepareSessionForAws(Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator) =>
-            PrepareSession(
-                AttestationProvider.AWS,
-                null,
-                environmentOperationsConfigurator,
-                t => SetupTime(t, s_utcNow),
-                SetupAwsWrapper
-            );
+        // act
+        var thrown = Assert.Throws<SnowflakeDbException>(authenticator.CreateAttestation);
 
-        internal static void SetupAwsWrapper(Mock<AwsSdkWrapper> awsSdkWrapper)
-        {
-            awsSdkWrapper
-                .Setup(w => w.GetAwsRegion())
-                .Returns(AwsRegion);
-            awsSdkWrapper
-                .Setup(w => w.GetAwsCredentials())
-                .Returns(new ImmutableCredentials(AwsAccessKey, AwsSecretKey, AwsToken));
-        }
+        // assert
+        SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+        Assert.Contains("Retrieving attestation for AWS failed.", thrown.Message);
+        Assert.Contains("Could not find AWS credentials", thrown.Message);
+    }
+
+    [SFFact]
+    public void TestFailAttestationWhenNoRegion()
+    {
+        // arrange
+        var session = PrepareSessionForAws(NoEnvironmentSetup, awsSdkConfigurator: SetupAwsWrapperNoRegion);
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+
+        // act
+        var thrown = Assert.Throws<SnowflakeDbException>(authenticator.CreateAttestation);
+
+        // assert
+        SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+        Assert.Contains("Retrieving attestation for AWS failed.", thrown.Message);
+        Assert.Contains("Could not find AWS region", thrown.Message);
+    }
+
+    [SFFact]
+    public void TestSuccessfulAwsTransitiveImpersonation()
+    {
+        // arrange
+        _fixture.Runner.AddMappings(s_wifAwsImpersonationStsPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, FakeJwt));
+        SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AWS, FakeJwt);
+        var session = PrepareSessionForAws(NoEnvironmentSetup, addStsMapping: false,
+            connectionStringSuffix: "workload_impersonation_path=arn:aws:iam::123456789012:role/TestRole");
+
+        // act
+        session.Open();
+
+        // assert
+        AssertSessionSuccessfullyCreated(session);
+    }
+
+    [SFFact]
+    public void TestSuccessfulAwsTransitiveImpersonationAttestation()
+    {
+        // arrange
+        _fixture.Runner.AddMappings(s_wifAwsImpersonationStsPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, FakeJwt));
+        var session = PrepareSessionForAws(NoEnvironmentSetup, addStsMapping: false,
+            connectionStringSuffix: "workload_impersonation_path=arn:aws:iam::123456789012:role/TestRole");
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+
+        // act
+        var attestation = authenticator.CreateAttestation();
+
+        // assert
+        Assert.Equal(AttestationProvider.AWS, attestation.Provider);
+        Assert.Equal(FakeJwt, attestation.Credential);
+        Assert.NotNull(attestation.UserIdentifierComponents);
+        Assert.Empty(attestation.UserIdentifierComponents);
+    }
+
+    private SFSession PrepareSessionForAws(
+        Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator,
+        Action<Mock<AwsSdkWrapper>> awsSdkConfigurator = null,
+        bool addStsMapping = true,
+        string connectionStringSuffix = null)
+    {
+        if (addStsMapping)
+            _fixture.Runner.AddMappings(s_wifAwsSuccessfulStsPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, FakeJwt));
+        return PrepareSession(
+            AttestationProvider.AWS,
+            connectionStringSuffix,
+            environmentOperationsConfigurator,
+            t => SetupTime(t, DateTime.UtcNow),
+            awsSdkConfigurator ?? SetupAwsWrapper
+        );
+    }
+
+    private static void SetupAwsWrapper(Mock<AwsSdkWrapper> awsSdkWrapper)
+    {
+        awsSdkWrapper
+            .Setup(w => w.GetAwsRegion())
+            .Returns(AwsRegion);
+        awsSdkWrapper
+            .Setup(w => w.GetAwsCredentials())
+            .Returns(new ImmutableCredentials(AwsAccessKey, AwsSecretKey, AwsToken));
+    }
+
+    private static void SetupAwsWrapperNoCredentials(Mock<AwsSdkWrapper> awsSdkWrapper)
+    {
+        awsSdkWrapper
+            .Setup(w => w.GetAwsRegion())
+            .Returns(AwsRegion);
+        awsSdkWrapper
+            .Setup(w => w.GetAwsCredentials())
+            .Returns((ImmutableCredentials)null);
+    }
+
+    private static void SetupAwsWrapperNoRegion(Mock<AwsSdkWrapper> awsSdkWrapper)
+    {
+        awsSdkWrapper
+            .Setup(w => w.GetAwsRegion())
+            .Returns((string)null);
     }
 }

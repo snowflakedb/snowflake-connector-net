@@ -1,0 +1,40 @@
+{
+    "mappings": [
+        {
+            "request": {
+                "urlPathPattern": "/",
+                "method": "POST",
+                "queryParameters": {
+                    "Action": {
+                        "equalTo": "AssumeRole"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "text/xml"
+                },
+                "body": "<AssumeRoleResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\"><AssumeRoleResult><Credentials><AccessKeyId>assumed-akid</AccessKeyId><SecretAccessKey>assumed-secret</SecretAccessKey><SessionToken>assumed-token</SessionToken></Credentials></AssumeRoleResult></AssumeRoleResponse>"
+            }
+        },
+        {
+            "request": {
+                "urlPathPattern": "/",
+                "method": "POST",
+                "queryParameters": {
+                    "Action": {
+                        "equalTo": "GetWebIdentityToken"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "text/xml"
+                },
+                "body": "<GetWebIdentityTokenResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\"><GetWebIdentityTokenResult><WebIdentityToken>%ACCESS_TOKEN%</WebIdentityToken><Expiration>2099-01-01T00:00:00.000Z</Expiration></GetWebIdentityTokenResult></GetWebIdentityTokenResponse>"
+            }
+        }
+    ]
+}
