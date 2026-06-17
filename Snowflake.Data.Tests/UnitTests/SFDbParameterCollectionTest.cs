@@ -25,13 +25,13 @@ namespace Snowflake.Data.Tests
         [SFFact]
         public void TestDefaultDbParameterCollection()
         {
-            Assert.Equal(0, _parameterCollection.Count);
+            Assert.Empty(_parameterCollection);
         }
 
         [SFFact]
         public void TestDbParameterCollectionCount()
         {
-            Assert.Equal(0, _parameterCollection.Count);
+            Assert.Empty(_parameterCollection);
 
             SnowflakeDbParameter parameter = new SnowflakeDbParameter();
 
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests
             Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
 
             _parameterCollection.Clear();
-            Assert.Equal(0, _parameterCollection.Count);
+            Assert.Empty(_parameterCollection);
         }
 
         [SFTheory]

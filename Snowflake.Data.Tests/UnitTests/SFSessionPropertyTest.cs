@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.Equal(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
-            Assert.True(exception.Message.Contains(expectedErrorMessagePart));
+            Assert.Contains(expectedErrorMessagePart, exception.Message);
         }
 
         [SFTheory]
@@ -233,8 +233,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 // Verify the Turkish culture issue exists
                 Assert.NotEqual(cultureDependent, cultureInvariant);
-                Assert.True(cultureDependent.Contains("İ"), "Turkish ToUpper() should contain Turkish dotted capital I");
-                Assert.True(cultureInvariant.Contains("I"), "Invariant ToUpper() should contain ASCII capital I");
+                Assert.Contains("İ", cultureDependent); // Turkish ToUpper() should contain Turkish dotted capital I
+                Assert.Contains("I", cultureInvariant); // Invariant ToUpper() should contain ASCII capital I
 
                 // Verify that invalid properties still throw exceptions even with Turkish culture
                 var invalidConnectionString = "ACCOUNT=testaccount;USER=testuser;PASSWORD=testpassword;invalidproperty=somevalue";
