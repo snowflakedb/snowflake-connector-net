@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Mono.Unix;
 using Xunit;
@@ -30,11 +31,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [SFTheory(SkipCondition.SkipOnWindows)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
-        public void TestUnsafePermissions(FileAccessPermissions unsecurePermissions)
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead, "User RW + Group R")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead, "User RWX + Other R")]
+        public void TestUnsafePermissions(FileAccessPermissions unsecurePermissions, string log)
         {
             // arrange
+            Console.WriteLine($@"Executing {nameof(TestUnsafePermissions)} with {log}..");
             var dirInfo = new DirectoryUnixInformation(s_directoryFullName, true, unsecurePermissions, UserId);
 
             // act

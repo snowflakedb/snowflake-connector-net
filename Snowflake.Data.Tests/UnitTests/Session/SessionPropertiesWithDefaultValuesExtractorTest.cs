@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFFact]
-        public void TestReturnDefaultValueWhenValueIsMissing( )
+        public void TestReturnDefaultValueWhenValueIsMissing()
         {
             // arrange
             var properties = SFSessionProperties.ParseConnectionString($"account=test;user=test;password=test", new SessionPropertiesContext());
