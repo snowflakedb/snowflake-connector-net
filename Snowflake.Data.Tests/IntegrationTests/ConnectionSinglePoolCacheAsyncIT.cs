@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                Assert.Equal(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 await conn.OpenAsync(connectionCancelToken.Token).ConfigureAwait(false);
 
@@ -55,7 +55,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var invalidConnectionString = ";connection_timeout=0";
             using (var conn = new SnowflakeDbConnection(invalidConnectionString))
             {
-                Assert.Equal(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 try
                 {
@@ -356,7 +356,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             connection.ConnectionString = _fixture.ConnectionString;
             await connection.OpenAsync(CancellationToken.None);
             connection.BeginTransaction();
-            Assert.Equal(true, connection.HasActiveExplicitTransaction());
+            Assert.True(connection.HasActiveExplicitTransaction());
             // no Rollback or Commit; during internal Rollback while closing a connection a mocked exception will be thrown
 
             // act

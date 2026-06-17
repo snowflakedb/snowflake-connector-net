@@ -532,7 +532,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Same(p3, cmd.Parameters[0]);
 
                     cmd.Parameters.Clear();
-                    Assert.Equal(0, cmd.Parameters.Count);
+                    Assert.Empty(cmd.Parameters);
                 }
 
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);

@@ -51,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var thrown = Assert.Throws<AggregateException>(() => commandTask.Wait());
 
             // Assert
-            Assert.Equal(thrown.InnerException.Message, "Unable to execute command due to command text not being set");
+            Assert.Equal("Unable to execute command due to command text not being set", thrown.InnerException.Message);
         }
 
         [SFFact]

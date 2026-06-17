@@ -143,11 +143,11 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
                 using (StreamReader logFileReader = new StreamReader(logFileStream))
                 {
                     string logLines = logFileReader.ReadToEnd();
-                    Assert.True(logLines.Contains(DebugMessage));
-                    Assert.True(logLines.Contains(InfoMessage));
-                    Assert.True(logLines.Contains(WarnMessage));
-                    Assert.True(logLines.Contains(ErrorMessage));
-                    Assert.True(logLines.Contains(CriticalMessage));
+                    Assert.Contains(DebugMessage, logLines);
+                    Assert.Contains(InfoMessage, logLines);
+                    Assert.Contains(WarnMessage, logLines);
+                    Assert.Contains(ErrorMessage, logLines);
+                    Assert.Contains(CriticalMessage, logLines);
                 }
             }
         }

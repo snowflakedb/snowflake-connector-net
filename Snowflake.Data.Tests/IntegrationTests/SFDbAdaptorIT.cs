@@ -54,14 +54,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 _adapter.Fill(ds);
                 await conn.CloseAsync(CancellationToken.None);
             }
-            Assert.Equal(ds.Tables[0].TableName, "Table");
+            Assert.Equal("Table", ds.Tables[0].TableName);
             Assert.Equal(ds.Tables[0].Rows[0].ItemArray[0], 1L);
             Assert.Equal(ds.Tables[0].Rows[0].ItemArray[1], 2L);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Assert.Equal("1", ds.Tables[0].Rows[0]["col1"].ToString());
-                Assert.Equal(ds.Tables[0].Rows[0]["col2"].ToString(), "2");
+                Assert.Equal("2", ds.Tables[0].Rows[0]["col2"].ToString());
             }
         }
 

@@ -207,7 +207,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     command.CommandText = sql;
                     var reader = command.ExecuteReader();
-                    Assert.Equal(false, await reader.ReadAsync());
+                    Assert.False(await reader.ReadAsync());
                 }
             }
         }

@@ -58,7 +58,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                Assert.Equal(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 await conn.OpenAsync(connectionCancelToken.Token).ConfigureAwait(false);
 
@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var invalidConnectionString = ";connection_timeout=0";
             using (var conn = new SnowflakeDbConnection(invalidConnectionString))
             {
-                Assert.Equal(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 try
                 {
@@ -154,7 +154,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             const int PoolTimeout = 1;
 
             // reset to default settings in case it changed by other test cases
-            Assert.Equal(true, SnowflakeDbConnectionPool.GetPool(connectionString).GetPooling()); // to instantiate pool
+            Assert.True(SnowflakeDbConnectionPool.GetPool(connectionString).GetPooling()); // to instantiate pool
             SnowflakeDbConnectionPool.SetMaxPoolSize(2);
             SnowflakeDbConnectionPool.SetTimeout(PoolTimeout);
 

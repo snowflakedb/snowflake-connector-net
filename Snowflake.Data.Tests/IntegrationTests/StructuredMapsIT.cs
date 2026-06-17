@@ -216,7 +216,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var map = reader.GetMap<string, string[]>(0);
 
                     // assert
-                    Assert.Equal(1, map.Count);
+                    Assert.Single(map);
                     Assert.Equal(new string[] { "a" }, map.Keys);
                     Assert.Equal(new string[] { "b", "c" }, map["a"]);
                 }
@@ -242,7 +242,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var map = reader.GetMap<string, List<string>>(0);
 
                     // assert
-                    Assert.Equal(1, map.Count);
+                    Assert.Single(map);
                     Assert.Equal(new string[] { "a" }, map.Keys);
                     Assert.Equal(new string[] { "b", "c" }, map["a"]);
                 }
@@ -268,9 +268,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var map = reader.GetMap<string, Dictionary<string, string>>(0);
 
                     // assert
-                    Assert.Equal(1, map.Count);
+                    Assert.Single(map);
                     var nestedMap = map["a"];
-                    Assert.Equal(1, nestedMap.Count);
+                    Assert.Single(nestedMap);
                     Assert.Equal("c", nestedMap["b"]);
                 }
             }
@@ -298,7 +298,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // assert
                     Assert.NotNull(map);
-                    Assert.Equal(1, map.Count);
+                    Assert.Single(map);
                     Assert.Equal(RemoveWhiteSpaces(expectedValue), RemoveWhiteSpaces(map["x"]));
                 }
             }

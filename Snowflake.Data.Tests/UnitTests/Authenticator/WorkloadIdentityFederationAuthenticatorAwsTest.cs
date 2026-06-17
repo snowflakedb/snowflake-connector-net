@@ -118,7 +118,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Equal("snowflakecomputing.com", signedRequest.Headers["X-Snowflake-Audience"]);
             Assert.Equal("20250527T142033Z", signedRequest.Headers["x-amz-date"]);
             Assert.Equal(AwsToken, signedRequest.Headers["x-amz-security-token"]);
-            Assert.True(signedRequest.Headers["authorization"].StartsWith($"AWS4-HMAC-SHA256 Credential={AwsAccessKey}/20250527/{AwsRegion}/sts/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token;x-snowflake-audience, Signature="));
+            Assert.StartsWith($"AWS4-HMAC-SHA256 Credential={AwsAccessKey}/20250527/{AwsRegion}/sts/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token;x-snowflake-audience, Signature=", signedRequest.Headers["authorization"]);
             Assert.Equal(64, ExtractSignature(signedRequest.Headers["authorization"]).Length);
             Assert.Equal(5, signedRequest.Headers.Count);
         }

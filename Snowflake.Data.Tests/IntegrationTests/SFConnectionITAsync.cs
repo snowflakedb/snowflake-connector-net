@@ -141,7 +141,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 "unknown",
                 _fixture.testConfig.password);
 
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
             try
             {
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -251,7 +251,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 _fixture.testConfig.warehouse,
                 _fixture.testConfig.user,
                 _fixture.testConfig.password);
-            Assert.Equal(conn1.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn1.State);
 
             await conn1.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             using (IDbCommand cmd = conn1.CreateCommand())
@@ -308,7 +308,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
-            Assert.Equal(conn.State, ConnectionState.Open);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
@@ -323,7 +323,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
 
             conn.ConnectionString = maxRetryConnStr;
 
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
             {
@@ -424,7 +424,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             conn.ConnectionString = _fixture.ConnectionString + ";invalidProperty=invalidvalue;";
 
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Open);
+            Assert.Equal(ConnectionState.Open, conn.State);
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
     }
@@ -436,12 +436,12 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         {
             conn.ConnectionString = _fixture.ConnectionString;
 
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
 
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
-            Assert.Equal(conn.State, ConnectionState.Open);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -468,12 +468,12 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using var conn = new SnowflakeDbConnection();
         conn.ConnectionString = _fixture.ConnectionString;
 
-        Assert.Equal(conn.State, ConnectionState.Closed);
+        Assert.Equal(ConnectionState.Closed, conn.State);
 
         await conn.OpenAsync(CancellationToken);
 
         Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
-        Assert.Equal(conn.State, ConnectionState.Open);
+        Assert.Equal(ConnectionState.Open, conn.State);
 
         var ex = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.ChangeDatabaseAsync(databaseName));
         Assert.Equal(2043, ex.ErrorCode); // object does not exist
@@ -490,12 +490,12 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using var conn = new SnowflakeDbConnection();
         conn.ConnectionString = _fixture.ConnectionString;
 
-        Assert.Equal(conn.State, ConnectionState.Closed);
+        Assert.Equal(ConnectionState.Closed, conn.State);
 
         await conn.OpenAsync(CancellationToken);
 
         Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
-        Assert.Equal(conn.State, ConnectionState.Open);
+        Assert.Equal(ConnectionState.Open, conn.State);
 
         var ex = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.ChangeDatabaseAsync(invalidDatabaseName, CancellationToken));
         Assert.Equal(1003, ex.ErrorCode); // unable to parse sql
@@ -514,7 +514,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             if (string.IsNullOrEmpty(_fixture.testConfig.host))
             {
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                Assert.Equal(conn.State, ConnectionState.Open);
+                Assert.Equal(ConnectionState.Open, conn.State);
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
@@ -544,7 +544,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 _fixture.testConfig.account
             );
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Open);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
             using (var command = conn.CreateCommand())
             {
@@ -842,7 +842,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
 
             conn.ConnectionString = infiniteLoginTimeOut;
 
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
 
             CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
             var openTask = conn.OpenAsync(connectionCancelToken.Token);
@@ -880,7 +880,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 timeoutSec);
             conn.ConnectionString = loginTimeOut5sec;
 
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
@@ -940,7 +940,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 conn.ConnectionString = String.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
                     connectionTimeout, retryTimeout);
 
-                Assert.Equal(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 try
@@ -980,7 +980,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
 
             conn.ConnectionString = invalidConnectionString;
 
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
             try
             {
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -1010,23 +1010,23 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString;
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
 
             // Close the connection. It's not opened yet, but it should not have any issue
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
 
             // Open the connection
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Open);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
             // Close the opened connection
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
 
             // Close the connection again.
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
 
@@ -1041,23 +1041,23 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString;
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
 
             // Close the connection. It's not opened yet, but it should not have any issue
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
 
             // Open the connection
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Open);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
             // Close the opened connection
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
 
             // Close the connection again.
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
 #endif
@@ -1068,11 +1068,11 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
         {
             conn.ConnectionString = _fixture.ConnectionString;
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
 
             // Open the connection
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(conn.State, ConnectionState.Open);
+            Assert.Equal(ConnectionState.Open, conn.State);
 
             // Close the opened connection
             var closeTask = conn.CloseAsync(CancellationToken.None);
@@ -1086,7 +1086,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 Assert.Equal(MockCloseSessionException.SESSION_CLOSE_ERROR,
                     ((SnowflakeDbException)e.InnerException).ErrorCode);
             }
-            Assert.Equal(conn.State, ConnectionState.Open);
+            Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
 
@@ -1096,18 +1096,18 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(false, conn.HasActiveExplicitTransaction());
+            Assert.False(conn.HasActiveExplicitTransaction());
 
             var trans = await conn.BeginTransactionAsync();
-            Assert.Equal(true, conn.HasActiveExplicitTransaction());
+            Assert.True(conn.HasActiveExplicitTransaction());
             await trans.RollbackAsync();
-            Assert.Equal(false, conn.HasActiveExplicitTransaction());
+            Assert.False(conn.HasActiveExplicitTransaction());
 
             await (await conn.BeginTransactionAsync()).RollbackAsync();
-            Assert.Equal(false, conn.HasActiveExplicitTransaction());
+            Assert.False(conn.HasActiveExplicitTransaction());
 
             await (await conn.BeginTransactionAsync()).CommitAsync();
-            Assert.Equal(false, conn.HasActiveExplicitTransaction());
+            Assert.False(conn.HasActiveExplicitTransaction());
         }
     }
 
@@ -1283,7 +1283,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         watchClosedFinished.Stop();
 
         // assert
-        Assert.Equal(1, restRequester.CloseRequests.Count);
+        Assert.Single(restRequester.CloseRequests);
         Assert.True(watchClose.Elapsed.Duration() < TimeSpan.FromSeconds(5)); // close executed immediately
         Assert.True(watchClosedFinished.Elapsed.Duration() >= TimeSpan.FromSeconds(10)); // while background task took more time
     }

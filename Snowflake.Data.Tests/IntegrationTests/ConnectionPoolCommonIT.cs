@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             await Task.Delay(100).ConfigureAwait(false);
             SFStatement statement = new SFStatement(conn1.SfSession);
             SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
-            Assert.Equal(true, await resultSet.NextAsync().ConfigureAwait(false));
+            Assert.True(await resultSet.NextAsync().ConfigureAwait(false));
             Assert.Equal("1", resultSet.GetString(0));
             await conn1.CloseAsync(CancellationToken.None);
         }
@@ -132,7 +132,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await connection.OpenAsync(CancellationToken.None);
                 firstOpenedSessionId = connection.SfSession.sessionId;
                 await connection.BeginTransactionAsync();
-                Assert.Equal(true, connection.HasActiveExplicitTransaction());
+                Assert.True(connection.HasActiveExplicitTransaction());
                 await Assert.ThrowsAsync<SnowflakeDbException>(async () =>
                 {
                     using (var command = connection.CreateCommand())
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await connectionWithSessionReused.OpenAsync(CancellationToken.None);
 
                 Assert.Equal(firstOpenedSessionId, connectionWithSessionReused.SfSession.sessionId);
-                Assert.Equal(false, connectionWithSessionReused.HasActiveExplicitTransaction());
+                Assert.False(connectionWithSessionReused.HasActiveExplicitTransaction());
                 using (var cmd = connectionWithSessionReused.CreateCommand())
                 {
                     cmd.CommandText = "SELECT CURRENT_TRANSACTION()";
@@ -170,7 +170,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     command.CommandText = "BEGIN"; // in general can be put as a part of a multi statement call and mixed with commit as well
                     await command.ExecuteNonQueryAsync();
-                    Assert.Equal(false, connection.HasActiveExplicitTransaction());
+                    Assert.False(connection.HasActiveExplicitTransaction());
                 }
             }
         }
@@ -187,7 +187,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await connection1.OpenAsync(CancellationToken.None);
                 Assert.Equal(ExpectedPoolCountAfterOpen(), SnowflakeDbConnectionPool.GetCurrentPoolSize());
                 await connection1.BeginTransactionAsync();
-                Assert.Equal(true, connection1.HasActiveExplicitTransaction());
+                Assert.True(connection1.HasActiveExplicitTransaction());
                 using (var command = connection1.CreateCommand())
                 {
                     firstOpenedSessionId = connection1.SfSession.sessionId;
@@ -201,7 +201,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 await connection2.OpenAsync(CancellationToken.None);
                 Assert.Equal(ExpectedPoolCountAfterOpen(), SnowflakeDbConnectionPool.GetCurrentPoolSize());
-                Assert.Equal(false, connection2.HasActiveExplicitTransaction());
+                Assert.False(connection2.HasActiveExplicitTransaction());
                 using (var command = connection2.CreateCommand())
                 {
                     Assert.Equal(firstOpenedSessionId, connection2.SfSession.sessionId);

@@ -244,7 +244,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<AggregateException>(() => cmd.GetResultsFromQueryId(unknownQueryId));
 
                     // Assert
-                    Assert.True(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
+                    Assert.Contains("Max retry for no data is reached", thrown.InnerException.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None);
@@ -274,7 +274,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var thrown = Assert.Throws<AggregateException>(() => task.Wait());
 
                     // Assert
-                    Assert.True(thrown.InnerException.Message.Contains($"Max retry for no data is reached"));
+                    Assert.Contains("Max retry for no data is reached", thrown.InnerException.Message);
                 }
 
                 await conn.CloseAsync(CancellationToken.None);
