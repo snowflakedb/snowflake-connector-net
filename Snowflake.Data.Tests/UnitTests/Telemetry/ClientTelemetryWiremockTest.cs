@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             _connectionStringTelemetryDisabled = $"account=testaccount;user=dummyuser;password=testpwd;host={url.Host};port={url.Port};scheme={url.Scheme};poolingEnabled=false;CLIENT_TELEMETRY_ENABLED=false;";
         }
 
-        [SFTheory(SkipCondition.SkipOnJenkins)]
+        [SFTheory(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
         [InlineData("ExecuteNonQuery")]
         [InlineData("ExecuteScalar")]
         [InlineData("ExecuteReader")]

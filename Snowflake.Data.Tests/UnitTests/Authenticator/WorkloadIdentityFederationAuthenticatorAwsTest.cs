@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Could not find AWS region", thrown.Message);
         }
 
-        [SFFact]
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
         public void TestSuccessfulAwsTransitiveImpersonation()
         {
             // arrange

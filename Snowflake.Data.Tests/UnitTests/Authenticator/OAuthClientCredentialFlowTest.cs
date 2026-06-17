@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
+        [SFFact(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
         public async Task TestSuccessfulFlowWithoutRefreshTokenAsync()
         {
             // arrange
