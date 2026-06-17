@@ -165,7 +165,6 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
 #if !NET8_0_OR_GREATER
             Skip.When(true, "API for x509 is outdated in older versions, there's little gain in effectively duplicating this test body to accomodate that contract.");
-        }
 #else
             // DER encodes positive integers with a leading 0x00 when the high bit is set.
             // This test verifies CrlParser.ConvertToHexadecimalString produces a hex string
@@ -214,6 +213,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             // assert — both representations must match regardless of leading 0x00 presence
             AssertExtensions.Equal(bouncyCastleHex, certificate.SerialNumber, $"Hex mismatch: CRL has '{bouncyCastleHex}', cert has '{certificate.SerialNumber}'");
             Assert.True(isRevoked, "Certificate should be found in the revocation list");
+#endif
         }
 
         private static X509Certificate2 BuildSelfSignedCertificate(int runNo)
@@ -223,6 +223,5 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var request = new CertificateRequest(distinguishedName, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(30));
         }
-#endif
     }
 }
