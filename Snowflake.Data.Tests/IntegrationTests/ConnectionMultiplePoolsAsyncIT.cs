@@ -298,7 +298,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var nestedException = ((AggregateException)thrown.InnerException).InnerException;
             Assert.Contains("Could not obtain a connection from the pool within a given timeout", nestedException.Message);
             Assert.InRange(watch.ElapsedMilliseconds, 1000, long.MaxValue);
-            Assert.Equal(pool.GetCurrentPoolSize(), 2);
+            Assert.Equal(2, pool.GetCurrentPoolSize());
 
             // cleanup
             await conn1.CloseAsync(CancellationToken.None).ConfigureAwait(false);

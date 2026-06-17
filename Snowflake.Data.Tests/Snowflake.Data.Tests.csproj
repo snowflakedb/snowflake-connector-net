@@ -16,7 +16,7 @@
         <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
         <OutputType Condition="'$(OldXunit)' != 'True'">Exe</OutputType>
         <!-- SNOW-3560694 !-->
-        <NoWarn>$(NoWarn);xUnit1013;xUnit2000;xUnit2017;xUnit1012;xUnit2003;xUnit2002;xUnit2008;xUnit1026;xUnit3003;xUnit1026;xUnit1025</NoWarn>
+        <NoWarn>$(NoWarn);xUnit1013;xUnit2017;xUnit1012;xUnit2003;xUnit2002;xUnit2008;xUnit1026;xUnit3003;xUnit1026;xUnit1025</NoWarn>
     </PropertyGroup>
     <ItemGroup>
         <Content Include="wiremock\**\*.*">

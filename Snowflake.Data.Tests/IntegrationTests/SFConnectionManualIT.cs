@@ -728,7 +728,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var command = conn.CreateCommand())
         {
             command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-            Assert.Equal(await command.ExecuteScalarAsync(), 46);
+            Assert.Equal(46, await command.ExecuteScalarAsync());
         }
 
         await conn.CloseAsync(CancellationToken);
@@ -755,7 +755,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var command = conn.CreateCommand())
         {
             command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-            Assert.Equal(await command.ExecuteScalarAsync(), 46);
+            Assert.Equal(46, await command.ExecuteScalarAsync());
         }
 
         await conn1.CloseAsync(CancellationToken);
@@ -783,7 +783,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                 "",
                 "externalbrowser");
 
-            Assert.Equal(conn.State, ConnectionState.Closed);
+            Assert.Equal(ConnectionState.Closed, conn.State);
             await conn.OpenAsync(CancellationToken);
             await conn.CloseAsync(CancellationToken);
             Assert.Equal(ConnectionState.Closed, conn.State);
