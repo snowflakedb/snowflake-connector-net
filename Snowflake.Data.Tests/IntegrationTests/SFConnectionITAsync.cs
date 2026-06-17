@@ -1283,7 +1283,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         watchClosedFinished.Stop();
 
         // assert
-        Assert.Equal(1, restRequester.CloseRequests.Count);
+        Assert.Single(restRequester.CloseRequests);
         Assert.True(watchClose.Elapsed.Duration() < TimeSpan.FromSeconds(5)); // close executed immediately
         Assert.True(watchClosedFinished.Elapsed.Duration() >= TimeSpan.FromSeconds(10)); // while background task took more time
     }

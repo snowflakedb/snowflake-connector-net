@@ -324,9 +324,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(new[] { "c" }, objectWithStructuredTypes.ArrayValue);
                     Assert.Equal(new[] { "d", "e" }, objectWithStructuredTypes.IListValue);
                     Assert.Equal(typeof(List<string>), objectWithStructuredTypes.IListValue.GetType());
-                    Assert.Equal(1, objectWithStructuredTypes.MapValue.Count);
+                    Assert.Single(objectWithStructuredTypes.MapValue);
                     Assert.Equal(5, objectWithStructuredTypes.MapValue[3]);
-                    Assert.Equal(1, objectWithStructuredTypes.IMapValue.Count);
+                    Assert.Single(objectWithStructuredTypes.IMapValue);
                     Assert.Equal(13, objectWithStructuredTypes.IMapValue[8]);
                     Assert.Equal(typeof(Dictionary<int, int>), objectWithStructuredTypes.IMapValue.GetType());
                 }

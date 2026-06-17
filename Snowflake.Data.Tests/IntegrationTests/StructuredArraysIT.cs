@@ -180,10 +180,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<Dictionary<string, string>>(0);
 
                     // assert
-                    Assert.Equal(1, array.Length);
+                    Assert.Single(array);
                     var map = array[0];
                     Assert.NotNull(map);
-                    Assert.Equal(1, map.Count);
+                    Assert.Single(map);
                     Assert.Equal("b", map["a"]);
                 }
             }
@@ -411,7 +411,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var array = reader.GetArray<DateTime>(0);
 
                     // assert
-                    Assert.Equal(1, array.Length);
+                    Assert.Single(array);
                     Assert.Equal(new[] { DateTime.Parse("2024-01-01") }, array);
                 }
             }

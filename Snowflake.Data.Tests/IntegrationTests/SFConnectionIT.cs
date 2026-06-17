@@ -217,10 +217,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 catch (Exception e)
                 {
                     SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.INTERNAL_ERROR);
-                    Assert.True(e.Message.Contains(
+                    Assert.Contains(
                         $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
                         $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
-                        "while trying to authenticate through Okta"));
+                        "while trying to authenticate through Okta", e.Message);
                 }
             }
         }

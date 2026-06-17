@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // assert
             Assert.Equal(SFError.INVALID_CONNECTION_PARAMETER_VALUE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
-            Assert.True(thrown.Message.Contains(expectedErrorMessage));
+            Assert.Contains(expectedErrorMessage, thrown.Message);
         }
 
         [SFTheory]
@@ -252,7 +252,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // act & assert
             var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;minTls=tls13;maxTls=tls12", new SessionPropertiesContext()));
-            Assert.True(exception.Message.Contains("Connection string is invalid: Parameter MINTLS value cannot be higher than MAXTLS value."));
+            Assert.Contains("Connection string is invalid: Parameter MINTLS value cannot be higher than MAXTLS value.", exception.Message);
         }
 
         [SFFact]
@@ -260,7 +260,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         {
             // act & assert
             var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString("account=test;user=test;password=test;minTls=tls11;maxTls=tls11", new SessionPropertiesContext()));
-            Assert.True(exception.Message.Contains("Connection string is invalid: Parameter MINTLS should have one of the following values: TLS12, TLS13."));
+            Assert.Contains("Connection string is invalid: Parameter MINTLS should have one of the following values: TLS12, TLS13.", exception.Message);
         }
 
         [SFTheory, MemberData(nameof(PropertiesProvider))]
