@@ -22,7 +22,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
         [ThreadStatic]
         private static SpcsTokenProvider t_provider;
-        public void Setup()
+
+        private void Setup()
         {
             t_fileOperations = new Mock<FileOperations>();
             t_environmentOperations = new Mock<EnvironmentOperations>();

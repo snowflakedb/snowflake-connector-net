@@ -60,12 +60,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [SFTheory(SkipCondition.SkipOnWindows)]
-        [InlineData(FileAccessPermissions.UserRead)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
-        public void TestUnsafeExactlyPermissions(FileAccessPermissions unsecurePermissions)
+        [InlineData(FileAccessPermissions.UserRead, "User R")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead, "User RWX + Group R")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead, "User RWX + Other R")]
+        public void TestUnsafeExactlyPermissions(FileAccessPermissions unsecurePermissions, string log)
         {
             // arrange
+            Console.WriteLine($@"Executing {nameof(TestUnsafePermissions)} with {log}..");
             var dirInfo = new DirectoryUnixInformation(s_directoryFullName, true, unsecurePermissions, UserId);
 
             // act
