@@ -50,7 +50,7 @@ timestamps {
         },
         'Test WIN': {
           stage('Test') {
-            build job: 'RT-LanguageDotnet-WIN-PC', parameters: params
+            build job: 'RT-LanguageDotnet-Windows-PC', parameters: params
            }
           },
         'Test Authentication': {
