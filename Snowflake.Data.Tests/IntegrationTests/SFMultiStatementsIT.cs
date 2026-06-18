@@ -304,20 +304,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestMixedQueryBindingWithMultiStatementCountZero()
         {
+            var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             using (var conn = new SnowflakeDbConnection())
             {
-                conn.ConnectionString = ConnectionString;
+                conn.ConnectionString = _fixture.ConnectionString;
                 await conn.OpenAsync();
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"use schema {testConfig.schema};"+
-                                      $"use schema {testConfig.schema};"+
-                                      $"create or replace table {TableName}(cola integer, colb string);" +
-                                      $"insert into {TableName} values (?, ?);" +
-                                      $"insert into {TableName} values (?, ?), (?, ?);" +
-                                      $"select * from {TableName};" +
-                                      $"drop table if exists {TableName}";
+                    cmd.CommandText = $"use schema {_fixture.testConfig.schema};"+
+                                      $"use schema {_fixture.testConfig.schema};"+
+                                      $"create or replace table {tableName}(cola integer, colb string);" +
+                                      $"insert into {tableName} values (?, ?);" +
+                                      $"insert into {tableName} values (?, ?), (?, ?);" +
+                                      $"select * from {tableName};" +
+                                      $"drop table if exists {tableName}";
 
                     // Set statement count
                     var stmtCountParam = cmd.CreateParameter();
