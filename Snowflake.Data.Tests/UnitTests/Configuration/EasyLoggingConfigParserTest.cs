@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
         }
 
-        public static void BeforeAll()
+        internal static void BeforeAll()
         {
             if (!Directory.Exists(s_workingDirectory))
             {
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
 
             // assert
             Assert.NotNull(thrown);
-            Assert.True(thrown.Message.Contains("Finding easy logging configuration failed"));
+            Assert.Contains("Finding easy logging configuration failed", thrown.Message);
         }
 
         [SFTheory, MemberData(nameof(WrongConfigFiles))]

@@ -207,7 +207,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     command.CommandText = sql;
                     var reader = command.ExecuteReader();
-                    Assert.Equal(false, await reader.ReadAsync());
+                    Assert.False(await reader.ReadAsync());
                 }
             }
         }
@@ -830,7 +830,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        public async TaskOrValueTask DisposeAsync()
+        private async TaskOrValueTask DisposeAsync()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
@@ -857,7 +857,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        public async TaskOrValueTask InitializeAsync()
+        private async TaskOrValueTask InitializeAsync()
         {
             // Base object's names on on worker thread id
             var suffix = Guid.NewGuid().ToString("N");

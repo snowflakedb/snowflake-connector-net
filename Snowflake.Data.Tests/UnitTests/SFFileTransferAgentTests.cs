@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests
             AfterEachTest();
         }
 
-        public void BeforeEachTest()
+        private void BeforeEachTest()
         {
             // Base object's names on worker thread id
             var threadSuffix = Thread.CurrentThread.ManagedThreadId.ToString()?.Replace('#', '_');
@@ -127,7 +127,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             _session = new SFSession(ConnectionStringMock, new SessionPropertiesContext());
         }
-        public void AfterEachTest()
+
+        private void AfterEachTest()
         {
             // Delete stage directory recursively
             if (Directory.Exists(t_locationStage))
@@ -359,8 +360,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 // Assert the file is uploaded
                 Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check the name of the source file and destination file are the same
-                Assert.True(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName).Contains(mockFileName));
-                Assert.True(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName).Contains(mockFileName));
+                Assert.Contains(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+                Assert.Contains(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
 
                 File.Delete($"{mockFileName}{index}.{extension}");
             }
@@ -665,7 +666,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithSpaces + "'  @TestStage", s_filePathWithSpaces);
         }
 
-        public void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
+        private void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
         {
             var actualFilePath = SFFileTransferAgent.getFilePathFromPutCommand(query);
             Assert.Equal(expectedFilePath, actualFilePath);

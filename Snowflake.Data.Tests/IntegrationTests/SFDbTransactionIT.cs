@@ -126,7 +126,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Console.Write("Row %d: %s, %d", row, dataDate.ToString(), dataInt);
                 row++;
             }
-            Assert.Equal(row, 4);
+            Assert.Equal(4, row);
 
             await conn.CloseAsync(CancellationToken.None);
         }
@@ -176,7 +176,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Console.Write("Row %d: %s, %d", row, dataDate.ToString(), dataInt);
                 row++;
             }
-            Assert.Equal(row, 3);
+            Assert.Equal(3, row);
 
             await conn.CloseAsync(CancellationToken.None);
         }

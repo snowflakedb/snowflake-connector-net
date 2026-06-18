@@ -114,8 +114,9 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             var uri = new Uri(url);
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             request.Headers.Add("Metadata-Flavor", "Google");
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
+
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
 
             try
             {
@@ -159,8 +160,8 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
             };
             request.Headers.Add("Authorization", $"Bearer {accessToken}");
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
 
             try
             {

@@ -47,6 +47,8 @@ namespace Snowflake.Data.Core.Revocation
 
         public Crl Create(X509Crl crl, DateTime now)
         {
+            var revokedCertificates = crl.GetRevokedCertificates()?.Select(cert => ConvertToHexadecimalString(cert.SerialNumber)) ?? [];
+            var revokedCertificatesSet = new HashSet<string>(revokedCertificates, StringComparer.OrdinalIgnoreCase);
             return new Crl
             {
                 DownloadTime = now,
@@ -55,7 +57,7 @@ namespace Snowflake.Data.Core.Revocation
                 IssuerName = crl.IssuerDN.ToString(),
                 IssuerNameRawData = crl.IssuerDN.GetEncoded(),
                 IssuerDistributionPoints = ReadIdpFromCrl(crl),
-                RevokedCertificates = crl.GetRevokedCertificates()?.Select(cert => ConvertToHexadecimalString(cert.SerialNumber)).ToList() ?? new List<string>(),
+                RevokedCertificates = revokedCertificatesSet,
                 BouncyCastleCrl = crl
             };
         }
@@ -77,8 +79,12 @@ namespace Snowflake.Data.Core.Revocation
         internal string ConvertToHexadecimalString(BigInteger value)
         {
             var bytes = value.ToByteArray();
-            var hexString = BitConverter.ToString(bytes)
-                .Replace("-", string.Empty)
+            var hexString =
+#if NET8_0_OR_GREATER
+                Convert.ToHexString(bytes)
+#else
+                BitConverter.ToString(bytes).Replace("-", string.Empty)
+#endif
                 .ToUpper();
             return hexString;
         }

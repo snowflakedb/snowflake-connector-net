@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 Uri newUri = updater.Update();
 
-                Assert.True(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_COUNT + "=" + retryCount));
+                Assert.Contains(RestParams.SF_QUERY_RETRY_COUNT + "=" + retryCount, newUri.Query);
             }
         }
 
@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Uri newUri = updater.Update(429);
 
-            Assert.True(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_REASON + "=" + 429));
+            Assert.Contains(RestParams.SF_QUERY_RETRY_REASON + "=" + 429, newUri.Query);
         }
 
         [SFFact]
@@ -43,7 +43,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Uri newUri = updater.Update(429);
 
-            Assert.False(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_REASON));
+            Assert.DoesNotContain(RestParams.SF_QUERY_RETRY_REASON, newUri.Query);
         }
 
         [SFFact]
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Uri newUri = updater.Update();
 
-            Assert.False(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_COUNT));
+            Assert.DoesNotContain(RestParams.SF_QUERY_RETRY_COUNT, newUri.Query);
         }
 
         [SFFact]
@@ -78,8 +78,8 @@ namespace Snowflake.Data.Tests.UnitTests
             updater = new HttpUtil.UriUpdater(uri);
             newUri = updater.Update();
 
-            Assert.True(newUri.Query.Contains(RestParams.SF_QUERY_REQUEST_GUID));
-            Assert.False(newUri.Query.Contains(initialGuid));
+            Assert.Contains(RestParams.SF_QUERY_REQUEST_GUID, newUri.Query);
+            Assert.DoesNotContain(initialGuid, newUri.Query);
             Assert.Equal(newUri.ToString().Length, uri.ToString().Length);
 
         }

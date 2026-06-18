@@ -27,11 +27,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             Assert.Equal(15, value);
         }
 
-        [SFTheory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void TestReturnDefaultValueWhenValueIsMissing(
-            bool failOnWrongValue)
+        [SFFact]
+        public void TestReturnDefaultValueWhenValueIsMissing()
         {
             // arrange
             var properties = SFSessionProperties.ParseConnectionString($"account=test;user=test;password=test", new SessionPropertiesContext());

@@ -102,7 +102,6 @@ public sealed class ActivityStarterTest : IDisposable
         Assert.Equal("ERROR", _sessionIdCapturedActivitiesMap[session.sessionId].GetTagItem(TelemetryTags.StatusCode));
 
         var exceptionEvent = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "exception");
-        Assert.NotNull(exceptionEvent);
         Assert.Equal(typeof(AbandonedMutexException).FullName,
             exceptionEvent.Tags.First(t => t.Key == TelemetryTags.Exception).Value);
     }
@@ -268,7 +267,7 @@ public sealed class ActivityStarterTest : IDisposable
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var evt = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "TestEvent");
-        Assert.NotNull(evt);
+        Assert.NotEqual(default, evt);
     }
 
     [SFFact]
@@ -285,7 +284,6 @@ public sealed class ActivityStarterTest : IDisposable
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var evt = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "StepComplete");
-        Assert.NotNull(evt);
         Assert.Equal("validation", evt.Tags.First(t => t.Key == "step.name").Value);
         Assert.Equal(42, evt.Tags.First(t => t.Key == "step.duration_ms").Value);
     }
@@ -302,7 +300,6 @@ public sealed class ActivityStarterTest : IDisposable
 
         Assert.True(_sessionIdCapturedActivitiesMap.ContainsKey(session.sessionId));
         var evt = _sessionIdCapturedActivitiesMap[session.sessionId].Events.FirstOrDefault(e => e.Name == "SimpleEvent");
-        Assert.NotNull(evt);
         Assert.False(evt.Tags.Any());
     }
 

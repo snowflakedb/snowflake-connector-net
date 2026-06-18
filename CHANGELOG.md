@@ -4,6 +4,9 @@
 - v5.8.0
   -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
   -  Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
+  -  Improved handling of certificates serial number matching and performance of CRL checkup.
+  -  Switched AWS Workload Identity Federation attestation from a SigV4-presigned `GetCallerIdentity` request to STS
+      `GetWebIdentityToken`, returning a signed JWT directly.
   -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
   -  Bug fix: Fixed incorrect DateTime conversion for timestamps preceding Unix epoch (1970-01-01) when fractional seconds are
     present.

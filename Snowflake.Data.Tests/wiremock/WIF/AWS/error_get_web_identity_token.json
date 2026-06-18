@@ -1,0 +1,17 @@
+{
+    "mappings": [
+        {
+            "request": {
+                "urlPattern": "/\\?Action=GetWebIdentityToken.*",
+                "method": "POST"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "text/xml"
+                },
+                "body": "<GetWebIdentityTokenResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\"><GetWebIdentityTokenResult><WebIdentityToken></WebIdentityToken></GetWebIdentityTokenResult></GetWebIdentityTokenResponse>"
+            }
+        }
+    ]
+}

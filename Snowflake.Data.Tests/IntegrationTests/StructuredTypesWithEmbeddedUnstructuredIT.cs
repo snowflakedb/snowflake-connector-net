@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(1.23f, allUnstructuredTypesObject.FloatValue);
                     Assert.Equal(1.23d, allUnstructuredTypesObject.DoubleValue);
                     Assert.Equal(1.23m, allUnstructuredTypesObject.DecimalValue);
-                    Assert.Equal(true, allUnstructuredTypesObject.BooleanValue);
+                    Assert.True(allUnstructuredTypesObject.BooleanValue);
                     Assert.Equal(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allUnstructuredTypesObject.GuidValue);
                     Assert.Equal(DateTime.Parse("2024-07-11 14:20:05"), allUnstructuredTypesObject.DateTimeValue);
                     Assert.Equal(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allUnstructuredTypesObject.DateTimeOffsetValue);
@@ -188,7 +188,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(1.23f, allUnstructuredTypesObject.FloatValue);
                     Assert.Equal(1.23d, allUnstructuredTypesObject.DoubleValue);
                     Assert.Equal(1.23m, allUnstructuredTypesObject.DecimalValue);
-                    Assert.Equal(true, allUnstructuredTypesObject.BooleanValue);
+                    Assert.True(allUnstructuredTypesObject.BooleanValue);
                     Assert.Equal(Guid.Parse("57af59a1-f010-450a-8c37-8fdc78e6ee93"), allUnstructuredTypesObject.GuidValue);
                     Assert.Equal(DateTime.Parse("2024-07-11 14:20:05"), allUnstructuredTypesObject.DateTimeValue);
                     Assert.Equal(DateTimeOffset.Parse($"2024-07-11 14:20:05 {expectedOffsetString}"), allUnstructuredTypesObject.DateTimeOffsetValue);
