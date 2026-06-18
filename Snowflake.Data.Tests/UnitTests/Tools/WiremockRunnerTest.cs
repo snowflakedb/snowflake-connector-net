@@ -1,15 +1,34 @@
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture, NonParallelizable]
+    [CollectionDefinition(nameof(WiremockRunnerTestFixture), DisableParallelization = true)]
+    public sealed class WiremockRunnerTestFixture : ICollectionFixture<WiremockRunnerTestFixture.Fixture>
+    {
+        public sealed class Fixture : IDisposable
+        {
+            internal WiremockRunner _runner { get; set; }
+
+            public Fixture()
+            {
+                _runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                _runner.Stop();
+            }
+        }
+    }
+
+    [Collection(nameof(WiremockRunnerTestFixture))]
     public class WiremockRunnerTest
     {
-        private WiremockRunner _runner;
         private readonly HttpClient _httpClient = new(
             new HttpClientHandler
             {
@@ -18,25 +37,15 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             }
         );
 
-        [OneTimeSetUp]
-        public void BeforeAll()
-        {
-            _runner = WiremockRunner.NewWiremock();
-        }
+        private readonly WiremockRunner _runner;
 
-        [SetUp]
-        public void BeforeEach()
+        public WiremockRunnerTest(WiremockRunnerTestFixture.Fixture fixture)
         {
+            _runner = fixture._runner;
             _runner.ResetMapping();
         }
 
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
-        }
-
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestRunnerAddMapping()
         {
             // arrange
@@ -49,7 +58,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(response.IsSuccessStatusCode);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestWiremockResetMapping()
         {
             // arrange
@@ -64,7 +73,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             // assert
             Assert.True(response.IsSuccessStatusCode);
             dynamic jsonObject = JsonConvert.DeserializeObject(Task.Run(async () => await response.Content.ReadAsStringAsync()).Result);
-            Assert.AreEqual("0", jsonObject?.meta.total.ToString());
+            Assert.Equal("0", jsonObject?.meta.total.ToString());
         }
     }
 }

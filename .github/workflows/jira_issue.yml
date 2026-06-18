@@ -1,10 +1,10 @@
 name: Jira creation
 
 on:
-  issues:
-    types: [opened]
-  issue_comment:
-    types: [created]
+    issues:
+        types: [opened]
+    issue_comment:
+        types: [created]
 
 jobs:
   create-issue:

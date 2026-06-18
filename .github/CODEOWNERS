@@ -1,1 +1,3 @@
 * @snowflakedb/Client
+/Snowflake.Data/Core/Revocation/** @snowflakedb/pki-oversight @snowflakedb/Client
+/Snowflake.Data/Core/HttpUtil.cs @snowflakedb/pki-oversight @snowflakedb/Client

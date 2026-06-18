@@ -7,6 +7,7 @@ using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Core
 {
@@ -108,10 +109,6 @@ namespace Snowflake.Data.Core
         private const string SF_PARAM_MULTI_STATEMENT_COUNT = "MULTI_STATEMENT_COUNT";
 
         private const string SF_PARAM_QUERY_TAG = "QUERY_TAG";
-
-        private const int SF_QUERY_IN_PROGRESS = 333333;
-
-        private const int SF_QUERY_IN_PROGRESS_ASYNC = 333334;
 
         private const int GetResultWithIdMaxRetriesCount = 3;
 
@@ -306,6 +303,10 @@ namespace Snowflake.Data.Core
                 }
             }
 
+            if (response.data?.QueryContext != null)
+            {
+                SfSession.UpdateQueryContextCache(response.data.QueryContext);
+            }
             throw new SnowflakeDbException(response.data?.sqlState,
                 response.code, response.message, response.data?.queryId);
         }
@@ -343,11 +344,6 @@ namespace Snowflake.Data.Core
                 });
             }
         }
-
-        private bool RequestInProgress(BaseRestResponse r) =>
-            r.code == SF_QUERY_IN_PROGRESS || r.code == SF_QUERY_IN_PROGRESS_ASYNC;
-
-        private bool SessionExpired(BaseRestResponse r) => r.code == SFSession.SF_SESSION_EXPIRED_CODE;
 
         internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec,
                                                           CancellationToken cancellationToken)
@@ -400,35 +396,24 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
-                    if (SessionExpired(response))
-                    {
-                        await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+
+                    if (await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    }
                     else
-                    {
                         receivedFirstQueryResponse = true;
-                    }
                 }
 
                 var lastResultUrl = response.data?.getResultUrl;
 
                 if (!asyncExec)
                 {
-                    while (RequestInProgress(response) || SessionExpired(response))
+                    while (response.IsQueryInProgress() || response.IsSessionExpired())
                     {
                         var req = BuildResultRequest(lastResultUrl);
                         response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
 
-                        if (SessionExpired(response))
-                        {
-                            logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                            await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
-                        }
-                        else
-                        {
+                        if (!await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
                             lastResultUrl = response.data?.getResultUrl;
-                        }
                     }
                 }
 
@@ -439,9 +424,10 @@ namespace Snowflake.Data.Core
                 logger.Warn("Query execution canceled.");
                 throw;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 logger.Error("Query execution failed.");
+                HandleExceptionForSession(ex);
                 throw;
             }
             finally
@@ -505,11 +491,13 @@ namespace Snowflake.Data.Core
             {
                 logger.Error($"Query execution failed, QueryId: {ex.QueryId ?? "unavailable"}", ex);
                 _lastQueryId = ex.QueryId ?? _lastQueryId;
+                HandleExceptionForSession(ex);
                 throw;
             }
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
+                HandleExceptionForSession(ex);
                 throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR);
             }
         }
@@ -566,6 +554,7 @@ namespace Snowflake.Data.Core
                 {
                     _lastQueryId = snowflakeDbException.QueryId ?? _lastQueryId;
                 }
+                HandleExceptionForSession(ex);
                 throw;
             }
         }
@@ -574,12 +563,15 @@ namespace Snowflake.Data.Core
         {
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
-            response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
-            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount && SessionExpired(response); retryCount++)
+            var stopRetrying = false;
+            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount + 1 && !stopRetrying; retryCount++)
             {
-                await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
-                req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
                 response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+
+                if (await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
+                    req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                else
+                    stopRetrying = true;
             }
             return BuildResultSet(response, cancellationToken);
         }
@@ -588,13 +580,17 @@ namespace Snowflake.Data.Core
         {
             var req = BuildResultRequestWithId(resultId);
             QueryExecResponse response = null;
-            response = _restRequester.Get<QueryExecResponse>(req);
-            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount && SessionExpired(response); retryCount++)
+            var stopRetrying = false;
+            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount + 1 && !stopRetrying; retryCount++)
             {
-                SfSession.renewSession();
-                req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
                 response = _restRequester.Get<QueryExecResponse>(req);
+
+                if (RenewSessionIfNeeded(response))
+                    req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                else
+                    stopRetrying = true;
             }
+
             return BuildResultSet(response, CancellationToken.None);
         }
 
@@ -675,15 +671,10 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = _restRequester.Post<T>(queryRequest);
-                    if (SessionExpired(response))
-                    {
-                        SfSession.renewSession();
+                    if (RenewSessionIfNeeded(response))
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    }
                     else
-                    {
                         receivedFirstQueryResponse = true;
-                    }
                 }
 
                 if (typeof(T) == typeof(QueryExecResponse))
@@ -693,26 +684,23 @@ namespace Snowflake.Data.Core
                     {
                         var lastResultUrl = queryResponse.data?.getResultUrl;
 
-                        while (RequestInProgress(response) || SessionExpired(response))
+                        while (response.IsQueryInProgress() || response.IsSessionExpired())
                         {
                             var req = BuildResultRequest(lastResultUrl);
                             response = _restRequester.Get<T>(req);
 
-                            if (SessionExpired(response))
-                            {
-                                logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                                SfSession.renewSession();
-                            }
-                            else
-                            {
+                            if (!RenewSessionIfNeeded(response))
                                 lastResultUrl = queryResponse.data?.getResultUrl;
-                            }
                         }
                     }
                 }
 
                 if (!response.success)
                 {
+                    if (response.data is QueryExecResponseData queryData && queryData.QueryContext != null)
+                    {
+                        SfSession.UpdateQueryContextCache(queryData.QueryContext);
+                    }
                     throw new SnowflakeDbException(
                         response.data.sqlState,
                         response.code,
@@ -725,6 +713,7 @@ namespace Snowflake.Data.Core
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
+                HandleExceptionForSession(ex);
                 throw;
             }
             finally
@@ -762,15 +751,11 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = await _restRequester.PostAsync<T>(queryRequest, cancellationToken).ConfigureAwait(false);
-                    if (SessionExpired(response))
-                    {
-                        await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+
+                    if (await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    }
                     else
-                    {
                         receivedFirstQueryResponse = true;
-                    }
                 }
 
                 if (typeof(T) == typeof(QueryExecResponse))
@@ -780,26 +765,23 @@ namespace Snowflake.Data.Core
                     {
                         var lastResultUrl = queryResponse.data?.getResultUrl;
 
-                        while (RequestInProgress(response) || SessionExpired(response))
+                        while (response.IsQueryInProgress() || response.IsSessionExpired())
                         {
                             var req = BuildResultRequest(lastResultUrl);
                             response = await _restRequester.GetAsync<T>(req, cancellationToken).ConfigureAwait(false);
 
-                            if (SessionExpired(response))
-                            {
-                                logger.Info("Ping pong request failed with session expired, trying to renew the session.");
-                                await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
-                            }
-                            else
-                            {
+                            if (!await RenewSessionIfNeededAsync(response, cancellationToken))
                                 lastResultUrl = queryResponse.data?.getResultUrl;
-                            }
                         }
                     }
                 }
 
                 if (!response.success)
                 {
+                    if (response.data is QueryExecResponseData queryData && queryData.QueryContext != null)
+                    {
+                        SfSession.UpdateQueryContextCache(queryData.QueryContext);
+                    }
                     throw new SnowflakeDbException(
                         response.data.sqlState,
                         response.code,
@@ -812,6 +794,7 @@ namespace Snowflake.Data.Core
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
+                HandleExceptionForSession(ex);
                 throw;
             }
             finally
@@ -858,15 +841,11 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = _restRequester.Get<QueryStatusResponse>(queryRequest);
-                    if (SessionExpired(response))
-                    {
-                        SfSession.renewSession();
+
+                    if (RenewSessionIfNeeded(response))
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    }
                     else
-                    {
                         receivedFirstQueryResponse = true;
-                    }
                 }
 
                 if (!response.success)
@@ -913,15 +892,10 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = await _restRequester.GetAsync<QueryStatusResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
-                    if (SessionExpired(response))
-                    {
-                        SfSession.renewSession();
+                    if (await RenewSessionIfNeededAsync(response, cancellationToken))
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    }
                     else
-                    {
                         receivedFirstQueryResponse = true;
-                    }
                 }
 
                 if (!response.success)
@@ -1106,6 +1080,40 @@ namespace Snowflake.Data.Core
         internal string GetQueryId()
         {
             return _lastQueryId;
+        }
+
+        private void HandleExceptionForSession(Exception ex)
+        {
+            if (RestRequester.HasUnauthorizedStatusCode(ex) || ex.IsSessionGone())
+            {
+                SfSession.InvalidateForPooling();
+            }
+        }
+
+        /// <summary>Renews the session if expired. Throws if the session no longer exists. Returns true if renewed.</summary>
+        private async Task<bool> RenewSessionIfNeededAsync(BaseRestResponse response, CancellationToken cancellationToken)
+        {
+            if (response.IsSessionGone())
+                throw new SnowflakeDbException(SFError.SESSION_GONE);
+
+            if (!response.IsSessionExpired()) return false;
+            logger.Info("Request failed with session expired, trying to renew the session.");
+            await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
+        /// <summary>Renews the session if expired. Throws if the session no longer exists. Returns true if renewed.</summary>
+        private bool RenewSessionIfNeeded(BaseRestResponse response)
+        {
+            if (response.IsSessionGone())
+                throw new SnowflakeDbException(SFError.SESSION_GONE);
+
+            if (!response.IsSessionExpired()) return false;
+            logger.Info("Request failed with session expired, trying to renew the session.");
+            SfSession.renewSession();
+
+            return true;
         }
     }
 }

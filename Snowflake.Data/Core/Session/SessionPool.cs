@@ -16,10 +16,13 @@ namespace Snowflake.Data.Core.Session
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
         private readonly object _sessionPoolLock = new object();
-        private static ISessionFactory s_sessionFactory = new SessionFactory();
+        private static readonly ISessionFactory s_sessionFactorySingleton = new SessionFactory();
+        private readonly ISessionFactory _instanceSessionFactory;
+
+        private ISessionFactory SessionFactory => _instanceSessionFactory ?? s_sessionFactorySingleton;
 
         private readonly Guid _id = Guid.NewGuid();
-        private readonly List<SFSession> _idleSessions;
+        internal readonly List<SFSession> _idleSessions;
         private readonly IWaitingQueue _waitingForIdleSessionQueue;
         private readonly ISessionCreationTokenCounter _sessionCreationTokenCounter;
         private readonly ISessionCreationTokenCounter _noPoolingSessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
@@ -44,9 +47,10 @@ namespace Snowflake.Data.Core.Session
             _waitingForIdleSessionQueue = new NonWaitingQueue();
             _sessionCreationTokenCounter = new NonCountingSessionCreationTokenCounter();
             _poolConfig = new ConnectionPoolConfig();
+            _instanceSessionFactory = null;
         }
 
-        private SessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets)
+        private SessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token, ConnectionPoolConfig poolConfig, string connectionStringWithoutSecrets, ISessionFactory sessionFactory)
         {
             // acquiring a lock not needed because one is already acquired in ConnectionPoolManager
             _idleSessions = new List<SFSession>();
@@ -59,17 +63,21 @@ namespace Snowflake.Data.Core.Session
             _waitingForIdleSessionQueue = new WaitingQueue();
             _poolConfig = poolConfig;
             _sessionCreationTokenCounter = new SessionCreationTokenCounter(_poolConfig.ConnectionTimeout);
+            _instanceSessionFactory = sessionFactory;
         }
 
-        internal static SessionPool CreateSessionCache() => new SessionPool();
+        internal static SessionPool CreateSessionCache() => new();
 
-        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token)
+        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token) =>
+            CreateSessionPool(connectionString, password, oauthClientSecret, token, null);
+
+        internal static SessionPool CreateSessionPool(string connectionString, SecureString password, SecureString oauthClientSecret, SecureString token, ISessionFactory sessionFactory)
         {
             s_logger.Debug("Creating a connection pool");
             var propertiesContext = new SessionPropertiesContext { Password = password, OAuthClientSecret = oauthClientSecret, Token = token };
             var extracted = ExtractConfig(connectionString, propertiesContext);
             s_logger.Debug("Creating a connection pool identified by: " + extracted.Item2);
-            return new SessionPool(connectionString, password, oauthClientSecret, token, extracted.Item1, extracted.Item2);
+            return new SessionPool(connectionString, password, oauthClientSecret, token, extracted.Item1, extracted.Item2, sessionFactory);
         }
 
         ~SessionPool()
@@ -84,11 +92,6 @@ namespace Snowflake.Data.Core.Session
             DestroyPool();
         }
 
-        internal static ISessionFactory SessionFactory
-        {
-            set => s_sessionFactory = value;
-        }
-
         private void CleanExpiredSessions()
         {
             s_logger.Debug("SessionPool::CleanExpiredSessions" + PoolIdentification());
@@ -100,8 +103,15 @@ namespace Snowflake.Data.Core.Session
                 {
                     if (item.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
                     {
-                        Task.Run(() => item.close());
                         _idleSessions.Remove(item);
+                        try
+                        {
+                            Task.Run(() => item.close());
+                        }
+                        catch (Exception ex)
+                        {
+                            s_logger.Error($"SessionPool::CleanExpiredSessions failed to close a session, error ignored." + PoolIdentification(), ex);
+                        }
                     }
                 }
             }
@@ -358,7 +368,7 @@ namespace Snowflake.Data.Core.Session
 
         private static Exception WaitingFailedException() => new Exception("Could not obtain a connection from the pool within a given timeout");
 
-        private SFSession ExtractIdleSession(string connStr)
+        internal SFSession ExtractIdleSession(string connStr)
         {
             for (int i = 0; i < _idleSessions.Count; i++)
             {
@@ -369,8 +379,29 @@ namespace Snowflake.Data.Core.Session
                     var timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                     if (session.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
                     {
-                        Task.Run(() => session.close());
-                        i--;
+                        s_logger.Debug($"session {session.sessionId}{PoolIdentification()} has expired");
+                        if (session.isHeartBeatEnabled)
+                        {
+                            s_logger.Debug($"keep alive enabled: renewing session {session.sessionId}{PoolIdentification()}");
+                            try
+                            {
+                                session.renewSession();
+                                _busySessionsCounter.Increase();
+                                return session;
+                            }
+                            catch (Exception e)
+                            {
+                                s_logger.Error($"failed to renew session {session.sessionId}{PoolIdentification()} due to error: {e.Message}");
+                                Task.Run(() => session.close());
+                                i--;
+                            }
+                        }
+                        else
+                        {
+                            s_logger.Debug($"keep alive disabled: closing the expired session {session.sessionId}{PoolIdentification()}");
+                            Task.Run(() => session.close());
+                            i--;
+                        }
                     }
                     else
                     {
@@ -391,7 +422,7 @@ namespace Snowflake.Data.Core.Session
             s_logger.Debug("SessionPool::NewSession" + PoolIdentification());
             try
             {
-                var session = s_sessionFactory.NewSession(connectionString, sessionContext);
+                var session = SessionFactory.NewSession(connectionString, sessionContext);
                 session.Open();
                 s_logger.Debug("SessionPool::NewSession - opened" + PoolIdentification());
                 if (GetPooling() && !_underDestruction)
@@ -437,7 +468,7 @@ namespace Snowflake.Data.Core.Session
         private Task<SFSession> NewSessionAsync(String connectionString, SessionPropertiesContext sessionContext, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
         {
             s_logger.Debug("SessionPool::NewSessionAsync" + PoolIdentification());
-            var session = s_sessionFactory.NewSession(connectionString, sessionContext);
+            var session = SessionFactory.NewSession(connectionString, sessionContext);
             return session
                 .OpenAsync(cancellationToken)
                 .ContinueWith(previousTask =>
@@ -454,32 +485,32 @@ namespace Snowflake.Data.Core.Session
                         }
                     }
 
-                    if (previousTask.IsFaulted && previousTask.Exception != null)
+                    if (previousTask.IsCanceled)
+                        throw previousTask.Exception as Exception ?? new TaskCanceledException();
+
+                    if (previousTask is { IsFaulted: true, Exception: not null })
                         throw previousTask.Exception;
 
                     if (previousTask.IsFaulted)
-                        throw new SnowflakeDbException(
-                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                            SFError.INTERNAL_ERROR,
-                            "Failure while opening session async");
+                        throw new SnowflakeDbException(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Failure while opening session async");
 
-                    if (!previousTask.IsCanceled)
+                    if (previousTask.IsCanceled)
+                        return session;
+
+                    if (GetPooling() && !_underDestruction)
                     {
-                        if (GetPooling() && !_underDestruction)
+                        lock (_sessionPoolLock)
                         {
-                            lock (_sessionPoolLock)
-                            {
-                                _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
-                                _busySessionsCounter.Increase();
-                                s_logger.Debug($"Pool state after creating a session {GetCurrentState()}" + PoolIdentification());
-                            }
+                            _sessionCreationTokenCounter.RemoveToken(sessionCreationToken);
+                            _busySessionsCounter.Increase();
+                            s_logger.Debug($"Pool state after creating a session {GetCurrentState()}" + PoolIdentification());
                         }
-
-                        _sessionPoolEventHandler.OnNewSessionCreated(this);
-                        _sessionPoolEventHandler.OnSessionProvided(this);
                     }
+
+                    _sessionPoolEventHandler.OnNewSessionCreated(this);
+                    _sessionPoolEventHandler.OnSessionProvided(this);
                     return session;
-                }, TaskContinuationOptions.NotOnCanceled);
+                });
         }
 
         internal void ReleaseBusySession(SFSession session)
@@ -538,7 +569,7 @@ namespace Snowflake.Data.Core.Session
         private Tuple<bool, List<SessionCreationToken>> ReturnSessionToPool(SFSession session, bool ensureMinPoolSize)
         {
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            if (session.IsNotOpen() || session.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
+            if (session.IsNotOpen() || session.IsExpired(_poolConfig.ExpirationTimeout, timeNow) || session.IsInvalidatedForPooling())
             {
                 lock (_sessionPoolLock)
                 {
@@ -622,28 +653,44 @@ namespace Snowflake.Data.Core.Session
         internal void ClearIdleSessions()
         {
             s_logger.Debug("SessionPool::ClearIdleSessions" + PoolIdentification());
+            SFSession[] sessionsCopy;
             lock (_sessionPoolLock)
             {
-                foreach (SFSession session in _idleSessions)
-                {
-                    session.close(); // it is left synchronously here because too much async tasks slows down testing
-                }
+                sessionsCopy = _idleSessions.ToArray();
                 _idleSessions.Clear();
+            }
+            foreach (SFSession session in sessionsCopy)
+            {
+                try
+                {
+                    session.close();
+                }
+                catch (Exception ex)
+                {
+                    s_logger.Error($"SessionPool::ClearIdleSessions failed to close a session, error ignored." + PoolIdentification(), ex);
+                }
             }
         }
 
         internal async void ClearIdleSessionsAsync()
         {
             s_logger.Debug("SessionPool::ClearIdleSessionsAsync" + PoolIdentification());
-            IEnumerable<SFSession> idleSessionsCopy;
+            SFSession[] sessionsCopy;
             lock (_sessionPoolLock)
             {
-                idleSessionsCopy = _idleSessions.Select(session => session);
+                sessionsCopy = _idleSessions.ToArray();
                 _idleSessions.Clear();
             }
-            foreach (SFSession session in idleSessionsCopy)
+            foreach (SFSession session in sessionsCopy)
             {
-                await session.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+                try
+                {
+                    await session.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    s_logger.Error($"SessionPool::ClearIdleSessionsAsync failed to close a session, error ignored." + PoolIdentification(), ex);
+                }
             }
         }
 

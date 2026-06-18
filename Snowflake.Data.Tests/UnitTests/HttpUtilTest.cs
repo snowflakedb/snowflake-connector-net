@@ -1,31 +1,27 @@
 using System.Net.Http;
+using Xunit;
+using Snowflake.Data.Core;
+using RichardSzalay.MockHttp;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Net;
+using System;
+using System.Security.Authentication;
+using Moq;
+using Moq.Protected;
+using Snowflake.Data.Core.Extensions;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Core;
-    using RichardSzalay.MockHttp;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using System.Net;
-    using System;
-    using System.Security.Authentication;
-    using Moq;
-    using Moq.Protected;
-
-    [TestFixture]
-    class HttpUtilTest
+    public class HttpUtilTest
     {
-        [Test]
+        [SFFact]
         public async Task TestNonRetryableHttpExceptionThrowsError()
         {
             var request = new HttpRequestMessage(HttpMethod.Post, new Uri("https://authenticationexceptiontest.com/"));
-            // Disable warning as this is the way to be compliant with netstandard2.0
-            // API reference: https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httprequestmessage?view=netstandard-2.0
-#pragma warning disable CS0618 // Type or member is obsolete
-            request.Properties[BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY] = Timeout.InfiniteTimeSpan;
-            request.Properties[BaseRestRequest.REST_REQUEST_TIMEOUT_KEY] = Timeout.InfiniteTimeSpan;
-#pragma warning restore CS0618 // Type or member is obsolete
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, Timeout.InfiniteTimeSpan);
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, Timeout.InfiniteTimeSpan);
 
             var handler = new Mock<DelegatingHandler>();
             handler.Protected()
@@ -36,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests
             .ThrowsAsync(new HttpRequestException("", new AuthenticationException()));
 
             var httpClient = HttpUtil.Instance.GetHttpClient(
-                new HttpClientConfig(false, "fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7),
+                new HttpClientConfig("fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7, 20, certRevocationCheckMode: "ENABLED"),
                 handler.Object);
 
             try
@@ -46,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             catch (HttpRequestException e)
             {
-                Assert.IsInstanceOf<AuthenticationException>(e.InnerException);
+                Assert.IsType<AuthenticationException>(e.InnerException);
             }
             catch (Exception unexpected)
             {
@@ -54,17 +50,19 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
+        [SFTheory]
         // Parameters: status code, force retry on 404, expected retryable value
-        [TestCase(HttpStatusCode.OK, false, false)]
-        [TestCase(HttpStatusCode.BadRequest, false, false)]
-        [TestCase(HttpStatusCode.Forbidden, false, true)]
-        [TestCase(HttpStatusCode.NotFound, false, false)]
-        [TestCase(HttpStatusCode.NotFound, true, true)] // force retry on 404
-        [TestCase(HttpStatusCode.RequestTimeout, false, true)]
-        [TestCase((HttpStatusCode)429, false, true)] // HttpStatusCode.TooManyRequests is not available on .NET Framework
-        [TestCase(HttpStatusCode.InternalServerError, false, true)]
-        [TestCase(HttpStatusCode.ServiceUnavailable, false, true)]
+        [InlineData(HttpStatusCode.OK, false, false)]
+        [InlineData(HttpStatusCode.BadRequest, false, false)]
+        [InlineData(HttpStatusCode.Forbidden, false, true)]
+        [InlineData(HttpStatusCode.NotFound, false, false)]
+        [InlineData(HttpStatusCode.NotFound, true, true)] // force retry on 404
+        [InlineData(HttpStatusCode.RequestTimeout, false, true)]
+        [InlineData((HttpStatusCode)429, false, true)] // HttpStatusCode.TooManyRequests is not available on .NET Framework
+        [InlineData(HttpStatusCode.InternalServerError, false, true)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, false, true)]
+        [InlineData(HttpStatusCode.TemporaryRedirect, false, true)]
+        [InlineData((HttpStatusCode)308, false, true)]  // HttpStatusCode.PermanentRedirect is not available on .NET Framework
         public async Task TestIsRetryableHTTPCode(HttpStatusCode statusCode, bool forceRetryOn404, bool expectedIsRetryable)
         {
             var mockHttp = new MockHttpMessageHandler();
@@ -75,15 +73,15 @@ namespace Snowflake.Data.Tests.UnitTests
 
             bool actualIsRetryable = HttpUtil.isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
 
-            Assert.AreEqual(expectedIsRetryable, actualIsRetryable);
+            Assert.Equal(expectedIsRetryable, actualIsRetryable);
         }
 
         // Parameters: request url, expected value
-        [TestCase("https://test.snowflakecomputing.com/session/v1/login-request", true)]
-        [TestCase("https://test.snowflakecomputing.com/session/authenticator-request", true)]
-        [TestCase("https://test.snowflakecomputing.com/session/token-request", true)]
-        [TestCase("https://test.snowflakecomputing.com/queries/v1/query-request", false)]
-        [Test]
+        [InlineData("https://test.snowflakecomputing.com/session/v1/login-request", true)]
+        [InlineData("https://test.snowflakecomputing.com/session/authenticator-request", true)]
+        [InlineData("https://test.snowflakecomputing.com/session/token-request", true)]
+        [InlineData("https://test.snowflakecomputing.com/queries/v1/query-request", false)]
+        [SFTheory]
         public void TestIsLoginUrl(string requestUrl, bool expectedIsLoginEndpoint)
         {
             // given
@@ -93,15 +91,15 @@ namespace Snowflake.Data.Tests.UnitTests
             bool isLoginEndpoint = HttpUtil.IsLoginEndpoint(uri.AbsolutePath);
 
             // then
-            Assert.AreEqual(expectedIsLoginEndpoint, isLoginEndpoint);
+            Assert.Equal(expectedIsLoginEndpoint, isLoginEndpoint);
         }
 
         // Parameters: request url, expected value
-        [TestCase("https://dev.okta.com/sso/saml", true)]
-        [TestCase("https://test.snowflakecomputing.com/session/v1/login-request", false)]
-        [TestCase("https://test.snowflakecomputing.com/session/authenticator-request", false)]
-        [TestCase("https://test.snowflakecomputing.com/session/token-request", false)]
-        [Test]
+        [InlineData("https://dev.okta.com/sso/saml", true)]
+        [InlineData("https://test.snowflakecomputing.com/session/v1/login-request", false)]
+        [InlineData("https://test.snowflakecomputing.com/session/authenticator-request", false)]
+        [InlineData("https://test.snowflakecomputing.com/session/token-request", false)]
+        [SFTheory]
         public void TestIsOktaSSORequest(string requestUrl, bool expectedIsOktaSSORequest)
         {
             // given
@@ -111,17 +109,17 @@ namespace Snowflake.Data.Tests.UnitTests
             bool isOktaSSORequest = HttpUtil.IsOktaSSORequest(uri.Host, uri.AbsolutePath);
 
             // then
-            Assert.AreEqual(expectedIsOktaSSORequest, isOktaSSORequest);
+            Assert.Equal(expectedIsOktaSSORequest, isOktaSSORequest);
         }
 
         // Parameters: time in seconds
-        [TestCase(4)]
-        [TestCase(8)]
-        [TestCase(16)]
-        [TestCase(32)]
-        [TestCase(64)]
-        [TestCase(128)]
-        [Test]
+        [InlineData(4)]
+        [InlineData(8)]
+        [InlineData(16)]
+        [InlineData(32)]
+        [InlineData(64)]
+        [InlineData(128)]
+        [SFTheory]
         public void TestGetJitter(int seconds)
         {
             // given
@@ -135,16 +133,15 @@ namespace Snowflake.Data.Tests.UnitTests
                 jitter = HttpUtil.GetJitter(seconds);
 
                 // then
-                Assert.IsTrue(jitter >= lowerBound && jitter <= upperBound);
+                Assert.True(jitter >= lowerBound && jitter <= upperBound);
             }
         }
 
-        [Test]
-        public void ShouldCreateHttpClientHandlerWithProxy()
+        [SFFact]
+        public void TestCreateHttpClientHandlerWithProxy()
         {
-            // given
+            // arrange
             var config = new HttpClientConfig(
-                true,
                 "snowflake.com",
                 "123",
                 "testUser",
@@ -152,23 +149,23 @@ namespace Snowflake.Data.Tests.UnitTests
                 "localhost",
                 false,
                 false,
-                7
+                7,
+                20
             );
 
-            // when
+            // act
             var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
 
-            // then
-            Assert.IsTrue(handler.UseProxy);
-            Assert.IsNotNull(handler.Proxy);
+            // assert
+            Assert.True(handler.UseProxy);
+            Assert.NotNull(handler.Proxy);
         }
 
-        [Test]
-        public void ShouldCreateHttpClientHandlerWithoutProxy()
+        [SFFact]
+        public void TestCreateHttpClientHandlerWithoutProxy()
         {
-            // given
+            // arrange
             var config = new HttpClientConfig(
-                true,
                 null,
                 null,
                 null,
@@ -176,15 +173,60 @@ namespace Snowflake.Data.Tests.UnitTests
                 null,
                 false,
                 false,
+                20,
                 0
             );
 
-            // when
+            // act
             var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
 
-            // then
-            Assert.IsFalse(handler.UseProxy);
-            Assert.IsNull(handler.Proxy);
+            // assert
+            Assert.False(handler.UseProxy);
+            Assert.Null(handler.Proxy);
+        }
+        [SFFact]
+        public void TestDefaultConnectionLimitIsNotChangedWhenOver50()
+        {
+            // arrange
+            var expectedLimit = 51;
+            var originalLimit = ServicePointManager.DefaultConnectionLimit;
+            ServicePointManager.DefaultConnectionLimit = expectedLimit;
+
+            try
+            {
+                // act
+                HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
+
+                // assert
+                Assert.Equal(expectedLimit, ServicePointManager.DefaultConnectionLimit);
+            }
+            finally
+            {
+                ServicePointManager.DefaultConnectionLimit = originalLimit;
+            }
+        }
+        [SFFact]
+        public void TestDefaultConnectionLimitIsChangedToDefaultWhenUnder50()
+        {
+            // arrange
+#if NET9_0_OR_GREATER
+            Skip.When(true, "TODO SNOW-3662960");
+#endif
+            var originalLimit = ServicePointManager.DefaultConnectionLimit;
+            ServicePointManager.DefaultConnectionLimit = 49;
+
+            try
+            {
+                // act
+                HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
+
+                // assert
+                Assert.Equal(HttpUtil.DefaultConnectionLimit, ServicePointManager.DefaultConnectionLimit);
+            }
+            finally
+            {
+                ServicePointManager.DefaultConnectionLimit = originalLimit;
+            }
         }
     }
 }

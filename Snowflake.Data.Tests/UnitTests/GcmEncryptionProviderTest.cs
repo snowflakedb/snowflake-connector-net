@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using Org.BouncyCastle.Crypto;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.FileTransfer;
@@ -9,7 +9,6 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
     public class GcmEncryptionProviderTest
     {
         private const string PlainText = "there is no rose without thorns";
@@ -42,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests
             MaxBytesInMemory = FileTransferConfiguration.DefaultMaxBytesInMemory
         };
 
-        [Test]
+        [SFFact]
         public void TestEncryptAndDecryptWithoutAad()
         {
             // arrange
@@ -63,20 +62,20 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                Assert.IsNull(encryptionMetadata.keyAad);
-                Assert.IsNull(encryptionMetadata.aad);
+                Assert.Null(encryptionMetadata.keyAad);
+                Assert.Null(encryptionMetadata.aad);
 
                 // act
                 using (var decryptedStream = GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration))
                 {
                     // assert
                     var decryptedText = ExtractContent(decryptedStream);
-                    CollectionAssert.AreEqual(s_plainTextBytes, decryptedText);
+                    Assert.Equal(PlainText, decryptedText);
                 }
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestEncryptAndDecryptWithEmptyAad()
         {
             // arrange
@@ -97,20 +96,20 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                Assert.AreEqual(s_emptyAadBase64, encryptionMetadata.keyAad);
-                Assert.AreEqual(s_emptyAadBase64, encryptionMetadata.aad);
+                Assert.Equal(s_emptyAadBase64, encryptionMetadata.keyAad);
+                Assert.Equal(s_emptyAadBase64, encryptionMetadata.aad);
 
                 // act
                 using (var decryptedStream = GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration))
                 {
                     // assert
                     var decryptedText = ExtractContent(decryptedStream);
-                    CollectionAssert.AreEqual(s_plainTextBytes, decryptedText);
+                    Assert.Equal(PlainText, decryptedText);
                 }
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestEncryptAndDecryptWithAad()
         {
             // arrange
@@ -131,20 +130,20 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                CollectionAssert.AreEqual(s_keyAadBase64, encryptionMetadata.keyAad);
-                CollectionAssert.AreEqual(s_contentAadBase64, encryptionMetadata.aad);
+                Assert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
+                Assert.Equal(s_contentAadBase64, encryptionMetadata.aad);
 
                 // act
                 using (var decryptedStream = GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration))
                 {
                     // assert
                     var decryptedText = ExtractContent(decryptedStream);
-                    CollectionAssert.AreEqual(s_plainTextBytes, decryptedText);
+                    Assert.Equal(PlainText, decryptedText);
                 }
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestFailDecryptWithInvalidKeyAad()
         {
             // arrange
@@ -161,8 +160,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                CollectionAssert.AreEqual(s_keyAadBase64, encryptionMetadata.keyAad);
-                Assert.IsNull(encryptionMetadata.aad);
+                Assert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
+                Assert.Null(encryptionMetadata.aad);
                 encryptionMetadata.keyAad = s_invalidAadBase64;
 
                 // act
@@ -170,11 +169,11 @@ namespace Snowflake.Data.Tests.UnitTests
                     GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration));
 
                 // assert
-                Assert.AreEqual("mac check in GCM failed", thrown.Message);
+                Assert.Equal("mac check in GCM failed", thrown.Message);
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestFailDecryptWithInvalidContentAad()
         {
             // arrange
@@ -191,8 +190,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                Assert.IsNull(encryptionMetadata.keyAad);
-                CollectionAssert.AreEqual(s_contentAadBase64, encryptionMetadata.aad);
+                Assert.Null(encryptionMetadata.keyAad);
+                Assert.Equal(s_contentAadBase64, encryptionMetadata.aad);
                 encryptionMetadata.aad = s_invalidAadBase64;
 
                 // act
@@ -200,11 +199,11 @@ namespace Snowflake.Data.Tests.UnitTests
                     GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration));
 
                 // assert
-                Assert.AreEqual("mac check in GCM failed", thrown.Message);
+                Assert.Equal("mac check in GCM failed", thrown.Message);
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestFailDecryptWhenMissingAad()
         {
             // arrange
@@ -221,8 +220,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                CollectionAssert.AreEqual(s_keyAadBase64, encryptionMetadata.keyAad);
-                CollectionAssert.AreEqual(s_contentAadBase64, encryptionMetadata.aad);
+                Assert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
+                Assert.Equal(s_contentAadBase64, encryptionMetadata.aad);
                 encryptionMetadata.keyAad = null;
                 encryptionMetadata.aad = null;
 
@@ -231,11 +230,11 @@ namespace Snowflake.Data.Tests.UnitTests
                     GcmEncryptionProvider.Decrypt(new MemoryStream(encryptedContent), s_encryptionMaterial, encryptionMetadata, s_fileTransferConfiguration));
 
                 // assert
-                Assert.AreEqual("mac check in GCM failed", thrown.Message);
+                Assert.Equal("mac check in GCM failed", thrown.Message);
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestEncryptAndDecryptFile()
         {
             // arrange
@@ -257,8 +256,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 Assert.NotNull(encryptionMetadata.key);
                 Assert.NotNull(encryptionMetadata.iv);
                 Assert.NotNull(encryptionMetadata.matDesc);
-                CollectionAssert.AreEqual(s_keyAadBase64, encryptionMetadata.keyAad);
-                CollectionAssert.AreEqual(s_contentAadBase64, encryptionMetadata.aad);
+                Assert.Equal(s_keyAadBase64, encryptionMetadata.keyAad);
+                Assert.Equal(s_contentAadBase64, encryptionMetadata.aad);
 
                 // act
                 string result;
@@ -268,12 +267,12 @@ namespace Snowflake.Data.Tests.UnitTests
                     decryptedStream.Position = 0;
                     var resultBytes = new byte[decryptedStream.Length];
                     var bytesRead = decryptedStream.Read(resultBytes, 0, resultBytes.Length);
-                    Assert.AreEqual(decryptedStream.Length, bytesRead);
+                    Assert.Equal(decryptedStream.Length, bytesRead);
                     result = Encoding.UTF8.GetString(resultBytes);
                 }
 
                 // assert
-                CollectionAssert.AreEqual(PlainText, result);
+                Assert.Equal(PlainText, result);
             }
             finally
             {

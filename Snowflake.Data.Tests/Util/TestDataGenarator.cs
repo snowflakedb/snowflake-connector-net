@@ -76,6 +76,17 @@ namespace Snowflake.Data.Tests.Util
             return buffer;
         }
 
+        public static T GetRandomEnumValue<T>()
+        {
+            var values = Enum.GetValues(typeof(T));
+            if (values.Length == 0)
+                throw new Exception("Could not get enum value because it doesn't have any value");
+            if (values.Length == 1)
+                return values.OfType<T>().First();
+            var randomIndex = NextInt(0, values.Length);
+            return values.OfType<T>().ElementAt(randomIndex);
+        }
+
         private static char NextAlphaNumericChar() => NextChar(s_alphanumericChars);
 
         public static string NextNonZeroDigitAsString() => NextNonZeroDigitChar().ToString();

@@ -2,7 +2,7 @@ using System;
 
 namespace Snowflake.Data.Core
 {
-    public abstract class BaseResultChunk : IResultChunk
+    internal abstract class BaseResultChunk : IResultChunk
     {
         internal abstract ResultFormat ResultFormat { get; }
 

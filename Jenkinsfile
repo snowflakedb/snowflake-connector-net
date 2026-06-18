@@ -1,7 +1,9 @@
+@Library('pipeline-utils')
+import com.snowflake.DevEnvUtils
 import groovy.json.JsonOutput
 
 timestamps {
-  node('regular-memory-node') {
+  node('regular-memory-node-snowos') {
     stage('checkout') {
       scmInfo = checkout scm
       println("${scmInfo}")
@@ -9,10 +11,17 @@ timestamps {
       env.GIT_COMMIT = scmInfo.GIT_COMMIT
     }
 
+    stage('Authenticate Artifactory') {
+      script {
+        new DevEnvUtils().withSfCli {
+          sh "sf artifact oci auth"
+        }
+      }
+    }
+
     stage('Build') {
       withCredentials([
         usernamePassword(credentialsId: '063fc85b-62a6-4181-9d72-873b43488411', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
-        string(credentialsId: 'a791118f-a1ea-46cd-b876-56da1b9bc71c', variable: 'NEXUS_PASSWORD')
       ]) {
         sh '''\
         |#!/bin/bash -e
@@ -24,11 +33,10 @@ timestamps {
     }
 
     def params = [
-      string(name: 'svn_revision', value: 'bptp-stable'),
       string(name: 'branch', value: 'main'),
       string(name: 'client_git_commit', value: scmInfo.GIT_COMMIT),
       string(name: 'client_git_branch', value: scmInfo.GIT_BRANCH),
-      string(name: 'TARGET_DOCKER_TEST_IMAGE', value: 'dotnet-ubuntu204-net9'),
+      string(name: 'TARGET_DOCKER_TEST_IMAGE', value: 'dotnet-ubuntu264-net10'),
       string(name: 'parent_job', value: env.JOB_NAME),
       string(name: 'parent_build_number', value: env.BUILD_NUMBER)
     ]
@@ -43,7 +51,6 @@ timestamps {
         'Test Authentication': {
           stage('Test Authentication') {
             withCredentials([
-              string(credentialsId: 'a791118f-a1ea-46cd-b876-56da1b9bc71c', variable: 'NEXUS_PASSWORD'),
               string(credentialsId: 'sfctest0-parameters-secret', variable: 'PARAMETERS_SECRET')
             ]) {
               sh '''\
@@ -64,6 +71,33 @@ timestamps {
               '''.stripMargin()
             }
           }
+        },
+        'Test Revocation Validation': {
+          stage('Test Revocation Validation') {
+            withCredentials([
+              usernamePassword(credentialsId: 'jenkins-snowflakedb-github-app',
+                usernameVariable: 'GITHUB_USER',
+                passwordVariable: 'GITHUB_TOKEN')
+            ]) {
+              try {
+                sh '''\
+                |#!/bin/bash -e
+                |chmod +x $WORKSPACE/ci/test_revocation.sh
+                |$WORKSPACE/ci/test_revocation.sh
+                '''.stripMargin()
+              } finally {
+                archiveArtifacts artifacts: 'revocation-results.json,revocation-report.html', allowEmptyArchive: true
+                publishHTML(target: [
+                  allowMissing: true,
+                  alwaysLinkToLastBuild: true,
+                  keepAll: true,
+                  reportDir: '.',
+                  reportFiles: 'revocation-report.html',
+                  reportName: 'Revocation Validation Report'
+                ])
+              }
+            }
+          }
         }
       )
     }
@@ -71,7 +105,7 @@ timestamps {
 }
 
 pipeline {
-  agent { label 'regular-memory-node' }
+  agent { label 'regular-memory-node-snowos' }
   options { timestamps() }
   environment {
     COMMIT_SHA_LONG = sh(returnStdout: true, script: "echo \$(git rev-parse HEAD)").trim()

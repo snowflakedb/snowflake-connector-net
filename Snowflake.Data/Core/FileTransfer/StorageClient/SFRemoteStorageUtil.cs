@@ -100,8 +100,7 @@ namespace Snowflake.Data.Core.FileTransfer
                     {
                         // Get the file metadata
                         FileHeader fileHeader = client.GetFileHeader(fileMetadata);
-                        if (fileHeader != null &&
-                            fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
+                        if (fileHeader != null)
                         {
                             // File already exists
                             fileMetadata.destFileSize = 0;
@@ -163,8 +162,7 @@ namespace Snowflake.Data.Core.FileTransfer
                         // Get the file metadata
                         FileHeader fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken)
                             .ConfigureAwait(false);
-                        if (fileHeader != null &&
-                            fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
+                        if (fileHeader != null)
                         {
                             // File already exists
                             fileMetadata.destFileSize = 0;
@@ -312,6 +310,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="fileMetadata">The file metadata of the file to download</param>
         internal static void DownloadOneFile(SFFileMetadata fileMetadata)
         {
+            PathValidator.ValidateFileDestinationPath(fileMetadata.localLocation, fileMetadata.destFileName);
             string fullDstPath = fileMetadata.localLocation;
             fullDstPath = Path.Combine(fullDstPath, fileMetadata.destFileName);
 
@@ -396,6 +395,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <param name="fileMetadata">The file metadata of the file to download</param>
         internal static async Task DownloadOneFileAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
+            PathValidator.ValidateFileDestinationPath(fileMetadata.localLocation, fileMetadata.destFileName);
             string fullDstPath = fileMetadata.localLocation;
             fullDstPath = Path.Combine(fullDstPath, fileMetadata.destFileName);
 

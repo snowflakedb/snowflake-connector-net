@@ -13,6 +13,11 @@ namespace Snowflake.Data.Client
     [System.ComponentModel.DesignerCategory("Code")]
     public class SnowflakeDbConnection : DbConnection
     {
+        static SnowflakeDbConnection()
+        {
+            SFEnvironment.StartMinicoreLoading();
+        }
+
         private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
         internal SFSession SfSession { get; set; }
@@ -175,11 +180,14 @@ namespace Snowflake.Data.Client
         {
             logger.Debug($"ChangeDatabase to:{databaseName}");
 
-            string alterDbCommand = $"use database {databaseName}";
-
-            using (IDbCommand cmd = CreateCommand())
+            using (var cmd = CreateCommand())
             {
-                cmd.CommandText = alterDbCommand;
+                cmd.CommandText = "use database identifier(?)";
+                var dbParam = cmd.CreateParameter();
+                dbParam.ParameterName = "1";
+                dbParam.DbType = DbType.String;
+                dbParam.Value = databaseName;
+                cmd.Parameters.Add(dbParam);
                 cmd.ExecuteNonQuery();
             }
         }
@@ -298,10 +306,10 @@ namespace Snowflake.Data.Client
                 // Otherwise when Dispose() is called, the close request would timeout.
                 _connectionState = ConnectionState.Closed;
                 logger.Error("Unable to connect: ", e);
+
                 if (e is SnowflakeDbException)
-                {
                     throw;
-                }
+
                 throw new SnowflakeDbException(
                         e,
                         SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
@@ -313,9 +321,7 @@ namespace Snowflake.Data.Client
         internal void FillConnectionStringFromTomlConfigIfNotSet()
         {
             if (string.IsNullOrEmpty(ConnectionString))
-            {
                 ConnectionString = _tomlConnectionBuilder.GetConnectionStringFromToml();
-            }
         }
 
         public override Task OpenAsync(CancellationToken cancellationToken)
@@ -335,6 +341,7 @@ namespace Snowflake.Data.Client
                 OAuthClientSecret = OAuthClientSecret,
                 Token = Token
             };
+
             return SnowflakeDbConnectionPool
                 .GetSessionAsync(ConnectionString, sessionContext, cancellationToken)
                 .ContinueWith(previousTask =>
@@ -346,10 +353,10 @@ namespace Snowflake.Data.Client
                         _connectionState = ConnectionState.Closed;
                         logger.Error("Unable to connect", sfSessionEx);
                         throw new SnowflakeDbException(
-                           sfSessionEx,
-                           SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                           SFError.INTERNAL_ERROR,
-                           "Unable to connect");
+                            sfSessionEx,
+                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                            SFError.INTERNAL_ERROR,
+                            "Unable to connect");
                     }
                     else if (previousTask.IsCanceled)
                     {

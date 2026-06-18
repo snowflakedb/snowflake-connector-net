@@ -1,5 +1,8 @@
 name: DotNet Build and Test
 
+permissions:
+  contents: read
+
 # Triggers the workflow on push or pull request events but only for the master branch
 on:
   push:
@@ -31,8 +34,49 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net462', 'net471', 'net472', 'net48', 'net481']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net10.0', 'net462', 'net471', 'net472', 'net48', 'net481']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            sdk: '6.0.x'
+            test_runner: 'dotnet test --framework net6.0'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net7.0
+            sdk: '7.0.x'
+            test_runner: 'dotnet test --framework net7.0'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net8.0
+            sdk: '8.0.x'
+            test_runner: 'dotnet run --framework net8.0'
+            test_args: '--no-build -junit %s.junit.xml'
+          - dotnet: net9.0
+            sdk: '9.0.x'
+            test_runner: 'dotnet run --framework net9.0'
+            test_args: '--no-build -junit %s.junit.xml'
+          - dotnet: net10.0
+            sdk: '10.0.x'
+            test_runner: 'dotnet run --framework net10.0'
+            test_args: '--no-build -junit %s.junit.xml'
+          - dotnet: net462
+            sdk: '6.0.x'
+            test_runner: 'dotnet test --framework net462'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net471
+            sdk: '6.0.x'
+            test_runner: 'dotnet test --framework net471'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net472
+            sdk: '6.0.x'
+            test_runner: 'dotnet test --framework net472'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net48
+            sdk: '6.0.x'
+            test_runner: 'dotnet test --framework net48'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net481
+            sdk: '6.0.x'
+            test_runner: 'dotnet test --framework net481'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,11 +89,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
-            8.0.x
-            9.0.x
+          dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -64,15 +104,26 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Decrypt RSA Key
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/rsa_keys/rsa_key_dotnet_${{ matrix.cloud_env }}.p8.gpg > Snowflake.Data.Tests/rsa_key_dotnet_${{ matrix.cloud_env }}.p8
       - name: Build Driver
         run: |
           cd Snowflake.Data.Tests
           dotnet restore
           dotnet build -f ${{ matrix.dotnet }} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
       - name: Run Tests
+        shell: bash
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml --verbosity normal" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          RESULTS_BASE="windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
+          ARGS='${{ matrix.test_args }}'
+          ARGS=${ARGS/\%s/$RESULTS_BASE}
+          dotnet-coverage collect "${{ matrix.test_runner }} ${ARGS}" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -92,11 +143,11 @@ jobs:
         with:
             token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-linux:
@@ -105,8 +156,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net10.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            sdk: '6.0.x'
+            test_runner: 'dotnet test --framework net6.0'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net7.0
+            sdk: '7.0.x'
+            test_runner: 'dotnet test --framework net7.0'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net8.0
+            sdk: '8.0.x'
+            test_runner: 'dotnet run --framework net8.0'
+            test_args: '--no-build -junit %s.junit.xml'
+          - dotnet: net9.0
+            sdk: '9.0.x'
+            test_runner: 'dotnet run --framework net9.0'
+            test_args: '--no-build -junit %s.junit.xml'
+          - dotnet: net10.0
+            sdk: '10.0.x'
+            test_runner: 'dotnet run --framework net10.0'
+            test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -118,11 +190,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
-            8.0.x
-            9.0.x
+          dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -137,6 +205,13 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Decrypt RSA Key
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/rsa_keys/rsa_key_dotnet_${{ matrix.cloud_env }}.p8.gpg > Snowflake.Data.Tests/rsa_key_dotnet_${{ matrix.cloud_env }}.p8
       - name: Build Driver
         run: |
           dotnet restore
@@ -144,7 +219,10 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml --verbosity normal" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          RESULTS_BASE="linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
+          ARGS='${{ matrix.test_args }}'
+          ARGS=${ARGS/\%s/$RESULTS_BASE}
+          dotnet-coverage collect "${{ matrix.test_runner }} ${ARGS}" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -164,11 +242,11 @@ jobs:
         with:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
 
   test-mac:
@@ -177,8 +255,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0']
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net10.0']
         cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            sdk: '6.0.x'
+            test_runner: 'dotnet test --framework net6.0'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net7.0
+            sdk: '7.0.x'
+            test_runner: 'dotnet test --framework net7.0'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net8.0
+            sdk: '8.0.x'
+            test_runner: 'dotnet run --framework net8.0'
+            test_args: '--no-build -junit %s.junit.xml'
+          - dotnet: net9.0
+            sdk: '9.0.x'
+            test_runner: 'dotnet run --framework net9.0'
+            test_args: '--no-build -junit %s.junit.xml'
+          - dotnet: net10.0
+            sdk: '10.0.x'
+            test_runner: 'dotnet run --framework net10.0'
+            test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -190,11 +289,7 @@ jobs:
       - name: Setup Dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
-            8.0.x
-            9.0.x
+          dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -209,6 +304,13 @@ jobs:
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
            ./.github/workflows/parameters/parameters_${{ matrix.cloud_env }}.json.gpg > Snowflake.Data.Tests/parameters.json
+      - name: Decrypt RSA Key
+        shell: bash
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="$PARAMETER_SECRET" \
+           ./.github/workflows/parameters/rsa_keys/rsa_key_dotnet_${{ matrix.cloud_env }}.p8.gpg > Snowflake.Data.Tests/rsa_key_dotnet_${{ matrix.cloud_env }}.p8
       - name: Build Driver
         run: |
           dotnet restore
@@ -216,7 +318,10 @@ jobs:
       - name: Run Tests
         run: |
           cd Snowflake.Data.Tests
-          dotnet-coverage collect "dotnet test --framework ${{ matrix.dotnet }} --no-build --logger junit;LogFilePath=windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results.junit.xml --verbosity normal" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+          RESULTS_BASE="macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
+          ARGS='${{ matrix.test_args }}'
+          ARGS=${ARGS/\%s/$RESULTS_BASE}
+          dotnet-coverage collect "${{ matrix.test_runner }} ${ARGS}" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
@@ -231,14 +336,73 @@ jobs:
           name: tests-performance_macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
       - name: Upload test results to Codecov
-        if: ${{!cancelled()}}
+        if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
           files: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+
+  test-rockylinux9:
+    name: Tests on Rocky Linux 9
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dotnet: ['net6.0', 'net7.0', 'net8.0', 'net9.0', 'net10.0']
+        cloud_env: ['AZURE', 'GCP', 'AWS']
+        include:
+          - dotnet: net6.0
+            test_runner: 'dotnet test --framework net6.0'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net7.0
+            test_runner: 'dotnet test --framework net7.0'
+            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
+          - dotnet: net8.0
+            test_runner: 'dotnet run --framework net8.0'
+            test_args: '--no-build -junit %s.junit.xml'
+          - dotnet: net9.0
+            test_runner: 'dotnet run --framework net9.0'
+            test_args: '--no-build -junit %s.junit.xml'
+          - dotnet: net10.0
+            test_runner: 'dotnet run --framework net10.0'
+            test_args: '--no-build -junit %s.junit.xml'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and Run Tests in Docker
+        run: ./ci/test_rockylinux9_docker.sh
+        env:
+          PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
+          snowflake_cloud_env: ${{ matrix.cloud_env }}
+          net_version: ${{ matrix.dotnet }}
+          DOTNET_COVERAGE_VERSION: "17.8.4"
+          TEST_RUNNER: ${{ matrix.test_runner }}
+          TEST_ARGS: ${{ matrix.test_args }}
+        shell: bash
+      - name: Upload Code Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report_rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
+          path: Snowflake.Data.Tests/rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
+      - name: Upload Test Performance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-performance_rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
+          path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v6
+        with:
+          # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
+          token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+          fail_ci_if_error: false # this is unstable, replace with true when https://github.com/codecov/codecov-action/issues/1940 is resolved
+          files: Snowflake.Data.Tests/rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -158,8 +159,9 @@ namespace Snowflake.Data.Core
 
             var type = sfResultSetMetaData.GetTypesByIndex(ordinal).Item1;
             var scale = sfResultSetMetaData.GetScaleByIndex(ordinal);
+            var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
 
-            var value = ((ArrowResultChunk)_currentChunk).ExtractCell(ordinal, type, (int)scale);
+            var value = ((ArrowResultChunk)_currentChunk).ExtractCell(ordinal, type, (int)scale, sessionTimezone);
 
             return value ?? DBNull.Value;
 
@@ -203,6 +205,15 @@ namespace Snowflake.Data.Core
                         obj = ret;
                         break;
                     case DateTimeOffset ret:
+                        obj = ret;
+                        break;
+                    case Dictionary<string, object> ret:
+                        obj = ret;
+                        break;
+                    case Dictionary<object, object> ret:
+                        obj = ret;
+                        break;
+                    case List<object> ret:
                         obj = ret;
                         break;
                     default:
@@ -388,13 +399,17 @@ namespace Snowflake.Data.Core
         {
             var value = GetObjectInternal(ordinal);
             if (value == DBNull.Value)
-                return (string)value;
+                return null;
 
             var type = sfResultSetMetaData.GetColumnTypeByIndex(ordinal);
             switch (value)
             {
                 case string ret:
                     return ret;
+                case Dictionary<string, object> _:
+                case Dictionary<object, object> _:
+                case List<object> _:
+                    return string.IsNullOrEmpty(value.ToString()) ? null : Newtonsoft.Json.JsonConvert.SerializeObject(value);
                 case DateTime ret:
                     if (type == SFDataType.DATE)
                         return SFDataConverter.ToDateString(ret, sfResultSetMetaData.dateOutputFormat);

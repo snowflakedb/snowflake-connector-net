@@ -1,11 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Snowflake.Data.Log
 {
-    interface SFLogger
+    internal interface SFLogger
     {
+        bool IsTraceEnabled();
+
         bool IsDebugEnabled();
 
         bool IsInfoEnabled();
@@ -14,7 +14,7 @@ namespace Snowflake.Data.Log
 
         bool IsErrorEnabled();
 
-        bool IsFatalEnabled();
+        void Trace(string msg, Exception ex = null);
 
         void Debug(string msg, Exception ex = null);
 
@@ -23,13 +23,10 @@ namespace Snowflake.Data.Log
         void Warn(string msg, Exception ex = null);
 
         void Error(string msg, Exception ex = null);
-
-        void Fatal(string msg, Exception ex = null);
     }
 
-    enum LoggingEvent
+    internal enum LoggingEvent
     {
-        DEBUG, INFO, WARN, ERROR, FATAL
+        OFF, TRACE, DEBUG, INFO, WARN, ERROR
     }
-
 }

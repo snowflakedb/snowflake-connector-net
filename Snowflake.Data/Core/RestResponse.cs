@@ -32,7 +32,7 @@ namespace Snowflake.Data.Core
         }
     }
 
-    public interface IQueryExecResponseData
+    internal interface IQueryExecResponseData
     {
         string queryId { get; }
 
@@ -119,13 +119,13 @@ namespace Snowflake.Data.Core
         internal string sessionToken { get; set; }
 
         [JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int16 sessionTokenValidityInSeconds { get; set; }
+        internal int sessionTokenValidityInSeconds { get; set; }
 
         [JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
         internal string masterToken { get; set; }
 
         [JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
-        internal Int16 masterTokenValidityInSeconds { get; set; }
+        internal int masterTokenValidityInSeconds { get; set; }
 
         [JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
         internal Int64 sessionId { get; set; }

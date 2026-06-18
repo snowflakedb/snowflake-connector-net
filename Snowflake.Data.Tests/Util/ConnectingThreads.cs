@@ -168,9 +168,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Duration = duration;
         }
 
-        public bool IsConnectedEvent() => EventName.Equals(Connected);
+        public bool IsConnectedEvent() => string.Equals(EventName, Connected);
 
-        public bool IsWaitingEvent() => EventName.Equals(WaitingForSession);
+        public bool IsWaitingEvent() => string.Equals(EventName, WaitingForSession);
 
         public static ThreadEvent EventConnected(string threadName, long duration) =>
             new ThreadEvent(threadName, Connected, null, duration);

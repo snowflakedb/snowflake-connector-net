@@ -11,8 +11,12 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
         public override AttestationProvider GetAttestationProvider() => AttestationProvider.OIDC;
 
-        public override WorkloadIdentityAttestationData CreateAttestationData(string snowflakeEntraResource, string tokenParam)
+        public override WorkloadIdentityAttestationData CreateAttestationData(string snowflakeEntraResource, string tokenParam, string impersonationPath = null)
         {
+            if (!string.IsNullOrEmpty(impersonationPath))
+            {
+                throw AttestationError("Impersonation is not supported for OIDC workload identity provider");
+            }
             if (string.IsNullOrEmpty(tokenParam))
             {
                 throw AttestationError("No token provided");

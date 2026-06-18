@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Web;
+using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -36,10 +37,16 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
         public override AttestationProvider GetAttestationProvider() => AttestationProvider.AZURE;
 
-        public override WorkloadIdentityAttestationData CreateAttestationData(string snowflakeEntraResource, string tokenParam)
+        public override WorkloadIdentityAttestationData CreateAttestationData(string snowflakeEntraResource, string tokenParam, string impersonationPath = null)
         {
+            if (!string.IsNullOrEmpty(impersonationPath))
+            {
+                throw AttestationError("Impersonation is not supported for Azure workload identity provider");
+            }
+
             var request = PrepareRequest(snowflakeEntraResource);
             var accessToken = GetAccessToken(request);
+
             var token = new JwtTokenExtractor().ReadJwtToken(accessToken, AttestationError);
             var issuer = token.Issuer;
             var subject = token.Subject;
@@ -85,6 +92,10 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             return response.AccessToken;
         }
 
+        /// <summary>
+        /// Prepares the HTTP request to get an access token from the Azure Instance Metadata Service.
+        /// </summary>
+        /// <param name="snowflakeEntraResource">The Entra resource to request the token for.</param>
         private HttpRequestMessage PrepareRequest(string snowflakeEntraResource)
         {
             var entraResourceOrDefault = string.IsNullOrEmpty(snowflakeEntraResource) ? DefaultWorkloadIdentityEntraResource : snowflakeEntraResource;
@@ -105,21 +116,23 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 urlWithoutQueryParams = identityEndpoint;
                 headers = new Dictionary<string, string> { { "X-IDENTITY-HEADER", identityHeader } };
                 queryParams = $"api-version=2019-08-01&resource={HttpUtility.UrlEncode(entraResourceOrDefault)}";
-
-                var clientId = _environmentOperations.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID");
-                if (!string.IsNullOrEmpty(clientId))
-                {
-                    queryParams += $"&client_id={HttpUtility.UrlEncode(clientId)}";
-                }
             }
+
+            var clientId = _environmentOperations.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID");
+
+            if (!string.IsNullOrEmpty(clientId))
+            {
+                queryParams += $"&client_id={HttpUtility.UrlEncode(clientId)}";
+            }
+
             var uri = new Uri(urlWithoutQueryParams + "?" + queryParams);
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             foreach (var keyValuePair in headers)
             {
                 request.Headers.Add(keyValuePair.Key, keyValuePair.Value);
             }
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, RestTimeout);
             return request;
         }
     }

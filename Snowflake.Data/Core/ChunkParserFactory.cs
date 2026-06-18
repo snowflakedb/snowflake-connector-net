@@ -5,7 +5,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
-    class ChunkParserFactory : IChunkParserFactory
+    internal class ChunkParserFactory : IChunkParserFactory
     {
         private static SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkParserFactory>();
         public static IChunkParserFactory Instance = new ChunkParserFactory();

@@ -1,0 +1,106 @@
+{
+    "mappings": [
+        {
+            "name": "Successful password login - telemetry disabled by server",
+            "request": {
+                "urlPathPattern": "/session/v1/login-request",
+                "method": "POST"
+            },
+            "response": {
+                "status": 200,
+                "headers": { "Content-Type": "application/json" },
+                "jsonBody": {
+                    "data": {
+                        "masterToken": "master-token",
+                        "token": "session-token",
+                        "sessionId": "telemetry-disabled-session",
+                        "parameters": [
+                            { "name": "CLIENT_SESSION_KEEP_ALIVE", "value": false },
+                            { "name": "CLIENT_TELEMETRY_ENABLED", "value": false },
+                            { "name": "QUERY_CONTEXT_CACHE_SIZE", "value": 5 },
+                            { "name": "CLIENT_STAGE_ARRAY_BINDING_THRESHOLD", "value": 65280 },
+                            { "name": "TIMEZONE", "value": "America/Los_Angeles" },
+                            { "name": "DATE_OUTPUT_FORMAT", "value": "YYYY-MM-DD" },
+                            { "name": "TIME_OUTPUT_FORMAT", "value": "HH24:MI:SS" }
+                        ],
+                        "sessionInfo": {
+                            "databaseName": "TEST_DB",
+                            "schemaName": "PUBLIC",
+                            "warehouseName": "TEST_WH",
+                            "roleName": "TEST_ROLE"
+                        },
+                        "idToken": null,
+                        "mfaToken": null
+                    },
+                    "code": null,
+                    "message": null,
+                    "success": true
+                }
+            }
+        },
+        {
+            "name": "Query execution - SELECT 1",
+            "request": {
+                "urlPathPattern": "/queries/v1/query-request",
+                "method": "POST"
+            },
+            "response": {
+                "status": 200,
+                "headers": { "Content-Type": "application/json" },
+                "jsonBody": {
+                    "data": {
+                        "parameters": [],
+                        "rowtype": [
+                            {
+                                "name": "1",
+                                "database": "",
+                                "schema": "",
+                                "table": "",
+                                "type": "fixed",
+                                "scale": 0,
+                                "precision": 1,
+                                "byteLength": null,
+                                "length": null,
+                                "nullable": false
+                            }
+                        ],
+                        "rowset": [["1"]],
+                        "total": 1,
+                        "returned": 1,
+                        "queryId": "fake-query-id-1234",
+                        "sqlState": "00000",
+                        "databaseProvider": null,
+                        "finalDatabaseName": "TEST_DB",
+                        "finalSchemaName": "PUBLIC",
+                        "finalWarehouseName": "TEST_WH",
+                        "finalRoleName": "TEST_ROLE",
+                        "statementTypeId": 4096,
+                        "version": 1,
+                        "sendResultTime": 0,
+                        "queryResultFormat": "json"
+                    },
+                    "code": "090000",
+                    "message": null,
+                    "success": true
+                }
+            }
+        },
+        {
+            "name": "Session close",
+            "request": {
+                "urlPathPattern": "/session",
+                "method": "POST"
+            },
+            "response": {
+                "status": 200,
+                "headers": { "Content-Type": "application/json" },
+                "jsonBody": {
+                    "data": null,
+                    "code": null,
+                    "message": null,
+                    "success": true
+                }
+            }
+        }
+    ]
+}

@@ -10,7 +10,15 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.Util
 {
-    internal class WiremockRunner : IDisposable
+    public interface IWiremockRunner : IDisposable
+    {
+        string WiremockBaseHttpUrl { get; }
+        void Stop();
+        void ResetMapping();
+        void AddMappings(string file, StringTransformations transformations = null);
+    }
+
+    internal class WiremockRunner : IWiremockRunner
     {
         internal const int DefaultHttpsPort = 1443;
         internal const int DefaultHttpPort = 1080;
@@ -146,7 +154,18 @@ namespace Snowflake.Data.Tests.Util
 
         public void Stop()
         {
-            _process?.Kill();
+            if (_process != null && !_process.HasExited)
+            {
+                try
+                {
+                    _process.Kill();
+                }
+                catch (InvalidOperationException)
+                {
+                    // Process already exited, ignore
+                }
+                _process = null;
+            }
             IsAvailable = false;
         }
 

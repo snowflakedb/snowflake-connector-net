@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
+using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
@@ -20,13 +21,14 @@ namespace Snowflake.Data.Core
         public static readonly TimeSpan DefaultExpirationTimeout = TimeSpan.FromHours(1);
         public const bool DefaultPoolingEnabled = true;
         public const int DefaultMaxHttpRetries = 7;
-        public static readonly TimeSpan DefaultRetryTimeout = TimeSpan.FromSeconds(300);
+        public const int DefaultConnectionLimit = 20;
+        public static TimeSpan DefaultRetryTimeout { get; internal set; } = TimeSpan.FromSeconds(300);
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFSessionHttpClientProperties>();
+        internal static readonly int MaxConnectionLimit = 1000;
 
         internal bool validateDefaultParameters;
         internal bool clientSessionKeepAlive;
         internal TimeSpan connectionTimeout;
-        internal bool insecureMode;
         internal bool disableRetry;
         internal bool forceRetryOn404;
         internal TimeSpan retryTimeout;
@@ -41,6 +43,15 @@ namespace Snowflake.Data.Core
         private TimeSpan _expirationTimeout;
         private bool _poolingEnabled;
         internal bool _clientStoreTemporaryCredential;
+        internal int _servicePointConnectionLimit;
+        internal CertRevocationCheckMode _certRevocationCheckMode;
+        internal bool _enableCrlDiskCaching;
+        internal bool _enableCrlInMemoryCaching;
+        internal bool _allowCertificatesWithoutCrlUrl;
+        private int _crlDownloadTimeout;
+        private long _crlDownloadMaxSize;
+        internal string _minTlsProtocol;
+        internal string _maxTlsProtocol;
 
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
@@ -92,6 +103,7 @@ namespace Snowflake.Data.Core
                 ValidateHttpRetries();
                 ValidateMinMaxPoolSize();
                 ValidateWaitingForSessionIdleTimeout();
+                ValidateConnectionLimit();
             }
             catch (SnowflakeDbException)
             {
@@ -181,10 +193,18 @@ namespace Snowflake.Data.Core
             }
         }
 
+        private void ValidateConnectionLimit()
+        {
+            if (_servicePointConnectionLimit < 1 || _servicePointConnectionLimit > MaxConnectionLimit)
+            {
+                s_logger.Warn($"Connection limit must be between 1 and {MaxConnectionLimit}. Using the default value of {DefaultConnectionLimit}");
+                _servicePointConnectionLimit = DefaultConnectionLimit;
+            }
+        }
+
         public HttpClientConfig BuildHttpClientConfig()
         {
             return new HttpClientConfig(
-                !insecureMode,
                 proxyProperties.proxyHost,
                 proxyProperties.proxyPort,
                 proxyProperties.proxyUser,
@@ -193,7 +213,17 @@ namespace Snowflake.Data.Core
                 disableRetry,
                 forceRetryOn404,
                 maxHttpRetries,
-                includeRetryReason);
+                _servicePointConnectionLimit,
+                includeRetryReason,
+                _certRevocationCheckMode.ToString(),
+                _enableCrlDiskCaching,
+                _enableCrlInMemoryCaching,
+                _allowCertificatesWithoutCrlUrl,
+                _crlDownloadTimeout,
+                _crlDownloadMaxSize,
+                _minTlsProtocol,
+                _maxTlsProtocol
+                );
         }
 
         public ConnectionPoolConfig BuildConnectionPoolConfig() =>
@@ -239,7 +269,6 @@ namespace Snowflake.Data.Core
                     validateDefaultParameters = Boolean.Parse(propertiesDictionary[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]),
                     clientSessionKeepAlive = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]),
                     connectionTimeout = extractor.ExtractTimeout(SFSessionProperty.CONNECTION_TIMEOUT),
-                    insecureMode = Boolean.Parse(propertiesDictionary[SFSessionProperty.INSECUREMODE]),
                     disableRetry = Boolean.Parse(propertiesDictionary[SFSessionProperty.DISABLERETRY]),
                     forceRetryOn404 = Boolean.Parse(propertiesDictionary[SFSessionProperty.FORCERETRYON404]),
                     retryTimeout = extractor.ExtractTimeout(SFSessionProperty.RETRY_TIMEOUT),
@@ -253,7 +282,16 @@ namespace Snowflake.Data.Core
                     _expirationTimeout = extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
                     _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
                     _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
-                    _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL])
+                    _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]),
+                    _servicePointConnectionLimit = int.Parse(propertiesDictionary[SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT]),
+                    _certRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), propertiesDictionary[SFSessionProperty.CERTREVOCATIONCHECKMODE], true),
+                    _enableCrlDiskCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLDISKCACHING]),
+                    _enableCrlInMemoryCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLINMEMORYCACHING]),
+                    _allowCertificatesWithoutCrlUrl = Boolean.Parse(propertiesDictionary[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]),
+                    _crlDownloadTimeout = int.Parse(propertiesDictionary[SFSessionProperty.CRLDOWNLOADTIMEOUT]),
+                    _crlDownloadMaxSize = long.Parse(propertiesDictionary[SFSessionProperty.CRLDOWNLOADMAXSIZE]),
+                    _minTlsProtocol = propertiesDictionary[SFSessionProperty.MINTLS],
+                    _maxTlsProtocol = propertiesDictionary[SFSessionProperty.MAXTLS]
                 };
             }
 

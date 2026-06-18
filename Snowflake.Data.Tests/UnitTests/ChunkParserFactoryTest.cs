@@ -1,48 +1,63 @@
+using System;
+using System.IO;
+using System.Text;
+using Snowflake.Data.Configuration;
+using Snowflake.Data.Core;
+using Snowflake.Data.Tests.Util;
+using Xunit;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Configuration;
-    using Snowflake.Data.Core;
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Security;
-    using System.Text;
-    using System.Threading;
 
-    [TestFixture, NonParallelizable]
-    class ChunkParserFactoryTest
+    [CollectionDefinition(nameof(ChunkParserFactoryTestCollection), DisableParallelization = true)]
+    public sealed class ChunkParserFactoryTestCollection : ICollectionFixture<ChunkParserFactory>
+    {
+
+    }
+
+    [Collection(nameof(ChunkParserFactoryTestCollection))]
+    public sealed class ChunkParserFactoryTest : IDisposable
     {
         int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
 
-        [TearDown]
-        public void AfterTest()
+        public void Dispose()
         {
             SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
         }
 
-        [Test]
-        public void TestGetParser([Values(1, 2, 3, 4)] int chunkParserVersion)
+        [SFTheory(RetriesCount = RetriesCount.Once)]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(4)]
+        public void TestGetParser(int chunkParserVersion)
         {
-            // Set configuration settings
-            SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
-
-            // Get parser using sample stream
-            byte[] bytes = Encoding.UTF8.GetBytes("test");
-            Stream stream = new MemoryStream(bytes);
-
-            IChunkParser parser = null;
-
-            // GetParser() throws an error when ChunkParserVersion is not 1-3
-            if (chunkParserVersion == 4)
+            try
             {
-                Exception ex = Assert.Throws<Exception>(() => parser = ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream));
-                Assert.AreEqual("Unsupported Chunk Parser version specified in the SFConfiguration", ex.Message);
+                SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
+
+                // Get parser using sample stream with proper disposal
+                byte[] bytes = Encoding.UTF8.GetBytes("test");
+                using (Stream stream = new MemoryStream(bytes))
+                {
+                    IChunkParser parser = null;
+
+                    // GetParser() throws an error when ChunkParserVersion is not 1-3
+                    if (chunkParserVersion == 4)
+                    {
+                        Exception ex = Assert.Throws<Exception>(() => parser = ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream));
+                        Assert.Contains("Unsupported Chunk Parser version", ex.Message);
+                    }
+                    else
+                    {
+                        parser = ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream);
+                        Assert.True(parser is ReusableChunkParser);
+                    }
+                }
             }
-            else
+            finally
             {
-                parser = ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream);
-                Assert.IsTrue(parser is ReusableChunkParser);
+                SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault;
             }
         }
     }

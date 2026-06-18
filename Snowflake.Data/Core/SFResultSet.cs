@@ -291,14 +291,16 @@ namespace Snowflake.Data.Core
         {
             UTF8Buffer val = GetObjectInternal(ordinal);
             var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
-            return SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2);
+            var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
+            return SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2, sessionTimezone);
         }
 
         private T GetValue<T>(int ordinal)
         {
             UTF8Buffer val = GetObjectInternal(ordinal);
             var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
-            return (T)SFDataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T));
+            var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
+            return (T)SFDataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T), sessionTimezone);
         }
 
         //

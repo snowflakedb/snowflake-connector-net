@@ -1,0 +1,32 @@
+using System;
+using Xunit;
+using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Tests.Util;
+
+namespace Snowflake.Data.Tests.UnitTests.Revocation
+{
+    public class MemoryCrlCacheTests
+    {
+        const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";
+        const string CrlUrl2 = "http://snowflakecomputing.com/crl2.crl";
+        private readonly Crl _crl1 = new();
+        private readonly Crl _crl2 = new();
+
+        [SFFact]
+        public void TestCacheOperations()
+        {
+            var cache = new MemoryCrlCache(TimeSpan.FromDays(1));
+            Assert.Null(cache.Get(CrlUrl1));
+            Assert.Null(cache.Get(CrlUrl2));
+            cache.Set(CrlUrl1, _crl1);
+            Assert.Same(_crl1, cache.Get(CrlUrl1));
+            Assert.Null(cache.Get(CrlUrl2));
+            cache.Set(CrlUrl1, _crl2);
+            Assert.Same(_crl2, cache.Get(CrlUrl1));
+            Assert.Null(cache.Get(CrlUrl2));
+            cache.Set(CrlUrl2, _crl1);
+            Assert.Same(_crl2, cache.Get(CrlUrl1));
+            Assert.Same(_crl1, cache.Get(CrlUrl2));
+        }
+    }
+}

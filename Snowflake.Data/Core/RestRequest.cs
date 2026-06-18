@@ -4,6 +4,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Snowflake.Data.Core.Extensions;
 
 namespace Snowflake.Data.Core
 {
@@ -24,7 +25,10 @@ namespace Snowflake.Data.Core
         internal static string REST_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_REST_REQUEST";
 
         // The default Rest timeout. Set to 120 seconds.
-        public static int DEFAULT_REST_RETRY_SECONDS_TIMEOUT = 120;
+        public static readonly int s_defaultRestRetrySecondsTimeout = 120;
+
+        // Default each http request timeout to 16 seconds
+        public static readonly int s_defaultHttpSecondsTimeout = 16;
 
         internal Uri Url { get; set; }
 
@@ -48,8 +52,8 @@ namespace Snowflake.Data.Core
         protected HttpRequestMessage newMessage(HttpMethod method, Uri url)
         {
             HttpRequestMessage message = new HttpRequestMessage(method, url);
-            message.Properties[HTTP_REQUEST_TIMEOUT_KEY] = HttpTimeout;
-            message.Properties[REST_REQUEST_TIMEOUT_KEY] = RestTimeout;
+            message.SetOption(HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
+            message.SetOption(REST_REQUEST_TIMEOUT_KEY, RestTimeout);
             return message;
         }
 
@@ -110,10 +114,8 @@ namespace Snowflake.Data.Core
 
         internal SFRestRequest() : base()
         {
-            RestTimeout = TimeSpan.FromSeconds(DEFAULT_REST_RETRY_SECONDS_TIMEOUT);
-
-            // default each http request timeout to 16 seconds
-            HttpTimeout = TimeSpan.FromSeconds(16);
+            RestTimeout = TimeSpan.FromSeconds(s_defaultRestRetrySecondsTimeout);
+            HttpTimeout = TimeSpan.FromSeconds(s_defaultHttpSecondsTimeout);
         }
 
         internal Object jsonBody { get; set; }
@@ -265,6 +267,9 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "PROVIDER", NullValueHandling = NullValueHandling.Ignore)]
         internal string Provider { get; set; }
 
+        [JsonProperty(PropertyName = "SPCS_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
+        internal string SpcsToken { get; set; }
+
         [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
         internal Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
 
@@ -278,7 +283,7 @@ namespace Snowflake.Data.Core
         }
     }
 
-    class LoginRequestClientEnv
+    internal class LoginRequestClientEnv
     {
         [JsonProperty(PropertyName = "APPLICATION")]
         internal String application { get; set; }
@@ -292,11 +297,38 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "NET_VERSION")]
         internal string netVersion { get; set; }
 
-        [JsonProperty(PropertyName = "INSECURE_MODE")]
-        internal string insecureMode { get; set; }
+        [JsonProperty(PropertyName = "CERT_REVOCATION_CHECK_MODE")]
+        internal string certRevocationCheckMode { get; set; }
 
         [JsonProperty(PropertyName = "OAUTH_TYPE")]
         internal string oauthType { get; set; }
+
+        [JsonProperty(PropertyName = "APPLICATION_PATH")]
+        internal string applicationPath { get; set; }
+
+        [JsonProperty(PropertyName = "CORE_VERSION", NullValueHandling = NullValueHandling.Ignore)]
+        internal string minicoreVersion { get; set; }
+
+        [JsonProperty(PropertyName = "CORE_FILE_NAME", NullValueHandling = NullValueHandling.Ignore)]
+        internal string minicoreFileName { get; set; }
+
+        [JsonProperty(PropertyName = "CORE_LOAD_ERROR", NullValueHandling = NullValueHandling.Ignore)]
+        internal string minicoreLoadError { get; set; }
+
+        [JsonProperty(PropertyName = "ISA", NullValueHandling = NullValueHandling.Ignore)]
+        internal string isa { get; set; }
+
+        [JsonProperty(PropertyName = "OS_DETAILS", NullValueHandling = NullValueHandling.Ignore)]
+        internal Dictionary<string, string> osDetails { get; set; }
+
+        [JsonProperty(PropertyName = "PLATFORM", NullValueHandling = NullValueHandling.Ignore)]
+        internal string[] platform { get; set; }
+
+        [JsonProperty(PropertyName = "LIBC_FAMILY", NullValueHandling = NullValueHandling.Ignore)]
+        internal string libcFamily { get; set; }
+
+        [JsonProperty(PropertyName = "LIBC_VERSION", NullValueHandling = NullValueHandling.Ignore)]
+        internal string libcVersion { get; set; }
 
         [JsonIgnore]
         internal string processName { get; set; }
@@ -306,18 +338,29 @@ namespace Snowflake.Data.Core
 
         public override string ToString()
         {
-            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, INSECURE_MODE: {4} }}",
-                application, osVersion, netRuntime, netVersion, insecureMode);
+            return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, CERT_REVOCATION_CHECK_MODE: {4}, APPLICATION_PATH: {5} }}",
+                application, osVersion, netRuntime, netVersion, certRevocationCheckMode, applicationPath);
         }
 
-        public LoginRequestClientEnv CopyUnchangingValues()
+        public LoginRequestClientEnv CloneForSession()
         {
             return new LoginRequestClientEnv()
             {
                 osVersion = osVersion,
                 netRuntime = netRuntime,
                 netVersion = netVersion,
-                processName = processName
+                processName = processName,
+                applicationPath = applicationPath,
+                isa = isa,
+                osDetails = osDetails,
+                platform = Tools.PlatformDetection.GetDetectedPlatforms(),
+                libcFamily = libcFamily,
+                libcVersion = libcVersion,
+                minicoreVersion = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.TryGetVersionSafe(),
+                minicoreFileName = SFEnvironment.MinicoreDisabled ? null : MiniCore.SfMiniCore.GetExpectedLibraryName(),
+                minicoreLoadError = SFEnvironment.MinicoreDisabled
+                    ? MiniCore.SfMiniCore.DISABLED_MESSAGE
+                    : MiniCore.SfMiniCore.GetLoadError()
             };
         }
     }

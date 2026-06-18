@@ -11,15 +11,15 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Core.CredentialManager;
+using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Telemetry;
 
 namespace Snowflake.Data.Core
 {
-    public class SFSession
+    internal class SFSession
     {
-        public const int SF_SESSION_EXPIRED_CODE = 390112;
-
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
 
         private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
@@ -54,8 +54,6 @@ namespace Snowflake.Data.Core
 
         internal TimeSpan connectionTimeout => _poolConfig.ConnectionTimeout;
 
-        internal bool InsecureMode;
-
         internal bool isHeartBeatEnabled;
 
         private HttpClient _HttpClient;
@@ -67,6 +65,9 @@ namespace Snowflake.Data.Core
         private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
         private long _startTime = 0;
+
+        private long _timeSinceLastRenew = 0;
+
         internal string ConnectionString { get; }
 
         internal SessionPropertiesContext PropertiesContext { get; }
@@ -87,6 +88,8 @@ namespace Snowflake.Data.Core
 
         internal bool _disableSamlUrlCheck;
 
+        private volatile bool _invalidatedForPooling;
+
         public bool GetPooling() => _poolConfig.PoolingEnabled;
 
         public void SetPooling(bool isEnabled)
@@ -97,6 +100,12 @@ namespace Snowflake.Data.Core
         internal String _queryTag;
 
         internal SecureString _mfaToken;
+
+        private bool _isClientTelemetryEnabled;
+
+        private bool _honorSessionTimezone = false;
+
+        private volatile TimeZoneInfo _cachedSessionTimezone;
 
         internal void ProcessLoginResponse(LoginResponse authnResponse)
         {
@@ -131,6 +140,8 @@ namespace Snowflake.Data.Core
                 }
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                _timeSinceLastRenew = _startTime;
+                SnowflakeTelemetryModule.Register(this);
             }
             else
             {
@@ -194,14 +205,15 @@ namespace Snowflake.Data.Core
             properties = SFSessionProperties.ParseConnectionString(ConnectionString, sessionContext);
             _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
             _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
+            _honorSessionTimezone = bool.Parse(properties[SFSessionProperty.HONORSESSIONTIMEZONE]);
             properties.TryGetValue(SFSessionProperty.USER, out _user);
+            _isClientTelemetryEnabled = !bool.TryParse(properties[SFSessionProperty.CLIENT_TELEMETRY_ENABLED], out var clientTelemetryFlag) || clientTelemetryFlag;
             ValidateApplicationName(properties);
             try
             {
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
                 ParameterMap = extractedProperties.ToParameterMap();
-                InsecureMode = extractedProperties.insecureMode;
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);
                 _poolConfig = extractedProperties.BuildConnectionPoolConfig();
@@ -321,6 +333,7 @@ namespace Snowflake.Data.Core
             if (!IsEstablished()) return;
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
+            SnowflakeTelemetryModule.Unregister(sessionId);
             var closeSessionRequest = PrepareCloseSessionRequest();
             PostCloseSession(closeSessionRequest, restRequester);
             sessionToken = null;
@@ -333,7 +346,11 @@ namespace Snowflake.Data.Core
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
             var closeSessionRequest = PrepareCloseSessionRequest();
-            Task.Run(() => PostCloseSession(closeSessionRequest, restRequester));
+            Task.Run(() =>
+            {
+                SnowflakeTelemetryModule.Unregister(sessionId);
+                PostCloseSession(closeSessionRequest, restRequester);
+            });
             sessionToken = null;
         }
 
@@ -343,7 +360,7 @@ namespace Snowflake.Data.Core
             if (!IsEstablished()) return;
             logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
             stopHeartBeatForThisSession();
-
+            await SnowflakeTelemetryModule.UnregisterAsync(sessionId, cancellationToken).ConfigureAwait(false);
             var closeSessionRequest = PrepareCloseSessionRequest();
 
             logger.Debug($"Closing session async");
@@ -407,8 +424,10 @@ namespace Snowflake.Data.Core
             }
             else
             {
+                _timeSinceLastRenew = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 sessionToken = response.data.sessionToken;
                 masterToken = response.data.masterToken;
+                SnowflakeTelemetryModule.Register(this);
             }
         }
 
@@ -431,6 +450,7 @@ namespace Snowflake.Data.Core
             {
                 sessionToken = response.data.sessionToken;
                 masterToken = response.data.masterToken;
+                SnowflakeTelemetryModule.Register(this);
             }
         }
 
@@ -498,6 +518,10 @@ namespace Snowflake.Data.Core
                 if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
                 {
                     ParameterMap[parameterName] = parameter.value;
+                    if (parameterName == SFSessionParameter.TIMEZONE)
+                    {
+                        _cachedSessionTimezone = null;
+                    }
                 }
             }
             if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
@@ -524,6 +548,11 @@ namespace Snowflake.Data.Core
                 _queryContextCacheSize = Int32.Parse(val);
                 _queryContextCache.SetCapacity(_queryContextCacheSize);
             }
+
+            if (ParameterMap.TryGetValue(SFSessionParameter.CLIENT_TELEMETRY_ENABLED, out var clientTelemetryEnabledObj) && bool.TryParse(clientTelemetryEnabledObj.ToString(), out var clientTelemetryEnabled))
+            {
+                _isClientTelemetryEnabled = clientTelemetryEnabled;
+            }
         }
 
         internal void ClearQueryContextCache()
@@ -549,6 +578,42 @@ namespace Snowflake.Data.Core
                 return null;
             }
             return _queryContextCache.GetQueryContextRequest();
+        }
+
+        internal TimeZoneInfo GetSessionTimezone()
+        {
+            if (!_honorSessionTimezone)
+            {
+                return TimeZoneInfo.Local;
+            }
+
+            var cached = _cachedSessionTimezone;
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            var resolved = ResolveSessionTimezone();
+            _cachedSessionTimezone = resolved;
+            return resolved;
+        }
+
+        private TimeZoneInfo ResolveSessionTimezone()
+        {
+            if (ParameterMap.TryGetValue(SFSessionParameter.TIMEZONE, out var value))
+            {
+                var timezoneString = value.ToString();
+                try
+                {
+                    return TimeZoneConverter.TZConvert.GetTimeZoneInfo(timezoneString);
+                }
+                catch (TimeZoneNotFoundException)
+                {
+                    logger.Warn($"Session timezone '{timezoneString}' not found, falling back to local time");
+                    return TimeZoneInfo.Local;
+                }
+            }
+            return TimeZoneInfo.Local;
         }
 
         internal void UpdateSessionProperties(QueryExecResponseData responseData)
@@ -660,7 +725,22 @@ namespace Snowflake.Data.Core
                         authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
                         RestTimeout = Timeout.InfiniteTimeSpan
                     };
-                    var response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
+
+                    NullDataResponse response = null;
+                    try
+                    {
+                        response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
+                    }
+                    catch (HttpRequestException ex)
+                    {
+                        logger.Error($"heartbeat HTTP request failed for session ID: {sessionId}.", ex);
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error($"heartbeat request failed for session ID: {sessionId}.", ex);
+                        return;
+                    }
 
                     logger.Debug("heartbeat response=" + response);
                     if (response.success)
@@ -669,7 +749,7 @@ namespace Snowflake.Data.Core
                     }
                     else
                     {
-                        if (response.code == SF_SESSION_EXPIRED_CODE)
+                        if (response.IsSessionExpired())
                         {
                             logger.Debug($"SFSession ::heartbeat Session ID: {sessionId} session token expired and retry heartbeat");
                             try
@@ -705,7 +785,7 @@ namespace Snowflake.Data.Core
         internal virtual bool IsExpired(TimeSpan timeout, long utcTimeInMillis)
         {
             var hasEverBeenOpened = !IsNotOpen();
-            return hasEverBeenOpened && TimeoutHelper.IsExpired(_startTime, utcTimeInMillis, timeout);
+            return hasEverBeenOpened && TimeoutHelper.IsExpired(_timeSinceLastRenew, utcTimeInMillis, timeout);
         }
 
         internal long GetStartTime() => _startTime;
@@ -713,6 +793,7 @@ namespace Snowflake.Data.Core
         internal void SetStartTime(long startTime)
         {
             _startTime = startTime;
+            _timeSinceLastRenew = _startTime;
         }
 
         internal void ReplaceAuthenticator(IAuthenticator authenticator)
@@ -721,5 +802,17 @@ namespace Snowflake.Data.Core
         }
 
         internal IAuthenticator GetAuthenticator() => authenticator;
+
+        internal void InvalidateForPooling()
+        {
+            if (_invalidatedForPooling)
+                return;
+            logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure or session being destroyed server-side.");
+            _invalidatedForPooling = true;
+        }
+
+        internal virtual bool IsInvalidatedForPooling() => _invalidatedForPooling;
+
+        internal virtual bool IsClientTelemetryEnabled() => !string.IsNullOrEmpty(sessionId) && _isClientTelemetryEnabled;
     }
 }

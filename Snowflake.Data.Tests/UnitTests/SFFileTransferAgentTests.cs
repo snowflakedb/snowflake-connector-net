@@ -4,7 +4,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.FileTransfer;
     using System.Collections.Generic;
@@ -13,9 +13,7 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.IO;
     using System.Text;
     using System;
-
-    [TestFixture]
-    class SFFileTransferAgentTest : SFBaseTest
+    public class SFFileTransferAgentTest : IDisposable
     {
         // Mock data for file metadata
         [ThreadStatic] private static string t_locationStage;
@@ -70,11 +68,20 @@ namespace Snowflake.Data.Tests.UnitTests
         static readonly string s_filePathWithoutSpaces = Path.Combine("C:\\Users\\Test\\", "folder_without_space", "*.*");
         static readonly string s_filePathWithSpaces = Path.Combine("C:\\Users\\Test\\", "folder with space", "*.*");
 
-        [SetUp]
-        public void BeforeEachTest()
+        public SFFileTransferAgentTest()
+        {
+            BeforeEachTest();
+        }
+
+        public void Dispose()
+        {
+            AfterEachTest();
+        }
+
+        private void BeforeEachTest()
         {
             // Base object's names on worker thread id
-            var threadSuffix = TestContext.CurrentContext.WorkerId?.Replace('#', '_');
+            var threadSuffix = Thread.CurrentThread.ManagedThreadId.ToString()?.Replace('#', '_');
 
             // Set values for thread variables
             t_realSourceFilePath = $"realSrcFilePath_{threadSuffix}.txt";
@@ -113,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     stageCredentials = null
                 },
                 statementTypeId = 0,
-                threshold = 209715200 // Server default threshold
+                threshold = 20971520 // Server default threshold
             };
 
             _cancellationToken = new CancellationToken();
@@ -121,8 +128,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _session = new SFSession(ConnectionStringMock, new SessionPropertiesContext());
         }
 
-        [TearDown]
-        public void AfterEachTest()
+        private void AfterEachTest()
         {
             // Delete stage directory recursively
             if (Directory.Exists(t_locationStage))
@@ -159,7 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests
             return result.GetObjectInternal((int)typeInfo).ToString();
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadUsingFilepath()
         {
             // Arrange
@@ -178,16 +184,16 @@ namespace Snowflake.Data.Tests.UnitTests
             result.Next();
 
             // Assert
-            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
             // Check the name of the source file and destination file are the same
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
             // Check the file size of the source file and destination file are the same
-            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
-            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
+            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
+            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestUploadAsyncUsingFilepath()
         {
             // Arrange
@@ -206,16 +212,16 @@ namespace Snowflake.Data.Tests.UnitTests
             result.Next();
 
             // Assert
-            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
             // Check the name of the source file and destination file are the same
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
             // Check the file size of the source file and destination file are the same
-            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
-            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
+            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
+            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadUsingMemoryStream()
         {
             // Arrange
@@ -239,16 +245,16 @@ namespace Snowflake.Data.Tests.UnitTests
             result.Next();
 
             // Assert
-            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
             // Check the name of the source file and destination file are the same
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
             // Check the file size of the source file and destination file are the same
-            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
-            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
+            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
+            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestUploadAsyncUsingMemoryStream()
         {
             // Arrange
@@ -272,16 +278,16 @@ namespace Snowflake.Data.Tests.UnitTests
             result.Next();
 
             // Assert
-            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
             // Check the name of the source file and destination file are the same
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
             // Check the file size of the source file and destination file are the same
-            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
-            Assert.AreEqual(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
+            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
+            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadWithGZIPCompression()
         {
             // Arrange
@@ -302,16 +308,16 @@ namespace Snowflake.Data.Tests.UnitTests
             result.Next();
 
             // Assert
-            Assert.AreEqual(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
             // Check the name of the destination file includes the gzip extension
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-            Assert.AreEqual(t_realSourceFilePath + ".gz", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Equal(t_realSourceFilePath + ".gz", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
             // Check the source file compression is none and the destination file compression is gzip
-            Assert.AreEqual("none", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-            Assert.AreEqual("gzip", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+            Assert.Equal("none", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+            Assert.Equal("gzip", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadWithWildcardInTheFilename()
         {
             // Arrange
@@ -352,16 +358,16 @@ namespace Snowflake.Data.Tests.UnitTests
                 result.Next();
 
                 // Assert the file is uploaded
-                Assert.AreEqual(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+                Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check the name of the source file and destination file are the same
-                Assert.IsTrue(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName).Contains(mockFileName));
-                Assert.IsTrue(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName).Contains(mockFileName));
+                Assert.Contains(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+                Assert.Contains(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
 
                 File.Delete($"{mockFileName}{index}.{extension}");
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadWithWildcardInTheRootDirectory()
         {
             // Arrange
@@ -402,16 +408,16 @@ namespace Snowflake.Data.Tests.UnitTests
                 result.Next();
 
                 // Assert the file is uploaded
-                Assert.AreEqual(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+                Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check the name of the source file and destination file are the same
-                Assert.AreEqual(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-                Assert.AreEqual(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+                Assert.Equal(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+                Assert.Equal(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
 
                 Directory.Delete($"{tempUploadRootDirectory}{i}", true);
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadWithWildcardInTheDirectoryPath()
         {
             // Arrange
@@ -452,16 +458,16 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 result.Next();
                 // Assert the file is uploaded
-                Assert.AreEqual(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+                Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
                 // Check the name of the source file and destination file are the same
-                Assert.AreEqual(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-                Assert.AreEqual(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+                Assert.Equal(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+                Assert.Equal(mockFileName, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
             }
 
             Directory.Delete(tempUploadRootDirectory, true);
         }
 
-        [Test]
+        [SFFact]
         public void TestUploadThrowsExceptionForMissingRootDirectoryWithWildcard()
         {
             // Arrange
@@ -501,9 +507,9 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
 
             // Assert
-            Assert.AreEqual(_responseData.queryId, ex.QueryId);
+            Assert.Equal(_responseData.queryId, ex.QueryId);
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
-            Assert.That(ex.Message, Does.Match($"No file found for: {tempUploadRootDirectory}\\*/{tempUploadSecondDirectory}\\*/{mockFileName}"));
+            Assert.Matches($"No file found for: {tempUploadRootDirectory}\\*/{tempUploadSecondDirectory}\\*/{mockFileName}", ex.Message);
 
             for (int i = 0; i < numberOfDirectories; i++)
             {
@@ -522,7 +528,7 @@ namespace Snowflake.Data.Tests.UnitTests
             File.WriteAllText(_location + t_realSourceFilePath, FileContent);
         }
 
-        [Test]
+        [SFFact]
         public void TestDownload()
         {
             // Arrange
@@ -541,13 +547,13 @@ namespace Snowflake.Data.Tests.UnitTests
             result.Next();
 
             // Assert
-            Assert.AreEqual(ResultStatus.DOWNLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Equal(ResultStatus.DOWNLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
             // Check the name of the source file and destination file are the same
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDownloadAsync()
         {
             // Arrange
@@ -566,13 +572,13 @@ namespace Snowflake.Data.Tests.UnitTests
             result.Next();
 
             // Assert
-            Assert.AreEqual(ResultStatus.DOWNLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Equal(ResultStatus.DOWNLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
             // Check the name of the source file and destination file are the same
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-            Assert.AreEqual(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
         }
 
-        [Test]
+        [SFFact]
         public void TestDownloadThrowsErrorFileNotFound()
         {
             // Arrange
@@ -596,15 +602,15 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
 
             // Assert
-            Assert.AreEqual(_responseData.queryId, ex.QueryId);
+            Assert.Equal(_responseData.queryId, ex.QueryId);
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
-            Assert.IsInstanceOf<AggregateException>(ex.InnerException);
+            Assert.IsType<AggregateException>(ex.InnerException);
             var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
-            Assert.IsInstanceOf<FileNotFoundException>(innerException);
-            Assert.That(innerException?.Message, Does.Match("Could not find file .*"));
+            Assert.IsType<FileNotFoundException>(innerException);
+            Assert.Matches("Could not find file .*", innerException?.Message);
         }
 
-        [Test]
+        [SFFact]
         public void TestDownloadThrowsErrorDirectoryNotFound()
         {
             // Arrange
@@ -628,42 +634,42 @@ namespace Snowflake.Data.Tests.UnitTests
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
 
             // Assert
-            Assert.AreEqual(_responseData.queryId, ex.QueryId);
+            Assert.Equal(_responseData.queryId, ex.QueryId);
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
-            Assert.IsInstanceOf<AggregateException>(ex.InnerException);
+            Assert.IsType<AggregateException>(ex.InnerException);
             var innerException = ((AggregateException)ex.InnerException)?.InnerExceptions[0];
-            Assert.IsInstanceOf<DirectoryNotFoundException>(innerException);
-            Assert.That(innerException?.Message, Does.Match("Could not find a part of the path .*"));
+            Assert.IsType<DirectoryNotFoundException>(innerException);
+            Assert.Matches("Could not find a part of the path .*", innerException?.Message);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetFilePathWithoutSpacesFromPutCommand()
         {
             TestGetFilePathFromPutCommand("PUT file://" + s_filePathWithoutSpaces + " @TestStage", s_filePathWithoutSpaces);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetFilePathWithSpacesFromPutCommand()
         {
             TestGetFilePathFromPutCommand("PUT file://" + s_filePathWithSpaces + "  @TestStage", s_filePathWithSpaces);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetFilePathWithoutSpacesAndWithSingleQuotesFromPutCommand()
         {
             TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithoutSpaces + "' @TestStage", s_filePathWithoutSpaces);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetFilePathWithSpacesAndWithSingleQuotesFromPutCommand()
         {
             TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithSpaces + "'  @TestStage", s_filePathWithSpaces);
         }
 
-        public void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
+        private void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
         {
             var actualFilePath = SFFileTransferAgent.getFilePathFromPutCommand(query);
-            Assert.AreEqual(expectedFilePath, actualFilePath);
+            Assert.Equal(expectedFilePath, actualFilePath);
         }
     }
 }

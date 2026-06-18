@@ -1,1 +1,1 @@
-FROM nexus.int.snowflakecomputing.com:8086/docker/client-dotnet-ubuntu204-net9-build:1
+FROM artifactory.ci1.us-west-2.aws-dev.app.snowflake.com/internal-production-docker-snowflake-virtual/docker/client-dotnet-ubuntu204-net9-build:1

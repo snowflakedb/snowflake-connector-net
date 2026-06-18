@@ -1,0 +1,22 @@
+{
+    "mappings": [
+        {
+            "name": "Query execution - error",
+            "priority": 1,
+            "request": {
+                "urlPathPattern": "/queries/v1/query-request",
+                "method": "POST"
+            },
+            "response": {
+                "status": 200,
+                "headers": { "Content-Type": "application/json" },
+                "jsonBody": {
+                    "data": { },
+                    "code": "002003",
+                    "message": "SQL compilation error: Object does not exist.",
+                    "success": false
+                }
+            }
+        }
+    ]
+}

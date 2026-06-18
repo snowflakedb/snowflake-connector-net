@@ -1,8 +1,8 @@
 name: Jira closure
 
 on:
-  issues:
-    types: [closed, deleted]
+    issues:
+        types: [closed, deleted]
 
 jobs:
   close-issue:

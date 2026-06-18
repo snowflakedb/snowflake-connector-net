@@ -1,25 +1,27 @@
+using System;
 using System.IO;
 using Mono.Unix;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
     public class DirectoryUnixInformationTest
     {
         private const long UserId = 5;
         private const long AnotherUserId = 6;
         static readonly string s_directoryFullName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
-        [Test]
-        [TestCase(FileAccessPermissions.UserWrite)]
-        [TestCase(FileAccessPermissions.UserRead)]
-        [TestCase(FileAccessPermissions.UserExecute)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute)]
-        public void TestSafeDirectory(FileAccessPermissions securePermissions)
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [InlineData(FileAccessPermissions.UserWrite, "User W")]
+        [InlineData(FileAccessPermissions.UserRead, "User R")]
+        [InlineData(FileAccessPermissions.UserExecute, "User X")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute, "User RWX")]
+        public void TestSafeDirectory(FileAccessPermissions securePermissions, string log)
         {
             // arrange
+            Console.WriteLine($@"Executing {nameof(TestSafeDirectory)} with {log}..");
             var dirInfo = new DirectoryUnixInformation(s_directoryFullName, true, securePermissions, UserId);
 
             // act
@@ -29,12 +31,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isSafe);
         }
 
-        [Test]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
-        public void TestUnsafePermissions(FileAccessPermissions unsecurePermissions)
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead, "User RW + Group R")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead, "User RWX + Other R")]
+        public void TestUnsafePermissions(FileAccessPermissions unsecurePermissions, string log)
         {
             // arrange
+            Console.WriteLine($@"Executing {nameof(TestUnsafePermissions)} with {log}..");
             var dirInfo = new DirectoryUnixInformation(s_directoryFullName, true, unsecurePermissions, UserId);
 
             // act
@@ -44,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isSafe);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestSafeExactlyDirectory()
         {
             // arrange
@@ -57,13 +60,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.True(isSafe);
         }
 
-        [Test]
-        [TestCase(FileAccessPermissions.UserRead)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
-        [TestCase(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
-        public void TestUnsafeExactlyPermissions(FileAccessPermissions unsecurePermissions)
+        [SFTheory(SkipCondition.SkipOnWindows)]
+        [InlineData(FileAccessPermissions.UserRead, "User R")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead, "User RWX + Group R")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead, "User RWX + Other R")]
+        public void TestUnsafeExactlyPermissions(FileAccessPermissions unsecurePermissions, string log)
         {
             // arrange
+            Console.WriteLine($@"Executing {nameof(TestUnsafePermissions)} with {log}..");
             var dirInfo = new DirectoryUnixInformation(s_directoryFullName, true, unsecurePermissions, UserId);
 
             // act
@@ -73,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Assert.False(isSafe);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestOwnedByOthers()
         {
             // arrange

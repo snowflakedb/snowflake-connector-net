@@ -1,15 +1,21 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Session
 {
-    [TestFixture]
+    [CollectionDefinition(nameof(WaitingQueueTestFixture), DisableParallelization = true)]
+    public sealed class WaitingQueueTestFixture { }
+
+    [Collection(nameof(WaitingQueueTestFixture))]
     public class WaitingQueueTest
     {
-        [Test]
+        private static readonly int s_timeMeasurementLeftToleranceInMs = 20; // DateTime precision is ~10ms, safety coefficient = x2
+
+        [SFFact]
         public void TestWaitForTheResourceUntilTimeout()
         {
             // arrange
@@ -18,15 +24,15 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act
             watch.Start();
-            var result = queue.Wait(50, CancellationToken.None);
+            var result = queue.Wait(500, CancellationToken.None);
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(45, 1500)); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
+            Assert.False(result);
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
-        [Test]
+        [SFFact]
         public void TestWaitForTheResourceUntilCancellation()
         {
             // arrange
@@ -40,20 +46,19 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(45, 1500)); // sometimes Wait takes a bit smaller amount of time than it should. Thus we expect it to be greater than 45, not just 50.
+            Assert.False(result);
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
-        [Test]
-        [Retry(2)]
+        [SFFact]
         public void TestWaitUntilResourceAvailable()
         {
             // arrange
             var queue = new WaitingQueue();
             var watch = new Stopwatch();
-            Task.Run(() =>
+            Task.Run(async () =>
             {
-                Thread.Sleep(50);
+                await Task.Delay(50).ConfigureAwait(false);
                 queue.OnResourceIncrease();
             });
 
@@ -63,11 +68,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsTrue(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50, 1500));
+            Assert.True(result);
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
 
-        [Test]
+        [SFFact]
         public void TestWaitingEnabled()
         {
             // arrange
@@ -77,10 +82,10 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isWaitingEnabled = queue.IsWaitingEnabled();
 
             // assert
-            Assert.IsTrue(isWaitingEnabled);
+            Assert.True(isWaitingEnabled);
         }
 
-        [Test]
+        [SFFact]
         public void TestNoOneIsWaiting()
         {
             // arrange
@@ -90,40 +95,39 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var isAnyoneWaiting = queue.IsAnyoneWaiting();
 
             // assert
-            Assert.IsFalse(isAnyoneWaiting);
+            Assert.False(isAnyoneWaiting);
         }
 
-        [Test]
-        public void TestSomeoneIsWaiting()
+        [SFFact]
+        public async Task TestSomeoneIsWaiting()
         {
             // arrange
             var queue = new WaitingQueue();
             var syncThreadsSemaphore = new SemaphoreSlim(0, 1);
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
                 syncThreadsSemaphore.Release();
-                return queue.Wait(1000, CancellationToken.None);
+                return queue.Wait(10000, CancellationToken.None);
             });
-            syncThreadsSemaphore.Wait(10000); // make sure scheduled thread execution has started
-            Thread.Sleep(50);
+            await syncThreadsSemaphore.WaitAsync(10000); // make sure scheduled thread execution has started
+            await Task.Delay(50).ConfigureAwait(false);
 
             // act
             var isAnyoneWaiting = queue.IsAnyoneWaiting();
 
             // assert
-            Assert.IsTrue(isAnyoneWaiting);
+            Assert.True(isAnyoneWaiting);
         }
 
-        [Test]
-        [Retry(2)]
+        [SFFact]
         public void TestReturnUnsuccessfulOnResetWhileWaiting()
         {
             // arrange
             var queue = new WaitingQueue();
             var watch = new Stopwatch();
-            Task.Run(() =>
+            Task.Run(async () =>
             {
-                Thread.Sleep(50);
+                await Task.Delay(50);
                 queue.Reset();
             });
 
@@ -133,8 +137,8 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             watch.Stop();
 
             // assert
-            Assert.IsFalse(result);
-            Assert.That(watch.ElapsedMilliseconds, Is.InRange(50, 1500));
+            Assert.False(result);
+            Assert.InRange(watch.ElapsedMilliseconds, 50 - s_timeMeasurementLeftToleranceInMs, 1500);
         }
     }
 }

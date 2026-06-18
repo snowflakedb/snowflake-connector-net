@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using NUnit.Framework;
+using Xunit;
 using System.IO;
 using System.Net;
 using Snowflake.Data.Core;
@@ -10,7 +10,6 @@ using System.Net.Http;
 using System.Security.Authentication;
 
 namespace Snowflake.Data.AuthenticationTests
-
 {
     static class AuthConnectionString
     {
@@ -19,7 +18,6 @@ namespace Snowflake.Data.AuthenticationTests
         public static readonly string SsoPassword = Environment.GetEnvironmentVariable("SNOWFLAKE_TEST_OKTA_PASS");
         public static readonly string SnowflakeUser = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_SNOWFLAKE_USER");
         public static readonly string SnowflakeRole = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_INTERNAL_OAUTH_SNOWFLAKE_ROLE");
-
 
         private static SFSessionProperties GetBaseConnectionParameters()
         {
@@ -33,7 +31,8 @@ namespace Snowflake.Data.AuthenticationTests
                 {SFSessionProperty.SCHEMA, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_SCHEMA") },
                 {SFSessionProperty.WAREHOUSE, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_WAREHOUSE") },
                 {SFSessionProperty.MINPOOLSIZE, "0"},
-                {SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, "false"}
+                {SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL, "false"},
+                {SFSessionProperty.CERTREVOCATIONCHECKMODE, "enabled"}
             };
             return properties;
         }
@@ -127,6 +126,16 @@ namespace Snowflake.Data.AuthenticationTests
             return properties;
         }
 
+        public static SFSessionProperties GetMfaConnectionString()
+        {
+            var properties = GetBaseConnectionParameters();
+            properties.Add(SFSessionProperty.AUTHENTICATOR, "USERNAME_PASSWORD_MFA");
+            properties.Add(SFSessionProperty.USER, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_MFA_USER"));
+            properties.Add(SFSessionProperty.PASSWORD, Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_MFA_PASSWORD"));
+
+            return properties;
+        }
+
         public static SFSessionProperties GetKeyPairFromFileContentParameters(string privateKey)
         {
 
@@ -170,9 +179,9 @@ namespace Snowflake.Data.AuthenticationTests
         public static string GetPrivateKeyContentForKeypairAuth(string fileLocation)
         {
             string filePath = Environment.GetEnvironmentVariable(fileLocation);
-            Assert.IsNotNull(filePath);
+            Assert.NotNull(filePath);
             string pemKey = File.ReadAllText(Path.Combine("..", "..", "..", "..", filePath));
-            Assert.IsNotNull(pemKey, $"Failed to read file: {filePath}");
+            Assert.NotNull(pemKey);
             return pemKey;
 
         }
@@ -180,7 +189,7 @@ namespace Snowflake.Data.AuthenticationTests
         public static string GetPrivateKeyPathForKeypairAuth(string relativeFileLocationEnvVariable)
         {
             string filePath = Environment.GetEnvironmentVariable(relativeFileLocationEnvVariable);
-            Assert.IsNotNull(filePath);
+            Assert.NotNull(filePath);
             return Path.Combine("..", "..", "..", "..", filePath);
         }
 
@@ -191,7 +200,7 @@ namespace Snowflake.Data.AuthenticationTests
                 using (var client = new HttpClient(new HttpClientHandler
                 {
                     CheckCertificateRevocationList = true,
-                    SslProtocols = SslProtocols.Tls12,
+                    SslProtocols = SslProtocols.Tls12 | SslProtocolsExtensions.Tls13,
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                     UseProxy = false,
                     UseCookies = false
@@ -218,7 +227,7 @@ namespace Snowflake.Data.AuthenticationTests
 
                     var fullResponse = response.Content.ReadAsStringAsync().Result;
                     var responseObject = JObject.Parse(fullResponse);
-                    Assert.IsNotNull(responseObject["access_token"]);
+                    Assert.NotNull(responseObject["access_token"]);
                     return responseObject["access_token"].ToString();
                 }
             }
