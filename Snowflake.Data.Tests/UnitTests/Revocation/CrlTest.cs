@@ -158,6 +158,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.True(isRevoked);
         }
 
+#pragma warning disable xUnit1026
         [SFTheory]
         [InlineData(true)]
         [InlineData(false)]
@@ -215,6 +216,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.True(isRevoked, "Certificate should be found in the revocation list");
 #endif
         }
+#pragma warning restore xUnit1026
 
 #if NET8_0_OR_GREATER
         private static X509Certificate2 BuildSelfSignedCertificate(int runNo)

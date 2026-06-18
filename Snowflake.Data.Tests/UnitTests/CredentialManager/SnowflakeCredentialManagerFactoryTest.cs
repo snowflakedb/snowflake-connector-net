@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
 {
     public class SnowflakeCredentialManagerFactoryTest : IDisposable
     {
-        public void TearDown()
+        private void TearDown()
         {
             SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
         }

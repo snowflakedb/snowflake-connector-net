@@ -7,6 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Amazon.Runtime;
+using Newtonsoft.Json;
+using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Log;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
@@ -221,8 +223,8 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             {
                 request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
-            request.Properties.Add(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, s_defaultTimeout);
-            request.Properties.Add(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, s_defaultTimeout);
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, s_defaultTimeout);
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, s_defaultTimeout);
 
             return request;
         }

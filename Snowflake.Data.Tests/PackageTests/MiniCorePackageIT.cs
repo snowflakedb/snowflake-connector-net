@@ -32,7 +32,8 @@ namespace Snowflake.Data.Tests.PackageTests
         private string _tempDir;
         private string _artifactsDir;
         private string _repoRoot;
-        public void Setup()
+
+        private void Setup()
         {
             _repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../"));
             _artifactsDir = Path.Combine(_repoRoot, "artifacts");
@@ -41,7 +42,8 @@ namespace Snowflake.Data.Tests.PackageTests
             Directory.CreateDirectory(_artifactsDir);
             Directory.CreateDirectory(_tempDir);
         }
-        public void TearDown()
+
+        private void TearDown()
         {
             try { Directory.Delete(_tempDir, true); } catch { }
         }

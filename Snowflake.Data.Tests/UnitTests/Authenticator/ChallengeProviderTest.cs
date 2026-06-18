@@ -18,7 +18,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.Equal(32, state.Length);
-            Assert.True(_onlyDigitsOrNumbers.IsMatch(state));
+            Assert.Matches(_onlyDigitsOrNumbers, state);
         }
 
         [SFFact]
@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             Assert.InRange(codeVerifier.Length, 43, 128);
-            Assert.True(_onlyDigitsOrNumbers.IsMatch(codeVerifier));
+            Assert.Matches(_onlyDigitsOrNumbers, codeVerifier);
         }
     }
 }

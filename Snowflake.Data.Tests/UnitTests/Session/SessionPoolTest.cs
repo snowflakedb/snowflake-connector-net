@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var poolIdentification = pool.PoolIdentificationBasedOnInternalId;
 
             // assert
-            Assert.True(poolIdRegex.IsMatch(poolIdentification));
+            Assert.Matches(poolIdRegex, poolIdentification);
         }
 
         [SFFact]

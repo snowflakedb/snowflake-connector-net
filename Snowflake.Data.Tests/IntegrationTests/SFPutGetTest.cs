@@ -830,7 +830,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        public async TaskOrValueTask DisposeAsync()
+        private async TaskOrValueTask DisposeAsync()
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
@@ -857,7 +857,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        public async TaskOrValueTask InitializeAsync()
+        private async TaskOrValueTask InitializeAsync()
         {
             // Base object's names on on worker thread id
             var suffix = Guid.NewGuid().ToString("N");

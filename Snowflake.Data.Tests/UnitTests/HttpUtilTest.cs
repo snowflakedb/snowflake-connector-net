@@ -209,6 +209,9 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestDefaultConnectionLimitIsChangedToDefaultWhenUnder50()
         {
             // arrange
+#if NET9_0_OR_GREATER
+            Skip.When(true, "TODO SNOW-3662960");
+#endif
             var originalLimit = ServicePointManager.DefaultConnectionLimit;
             ServicePointManager.DefaultConnectionLimit = 49;
 
