@@ -43,9 +43,11 @@ namespace Snowflake.Data.Core.Tools
                 ThrowSecurityException("Attempting to read or write a file not owned by the effective user of the current process");
         }
 
-        internal void ThrowSecurityException(string errorMessage)
+        internal void ThrowSecurityException(string errorMessage, bool shouldLog = true)
         {
-            s_logger.Error(errorMessage);
+            if (shouldLog) // it's possible we want to throw due to logger not having proper permissions
+                s_logger.Error(errorMessage);
+
             throw new SecurityException(errorMessage);
         }
     }

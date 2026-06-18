@@ -1,13 +1,13 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using System;
     using Snowflake.Data.Core;
-
-    [TestFixture]
-    class SFUriUpdaterTest
+    public class SFUriUpdaterTest
     {
-        [Test]
+        [SFFact]
         public void TestRetryCount()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
@@ -18,11 +18,11 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 Uri newUri = updater.Update();
 
-                Assert.IsTrue(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_COUNT + "=" + retryCount));
+                Assert.Contains(RestParams.SF_QUERY_RETRY_COUNT + "=" + retryCount, newUri.Query);
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestRetryReasonEnabled()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
@@ -31,10 +31,10 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Uri newUri = updater.Update(429);
 
-            Assert.IsTrue(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_REASON + "=" + 429));
+            Assert.Contains(RestParams.SF_QUERY_RETRY_REASON + "=" + 429, newUri.Query);
         }
 
-        [Test]
+        [SFFact]
         public void TestRetryReasonDisabled()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
@@ -43,10 +43,10 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Uri newUri = updater.Update(429);
 
-            Assert.IsFalse(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_REASON));
+            Assert.DoesNotContain(RestParams.SF_QUERY_RETRY_REASON, newUri.Query);
         }
 
-        [Test]
+        [SFFact]
         /// This uri with query path other than query request should not have a retry counter
         public void TestRetryCountNoneQueryPath()
         {
@@ -56,10 +56,10 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Uri newUri = updater.Update();
 
-            Assert.IsFalse(newUri.Query.Contains(RestParams.SF_QUERY_RETRY_COUNT));
+            Assert.DoesNotContain(RestParams.SF_QUERY_RETRY_COUNT, newUri.Query);
         }
 
-        [Test]
+        [SFFact]
         public void TestRequestGUIDUpdate()
         {
             Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_LOGIN_PATH);
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // A uri with no request_guid at the begining should not change with the updater.
             Uri newUri = updater.Update();
 
-            Assert.AreEqual(newUri.ToString(), uri.ToString());
+            Assert.Equal(newUri.ToString(), uri.ToString());
 
             // A uri with request_guid should update that param
             string initialGuid = Guid.NewGuid().ToString();
@@ -78,9 +78,9 @@ namespace Snowflake.Data.Tests.UnitTests
             updater = new HttpUtil.UriUpdater(uri);
             newUri = updater.Update();
 
-            Assert.IsTrue(newUri.Query.Contains(RestParams.SF_QUERY_REQUEST_GUID));
-            Assert.IsFalse(newUri.Query.Contains(initialGuid));
-            Assert.AreEqual(newUri.ToString().Length, uri.ToString().Length);
+            Assert.Contains(RestParams.SF_QUERY_REQUEST_GUID, newUri.Query);
+            Assert.DoesNotContain(initialGuid, newUri.Query);
+            Assert.Equal(newUri.ToString().Length, uri.ToString().Length);
 
         }
     }

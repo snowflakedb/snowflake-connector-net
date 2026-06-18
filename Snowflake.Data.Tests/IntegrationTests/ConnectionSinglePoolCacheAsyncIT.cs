@@ -3,7 +3,8 @@ using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Moq;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Mock;
@@ -11,33 +12,30 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    [TestFixture]
-    [NonParallelizable]
-    public class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync
+    public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposable
     {
-        private readonly PoolConfig _previousPoolConfig = new PoolConfig();
+        private readonly SFBaseTestAsyncFixture _fixture;
 
-        [SetUp]
-        public new void BeforeTest()
+        public ConnectionSinglePoolCacheAsyncIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
+            _fixture = fixture;
+            ConnectionManagerTestsFacade.RegisterDedicatedContext(this, ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ForceConnectionPoolVersion(ConnectionPoolType.SingleConnectionCache);
             SnowflakeDbConnectionPool.ClearAllPools();
         }
 
-        [TearDown]
-        public new void AfterTest()
+        public void Dispose()
         {
-            _previousPoolConfig.Reset();
+            ConnectionManagerTestsFacade.UnregisterDedicatedContext(this);
         }
 
-
-        [Test]
+        [SFFact]
         public async Task TestPutConnectionToPoolOnCloseAsync()
         {
             // arrange
-            using (var conn = new SnowflakeDbConnection(ConnectionString))
+            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 await conn.OpenAsync(connectionCancelToken.Token).ConfigureAwait(false);
 
@@ -45,19 +43,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await conn.CloseAsync(connectionCancelToken.Token).ConfigureAwait(false);
 
                 // assert
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
             }
         }
 
-        [Test]
+        [SFFact]
         public async Task TestDoNotPutInvalidConnectionToPoolAsync()
         {
             // arrange
             var invalidConnectionString = ";connection_timeout=0";
             using (var conn = new SnowflakeDbConnection(invalidConnectionString))
             {
-                Assert.AreEqual(conn.State, ConnectionState.Closed);
+                Assert.Equal(ConnectionState.Closed, conn.State);
                 CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
                 try
                 {
@@ -70,18 +68,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await conn.CloseAsync(connectionCancelToken.Token).ConfigureAwait(false);
 
                 // assert
-                Assert.AreEqual(ConnectionState.Closed, conn.State);
-                Assert.AreEqual(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+                Assert.Equal(ConnectionState.Closed, conn.State);
+                Assert.Equal(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
             }
         }
 
-        [Test]
-        public void TestConnectionPoolWithInvalidOpenAsync()
+        [SFFact]
+        public async Task TestConnectionPoolWithInvalidOpenAsync()
         {
             SnowflakeDbConnectionPool.SetMaxPoolSize(10);
             // make the connection string unique so it won't pick up connection
             // pooled by other test cases.
-            string connStr = ConnectionString + "application=conn_pool_test_invalid_openasync";
+            string connStr = _fixture.ConnectionString + "application=conn_pool_test_invalid_openasync";
             using (var connection = new SnowflakeDbConnection())
             {
                 connection.ConnectionString = connStr;
@@ -103,9 +101,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 try
                 {
-                    using (var reader = command.ExecuteReader())
+                    using (var reader = await command.ExecuteReaderAsync())
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync())
                         {
                             for (int i = 0; i < reader.FieldCount; i++)
                             {
@@ -123,29 +121,279 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
         }
 
-        [Test(Description = "test connection pooling with concurrent connection using async calls")]
-        public void TestConcurrentConnectionPoolingAsync()
+        [SFFact(DisplayName = "test connection pooling with concurrent connection using async calls")]
+        public async Task TestConcurrentConnectionPoolingAsync()
         {
             // add test case name in connection string to make in unique for each test case
-            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
+            string connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
             SnowflakeDbConnectionPool.SetMaxPoolSize(3);
             SnowflakeDbConnectionPool.SetTimeout(1); // set short pooling timeout to cover the case that connection expired
-            ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3);
+            await ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3);
             SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
-        [Test(Description = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
-        public void TestConcurrentConnectionPoolingDisposeAsync()
+        [SFFact(DisplayName = "test connection pooling with concurrent connection and using async calls no close call for connection. Connection is closed when Dispose() is called by framework.")]
+        public async Task TestConcurrentConnectionPoolingDisposeAsync()
         {
             // add test case name in connection string to make in unique for each test case
-            string connStr = ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync";
+            string connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync";
             SnowflakeDbConnectionPool.SetMaxPoolSize(3);
             SnowflakeDbConnectionPool.SetTimeout(1); // set short pooling timeout to cover the case that connection expired
-            ConcurrentPoolingAsyncHelper(connStr, false, 5, 5, 3);
+            await ConcurrentPoolingAsyncHelper(connStr, false, 5, 5, 3);
             SnowflakeDbConnectionPool.SetTimeout(3600);
         }
 
-        public static void ConcurrentPoolingAsyncHelper(string connectionString, bool closeConnection, int tasksCount, int connectionsInTask, int abandonedConnectionsCount)
+        [SFFact]
+        public async Task TestBasicConnectionPool()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(1);
+
+            var conn1 = new SnowflakeDbConnection(_fixture.ConnectionString);
+            await conn1.OpenAsync(CancellationToken.None);
+            Assert.Equal(ConnectionState.Open, conn1.State);
+            await conn1.CloseAsync(CancellationToken.None);
+
+            Assert.Equal(ConnectionState.Closed, conn1.State);
+            Assert.Equal(1, SnowflakeDbConnectionPool.GetPool(_fixture.ConnectionString).GetCurrentPoolSize());
+        }
+
+        [SFFact]
+        public async Task TestPoolContainsClosedConnections() // old name: TestConnectionPool
+        {
+            var conn1 = new SnowflakeDbConnection(_fixture.ConnectionString);
+            await conn1.OpenAsync(CancellationToken.None);
+            Assert.Equal(ConnectionState.Open, conn1.State);
+            await conn1.CloseAsync(CancellationToken.None);
+            Assert.Equal(1, SnowflakeDbConnectionPool.GetPool(_fixture.ConnectionString).GetCurrentPoolSize());
+
+            var conn2 = new SnowflakeDbConnection();
+            conn2.ConnectionString = _fixture.ConnectionString;
+            await conn2.OpenAsync(CancellationToken.None);
+            Assert.Equal(ConnectionState.Open, conn2.State);
+            Assert.Equal(0, SnowflakeDbConnectionPool.GetPool(_fixture.ConnectionString).GetCurrentPoolSize());
+
+            await conn2.CloseAsync(CancellationToken.None);
+            Assert.Equal(1, SnowflakeDbConnectionPool.GetPool(_fixture.ConnectionString).GetCurrentPoolSize());
+            Assert.Equal(ConnectionState.Closed, conn1.State);
+            Assert.Equal(ConnectionState.Closed, conn2.State);
+        }
+
+        [SFFact]
+        public async Task TestPoolContainsAtMostMaxPoolSizeConnections() // old name: TestConnectionPoolFull
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = _fixture.ConnectionString;
+            await conn1.OpenAsync(CancellationToken.None);
+            Assert.Equal(ConnectionState.Open, conn1.State);
+
+            var conn2 = new SnowflakeDbConnection();
+            conn2.ConnectionString = _fixture.ConnectionString + " retryCount=1";
+            await conn2.OpenAsync(CancellationToken.None);
+            Assert.Equal(ConnectionState.Open, conn2.State);
+            Assert.Equal(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            await conn1.CloseAsync(CancellationToken.None);
+            await conn2.CloseAsync(CancellationToken.None);
+            Assert.Equal(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            var conn3 = new SnowflakeDbConnection();
+            conn3.ConnectionString = _fixture.ConnectionString + "  retryCount=2";
+            await conn3.OpenAsync(CancellationToken.None);
+            Assert.Equal(ConnectionState.Open, conn3.State);
+
+            var conn4 = new SnowflakeDbConnection();
+            conn4.ConnectionString = _fixture.ConnectionString + "  retryCount=3";
+            await conn4.OpenAsync(CancellationToken.None);
+            Assert.Equal(ConnectionState.Open, conn4.State);
+
+            await conn3.CloseAsync(CancellationToken.None);
+            Assert.Equal(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            await conn4.CloseAsync(CancellationToken.None);
+            Assert.Equal(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+
+            Assert.Equal(ConnectionState.Closed, conn1.State);
+            Assert.Equal(ConnectionState.Closed, conn2.State);
+            Assert.Equal(ConnectionState.Closed, conn3.State);
+            Assert.Equal(ConnectionState.Closed, conn4.State);
+            SnowflakeDbConnectionPool.ClearAllPools();
+        }
+
+        [SFFact]
+        public async Task TestConnectionPoolDisableFromPoolManagerLevel()
+        {
+            // arrange
+            SnowflakeDbConnectionPool.SetPooling(false);
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = _fixture.ConnectionString;
+
+            // act
+            await conn1.OpenAsync(CancellationToken.None);
+
+            // assert
+            Assert.Equal(ConnectionState.Open, conn1.State);
+            Assert.Equal(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+
+            // act
+            await conn1.CloseAsync(CancellationToken.None);
+
+            // assert
+            Assert.Equal(ConnectionState.Closed, conn1.State);
+            Assert.Equal(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+        }
+
+        [SFFact]
+        public async Task TestConnectionPoolDisable()
+        {
+            // arrange
+            var pool = SnowflakeDbConnectionPool.GetPool(_fixture.ConnectionString);
+            SnowflakeDbConnectionPool.SetPooling(false);
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = _fixture.ConnectionString;
+
+            // act
+            await conn1.OpenAsync(CancellationToken.None);
+
+            // assert
+            Assert.Equal(ConnectionState.Open, conn1.State);
+            Assert.Equal(0, pool.GetCurrentPoolSize());
+
+            // act
+            await conn1.CloseAsync(CancellationToken.None);
+
+            // assert
+            Assert.Equal(ConnectionState.Closed, conn1.State);
+            Assert.Equal(0, pool.GetCurrentPoolSize());
+        }
+
+        [SFFact]
+        public async Task TestConnectionPoolClean()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = _fixture.ConnectionString;
+            await conn1.OpenAsync(CancellationToken.None);
+            Assert.Equal(ConnectionState.Open, conn1.State);
+
+            var conn2 = new SnowflakeDbConnection();
+            conn2.ConnectionString = _fixture.ConnectionString + " retryCount=1";
+            await conn2.OpenAsync(CancellationToken.None);
+            Assert.Equal(ConnectionState.Open, conn2.State);
+
+            var conn3 = new SnowflakeDbConnection();
+            conn3.ConnectionString = _fixture.ConnectionString + "  retryCount=2";
+            await conn3.OpenAsync(CancellationToken.None);
+            Assert.Equal(ConnectionState.Open, conn3.State);
+
+            await conn1.CloseAsync(CancellationToken.None);
+            await conn2.CloseAsync(CancellationToken.None);
+            Assert.Equal(2, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            SnowflakeDbConnectionPool.ClearAllPools();
+            Assert.Equal(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            await conn3.CloseAsync(CancellationToken.None);
+            Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+
+            Assert.Equal(ConnectionState.Closed, conn1.State);
+            Assert.Equal(ConnectionState.Closed, conn2.State);
+            Assert.Equal(ConnectionState.Closed, conn3.State);
+        }
+
+        [SFFact]
+        public async Task TestConnectionPoolExpirationWorks()
+        {
+            SnowflakeDbConnectionPool.SetMaxPoolSize(2);
+            SnowflakeDbConnectionPool.SetTimeout(10);
+
+            var conn1 = new SnowflakeDbConnection();
+            conn1.ConnectionString = _fixture.ConnectionString;
+
+            await conn1.OpenAsync(CancellationToken.None);
+            await conn1.CloseAsync(CancellationToken.None);
+            SnowflakeDbConnectionPool.SetTimeout(0);
+
+            var conn2 = new SnowflakeDbConnection();
+            conn2.ConnectionString = _fixture.ConnectionString;
+            await conn2.OpenAsync(CancellationToken.None);
+            await conn2.CloseAsync(CancellationToken.None);
+
+            var conn3 = new SnowflakeDbConnection();
+            conn3.ConnectionString = _fixture.ConnectionString;
+            await conn3.OpenAsync(CancellationToken.None);
+            await conn3.CloseAsync(CancellationToken.None);
+
+            // The pooling timeout should apply to all connections being pooled,
+            // not just the connections created after the new setting,
+            // so expected result should be 0
+            Assert.Equal(0, SnowflakeDbConnectionPool.GetPool(_fixture.ConnectionString).GetCurrentPoolSize());
+        }
+
+        [SFFact]
+        public async Task TestPreventConnectionFromReturningToPool()
+        {
+            // arrange
+            var connection = new SnowflakeDbConnection(_fixture.ConnectionString);
+            await connection.OpenAsync(CancellationToken.None);
+            var pool = SnowflakeDbConnectionPool.GetPool(_fixture.ConnectionString);
+            Assert.Equal(0, pool.GetCurrentPoolSize());
+
+            // act
+            connection.PreventPooling();
+            await connection.CloseAsync(CancellationToken.None);
+
+            // assert
+            Assert.Equal(0, pool.GetCurrentPoolSize());
+        }
+
+        [SFFact]
+        public async Task TestReleaseConnectionWhenRollbackFails()
+        {
+            // arrange
+            SnowflakeDbConnectionPool.SetMaxPoolSize(10);
+            var commandThrowingExceptionOnlyForRollback = MockHelper.CommandThrowingExceptionOnlyForRollback();
+            var mockDbProviderFactory = new Mock<DbProviderFactory>();
+            mockDbProviderFactory.Setup(p => p.CreateCommand()).Returns(commandThrowingExceptionOnlyForRollback.Object);
+            Assert.Equal(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+            var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object);
+            connection.ConnectionString = _fixture.ConnectionString;
+            await connection.OpenAsync(CancellationToken.None);
+            connection.BeginTransaction();
+            Assert.True(connection.HasActiveExplicitTransaction());
+            // no Rollback or Commit; during internal Rollback while closing a connection a mocked exception will be thrown
+
+            // act
+            await connection.CloseAsync(CancellationToken.None);
+
+            // assert
+            Assert.Equal(0, SnowflakeDbConnectionPool.GetCurrentPoolSize());
+        }
+
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
+        public async Task TestCloseSessionAfterTimeout()
+        {
+            // arrange
+            const int SessionTimeoutSeconds = 1;
+            const int TimeForBackgroundSessionCloseMillis = 3000;
+            SnowflakeDbConnectionPool.SetTimeout(SessionTimeoutSeconds);
+            var conn1 = new SnowflakeDbConnection(_fixture.ConnectionString);
+            await conn1.OpenAsync(CancellationToken.None);
+            var session = conn1.SfSession;
+            await conn1.CloseAsync(CancellationToken.None);
+            Assert.True(session.IsEstablished());
+            await Task.Delay(SessionTimeoutSeconds * 1000).ConfigureAwait(false); // wait until the session is expired
+            var conn2 = new SnowflakeDbConnection(_fixture.ConnectionString);
+
+            // act
+            await conn2.OpenAsync(CancellationToken.None); // it gets a session from the caching pool firstly closing session of conn1 in background
+
+            await Awaiter.WaitUntilConditionOrTimeout(() => !session.IsEstablished(), TimeSpan.FromMilliseconds(TimeForBackgroundSessionCloseMillis)).ConfigureAwait(false);
+
+            // assert
+            Assert.False(session.IsEstablished());
+
+            // cleanup
+            await conn2.CloseAsync(CancellationToken.None);
+        }
+
+        internal static Task ConcurrentPoolingAsyncHelper(string connectionString, bool closeConnection, int tasksCount, int connectionsInTask, int abandonedConnectionsCount)
         {
             var tasks = new Task[tasksCount + 1];
             for (int i = 0; i < tasksCount; i++)
@@ -155,7 +403,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // cover the case of invalid sessions to ensure that won't
             // break connection pooling
             tasks[tasksCount] = InvalidConnectionTaskAsync(connectionString, abandonedConnectionsCount);
-            Task.WaitAll(tasks);
+            return Task.WhenAll(tasks);
         }
 
         // task to execute query with new connection in a loop
@@ -165,7 +413,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection(connectionString))
                 {
-                    await conn.OpenAsync().ConfigureAwait(false);
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                     using (DbCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = "select 1, 2, 3";
@@ -206,7 +454,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // intentionally not using await so the connection
                     // will be disposed with invalid underlying session
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                    conn.OpenAsync();
+                    conn.OpenAsync(CancellationToken.None);
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 }
 
@@ -215,6 +463,5 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await Task.Delay(100).ConfigureAwait(false);
             }
         }
-
     }
 }

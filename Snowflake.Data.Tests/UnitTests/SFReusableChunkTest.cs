@@ -1,104 +1,103 @@
 using System;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using System.Data;
     using System.IO;
     using System.Text;
     using Snowflake.Data.Core;
     using Snowflake.Data.Client;
     using System.Threading.Tasks;
-
-    [TestFixture]
-    class SFReusableChunkTest
+    public class SFReusableChunkTest
     {
-        [Test]
+        [SFFact]
         public void TestExtractCellWithRowParameterReadsAllRows()
         {
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
             var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
 #pragma warning disable CS0618 // Type or member is obsolete
-            Assert.AreEqual("1", chunk.ExtractCell(0, 0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
-            Assert.AreEqual("abcde", chunk.ExtractCell(0, 2).SafeToString());
+            Assert.Equal("1", chunk.ExtractCell(0, 0).SafeToString());
+            Assert.Equal("1.234", chunk.ExtractCell(0, 1).SafeToString());
+            Assert.Equal("abcde", chunk.ExtractCell(0, 2).SafeToString());
 
-            Assert.AreEqual("2", chunk.ExtractCell(1, 0).SafeToString());
-            Assert.AreEqual("5.678", chunk.ExtractCell(1, 1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(1, 2).SafeToString());
+            Assert.Equal("2", chunk.ExtractCell(1, 0).SafeToString());
+            Assert.Equal("5.678", chunk.ExtractCell(1, 1).SafeToString());
+            Assert.Equal("fghi", chunk.ExtractCell(1, 2).SafeToString());
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 
-        [Test]
+        [SFFact]
         public void TestSimpleChunk()
         {
             string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
             var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
             chunk.Next();
-            Assert.AreEqual("1", chunk.ExtractCell(0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
-            Assert.AreEqual("abcde", chunk.ExtractCell(2).SafeToString());
+            Assert.Equal("1", chunk.ExtractCell(0).SafeToString());
+            Assert.Equal("1.234", chunk.ExtractCell(1).SafeToString());
+            Assert.Equal("abcde", chunk.ExtractCell(2).SafeToString());
 
             chunk.Next();
-            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
-            Assert.AreEqual("5.678", chunk.ExtractCell(1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
+            Assert.Equal("2", chunk.ExtractCell(0).SafeToString());
+            Assert.Equal("5.678", chunk.ExtractCell(1).SafeToString());
+            Assert.Equal("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestChunkWithNull()
         {
             string data = "[ [null, \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
             var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
             chunk.Next();
-            Assert.AreEqual(null, chunk.ExtractCell(0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
+            Assert.Null(chunk.ExtractCell(0).SafeToString());
+            Assert.Equal("1.234", chunk.ExtractCell(1).SafeToString());
+            Assert.Null(chunk.ExtractCell(2).SafeToString());
 
             chunk.Next();
-            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
+            Assert.Equal("2", chunk.ExtractCell(0).SafeToString());
+            Assert.Null(chunk.ExtractCell(1).SafeToString());
+            Assert.Equal("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestChunkWithDate()
         {
             string data = "[ [null, \"2019-08-21T11:58:00\", null],  [\"2\", null, \"fghi\"] ]";
             var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
             chunk.Next();
-            Assert.AreEqual(null, chunk.ExtractCell(0).SafeToString());
-            Assert.AreEqual("2019-08-21T11:58:00", chunk.ExtractCell(1).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
+            Assert.Null(chunk.ExtractCell(0).SafeToString());
+            Assert.Equal("2019-08-21T11:58:00", chunk.ExtractCell(1).SafeToString());
+            Assert.Null(chunk.ExtractCell(2).SafeToString());
 
             chunk.Next();
-            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
+            Assert.Equal("2", chunk.ExtractCell(0).SafeToString());
+            Assert.Null(chunk.ExtractCell(1).SafeToString());
+            Assert.Equal("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestChunkWithEscape()
         {
             string data = "[ [\"\\\\åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
             var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
             chunk.Next();
-            Assert.AreEqual("\\åäö\nÅÄÖ\r", chunk.ExtractCell(0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
+            Assert.Equal("\\åäö\nÅÄÖ\r", chunk.ExtractCell(0).SafeToString());
+            Assert.Equal("1.234", chunk.ExtractCell(1).SafeToString());
+            Assert.Null(chunk.ExtractCell(2).SafeToString());
 
             chunk.Next();
-            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
-            Assert.AreEqual("fghi", chunk.ExtractCell(2).SafeToString());
+            Assert.Equal("2", chunk.ExtractCell(0).SafeToString());
+            Assert.Null(chunk.ExtractCell(1).SafeToString());
+            Assert.Equal("fghi", chunk.ExtractCell(2).SafeToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestChunkWithLongString()
         {
             string longstring = new string('å', 10 * 1000 * 1000);
@@ -106,17 +105,17 @@ namespace Snowflake.Data.Tests.UnitTests
             var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
             chunk.Next();
-            Assert.AreEqual("åäö\nÅÄÖ\r", chunk.ExtractCell(0).SafeToString());
-            Assert.AreEqual("1.234", chunk.ExtractCell(1).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(2).SafeToString());
+            Assert.Equal("åäö\nÅÄÖ\r", chunk.ExtractCell(0).SafeToString());
+            Assert.Equal("1.234", chunk.ExtractCell(1).SafeToString());
+            Assert.Null(chunk.ExtractCell(2).SafeToString());
 
             chunk.Next();
-            Assert.AreEqual("2", chunk.ExtractCell(0).SafeToString());
-            Assert.AreEqual(null, chunk.ExtractCell(1).SafeToString());
-            Assert.AreEqual(longstring, chunk.ExtractCell(2).SafeToString());
+            Assert.Equal("2", chunk.ExtractCell(0).SafeToString());
+            Assert.Null(chunk.ExtractCell(1).SafeToString());
+            Assert.Equal(longstring, chunk.ExtractCell(2).SafeToString());
         }
 
-        [Test]
+        [SFFact]
         public async Task TestParserError1()
         {
             // Unterminated escape sequence
@@ -129,11 +128,11 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+                Assert.Equal(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
             }
         }
 
-        [Test]
+        [SFFact]
         public async Task TestParserError2()
         {
             // Unterminated string
@@ -146,11 +145,11 @@ namespace Snowflake.Data.Tests.UnitTests
             }
             catch (SnowflakeDbException e)
             {
-                Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+                Assert.Equal(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestParserWithTab()
         {
             // Unterminated string
@@ -159,10 +158,10 @@ namespace Snowflake.Data.Tests.UnitTests
 
             chunk.Next();
             string val = chunk.ExtractCell(0).SafeToString();
-            Assert.AreEqual("abc\t", chunk.ExtractCell(0).SafeToString());
+            Assert.Equal("abc\t", chunk.ExtractCell(0).SafeToString());
         }
 
-        [Test]
+        [SFFact]
         public void TestNextIteratesThroughAllRecords()
         {
             const int RowCount = 3;
@@ -171,12 +170,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
             for (var i = 0; i < RowCount; ++i)
             {
-                Assert.IsTrue(chunk.Next());
+                Assert.True(chunk.Next());
             }
-            Assert.IsFalse(chunk.Next());
+            Assert.False(chunk.Next());
         }
 
-        [Test]
+        [SFFact]
         public void TestRewindIteratesThroughAllRecords()
         {
             const int RowCount = 3;
@@ -191,12 +190,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
             for (var i = 0; i < RowCount; ++i)
             {
-                Assert.IsTrue(chunk.Rewind());
+                Assert.True(chunk.Rewind());
             }
-            Assert.IsFalse(chunk.Rewind());
+            Assert.False(chunk.Rewind());
         }
 
-        [Test]
+        [SFFact]
         public void TestResetClearsChunkData()
         {
             const int RowCount = 3;
@@ -212,15 +211,15 @@ namespace Snowflake.Data.Tests.UnitTests
 
             chunk.Reset(chunkInfo, 0);
 
-            Assert.AreEqual(0, chunk.ChunkIndex);
-            Assert.AreEqual(chunkInfo.url, chunk.Url);
-            Assert.AreEqual(chunkInfo.rowCount, chunk.RowCount);
-            Assert.AreEqual(chunkInfo.uncompressedSize, chunk.UncompressedSize);
-            Assert.Greater(chunk.data.blockCount, 0);
-            Assert.Greater(chunk.data.metaBlockCount, 0);
+            Assert.Equal(0, chunk.ChunkIndex);
+            Assert.Equal(chunkInfo.url, chunk.Url);
+            Assert.Equal(chunkInfo.rowCount, chunk.RowCount);
+            Assert.Equal(chunkInfo.uncompressedSize, chunk.UncompressedSize);
+            Assert.True(chunk.data.blockCount > 0);
+            Assert.True(chunk.data.metaBlockCount > 0);
         }
 
-        [Test]
+        [SFFact]
         public void TestClearRemovesAllChunkData()
         {
             const int RowCount = 3;
@@ -236,12 +235,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
             chunk.Clear();
 
-            Assert.AreEqual(0, chunk.ChunkIndex);
-            Assert.AreEqual(null, chunk.Url);
-            Assert.AreEqual(0, chunk.RowCount);
-            Assert.AreEqual(0, chunk.UncompressedSize);
-            Assert.AreEqual(0, chunk.data.blockCount);
-            Assert.AreEqual(0, chunk.data.metaBlockCount);
+            Assert.Equal(0, chunk.ChunkIndex);
+            Assert.Null(chunk.Url);
+            Assert.Equal(0, chunk.RowCount);
+            Assert.Equal(0, chunk.UncompressedSize);
+            Assert.Equal(0, chunk.data.blockCount);
+            Assert.Equal(0, chunk.data.metaBlockCount);
         }
 
         private async Task<SFReusableChunk> PrepareChunkAsync(string stringData, int colCount, int rowCount)

@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Apache.Arrow;
 using Apache.Arrow.Ipc;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
@@ -15,8 +15,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [TestFixture]
-    class ArrowResultSetTest
+    public sealed class ArrowResultSetTest
     {
         private const int RowCount = 10;
         private const int ColumnIndex = 0;
@@ -24,20 +23,19 @@ namespace Snowflake.Data.Tests.UnitTests
         private RecordBatch _recordBatch;
         private ArrowResultSet _arrowResultSet;
 
-        [SetUp]
-        public void BeforeTest()
+        public ArrowResultSetTest()
         {
             // by default generate Int32 values from 1 to RowCount
             PrepareTestCase(SFDataType.FIXED, 0, Enumerable.Range(1, RowCount).ToArray());
         }
 
-        [Test]
+        [SFFact]
         public void TestResultFormatIsArrow()
         {
-            Assert.AreEqual(ResultFormat.ARROW, _arrowResultSet.ResultFormat);
+            Assert.Equal(ResultFormat.ARROW, _arrowResultSet.ResultFormat);
         }
 
-        [Test]
+        [SFFact]
         public void TestNextReturnsFalseIfNoData()
         {
             var responseData = PrepareResponseData(_recordBatch, SFDataType.FIXED, 0);
@@ -47,89 +45,89 @@ namespace Snowflake.Data.Tests.UnitTests
             responseData.rowsetBase64 = "";
             var arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
 
-            Assert.IsFalse(arrowResultSet.Next());
+            Assert.False(arrowResultSet.Next());
         }
 
-        [Test]
+        [SFFact]
         public void TestNextReturnsTrueUntilRowsExist()
         {
             for (var i = 0; i < RowCount; ++i)
             {
-                Assert.IsTrue(_arrowResultSet.Next());
+                Assert.True(_arrowResultSet.Next());
             }
-            Assert.IsFalse(_arrowResultSet.Next());
+            Assert.False(_arrowResultSet.Next());
         }
 
-        [Test]
+        [SFFact]
         public async Task TestNextAsyncReturnsTrueUntilRowsExist()
         {
             for (var i = 0; i < RowCount; ++i)
             {
-                Assert.IsTrue(await _arrowResultSet.NextAsync());
+                Assert.True(await _arrowResultSet.NextAsync());
             }
-            Assert.IsFalse(await _arrowResultSet.NextAsync());
+            Assert.False(await _arrowResultSet.NextAsync());
         }
 
-        [Test]
+        [SFFact]
         public void TestNextResultReturnsFalse()
         {
-            Assert.IsFalse(_arrowResultSet.NextResult());
+            Assert.False(_arrowResultSet.NextResult());
         }
 
-        [Test]
+        [SFFact]
         public async Task TestNextResultAsyncReturnsFalse()
         {
-            Assert.IsFalse(await _arrowResultSet.NextResultAsync(CancellationToken.None));
+            Assert.False(await _arrowResultSet.NextResultAsync(CancellationToken.None));
         }
 
-        [Test]
+        [SFFact]
         public void TestHasRowsReturnsTrueIfRowExists()
         {
-            Assert.IsTrue(_arrowResultSet.HasRows());
+            Assert.True(_arrowResultSet.HasRows());
         }
 
-        [Test]
+        [SFFact]
         public void TestHasRowsReturnsFalseIfNoRows()
         {
             PrepareTestCase(SFDataType.FIXED, 0, new sbyte[] { });
 
-            Assert.IsFalse(_arrowResultSet.HasRows());
+            Assert.False(_arrowResultSet.HasRows());
         }
 
-        [Test]
+        [SFFact]
         public void TestRewindReturnsFalseBeforeFirstRow()
         {
-            Assert.IsFalse(_arrowResultSet.Rewind());
+            Assert.False(_arrowResultSet.Rewind());
         }
 
-        [Test]
+        [SFFact]
         public void TestRewindReturnsFalseForFirstRow()
         {
             _arrowResultSet.Next(); // move to first row
-            Assert.IsFalse(_arrowResultSet.Rewind());
+            Assert.False(_arrowResultSet.Rewind());
         }
 
-        [Test]
+        [SFFact]
         public void TestRewindReturnsTrueForSecondRowAndMovesToFirstRow()
         {
             _arrowResultSet.Next(); // move to first row
             _arrowResultSet.Next(); // move to second row
-            Assert.IsTrue(_arrowResultSet.Rewind());
-            Assert.IsFalse(_arrowResultSet.Rewind());
+            Assert.True(_arrowResultSet.Rewind());
+            Assert.False(_arrowResultSet.Rewind());
         }
 
-        [Test]
+        [SFFact]
         public void TestRewindReturnsTrueForThirdRowAndMovesToFirstRow()
         {
             _arrowResultSet.Next(); // move to first row
             _arrowResultSet.Next(); // move to second row
             _arrowResultSet.Next(); // move to third row
-            Assert.IsTrue(_arrowResultSet.Rewind());
-            Assert.IsTrue(_arrowResultSet.Rewind());
-            Assert.IsFalse(_arrowResultSet.Rewind());
+            Assert.True(_arrowResultSet.Rewind());
+            Assert.True(_arrowResultSet.Rewind());
+            Assert.False(_arrowResultSet.Rewind());
         }
 
-        [Test]
+        [SFFact]
         public void TestGetValueReturnsNull()
         {
             var responseData = PrepareResponseData(ArrowResultChunkTest.RecordBatchWithNullValue, SFDataType.FIXED, 0);
@@ -138,11 +136,11 @@ namespace Snowflake.Data.Tests.UnitTests
 
             arrowResultSet.Next();
 
-            Assert.AreEqual(true, arrowResultSet.IsDBNull(0));
-            Assert.AreEqual(DBNull.Value, arrowResultSet.GetValue(0));
+            Assert.True(arrowResultSet.IsDBNull(0));
+            Assert.Equal(DBNull.Value, arrowResultSet.GetValue(0));
         }
 
-        [Test]
+        [SFFact]
         public void TestGetDecimal()
         {
             var testValues = new decimal[] { 0, 100, -100, Decimal.MaxValue, Decimal.MinValue };
@@ -150,7 +148,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetNumber(testValues);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetNumber64()
         {
             var testValues = new long[] { 0, 100, -100, Int64.MaxValue, Int64.MinValue };
@@ -158,7 +156,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetNumber(testValues);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetNumber32()
         {
             var testValues = new int[] { 0, 100, -100, Int32.MaxValue, Int32.MinValue };
@@ -166,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetNumber(testValues);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetNumber16()
         {
             var testValues = new short[] { 0, 100, -100, Int16.MaxValue, Int16.MinValue };
@@ -174,7 +172,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetNumber(testValues);
         }
 
-        [Test]
+        [SFFact]
         public void TestGetNumber8()
         {
             var testValues = new sbyte[] { 0, 127, -128 };
@@ -182,7 +180,7 @@ namespace Snowflake.Data.Tests.UnitTests
             TestGetNumber(testValues);
         }
 
-        private void TestGetNumber(IEnumerable testValues)
+        private void TestGetNumber<T>(IEnumerable<T> testValues)
         {
             for (var scale = 0; scale <= 9; ++scale)
             {
@@ -192,36 +190,43 @@ namespace Snowflake.Data.Tests.UnitTests
                 {
                     _arrowResultSet.Next();
 
+                    var isLong = typeof(T) != typeof(decimal) && scale == 0;
                     var expectedValue = Convert.ToDecimal(testValue) / (decimal)Math.Pow(10, scale);
-                    Assert.AreEqual(expectedValue, _arrowResultSet.GetValue(ColumnIndex));
-                    Assert.AreEqual(expectedValue, _arrowResultSet.GetDecimal(ColumnIndex));
-                    Assert.AreEqual(expectedValue, _arrowResultSet.GetDouble(ColumnIndex));
-                    Assert.AreEqual(expectedValue, _arrowResultSet.GetFloat(ColumnIndex));
 
-                    if (expectedValue >= Int64.MinValue && expectedValue <= Int64.MaxValue)
-                    {
-                        // get integer value
-                        long expectedInteger = (long)expectedValue;
+                    if (!isLong)
+                        Assert.Equal(expectedValue, _arrowResultSet.GetValue(ColumnIndex));
 
-                        Assert.AreEqual(expectedInteger, _arrowResultSet.GetInt64(ColumnIndex));
-                        if (expectedInteger >= Int32.MinValue && expectedInteger <= Int32.MaxValue)
-                            Assert.AreEqual(expectedInteger, _arrowResultSet.GetInt32(ColumnIndex));
-                        else
-                            Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt32(ColumnIndex));
-                        if (expectedInteger >= Int16.MinValue && expectedInteger <= Int16.MaxValue)
-                            Assert.AreEqual(expectedInteger, _arrowResultSet.GetInt16(ColumnIndex));
-                        else
-                            Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt16(ColumnIndex));
-                        if (expectedInteger >= 0 && expectedInteger <= 255)
-                            Assert.AreEqual(expectedInteger, _arrowResultSet.GetByte(ColumnIndex));
-                        else
-                            Assert.Throws<OverflowException>(() => _arrowResultSet.GetByte(ColumnIndex));
-                    }
+                    Assert.Equal(expectedValue, _arrowResultSet.GetDecimal(ColumnIndex));
+                    Assert.Equal((double)expectedValue, _arrowResultSet.GetDouble(ColumnIndex));
+                    Assert.Equal((float)expectedValue, _arrowResultSet.GetFloat(ColumnIndex));
+
+                    if (typeof(T) == typeof(decimal))
+                        return;
+
+                    // get integer value
+                    var expectedInteger = (long)expectedValue;
+
+                    Assert.Equal(expectedInteger, _arrowResultSet.GetInt64(ColumnIndex));
+                    if (expectedInteger >= Int32.MinValue && expectedInteger <= Int32.MaxValue)
+                        Assert.Equal(expectedInteger, _arrowResultSet.GetInt32(ColumnIndex));
+                    else
+                        Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt32(ColumnIndex));
+                    if (expectedInteger >= Int16.MinValue && expectedInteger <= Int16.MaxValue)
+                        Assert.Equal(expectedInteger, _arrowResultSet.GetInt16(ColumnIndex));
+                    else
+                        Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt16(ColumnIndex));
+                    if (expectedInteger >= 0 && expectedInteger <= 255)
+                        Assert.Equal(expectedInteger, _arrowResultSet.GetByte(ColumnIndex));
+                    else
+                        Assert.Throws<OverflowException>(() => _arrowResultSet.GetByte(ColumnIndex));
+
+                    if (isLong)
+                        Assert.Equal(expectedInteger, _arrowResultSet.GetValue(ColumnIndex));
                 }
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetBoolean()
         {
             var testValues = new bool[] { true, false };
@@ -231,12 +236,12 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.AreEqual(testValue, _arrowResultSet.GetBoolean(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetBoolean(ColumnIndex));
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetReal()
         {
             var testValues = new double[] { 0, Double.MinValue, Double.MaxValue };
@@ -246,12 +251,12 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.AreEqual(testValue, _arrowResultSet.GetDouble(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetDouble(ColumnIndex));
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetText()
         {
             var testValues = new string[]
@@ -265,12 +270,12 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.AreEqual(testValue, _arrowResultSet.GetString(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetString(ColumnIndex));
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetTextWithOneChar()
         {
             char[] testValues;
@@ -291,11 +296,11 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetChar(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetChar(ColumnIndex));
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetArray()
         {
             var testValues = new string[]
@@ -309,16 +314,16 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
                 char[] buffer = new char[1000];
                 var len = _arrowResultSet.GetChars(ColumnIndex, 0, buffer, 0, buffer.Length);
                 var str = new String(buffer, 0, (int)len);
-                Assert.AreEqual(testValue, str);
-                Assert.AreEqual(testValue.Length, str.Length);
+                Assert.Equal(testValue, str);
+                Assert.Equal(testValue.Length, str.Length);
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetBinary()
         {
             var testValues = new byte[][]
@@ -331,16 +336,16 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
                 byte[] buffer = new byte[100];
                 var len = _arrowResultSet.GetBytes(ColumnIndex, 0, buffer, 0, buffer.Length);
-                Assert.AreEqual(testValue.Length, len);
+                Assert.Equal(testValue.Length, len);
                 for (var j = 0; j < len; ++j)
-                    Assert.AreEqual(testValue[j], buffer[j], "position " + j);
+                    Assert.Equal(testValue[j], buffer[j]);
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetDate()
         {
             var testValues = new DateTime[]
@@ -355,12 +360,12 @@ namespace Snowflake.Data.Tests.UnitTests
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.AreEqual(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetTime()
         {
             var testValues = new DateTime[]
@@ -378,13 +383,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 foreach (var testValue in values)
                 {
                     _arrowResultSet.Next();
-                    Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                    Assert.AreEqual(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
                 }
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetTimestampTz()
         {
             var testValues = new DateTimeOffset[]
@@ -405,12 +410,12 @@ namespace Snowflake.Data.Tests.UnitTests
                 foreach (var testValue in values)
                 {
                     _arrowResultSet.Next();
-                    Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
                 }
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetTimestampLtz()
         {
             var testValues = new DateTimeOffset[]
@@ -428,12 +433,12 @@ namespace Snowflake.Data.Tests.UnitTests
                 foreach (var testValue in values)
                 {
                     _arrowResultSet.Next();
-                    Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
                 }
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestGetTimestampNtz()
         {
             var testValues = new DateTime[]
@@ -451,13 +456,13 @@ namespace Snowflake.Data.Tests.UnitTests
                 foreach (var testValue in values)
                 {
                     _arrowResultSet.Next();
-                    Assert.AreEqual(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                    Assert.AreEqual(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                    Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
                 }
             }
         }
 
-        [Test]
+        [SFFact]
         public void TestThrowsExceptionForResultSetWithUnknownSFDataType()
         {
             const string UnknownDataType = "FAKE_TYPE";
@@ -474,10 +479,10 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), new CancellationToken()));
-            Assert.IsTrue(exception.Message.Contains($"Unknown column type: {UnknownDataType}"));
+            Assert.Contains($"Unknown column type: {UnknownDataType}", exception.Message);
         }
 
-        [Test]
+        [SFFact]
         public void TestThrowsExceptionForResultSetWithUnknownNativeType()
         {
             QueryExecResponseData responseData = new QueryExecResponseData()
@@ -492,8 +497,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 }
             };
 
-            var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), new CancellationToken()));
-            Assert.IsTrue(exception.Message.Contains($"Unknown column type: {SFDataType.None.ToString()}"));
+            var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), CancellationToken.None));
+            Assert.Contains($"Unknown column type: {nameof(SFDataType.None)}", exception.Message);
         }
 
         private void PrepareTestCase(SFDataType sfType, long scale, object values)
@@ -502,7 +507,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var responseData = PrepareResponseData(_recordBatch, sfType, scale);
             var sfStatement = PrepareStatement();
 
-            _arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
+            _arrowResultSet = new ArrowResultSet(responseData, sfStatement, CancellationToken.None);
         }
 
         private QueryExecResponseData PrepareResponseData(RecordBatch recordBatch, SFDataType sfType, long scale)

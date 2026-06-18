@@ -10,7 +10,7 @@ source $THIS_DIR/_init.sh
 declare -A TARGET_TEST_IMAGES
 if [[ -n "$TARGET_DOCKER_TEST_IMAGE" ]]; then
     echo "[INFO] TARGET_DOCKER_TEST_IMAGE: $TARGET_DOCKER_TEST_IMAGE"
-    IMAGE_NAME=${TEST_IMAGE_NAMES[$TARGET_DOCKER_TEST_IMAGE]}
+    IMAGE_NAME=${BUILD_IMAGE_NAMES[$TARGET_DOCKER_TEST_IMAGE]}
     if [[ -z "$IMAGE_NAME" ]]; then
         echo "[ERROR] The target platform $TARGET_DOCKER_TEST_IMAGE doesn't exist. Check $THIS_DIR/_init.sh"
         exit 1
@@ -44,7 +44,7 @@ for name in "${!TARGET_TEST_IMAGES[@]}"; do
         -e JOB_NAME \
         -e BUILD_NUMBER \
         -e CI \
-        ${TEST_IMAGE_NAMES[$name]} \
+        ${BUILD_IMAGE_NAMES[$name]} \
         /mnt/host/ci/container/test_component.sh
         echo "[INFO] Test Results: $WORKSPACE/junit-dotnet.xml"
 done

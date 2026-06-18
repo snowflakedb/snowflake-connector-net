@@ -14,12 +14,3 @@ for name in "${!BUILD_IMAGE_NAMES[@]}"; do
         --label $DRIVER_NAME \
         --tag ${BUILD_IMAGE_NAMES[$name]} .
 done
-
-for name in "${!TEST_IMAGE_NAMES[@]}"; do
-    docker build \
-        --platform=linux/amd64 \
-        --file $THIS_DIR/Dockerfile.$name-test \
-        --label snowflake \
-        --label $DRIVER_NAME \
-        --tag ${TEST_IMAGE_NAMES[$name]} .
-done

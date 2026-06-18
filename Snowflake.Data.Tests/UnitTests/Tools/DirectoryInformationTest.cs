@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Core.Tools;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Tools
 {
-    [TestFixture]
     public class DirectoryInformationTest
     {
-        [Test]
-        [TestCaseSource(nameof(OldCreatingDatesTestCases))]
+        [SFTheory]
+        [MemberData(nameof(OldCreatingDatesTestCases))]
         public void TestIsCreatedEarlierThanSeconds(DateTime? createdDate, DateTime utcNow)
         {
             // arrange
@@ -19,11 +19,11 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = directoryInformation.IsCreatedEarlierThanSeconds(60, utcNow);
 
             // assert
-            Assert.AreEqual(true, result);
+            Assert.True(result);
         }
 
-        [Test]
-        [TestCaseSource(nameof(NewCreatingDatesTestCases))]
+        [SFTheory]
+        [MemberData(nameof(NewCreatingDatesTestCases))]
         public void TestIsNotCreatedEarlierThanSeconds(bool dirExists, DateTime? createdDate, DateTime utcNow)
         {
             // arrange
@@ -33,16 +33,16 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var result = directoryInformation.IsCreatedEarlierThanSeconds(60, utcNow);
 
             // assert
-            Assert.AreEqual(false, result);
+            Assert.False(result);
         }
 
-        internal static IEnumerable<object[]> OldCreatingDatesTestCases()
+        public static IEnumerable<object[]> OldCreatingDatesTestCases()
         {
             yield return new object[] { DateTime.UtcNow.AddMinutes(-2), DateTime.UtcNow };
             yield return new object[] { DateTime.UtcNow.AddSeconds(-61), DateTime.UtcNow };
         }
 
-        internal static IEnumerable<object[]> NewCreatingDatesTestCases()
+        public static IEnumerable<object[]> NewCreatingDatesTestCases()
         {
             yield return new object[] { true, DateTime.UtcNow.AddSeconds(-30), DateTime.UtcNow };
             yield return new object[] { true, DateTime.UtcNow.AddSeconds(30), DateTime.UtcNow };

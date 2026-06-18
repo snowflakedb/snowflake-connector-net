@@ -12,17 +12,12 @@ RUN dnf -y update && \
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
-# Install .NET from Microsoft repo (latest GA versions not available in Rocky's AppStream).
-# Exclude AppStream's .NET packages to avoid version conflicts and path mismatches.
-# See: https://learn.microsoft.com/en-us/dotnet/core/install/linux-package-mixup?pivots=os-linux-redhat
-RUN dnf install -y 'dnf-command(config-manager)' && \
-    dnf config-manager --save --setopt="appstream.excludepkgs=dotnet*,aspnet*,netstandard*" && \
-    dnf install -y https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
-    dnf install -y \
+RUN dnf install -y \
         dotnet-sdk-6.0 \
         dotnet-sdk-7.0 \
         dotnet-sdk-8.0 \
-        dotnet-sdk-9.0 && \
+        dotnet-sdk-9.0 \
+        dotnet-sdk-10.0 && \
     dotnet --list-sdks && \
     dnf clean all
 

@@ -917,7 +917,9 @@ namespace Snowflake.Data.Core
         /// <param name="fileMetadata">The metadata for the file to get digest.</param>
         private void getDigestAndSizeForFile(SFFileMetadata fileMetadata)
         {
+#pragma warning disable SYSLIB0021 // TODO SNOW-3662960
             using (SHA256 SHA256 = SHA256Managed.Create())
+#pragma warning restore SYSLIB0021
             {
                 if (fileMetadata.memoryStream != null)
                 {

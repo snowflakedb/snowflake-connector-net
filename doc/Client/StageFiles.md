@@ -4,27 +4,26 @@ PUT command can be used to upload files of a local directory or a single local f
 Such staging files can be used to load data into a table.
 More on this topic: [File staging with PUT](https://docs.snowflake.com/en/sql-reference/sql/put).
 
-In the driver the command can be executed in a bellow way:
+In the driver the command can be executed in the following way:
 
 ```cs
-using (IDbConnection conn = new SnowflakeDbConnection())
+using var conn = new SnowflakeDbConnection();
+try
 {
-    try
-    {
-	    conn.ConnectionString = "<connection parameters>";
-	    conn.Open();
-	    var cmd = (SnowflakeDbCommand)conn.CreateCommand(); // cast allows get QueryId from the command
-
-	    cmd.CommandText = "PUT file://some_data.csv @my_schema.my_stage AUTO_COMPRESS=TRUE";
-	    var reader = cmd.ExecuteReader();
-	    Assert.IsTrue(reader.Read());
-        Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
-    }
-    catch (SnowflakeDbException e)
-    {
-        Assert.DoesNotThrow(() => Guid.Parse(e.QueryId)); // when failed
-        Assert.That(e.InnerException.GetType(), Is.EqualTo(typeof(FileNotFoundException)));
-    }
+    conn.ConnectionString = "<connection parameters>";
+    await conn.OpenAsync(cancellationToken);
+    var cmd = (SnowflakeDbCommand)conn.CreateCommand(); // cast allows get QueryId from the command
+	    
+    cmd.CommandText = "PUT file://some_data.csv @my_schema.my_stage AUTO_COMPRESS=TRUE";
+	await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+	Assert.IsTrue(await reader.ReadAsync(cancellationToken));
+    Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
+}
+catch (SnowflakeDbException e)
+{
+    Assert.DoesNotThrow(() => Guid.Parse(e.QueryId)); // when failed
+    Assert.That(e.InnerException.GetType(), Is.EqualTo(typeof(FileNotFoundException)));
+}
 ```
 
 In case of a failure a SnowflakeDbException exception will be thrown with affected QueryId if possible.
@@ -35,22 +34,22 @@ it will be for example: FileNotFoundException, DirectoryNotFoundException.
 
 ## GET stage files
 
-GET command allows to download stage directories or files to a local directory.
+GET command allows downloading stage directories or files to a local directory.
 It can be used in connection with named stage, table internal stage or user stage.
 Detailed information on the command: [Downloading files with GET](https://docs.snowflake.com/en/sql-reference/sql/get).
 
-To use the command in a driver similar code can be executed in a client app:
+To use the command in the driver, similar code can be executed in a client app:
 
 ```cs
     try
     {
 	    conn.ConnectionString = "<connection parameters>";
-	    conn.Open();
+	    await conn.OpenAsync(cancellationToken);
 	    var cmd = (SnowflakeDbCommand)conn.CreateCommand(); // cast allows get QueryId from the command
 
 	    cmd.CommandText = "GET @my_schema.my_stage/stage_file.csv file://local_file.csv AUTO_COMPRESS=TRUE";
-	    var reader = cmd.ExecuteReader();
-	    Assert.IsTrue(reader.Read()); // True on success, False if failure
+	    await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+	    Assert.IsTrue(await reader.ReadAsync(cancellationToken)); // True on success, False if failure
         Assert.DoesNotThrow(() => Guid.Parse(cmd.GetQueryId()));
     }
     catch (SnowflakeDbException e)

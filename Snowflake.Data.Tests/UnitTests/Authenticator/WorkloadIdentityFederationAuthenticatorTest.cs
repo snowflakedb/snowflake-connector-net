@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
@@ -46,27 +48,27 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             return session;
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailsAuthorizationWhenProviderIsNotGiven()
         {
             // arrange/act
             var exception = Assert.Throws<SnowflakeDbException>(() => PrepareSession(null, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled));
 
             // assert
-            Assert.That(exception?.Message, Does.Contain("Required property WORKLOAD_IDENTITY_PROVIDER is not provided"));
+            Assert.Contains("Required property WORKLOAD_IDENTITY_PROVIDER is not provided", exception?.Message);
         }
 
-        [Test]
-        public void TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
+        [SFFact(SkipCondition.SkipOnJenkins)]
+        public async Task TestFailsWithWifProviderExceptionMessageAttachedToSnowflakeException()
         {
             // arrange: throws exception with "Not available" message
             var session = PrepareSession(AttestationProvider.AWS, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled);
 
             // act
-            var exception = Assert.Throws<SnowflakeDbException>(() => session.Open());
+            var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
 
             // assert
-            Assert.That(exception?.Message, Does.Contain("Retrieving attestation for AWS failed. Not available"));
+            Assert.Contains("Retrieving attestation for AWS failed. Not available", exception?.Message);
         }
 
         internal void NoEnvironmentSetup(Mock<EnvironmentOperations> environmentOperations)
@@ -94,7 +96,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 .Throws(() => new Exception("Not available"));
         }
 
-        internal void SetupSnowflakeAuthentication(WiremockRunner runner, AttestationProvider provider, string accessToken) =>
+        internal void SetupSnowflakeAuthentication(IWiremockRunner runner, AttestationProvider provider, string accessToken) =>
             runner.AddMappings(s_SuccessfulMappingPath,
                 new StringTransformations()
                     .ThenTransform(s_accessTokenReplacement, accessToken)
@@ -103,9 +105,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         internal void AssertSessionSuccessfullyCreated(SFSession session)
         {
-            Assert.AreEqual(SessionId, session.sessionId);
-            Assert.AreEqual(MasterToken, session.masterToken);
-            Assert.AreEqual(SessionToken, session.sessionToken);
+            Assert.Equal(SessionId, session.sessionId);
+            Assert.Equal(MasterToken, session.masterToken);
+            Assert.Equal(SessionToken, session.sessionToken);
         }
     }
 }

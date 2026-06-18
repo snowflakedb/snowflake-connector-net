@@ -2,7 +2,8 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using NUnit.Framework;
+using Moq;
+using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
@@ -12,9 +13,35 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [TestFixture, NonParallelizable]
+    [CollectionDefinition(nameof(WorkflowIdentityFederationAuthenticatorGcpTestFixture), DisableParallelization = true)]
+    public sealed class WorkflowIdentityFederationAuthenticatorGcpTestFixture : ICollectionFixture<WorkflowIdentityFederationAuthenticatorGcpTestFixture.Fixture>
+    {
+        public sealed class Fixture : IDisposable
+        {
+            internal readonly IWiremockRunner Runner;
+
+            public Fixture()
+            {
+                if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
+                {
+                    Runner = new Mock<IWiremockRunner>().Object;
+                    return;
+                }
+
+                Runner = WiremockRunner.NewWiremock();
+            }
+
+            public void Dispose()
+            {
+                Runner.Stop();
+            }
+        }
+    }
+
+    [Collection(nameof(WorkflowIdentityFederationAuthenticatorGcpTestFixture))]
     public class WorkflowIdentityFederationAuthenticatorGcpTest : WorkloadIdentityFederationAuthenticatorTest
     {
+        private readonly WorkflowIdentityFederationAuthenticatorGcpTestFixture.Fixture _fixture;
         private static readonly string s_wifGcpMappingPath = Path.Combine(s_wifMappingPath, "GCP");
         private static readonly string s_wifGcpSuccessfulMappingPath = Path.Combine(s_wifGcpMappingPath, "successful_flow.json");
         private static readonly string s_wifGcpHttpErrorMappingPath = Path.Combine(s_wifGcpMappingPath, "http_error.json");
@@ -23,32 +50,18 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         private const string JWTGCPTokenWithoutSubject = "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImU2M2I5NzA1OTRiY2NmZTAxMDlkOTg4OWM2MDk3OWEwIn0.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJpYXQiOjE3NDM3NjEyMTMsImV4cCI6MTc0Mzc2NDgxMywiYXVkIjoid3d3LmV4YW1wbGUuY29tIn0.w0njdpfWFETVK8Ktq9GdvuKRQJjvhOplcSyvQ_zHHwBUSMapqO1bjEWBx5VhGkdECZIGS1VY7db_IOqT45yOMA"; // pragma: allowlist secret
         private const string JWTGCPUnparsableToken = "unparsable.token";
 
-        private WiremockRunner _runner;
-
-        [OneTimeSetUp]
-        public void BeforeAll()
+        public WorkflowIdentityFederationAuthenticatorGcpTest(WorkflowIdentityFederationAuthenticatorGcpTestFixture.Fixture fixture)
         {
-            _runner = WiremockRunner.NewWiremock();
+            _fixture = fixture;
+            _fixture.Runner.ResetMapping();
         }
 
-        [SetUp]
-        public void BeforeEach()
-        {
-            _runner.ResetMapping();
-        }
-
-        [OneTimeTearDown]
-        public void AfterAll()
-        {
-            _runner.Stop();
-        }
-
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulGCPAuthorization()
         {
             // arrange
             AddGcpWiremockMapping(JWTGCPToken);
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.GCP, JWTGCPToken);
+            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.GCP, JWTGCPToken);
             var session = PrepareSessionForGcp("", NoEnvironmentSetup);
 
             // act
@@ -58,12 +71,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public async Task TestSuccessfulGCPAuthorizationAsync()
         {
             // arrange
             AddGcpWiremockMapping(JWTGCPToken);
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.GCP, JWTGCPToken);
+            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.GCP, JWTGCPToken);
             var session = PrepareSessionForGcp("", NoEnvironmentSetup);
 
             // act
@@ -73,7 +86,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulGCPAttestation()
         {
             // arrange
@@ -85,15 +98,15 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.GCP, attestation.Provider);
-            Assert.AreEqual("some-subject", attestation.UserIdentifierComponents["sub"]);
-            Assert.AreEqual(JWTGCPToken, attestation.Credential);
+            Assert.Equal(AttestationProvider.GCP, attestation.Provider);
+            Assert.Equal("some-subject", attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(JWTGCPToken, attestation.Credential);
         }
 
-        [Test]
-        [TestCase(JWTGCPTokenWithoutIssuer, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
-        [TestCase(JWTGCPTokenWithoutSubject, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
-        [TestCase(JWTGCPUnparsableToken, "Retrieving attestation for GCP failed. Reading of the token failed.")]
+        [SFTheory(SkipCondition.SkipOnJenkins)]
+        [InlineData(JWTGCPTokenWithoutIssuer, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
+        [InlineData(JWTGCPTokenWithoutSubject, "Retrieving attestation for GCP failed. No issuer or subject found in the token.")]
+        [InlineData(JWTGCPUnparsableToken, "Retrieving attestation for GCP failed. Reading of the token failed.")]
         public void TestFailAttestationForInvalidToken(string token, string expectedErrorMessage)
         {
             // arrange
@@ -106,14 +119,14 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.That(thrown.Message, Does.Contain(expectedErrorMessage));
+            Assert.Contains(expectedErrorMessage, thrown.Message);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailAttestationWhenHttpError()
         {
             // arrange
-            _runner.AddMappings(s_wifGcpHttpErrorMappingPath);
+            _fixture.Runner.AddMappings(s_wifGcpHttpErrorMappingPath);
             var session = PrepareSessionForGcp("", NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
@@ -122,15 +135,15 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
             // assert
             SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.That(thrown.Message, Does.Contain("Retrieving attestation for GCP failed. Failed to get token: Response status code does not indicate success: 400 (Bad Request)."));
+            Assert.Contains("Retrieving attestation for GCP failed. Failed to get token: Response status code does not indicate success: 400 (Bad Request).", thrown.Message);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulGCPTransitiveImpersonation()
         {
             // arrange
-            _runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
-            SetupSnowflakeAuthentication(_runner, AttestationProvider.GCP, JWTGCPToken);
+            _fixture.Runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
+            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.GCP, JWTGCPToken);
             var session = PrepareSessionForGcp($"workload_impersonation_path=target-sa@project.iam.gserviceaccount.com", NoEnvironmentSetup);
 
             // act
@@ -140,11 +153,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [Test]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulGCPTransitiveImpersonationAttestation()
         {
             // arrange
-            _runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
+            _fixture.Runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
             var session = PrepareSessionForGcp($"workload_impersonation_path=target-sa@project.iam.gserviceaccount.com", NoEnvironmentSetup);
             var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
 
@@ -152,15 +165,15 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var attestation = authenticator.CreateAttestation();
 
             // assert
-            Assert.AreEqual(AttestationProvider.GCP, attestation.Provider);
-            Assert.AreEqual("some-subject", attestation.UserIdentifierComponents["sub"]);
-            Assert.AreEqual(JWTGCPToken, attestation.Credential);
+            Assert.Equal(AttestationProvider.GCP, attestation.Provider);
+            Assert.Equal("some-subject", attestation.UserIdentifierComponents["sub"]);
+            Assert.Equal(JWTGCPToken, attestation.Credential);
         }
 
         private void AddGcpWiremockMapping(string token) =>
-            AddGcpWiremockMapping(_runner, token);
+            AddGcpWiremockMapping(_fixture.Runner, token);
 
-        internal static void AddGcpWiremockMapping(WiremockRunner runner, string token) =>
+        internal static void AddGcpWiremockMapping(IWiremockRunner runner, string token) =>
             runner.AddMappings(s_wifGcpSuccessfulMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, token));
 
         private SFSession PrepareSessionForGcp(string connectionStringSuffix,

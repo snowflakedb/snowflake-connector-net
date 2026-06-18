@@ -3,7 +3,7 @@ import com.snowflake.DevEnvUtils
 import groovy.json.JsonOutput
 
 timestamps {
-  node('regular-memory-node') {
+  node('regular-memory-node-snowos') {
     stage('checkout') {
       scmInfo = checkout scm
       println("${scmInfo}")
@@ -33,11 +33,10 @@ timestamps {
     }
 
     def params = [
-      string(name: 'svn_revision', value: 'temptest-deployed'),
       string(name: 'branch', value: 'main'),
       string(name: 'client_git_commit', value: scmInfo.GIT_COMMIT),
       string(name: 'client_git_branch', value: scmInfo.GIT_BRANCH),
-      string(name: 'TARGET_DOCKER_TEST_IMAGE', value: 'dotnet-ubuntu204-net9'),
+      string(name: 'TARGET_DOCKER_TEST_IMAGE', value: 'dotnet-ubuntu264-net10'),
       string(name: 'parent_job', value: env.JOB_NAME),
       string(name: 'parent_build_number', value: env.BUILD_NUMBER)
     ]
@@ -106,7 +105,7 @@ timestamps {
 }
 
 pipeline {
-  agent { label 'regular-memory-node' }
+  agent { label 'regular-memory-node-snowos' }
   options { timestamps() }
   environment {
     COMMIT_SHA_LONG = sh(returnStdout: true, script: "echo \$(git rev-parse HEAD)").trim()

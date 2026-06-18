@@ -6,7 +6,7 @@
 # It builds the .NET connector and runs tests for a specific target framework.
 #
 # Required environment variables:
-#   - net_version: Target framework (e.g., "net8.0")
+#   - net_version: Target framework (e.g., "net10.0")
 #   - snowflake_cloud_env: Cloud environment (e.g., "AWS", "AZURE", "GCP")
 #   - PARAMETER_SECRET: GPG passphrase for decrypting test parameters
 #
@@ -66,8 +66,10 @@ popd
 # Run tests from Snowflake.Data.Tests directory
 echo "[INFO] Running tests for ${net_version}"
 pushd "${CONNECTOR_DIR}/Snowflake.Data.Tests"
+RESULTS_BASE="rockylinux9_${net_version}_${snowflake_cloud_env}_results"
+ARGS=${TEST_ARGS/\%s/$RESULTS_BASE}
 dotnet-coverage collect \
-    "dotnet test --framework ${net_version} --no-build --logger \"junit;LogFilePath=rockylinux9_${net_version}_${snowflake_cloud_env}_results.junit.xml\" --verbosity normal" \
+    "${TEST_RUNNER} ${ARGS}" \
     --output "rockylinux9_${net_version}_${snowflake_cloud_env}_coverage.xml" \
     --output-format cobertura \
     --settings coverage.config

@@ -4,6 +4,8 @@ namespace Snowflake.Data.Log
 {
     internal interface SFLogger
     {
+        bool IsTraceEnabled();
+
         bool IsDebugEnabled();
 
         bool IsInfoEnabled();
@@ -11,6 +13,8 @@ namespace Snowflake.Data.Log
         bool IsWarnEnabled();
 
         bool IsErrorEnabled();
+
+        void Trace(string msg, Exception ex = null);
 
         void Debug(string msg, Exception ex = null);
 

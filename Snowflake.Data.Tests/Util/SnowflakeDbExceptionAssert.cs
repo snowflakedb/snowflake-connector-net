@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Http;
 using Snowflake.Data.Core;
 using Snowflake.Data.Client;
-using NUnit.Framework;
+using Xunit;
 
 namespace Snowflake.Data.Tests.Util
 {
@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.Util
     {
         public static void HasErrorCode(SnowflakeDbException exception, SFError sfError)
         {
-            Assert.AreEqual(sfError.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
+            Assert.Equal(sfError.GetAttribute<SFErrorAttr>().errorCode, exception.ErrorCode);
         }
 
         public static void HasErrorCode(Exception exception, SFError sfError)
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.Util
             switch (exception)
             {
                 case SnowflakeDbException snowflakeDbException:
-                    Assert.AreEqual(sfError.GetAttribute<SFErrorAttr>().errorCode, snowflakeDbException.ErrorCode);
+                    Assert.Equal(sfError.GetAttribute<SFErrorAttr>().errorCode, snowflakeDbException.ErrorCode);
                     break;
                 default:
                     Assert.Fail(exception.GetType() + " type is not " + typeof(SnowflakeDbException));
@@ -30,11 +30,18 @@ namespace Snowflake.Data.Tests.Util
             }
         }
 
+        public static void HasErrorCodeInExceptionChain(Exception exception, SFError sfError)
+        {
+            var exceptions = CollectExceptions(exception);
+            var errorCodes = exceptions.OfType<SnowflakeDbException>().Select(x => x.ErrorCode).Distinct().ToArray();
+            var expectedErrorCode = sfError.GetAttribute<SFErrorAttr>().errorCode;
+            Assert.Contains(expectedErrorCode, errorCodes);
+        }
+
         public static void HasHttpErrorCodeInExceptionChain(Exception exception, HttpStatusCode expected)
         {
             var exceptions = CollectExceptions(exception);
-            Assert.AreEqual(true,
-                exceptions.Any(e =>
+            Assert.Contains(exceptions, e =>
                 {
                     switch (e)
                     {
@@ -45,16 +52,13 @@ namespace Snowflake.Data.Tests.Util
                         default:
                             return false;
                     }
-                }),
-                $"Any of exceptions in the chain should have HTTP Status: {expected}");
+                });
         }
 
         public static void HasMessageInExceptionChain(Exception exception, string expected)
         {
             var exceptions = CollectExceptions(exception);
-            Assert.AreEqual(true,
-                exceptions.Any(e => e.Message.Contains(expected)),
-                $"Any of exceptions in the chain should contain message: {expected}");
+            Assert.Contains(exceptions, e => e.Message.Contains(expected));
         }
 
         private static List<Exception> CollectExceptions(Exception exception)

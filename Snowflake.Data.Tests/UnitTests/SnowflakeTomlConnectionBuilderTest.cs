@@ -1,18 +1,17 @@
 using Mono.Unix;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
     using System;
     using System.IO;
     using Moq;
-    using NUnit.Framework;
+    using Xunit;
     using Core.Tools;
     using Snowflake.Data.Core;
-
-    [TestFixture]
-    class TomlConnectionBuilderTest
+    public class TomlConnectionBuilderTest
     {
         private const string BasicTomlConfig = @"
 [default]
@@ -28,7 +27,7 @@ account = ""otheraccountname""
 user = ""otherusername""
 password = ""otherpassword""";
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithReadFromDefaultValuesInSnowflakeTomlConnectionBuilder()
         {
             // Arrange
@@ -46,10 +45,10 @@ password = ""otherpassword""";
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual("account=defaultaccountname;user=defaultusername;password=defaultpassword;", connectionString);
+            Assert.Equal("account=defaultaccountname;user=defaultusername;password=defaultpassword;", connectionString);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionFromCustomSnowflakeHome()
         {
             // Arrange
@@ -70,10 +69,10 @@ password = ""otherpassword""";
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual("account=defaultaccountname;user=defaultusername;password=defaultpassword;", connectionString);
+            Assert.Equal("account=defaultaccountname;user=defaultusername;password=defaultpassword;", connectionString);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithUserConnectionNameFromEnvVariable()
         {
             // Arrange
@@ -94,10 +93,10 @@ password = ""otherpassword""";
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual("account=testaccountname;user=testusername;password=testpassword;", connectionString);
+            Assert.Equal("account=testaccountname;user=testusername;password=testpassword;", connectionString);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithUserConnectionNameFromEnvVariableWithMultipleConnections()
         {
             // Arrange
@@ -118,10 +117,10 @@ password = ""otherpassword""";
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual("account=otheraccountname;user=otherusername;password=otherpassword;", connectionString);
+            Assert.Equal("account=otheraccountname;user=otherusername;password=otherpassword;", connectionString);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithUserConnectionName()
         {
             // Arrange
@@ -142,12 +141,12 @@ password = ""otherpassword""";
             var connectionString = reader.GetConnectionStringFromToml("testconnection");
 
             // Assert
-            Assert.AreEqual("account=testaccountname;user=testusername;password=testpassword;", connectionString);
+            Assert.Equal("account=testaccountname;user=testusername;password=testpassword;", connectionString);
         }
 
 
-        [Test]
-        [TestCase("database = \"mydb\"", "DB=mydb;")]
+        [SFTheory]
+        [InlineData("database = \"mydb\"", "DB=mydb;")]
         public void TestConnectionMapPropertiesFromTomlKeyValues(string tomlKeyValue, string connectionStringValue)
         {
             // Arrange
@@ -171,10 +170,10 @@ password = ""defaultpassword""
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual($"account=defaultaccountname;user=defaultusername;password=defaultpassword;{connectionStringValue}", connectionString);
+            Assert.Equal($"account=defaultaccountname;user=defaultusername;password=defaultpassword;{connectionStringValue}", connectionString);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionConfigurationFileDoesNotExistsShouldReturnEmpty()
         {
             // Arrange
@@ -192,10 +191,10 @@ password = ""defaultpassword""
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual(string.Empty, connectionString);
+            Assert.Equal(string.Empty, connectionString);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithInvalidConnectionName()
         {
             // Arrange
@@ -213,10 +212,10 @@ password = ""defaultpassword""
             var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
 
             // Act and assert
-            Assert.Throws<Exception>(() => reader.GetConnectionStringFromToml(), "Specified connection name does not exist in connections.toml");
+            Assert.Throws<Exception>(() => reader.GetConnectionStringFromToml());
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithNonExistingDefaultConnection()
         {
             // Arrange
@@ -234,11 +233,11 @@ password = ""defaultpassword""
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual(string.Empty, connectionString);
+            Assert.Equal(string.Empty, connectionString);
         }
 
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithSpecifiedConnectionEmpty()
         {
             // Arrange
@@ -268,10 +267,10 @@ password = ""testpassword""");
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual(string.Empty, connectionString);
+            Assert.Equal(string.Empty, connectionString);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithOauthAuthenticatorTokenFromFile()
         {
             // Arrange
@@ -303,10 +302,10 @@ token_file_path = ""{tokenFilePath}""");
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual($"account=testaccountname;authenticator=oauth;token={testToken};", connectionString);
+            Assert.Equal($"account=testaccountname;authenticator=oauth;token={testToken};", connectionString);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithOauthAuthenticatorThrowsExceptionIfTokenFilePathNotExists()
         {
             // Arrange
@@ -337,10 +336,10 @@ token_file_path = ""{tokenFilePath}""");
 
             // Act and assert
             var exception = Assert.Throws<SnowflakeDbException>(() => reader.GetConnectionStringFromToml());
-            Assert.IsTrue(exception.Message.StartsWith("Error: Invalid parameter value /Users/testuser/token for token_file_path"));
+            Assert.StartsWith("Error: Invalid parameter value /Users/testuser/token for token_file_path", exception.Message);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithOauthAuthenticatorFromDefaultPathShouldBeLoadedIfTokenFilePathNotSpecified()
         {
             // Arrange
@@ -370,10 +369,10 @@ authenticator = ""oauth""");
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual($"account=testaccountname;authenticator=oauth;token={defaultToken};", connectionString);
+            Assert.Equal($"account=testaccountname;authenticator=oauth;token={defaultToken};", connectionString);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithOauthAuthenticatorShouldNotIncludeTokenIfNotStoredDefaultPath()
         {
             // Arrange
@@ -402,11 +401,11 @@ authenticator = ""oauth""");
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual($"account=testaccountname;authenticator=oauth;", connectionString);
+            Assert.Equal($"account=testaccountname;authenticator=oauth;", connectionString);
         }
 
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithOauthAuthenticatorShouldNotLoadFromFileIsSpecifiedInTokenProperty()
         {
             // Arrange
@@ -438,10 +437,10 @@ token_file_path = ""{tokenFilePath}""");
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual($"account=testaccountname;authenticator=oauth;token={tokenFromToml};", connectionString);
+            Assert.Equal($"account=testaccountname;authenticator=oauth;token={tokenFromToml};", connectionString);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithOauthAuthenticatorShouldNotIncludeTokenIfNullOrEmpty()
         {
             // Arrange
@@ -470,17 +469,17 @@ authenticator = ""oauth""");
             var connectionString = reader.GetConnectionStringFromToml();
 
             // Assert
-            Assert.AreEqual($"account=testaccountname;authenticator=oauth;", connectionString);
+            Assert.Equal($"account=testaccountname;authenticator=oauth;", connectionString);
         }
 
-        [Test]
-        [TestCase("\\\"password;default\\\"", "password;default")]
-        [TestCase("\\\"\\\"\\\"password;default\\\"", "\"password;default")]
-        [TestCase("p\\\"assworddefault", "p\"assworddefault")]
-        [TestCase("password\\\"default", "password\"default")]
-        [TestCase("password\'default", "password\'default")]
-        [TestCase("password=default", "password=default")]
-        [TestCase("\\\"pa=ss\\\"\\\"word;def\'ault\\\"", "pa=ss\"word;def\'ault")]
+        [SFTheory]
+        [InlineData("\\\"password;default\\\"", "password;default")]
+        [InlineData("\\\"\\\"\\\"password;default\\\"", "\"password;default")]
+        [InlineData("p\\\"assworddefault", "p\"assworddefault")]
+        [InlineData("password\\\"default", "password\"default")]
+        [InlineData("password\'default", "password\'default")]
+        [InlineData("password=default", "password=default")]
+        [InlineData("\\\"pa=ss\\\"\\\"word;def\'ault\\\"", "pa=ss\"word;def\'ault")]
         public void TestConnectionMapPropertiesWithSpecialCharacters(string passwordValueWithSpecialCharacter, string expectedValue)
         {
             // Arrange
@@ -504,10 +503,10 @@ password = ""{passwordValueWithSpecialCharacter}""
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
 
             // Assert
-            Assert.AreEqual(expectedValue, properties[SFSessionProperty.PASSWORD]);
+            Assert.Equal(expectedValue, properties[SFSessionProperty.PASSWORD]);
         }
 
-        [Test]
+        [SFFact]
         public void TestConnectionWithCompleteSPCSConfiguration()
         {
             // Arrange
@@ -545,16 +544,16 @@ disable_ocsp_check = true
             // Assert
             Assert.Multiple(() =>
             {
-                Assert.AreEqual("host.snowflake.com", properties[SFSessionProperty.HOST]);
-                Assert.AreEqual("http", properties[SFSessionProperty.SCHEME]);
-                Assert.AreEqual("80", properties[SFSessionProperty.PORT]);
-                Assert.AreEqual("account123", properties[SFSessionProperty.ACCOUNT]);
-                Assert.AreEqual("testdb", properties[SFSessionProperty.DB]);
-                Assert.AreEqual("testschema", properties[SFSessionProperty.SCHEMA]);
-                Assert.AreEqual("testwh", properties[SFSessionProperty.WAREHOUSE]);
-                Assert.AreEqual("oauth", properties[SFSessionProperty.AUTHENTICATOR]);
-                Assert.AreEqual(testToken, properties[SFSessionProperty.TOKEN]);
-                Assert.AreEqual("true", properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
+                Assert.Equal("host.snowflake.com", properties[SFSessionProperty.HOST]);
+                Assert.Equal("http", properties[SFSessionProperty.SCHEME]);
+                Assert.Equal("80", properties[SFSessionProperty.PORT]);
+                Assert.Equal("account123", properties[SFSessionProperty.ACCOUNT]);
+                Assert.Equal("testdb", properties[SFSessionProperty.DB]);
+                Assert.Equal("testschema", properties[SFSessionProperty.SCHEMA]);
+                Assert.Equal("testwh", properties[SFSessionProperty.WAREHOUSE]);
+                Assert.Equal("oauth", properties[SFSessionProperty.AUTHENTICATOR]);
+                Assert.Equal(testToken, properties[SFSessionProperty.TOKEN]);
+                Assert.Equal("true", properties[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]);
             });
         }
     }

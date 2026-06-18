@@ -63,9 +63,11 @@ namespace Snowflake.Data.Core.FileTransfer
             byte[] ivData = new byte[blockSize];
             byte[] keyData = new byte[blockSize];
 
-            var random = new Random();
-            random.NextBytes(ivData);
-            random.NextBytes(keyData);
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(ivData);
+                rng.GetBytes(keyData);
+            }
 
             var encryptedBytesStream = CreateEncryptedBytesStream(
                 inputStream,
@@ -188,7 +190,7 @@ namespace Snowflake.Data.Core.FileTransfer
             byte[] ivBytes = Convert.FromBase64String(ivBase64);
 
             // Create temp file
-            string tempFileName = Path.Combine(Path.GetTempPath(), Path.GetFileName(inFile));
+            string tempFileName = Path.Combine(TempUtil.GetTempPath(), Path.GetFileName(inFile));
 
             // Create decipher with file key, iv bytes, and AES CBC
             byte[] decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);

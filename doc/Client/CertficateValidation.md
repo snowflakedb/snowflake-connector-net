@@ -17,7 +17,7 @@ Both methods operate on port 80, unencrypted HTTP. Click [Why OCSP uses port 80]
 The certificate authorities operating their CRL/OCSP services over unencrypted HTTP does not introduce any security risk in itself, because no customer data is actually transmitted unencrypted.
 Only the data necessary for verifying certificates, which is publicly available information.
 
-Without the CRL endpoints being properly reachable for the .NET driver, it won't be able to verify certificate validity, and attempting to connect to Snowflake-related endpoints might suffer unnecessary delays, and eventually time out or break with an error:
+Without the CRL endpoints being properly reachable for the .NET driver, it won't be able to verify certificate validity, and attempting to connect to Snowflake-related endpoints might suffer unnecessary delays and eventually time out or fail with an error:
 ```c#
 error:System.Security.Authentication.AuthenticationException:
 The remote certificate is invalid because of errors in the certificate chain: RevocationStatusUnknown, OfflineRevocation

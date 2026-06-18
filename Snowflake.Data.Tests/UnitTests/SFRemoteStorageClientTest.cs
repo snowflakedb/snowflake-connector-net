@@ -1,6 +1,8 @@
+using Snowflake.Data.Tests.Util;
+
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using NUnit.Framework;
+    using Xunit;
     using Snowflake.Data.Core;
     using Snowflake.Data.Core.FileTransfer.StorageClient;
     using Snowflake.Data.Core.FileTransfer;
@@ -13,10 +15,9 @@ namespace Snowflake.Data.Tests.UnitTests
     using System.Text;
     using System.Net;
     using Moq;
-
-    [TestFixture]
-    class SFRemoteStorageClientTest : UnitTestBase
+    public sealed class SFRemoteStorageClientTest : IDisposable
     {
+        private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
         // Mock data for file metadata
         const string EndPoint = "mockEndPoint.com";
 
@@ -66,8 +67,7 @@ namespace Snowflake.Data.Tests.UnitTests
         const bool NotAsync = false;
         const bool IsAsync = true;
 
-        [SetUp]
-        public void BeforeTest()
+        public SFRemoteStorageClientTest()
         {
             t_realSourceFilePath = TestNameWithWorker + "_realSrcFilePath.txt";
             t_downloadFileName = TestNameWithWorker + "_mockFileName.txt";
@@ -116,8 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _cancellationToken = new CancellationToken();
         }
 
-        [TearDown]
-        public void AfterTest()
+        public new void Dispose()
         {
             // Delete temporary files from upload
             if (File.Exists(_fileMetadata.realSrcFilePath))
@@ -132,19 +131,18 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
-        [Test]
-        [Ignore("RemoteStorageClientTest")]
+        [SFFact(Skip = "RemoteStorageClientTest")]
         public void RemoteStorageClientTestDone()
         {
             // Do nothing;
         }
 
-        [Test]
-        [TestCase(SFRemoteStorageUtil.LOCAL_FS)]
-        [TestCase(SFRemoteStorageUtil.S3_FS)]
-        [TestCase(SFRemoteStorageUtil.AZURE_FS)]
-        [TestCase(SFRemoteStorageUtil.GCS_FS)]
-        [TestCase(UnsupportedStageType)] // Any other stage type should return null
+        [SFTheory]
+        [InlineData(SFRemoteStorageUtil.LOCAL_FS)]
+        [InlineData(SFRemoteStorageUtil.S3_FS)]
+        [InlineData(SFRemoteStorageUtil.AZURE_FS)]
+        [InlineData(SFRemoteStorageUtil.GCS_FS)]
+        [InlineData(UnsupportedStageType)] // Any other stage type should return null
         public void TestGetRemoteStorageClient(string stageType)
         {
             _responseData.stageInfo.locationType = stageType;
@@ -159,28 +157,28 @@ namespace Snowflake.Data.Tests.UnitTests
 
                 if (stageType == SFRemoteStorageUtil.S3_FS)
                 {
-                    Assert.IsInstanceOf<SFS3Client>(client);
+                    Assert.IsType<SFS3Client>(client);
                 }
                 else if (stageType == SFRemoteStorageUtil.AZURE_FS)
                 {
-                    Assert.IsInstanceOf<SFSnowflakeAzureClient>(client);
+                    Assert.IsType<SFSnowflakeAzureClient>(client);
                 }
                 else if (stageType == SFRemoteStorageUtil.GCS_FS)
                 {
-                    Assert.IsInstanceOf<SFGCSClient>(client);
+                    Assert.IsType<SFGCSClient>(client);
                 }
                 else
                 {
-                    Assert.IsNull(client);
+                    Assert.Null(client);
                 }
             }
         }
 
-        [Test]
-        [TestCase(false, false)]
-        [TestCase(false, true)]
-        [TestCase(true, false)]
-        [TestCase(true, true)]
+        [SFTheory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
         public void TestUploadFileOrStreamWithAndWithoutEncryption(bool containsEncryptionMaterial, bool useMemoryStream)
         {
             // Arrange
@@ -206,8 +204,8 @@ namespace Snowflake.Data.Tests.UnitTests
             SFRemoteStorageUtil.UploadOneFile(_fileMetadata);
 
             // Assert
-            Assert.AreEqual(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
-            Assert.AreEqual(ResultStatus.SKIPPED.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
+            Assert.Equal(ResultStatus.SKIPPED.ToString(), _fileMetadata.resultStatus);
         }
 
         private Mock<WebRequest> CreateBaseMockClient()
@@ -249,9 +247,9 @@ namespace Snowflake.Data.Tests.UnitTests
             _client.SetCustomWebRequest(mockWebRequest.Object);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        public void TestUploadOneFileWithRetry(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, 1)]
+        public void TestUploadOneFileWithRetry(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, NotAsync);
@@ -260,12 +258,12 @@ namespace Snowflake.Data.Tests.UnitTests
             SFRemoteStorageUtil.UploadOneFileWithRetry(_fileMetadata);
 
             // Assert
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        public async Task TestUploadOneFileAsyncWithRetry(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, 1)]
+        public async Task TestUploadOneFileAsyncWithRetry(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
@@ -274,17 +272,18 @@ namespace Snowflake.Data.Tests.UnitTests
             await SFRemoteStorageUtil.UploadOneFileWithRetryAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
             // Assert
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.OK, null, ResultStatus.SKIPPED)]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        public void TestUploadOneFile(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.OK, default(HttpStatusCode), 4)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, 1)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, 6)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, 5)]
+        public void TestUploadOneFile(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatusInt)
         {
             // Arrange
+            var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, NotAsync);
 
             // Act
@@ -293,19 +292,20 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.SKIPPED)
             {
-                Assert.AreEqual(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
+                Assert.Equal(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
             }
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.OK, null, ResultStatus.SKIPPED)]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.OK, ResultStatus.UPLOADED)]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, ResultStatus.RENEW_PRESIGNED_URL)]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        public async Task TestUploadOneFileAsync(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.OK, default(HttpStatusCode), 4)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.OK, 1)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, 6)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, 5)]
+        public async Task TestUploadOneFileAsync(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatusInt)
         {
             // Arrange
+            var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
 
             // Act
@@ -314,16 +314,16 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.SKIPPED)
             {
-                Assert.AreEqual(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
+                Assert.Equal(DestFileSizeWhenFileAlreadyExists, _fileMetadata.destFileSize);
             }
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public void TestUploadOneFileThrowsForRetryErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, 8)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, 8)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.ServiceUnavailable, 8)]
+        public void TestUploadOneFileThrowsForRetryErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, NotAsync);
@@ -332,31 +332,31 @@ namespace Snowflake.Data.Tests.UnitTests
             Exception ex = Assert.Throws<WebException>(() => SFRemoteStorageUtil.UploadOneFile(_fileMetadata));
 
             // Assert
-            Assert.That(ex.Message, Does.Match(MockRemoteStorageClient.ErrorMessage));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.NotFound, HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public void TestUploadOneFileAsyncThrowsForRetryErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, 8)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError, 8)]
+        [InlineData(HttpStatusCode.NotFound, HttpStatusCode.ServiceUnavailable, 8)]
+        public async Task TestUploadOneFileAsyncThrowsForRetryErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
 
             // Act
-            Exception ex = Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
 
             // Assert
-            Assert.That(ex.Message, Does.Match(MockRemoteStorageClient.ErrorMessage));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
 
-        [Test]
-        [TestCase(HttpStatusCode.NotFound, null, ResultStatus.ERROR)]
-        public void TestUploadOneFileThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.NotFound, default(HttpStatusCode), 0)]
+        public void TestUploadOneFileThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, NotAsync);
@@ -365,23 +365,23 @@ namespace Snowflake.Data.Tests.UnitTests
             Exception ex = Assert.Throws<Exception>(() => SFRemoteStorageUtil.UploadOneFile(_fileMetadata));
 
             // Assert
-            Assert.That(ex.Message, Does.Match($"Unknown Error in uploading a file: .*"));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Matches($"Unknown Error in uploading a file: .*", ex.Message);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.NotFound, null, ResultStatus.ERROR)]
-        public void TestUploadOneFileAsyncThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.NotFound, default(HttpStatusCode), 0)]
+        public async Task TestUploadOneFileAsyncThrowsForUnknownErrors(HttpStatusCode httpStatusCode, HttpStatusCode httpStatusCodeAfterRetry, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
 
             // Act
-            Exception ex = Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
 
             // Assert
-            Assert.That(ex.Message, Does.Match($"Unknown Error in uploading a file: .*"));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Matches($"Unknown Error in uploading a file: .*", ex.Message);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
         private void SetUpMockClientForDownload(HttpStatusCode statusCode, bool isAsync)
@@ -409,12 +409,13 @@ namespace Snowflake.Data.Tests.UnitTests
             _client.SetCustomWebRequest(mockWebRequest.Object);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
-        [TestCase(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        public void TestDownloadOneFile(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.OK, 2)]
+        [InlineData(HttpStatusCode.Unauthorized, 5)]
+        public async Task TestDownloadOneFile(HttpStatusCode httpStatusCode, int expectedResultStatusInt)
         {
             // Arrange
+            var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
             SetUpMockClientForDownload(httpStatusCode, NotAsync);
 
             // Act
@@ -423,18 +424,19 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
-                string text = File.ReadAllText(t_downloadFileName);
-                Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
+                string text = await ReadDownloadFileAsync();
+                Assert.Equal(MockRemoteStorageClient.FileContent, text);
             }
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
-        [TestCase(HttpStatusCode.Unauthorized, ResultStatus.RENEW_TOKEN)]
-        public async Task TestDownloadOneFileAsync(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.OK, 2)]
+        [InlineData(HttpStatusCode.Unauthorized, 5)]
+        public async Task TestDownloadOneFileAsync(HttpStatusCode httpStatusCode, int expectedResultStatusInt)
         {
             // Arrange
+            var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
             SetUpMockClientForDownload(httpStatusCode, IsAsync);
 
             // Act
@@ -443,17 +445,18 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
-                string text = File.ReadAllText(t_downloadFileName);
-                Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
+                var text = await ReadDownloadFileAsync();
+                Assert.Equal(MockRemoteStorageClient.FileContent, text);
             }
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public void TestDownloadOneFileThrowsForRetryErrors(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+
+        [SFTheory]
+        [InlineData(HttpStatusCode.Forbidden, 8)]
+        [InlineData(HttpStatusCode.InternalServerError, 8)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, 8)]
+        public void TestDownloadOneFileThrowsForRetryErrors(HttpStatusCode httpStatusCode, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForDownload(httpStatusCode, NotAsync);
@@ -462,29 +465,29 @@ namespace Snowflake.Data.Tests.UnitTests
             Exception ex = Assert.Throws<WebException>(() => SFRemoteStorageUtil.DownloadOneFile(_fileMetadata));
 
             // Assert
-            Assert.That(ex.Message, Does.Match(MockRemoteStorageClient.ErrorMessage));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.Forbidden, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.InternalServerError, ResultStatus.NEED_RETRY)]
-        [TestCase(HttpStatusCode.ServiceUnavailable, ResultStatus.NEED_RETRY)]
-        public void TestDownloadOneFileAsyncThrowsForRetryErrors(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.Forbidden, 8)]
+        [InlineData(HttpStatusCode.InternalServerError, 8)]
+        [InlineData(HttpStatusCode.ServiceUnavailable, 8)]
+        public async Task TestDownloadOneFileAsyncThrowsForRetryErrors(HttpStatusCode httpStatusCode, int expectedResultStatus)
         {
             // Arrange
             SetUpMockClientForDownload(httpStatusCode, IsAsync);
 
             // Act
-            Exception ex = Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
 
             // Assert
-            Assert.That(ex.Message, Does.Match(MockRemoteStorageClient.ErrorMessage));
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.NotFound)]
+        [SFTheory]
+        [InlineData(HttpStatusCode.NotFound)]
         public void TestDownloadOneFileThrowsForUnknownErrors(HttpStatusCode httpStatusCode)
         {
             // Arrange
@@ -494,23 +497,23 @@ namespace Snowflake.Data.Tests.UnitTests
             Exception ex = Assert.Throws<Exception>(() => SFRemoteStorageUtil.DownloadOneFile(_fileMetadata));
 
             // Assert
-            Assert.That(ex.Message, Does.Match($"Unknown Error in downloading a file: .*"));
-            Assert.IsNull(_fileMetadata.resultStatus);
+            Assert.Matches($"Unknown Error in downloading a file: .*", ex.Message);
+            Assert.Null(_fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.NotFound)]
-        public void TestDownloadOneFileAsyncThrowsForUnknownErrors(HttpStatusCode httpStatusCode)
+        [SFTheory]
+        [InlineData(HttpStatusCode.NotFound)]
+        public async Task TestDownloadOneFileAsyncThrowsForUnknownErrors(HttpStatusCode httpStatusCode)
         {
             // Arrange
             SetUpMockClientForDownload(httpStatusCode, IsAsync);
 
             // Act
-            Exception ex = Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
 
             // Assert
-            Assert.That(ex.Message, Does.Match($"Unknown Error in downloading a file: .*"));
-            Assert.IsNull(_fileMetadata.resultStatus);
+            Assert.Matches($"Unknown Error in downloading a file: .*", ex.Message);
+            Assert.Null(_fileMetadata.resultStatus);
         }
 
         private void SetUpMockEncryptedFileForDownload()
@@ -532,9 +535,9 @@ namespace Snowflake.Data.Tests.UnitTests
             MockRemoteStorageClient.SetEncryptionData(streamPair.MainStream, encryptionMetadata.iv, encryptionMetadata.key);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
-        public void TestDownloadOneFileWithEncryptionMaterial(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.OK, 2)]
+        public async Task TestDownloadOneFileWithEncryptionMaterial(HttpStatusCode httpStatusCode, int expectedResultStatus)
         {
             // Arrange
             SetUpMockEncryptedFileForDownload();
@@ -544,14 +547,14 @@ namespace Snowflake.Data.Tests.UnitTests
             SFRemoteStorageUtil.DownloadOneFile(_fileMetadata);
 
             // Assert
-            string text = File.ReadAllText(t_downloadFileName);
-            Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            string text = await ReadDownloadFileAsync();
+            Assert.Equal(MockRemoteStorageClient.FileContent, text);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
 
-        [Test]
-        [TestCase(HttpStatusCode.OK, ResultStatus.DOWNLOADED)]
-        public async Task TestDownloadOneFileAsyncWithEncryptionMaterial(HttpStatusCode httpStatusCode, ResultStatus expectedResultStatus)
+        [SFTheory]
+        [InlineData(HttpStatusCode.OK, 2)]
+        public async Task TestDownloadOneFileAsyncWithEncryptionMaterial(HttpStatusCode httpStatusCode, int expectedResultStatus)
         {
             // Arrange
             SetUpMockEncryptedFileForDownload();
@@ -561,9 +564,20 @@ namespace Snowflake.Data.Tests.UnitTests
             await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
             // Assert
-            string text = File.ReadAllText(t_downloadFileName);
-            Assert.AreEqual(MockRemoteStorageClient.FileContent, text);
-            Assert.AreEqual(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
+            string text = await ReadDownloadFileAsync();
+            Assert.Equal(MockRemoteStorageClient.FileContent, text);
+            Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
+        }
+
+        private async Task<string> ReadDownloadFileAsync()
+        {
+#if NETFRAMEWORK
+            var result = File.ReadAllText(t_downloadFileName);
+            return result;
+#else
+            var text = await File.ReadAllTextAsync(t_downloadFileName, _cancellationToken);
+            return text;
+#endif
         }
     }
 }
