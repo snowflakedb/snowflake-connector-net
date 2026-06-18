@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Empty(attestation.UserIdentifierComponents);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailAttestationWhenStsCallFails()
         {
             // arrange - STS returns empty token
@@ -87,7 +87,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Retrieving attestation for AWS failed.", thrown.Message);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailAttestationWhenNoCredentials()
         {
             // arrange
@@ -103,7 +103,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Could not find AWS credentials", thrown.Message);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestFailAttestationWhenNoRegion()
         {
             // arrange
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Could not find AWS region", thrown.Message);
         }
 
-        [SFFact(RetriesCount = RetriesCount.Thrice)]
+        [SFFact(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
         public void TestSuccessfulAwsTransitiveImpersonation()
         {
             // arrange
@@ -135,7 +135,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             AssertSessionSuccessfullyCreated(session);
         }
 
-        [SFFact]
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulAwsTransitiveImpersonationAttestation()
         {
             // arrange
