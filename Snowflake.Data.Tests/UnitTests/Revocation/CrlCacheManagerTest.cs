@@ -24,7 +24,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 
         const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";
         const string CrlUrl2 = "http://snowflakecomputing.com/crl2.crl";
-        public void SetUp()
+
+        private void SetUp()
         {
             var cacheDir = GetCrlCacheDirectory();
             if (Directory.Exists(cacheDir))

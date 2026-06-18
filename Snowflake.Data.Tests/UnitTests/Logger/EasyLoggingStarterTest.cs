@@ -142,18 +142,19 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
 
         [SFTheory(SkipCondition.SkipOnWindows)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute)]
-        [InlineData(FileAccessPermissions.AllPermissions)]
-        [InlineData(FileAccessPermissions.GroupReadWriteExecute)]
-        [InlineData(FileAccessPermissions.OtherReadWriteExecute)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead)]
-        [InlineData(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead)]
-        public void TestThatThrowsErrorWhenLogDirectoryHasInvalidPermissions(FileAccessPermissions invalidPermissions)
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute, "User RWX + Group RX")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute, "User RWX + Group RWX")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute, "User RWX + Group RWX + Other RX")]
+        [InlineData(FileAccessPermissions.AllPermissions, "All")]
+        [InlineData(FileAccessPermissions.GroupReadWriteExecute, "Group RWX")]
+        [InlineData(FileAccessPermissions.OtherReadWriteExecute, "Other RWX")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead, "User RWX + Other R")]
+        [InlineData(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite, "User RW")]
+        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead, "User RWX + Group R")]
+        public void TestThatThrowsErrorWhenLogDirectoryHasInvalidPermissions(FileAccessPermissions invalidPermissions, string log)
         {
             // arrange
+            Console.WriteLine($@"Executing {nameof(TestThatThrowsErrorWhenLogDirectoryHasInvalidPermissions)} with {log}..");
             t_easyLoggingProvider
                 .Setup(provider => provider.ProvideConfig(ConfigPath))
                 .Returns(s_configWithInfoLevel);

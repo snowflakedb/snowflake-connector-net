@@ -31,7 +31,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         {
         }
 
-        public static void BeforeAll()
+        internal static void BeforeAll()
         {
             if (!Directory.Exists(s_workingDirectory))
             {

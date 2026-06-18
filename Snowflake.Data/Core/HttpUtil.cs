@@ -38,7 +38,7 @@ namespace Snowflake.Data.Core
             long crlDownloadMaxSize = 209715200,
             string minTlsProtocol = "TLS12",
             string maxTlsProtocol = "TLS13"
-            )
+        )
         {
             ProxyHost = proxyHost;
             ProxyPort = proxyPort;
@@ -60,7 +60,8 @@ namespace Snowflake.Data.Core
             MaxTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(maxTlsProtocol) : SslProtocols.None;
 
             ConfKey = string.Join(";",
-                new string[] {
+                new string[]
+                {
                     proxyHost,
                     proxyPort,
                     proxyUser,
@@ -137,6 +138,7 @@ namespace Snowflake.Data.Core
 
         internal void IncreaseLowDefaultConnectionLimitOfServicePointManager()
         {
+#if !NET9_0_OR_GREATER // ServicePointManager has no effect on HttpClient from net9
             var currentLimit = ServicePointManager.DefaultConnectionLimit;
 
             // Only increase if below Snowflake's minimum requirement
@@ -152,6 +154,7 @@ namespace Snowflake.Data.Core
             {
                 logger.Debug($"Using the current ServicePointManager.DefaultConnectionLimit value of {currentLimit}");
             }
+#endif
         }
 
         internal static HttpUtil Instance { get; } = new HttpUtil();
@@ -187,7 +190,8 @@ namespace Snowflake.Data.Core
 
         internal HttpClient CreateNewHttpClient(HttpClientConfig config, DelegatingHandler customHandler = null) =>
             new HttpClient(
-                new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason, config.ConnectionLimit))
+                new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries,
+                    config.IncludeRetryReason, config.ConnectionLimit))
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
@@ -199,12 +203,14 @@ namespace Snowflake.Data.Core
             {
                 return _restRequesterForCrlCheck;
             }
+
             lock (_httpClientProviderLock)
             {
                 if (_restRequesterForCrlCheck != null)
                 {
                     return _restRequesterForCrlCheck;
                 }
+
                 var httpClient = new HttpClient();
                 _restRequesterForCrlCheck = new RestRequester(httpClient);
                 return _restRequesterForCrlCheck;
@@ -256,8 +262,8 @@ namespace Snowflake.Data.Core
 
                         // Replace with the valid entry syntax
                         bypassList[i] = entry;
-
                     }
+
                     proxy.BypassList = bypassList;
                 }
 
@@ -266,6 +272,7 @@ namespace Snowflake.Data.Core
                 httpHandlerWithProxy.Proxy = proxy;
                 return httpHandlerWithProxy;
             }
+
             return httpHandler;
         }
 
@@ -279,6 +286,7 @@ namespace Snowflake.Data.Core
                     customizedCrlCheck = true;
                     return CreateHttpClientHandlerWithCustomizedCrlCheck(config);
                 }
+
                 return CreateHttpClientHandlerWithDotnetCrlCheck(config);
             }
             // special logic for .NET framework 4.7.1 that
@@ -287,8 +295,10 @@ namespace Snowflake.Data.Core
             {
                 if (customizedCrlCheck)
                 {
-                    logger.Error("Could not use customized Crl revocation check. Probably you are using old .net framework 4.6.2 or 4.7.1 where revocation check is done by Windows OS");
+                    logger.Error(
+                        "Could not use customized Crl revocation check. Probably you are using old .net framework 4.6.2 or 4.7.1 where revocation check is done by Windows OS");
                 }
+
                 return new HttpClientHandler
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
@@ -371,6 +381,7 @@ namespace Snowflake.Data.Core
                     {
                         queryParams.Set(RestParams.SF_QUERY_RETRY_COUNT, retryCount.ToString());
                     }
+
                     retryCount++;
                 }
             }
@@ -411,6 +422,7 @@ namespace Snowflake.Data.Core
 
             UriBuilder uriBuilder;
             List<IRule> rules;
+
             internal UriUpdater(Uri uri, bool includeRetryReason = true)
             {
                 uriBuilder = new UriBuilder(uri);
@@ -450,6 +462,7 @@ namespace Snowflake.Data.Core
                     {
                         ((RetryReasonRule)rule).SetRetryReason(retryReason);
                     }
+
                     rule.apply(queryParams);
                 }
 
@@ -465,6 +478,7 @@ namespace Snowflake.Data.Core
                 return uriBuilder.Uri;
             }
         }
+
         private class RetryHandler : DelegatingHandler
         {
             static private SFLogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
@@ -475,7 +489,8 @@ namespace Snowflake.Data.Core
             private bool includeRetryReason;
             private int connectionLimit;
 
-            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetryCount, bool includeRetryReason, int connectionLimit) : base(innerHandler)
+            internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetryCount,
+                bool includeRetryReason, int connectionLimit) : base(innerHandler)
             {
                 this.disableRetry = disableRetry;
                 this.forceRetryOn404 = forceRetryOn404;
@@ -488,20 +503,22 @@ namespace Snowflake.Data.Core
                 CancellationToken cancellationToken)
             {
                 HttpResponseMessage response = null;
-                string absolutePath = requestMessage.RequestUri.AbsolutePath;
-                bool isLoginRequest = IsLoginEndpoint(absolutePath);
-                bool isOktaSSORequest = IsOktaSSORequest(requestMessage.RequestUri.Host, absolutePath);
-                int backOffInSec = s_baseBackOffTime;
-                int totalRetryTime = 0;
+                var absolutePath = requestMessage.RequestUri!.AbsolutePath;
+                var isLoginRequest = IsLoginEndpoint(absolutePath);
+                var isOktaSSORequest = IsOktaSSORequest(requestMessage.RequestUri.Host, absolutePath);
+                var backOffInSec = s_baseBackOffTime;
                 Exception lastException = null;
 
-                ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
+
+#pragma warning disable SYSLIB0014 // TODO SNOW-3662960
+                var p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
+#pragma warning restore SYSLIB0014
                 p.Expect100Continue = false; // Saves about 100 ms per request
                 p.UseNagleAlgorithm = false; // Saves about 200 ms per request
-                p.ConnectionLimit = connectionLimit;    // Default value is 2, we need more connections for performing multiple parallel queries
+                p.ConnectionLimit = connectionLimit; // Default value is 2, we need more connections for performing multiple parallel queries
 
-                TimeSpan httpTimeout = (TimeSpan)requestMessage.GetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY);
-                TimeSpan restTimeout = (TimeSpan)requestMessage.GetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY);
+                var httpTimeout = (TimeSpan)requestMessage.GetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY);
+                var restTimeout = (TimeSpan)requestMessage.GetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY);
 
                 if (logger.IsDebugEnabled())
                 {
@@ -511,10 +528,10 @@ namespace Snowflake.Data.Core
 
                 CancellationTokenSource childCts = null;
 
-                UriUpdater updater = new UriUpdater(requestMessage.RequestUri, includeRetryReason);
-                int retryCount = 0;
+                var updater = new UriUpdater(requestMessage.RequestUri, includeRetryReason);
+                var retryCount = 0;
 
-                long startTimeInMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                var startTimeInMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 while (true)
                 {
                     try
@@ -529,8 +546,8 @@ namespace Snowflake.Data.Core
                             else
                                 childCts.CancelAfter(httpTimeout);
                         }
-                        response = await base.SendAsync(requestMessage, childCts == null ?
-                            cancellationToken : childCts.Token).ConfigureAwait(false);
+
+                        response = await base.SendAsync(requestMessage, childCts?.Token ?? cancellationToken).ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {
@@ -540,13 +557,13 @@ namespace Snowflake.Data.Core
                             logger.Info("SF rest request timeout or explicit cancel called.");
                             cancellationToken.ThrowIfCancellationRequested();
                         }
-                        else if (childCts != null && childCts.Token.IsCancellationRequested)
+                        else if (childCts is { Token.IsCancellationRequested: true })
                         {
                             logger.Warn($"Http request timeout. Retry the request after max {backOffInSec} sec.");
                         }
                         else
                         {
-                            Exception innermostException = GetInnerMostException(e);
+                            var innermostException = GetInnerMostException(e);
 
                             if (innermostException is AuthenticationException)
                             {
@@ -561,14 +578,11 @@ namespace Snowflake.Data.Core
                         }
                     }
 
-                    totalRetryTime = (int)((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startTimeInMilliseconds) / 1000);
+                    var totalRetryTime = (int)((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startTimeInMilliseconds) / 1000);
 
-                    if (childCts != null)
-                    {
-                        childCts.Dispose();
-                    }
+                    childCts?.Dispose();
 
-                    int errorReason = 0;
+                    var errorReason = 0;
 
                     if (response != null)
                     {
@@ -594,6 +608,7 @@ namespace Snowflake.Data.Core
                                 return response;
                             }
                         }
+
                         errorReason = (int)response.StatusCode;
                     }
                     else
@@ -608,6 +623,7 @@ namespace Snowflake.Data.Core
                         {
                             return response;
                         }
+
                         var errorMessage = $"http request failed and connection_timeout {restTimeout.TotalSeconds} sec. reached.\n";
                         errorMessage += $"Last exception encountered: {lastException}";
                         logger.Error(errorMessage);
@@ -628,6 +644,7 @@ namespace Snowflake.Data.Core
                         {
                             return response;
                         }
+
                         var errorMessage = $"http request failed and max retry {maxRetryCount} reached.\n";
                         errorMessage += $"Last exception encountered: {lastException}";
                         logger.Error(errorMessage);
@@ -684,22 +701,22 @@ namespace Snowflake.Data.Core
             if (forceRetryOn404 && statusCode == 404)
                 return true;
             return (500 <= statusCode && statusCode < 600) ||
-            // Forbidden
-            (statusCode == 403) ||
-            // Request timeout
-            (statusCode == 408) ||
-            // Too many requests
-            (statusCode == 429) ||
-            IsRedirectHTTPCode(statusCode);
+                   // Forbidden
+                   (statusCode == 403) ||
+                   // Request timeout
+                   (statusCode == 408) ||
+                   // Too many requests
+                   (statusCode == 429) ||
+                   IsRedirectHTTPCode(statusCode);
         }
 
         static public bool IsRedirectHTTPCode(int statusCode)
         {
             return
-            // Temporary redirect
-            (statusCode == 307) ||
-            // Permanent redirect
-            (statusCode == 308);
+                // Temporary redirect
+                (statusCode == 307) ||
+                // Permanent redirect
+                (statusCode == 308);
         }
 
         /// <summary>
@@ -749,5 +766,3 @@ namespace Snowflake.Data.Core
         }
     }
 }
-
-

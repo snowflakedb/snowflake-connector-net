@@ -26,7 +26,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         private const string KConfiguration = "K_CONFIGURATION";
         private const string CloudRunJob = "CLOUD_RUN_JOB";
         private const string CloudRunExecution = "CLOUD_RUN_EXECUTION";
-        public void TearDown()
+
+        private void TearDown()
         {
             Environment.SetEnvironmentVariable(LambdaTaskRoot, null);
             Environment.SetEnvironmentVariable(GithubActions, null);
