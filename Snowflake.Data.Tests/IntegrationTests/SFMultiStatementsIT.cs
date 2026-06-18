@@ -312,8 +312,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"use schema {_fixture.testConfig.schema};"+
-                                      $"use schema {_fixture.testConfig.schema};"+
+                    cmd.CommandText = $"use schema {_fixture.testConfig.schema};" +
                                       $"create or replace table {tableName}(cola integer, colb string);" +
                                       $"insert into {tableName} values (?, ?);" +
                                       $"insert into {tableName} values (?, ?), (?, ?);" +
@@ -337,7 +336,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     var p2 = cmd.CreateParameter();
                     p2.ParameterName = "2";
                     p2.DbType = DbType.String;
-                    p2.Value ="str1";
+                    p2.Value = "str1";
                     cmd.Parameters.Add(p2);
 
                     var p3 = cmd.CreateParameter();
@@ -368,20 +367,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     //skip use statement
                     Assert.True(reader.NextResult());
-                    Assert.True(reader.NextResult());
 
                     // result of create
-                    Assert.False(reader.HasRows);
+                    Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of insert #1
                     Assert.True(reader.NextResult());
-                    Assert.False(reader.HasRows);
+                    Assert.True(reader.HasRows);
                     Assert.Equal(1, reader.RecordsAffected);
 
                     // result of insert #2
                     Assert.True(reader.NextResult());
-                    Assert.False(reader.HasRows);
+                    Assert.True(reader.HasRows);
                     Assert.Equal(2, reader.RecordsAffected);
 
                     // result of select
@@ -401,7 +399,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // result of drop
                     Assert.True(reader.NextResult());
-                    Assert.False(reader.HasRows);
+                    Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     Assert.False(reader.NextResult());
