@@ -17,15 +17,7 @@ namespace Snowflake.Data.Core
 {
     internal class TomlConnectionBuilder
     {
-        private const string DefaultConnectionName = "default";
-        private const string DefaultSnowflakeFolder = ".snowflake";
         private const string DefaultTokenPath = "/snowflake/session/token";
-
-        internal const string SnowflakeDefaultConnectionName = "SNOWFLAKE_DEFAULT_CONNECTION_NAME";
-        internal const string SnowflakeHome = "SNOWFLAKE_HOME";
-        internal const string SkipWarningForReadPermissions = "SF_SKIP_WARNING_FOR_READ_PERMISSIONS_ON_CONFIG_FILE";
-        internal const string SkipTokenFilePermissionsVerification = "SKIP_TOKEN_FILE_PERMISSIONS_VERIFICATION";
-
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
         private readonly Dictionary<string, string> _tomlToNetPropertiesMapper = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
@@ -35,20 +27,20 @@ namespace Snowflake.Data.Core
         };
 
         private readonly FileOperations _fileOperations;
-        private readonly EnvironmentOperations _environmentOperations;
+        private readonly IEnvironmentFacade _environmentFacade;
 
         private static bool _skipWarningForReadPermissions = false;
 
         public static readonly TomlConnectionBuilder Instance = new TomlConnectionBuilder();
 
-        private TomlConnectionBuilder() : this(FileOperations.Instance, EnvironmentOperations.Instance)
+        private TomlConnectionBuilder() : this(FileOperations.Instance, EnvironmentFacade.Instance)
         {
         }
 
-        internal TomlConnectionBuilder(FileOperations fileOperations, EnvironmentOperations environmentOperations)
+        internal TomlConnectionBuilder(FileOperations fileOperations, IEnvironmentFacade environmentFacade)
         {
             _fileOperations = fileOperations;
-            _environmentOperations = environmentOperations;
+            _environmentFacade = environmentFacade;
         }
 
         public string GetConnectionStringFromToml(string connectionName = null)
@@ -141,13 +133,13 @@ namespace Snowflake.Data.Core
             var toml = Toml.ToModel(tomlContent);
             if (string.IsNullOrEmpty(connectionName))
             {
-                connectionName = _environmentOperations.GetEnvironmentVariable(SnowflakeDefaultConnectionName) ?? DefaultConnectionName;
+                connectionName = _environmentFacade.GetString(EnvVars.DefaultConnectionName);
             }
 
             var connectionExists = toml.TryGetValue(connectionName, out var connection);
             // Avoid handling error when default connection does not exist, user could not want to use toml configuration and forgot to provide the
             // connection string, this error should be thrown later when the undefined connection string is used.
-            if (!connectionExists && connectionName != DefaultConnectionName)
+            if (!connectionExists && connectionName != EnvVars.DefaultConnectionName.DefaultValue)
             {
                 throw new Exception("Specified connection name does not exist in connections.toml");
             }
@@ -158,8 +150,11 @@ namespace Snowflake.Data.Core
 
         private string ResolveConnectionTomlFile()
         {
-            var defaultDirectory = Path.Combine(HomeDirectoryProvider.HomeDirectory(_environmentOperations), DefaultSnowflakeFolder);
-            var tomlFolder = _environmentOperations.GetEnvironmentVariable(SnowflakeHome) ?? defaultDirectory;
+            var tomlFolder = _environmentFacade.GetString(EnvVars.SnowflakeHome);
+            tomlFolder = string.IsNullOrEmpty(tomlFolder)
+                ? Path.Combine(HomeDirectoryProvider.HomeDirectory(_environmentFacade), ".snowflake")
+                : tomlFolder;
+
             var tomlPath = Path.Combine(tomlFolder, "connections.toml");
             return tomlPath;
         }
@@ -167,9 +162,9 @@ namespace Snowflake.Data.Core
 
         internal static void ValidateFilePermissions(UnixStream stream)
         {
-            if (bool.TryParse(EnvironmentOperations.Instance.GetEnvironmentVariable(SkipTokenFilePermissionsVerification), out var skipAll) && skipAll)
+            if (EnvironmentFacade.Instance.GetBool(EnvVars.SkipTokenFilePermissionsVerification))
             {
-                s_logger.Info("Skipping file permissions verification due to environment variable: " + SkipTokenFilePermissionsVerification);
+                s_logger.Info("Skipping file permissions verification due to environment variable: " + EnvVars.SkipTokenFilePermissionsVerification.Name);
                 return;
             }
 
@@ -184,7 +179,7 @@ namespace Snowflake.Data.Core
             if (stream.OwnerUser.UserId != Syscall.geteuid())
                 throw new SecurityException("Attempting to read a file not owned by the effective user of the current process");
 
-            bool.TryParse(EnvironmentOperations.Instance.GetEnvironmentVariable(SkipWarningForReadPermissions), out _skipWarningForReadPermissions);
+            _skipWarningForReadPermissions = EnvironmentFacade.Instance.GetBool(EnvVars.SkipWarnForFilePermissionsVerification);
             if (!_skipWarningForReadPermissions)
             {
                 var nonUserReadPermissions = new[]

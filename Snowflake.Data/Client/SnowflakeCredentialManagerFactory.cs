@@ -87,8 +87,7 @@ namespace Snowflake.Data.Client
         private static ISnowflakeCredentialManager GetDefaultCredentialManager()
         {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? (ISnowflakeCredentialManager)
-                SFCredentialManagerWindowsNativeImpl.Instance
+                ? SFCredentialManagerWindowsNativeImpl.Instance
                 : SFCredentialManagerFileImpl.Instance;
         }
     }

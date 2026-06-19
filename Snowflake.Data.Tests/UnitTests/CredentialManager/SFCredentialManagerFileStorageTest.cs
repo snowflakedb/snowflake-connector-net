@@ -15,11 +15,11 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         private const string HomeLocation = "/Users/snowflake";
 
         [ThreadStatic]
-        private static Mock<EnvironmentOperations> t_environmentOperations;
+        private static Mock<IEnvironmentFacade> t_environmentOperations;
 
         public SFCredentialManagerFileStorageTest()
         {
-            t_environmentOperations = new Mock<EnvironmentOperations>();
+            t_environmentOperations = new Mock<IEnvironmentFacade>();
         }
 
         [SFFact]
@@ -87,14 +87,14 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         private void MockSnowflakeCacheEnvironmentVariable()
         {
             t_environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileStorage.CredentialCacheDirectoryEnvironmentName))
+                .Setup(e => e.GetString(EnvVars.TemporaryCredentialDir))
                 .Returns(SnowflakeCacheLocation);
         }
 
         private void MockCommonCacheEnvironmentVariable()
         {
             t_environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(SFCredentialManagerFileStorage.CommonCacheDirectoryEnvironmentName))
+                .Setup(e => e.GetString(EnvVars.CommonCacheDirectory))
                 .Returns(CommonCacheLocation);
         }
 

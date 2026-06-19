@@ -11,29 +11,27 @@ namespace Snowflake.Data.Core.Revocation
 {
     internal class CrlParser
     {
-        internal const string CrlValidityTimeEnvName = "SF_CRL_VALIDITY_TIME";
-        private const int CrlValidityTimeDefaultDays = 1;
-
         private readonly TimeSpan _crlCacheValidityTime;
+        private readonly TimeSpan _crlCacheRemovalDelay;
 
-        public CrlParser(EnvironmentOperations environmentOperations)
+        public CrlParser(IEnvironmentFacade environmentFacade)
         {
-            var validityDays = ValuesExtractor.ExtractInt(
-                () => environmentOperations.GetEnvironmentVariable(CrlValidityTimeEnvName),
-                $"environmental variable {CrlValidityTimeEnvName}",
-                CrlValidityTimeDefaultDays);
+            var validityDays = environmentFacade.GetInt(EnvVars.CrlValidityTime);
             _crlCacheValidityTime = TimeSpan.FromDays(validityDays);
+
+            var cacheRemovalDelayDays = environmentFacade.GetInt(EnvVars.CrlCacheRemovalDelay);
+            _crlCacheRemovalDelay = TimeSpan.FromDays(cacheRemovalDelayDays);
         }
 
-        internal CrlParser(TimeSpan crlCacheValidityTime)
+        internal CrlParser(TimeSpan crlCacheValidityTime, TimeSpan crlCacheRemovalDelay)
         {
             _crlCacheValidityTime = crlCacheValidityTime;
+            _crlCacheRemovalDelay = crlCacheRemovalDelay;
         }
 
-        internal TimeSpan GetCacheValidityTime()
-        {
-            return _crlCacheValidityTime;
-        }
+        internal TimeSpan GetCacheValidityTime() => _crlCacheValidityTime;
+
+        internal TimeSpan GetCleanupInterval() => _crlCacheRemovalDelay;
 
         public Crl Parse(byte[] bytes, DateTime now)
         {

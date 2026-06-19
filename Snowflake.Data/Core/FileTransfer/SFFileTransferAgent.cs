@@ -90,15 +90,6 @@ namespace Snowflake.Data.Core
         private PutGetResponseData TransferMetadata;
 
         /// <summary>
-        /// The path to the user home directory.
-        /// </summary>
-        private readonly string HomePath = (
-            Environment.OSVersion.Platform == PlatformID.Unix ||
-            Environment.OSVersion.Platform == PlatformID.MacOSX) ?
-              Environment.GetEnvironmentVariable("HOME") :
-              Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
-
-        /// <summary>
         /// List of metadata for small and large files.
         /// </summary>
         private List<SFFileMetadata> FilesMetas = new List<SFFileMetadata>();
@@ -874,7 +865,7 @@ namespace Snowflake.Data.Core
 
             var homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
                             Environment.OSVersion.Platform == PlatformID.MacOSX)
-                ? Environment.GetEnvironmentVariable("HOME")
+                ? EnvironmentFacade.Instance.GetString(EnvVars.Home)
                 : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
 
             return directoryPath.Replace("~", homePath);

@@ -21,7 +21,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private static Mock<FileOperations> t_fileOperations;
 
         [ThreadStatic]
-        private static Mock<EnvironmentOperations> t_environmentOperations;
+        private static Mock<IEnvironmentFacade> t_environmentOperations;
 
         [ThreadStatic]
         private static EasyLoggingConfigFinder t_finder;
@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         public EasyLoggingConfigFinderTest()
         {
             t_fileOperations = new Mock<FileOperations>();
-            t_environmentOperations = new Mock<EnvironmentOperations>();
+            t_environmentOperations = new Mock<IEnvironmentFacade>();
             t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_environmentOperations.Object);
             MockHomeDirectory();
             MockExecutionDirectory();
@@ -200,7 +200,7 @@ namespace Snowflake.Data.Tests.UnitTests.Configuration
         private static void MockFileFromEnvironmentalVariable()
         {
             t_environmentOperations
-                .Setup(e => e.GetEnvironmentVariable(EasyLoggingConfigFinder.ClientConfigEnvironmentName))
+                .Setup(e => e.GetString(EnvVars.ClientConfigFile))
                 .Returns(EnvironmentalConfigFilePath);
         }
 

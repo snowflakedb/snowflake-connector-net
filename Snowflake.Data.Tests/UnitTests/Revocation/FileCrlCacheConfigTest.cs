@@ -16,7 +16,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             // arrange
             const string WindowsHomeDirectory = "C:\\Windows\\Home";
             const string ExpectedCrlCacheDirectory = "C:\\Windows\\Home\\AppData\\Local\\Snowflake\\Caches\\crls";
-            var environmentOperations = new Mock<EnvironmentOperations>();
+            var environmentOperations = new Mock<IEnvironmentFacade>();
             environmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns(WindowsHomeDirectory);
             var unixOperations = new Mock<UnixOperations>();
@@ -42,7 +42,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             const string ExpectedMacOsCrlCacheDirectory = "/Users/dotnet-user/Library/Caches/Snowflake/crls";
             const string ExpectedLinuxCrlCacheDirectory = "/Users/dotnet-user/.cache/snowflake/crls";
             var expectedDirectory = RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? ExpectedMacOsCrlCacheDirectory : ExpectedLinuxCrlCacheDirectory;
-            var environmentOperations = new Mock<EnvironmentOperations>();
+            var environmentOperations = new Mock<IEnvironmentFacade>();
             environmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns(HomeDirectory);
             var unixOperations = new Mock<UnixOperations>();

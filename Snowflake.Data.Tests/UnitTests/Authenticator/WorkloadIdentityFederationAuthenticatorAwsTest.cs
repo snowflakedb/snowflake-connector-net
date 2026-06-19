@@ -190,7 +190,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
     }
 
     private SFSession PrepareSessionForAws(
-        Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator,
+        Action<Mock<IEnvironmentFacade>> environmentOperationsConfigurator,
         Action<Mock<AwsSdkWrapper>> awsSdkConfigurator = null,
         bool addStsMapping = true,
         string connectionStringSuffix = null)
@@ -200,7 +200,11 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         return PrepareSession(
             AttestationProvider.AWS,
             connectionStringSuffix,
-            environmentOperationsConfigurator,
+            env =>
+            {
+                env.Setup(e => e.GetBool(EnvVars.EnableAwsWifOutboundToken)).Returns(true);
+                environmentOperationsConfigurator(env);
+            },
             t => SetupTime(t, DateTime.UtcNow),
             awsSdkConfigurator ?? SetupAwsWrapper
         );

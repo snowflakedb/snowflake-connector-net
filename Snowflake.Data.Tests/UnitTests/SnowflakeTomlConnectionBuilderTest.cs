@@ -32,14 +32,14 @@ password = ""otherpassword""";
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
                 .Returns(BasicTomlConfig);
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -53,17 +53,17 @@ password = ""otherpassword""";
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.SnowflakeHome))
                 .Returns($"{Path.DirectorySeparatorChar}customsnowhome");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains("customsnowhome")), It.IsAny<Action<UnixStream>>()))
                 .Returns(BasicTomlConfig);
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -77,17 +77,17 @@ password = ""otherpassword""";
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("testconnection");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
                 .Returns(BasicTomlConfig);
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -101,17 +101,17 @@ password = ""otherpassword""";
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("otherconnection");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
                 .Returns(BasicTomlConfig);
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -125,17 +125,17 @@ password = ""otherpassword""";
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("otherconnection");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
                 .Returns(BasicTomlConfig);
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml("testconnection");
@@ -151,8 +151,8 @@ password = ""otherpassword""";
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
@@ -164,7 +164,7 @@ password = ""defaultpassword""
 {tomlKeyValue}
 ");
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -178,14 +178,14 @@ password = ""defaultpassword""
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.SnowflakeHome))
                 .Returns($"{Path.DirectorySeparatorChar}notexistenttestpath");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(false);
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -199,17 +199,17 @@ password = ""defaultpassword""
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("wrongconnectionname");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
                 .Returns(BasicTomlConfig);
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act and assert
             Assert.Throws<Exception>(() => reader.GetConnectionStringFromToml());
@@ -220,14 +220,14 @@ password = ""defaultpassword""
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
                 .Returns("[qa]\naccount = \"qaaccountname\"\nuser = \"qausername\"\npassword = \"qapassword\"");
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -242,11 +242,11 @@ password = ""defaultpassword""
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("testconnection1");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
@@ -261,7 +261,7 @@ account = ""testaccountname""
 user = ""testusername""
 password = ""testpassword""");
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -277,11 +277,11 @@ password = ""testpassword""");
             var tokenFilePath = "/Users/testuser/token";
             var testToken = "token1234";
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("oauthconnection");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(tokenFilePath, It.IsAny<Action<UnixStream>>())).Returns(testToken);
@@ -296,7 +296,7 @@ account = ""testaccountname""
 authenticator = ""oauth""
 token_file_path = ""{tokenFilePath}""");
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -312,11 +312,11 @@ token_file_path = ""{tokenFilePath}""");
             var tokenFilePath = "/Users/testuser/token";
             var defaultToken = "defaultToken1234";
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("oauthconnection");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(tokenFilePath)).Returns(false);
             mockFileOperations.Setup(f => f.Exists(It.Is<string>(p => !p.Equals(tokenFilePath)))).Returns(true);
@@ -332,7 +332,7 @@ authenticator = ""oauth""
 token_file_path = ""{tokenFilePath}""");
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains("/snowflake/session/token")), It.IsAny<Action<UnixStream>>())).Returns(defaultToken);
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act and assert
             var exception = Assert.Throws<SnowflakeDbException>(() => reader.GetConnectionStringFromToml());
@@ -345,11 +345,11 @@ token_file_path = ""{tokenFilePath}""");
             // Arrange
             var defaultToken = "defaultToken1234";
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("oauthconnection");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
@@ -363,7 +363,7 @@ account = ""testaccountname""
 authenticator = ""oauth""");
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains("/snowflake/session/token")), It.IsAny<Action<UnixStream>>())).Returns(defaultToken);
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -377,11 +377,11 @@ authenticator = ""oauth""");
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("oauthconnection");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.Is<string>(p => p.Contains("/snowflake/session/token")))).Returns(false);
             mockFileOperations.Setup(f => f.Exists(It.Is<string>(p => !string.IsNullOrEmpty(p) && !p.Contains("/snowflake/session/token")))).Returns(true);
@@ -395,7 +395,7 @@ password = ""defaultpassword""
 account = ""testaccountname""
 authenticator = ""oauth""");
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -412,11 +412,11 @@ authenticator = ""oauth""");
             var tokenFilePath = "/Users/testuser/token";
             var tokenFromToml = "tomlToken1234";
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("oauthconnection");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
@@ -431,7 +431,7 @@ authenticator = ""oauth""
 token = ""{tokenFromToml}""
 token_file_path = ""{tokenFilePath}""");
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -445,11 +445,11 @@ token_file_path = ""{tokenFilePath}""");
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations
-                .Setup(e => e.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade
+                .Setup(e => e.GetString(EnvVars.DefaultConnectionName))
                 .Returns("oauthconnection");
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
@@ -463,7 +463,7 @@ account = ""testaccountname""
 authenticator = ""oauth""");
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains("/snowflake/session/token")), It.IsAny<Action<UnixStream>>())).Returns(string.Empty);
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -484,8 +484,8 @@ authenticator = ""oauth""");
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.Is<string>(p => p.Contains(".snowflake")), It.IsAny<Action<UnixStream>>()))
@@ -496,7 +496,7 @@ user = ""defaultusername""
 password = ""{passwordValueWithSpecialCharacter}""
 ");
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();
@@ -513,8 +513,8 @@ password = ""{passwordValueWithSpecialCharacter}""
             var tokenFilePath = "/path/to/token";
             var testToken = "oauth_token_12345";
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(tokenFilePath, It.IsAny<Action<UnixStream>>())).Returns(testToken);
@@ -535,7 +535,7 @@ ocsp_fail_open = true
 disable_ocsp_check = true
 ");
 
-            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var reader = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             var connectionString = reader.GetConnectionStringFromToml();

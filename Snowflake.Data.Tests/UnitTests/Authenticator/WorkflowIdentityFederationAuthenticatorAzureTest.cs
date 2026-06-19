@@ -353,7 +353,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         private SFSession PrepareSessionForAzure(string connectionStringSuffix,
-            Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator) =>
+            Action<Mock<IEnvironmentFacade>> environmentOperationsConfigurator) =>
             PrepareSession(
                 AttestationProvider.AZURE,
                 connectionStringSuffix,
@@ -361,24 +361,24 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 SetupSystemTime,
                 SetupAwsSdkDisabled);
 
-        private void ConfigureIdentityEndpoint(Mock<EnvironmentOperations> environmentOperations)
+        private void ConfigureIdentityEndpoint(Mock<IEnvironmentFacade> environmentOperations)
         {
             environmentOperations
-                .Setup(e => e.GetEnvironmentVariable("IDENTITY_ENDPOINT"))
+                .Setup(e => e.GetString(EnvVars.WifEndpoint))
                 .Returns(s_azureIdentityEndpoint);
         }
 
-        private void ConfigureIdentityHeader(Mock<EnvironmentOperations> environmentOperations)
+        private void ConfigureIdentityHeader(Mock<IEnvironmentFacade> environmentOperations)
         {
             environmentOperations
-                .Setup(e => e.GetEnvironmentVariable("IDENTITY_HEADER"))
+                .Setup(e => e.GetString(EnvVars.WifHeader))
                 .Returns(s_azureIdentityHeader);
         }
 
-        private void ConfigureIdentityClientId(Mock<EnvironmentOperations> environmentOperations)
+        private void ConfigureIdentityClientId(Mock<IEnvironmentFacade> environmentOperations)
         {
             environmentOperations
-                .Setup(e => e.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID"))
+                .Setup(e => e.GetString(EnvVars.WifClientId))
                 .Returns(s_azureManagedClientId);
         }
     }

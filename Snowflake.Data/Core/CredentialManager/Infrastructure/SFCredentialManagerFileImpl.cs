@@ -29,16 +29,16 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         private readonly UnixOperations _unixOperations;
 
-        private readonly EnvironmentOperations _environmentOperations;
+        private readonly IEnvironmentFacade _environmentFacade;
 
-        public static readonly SFCredentialManagerFileImpl Instance = new SFCredentialManagerFileImpl(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, EnvironmentOperations.Instance);
+        public static readonly SFCredentialManagerFileImpl Instance = new (FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, EnvironmentFacade.Instance);
 
-        internal SFCredentialManagerFileImpl(FileOperations fileOperations, DirectoryOperations directoryOperations, UnixOperations unixOperations, EnvironmentOperations environmentOperations)
+        internal SFCredentialManagerFileImpl(FileOperations fileOperations, DirectoryOperations directoryOperations, UnixOperations unixOperations, IEnvironmentFacade environmentFacade)
         {
             _fileOperations = fileOperations;
             _directoryOperations = directoryOperations;
             _unixOperations = unixOperations;
-            _environmentOperations = environmentOperations;
+            _environmentFacade = environmentFacade;
         }
 
         public string GetCredentials(string key)
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         {
             if (_fileStorage != null)
                 return;
-            var fileStorage = new SFCredentialManagerFileStorage(_environmentOperations);
+            var fileStorage = new SFCredentialManagerFileStorage(_environmentFacade);
             _directoryOperations.CreateDirectory(fileStorage.JsonCacheDirectory);
             CheckIfDirectoryIsSecure(fileStorage.JsonCacheDirectory);
             _fileStorage = fileStorage;
@@ -268,9 +268,9 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         internal void ValidateFilePermissions(UnixStream stream)
         {
-            if (bool.TryParse(_environmentOperations.GetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification), out var skipAll) && skipAll)
+            if (_environmentFacade.GetBool(EnvVars.SkipTokenFilePermissionsVerification))
             {
-                s_logger.Info("Skipping file permissions verification due to environment variable: " + TomlConnectionBuilder.SkipTokenFilePermissionsVerification);
+                s_logger.Info("Skipping file permissions verification due to environment variable: " + EnvVars.SkipTokenFilePermissionsVerification.Name);
                 return;
             }
 

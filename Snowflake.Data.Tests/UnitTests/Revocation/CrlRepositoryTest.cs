@@ -1,27 +1,24 @@
 using System;
+using Moq;
 using Xunit;
 using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
     public class CrlRepositoryTest
     {
-        public CrlRepositoryTest()
-        {
-            SetUp();
-        }
-
-        private void SetUp()
-        {
-            Environment.SetEnvironmentVariable("SF_CRL_CACHE_REMOVAL_DELAY", null);
-        }
-
         [SFFact]
         public void TestDefaultCleanupInterval()
         {
-            // arrange & act
-            var cleanupInterval = CrlRepository.GetCleanupInterval();
+            // arrange
+            var environmentOperations = new Mock<IEnvironmentFacade>();
+            environmentOperations.Setup(e => e.GetInt(EnvVars.CrlCacheRemovalDelay)).Returns(7);
+            var crlParser = new CrlParser(environmentOperations.Object);
+
+            // act
+            var cleanupInterval = crlParser.GetCleanupInterval();
 
             // assert
             Assert.Equal(TimeSpan.FromDays(7), cleanupInterval);
@@ -31,10 +28,12 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestCustomCleanupIntervalFromEnvironmentVariable()
         {
             // arrange
-            Environment.SetEnvironmentVariable("SF_CRL_CACHE_REMOVAL_DELAY", "14");
+            var environmentOperations = new Mock<IEnvironmentFacade>();
+            environmentOperations.Setup(e => e.GetInt(EnvVars.CrlCacheRemovalDelay)).Returns(14);
+            var crlParser = new CrlParser(environmentOperations.Object);
 
             // act
-            var cleanupInterval = CrlRepository.GetCleanupInterval();
+            var cleanupInterval = crlParser.GetCleanupInterval();
 
             // assert
             Assert.Equal(TimeSpan.FromDays(14), cleanupInterval);
@@ -43,11 +42,13 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         [SFFact]
         public void TestInvalidCleanupIntervalUsesDefault()
         {
-            // arrange
-            Environment.SetEnvironmentVariable("SF_CRL_CACHE_REMOVAL_DELAY", "invalid");
+            // arrange - default value from EnvVars.CrlCacheRemovalDelay is 7
+            var environmentOperations = new Mock<IEnvironmentFacade>();
+            environmentOperations.Setup(e => e.GetInt(EnvVars.CrlCacheRemovalDelay)).Returns(7);
+            var crlParser = new CrlParser(environmentOperations.Object);
 
             // act
-            var cleanupInterval = CrlRepository.GetCleanupInterval();
+            var cleanupInterval = crlParser.GetCleanupInterval();
 
             // assert
             Assert.Equal(TimeSpan.FromDays(7), cleanupInterval);

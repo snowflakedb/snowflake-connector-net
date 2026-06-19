@@ -29,7 +29,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         internal SFSession PrepareSession(
             AttestationProvider? attestationProvider,
             string connectionStringSuffix,
-            Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator,
+            Action<Mock<IEnvironmentFacade>> environmentOperationsConfigurator,
             Action<Mock<TimeProvider>> timeProviderConfigurator,
             Action<Mock<AwsSdkWrapper>> awsSdkConfigurator)
         {
@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var connectionString = $"authenticator=workload_identity;account=testaccount;{wifProviderPart}{connectionStringSuffix ?? string.Empty};host=localhost;port={WiremockRunner.DefaultHttpPort};scheme=http;";
             var sessionContext = new SessionPropertiesContext();
             var session = new SFSession(connectionString, sessionContext);
-            var environmentOperations = new Mock<EnvironmentOperations>();
+            var environmentOperations = new Mock<IEnvironmentFacade>();
             environmentOperationsConfigurator(environmentOperations);
             var timeProvider = new Mock<TimeProvider>();
             timeProviderConfigurator(timeProvider);
@@ -71,7 +71,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Retrieving attestation for AWS failed. Not available", exception?.Message);
         }
 
-        internal void NoEnvironmentSetup(Mock<EnvironmentOperations> environmentOperations)
+        internal void NoEnvironmentSetup(Mock<IEnvironmentFacade> environmentOperations)
         {
         }
 

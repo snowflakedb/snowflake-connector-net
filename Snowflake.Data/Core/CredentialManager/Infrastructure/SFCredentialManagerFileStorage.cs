@@ -9,10 +9,6 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFileStorage>();
 
-        internal const string CredentialCacheDirectoryEnvironmentName = "SF_TEMPORARY_CREDENTIAL_CACHE_DIR";
-
-        internal const string CommonCacheDirectoryEnvironmentName = "XDG_CACHE_HOME";
-
         internal const string CommonCacheDirectoryName = ".cache";
 
         internal const string CredentialCacheDirName = "snowflake";
@@ -27,21 +23,22 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         public string JsonCacheLockPath { get; private set; }
 
-        public SFCredentialManagerFileStorage(EnvironmentOperations environmentOperations)
+        public SFCredentialManagerFileStorage(IEnvironmentFacade environmentFacade)
         {
-            var snowflakeEnvBasedDirectory = environmentOperations.GetEnvironmentVariable(CredentialCacheDirectoryEnvironmentName);
+            var snowflakeEnvBasedDirectory = environmentFacade.GetString(EnvVars.TemporaryCredentialDir);
             if (!string.IsNullOrEmpty(snowflakeEnvBasedDirectory))
             {
                 InitializeForDirectory(snowflakeEnvBasedDirectory);
                 return;
             }
-            var commonCacheEnvBasedDirectory = environmentOperations.GetEnvironmentVariable(CommonCacheDirectoryEnvironmentName);
+
+            var commonCacheEnvBasedDirectory = environmentFacade.GetString(EnvVars.CommonCacheDirectory);
             if (!string.IsNullOrEmpty(commonCacheEnvBasedDirectory))
             {
                 InitializeForDirectory(Path.Combine(commonCacheEnvBasedDirectory, CredentialCacheDirName));
                 return;
             }
-            var homeBasedDirectory = HomeDirectoryProvider.HomeDirectory(environmentOperations);
+            var homeBasedDirectory = HomeDirectoryProvider.HomeDirectory(environmentFacade);
             if (string.IsNullOrEmpty(homeBasedDirectory))
             {
                 throw new Exception("Unable to identify credential cache directory");

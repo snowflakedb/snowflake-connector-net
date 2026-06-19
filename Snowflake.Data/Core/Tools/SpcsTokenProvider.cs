@@ -3,29 +3,25 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Tools
 {
-    internal class SpcsTokenProvider
+    internal sealed class SpcsTokenProvider
     {
-        internal const string RunningInsideSpcsEnvVar = "SNOWFLAKE_RUNNING_INSIDE_SPCS";
-        internal const string DefaultSpcsTokenPath = "/snowflake/session/spcs_token";
-
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SpcsTokenProvider>();
+        private const string SpcsTokenPath = "/snowflake/session/spcs_token";
 
-        internal static SpcsTokenProvider CreateIfRunningInSpcs() =>
-            string.IsNullOrEmpty(EnvironmentOperations.Instance.GetEnvironmentVariable(RunningInsideSpcsEnvVar))
+        internal static SpcsTokenProvider CreateIfRunningInSpcs() => CreateIfRunningInSpcs(EnvironmentFacade.Instance);
+
+        internal static SpcsTokenProvider CreateIfRunningInSpcs(IEnvironmentFacade environmentFacade) =>
+            string.IsNullOrEmpty(environmentFacade.GetString(EnvVars.RunningInsideSpcs))
                 ? null
-                : new SpcsTokenProvider();
+                : new SpcsTokenProvider(FileOperations.Instance, environmentFacade);
 
         private readonly FileOperations _fileOperations;
-        private readonly EnvironmentOperations _environmentOperations;
+        private readonly IEnvironmentFacade _environmentFacade;
 
-        internal SpcsTokenProvider() : this(FileOperations.Instance, EnvironmentOperations.Instance)
-        {
-        }
-
-        internal SpcsTokenProvider(FileOperations fileOperations, EnvironmentOperations environmentOperations)
+        internal SpcsTokenProvider(FileOperations fileOperations, IEnvironmentFacade environmentFacade)
         {
             _fileOperations = fileOperations;
-            _environmentOperations = environmentOperations;
+            _environmentFacade = environmentFacade;
         }
 
         /// <summary>
@@ -33,21 +29,20 @@ namespace Snowflake.Data.Core.Tools
         /// Only attempts to read the token when SNOWFLAKE_RUNNING_INSIDE_SPCS is set.
         /// Any I/O errors or missing/empty files are treated as "no token".
         /// </summary>
-        internal virtual string GetSpcsToken()
+        internal string GetSpcsToken()
         {
-            if (string.IsNullOrEmpty(_environmentOperations.GetEnvironmentVariable(RunningInsideSpcsEnvVar)))
-            {
+            var tokenPath = _environmentFacade.GetString(EnvVars.RunningInsideSpcs);
+            if (string.IsNullOrEmpty(tokenPath))
                 return null;
-            }
 
             try
             {
-                var token = _fileOperations.ReadAllText(DefaultSpcsTokenPath).Trim();
+                var token = _fileOperations.ReadAllText(SpcsTokenPath).Trim();
                 return string.IsNullOrEmpty(token) ? null : token;
             }
             catch (Exception e)
             {
-                s_logger.Warn($"Failed to read SPCS token from {DefaultSpcsTokenPath}: {e.Message}");
+                s_logger.Warn($"Failed to read SPCS token from {tokenPath}: {e.Message}");
                 return null;
             }
         }

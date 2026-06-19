@@ -7,11 +7,11 @@ namespace Snowflake.Data.Core.Tools
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<HomeDirectoryProvider>();
 
-        public static string HomeDirectory(EnvironmentOperations _environmentOperations)
+        public static string HomeDirectory(IEnvironmentFacade environmentFacade)
         {
             try
             {
-                var homeDirectory = _environmentOperations.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                var homeDirectory = environmentFacade.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 if (string.IsNullOrEmpty(homeDirectory) || homeDirectory.Equals("/"))
                 {
                     return null;
