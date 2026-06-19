@@ -1,4 +1,5 @@
 using System;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Tools

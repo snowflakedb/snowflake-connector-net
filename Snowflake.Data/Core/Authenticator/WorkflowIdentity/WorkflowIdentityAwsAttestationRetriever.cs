@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Amazon.Runtime;
 using Newtonsoft.Json;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Tools;

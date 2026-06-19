@@ -9,6 +9,7 @@ using Xunit;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;

@@ -3,6 +3,7 @@ using System.IO;
 using System.Security;
 using Mono.Unix;
 using Moq;
+using Snowflake.Data.Configuration;
 using Xunit;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Tools;

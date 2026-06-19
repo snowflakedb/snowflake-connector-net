@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Amazon.Runtime;
 using Moq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;

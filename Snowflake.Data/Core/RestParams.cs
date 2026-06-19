@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.MiniCore;
 using Snowflake.Data.Core.Tools;
 

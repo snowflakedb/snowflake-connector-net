@@ -7,6 +7,7 @@ using System.Text;
 using Mono.Unix;
 using Mono.Unix.Native;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;

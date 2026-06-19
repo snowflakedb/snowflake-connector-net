@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Mono.Unix.Native;
 using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;

@@ -5,6 +5,7 @@ using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.X509;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Revocation

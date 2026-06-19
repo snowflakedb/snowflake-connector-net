@@ -1,4 +1,4 @@
-namespace Snowflake.Data.Core.Tools;
+namespace Snowflake.Data.Configuration;
 
 internal readonly record struct EnvVar<T>
 {

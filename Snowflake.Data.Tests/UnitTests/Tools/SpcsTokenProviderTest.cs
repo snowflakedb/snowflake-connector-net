@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Moq;
+using Snowflake.Data.Configuration;
 using Xunit;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;

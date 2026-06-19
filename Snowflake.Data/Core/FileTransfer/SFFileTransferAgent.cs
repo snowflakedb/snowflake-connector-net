@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core

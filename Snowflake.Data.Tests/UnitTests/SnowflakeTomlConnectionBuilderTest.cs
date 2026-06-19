@@ -1,5 +1,6 @@
 using Mono.Unix;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 

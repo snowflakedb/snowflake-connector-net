@@ -1,5 +1,6 @@
 using System;
 using Moq;
+using Snowflake.Data.Configuration;
 using Xunit;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
