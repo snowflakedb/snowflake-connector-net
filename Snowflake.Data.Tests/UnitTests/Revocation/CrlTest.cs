@@ -8,6 +8,15 @@ using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
+#if NET8_0_OR_GREATER
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Crypto.Operators;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.X509;
+#endif
+
 namespace Snowflake.Data.Tests.UnitTests.Revocation
 {
     public sealed class CrlTest : RevocationTests
