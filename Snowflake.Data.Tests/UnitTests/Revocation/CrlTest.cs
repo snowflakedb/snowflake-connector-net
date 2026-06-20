@@ -1,14 +1,8 @@
 using System;
 using System.IO;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Moq;
-using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.Crypto.Operators;
 using Xunit;
 using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.X509;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
@@ -23,8 +17,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
             // arrange
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
-            var environmentOperations = new Mock<IEnvironmentFacade>();
-            var crlParser = new CrlParser(environmentOperations.Object);
+            var envFacade = new Mock<IEnvironmentFacade>();
+            var crlParser = new CrlParser(envFacade.Object);
             var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
             var expectedCrlDistributionPoints = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
 
@@ -55,8 +49,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
             // arrange
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
-            var environmentOperations = new Mock<IEnvironmentFacade>();
-            var crlParser = new CrlParser(environmentOperations.Object);
+            var envFacade = new Mock<IEnvironmentFacade>();
+            var crlParser = new CrlParser(envFacade.Object);
             var now = DateTimeOffset.Parse(nowString).UtcDateTime;
             var crl = crlParser.Parse(crlBytes, now);
 
@@ -71,8 +65,10 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestCrlParserDefaultValidityTime()
         {
             // arrange
-            var environmentOperations = new Mock<IEnvironmentFacade>();
-            var crlParser = new CrlParser(environmentOperations.Object);
+            var envFacade = new Mock<IEnvironmentFacade>();
+            envFacade.Setup(e => e.GetInt(EnvVars.CrlValidityTime)).Returns(EnvVars.CrlValidityTime.DefaultValue);
+            envFacade.Setup(e => e.GetInt(EnvVars.CrlCacheRemovalDelay)).Returns(EnvVars.CrlCacheRemovalDelay.DefaultValue);
+            var crlParser = new CrlParser(envFacade.Object);
 
             // act
             var validityTime = crlParser.GetCacheValidityTime();
@@ -85,11 +81,11 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void TestCrlParserCustomValidityTime()
         {
             // arrange
-            var environmentOperations = new Mock<IEnvironmentFacade>();
-            environmentOperations
+            var envFacade = new Mock<IEnvironmentFacade>();
+            envFacade
                 .Setup(e => e.GetInt(EnvVars.CrlValidityTime))
                 .Returns(7);
-            var crlParser = new CrlParser(environmentOperations.Object);
+            var crlParser = new CrlParser(envFacade.Object);
 
             // act
             var validityTime = crlParser.GetCacheValidityTime();
@@ -103,8 +99,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
             // arrange
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
-            var environmentOperations = new Mock<IEnvironmentFacade>();
-            var crlParser = new CrlParser(environmentOperations.Object);
+            var envFacade = new Mock<IEnvironmentFacade>();
+            var crlParser = new CrlParser(envFacade.Object);
             var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
             var crl = crlParser.Parse(crlBytes, now);
             var cacheValidityTime = TimeSpan.FromDays(1);
@@ -129,8 +125,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
             // arrange
             var bigInt = new BigInteger(stringValue);
-            var environmentOperations = new Mock<IEnvironmentFacade>();
-            var crlParser = new CrlParser(environmentOperations.Object);
+            var envFacade = new Mock<IEnvironmentFacade>();
+            var crlParser = new CrlParser(envFacade.Object);
 
             // act
             var hexString = crlParser.ConvertToHexadecimalString(bigInt);
@@ -147,8 +143,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
             // arrange
             var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
-            var environmentOperations = new Mock<IEnvironmentFacade>();
-            var crlParser = new CrlParser(environmentOperations.Object);
+            var envFacade = new Mock<IEnvironmentFacade>();
+            var crlParser = new CrlParser(envFacade.Object);
             var now = new DateTime(2010, 04, 10, 16, 57, 0, DateTimeKind.Utc);
             var crl = crlParser.Parse(crlBytes, now);
 
@@ -202,8 +198,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var bouncyCrl = crlGenerator.Generate(signatureFactory);
 
             // Parse through production code path
-            var environmentOperations = new Mock<IEnvironmentFacade>();
-            var crlParser = new CrlParser(environmentOperations.Object);
+            var envFacade = new Mock<IEnvironmentFacade>();
+            var crlParser = new CrlParser(envFacade.Object);
             var crl = crlParser.Create(bouncyCrl, now);
 
             var bouncyCastleHex = crlParser.ConvertToHexadecimalString(serialAsBigInt);

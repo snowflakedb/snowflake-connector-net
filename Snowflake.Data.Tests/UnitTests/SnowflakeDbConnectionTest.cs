@@ -6,6 +6,7 @@ using Mono.Unix;
 using Moq;
 using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
@@ -25,6 +26,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
             var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(x => x.GetString(EnvVars.DefaultConnectionName)).Returns(EnvVars.DefaultConnectionName.DefaultValue);
             mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);

@@ -34,6 +34,7 @@ password = ""otherpassword""";
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
             var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(x => x.GetString(EnvVars.DefaultConnectionName)).Returns(EnvVars.DefaultConnectionName.DefaultValue);
             mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
@@ -55,6 +56,7 @@ password = ""otherpassword""";
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
             var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(x => x.GetString(EnvVars.DefaultConnectionName)).Returns(EnvVars.DefaultConnectionName.DefaultValue);
             mockFacade
                 .Setup(e => e.GetString(EnvVars.SnowflakeHome))
                 .Returns($"{Path.DirectorySeparatorChar}customsnowhome");
@@ -153,6 +155,7 @@ password = ""otherpassword""";
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
             var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(x => x.GetString(EnvVars.DefaultConnectionName)).Returns(EnvVars.DefaultConnectionName.DefaultValue);
             mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
@@ -222,6 +225,7 @@ password = ""defaultpassword""
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
             var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(x => x.GetString(EnvVars.DefaultConnectionName)).Returns(EnvVars.DefaultConnectionName.DefaultValue);
             mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
@@ -486,6 +490,7 @@ authenticator = ""oauth""");
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
             var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(x => x.GetString(EnvVars.DefaultConnectionName)).Returns(EnvVars.DefaultConnectionName.DefaultValue);
             mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
@@ -515,6 +520,7 @@ password = ""{passwordValueWithSpecialCharacter}""
             var testToken = "oauth_token_12345";
             var mockFileOperations = new Mock<FileOperations>();
             var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(x => x.GetString(EnvVars.DefaultConnectionName)).Returns(EnvVars.DefaultConnectionName.DefaultValue);
             mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
