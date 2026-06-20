@@ -37,8 +37,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestReturnsTokenFromConfiguredPath()
         {
             // arrange
-            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns("/custom/token/path");
-            _fileOperations.Setup(f => f.ReadAllText("/custom/token/path")).Returns("my-spcs-token");
+            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns("snowflake/session/spcs_token");
+            _fileOperations.Setup(f => f.ReadAllText("/snowflake/session/spcs_token")).Returns("my-spcs-token");
             var provider = CreateProvider();
 
             // act

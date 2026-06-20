@@ -32,7 +32,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 
         private readonly IEnvironmentFacade _environmentFacade;
 
-        public static readonly SFCredentialManagerFileImpl Instance = new (FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, EnvironmentFacade.Instance);
+        public static readonly SFCredentialManagerFileImpl Instance = new(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, EnvironmentFacade.Instance);
 
         internal SFCredentialManagerFileImpl(FileOperations fileOperations, DirectoryOperations directoryOperations, UnixOperations unixOperations, IEnvironmentFacade environmentFacade)
         {
