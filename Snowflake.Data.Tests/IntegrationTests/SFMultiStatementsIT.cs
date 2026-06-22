@@ -39,7 +39,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -96,7 +96,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.False(reader.Read());
 
                 reader.Close();
-                await conn.CloseAsync();
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -106,7 +106,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 DbCommand cmd = conn.CreateCommand();
@@ -137,8 +137,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.False(await reader.NextResultAsync().ConfigureAwait(false));
                 Assert.False(await reader.ReadAsync().ConfigureAwait(false));
 
-                await reader.CloseAsync();
-                await conn.CloseAsync();
+                await reader.CloseAsync().ConfigureAwait(false);
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -148,7 +148,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 IDbCommand cmd = conn.CreateCommand();
@@ -191,7 +191,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.False(reader.NextResult());
 
                 reader.Close();
-                await conn.CloseAsync();
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -202,7 +202,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -257,7 +257,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p6.Value = "str3";
                     cmd.Parameters.Add(p6);
 
-                    DbDataReader reader = await cmd.ExecuteReaderAsync();
+                    DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
                     // result of create
                     Assert.True(reader.HasRows);
@@ -297,7 +297,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     reader.Close();
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -308,7 +308,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync();
+                await conn.OpenAsync().ConfigureAwait(false);
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -417,7 +417,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -472,11 +472,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p6.Value = "str3";
                     cmd.Parameters.Add(p6);
 
-                    int count = await cmd.ExecuteNonQueryAsync();
+                    int count = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                     Assert.Equal(3, count);
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -487,7 +487,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -511,19 +511,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     stmtCountParam.Value = 11;
                     cmd.Parameters.Add(stmtCountParam);
 
-                    DbDataReader reader = await cmd.ExecuteReaderAsync();
+                    DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
                     // result of select
                     Assert.True(reader.HasRows);
                     Assert.Equal(-1, reader.RecordsAffected);
 
                     // result of create
-                    Assert.True(await reader.NextResultAsync());
+                    Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of explain
-                    Assert.True(await reader.NextResultAsync());
+                    Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                     Assert.True(reader.HasRows);
                     // server used to return query type of explain as select
                     // but now it could be a specific type of explain
@@ -531,37 +531,37 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                   (reader.RecordsAffected == -1));
 
                     // result of show
-                    Assert.True(await reader.NextResultAsync());
+                    Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of insert
-                    Assert.True(await reader.NextResultAsync());
+                    Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                     Assert.True(reader.HasRows);
                     Assert.Equal(1, reader.RecordsAffected);
 
                     // result of describe
-                    Assert.True(await reader.NextResultAsync());
+                    Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of list
-                    Assert.True(await reader.NextResultAsync());
+                    Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                     Assert.False(reader.HasRows); // no files staged for table t1
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of remove
-                    Assert.True(await reader.NextResultAsync());
+                    Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                     Assert.False(reader.HasRows); // no files staged for table t1
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of create
-                    Assert.True(await reader.NextResultAsync());
+                    Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
                     // result of call
-                    Assert.True(await reader.NextResultAsync());
+                    Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                     Assert.True(reader.HasRows);
                     // The server behaivor is inconsistant for now, some of
                     // them returns procedure call as select while some of
@@ -570,15 +570,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
                                   (reader.RecordsAffected == -1));
 
                     // result of use
-                    Assert.True(await reader.NextResultAsync());
+                    Assert.True(await reader.NextResultAsync().ConfigureAwait(false));
                     Assert.True(reader.HasRows);
                     Assert.Equal(0, reader.RecordsAffected);
 
-                    Assert.False(await reader.NextResultAsync());
-                    await reader.CloseAsync();
+                    Assert.False(await reader.NextResultAsync().ConfigureAwait(false));
+                    await reader.CloseAsync().ConfigureAwait(false);
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -588,7 +588,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -596,12 +596,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // MULTI_STATEMENT_COUNT=1
                     // multiple statements execution is disabled
                     cmd.CommandText = "alter session set MULTI_STATEMENT_COUNT=1";
-                    await cmd.ExecuteNonQueryAsync();
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     cmd.CommandText = "select 1; select 2; select 3";
                     try
                     {
-                        await cmd.ExecuteNonQueryAsync();
+                        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                         Assert.Fail();
                     }
                     catch
@@ -613,10 +613,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // MULTI_STATEMENT_COUNT=0
                     // multiple statements execution is enabled
                     cmd.CommandText = "alter session set MULTI_STATEMENT_COUNT=0";
-                    await cmd.ExecuteNonQueryAsync();
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     cmd.CommandText = "select 1; select 2; select 3";
-                    await cmd.ExecuteNonQueryAsync();
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     // Set MULTI_STATEMENT_COUNT per query (not match)
                     var stmtCountParam = cmd.CreateParameter();
@@ -628,7 +628,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.CommandText = "select 1; select 2; select 3";
                     try
                     {
-                        await cmd.ExecuteNonQueryAsync();
+                        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                         Assert.Fail();
                     }
                     catch
@@ -646,7 +646,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(stmtCountParam);
 
                     cmd.CommandText = "select 1; select 2; select 3";
-                    await cmd.ExecuteNonQueryAsync();
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     // No matter how session paramter is set
                     // parameter per query always works
@@ -654,7 +654,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // multiple statements execution is enabled
                     cmd.Parameters.Clear();
                     cmd.CommandText = "alter session set MULTI_STATEMENT_COUNT=1";
-                    await cmd.ExecuteNonQueryAsync();
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     stmtCountParam = cmd.CreateParameter();
                     stmtCountParam.ParameterName = "MULTI_STATEMENT_COUNT";
@@ -663,10 +663,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     cmd.Parameters.Add(stmtCountParam);
 
                     cmd.CommandText = "select 1; select 2; select 3";
-                    await cmd.ExecuteNonQueryAsync();
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -677,7 +677,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
                 using (DbCommand cmd = conn.CreateCommand())
@@ -708,7 +708,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     stmtCountParam.Value = stmtCount;
                     cmd.Parameters.Add(stmtCountParam);
 
-                    DbDataReader reader = await cmd.ExecuteReaderAsync();
+                    DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
                     // at least one row in the first result set
                     Assert.True(reader.HasRows);
@@ -726,7 +726,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     reader.Close();
                 }
 
-                await conn.CloseAsync();
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
     }

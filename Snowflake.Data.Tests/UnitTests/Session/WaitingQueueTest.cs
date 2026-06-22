@@ -127,7 +127,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var watch = new Stopwatch();
             Task.Run(async () =>
             {
-                await Task.Delay(50);
+                await Task.Delay(50).ConfigureAwait(false);
                 queue.Reset();
             });
 

@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
             {
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "alter session set ENABLE_LARGE_VARCHAR_AND_BINARY_IN_RESULT=false";
                 cmd.ExecuteNonQuery();

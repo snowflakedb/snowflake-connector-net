@@ -122,12 +122,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync(CancellationToken);
+                await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
                 using (var command = conn.CreateCommand())
                 {
                     // act
                     command.CommandText = $"SELECT RANDSTR({size}, 124)";
-                    string row = (string)await command.ExecuteScalarAsync(CancellationToken);
+                    string row = (string)await command.ExecuteScalarAsync(CancellationToken).ConfigureAwait(false);
 
                     // assert
                     Assert.Equal(size, row.Length);
@@ -147,17 +147,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync(CancellationToken.None);
-                await AlterSessionSettingsAsync(conn);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+                await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
                 using (var command = conn.CreateCommand())
                 {
                     // act
                     command.CommandText = $"{t_insertQuery.Value} ('{c1}', '{c2}', '{c3}')";
-                    await command.ExecuteNonQueryAsync();
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     command.CommandText = t_selectQuery.Value;
-                    var reader = await command.ExecuteReaderAsync();
+                    var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                     // assert
                     Assert.True(reader.Read());
@@ -180,8 +180,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync(CancellationToken.None);
-                await AlterSessionSettingsAsync(conn);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+                await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
                 using (var command = conn.CreateCommand())
                 {
@@ -206,10 +206,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p3.Value = c3;
                     command.Parameters.Add(p3);
 
-                    await command.ExecuteNonQueryAsync();
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     command.CommandText = t_selectQuery.Value;
-                    var reader = await command.ExecuteReaderAsync();
+                    var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                     // assert
                     Assert.True(reader.Read());
@@ -233,8 +233,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync(CancellationToken.None);
-                await AlterSessionSettingsAsync(conn);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+                await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
                 using (var command = conn.CreateCommand())
                 {
@@ -259,10 +259,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p3.Value = c3;
                     command.Parameters.Add(p3);
 
-                    await command.ExecuteNonQueryAsync();
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     command.CommandText = t_selectQuery.Value;
-                    var reader = await command.ExecuteReaderAsync();
+                    var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                     // assert
                     Assert.True(reader.Read());
@@ -288,12 +288,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await conn.OpenAsync(CancellationToken.None);
-                await AlterSessionSettingsAsync(conn);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+                await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-                await PutFile(conn);
-                await CopyIntoTableAsync(conn);
-                await GetFileAsync(conn);
+                await PutFile(conn).ConfigureAwait(false);
+                await CopyIntoTableAsync(conn).ConfigureAwait(false);
+                await GetFileAsync(conn).ConfigureAwait(false);
             }
         }
 
@@ -375,13 +375,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 command.CommandText = $"COPY INTO {t_tableName.Value}";
 
                 // act
-                await command.ExecuteNonQueryAsync();
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                 // arrange
                 command.CommandText = $"SELECT * FROM {t_tableName.Value}";
 
                 // act
-                var reader = await command.ExecuteReaderAsync();
+                var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                 // assert
                 Assert.True(await reader.ReadAsync().ConfigureAwait(false));
@@ -430,7 +430,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // Alter session result format
                 command.CommandText = $"ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = {_resultFormat}";
-                await command.ExecuteNonQueryAsync();
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                 //// Alter session max lob
                 //command.CommandText = "ALTER SESSION SET FEATURE_INCREASED_MAX_LOB_SIZE_IN_MEMORY = 'ENABLED'";

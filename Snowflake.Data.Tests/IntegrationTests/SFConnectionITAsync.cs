@@ -404,7 +404,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 try
                 {
                     conn.ConnectionString = invalidStrings[i];
-                    await conn.OpenAsync();
+                    await conn.OpenAsync().ConfigureAwait(false);
                     Assert.Fail();
                 }
                 catch (SnowflakeDbException e)
@@ -470,14 +470,14 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
 
         Assert.Equal(ConnectionState.Closed, conn.State);
 
-        await conn.OpenAsync(CancellationToken);
+        await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
 
         Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
         Assert.Equal(ConnectionState.Open, conn.State);
 
-        var ex = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.ChangeDatabaseAsync(databaseName));
+        var ex = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.ChangeDatabaseAsync(databaseName)).ConfigureAwait(false);
         Assert.Equal(2043, ex.ErrorCode); // object does not exist
-        await conn.CloseAsync(CancellationToken);
+        await conn.CloseAsync(CancellationToken).ConfigureAwait(false);
     }
 
     [SFTheory(SkipCondition.RunOnlyOnCloudAWS)]
@@ -492,14 +492,14 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
 
         Assert.Equal(ConnectionState.Closed, conn.State);
 
-        await conn.OpenAsync(CancellationToken);
+        await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
 
         Assert.Equal(_fixture.testConfig.database.ToUpper(), conn.Database);
         Assert.Equal(ConnectionState.Open, conn.State);
 
-        var ex = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.ChangeDatabaseAsync(invalidDatabaseName, CancellationToken));
+        var ex = await Assert.ThrowsAsync<SnowflakeDbException>(() => conn.ChangeDatabaseAsync(invalidDatabaseName, CancellationToken)).ConfigureAwait(false);
         Assert.Equal(1003, ex.ErrorCode); // unable to parse sql
-        await conn.CloseAsync(CancellationToken);
+        await conn.CloseAsync(CancellationToken).ConfigureAwait(false);
     }
 
     [SFFact]
@@ -573,12 +573,12 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" });
-            var t1 = await conn.BeginTransactionAsync();
+            await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" }).ConfigureAwait(false);
+            var t1 = await conn.BeginTransactionAsync().ConfigureAwait(false);
             var t1c1 = conn.CreateCommand();
             t1c1.Transaction = t1;
             t1c1.CommandText = $"insert into {tableName} values (1)";
-            await t1c1.ExecuteNonQueryAsync();
+            await t1c1.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
 
         using (var conn = new SnowflakeDbConnection())
@@ -589,7 +589,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var command = conn.CreateCommand();
             command.CommandText = $"SELECT * FROM {tableName}";
-            IDataReader reader = await command.ExecuteReaderAsync();
+            IDataReader reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
             Assert.False(reader.Read());
         }
     }
@@ -1078,7 +1078,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             var closeTask = conn.CloseAsync(CancellationToken.None);
             try
             {
-                await closeTask;
+                await closeTask.ConfigureAwait(false);
                 Assert.Fail();
             }
             catch (AggregateException e)
@@ -1098,15 +1098,15 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.False(conn.HasActiveExplicitTransaction());
 
-            var trans = await conn.BeginTransactionAsync();
+            var trans = await conn.BeginTransactionAsync().ConfigureAwait(false);
             Assert.True(conn.HasActiveExplicitTransaction());
-            await trans.RollbackAsync();
+            await trans.RollbackAsync().ConfigureAwait(false);
             Assert.False(conn.HasActiveExplicitTransaction());
 
-            await (await conn.BeginTransactionAsync()).RollbackAsync();
+            await (await conn.BeginTransactionAsync()).RollbackAsync().ConfigureAwait(false);
             Assert.False(conn.HasActiveExplicitTransaction());
 
-            await (await conn.BeginTransactionAsync()).CommitAsync();
+            await (await conn.BeginTransactionAsync()).CommitAsync().ConfigureAwait(false);
             Assert.False(conn.HasActiveExplicitTransaction());
         }
     }
@@ -1166,7 +1166,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             var command = conn.CreateCommand();
             // This query itself will be part of the history and will have the query tag
             command.CommandText = "SELECT QUERY_TAG FROM table(information_schema.query_history_by_session())";
-            var queryTag = await command.ExecuteScalarAsync();
+            var queryTag = await command.ExecuteScalarAsync().ConfigureAwait(false);
 
             Assert.Equal(expectedQueryTag, queryTag);
         }

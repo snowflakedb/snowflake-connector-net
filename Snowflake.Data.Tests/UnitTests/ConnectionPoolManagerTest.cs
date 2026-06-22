@@ -120,7 +120,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public async Task TestGetSessionAsyncWorksForSpecifiedConnectionString()
         {
             // Act
-            var sfSession = await SnowflakeDbConnectionPool.ConnectionManager.GetSessionAsync(ConnectionString1, new SessionPropertiesContext(), CancellationToken.None);
+            var sfSession = await SnowflakeDbConnectionPool.ConnectionManager.GetSessionAsync(ConnectionString1, new SessionPropertiesContext(), CancellationToken.None).ConfigureAwait(false);
 
             // Assert
             Assert.Equal(ConnectionString1, sfSession.ConnectionString);

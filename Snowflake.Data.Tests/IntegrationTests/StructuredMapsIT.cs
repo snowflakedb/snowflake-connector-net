@@ -49,10 +49,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var key = "city";
                     var value = "San Mateo";
                     var addressAsSFString = $"OBJECT_CONSTRUCT('{key}','{value}')::MAP(VARCHAR, VARCHAR)";
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     command.CommandText = $"SELECT {addressAsSFString} AS {colName}";
 
                     // act
-                    using (var reader = await command.ExecuteReaderAsync())
+                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                     {
                         var dt = new DataTable();
                         dt.Load(reader);
@@ -78,13 +78,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var addressAsSFString = "OBJECT_CONSTRUCT('city','San Mateo', 'state', 'CA', 'zip', '01-234')::MAP(VARCHAR, VARCHAR)";
                     command.CommandText = $"SELECT {addressAsSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -100,8 +100,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     if (_nativeArrow)
                     {
                         var arrowString = reader.GetString(0);
-                        await EnableStructuredTypesAsync(connection, ResultFormat.JSON);
-                        reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                        await EnableStructuredTypesAsync(connection, ResultFormat.JSON).ConfigureAwait(false);
+                        reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                         Assert.True(reader.Read());
                         var jsonString = reader.GetString(0);
 
@@ -117,13 +117,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var mapSfString = "OBJECT_CONSTRUCT('5','San Mateo', '8', 'CA', '13', '01-234')::MAP(INTEGER, VARCHAR)";
                     command.CommandText = $"SELECT {mapSfString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -145,13 +145,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var mapSfString = "OBJECT_CONSTRUCT('5','San Mateo', '8', 'CA', '13', '01-234')::MAP(INTEGER, VARCHAR)";
                     command.CommandText = $"SELECT {mapSfString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -173,16 +173,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var mapWitObjectValueSFString = @"OBJECT_CONSTRUCT(
                         'Warsaw', OBJECT_CONSTRUCT('prefix', '01', 'postfix', '234'),
                         'San Mateo', OBJECT_CONSTRUCT('prefix', '02', 'postfix', '567')
                     )::MAP(VARCHAR, OBJECT(prefix VARCHAR, postfix VARCHAR))";
                     command.CommandText = $"SELECT {mapWitObjectValueSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -203,13 +203,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
                     command.CommandText = $"SELECT {mapWithArrayValueSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -229,13 +229,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var mapWithArrayValueSFString = "OBJECT_CONSTRUCT('a', ARRAY_CONSTRUCT('b', 'c'))::MAP(VARCHAR, ARRAY(TEXT))";
                     command.CommandText = $"SELECT {mapWithArrayValueSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -255,13 +255,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var mapAsSFString = "OBJECT_CONSTRUCT('a', OBJECT_CONSTRUCT('b', 'c'))::MAP(TEXT, MAP(TEXT, TEXT))";
                     command.CommandText = $"SELECT {mapAsSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -285,12 +285,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     command.CommandText = $"SELECT {valueSfString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -310,13 +310,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var nullMapSFString = "NULL::MAP(TEXT,TEXT)";
                     command.CommandText = $"SELECT {nullMapSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -334,13 +334,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var invalidMapSFString = "OBJECT_CONSTRUCT('x', 'y')::OBJECT";
                     command.CommandText = $"SELECT {invalidMapSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -360,16 +360,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow);
+                    await EnableStructuredTypesAsync(connection, _resultFormat, _nativeArrow).ConfigureAwait(false);
                     var invalidMapSFString = @"OBJECT_CONSTRUCT(
                         'x', 'a76dacad-0e35-497b-bf9b-7cd49262b68b',
                         'y', 'z76dacad-0e35-497b-bf9b-7cd49262b68b'
                     )::MAP(TEXT,TEXT)";
                     command.CommandText = $"SELECT {invalidMapSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act

@@ -28,7 +28,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-                await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true));
+                await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true)).ConfigureAwait(false);
 
             // Assert
             Assert.True(mockRequester.CancelRequestSent,
@@ -44,7 +44,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var mockRequester = new MockRestRequesterForQueryCancellation();
             var conn = new MockSnowflakeDbConnection(mockRequester);
             conn.ConnectionString = ConnectionString;
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             var awaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(1, new[] { 1 }));
             var cts = new CancellationTokenSource();
@@ -56,7 +56,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Act
             try
             {
-                await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true);
+                await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true).ConfigureAwait(false);
                 Assert.Fail("Expected an OperationCanceledException to be thrown");
             }
             catch (OperationCanceledException)
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, false);
-            await Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            await Assert.ThrowsAsync<OperationCanceledException>(async () => await task).ConfigureAwait(false);
 
             // Assert
             Assert.True(mockRequester.CancelRequestSent,
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, false);
-            await Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            await Assert.ThrowsAsync<OperationCanceledException>(async () => await task).ConfigureAwait(false);
 
             // Assert
             Assert.True(mockRequester.CancelRequestSent,
@@ -132,7 +132,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act & Assert
             await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-                await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true));
+                await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true)).ConfigureAwait(false);
             Assert.False(mockRequester.CancelRequestSent,
                 "Cancel request should not have succeeded since the mock was configured to throw");
         }
@@ -152,7 +152,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act & Assert
             var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, false);
-            await Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            await Assert.ThrowsAsync<OperationCanceledException>(async () => await task).ConfigureAwait(false);
             Assert.False(mockRequester.CancelRequestSent,
                 "Cancel request should not have succeeded since the mock was configured to throw");
         }
@@ -164,11 +164,11 @@ namespace Snowflake.Data.Tests.UnitTests
             mockRequester.EnqueueStatus("RUNNING", "RUNNING", "SUCCESS");
             var conn = new MockSnowflakeDbConnection(mockRequester);
             conn.ConnectionString = ConnectionString;
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             var awaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(1, new[] { 0, 0, 0 }));
 
-            await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, CancellationToken.None, true);
+            await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, CancellationToken.None, true).ConfigureAwait(false);
 
             Assert.False(mockRequester.CancelRequestSent,
                 "No cancel request should be sent when query completes normally");
@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var awaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(1, new[] { 0, 0, 0 }));
 
             var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, CancellationToken.None, false);
-            await task;
+            await task.ConfigureAwait(false);
 
             Assert.False(mockRequester.CancelRequestSent,
                 "No cancel request should be sent when query completes normally");
@@ -221,7 +221,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act - cancellation triggers AbortQuery which validates the query ID
             await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-                await awaiter.RetryUntilQueryResultIsAvailable(conn, invalidQueryId, cts.Token, true));
+                await awaiter.RetryUntilQueryResultIsAvailable(conn, invalidQueryId, cts.Token, true)).ConfigureAwait(false);
 
             // Assert - no SQL command should have been sent
             Assert.False(mockRequester.CancelRequestSent,

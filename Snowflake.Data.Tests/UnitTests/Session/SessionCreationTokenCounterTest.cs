@@ -77,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             tokens.NewToken(); // this token will be cleaned because of expiration
             Assert.Equal(2, tokens.Count());
             const int EpsilonMillis = 5;
-            await Task.Delay((int)s_shortTime.TotalMilliseconds + EpsilonMillis);
+            await Task.Delay((int)s_shortTime.TotalMilliseconds + EpsilonMillis).ConfigureAwait(false);
 
             // act
             tokens.RemoveToken(token);
