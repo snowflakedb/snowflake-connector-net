@@ -346,7 +346,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
 
             // Act
-            Exception ex = await Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
             // Assert
             Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
@@ -377,7 +377,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
 
             // Act
-            Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
             // Assert
             Assert.Matches($"Unknown Error in uploading a file: .*", ex.Message);
@@ -479,7 +479,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SetUpMockClientForDownload(httpStatusCode, IsAsync);
 
             // Act
-            Exception ex = await Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
             // Assert
             Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
@@ -509,7 +509,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SetUpMockClientForDownload(httpStatusCode, IsAsync);
 
             // Act
-            Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
             // Assert
             Assert.Matches($"Unknown Error in downloading a file: .*", ex.Message);

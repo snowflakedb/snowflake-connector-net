@@ -1103,10 +1103,10 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             await trans.RollbackAsync().ConfigureAwait(false);
             Assert.False(conn.HasActiveExplicitTransaction());
 
-            await (await conn.BeginTransactionAsync()).RollbackAsync().ConfigureAwait(false);
+            await (await conn.BeginTransactionAsync().ConfigureAwait(false)).RollbackAsync().ConfigureAwait(false);
             Assert.False(conn.HasActiveExplicitTransaction());
 
-            await (await conn.BeginTransactionAsync()).CommitAsync().ConfigureAwait(false);
+            await (await conn.BeginTransactionAsync().ConfigureAwait(false)).CommitAsync().ConfigureAwait(false);
             Assert.False(conn.HasActiveExplicitTransaction());
         }
     }

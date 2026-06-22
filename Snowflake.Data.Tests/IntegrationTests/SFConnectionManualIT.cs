@@ -210,12 +210,12 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                     conn.ConnectionString
                         = _fixture.ConnectionStringWithoutAuth
                           + $";authenticator=externalbrowser;user=qa@snowflakecomputing.com;BROWSER_RESPONSE_TIMEOUT={waitSeconds}";
-                    await conn.OpenAsync(CancellationToken.None);
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                     Assert.Equal(ConnectionState.Open, conn.State);
                     using (var command = conn.CreateCommand())
                     {
                         command.CommandText = "SELECT CURRENT_USER()";
-                        Assert.Equal("QA", (await command.ExecuteScalarAsync()).ToString());
+                        Assert.Equal("QA", (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
                     }
                 }
             }

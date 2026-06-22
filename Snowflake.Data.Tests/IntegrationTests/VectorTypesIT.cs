@@ -204,7 +204,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     command.CommandText = "SELECT [1.1]::VECTOR(INT, 3) as vec;";
 
-                    var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await command.ExecuteReaderAsync()).ConfigureAwait(false);
+                    var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await command.ExecuteReaderAsync().ConfigureAwait(false)).ConfigureAwait(false);
 
                     AssertExtensions.AnySucceeds(
                         () => Assert.Contains("Array-like value being cast to a vector has incorrect dimension", thrown.Message),
@@ -226,7 +226,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     command.CommandText = "SELECT [A, B, C]::VECTOR(INT, 3) as vec;";
 
-                    var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await command.ExecuteReaderAsync()).ConfigureAwait(false);
+                    var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await command.ExecuteReaderAsync().ConfigureAwait(false)).ConfigureAwait(false);
 
                     Assert.Contains("invalid identifier", thrown.Message);
                 }
@@ -349,7 +349,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     command.CommandText = "SELECT [A, B, C]::VECTOR(FLOAT, 3) as vec;";
 
-                    var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await command.ExecuteReaderAsync()).ConfigureAwait(false);
+                    var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await command.ExecuteReaderAsync().ConfigureAwait(false)).ConfigureAwait(false);
 
                     Assert.Contains("invalid identifier", thrown.Message);
                 }

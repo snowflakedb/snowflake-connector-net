@@ -185,7 +185,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
                 // await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false); // intentionally closed
-                var snowflakeDbException = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await ProcessFileAsync(command, conn)).ConfigureAwait(false);
+                var snowflakeDbException = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await ProcessFileAsync(command, conn).ConfigureAwait(false)).ConfigureAwait(false);
                 Assert.NotNull(snowflakeDbException);
                 Assert.Null(snowflakeDbException.QueryId);
                 SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);

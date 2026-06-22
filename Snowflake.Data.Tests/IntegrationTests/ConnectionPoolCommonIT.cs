@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     using (var command = connection.CreateCommand())
                     {
                         command.CommandText = "invalid command will throw exception and leave session with an unfinished transaction";
-                        await command.ExecuteNonQueryAsync();
+                        await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                 }).ConfigureAwait(false);
             }

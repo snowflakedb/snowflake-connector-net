@@ -188,7 +188,7 @@ namespace Snowflake.Data.Tests.Util
             var payload = new StringContent(transformedContent, Encoding.UTF8, "application/json");
             var response = Task.Run(async () => await s_httpClient.PostAsync(
                 WiremockBaseHttpUrl + "/__admin/mappings/import",
-                payload)
+                payload).ConfigureAwait(false)
             ).Result;
 
             if (!response.IsSuccessStatusCode)

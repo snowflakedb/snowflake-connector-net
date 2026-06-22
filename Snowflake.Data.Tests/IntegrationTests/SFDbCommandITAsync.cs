@@ -175,7 +175,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     // Act
                     cancelToken.Cancel();
                     var thrown = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-                        await cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token).ConfigureAwait(false));
+                        await cmd.GetResultsFromQueryIdAsync(queryId, cancelToken.Token).ConfigureAwait(false)).ConfigureAwait(false);
 
                     // Assert
                     Assert.Contains("The operation was canceled", thrown.Message);
@@ -268,7 +268,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // Act
                     var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () =>
-                        await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false));
+                        await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
 
                     // Assert
                     Assert.Contains("'FAKE_TABLE' does not exist", thrown.Message);
@@ -292,7 +292,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     // Act
                     var thrown = await Assert.ThrowsAsync<Exception>(async () =>
-                        await cmd.GetQueryStatusAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
+                        await cmd.GetQueryStatusAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
 
                     // Assert
                     Assert.Contains("Invalid query id format. Expected a UUID.", thrown.Message);
@@ -316,7 +316,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     // Act
                     var thrown = await Assert.ThrowsAsync<Exception>(async () =>
-                        await cmd.GetResultsFromQueryIdAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false));
+                        await cmd.GetResultsFromQueryIdAsync(fakeQueryId, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
 
                     // Assert
                     Assert.Contains("Invalid query id format. Expected a UUID.", thrown.Message);
@@ -363,7 +363,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     // Act
                     var thrown = await Assert.ThrowsAsync<Exception>(async () =>
-                        await cmd.GetResultsFromQueryIdAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false));
+                        await cmd.GetResultsFromQueryIdAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
 
                     // Assert
                     Assert.Contains("Max retry for no data is reached", thrown.Message);
@@ -392,7 +392,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     // Act
                     var thrown = await Assert.ThrowsAsync<Exception>(async () =>
-                        await queryResultsAwaiter.RetryUntilQueryResultIsAvailable(conn, unknownQueryId, CancellationToken.None, true).ConfigureAwait(false));
+                        await queryResultsAwaiter.RetryUntilQueryResultIsAvailable(conn, unknownQueryId, CancellationToken.None, true).ConfigureAwait(false)).ConfigureAwait(false);
 
                     // Assert
                     Assert.Contains("Max retry for no data is reached", thrown.Message);
