@@ -392,7 +392,7 @@ namespace Snowflake.Data.Client
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            return await resultSet.NextAsync();
+            return await resultSet.NextAsync().ConfigureAwait(false);
         }
 
         public override void Close()

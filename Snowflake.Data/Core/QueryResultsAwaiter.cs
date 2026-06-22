@@ -88,7 +88,7 @@ namespace Snowflake.Data.Core
                     }
 
                     status = isAsync
-                        ? await GetQueryStatusAsync(connection, queryId, cancellationToken)
+                        ? await GetQueryStatusAsync(connection, queryId, cancellationToken).ConfigureAwait(false)
                         : GetQueryStatus(connection, queryId);
 
                     if (!QueryStatusExtensions.IsStillRunning(status))

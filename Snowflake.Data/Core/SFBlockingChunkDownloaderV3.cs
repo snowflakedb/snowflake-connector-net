@@ -121,11 +121,11 @@ namespace Snowflake.Data.Core
                     }
                 }
                 nextChunkToConsumeIndex++;
-                return await chunk;
+                return await chunk.ConfigureAwait(false);
             }
             else
             {
-                return await Task.FromResult<BaseResultChunk>(null);
+                return null;
             }
         }
 
@@ -218,7 +218,7 @@ namespace Snowflake.Data.Core
         private async Task ParseStreamIntoChunk(Stream content, BaseResultChunk resultChunk)
         {
             IChunkParser parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, content);
-            await parser.ParseChunk(resultChunk);
+            await parser.ParseChunk(resultChunk).ConfigureAwait(false);
         }
     }
 
