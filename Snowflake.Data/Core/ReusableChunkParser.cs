@@ -147,7 +147,7 @@ namespace Snowflake.Data.Core
                 }
                 if (inString)
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in string");
-            });
+            }).ConfigureAwait(false);
         }
     }
 }

@@ -89,7 +89,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
 
                 // act
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 // assert
                 Assert.True(EasyLoggerManager.HasEasyLoggingAppender());
@@ -126,7 +126,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
-                    await conn.OpenAsync(CancellationToken.None);
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                     var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
                     var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
                     var logFile = fileAppender.LogFilePath;
@@ -161,7 +161,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = _fixture.ConnectionString + $"CLIENT_CONFIG_FILE={configFilePath}";
-                    await conn.OpenAsync(CancellationToken.None);
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                     var sfLogger = (SFLoggerImpl)SFLoggerFactory.GetSFLogger<EasyLoggingIT>();
                     var fileAppender = (SFRollingFileAppender)SFLoggerImpl.s_appenders.First();
                     var logFile = fileAppender.LogFilePath;

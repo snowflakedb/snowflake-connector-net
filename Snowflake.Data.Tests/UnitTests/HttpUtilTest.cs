@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockHttp.When("https://test.snowflakecomputing.com")
             .Respond(statusCode);
             var client = mockHttp.ToHttpClient();
-            var response = await client.GetAsync("https://test.snowflakecomputing.com");
+            var response = await client.GetAsync("https://test.snowflakecomputing.com").ConfigureAwait(false);
 
             bool actualIsRetryable = HttpUtil.isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
 

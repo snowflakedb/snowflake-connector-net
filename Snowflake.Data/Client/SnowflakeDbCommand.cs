@@ -429,7 +429,7 @@ namespace Snowflake.Data.Client
             using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetQueryStatusAsync);
             try
             {
-                var status = await _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken);
+                var status = await _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken).ConfigureAwait(false);
                 activity?.SetSuccess();
                 return status;
             }
@@ -480,7 +480,7 @@ namespace Snowflake.Data.Client
 
             try
             {
-                await _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true);
+                await _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true).ConfigureAwait(false);
 
                 SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
 

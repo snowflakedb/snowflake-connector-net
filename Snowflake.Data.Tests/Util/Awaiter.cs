@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.Util
             var breakTime = TimeoutHelper.IsInfinite(timeout) ? long.MaxValue : startTime + timeout.TotalMilliseconds;
             while (!condition() && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < breakTime)
             {
-                await Task.Delay(delay);
+                await Task.Delay(delay).ConfigureAwait(false);
             }
         }
     }

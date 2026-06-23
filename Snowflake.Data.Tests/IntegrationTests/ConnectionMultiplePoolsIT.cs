@@ -38,8 +38,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connectionString = _fixture.ConnectionString + "application=TestWaitForMaxSize1;waitingForIdleSessionTimeout=1s;maxPoolSize=2;minPoolSize=1;poolingEnabled=true";
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(0, pool.GetCurrentPoolSize());
-            var conn1 = await OpenConnectionAsync(connectionString);
-            var conn2 = await OpenConnectionAsync(connectionString);
+            var conn1 = await OpenConnectionAsync(connectionString).ConfigureAwait(false);
+            var conn2 = await OpenConnectionAsync(connectionString).ConfigureAwait(false);
             var watch = new StopWatch();
 
             // act
@@ -53,8 +53,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(2, pool.GetCurrentPoolSize());
 
             // cleanup
-            await conn1.CloseAsync(CancellationToken.None);
-            await conn2.CloseAsync(CancellationToken.None);
+            await conn1.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            await conn2.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         [SFFact(RetriesCount = RetriesCount.Thrice)]
@@ -138,7 +138,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(3, pool.GetCurrentPoolSize());
 
             // cleanup
-            await connection.CloseAsync(CancellationToken.None);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         [SFFact]
@@ -146,7 +146,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             // arrange
             var connectionString = _fixture.ConnectionString + "minPoolSize=0;poolingEnabled=true";
-            var connection = await OpenConnectionAsync(connectionString);
+            var connection = await OpenConnectionAsync(connectionString).ConfigureAwait(false);
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
@@ -170,8 +170,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Assert.Equal(0, pool.GetCurrentPoolSize());
             var connection = new TestSnowflakeDbConnection(mockDbProviderFactory.Object);
             connection.ConnectionString = connectionString;
-            await connection.OpenAsync(CancellationToken.None);
-            await connection.BeginTransactionAsync();
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await connection.BeginTransactionAsync().ConfigureAwait(false);
             Assert.True(connection.HasActiveExplicitTransaction());
 
             // act
@@ -200,11 +200,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var connection = new SnowflakeDbConnection(connectionString))
                 {
-                    await connection.OpenAsync(cts.Token);
+                    await connection.OpenAsync(cts.Token).ConfigureAwait(false);
                     using (var command = connection.CreateCommand())
                     {
                         command.CommandText = $"SELECT SYSTEM$WAIT(20)";
-                        await command.ExecuteNonQueryAsync(cts.Token);
+                        await command.ExecuteNonQueryAsync(cts.Token).ConfigureAwait(false);
                     }
                 }
             }, CancellationToken.None);
@@ -213,7 +213,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 var state = pool.GetCurrentState();
                 return state.IdleSessionsCount == 0 && state.BusySessionsCount == 1;
-            }, TimeSpan.FromMilliseconds(10000));
+            }, TimeSpan.FromMilliseconds(10000)).ConfigureAwait(false);
 
             // one busy session
             Assert.Equal(0, pool.GetCurrentState().IdleSessionsCount);
@@ -221,7 +221,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             if (cancelAsync)
 #if NET8_0_OR_GREATER
-                await cts.CancelAsync();
+                await cts.CancelAsync().ConfigureAwait(false);
 #else
                 cts.Cancel();
 #endif
@@ -229,7 +229,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cts.Cancel();
 
             // operation canceled properly
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task).ConfigureAwait(false);
 
             // one idle session
             Assert.Equal(1, pool.GetCurrentState().IdleSessionsCount);

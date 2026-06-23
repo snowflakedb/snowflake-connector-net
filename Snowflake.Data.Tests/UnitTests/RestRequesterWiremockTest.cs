@@ -56,16 +56,16 @@ namespace Snowflake.Data.Tests.UnitTests
 
             using var conn = new SnowflakeDbConnection();
             conn.ConnectionString = BuildConnectionString();
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT 1";
 
             // act
-            using var reader = await cmd.ExecuteReaderAsync(CancellationToken.None);
+            using var reader = await cmd.ExecuteReaderAsync(CancellationToken.None).ConfigureAwait(false);
 
             // assert
-            Assert.True(await reader.ReadAsync());
+            Assert.True(await reader.ReadAsync().ConfigureAwait(false));
             Assert.Equal("1", reader.GetString(0));
         }
 
@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // act & assert
             await Assert.ThrowsAsync<JsonReaderException>(
-                () => cmd.ExecuteReaderAsync(CancellationToken.None));
+                () => cmd.ExecuteReaderAsync(CancellationToken.None)).ConfigureAwait(false);
         }
 
         private string BuildConnectionString()

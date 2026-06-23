@@ -2,6 +2,7 @@
 
 # Changelog
 - v5.8.0
+  -  Reduced synchronization context capture in library, minimizing the risk of deadlock occurrence across different code path executions.
   -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
   -  Improved handling of certificates serial number matching and performance of CRL checkup.
   -  AWS Workload Identity Federation attestation now defaults to a SigV4-presigned `GetCallerIdentity` request.

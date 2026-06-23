@@ -38,7 +38,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 {
                     "cola INTEGER",
                     "colb STRING"
-                });
+                }).ConfigureAwait(false);
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -86,7 +86,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     "timeData TIME",
                     "dateTimeData DATETIME",
                     "dateTimeWithTimeZone TIMESTAMP_TZ"
-                });
+                }).ConfigureAwait(false);
                 foreach (DbType type in Enum.GetValues(typeof(DbType)))
                 {
                     bool isTypeSupported = true;
@@ -229,7 +229,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     "timeData TIME",
                     "dateTimeData DATETIME",
                     "dateTimeWithTimeZone TIMESTAMP_TZ"
-                });
+                }).ConfigureAwait(false);
 
                 foreach (DbType type in Enum.GetValues(typeof(DbType)))
                 {
@@ -342,7 +342,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         using (var command = dbConnection.CreateCommand())
                         {
                             command.CommandText = $"select {colName} from {fixtureTableName};";
-                            using (IDataReader reader = await command.ExecuteReaderAsync())
+                            using (IDataReader reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                             {
                                 reader.Read();
                                 Assert.True(!reader.IsDBNull(0));
@@ -392,7 +392,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         }
 
                         var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-                        await _fixture.CreateOrReplaceTable(dbConnection, fixtureTableName, columns);
+                        await _fixture.CreateOrReplaceTable(dbConnection, fixtureTableName, columns).ConfigureAwait(false);
 
                         using (var command = dbConnection.CreateCommand())
                         {
@@ -556,7 +556,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     "cold TIME",
                     "cole TIMESTAMP_NTZ",
                     "colf TIMESTAMP_TZ"
-                });
+                }).ConfigureAwait(false);
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -662,7 +662,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                     cmd.Parameters.Clear();
                     cmd.CommandText = $"SELECT * FROM {fixtureTableName}";
-                    IDataReader reader = await cmd.ExecuteReaderAsync();
+                    IDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
                 }
 
@@ -688,7 +688,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     "cola REAL",
                     "colb TEXT",
                     "colc NUMBER(38,0)"
-                });
+                }).ConfigureAwait(false);
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -736,7 +736,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(total * 3, rowsCount);
 
                     cmd.CommandText = $"SELECT * FROM {fixtureTableName}";
-                    IDataReader reader = await cmd.ExecuteReaderAsync();
+                    IDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
                 }
 
@@ -756,7 +756,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER"
-                });
+                }).ConfigureAwait(false);
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -780,7 +780,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     Assert.Equal(70000, count);
 
                     cmd.CommandText = $"SELECT * FROM {fixtureTableName}";
-                    IDataReader reader = await cmd.ExecuteReaderAsync();
+                    IDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
                 }
                 await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -800,7 +800,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER",
-                });
+                }).ConfigureAwait(false);
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -833,7 +833,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
                 {
                     "cola INTEGER",
-                });
+                }).ConfigureAwait(false);
 
                 using (var cmd = conn.CreateCommand())
                 {
@@ -950,7 +950,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     fixtureTableName,
                     tableType.TableDDLCreationPrefix(),
                     columns,
-                    tableType.TableDDLCreationFlags());
+                    tableType.TableDDLCreationFlags()).ConfigureAwait(false);
 
                 // Act+Assert
                 var sqlInsert = $"insert into {fixtureTableName} ({sql_columns}) values ({sql_values})";

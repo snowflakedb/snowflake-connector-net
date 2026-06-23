@@ -50,10 +50,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var request = CreateQueryRequest();
 
             //act
-            var response = await httpClient.SendAsync(request);
+            var response = await httpClient.SendAsync(request).ConfigureAwait(false);
 
             // assert
-            await AssertResponseId(response, expectedQueryId);
+            await AssertResponseId(response, expectedQueryId).ConfigureAwait(false);
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
@@ -66,10 +66,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var request = CreateQueryRequest();
 
             //act
-            var response = await httpClient.SendAsync(request);
+            var response = await httpClient.SendAsync(request).ConfigureAwait(false);
 
             // assert
-            await AssertResponseId(response, expectedQueryId);
+            await AssertResponseId(response, expectedQueryId).ConfigureAwait(false);
         }
 
         private HttpClient CreateHttpClientForRetry()
@@ -94,7 +94,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private async Task AssertResponseId(HttpResponseMessage response, string expectedQueryId)
         {
-            var json = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var result = JsonConvert.DeserializeObject<QueryExecResponse>(json, JsonUtils.JsonSettings);
 
             // assert
@@ -111,7 +111,7 @@ namespace Snowflake.Data.Tests.UnitTests
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
-            var response = await base.SendAsync(request, cancellationToken);
+            var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
             return response;
         }
     }
