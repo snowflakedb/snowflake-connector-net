@@ -74,7 +74,7 @@ public abstract class NumberOverflowAsStringIT : SFBaseTestAsync
 
         var cmd = conn.CreateCommand();
         cmd.CommandText = $"SELECT cola FROM {tableName}";
-        using var reader = await cmd.ExecuteReaderAsync();
+        using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
         Assert.True(await reader.ReadAsync().ConfigureAwait(false));
         Assert.Throws<OverflowException>(() => reader.GetValue(0));
     }
