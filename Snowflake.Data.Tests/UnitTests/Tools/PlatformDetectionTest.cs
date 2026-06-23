@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
 using RichardSzalay.MockHttp;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
@@ -40,7 +41,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             Environment.SetEnvironmentVariable(KConfiguration, null);
             Environment.SetEnvironmentVariable(CloudRunJob, null);
             Environment.SetEnvironmentVariable(CloudRunExecution, null);
-            Environment.SetEnvironmentVariable(PlatformDetection.DisableEnvVar, null);
+            Environment.SetEnvironmentVariable(EnvVars.DisablePlatformDetection.Name, null);
         }
 
         // --- DetectAwsLambda ---
@@ -296,7 +297,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [SFFact]
         public async Task TestRunDetectionAsyncReturnsDisabledWhenEnvVarSetToTrue()
         {
-            Environment.SetEnvironmentVariable(PlatformDetection.DisableEnvVar, "true");
+            Environment.SetEnvironmentVariable(EnvVars.DisablePlatformDetection.Name, "true");
             var result = await PlatformDetection.RunDetectionAsync().ConfigureAwait(false);
             Assert.Equal(new[] { "disabled" }, result);
         }
@@ -304,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         [SFFact]
         public async Task TestRunDetectionAsyncReturnsDisabledWhenEnvVarSetCaseInsensitive()
         {
-            Environment.SetEnvironmentVariable(PlatformDetection.DisableEnvVar, "TRUE");
+            Environment.SetEnvironmentVariable(EnvVars.DisablePlatformDetection.Name, "TRUE");
             var result = await PlatformDetection.RunDetectionAsync().ConfigureAwait(false);
             Assert.Equal(new[] { "disabled" }, result);
         }

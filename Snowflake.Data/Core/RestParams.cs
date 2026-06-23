@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.MiniCore;
 using Snowflake.Data.Core.Tools;
 
@@ -78,7 +79,7 @@ namespace Snowflake.Data.Core
 
         static SFEnvironment()
         {
-            MinicoreDisabled = IsMinicoreDisabled();
+            MinicoreDisabled = EnvironmentFacade.Instance.GetBool(EnvVars.DisableMinicore);
             Tools.PlatformDetection.EnsureStarted();
             var libcInfo = LibcDetector.Instance.Detect();
             ClientEnv = new LoginRequestClientEnv()
@@ -138,13 +139,6 @@ namespace Snowflake.Data.Core
             {
                 return "UNKNOWN";
             }
-        }
-
-        private static bool IsMinicoreDisabled()
-        {
-            string val = Environment.GetEnvironmentVariable("SF_DISABLE_MINICORE");
-            if (string.IsNullOrEmpty(val)) return false;
-            return val.Equals("true", StringComparison.OrdinalIgnoreCase);
         }
 
         internal static Dictionary<string, string> ExtractOsDetails()

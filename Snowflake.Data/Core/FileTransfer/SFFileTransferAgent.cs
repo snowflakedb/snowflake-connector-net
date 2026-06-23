@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
@@ -88,15 +89,6 @@ namespace Snowflake.Data.Core
         /// The file metadata. Applies to all files being uploaded/downloaded
         /// </summary>
         private PutGetResponseData TransferMetadata;
-
-        /// <summary>
-        /// The path to the user home directory.
-        /// </summary>
-        private readonly string HomePath = (
-            Environment.OSVersion.Platform == PlatformID.Unix ||
-            Environment.OSVersion.Platform == PlatformID.MacOSX) ?
-              Environment.GetEnvironmentVariable("HOME") :
-              Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
 
         /// <summary>
         /// List of metadata for small and large files.
@@ -874,7 +866,7 @@ namespace Snowflake.Data.Core
 
             var homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
                             Environment.OSVersion.Platform == PlatformID.MacOSX)
-                ? Environment.GetEnvironmentVariable("HOME")
+                ? EnvironmentFacade.Instance.GetString(EnvVars.Home)
                 : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
 
             return directoryPath.Replace("~", homePath);

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Moq;
+using Snowflake.Data.Configuration;
 using Xunit;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
@@ -9,68 +10,39 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 {
     public class SpcsTokenProviderTest
     {
-        public SpcsTokenProviderTest()
+        private readonly Mock<FileOperations> _fileOperations = new();
+        private readonly Mock<IEnvironmentFacade> _environmentFacade = new();
+
+        private SpcsTokenProvider CreateProvider()
         {
-            Setup();
-        }
-
-        [ThreadStatic]
-        private static Mock<FileOperations> t_fileOperations;
-
-        [ThreadStatic]
-        private static Mock<EnvironmentOperations> t_environmentOperations;
-
-        [ThreadStatic]
-        private static SpcsTokenProvider t_provider;
-
-        private void Setup()
-        {
-            t_fileOperations = new Mock<FileOperations>();
-            t_environmentOperations = new Mock<EnvironmentOperations>();
-            t_provider = new SpcsTokenProvider(t_fileOperations.Object, t_environmentOperations.Object);
+            return new SpcsTokenProvider(_fileOperations.Object, _environmentFacade.Object);
         }
 
         [SFFact]
         public void TestReturnsNullWhenRunningInsideSpcsEnvVarIsNotSet()
         {
             // arrange
-            t_environmentOperations.Setup(e => e.GetEnvironmentVariable(SpcsTokenProvider.RunningInsideSpcsEnvVar))
-                .Returns((string)null);
+            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns(string.Empty);
+            var provider = CreateProvider();
 
             // act
-            var token = t_provider.GetSpcsToken();
+            var token = provider.GetSpcsToken();
 
             // assert
             Assert.Null(token);
-            t_fileOperations.Verify(f => f.ReadAllText(It.IsAny<string>()), Times.Never);
+            _fileOperations.Verify(f => f.ReadAllText(It.IsAny<string>()), Times.Never);
         }
 
         [SFFact]
-        public void TestReturnsNullWhenRunningInsideSpcsEnvVarIsEmpty()
+        public void TestReturnsTokenFromConfiguredPath()
         {
             // arrange
-            t_environmentOperations.Setup(e => e.GetEnvironmentVariable(SpcsTokenProvider.RunningInsideSpcsEnvVar))
-                .Returns("");
+            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns("snowflake/session/spcs_token");
+            _fileOperations.Setup(f => f.ReadAllText("/snowflake/session/spcs_token")).Returns("my-spcs-token");
+            var provider = CreateProvider();
 
             // act
-            var token = t_provider.GetSpcsToken();
-
-            // assert
-            Assert.Null(token);
-            t_fileOperations.Verify(f => f.ReadAllText(It.IsAny<string>()), Times.Never);
-        }
-
-        [SFFact]
-        public void TestReturnsTokenFromDefaultPath()
-        {
-            // arrange
-            t_environmentOperations.Setup(e => e.GetEnvironmentVariable(SpcsTokenProvider.RunningInsideSpcsEnvVar))
-                .Returns("true");
-            t_fileOperations.Setup(f => f.ReadAllText(SpcsTokenProvider.DefaultSpcsTokenPath))
-                .Returns("my-spcs-token");
-
-            // act
-            var token = t_provider.GetSpcsToken();
+            var token = provider.GetSpcsToken();
 
             // assert
             Assert.Equal("my-spcs-token", token);
@@ -80,13 +52,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestTrimsWhitespaceFromToken()
         {
             // arrange
-            t_environmentOperations.Setup(e => e.GetEnvironmentVariable(SpcsTokenProvider.RunningInsideSpcsEnvVar))
-                .Returns("true");
-            t_fileOperations.Setup(f => f.ReadAllText(SpcsTokenProvider.DefaultSpcsTokenPath))
-                .Returns("  my-spcs-token\n");
+            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns("/snowflake/session/spcs_token");
+            _fileOperations.Setup(f => f.ReadAllText("/snowflake/session/spcs_token")).Returns("  my-spcs-token\n");
+            var provider = CreateProvider();
 
             // act
-            var token = t_provider.GetSpcsToken();
+            var token = provider.GetSpcsToken();
 
             // assert
             Assert.Equal("my-spcs-token", token);
@@ -96,13 +67,13 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestReturnsNullWhenFileDoesNotExist()
         {
             // arrange
-            t_environmentOperations.Setup(e => e.GetEnvironmentVariable(SpcsTokenProvider.RunningInsideSpcsEnvVar))
-                .Returns("true");
-            t_fileOperations.Setup(f => f.ReadAllText(SpcsTokenProvider.DefaultSpcsTokenPath))
-                .Throws(new FileNotFoundException("File not found", SpcsTokenProvider.DefaultSpcsTokenPath));
+            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns("/snowflake/session/spcs_token");
+            _fileOperations.Setup(f => f.ReadAllText("/snowflake/session/spcs_token"))
+                .Throws(new FileNotFoundException("File not found"));
+            var provider = CreateProvider();
 
             // act
-            var token = t_provider.GetSpcsToken();
+            var token = provider.GetSpcsToken();
 
             // assert
             Assert.Null(token);
@@ -112,13 +83,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestReturnsNullWhenFileIsEmpty()
         {
             // arrange
-            t_environmentOperations.Setup(e => e.GetEnvironmentVariable(SpcsTokenProvider.RunningInsideSpcsEnvVar))
-                .Returns("true");
-            t_fileOperations.Setup(f => f.ReadAllText(SpcsTokenProvider.DefaultSpcsTokenPath))
-                .Returns("");
+            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns("/snowflake/session/spcs_token");
+            _fileOperations.Setup(f => f.ReadAllText("/snowflake/session/spcs_token")).Returns("");
+            var provider = CreateProvider();
 
             // act
-            var token = t_provider.GetSpcsToken();
+            var token = provider.GetSpcsToken();
 
             // assert
             Assert.Null(token);
@@ -128,13 +98,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestReturnsNullWhenFileContainsOnlyWhitespace()
         {
             // arrange
-            t_environmentOperations.Setup(e => e.GetEnvironmentVariable(SpcsTokenProvider.RunningInsideSpcsEnvVar))
-                .Returns("true");
-            t_fileOperations.Setup(f => f.ReadAllText(SpcsTokenProvider.DefaultSpcsTokenPath))
-                .Returns("   \n  ");
+            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns("/snowflake/session/spcs_token");
+            _fileOperations.Setup(f => f.ReadAllText("/snowflake/session/spcs_token")).Returns("   \n  ");
+            var provider = CreateProvider();
 
             // act
-            var token = t_provider.GetSpcsToken();
+            var token = provider.GetSpcsToken();
 
             // assert
             Assert.Null(token);
@@ -144,16 +113,42 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         public void TestReturnsNullAndDoesNotThrowOnReadException()
         {
             // arrange
-            t_environmentOperations.Setup(e => e.GetEnvironmentVariable(SpcsTokenProvider.RunningInsideSpcsEnvVar))
-                .Returns("true");
-            t_fileOperations.Setup(f => f.ReadAllText(SpcsTokenProvider.DefaultSpcsTokenPath))
+            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns("/snowflake/session/spcs_token");
+            _fileOperations.Setup(f => f.ReadAllText("/snowflake/session/spcs_token"))
                 .Throws(new IOException("Access denied"));
+            var provider = CreateProvider();
 
             // act
-            var token = t_provider.GetSpcsToken();
+            var token = provider.GetSpcsToken();
 
             // assert
             Assert.Null(token);
+        }
+
+        [SFFact]
+        public void TestCreateIfRunningInSpcsReturnsNullWhenNotInSpcs()
+        {
+            // arrange
+            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns(string.Empty);
+
+            // act
+            var provider = SpcsTokenProvider.CreateIfRunningInSpcs(_environmentFacade.Object);
+
+            // assert
+            Assert.Null(provider);
+        }
+
+        [SFFact]
+        public void TestCreateIfRunningInSpcsReturnsProviderWhenInSpcs()
+        {
+            // arrange
+            _environmentFacade.Setup(e => e.GetString(EnvVars.RunningInsideSpcs)).Returns("/snowflake/session/spcs_token");
+
+            // act
+            var provider = SpcsTokenProvider.CreateIfRunningInSpcs(_environmentFacade.Object);
+
+            // assert
+            Assert.NotNull(provider);
         }
     }
 }

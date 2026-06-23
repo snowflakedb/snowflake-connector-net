@@ -81,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         private static Mock<DirectoryOperations> t_directoryOperations;
 
         [ThreadStatic]
-        private static Mock<EnvironmentOperations> t_environmentOperations;
+        private static Mock<IEnvironmentFacade> t_environmentOperations;
 
         [ThreadStatic]
         private static EasyLoggingStarter t_easyLoggerStarter;
@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             t_easyLoggerManager = new Mock<EasyLoggerManager>();
             t_unixOperations = new Mock<UnixOperations>();
             t_directoryOperations = new Mock<DirectoryOperations>();
-            t_environmentOperations = new Mock<EnvironmentOperations>();
+            t_environmentOperations = new Mock<IEnvironmentFacade>();
             t_easyLoggerStarter = new EasyLoggingStarter(
                 t_easyLoggingProvider.Object,
                 t_easyLoggerManager.Object,

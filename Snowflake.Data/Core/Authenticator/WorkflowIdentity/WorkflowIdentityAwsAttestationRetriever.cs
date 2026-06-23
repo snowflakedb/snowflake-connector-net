@@ -3,13 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Amazon.Runtime;
 using Newtonsoft.Json;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
@@ -26,13 +29,15 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
         private readonly AwsSdkWrapper _awsSdkWrapper;
         private readonly IRestRequester _restRequester;
         private readonly string _stsHost;
+        private readonly IEnvironmentFacade _environmentFacade;
 
-        internal WorkflowIdentityAwsAttestationRetriever(TimeProvider timeProvider, AwsSdkWrapper awsSdkWrapper, IRestRequester restRequester, string stsHost)
+        internal WorkflowIdentityAwsAttestationRetriever(IEnvironmentFacade environmentFacade, TimeProvider timeProvider, AwsSdkWrapper awsSdkWrapper, IRestRequester restRequester, string stsHost)
         {
             _timeProvider = timeProvider;
             _awsSdkWrapper = awsSdkWrapper;
             _restRequester = restRequester;
             _stsHost = stsHost;
+            _environmentFacade = environmentFacade;
         }
 
         public override AttestationProvider GetAttestationProvider() => AttestationProvider.AWS;
@@ -58,12 +63,16 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 credentials = GetAwsCredentials();
             }
 
-            var jwt = GetWebIdentityTokenAsync(region, credentials, CancellationToken.None).GetAwaiter().GetResult();
+            var useOutboundToken = _environmentFacade.GetBool(EnvVars.EnableAwsWifOutboundToken);
+
+            var credential = useOutboundToken
+                ? GetWebIdentityTokenAsync(region, credentials, CancellationToken.None).GetAwaiter().GetResult()
+                : CreateSignedGetCallerIdentityRequest(region, credentials);
 
             return new WorkloadIdentityAttestationData
             {
                 Provider = AttestationProvider.AWS,
-                Credential = jwt,
+                Credential = credential,
                 UserIdentifierComponents = new Dictionary<string, string>()
             };
         }
@@ -120,6 +129,36 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 s_logger.Error($"Failed to assume role {targetRoleArn}: {exception.Message}");
                 throw AttestationError($"Failed to assume role {targetRoleArn}: {exception.Message}");
             }
+        }
+
+        private string CreateSignedGetCallerIdentityRequest(string region, ImmutableCredentials credentials)
+        {
+            var domain = region.StartsWith("cn-") ? "amazonaws.com.cn" : "amazonaws.com";
+            var stsHostName = $"sts.{region}.{domain}";
+            var uri = new Uri($"https://{stsHostName}/?Action=GetCallerIdentity&Version={AmazonApiVersion}");
+            var headers = new Dictionary<string, string>
+            {
+                { "Host", stsHostName },
+                { "X-Snowflake-Audience", SnowflakeAudience }
+            };
+            var requestBuilder = new AttestationRequest
+            {
+                HttpMethod = HttpMethod.Post,
+                Uri = uri,
+                Headers = headers
+            };
+
+            var awsConfiguration = new AwsConfiguration
+            {
+                Region = region,
+                Service = "sts",
+                Credentials = credentials
+            };
+            var utcNow = _timeProvider.UtcNow();
+            AwsSignature4Signer.AddTokenAndSignatureHeaders(requestBuilder, awsConfiguration, utcNow);
+
+            var jsonRequest = JsonConvert.SerializeObject(requestBuilder);
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonRequest));
         }
 
         internal async Task<string> GetWebIdentityTokenAsync(string region, ImmutableCredentials credentials, CancellationToken cancellationToken)

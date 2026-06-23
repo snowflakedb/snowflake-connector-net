@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Web;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Tools;
@@ -18,8 +19,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WorkflowIdentityAzureAttestationRetriever>();
 
-        private readonly EnvironmentOperations _environmentOperations;
-
+        private readonly IEnvironmentFacade _environmentFacade;
         private readonly IRestRequester _restRequester;
 
         private readonly string _metadataServiceHost;
@@ -28,9 +28,9 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
         private TimeSpan RestTimeout { get; set; } = s_defaultTimeout;
 
-        public WorkflowIdentityAzureAttestationRetriever(EnvironmentOperations environmentOperations, IRestRequester restRequester, string metadataServiceHost)
+        public WorkflowIdentityAzureAttestationRetriever(IEnvironmentFacade environmentFacade, IRestRequester restRequester, string metadataServiceHost)
         {
-            _environmentOperations = environmentOperations;
+            _environmentFacade = environmentFacade;
             _restRequester = restRequester;
             _metadataServiceHost = metadataServiceHost ?? DefaultMetadataServiceHost;
         }
@@ -102,8 +102,8 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             var headers = new Dictionary<string, string> { { "Metadata", "True" } };
             var urlWithoutQueryParams = $"{_metadataServiceHost}{MetadataServiceEndpoint}";
             var queryParams = $"api-version=2018-02-01&resource={HttpUtility.UrlEncode(entraResourceOrDefault)}";
-            var identityEndpoint = _environmentOperations.GetEnvironmentVariable("IDENTITY_ENDPOINT");
-            var identityHeader = _environmentOperations.GetEnvironmentVariable("IDENTITY_HEADER");
+            var identityEndpoint = _environmentFacade.GetString(EnvVars.WifEndpoint);
+            var identityHeader = _environmentFacade.GetString(EnvVars.WifHeader);
             var useAzureFunctions = !string.IsNullOrEmpty(identityEndpoint);
             if (useAzureFunctions)
             {
@@ -118,7 +118,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
                 queryParams = $"api-version=2019-08-01&resource={HttpUtility.UrlEncode(entraResourceOrDefault)}";
             }
 
-            var clientId = _environmentOperations.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID");
+            var clientId = _environmentFacade.GetString(EnvVars.WifClientId);
 
             if (!string.IsNullOrEmpty(clientId))
             {

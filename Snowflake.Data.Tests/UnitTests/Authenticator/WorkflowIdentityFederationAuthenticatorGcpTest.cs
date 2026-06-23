@@ -177,7 +177,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             runner.AddMappings(s_wifGcpSuccessfulMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, token));
 
         private SFSession PrepareSessionForGcp(string connectionStringSuffix,
-            Action<Moq.Mock<EnvironmentOperations>> environmentOperationsConfigurator) =>
+            Action<Moq.Mock<IEnvironmentFacade>> environmentOperationsConfigurator) =>
             PrepareSession(
                 AttestationProvider.GCP,
                 connectionStringSuffix,
