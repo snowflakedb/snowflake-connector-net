@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             _runner.AddMappings("wiremock/test_mapping.json");
 
             //act
-            var response = await _httpClient.GetAsync(_runner.Url + "/test");
+            var response = await _httpClient.GetAsync(_runner.Url + "/test").ConfigureAwait(false);
 
             // assert
             Assert.True(response.IsSuccessStatusCode);
@@ -46,12 +46,12 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             // arrange
             _runner.AddMappings("wiremock/test_mapping.json");
-            var response = await _httpClient.GetAsync(_runner.Url + "/test");
+            var response = await _httpClient.GetAsync(_runner.Url + "/test").ConfigureAwait(false);
             Assert.True(response.IsSuccessStatusCode);
 
             // act
             _runner.ResetMapping();
-            response = await _httpClient.GetAsync(_runner.Url + "/test");
+            response = await _httpClient.GetAsync(_runner.Url + "/test").ConfigureAwait(false);
 
             // assert
             Assert.False(response.IsSuccessStatusCode);

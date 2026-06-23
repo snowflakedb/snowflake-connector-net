@@ -65,9 +65,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            await connection.OpenAsync(CancellationToken.None);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedDatabase());
-            await connection.CloseAsync(CancellationToken.None);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             Assert.Equal(0, pool.GetCurrentPoolSize());
         }
@@ -79,8 +79,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            await connection.OpenAsync(CancellationToken.None);
-            await connection.CloseAsync(CancellationToken.None);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             Assert.Equal(1, pool.GetCurrentPoolSize());
         }
@@ -92,18 +92,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            await connection.OpenAsync(CancellationToken.None);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedWarehouse());
             var sessionId = connection.SfSession.sessionId;
-            await connection.CloseAsync(CancellationToken.None);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             Assert.Equal(1, pool.GetCurrentPoolSize());
-            await connection.CloseAsync(CancellationToken.None);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            await connection2.OpenAsync(CancellationToken.None);
+            await connection2.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(sessionId, connection2.SfSession.sessionId);
-            await connection2.CloseAsync(CancellationToken.None);
+            await connection2.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         [SFFact]
@@ -113,17 +113,17 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
 
             var connection = new SnowflakeDbConnection(connectionString);
-            await connection.OpenAsync(CancellationToken.None);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedRole());
             var sessionId = connection.SfSession.sessionId;
-            await connection.CloseAsync(CancellationToken.None);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             Assert.Equal(0, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            await connection2.OpenAsync(CancellationToken.None);
+            await connection2.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
-            await connection2.CloseAsync(CancellationToken.None);
+            await connection2.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         [SFFact]
@@ -132,18 +132,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var connectionString = _fixture.ConnectionString + "application=DestroyRecreateSession;ChangedSession=Destroy;minPoolSize=1;maxPoolSize=3;poolingEnabled=true";
 
             var connection = new SnowflakeDbConnection(connectionString);
-            await connection.OpenAsync(CancellationToken.None);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var sessionId = connection.SfSession.sessionId;
             connection.SfSession.UpdateSessionProperties(_queryExecResponseChangedSchema);
-            await connection.CloseAsync(CancellationToken.None);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            await connection2.OpenAsync(CancellationToken.None);
+            await connection2.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
-            await connection2.CloseAsync(CancellationToken.None);
+            await connection2.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         [SFFact]
@@ -160,18 +160,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
 
             var connection = new SnowflakeDbConnection(connectionString);
-            await connection.OpenAsync(CancellationToken.None);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var sessionId = connection.SfSession.sessionId;
             connection.SfSession.UpdateSessionProperties(responseData);
-            await connection.CloseAsync(CancellationToken.None);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            await connection2.OpenAsync(CancellationToken.None);
+            await connection2.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(sessionId, connection2.SfSession.sessionId);
-            await connection2.CloseAsync(CancellationToken.None);
+            await connection2.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         [SFFact]
@@ -188,18 +188,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             };
 
             var connection = new SnowflakeDbConnection(connectionString);
-            await connection.OpenAsync(CancellationToken.None);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var sessionId = connection.SfSession.sessionId;
             connection.SfSession.UpdateSessionProperties(responseData);
-            await connection.CloseAsync(CancellationToken.None);
+            await connection.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             var pool = SnowflakeDbConnectionPool.GetPool(connectionString);
             Assert.Equal(1, pool.GetCurrentPoolSize());
 
             var connection2 = new SnowflakeDbConnection(connectionString);
-            await connection2.OpenAsync(CancellationToken.None);
+            await connection2.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.NotEqual(sessionId, connection2.SfSession.sessionId);
-            await connection2.CloseAsync(CancellationToken.None);
+            await connection2.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
     }
 }

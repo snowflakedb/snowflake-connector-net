@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var session = PrepareSession(AttestationProvider.AWS, null, NoEnvironmentSetup, SetupSystemTime, SetupAwsSdkDisabled);
 
             // act
-            var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+            var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None)).ConfigureAwait(false);
 
             // assert
             Assert.Contains("Retrieving attestation for AWS failed. Not available", exception?.Message);

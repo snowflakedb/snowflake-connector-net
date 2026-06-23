@@ -36,7 +36,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString = _fixture.ConnectionStringWithoutAuth +
                                     $";authenticator={oktaUrl};user={oktaUser};password={oktaPassword};";
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -53,7 +53,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.oktaUrl,
                       _fixture.testConfig.oktaUser,
                       _fixture.testConfig.oktaPassword);
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -71,7 +71,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.oktaUrl,
                       _fixture.testConfig.oktaUser,
                       _fixture.testConfig.oktaPassword);
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
 
@@ -85,7 +85,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.oktaUrl,
                       _fixture.testConfig.oktaUser,
                       _fixture.testConfig.oktaPassword);
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -99,7 +99,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
                   + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
 
             // connection pooling is disabled for external browser by default
@@ -107,7 +107,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
-                Assert.Equal("QA", (await command.ExecuteScalarAsync()).ToString());
+                Assert.Equal("QA", (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
             }
         }
     }
@@ -121,13 +121,13 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
                   + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;POOLINGENABLED=TRUE";
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
             Assert.True(SnowflakeDbConnectionPool.GetPool(conn.ConnectionString).GetPooling());
             using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
-                Assert.Equal("QA", (await command.ExecuteScalarAsync()).ToString());
+                Assert.Equal("QA", (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
             }
         }
     }
@@ -164,12 +164,12 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
                   + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;disable_console_login=false;";
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
             using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
-                Assert.Equal("QA", (await command.ExecuteScalarAsync()).ToString());
+                Assert.Equal("QA", (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
             }
         }
     }
@@ -210,16 +210,16 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                     conn.ConnectionString
                         = _fixture.ConnectionStringWithoutAuth
                           + $";authenticator=externalbrowser;user=qa@snowflakecomputing.com;BROWSER_RESPONSE_TIMEOUT={waitSeconds}";
-                    await conn.OpenAsync(CancellationToken.None);
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                     Assert.Equal(ConnectionState.Open, conn.State);
                     using (var command = conn.CreateCommand())
                     {
                         command.CommandText = "SELECT CURRENT_USER()";
-                        Assert.Equal("QA", (await command.ExecuteScalarAsync()).ToString());
+                        Assert.Equal("QA", (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
                     }
                 }
             }
-        );
+        ).ConfigureAwait(false);
         stopwatch.Stop();
 
         // timeout after specified number of seconds
@@ -248,7 +248,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             conn.ConnectionString = externalBrowserConnectionString;
 
             // Authenticate to retrieve and store the token if doesn't exist or invalid
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
 
@@ -257,7 +257,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             conn.ConnectionString = externalBrowserConnectionString;
 
             // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -276,7 +276,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             using (var connection = new SnowflakeDbConnection(ConnectionStringForOAuthFlows(_fixture.testConfig, authenticator)))
             {
                 // act
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
         finally
@@ -292,7 +292,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var connection = new SnowflakeDbConnection(ConnectionStringForPat(_fixture.testConfig)))
         {
             // act
-            await connection.OpenAsync(CancellationToken.None);
+            await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
         }
     }
 
@@ -316,7 +316,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             conn.ConnectionString = externalBrowserConnectionString;
 
             // Authenticate to retrieve and store the token if doesn't exist or invalid
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
 
@@ -325,7 +325,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             conn.ConnectionString = externalBrowserConnectionString;
 
             // Authenticate using the SSO token (the connector will automatically use the token and a browser should not pop-up in this step)
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
 
@@ -391,7 +391,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
 
 
             // Authenticate to retrieve and store the token if doesn't exist or invalid
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -421,7 +421,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
 
             // Open a connection which should switch to external browser after trying to connect using the wrong token
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
 
             // Switch back to the default credential manager
@@ -439,7 +439,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                 conn.ConnectionString
                     = _fixture.ConnectionStringWithoutAuth
                       + ";authenticator=externalbrowser;user=wrong@snowflakecomputing.com";
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 Assert.Fail();
             }
         }
@@ -461,7 +461,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       + String.Format(
                           ";authenticator=oauth;token={0}",
                           _fixture.testConfig.expOauthToken);
-                await conn.OpenAsync(CancellationToken);
+                await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
                 Assert.Fail();
             }
         }
@@ -485,7 +485,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.proxyHost,
                       _fixture.testConfig.proxyPort);
 
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -503,7 +503,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.authProxyUser,
                       _fixture.testConfig.authProxyPwd);
 
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -522,7 +522,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.authProxyPwd,
                       "*.foo.com %7C" + _fixture.testConfig.host + "|localhost");
 
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -539,14 +539,14 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                                          _fixture.testConfig.authProxyPort,
                                          _fixture.testConfig.authProxyUser,
                                          _fixture.testConfig.authProxyPwd);
-            await conn1.OpenAsync(CancellationToken);
+            await conn1.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
 
         // No proxy
         using (var conn2 = new SnowflakeDbConnection())
         {
             conn2.ConnectionString = _fixture.ConnectionString;
-            await conn2.OpenAsync(CancellationToken);
+            await conn2.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
 
         // Non authenticated proxy
@@ -557,7 +557,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                                          ";useProxy=true;proxyHost={0};proxyPort={1}",
                                          _fixture.testConfig.proxyHost,
                                          _fixture.testConfig.proxyPort);
-            await conn3.OpenAsync(CancellationToken);
+            await conn3.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
 
         // Invalid proxy
@@ -567,7 +567,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                 _fixture.ConnectionString + "connection_timeout=20;useProxy=true;proxyHost=Invalid;proxyPort=8080;";
             try
             {
-                await conn4.OpenAsync(CancellationToken);
+                await conn4.OpenAsync(CancellationToken).ConfigureAwait(false);
                 Assert.Fail();
             }
             catch
@@ -587,7 +587,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                                                                                             _fixture.testConfig.authProxyPort,
                                                                                             _fixture.testConfig.authProxyUser,
                                                                                             _fixture.testConfig.authProxyPwd));
-            await conn5.OpenAsync(CancellationToken);
+            await conn5.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
 
         // No proxy again, but crl check is disabled
@@ -595,7 +595,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var conn6 = new SnowflakeDbConnection())
         {
             conn6.ConnectionString = ConnectionStringModifier.DisableCrlRevocationCheck(_fixture.ConnectionString);
-            await conn6.OpenAsync(CancellationToken);
+            await conn6.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
 
         // Another authenticated proxy, but this will create a new httpclient because there is
@@ -612,7 +612,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.authProxyPwd,
                       "*.foo.com %7C" + _fixture.testConfig.host + "|localhost");
 
-            await conn7.OpenAsync(CancellationToken);
+            await conn7.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
 
         // No proxy again, crl check is enabled in the default connection string for tests
@@ -620,7 +620,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var conn8 = new SnowflakeDbConnection())
         {
             conn8.ConnectionString = _fixture.ConnectionString;
-            await conn8.OpenAsync(CancellationToken);
+            await conn8.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
 
         // Another authenticated proxy with bypasslist, but this will create a new httpclient because of
@@ -637,7 +637,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.authProxyPwd,
                       "*.foo.com %7C" + _fixture.testConfig.host + "|localhost");
 
-            await conn9.OpenAsync(CancellationToken);
+            await conn9.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
 
         // Another authenticated proxy with bypasslist
@@ -654,7 +654,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.authProxyPwd,
                       "*.foo.com %7C" + _fixture.testConfig.host + "|localhost");
 
-            await conn10.OpenAsync(CancellationToken);
+            await conn10.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
 
         // No proxy, but crl check disabled
@@ -662,7 +662,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var conn11 = new SnowflakeDbConnection())
         {
             conn11.ConnectionString = ConnectionStringModifier.DisableCrlRevocationCheck(_fixture.ConnectionString);
-            await conn11.OpenAsync(CancellationToken);
+            await conn11.OpenAsync(CancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -672,7 +672,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false;key1=test\'password;key2=test\"password;key3=test==password";
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
 
             Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
@@ -686,7 +686,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                 Assert.Equal(3, versionElements.Length);
             }
 
-            await conn.CloseAsync(CancellationToken);
+            await conn.CloseAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
@@ -698,7 +698,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString =
                 _fixture.ConnectionString + "poolingEnabled=false;key==word=value; key1=\"test;password\"; key2=\"test=password\"";
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
 
             Assert.Equal(SFSessionHttpClientProperties.DefaultRetryTimeout.TotalSeconds, conn.ConnectionTimeout);
@@ -712,7 +712,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                 Assert.Equal(3, versionElements.Length);
             }
 
-            await conn.CloseAsync(CancellationToken);
+            await conn.CloseAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
@@ -722,16 +722,16 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     {
         var conn = new SnowflakeDbConnection();
         conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false;CLIENT_SESSION_KEEP_ALIVE=true";
-        await conn.OpenAsync(CancellationToken);
+        await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
 
         Thread.Sleep(TimeSpan.FromSeconds(14430)); // more than 4 hrs
         using (var command = conn.CreateCommand())
         {
             command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-            Assert.Equal(46, await command.ExecuteScalarAsync());
+            Assert.Equal(46, await command.ExecuteScalarAsync().ConfigureAwait(false));
         }
 
-        await conn.CloseAsync(CancellationToken);
+        await conn.CloseAsync(CancellationToken).ConfigureAwait(false);
         Assert.Equal(ConnectionState.Closed, conn.State);
     }
 
@@ -742,23 +742,23 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
 
         var conn = new SnowflakeDbConnection();
         conn.ConnectionString = _fixture.ConnectionString + "maxPoolSize=2;minPoolSize=0;expirationTimeout=14800;CLIENT_SESSION_KEEP_ALIVE=true";
-        await conn.OpenAsync(CancellationToken);
-        await conn.CloseAsync(CancellationToken);
+        await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
+        await conn.CloseAsync(CancellationToken).ConfigureAwait(false);
 
         Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
 
         var conn1 = new SnowflakeDbConnection();
         conn1.ConnectionString = _fixture.ConnectionString + ";CLIENT_SESSION_KEEP_ALIVE=true";
-        await conn1.OpenAsync(CancellationToken);
+        await conn1.OpenAsync(CancellationToken).ConfigureAwait(false);
         Thread.Sleep(TimeSpan.FromSeconds(14430)); // more than 4 hrs
 
         using (var command = conn.CreateCommand())
         {
             command.CommandText = $"SELECT COUNT(*) FROM DOUBLE_TABLE";
-            Assert.Equal(46, await command.ExecuteScalarAsync());
+            Assert.Equal(46, await command.ExecuteScalarAsync().ConfigureAwait(false));
         }
 
-        await conn1.CloseAsync(CancellationToken);
+        await conn1.CloseAsync(CancellationToken).ConfigureAwait(false);
         Assert.Equal(ConnectionState.Closed, conn1.State);
         Assert.Equal(1, SnowflakeDbConnectionPool.GetCurrentPoolSize());
     }
@@ -784,8 +784,8 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                 "externalbrowser");
 
             Assert.Equal(ConnectionState.Closed, conn.State);
-            await conn.OpenAsync(CancellationToken);
-            await conn.CloseAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
+            await conn.CloseAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Closed, conn.State);
         }
     }
@@ -801,7 +801,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
                       _fixture.testConfig.jwtAuthUser,
                       _fixture.testConfig.pemFilePath);
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -817,7 +817,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
                       _fixture.testConfig.jwtAuthUser,
                       _fixture.testConfig.p8FilePath);
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -834,7 +834,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.jwtAuthUser,
                       _fixture.testConfig.pwdProtectedPrivateKeyFilePath,
                       _fixture.testConfig.privateKeyFilePwd);
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -850,7 +850,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       ";authenticator=snowflake_jwt;user={0};private_key={1}",
                       _fixture.testConfig.jwtAuthUser,
                       _fixture.testConfig.privateKey);
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -867,7 +867,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                       _fixture.testConfig.jwtAuthUser,
                       _fixture.testConfig.pwdProtectedPrivateKey,
                       _fixture.testConfig.privateKeyFilePwd);
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -885,7 +885,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                           ";authenticator=snowflake_jwt;user={0};private_key_pwd={1}",
                           _fixture.testConfig.jwtAuthUser,
                           _fixture.testConfig.privateKeyFilePwd);
-                await conn.OpenAsync(CancellationToken);
+                await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
                 Assert.Fail();
             }
         }
@@ -910,7 +910,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                           ";authenticator=snowflake_jwt;user={0};private_key_file={1};private_key_pwd=Invalid",
                           _fixture.testConfig.jwtAuthUser,
                           _fixture.testConfig.pwdProtectedPrivateKeyFilePath);
-                await conn.OpenAsync(CancellationToken);
+                await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
                 Assert.Fail();
             }
         }
@@ -934,7 +934,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                           ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
                           _fixture.testConfig.jwtAuthUser,
                           _fixture.testConfig.pwdProtectedPrivateKeyFilePath);
-                await conn.OpenAsync(CancellationToken);
+                await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
                 Assert.Fail();
             }
         }
@@ -958,7 +958,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                           ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
                           "WrongUser",
                           _fixture.testConfig.pemFilePath);
-                await conn.OpenAsync(CancellationToken);
+                await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
                 Assert.Fail();
             }
         }
@@ -983,7 +983,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                           "WrongUser",
                           _fixture.testConfig.pwdProtectedPrivateKeyFilePath,
                           _fixture.testConfig.privateKeyFilePwd);
-                await conn.OpenAsync(CancellationToken);
+                await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
                 Assert.Fail();
             }
         }
@@ -1004,7 +1004,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                   + String.Format(
                       ";authenticator=oauth;token={0}",
                       _fixture.testConfig.oauthToken);
-            await conn.OpenAsync(CancellationToken);
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
         }
     }
@@ -1044,7 +1044,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                     Console.WriteLine($"{conn.ConnectionString}");
                     try
                     {
-                        await conn.OpenAsync(CancellationToken);
+                        await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {
@@ -1059,7 +1059,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                         try
                         {
                             command.CommandText = "SELECT 1";
-                            await command.ExecuteScalarAsync();
+                            await command.ExecuteScalarAsync().ConfigureAwait(false);
                         }
                         catch (Exception e)
                         {

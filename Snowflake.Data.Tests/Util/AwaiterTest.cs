@@ -12,7 +12,7 @@ namespace Snowflake.Data.Tests.Util
         public async Task TestReturnsImmediatelyWhenConditionIsMet()
         {
             // act
-            var millis = await MillisecondsOfWaiting(() => true, TimeSpan.FromHours(1));
+            var millis = await MillisecondsOfWaiting(() => true, TimeSpan.FromHours(1)).ConfigureAwait(false);
 
             // assert
             Assert.InRange(millis, long.MinValue, _maxDurationRegardedAsImmediately.TotalMilliseconds);
@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.Util
         public async Task TestReturnsImmediatelyOnZeroTimeout()
         {
             // act
-            var millis = await MillisecondsOfWaiting(() => false, TimeSpan.FromMilliseconds(0));
+            var millis = await MillisecondsOfWaiting(() => false, TimeSpan.FromMilliseconds(0)).ConfigureAwait(false);
 
             // assert
             Assert.True(millis <= _maxDurationRegardedAsImmediately.TotalMilliseconds);
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Tests.Util
             var timeout = TimeSpan.FromSeconds(2);
 
             // act
-            var millis = await MillisecondsOfWaiting(() => false, TimeSpan.FromSeconds(2));
+            var millis = await MillisecondsOfWaiting(() => false, TimeSpan.FromSeconds(2)).ConfigureAwait(false);
 
             // assert
             Assert.True(millis >= timeout.TotalMilliseconds);
@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.Util
         {
             var watch = new StopWatch();
             watch.Start();
-            await Awaiter.WaitUntilConditionOrTimeout(condition, timeout);
+            await Awaiter.WaitUntilConditionOrTimeout(condition, timeout).ConfigureAwait(false);
             watch.Stop();
             return watch.ElapsedMilliseconds;
         }

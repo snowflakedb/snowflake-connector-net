@@ -79,19 +79,19 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
         public async Task TestAsyncCommandSendsTelemetryToServer(string method)
         {
             using var conn = new SnowflakeDbConnection(_connectionString);
-            await conn.OpenAsync();
+            await conn.OpenAsync().ConfigureAwait(false);
 
             using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
             cmd.CommandText = "SELECT 1";
 
             switch (method)
             {
-                case "ExecuteNonQueryAsync": await cmd.ExecuteNonQueryAsync(); break;
-                case "ExecuteScalarAsync": await cmd.ExecuteScalarAsync(); break;
-                case "ExecuteReaderAsync": (await cmd.ExecuteReaderAsync()).Dispose(); break;
+                case "ExecuteNonQueryAsync": await cmd.ExecuteNonQueryAsync().ConfigureAwait(false); break;
+                case "ExecuteScalarAsync": await cmd.ExecuteScalarAsync().ConfigureAwait(false); break;
+                case "ExecuteReaderAsync": (await cmd.ExecuteReaderAsync().ConfigureAwait(false)).Dispose(); break;
             }
 
-            await conn.CloseAsync(CancellationToken.None);
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
             var logs = await GetTelemetryLogsAsync();
             var matching = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName && l.StatusCode == "OK").ToList();

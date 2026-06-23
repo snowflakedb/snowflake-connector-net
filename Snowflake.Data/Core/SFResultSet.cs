@@ -111,7 +111,7 @@ namespace Snowflake.Data.Core
 
             if (_chunkDownloader != null)
             {
-                // GetNextChunk could be blocked if download result is not done yet. 
+                // GetNextChunk could be blocked if download result is not done yet.
                 // So put this piece of code in a seperate task
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
@@ -154,9 +154,9 @@ namespace Snowflake.Data.Core
             return false;
         }
 
-        internal override async Task<bool> NextResultAsync(CancellationToken cancellationToken)
+        internal override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            return await Task.FromResult(false);
+            return Task.FromResult(false);
         }
 
         internal override bool HasRows()

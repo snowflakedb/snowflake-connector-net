@@ -234,7 +234,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     await Task.Delay(1000).ContinueWith(_ =>
                     {
                         s_httpClient.GetAsync(uri.ToString());
-                    });
+                    }).ConfigureAwait(false);
                 });
 
             var restRequester = new Mock.MockExternalBrowserRestRequester()

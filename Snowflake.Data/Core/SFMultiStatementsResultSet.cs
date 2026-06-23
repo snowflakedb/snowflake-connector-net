@@ -34,12 +34,12 @@ namespace Snowflake.Data.Core
         {
             if (curResultSet == null)
             {
-                if (!await NextResultAsync(CancellationToken.None))
+                if (!await NextResultAsync(CancellationToken.None).ConfigureAwait(false))
                 {
                     return false;
                 }
             }
-            return await curResultSet.NextAsync();
+            return await curResultSet.NextAsync().ConfigureAwait(false);
         }
 
         internal override bool Next()
@@ -60,7 +60,7 @@ namespace Snowflake.Data.Core
             {
                 curResultSet = await sfStatement.GetResultWithIdAsync(
                                         resultIds[curResultIndex],
-                                        cancellationToken);
+                                        cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -68,7 +68,7 @@ namespace Snowflake.Data.Core
             }
 
             updateResultMetadata();
-            return await Task.FromResult(curResultSet != null);
+            return curResultSet != null;
         }
 
         internal override bool NextResult()

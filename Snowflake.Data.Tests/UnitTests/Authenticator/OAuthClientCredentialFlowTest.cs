@@ -47,7 +47,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var session = PrepareSession();
 
             // act
-            await session.OpenAsync(CancellationToken.None);
+            await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             // assert
             AssertAccessTokenSetInAuthenticator(session);
@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var session = PrepareSession();
 
             // act
-            await session.OpenAsync(CancellationToken.None);
+            await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             // assert
             AssertAccessTokenSetInAuthenticator(session);
@@ -125,7 +125,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var session = PrepareSession();
 
             // act
-            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None));
+            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None)).ConfigureAwait(false);
 
             // assert
             Assert.Equal(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);

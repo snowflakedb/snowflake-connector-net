@@ -770,7 +770,7 @@ namespace Snowflake.Data.Core
                             var req = BuildResultRequest(lastResultUrl);
                             response = await _restRequester.GetAsync<T>(req, cancellationToken).ConfigureAwait(false);
 
-                            if (!await RenewSessionIfNeededAsync(response, cancellationToken))
+                            if (!await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
                                 lastResultUrl = queryResponse.data?.getResultUrl;
                         }
                     }
@@ -892,7 +892,7 @@ namespace Snowflake.Data.Core
                 while (!receivedFirstQueryResponse)
                 {
                     response = await _restRequester.GetAsync<QueryStatusResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
-                    if (await RenewSessionIfNeededAsync(response, cancellationToken))
+                    if (await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
                     else
                         receivedFirstQueryResponse = true;

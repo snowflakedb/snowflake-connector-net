@@ -30,12 +30,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 try
                 {
                     SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                    await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" });
+                    await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" }).ConfigureAwait(false);
 
                     IDbCommand cmd = conn.CreateCommand();
                     var rowCount = 0;
@@ -70,7 +70,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 finally
                 {
                     SessionParameterAlterer.RestoreResultFormat(conn);
-                    await conn.CloseAsync(CancellationToken.None);
+                    await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
                 }
             }
         }
@@ -88,10 +88,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = _fixture.ConnectionString;
-                    await conn.OpenAsync(CancellationToken.None);
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                     SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                    await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "src VARIANT" });
+                    await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "src VARIANT" }).ConfigureAwait(false);
 
                     var cmd = conn.CreateCommand();
                     var rowCount = 0;
@@ -116,7 +116,7 @@ select parse_json('{{
 )
 ";
                     cmd.CommandText = insertCommand;
-                    IDataReader insertReader = await cmd.ExecuteReaderAsync();
+                    IDataReader insertReader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.Equal(500, insertReader.RecordsAffected);
 
                     var selectCommand = $"select * from {tableName}";
@@ -124,9 +124,9 @@ select parse_json('{{
                     cmd.CommandType = System.Data.CommandType.Text;
 
                     rowCount = 0;
-                    using (var reader = await cmd.ExecuteReaderAsync())
+                    using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
                     {
-                        while (await reader.ReadAsync())
+                        while (await reader.ReadAsync().ConfigureAwait(false))
                         {
                             Newtonsoft.Json.JsonConvert.DeserializeObject(reader[0].ToString());
                             rowCount++;
@@ -135,7 +135,7 @@ select parse_json('{{
                     Assert.Equal(500, rowCount);
 
                     SessionParameterAlterer.RestoreResultFormat(conn);
-                    await conn.CloseAsync(CancellationToken.None);
+                    await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
                 }
             }
             finally
@@ -157,29 +157,29 @@ select parse_json('{{
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 try
                 {
                     ChunkParserFactory.Instance = testFactory;
                     SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                    await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" });
+                    await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" }).ConfigureAwait(false);
 
                     var cmd = conn.CreateCommand();
                     var rowCount = 0;
 
                     var insertCommand = $"insert into {tableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                     cmd.CommandText = insertCommand;
-                    IDataReader insertReader = await cmd.ExecuteReaderAsync();
+                    IDataReader insertReader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.Equal(TestRowCount, insertReader.RecordsAffected);
 
                     var selectCommand = $"select * from {tableName}";
                     cmd.CommandText = selectCommand;
 
                     rowCount = 0;
-                    using (var reader = await cmd.ExecuteReaderAsync())
+                    using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
                     {
-                        while (await reader.ReadAsync())
+                        while (await reader.ReadAsync().ConfigureAwait(false))
                         {
                             var obj = new object[reader.FieldCount];
                             reader.GetValues(obj);
@@ -199,7 +199,7 @@ select parse_json('{{
                 {
                     ChunkParserFactory.Instance = previous;
                     SessionParameterAlterer.RestoreResultFormat(conn);
-                    await conn.CloseAsync(CancellationToken.None);
+                    await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
                 }
             }
         }
@@ -220,19 +220,19 @@ select parse_json('{{
                 using (var conn = new SnowflakeDbConnection())
                 {
                     conn.ConnectionString = _fixture.ConnectionString;
-                    await conn.OpenAsync(CancellationToken.None);
+                    await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                     try
                     {
                         SessionParameterAlterer.SetResultFormat(conn, ResultFormat.JSON);
-                        await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" });
+                        await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "col STRING" }).ConfigureAwait(false);
 
                         var cmd = conn.CreateCommand();
                         var rowCount = 0;
 
                         var insertCommand = $"insert into {tableName}(select hex_decode_string(hex_encode('snow') || '7F' || hex_encode('FLAKE')) from table(generator(rowcount => {TestRowCount})))";
                         cmd.CommandText = insertCommand;
-                        IDataReader insertReader = await cmd.ExecuteReaderAsync();
+                        IDataReader insertReader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
                         Assert.Equal(TestRowCount, insertReader.RecordsAffected);
 
                         var selectCommand = $"select * from {tableName}";
@@ -260,7 +260,7 @@ select parse_json('{{
                     finally
                     {
                         SessionParameterAlterer.RestoreResultFormat(conn);
-                        await conn.CloseAsync(CancellationToken.None);
+                        await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
                     }
                 }
             }
