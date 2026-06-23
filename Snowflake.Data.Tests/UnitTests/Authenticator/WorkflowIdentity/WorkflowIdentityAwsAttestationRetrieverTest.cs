@@ -70,7 +70,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
 
         // act
         var credentials = new ImmutableCredentials("akid", "secret", "session-token");
-        var jwt = await retriever.GetWebIdentityTokenAsync("us-east-1", credentials, CancellationToken.None);
+        var jwt = await retriever.GetWebIdentityTokenAsync("us-east-1", credentials, CancellationToken.None).ConfigureAwait(false);
 
         // assert
         Assert.Equal("fake.jwt.token", jwt);
@@ -85,7 +85,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
 
         // act/assert
         var credentials = new ImmutableCredentials("akid", "secret", "session-token");
-        var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => retriever.GetWebIdentityTokenAsync("us-east-1", credentials, CancellationToken.None));
+        var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => retriever.GetWebIdentityTokenAsync("us-east-1", credentials, CancellationToken.None)).ConfigureAwait(false);
         Assert.Contains("GetWebIdentityToken returned an empty token", exception.Message);
     }
 
@@ -101,7 +101,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
 
         // act/assert
         var credentials = new ImmutableCredentials("akid", "secret", "session-token");
-        var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => retriever.GetWebIdentityTokenAsync("us-east-1", credentials, CancellationToken.None));
+        var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => retriever.GetWebIdentityTokenAsync("us-east-1", credentials, CancellationToken.None)).ConfigureAwait(false);
         Assert.Contains("Failed to call AWS STS GetWebIdentityToken", exception.Message);
         Assert.Contains("connection refused", exception.Message);
     }

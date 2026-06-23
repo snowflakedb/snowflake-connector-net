@@ -32,7 +32,7 @@ namespace Snowflake.Data.Tests.Mock
                 message.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromTicks(0));
             }
 
-            return await (base.SendAsync(message, restTimeout, externalCancellationToken).ConfigureAwait(false));
+            return await base.SendAsync(message, restTimeout, externalCancellationToken).ConfigureAwait(false);
         }
     }
 }

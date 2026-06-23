@@ -27,7 +27,7 @@ public sealed class SFDbCommandITSlow : SFBaseTestAsync
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
 
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             var cmd = conn.CreateCommand();
             cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v order by 1";
@@ -35,7 +35,7 @@ public sealed class SFDbCommandITSlow : SFBaseTestAsync
             // only one result is returned
             Assert.True(reader.Read());
 
-            await conn.CloseAsync(CancellationToken.None);
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
     }
@@ -57,9 +57,9 @@ public sealed class SFDbCommandITSlowB : SFBaseTestAsync
         var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
         using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
         {
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c1 NUMBER" });
+            await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c1 NUMBER" }).ConfigureAwait(false);
 
             using (IDbCommand command = conn.CreateCommand())
             {
@@ -69,7 +69,7 @@ public sealed class SFDbCommandITSlowB : SFBaseTestAsync
                 Assert.Equal(-1, affected);
             }
 
-            await conn.CloseAsync(CancellationToken.None);
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
     }
 
@@ -94,7 +94,7 @@ public sealed class SFDbCommandITSlowC : SFBaseTestAsync
             string maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=8;poolingEnabled=false";
 
             conn.ConnectionString = maxRetryConnStr;
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             try
@@ -145,7 +145,7 @@ public sealed class SFDbCommandITSlowD : SFBaseTestAsync
             string maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=8;poolingEnabled=false";
 
             conn.ConnectionString = maxRetryConnStr;
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             try

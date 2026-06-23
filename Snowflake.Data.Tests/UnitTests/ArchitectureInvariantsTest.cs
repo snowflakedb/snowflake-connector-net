@@ -16,7 +16,6 @@ namespace Snowflake.Data.Tests.UnitTests;
 public sealed class ArchitectureInvariantsTest
 {
     private static readonly string s_solutionRoot = FindSolutionRoot();
-    private static readonly string s_productionSourceDir = Path.Combine(s_solutionRoot, "Snowflake.Data");
 
     private static readonly Assembly s_testAssembly = typeof(ArchitectureInvariantsTest).Assembly;
 
@@ -54,15 +53,18 @@ public sealed class ArchitectureInvariantsTest
         AssertOnViolations(expectedViolations, violations);
     }
 
-    [SFFact]
-    public void TestConfigureAwaitFalse_AllAwaitsInProductionCodeMustHaveConfigureAwaitFalse()
+    [SFTheory]
+    [InlineData("Snowflake.Data")]
+    [InlineData("Snowflake.Data.Tests")]
+    public void TestConfigureAwaitFalse_AllAwaitsInProductionCodeMustHaveConfigureAwaitFalse(string assemblyName)
     {
         var violations = new ConcurrentBag<string>();
-        var csFiles = Directory.GetFiles(s_productionSourceDir, "*.cs", SearchOption.AllDirectories);
+        var path = GetPath(assemblyName);
+        var csFiles = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
 
         Parallel.ForEach(csFiles, file =>
         {
-            var relativePath = file.Substring(s_solutionRoot.Length + "Snowflake.Data".Length + 1);
+            var relativePath = file.Substring(s_solutionRoot.Length + assemblyName.Length + 1);
             var source = File.ReadAllText(file);
             var tree = CSharpSyntaxTree.ParseText(source, path: file);
             var root = tree.GetRoot();
@@ -96,29 +98,7 @@ public sealed class ArchitectureInvariantsTest
             }
         });
 
-        // TODO SNOW-3560671
-        var expectedViolations = new[]
-        {
-            "/Core/SFResultSet.cs: Task.FromResult(false)",
-            "/Core/ArrowResultSet.cs: Task.FromResult(false)",
-            "/Core/SFMultiStatementsResultSet.cs: NextResultAsync(CancellationToken.None)",
-            "/Core/SFMultiStatementsResultSet.cs: curResultSet.NextAsync()",
-            "/Core/SFMultiStatementsResultSet.cs: sfStatement.GetResultWithIdAsync(                                        resultIds[curResultIndex],                                        cancellationToken)",
-            "/Core/SFMultiStatementsResultSet.cs: Task.FromResult(curResultSet != null)",
-            "/Core/ReusableChunkParser.cs: Task.Run(...);",
-            "/Client/SnowflakeDbDataReader.cs: resultSet.NextAsync()",
-            "/Client/SnowflakeDbCommand.cs: _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken)",
-            "/Client/SnowflakeDbCommand.cs: _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true)",
-            "/Core/Authenticator/BasicAuthenticator.cs: base.LoginAsync(cancellationToken)",
-            "/Core/SFStatement.cs: RenewSessionIfNeededAsync(response, cancellationToken)",
-            "/Core/QueryResultsAwaiter.cs: GetQueryStatusAsync(connection, queryId, cancellationToken)",
-            "/Client/SnowflakeDbConnection.cs: taskCompletionSource.Task",
-            "/Core/Authenticator/MFACacheAuthenticator.cs: base.LoginAsync(cancellationToken)",
-            "/Core/SFBlockingChunkDownloaderV3.cs: chunk",
-            "/Core/SFBlockingChunkDownloaderV3.cs: Task.FromResult<BaseResultChunk>(null)",
-            "/Core/SFBlockingChunkDownloaderV3.cs: parser.ParseChunk(resultChunk)"
-        }.Select(x => x.Replace('/', Path.DirectorySeparatorChar)).ToArray();
-        AssertOnViolations(expectedViolations, violations);
+        AssertOnViolations([], violations);
     }
 
     [Fact]
@@ -164,4 +144,6 @@ public sealed class ArchitectureInvariantsTest
 
         throw new InvalidOperationException("Cannot find solution root directory");
     }
+
+    private static string GetPath(string assemblyName) => Path.Combine(s_solutionRoot, assemblyName);
 }

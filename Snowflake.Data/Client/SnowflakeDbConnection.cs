@@ -267,7 +267,7 @@ namespace Snowflake.Data.Client
                     taskCompletionSource.SetResult(null);
                 }
             }
-            await taskCompletionSource.Task;
+            await taskCompletionSource.Task.ConfigureAwait(false);
         }
 
         protected virtual bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)

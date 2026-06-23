@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
-                    await conn.OpenAsync();
+                    await conn.OpenAsync().ConfigureAwait(false);
                     Assert.Equal(ConnectionState.Open, conn.State);
                 }
             }

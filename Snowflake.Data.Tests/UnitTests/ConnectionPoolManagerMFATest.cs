@@ -64,7 +64,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var session = SnowflakeDbConnectionPool.ConnectionManager.GetSession(ConnectionStringMFACache, new SessionPropertiesContext());
 
             // Assert
-            await Awaiter.WaitUntilConditionOrTimeout(() => RestRequester.LoginRequests.Count == 2, TimeSpan.FromSeconds(15));
+            await Awaiter.WaitUntilConditionOrTimeout(() => RestRequester.LoginRequests.Count == 2, TimeSpan.FromSeconds(15)).ConfigureAwait(false);
             Assert.Equal(2, RestRequester.LoginRequests.Count);
             var loginRequest1 = RestRequester.LoginRequests.Dequeue();
             Assert.Equal(string.Empty, loginRequest1.data.Token);

@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // Arrange
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 // Act
                 using (IDbTransaction t1 = conn.BeginTransaction())
@@ -40,7 +40,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 // Arrange
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 // Act
                 using (IDbTransaction t1 = conn.BeginTransaction())
@@ -59,11 +59,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" });
+                await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "c INT" }).ConfigureAwait(false);
 
-                using (IDbTransaction t1 = await conn.BeginTransactionAsync())
+                using (IDbTransaction t1 = await conn.BeginTransactionAsync().ConfigureAwait(false))
                 {
                     IDbCommand t1c1 = conn.CreateCommand();
                     t1c1.Transaction = t1;
@@ -86,15 +86,15 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = _fixture.ConnectionString;
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             await _fixture.CreateOrReplaceTable(conn, tableName, new[]
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
-            });
+            }).ConfigureAwait(false);
 
-            using (DbTransaction transaction = await conn.BeginTransactionAsync())
+            using (DbTransaction transaction = await conn.BeginTransactionAsync().ConfigureAwait(false))
             {
                 IDbCommand t1c1 = conn.CreateCommand();
                 t1c1.Transaction = transaction;
@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             Assert.Equal(4, row);
 
-            await conn.CloseAsync(CancellationToken.None);
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         [SFFact(RetriesCount = RetriesCount.Once)]
@@ -138,13 +138,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             var conn = new SnowflakeDbConnection();
             conn.ConnectionString = _fixture.ConnectionString;
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             await _fixture.CreateOrReplaceTable(conn, tableName, new[]
             {
                 "x TIMESTAMP_NTZ",
                 "a INTEGER"
-            });
+            }).ConfigureAwait(false);
 
             using (DbTransaction transaction = conn.BeginTransaction())
             {
@@ -155,7 +155,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 t1c1.Transaction.Commit();
             }
 
-            using (DbTransaction transaction2 = await conn.BeginTransactionAsync())
+            using (DbTransaction transaction2 = await conn.BeginTransactionAsync().ConfigureAwait(false))
             {
                 IDbCommand t2c2 = conn.CreateCommand();
                 t2c2.Transaction = transaction2;
@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             Assert.Equal(3, row);
 
-            await conn.CloseAsync(CancellationToken.None);
+            await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         [SFFact]

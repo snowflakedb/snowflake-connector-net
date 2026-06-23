@@ -87,7 +87,7 @@ public sealed class SessionTelemetryModuleTest
         module.OnActivityStoppedImpl(activity);
 
         // Act
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(capturedBody);
@@ -126,7 +126,7 @@ public sealed class SessionTelemetryModuleTest
         }
 
         // Act
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(capturedBody);
@@ -164,7 +164,7 @@ public sealed class SessionTelemetryModuleTest
         }
 
         // Act
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(capturedBody);
@@ -197,7 +197,7 @@ public sealed class SessionTelemetryModuleTest
         module.OnActivityStoppedImpl(activity);
 
         // Act
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(capturedBody);
@@ -224,13 +224,13 @@ public sealed class SessionTelemetryModuleTest
         module.OnActivityStoppedImpl(activity1);
 
         // Act — first flush triggers the failure
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Buffer more data and flush again — should be a no-op
         var activity2 = new Activity("SecondOp");
         activity2.Start();
         module.OnActivityStoppedImpl(activity2);
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Assert — Post was attempted only once
         _mockRestRequester.Verify(
@@ -252,7 +252,7 @@ public sealed class SessionTelemetryModuleTest
         activity.Start();
         module.OnActivityStoppedImpl(activity);
 
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
         var expectedToken1 = "test-token";
         _mockRestRequester.Verify(x => x.PostAsync<NullDataResponse>(It.Is<IRestRequest>(y => ((SFRestRequest)y).authorizationToken == $"Snowflake Token=\"{expectedToken1}\""), It.IsAny<CancellationToken>()), Times.Once);
 
@@ -261,7 +261,7 @@ public sealed class SessionTelemetryModuleTest
         var activity2 = new Activity("whatever 2");
         activity2.Start();
         module.OnActivityStoppedImpl(activity2);
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
         _mockRestRequester.Verify(x => x.PostAsync<NullDataResponse>(It.Is<IRestRequest>(y => ((SFRestRequest)y).authorizationToken == $"Snowflake Token=\"{newToken}\""), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -327,7 +327,7 @@ public sealed class SessionTelemetryModuleTest
         var module = new SessionTelemetryModule(session);
 
         // Act - no data added
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         _mockRestRequester.Verify(
@@ -489,7 +489,7 @@ public sealed class SessionTelemetryModuleTest
         module.OnActivityStoppedImpl(activity);
 
         // Act
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(capturedBody);
@@ -520,7 +520,7 @@ public sealed class SessionTelemetryModuleTest
         module.OnActivityStoppedImpl(activity);
 
         // Act
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(capturedBody);
@@ -553,7 +553,7 @@ public sealed class SessionTelemetryModuleTest
         module.OnActivityStoppedImpl(activity);
 
         // Act
-        await module.FlushAsync(CancellationToken.None);
+        await module.FlushAsync(CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.NotNull(capturedBody);

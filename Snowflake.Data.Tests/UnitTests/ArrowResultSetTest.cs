@@ -63,9 +63,9 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             for (var i = 0; i < RowCount; ++i)
             {
-                Assert.True(await _arrowResultSet.NextAsync());
+                Assert.True(await _arrowResultSet.NextAsync().ConfigureAwait(false));
             }
-            Assert.False(await _arrowResultSet.NextAsync());
+            Assert.False(await _arrowResultSet.NextAsync().ConfigureAwait(false));
         }
 
         [SFFact]
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [SFFact]
         public async Task TestNextResultAsyncReturnsFalse()
         {
-            Assert.False(await _arrowResultSet.NextResultAsync(CancellationToken.None));
+            Assert.False(await _arrowResultSet.NextResultAsync(CancellationToken.None).ConfigureAwait(false));
         }
 
         [SFFact]

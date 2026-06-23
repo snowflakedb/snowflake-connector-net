@@ -124,7 +124,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var request = CreateMockRestRequest(HttpMethod.Post);
 
             // act
-            var result = await restRequester.PostAsync<NullDataResponse>(request, CancellationToken.None);
+            var result = await restRequester.PostAsync<NullDataResponse>(request, CancellationToken.None).ConfigureAwait(false);
 
             // assert
             Assert.True(result.success);
@@ -144,7 +144,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var request = CreateMockRestRequest(HttpMethod.Get);
 
             // act
-            var result = await restRequester.GetAsync<NullDataResponse>(request, CancellationToken.None);
+            var result = await restRequester.GetAsync<NullDataResponse>(request, CancellationToken.None).ConfigureAwait(false);
 
             // assert
             Assert.True(result.success);
@@ -164,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // act & assert
             await Assert.ThrowsAsync<JsonReaderException>(
-                () => restRequester.GetAsync<NullDataResponse>(request, CancellationToken.None));
+                () => restRequester.GetAsync<NullDataResponse>(request, CancellationToken.None)).ConfigureAwait(false);
         }
 
         private static HttpClient CreateHttpClientWithSequentialResponses(params HttpResponseMessage[] responses)
