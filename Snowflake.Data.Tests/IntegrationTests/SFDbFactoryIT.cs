@@ -37,7 +37,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _command.Connection = _connection;
             _command.CommandText = "select 1";
 
-            object res = await _command.ExecuteScalarAsync();
+            object res = await _command.ExecuteScalarAsync().ConfigureAwait(false);
 
             Assert.Equal(1L, res);
         }
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             _command.Connection = _connection;
             _command.CommandText = "select ?";
 
-            var result = await _command.ExecuteScalarAsync();
+            var result = await _command.ExecuteScalarAsync().ConfigureAwait(false);
 
             Assert.Equal((long)expectedIntValue, result);
         }
@@ -69,13 +69,13 @@ namespace Snowflake.Data.Tests.IntegrationTests
             builder.ConnectionString = _fixture.ConnectionString;
 
             _connection.ConnectionString = builder.ConnectionString;
-            await _connection.OpenAsync(CancellationToken.None);
+            await _connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             // set command's connection object
             _command.Connection = _connection;
             _command.CommandText = "select 1";
 
-            var result = await _command.ExecuteScalarAsync();
+            var result = await _command.ExecuteScalarAsync().ConfigureAwait(false);
 
             Assert.Equal(1L, result);
         }

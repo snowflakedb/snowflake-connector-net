@@ -25,11 +25,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection);
-                    var timeZone = await GetTimeZoneAsync(connection);
+                    await EnableStructuredTypesAsync(connection).ConfigureAwait(false);
+                    var timeZone = await GetTimeZoneAsync(connection).ConfigureAwait(false);
                     var expectedOffset = timeZone.GetUtcOffset(DateTime.Parse("2024-07-11 14:20:05"));
                     var expectedOffsetString = ToOffsetString(expectedOffset);
                     var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT(
@@ -77,7 +77,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     ), '2024-07-11 14:20:05'::TIMESTAMP_LTZ";
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -115,11 +115,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection);
-                    var timeZone = await GetTimeZoneAsync(connection);
+                    await EnableStructuredTypesAsync(connection).ConfigureAwait(false);
+                    var timeZone = await GetTimeZoneAsync(connection).ConfigureAwait(false);
                     var expectedOffset = timeZone.GetUtcOffset(DateTime.Parse("2024-07-11 14:20:05"));
                     var expectedOffsetString = ToOffsetString(expectedOffset);
                     var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT(
@@ -167,7 +167,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     )";
                     var bytesForBinary = Encoding.UTF8.GetBytes("this is binary data");
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -205,10 +205,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(_fixture.ConnectionString))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
-                    await EnableStructuredTypesAsync(connection);
+                    await EnableStructuredTypesAsync(connection).ConfigureAwait(false);
                     var allTypesObjectAsSFString = @"OBJECT_CONSTRUCT_KEEP_NULL(
                         'StringValue', NULL,
                         'CharValue', NULL,
@@ -253,7 +253,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         SemiStructuredValue OBJECT
                     )";
                     command.CommandText = $"SELECT {allTypesObjectAsSFString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act
@@ -292,18 +292,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionStringWithHonorSessionTimezone))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
-                    await command.ExecuteNonQueryAsync();
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                    await EnableStructuredTypesAsync(connection);
-                    await SetTimePrecisionAsync(connection, 9);
+                    await EnableStructuredTypesAsync(connection).ConfigureAwait(false);
+                    await SetTimePrecisionAsync(connection, 9).ConfigureAwait(false);
                     var rawValueString = $"'{dbValue}'::{dbType}";
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act/assert
@@ -423,18 +423,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             using (var connection = new SnowflakeDbConnection(ConnectionStringWithHonorSessionTimezone))
             {
-                await connection.OpenAsync(CancellationToken.None);
+                await connection.OpenAsync(CancellationToken.None).ConfigureAwait(false);
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
-                    await command.ExecuteNonQueryAsync();
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                    await EnableStructuredTypesAsync(connection);
-                    await SetTimePrecisionAsync(connection, 9);
+                    await EnableStructuredTypesAsync(connection).ConfigureAwait(false);
+                    await SetTimePrecisionAsync(connection, 9).ConfigureAwait(false);
                     var rawValueString = $"'{dbValue}'::{dbType}";
                     var objectValueString = $"OBJECT_CONSTRUCT('Value', {rawValueString})::OBJECT(Value {dbType})";
                     command.CommandText = $"SELECT {rawValueString}, {objectValueString}";
-                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                    var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                     Assert.True(reader.Read());
 
                     // act/assert
@@ -550,7 +550,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "show parameters like 'timezone'";
-                var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync();
+                var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
                 Assert.True(reader.Read());
                 var timeZoneString = reader.GetString(1);
                 return TimeZoneInfoConverter.FindSystemTimeZoneById(timeZoneString);

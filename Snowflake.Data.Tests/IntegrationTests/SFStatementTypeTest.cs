@@ -19,14 +19,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (DbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 using (DbCommand command = conn.CreateCommand())
                 {
                     try
                     {
                         command.CommandText = "ALTER SESSION SET USE_STATEMENT_TYPE_CALL_FOR_STORED_PROC_CALLS=true";
-                        await command.ExecuteNonQueryAsync();
+                        await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                     }
                     catch (SnowflakeDbException ex)
                     {
@@ -41,7 +41,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                         + "res.next();\n"
                         + "return res.getColumnValueAsString(1) + ' ' + res.getColumnValueAsString(2) + ' ' + IN2;\n"
                         + "$$;";
-                    await command.ExecuteNonQueryAsync();
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     command.CommandText = "call TEST_SP_CALL_STMT_ENABLED(?, to_variant(?))";
 
@@ -57,7 +57,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     p2.Value = "[2,3]";
                     command.Parameters.Add(p2);
 
-                    DbDataReader reader = await command.ExecuteReaderAsync();
+                    DbDataReader reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                     string result = "1 \"[2,3]\" [2,3]";
                     while (reader.Read())
@@ -66,9 +66,9 @@ namespace Snowflake.Data.Tests.IntegrationTests
                     }
 
                     command.CommandText = "drop procedure if exists TEST_SP_CALL_STMT_ENABLED(float, variant)";
-                    await command.ExecuteNonQueryAsync();
+                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
-                await conn.CloseAsync();
+                await conn.CloseAsync().ConfigureAwait(false);
             }
         }
     }

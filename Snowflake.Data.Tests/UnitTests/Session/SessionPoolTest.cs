@@ -518,7 +518,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             {
                 try
                 {
-                    await pool.GetSessionAsync(connectionString, new SessionPropertiesContext(), cancelledToken);
+                    await pool.GetSessionAsync(connectionString, new SessionPropertiesContext(), cancelledToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {

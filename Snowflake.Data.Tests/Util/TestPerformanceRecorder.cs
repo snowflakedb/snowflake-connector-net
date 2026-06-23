@@ -81,7 +81,7 @@ public sealed class TestPerformanceRecorder : IDisposable
         sw.Close();
         return;
 #else
-        await File.AppendAllTextAsync(s_filePath, entyStr);
+        await File.AppendAllTextAsync(s_filePath, entyStr).ConfigureAwait(false);
 #endif
     }
 

@@ -46,13 +46,13 @@ public static class IntegrationTestEnvironment
 
     public static async Task StartIntegrationTest()
     {
-        await s_semaphoreSlim.WaitAsync();
+        await s_semaphoreSlim.WaitAsync().ConfigureAwait(false);
 
         try
         {
             if (s_integrationTestsRunning++ == 0)
             {
-                await ModifySchemaAsync(TestConfigSingleton.TestConfig.schema, SchemaAction.Create);
+                await ModifySchemaAsync(TestConfigSingleton.TestConfig.schema, SchemaAction.Create).ConfigureAwait(false);
             }
         }
         finally
@@ -63,14 +63,14 @@ public static class IntegrationTestEnvironment
 
     public static async Task EndIntegrationTest()
     {
-        await s_semaphoreSlim.WaitAsync();
+        await s_semaphoreSlim.WaitAsync().ConfigureAwait(false);
 
         try
         {
             if (--s_integrationTestsRunning == 0)
             {
                 // cleanup
-                await ModifySchemaAsync(TestConfigSingleton.TestConfig.schema, SchemaAction.Drop);
+                await ModifySchemaAsync(TestConfigSingleton.TestConfig.schema, SchemaAction.Drop).ConfigureAwait(false);
             }
         }
         finally
@@ -90,7 +90,7 @@ public static class IntegrationTestEnvironment
         using (IDbConnection conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = BuildConnectionString(TestConfigSingleton.TestConfig);
-            await ((SnowflakeDbConnection)conn).OpenAsync(CancellationToken.None);
+            await ((SnowflakeDbConnection)conn).OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var dbCommand = conn.CreateCommand();
 
             switch (schemaAction)

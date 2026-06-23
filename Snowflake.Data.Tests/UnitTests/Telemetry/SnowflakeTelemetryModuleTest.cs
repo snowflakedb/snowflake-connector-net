@@ -120,18 +120,18 @@ public sealed class SnowflakeTelemetryModuleTest : IDisposable
 
         // Act
         Assert.Equal(1, sessionModule.CurrentBufferSize);
-        await SnowflakeTelemetryModule.UnregisterAsync(sessionId, CancellationToken.None);
+        await SnowflakeTelemetryModule.UnregisterAsync(sessionId, CancellationToken.None).ConfigureAwait(false);
         Assert.True(sessionModule.IsDisposed);
         Assert.Equal(0, sessionModule.CurrentBufferSize);
 
         // Assert - calling again should be no-op
-        await SnowflakeTelemetryModule.UnregisterAsync(sessionId, CancellationToken.None);
+        await SnowflakeTelemetryModule.UnregisterAsync(sessionId, CancellationToken.None).ConfigureAwait(false);
     }
 
     [SFFact]
     public async Task TestUnregisterAsyncForNonExistentSessionDoesNotThrow()
     {
-        await SnowflakeTelemetryModule.UnregisterAsync("non-existent-async", CancellationToken.None);
+        await SnowflakeTelemetryModule.UnregisterAsync("non-existent-async", CancellationToken.None).ConfigureAwait(false);
     }
 
     [SFTheory]

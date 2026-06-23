@@ -123,7 +123,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             try
             {
-                await PrepareChunkAsync(data, 1, 1);
+                await PrepareChunkAsync(data, 1, 1).ConfigureAwait(false);
                 Assert.Fail();
             }
             catch (SnowflakeDbException e)
@@ -140,7 +140,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             try
             {
-                await PrepareChunkAsync(data, 1, 1);
+                await PrepareChunkAsync(data, 1, 1).ConfigureAwait(false);
                 Assert.Fail();
             }
             catch (SnowflakeDbException e)
@@ -259,7 +259,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFReusableChunk chunk = new SFReusableChunk(colCount);
             chunk.Reset(chunkInfo, 0);
 
-            await parser.ParseChunk(chunk);
+            await parser.ParseChunk(chunk).ConfigureAwait(false);
             return chunk;
         }
     }

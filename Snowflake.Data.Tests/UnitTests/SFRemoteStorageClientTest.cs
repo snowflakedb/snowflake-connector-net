@@ -346,7 +346,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
 
             // Act
-            Exception ex = await Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
             // Assert
             Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
@@ -377,7 +377,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
 
             // Act
-            Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
             // Assert
             Assert.Matches($"Unknown Error in uploading a file: .*", ex.Message);
@@ -424,7 +424,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
-                string text = await ReadDownloadFileAsync();
+                string text = await ReadDownloadFileAsync().ConfigureAwait(false);
                 Assert.Equal(MockRemoteStorageClient.FileContent, text);
             }
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
@@ -445,7 +445,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // Assert
             if (expectedResultStatus == ResultStatus.DOWNLOADED)
             {
-                var text = await ReadDownloadFileAsync();
+                var text = await ReadDownloadFileAsync().ConfigureAwait(false);
                 Assert.Equal(MockRemoteStorageClient.FileContent, text);
             }
             Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
@@ -479,7 +479,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SetUpMockClientForDownload(httpStatusCode, IsAsync);
 
             // Act
-            Exception ex = await Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<WebException>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
             // Assert
             Assert.Matches(MockRemoteStorageClient.ErrorMessage, ex.Message);
@@ -509,7 +509,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SetUpMockClientForDownload(httpStatusCode, IsAsync);
 
             // Act
-            Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false));
+            Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
             // Assert
             Assert.Matches($"Unknown Error in downloading a file: .*", ex.Message);
@@ -547,7 +547,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFRemoteStorageUtil.DownloadOneFile(_fileMetadata);
 
             // Assert
-            string text = await ReadDownloadFileAsync();
+            string text = await ReadDownloadFileAsync().ConfigureAwait(false);
             Assert.Equal(MockRemoteStorageClient.FileContent, text);
             Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
@@ -564,7 +564,7 @@ namespace Snowflake.Data.Tests.UnitTests
             await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
             // Assert
-            string text = await ReadDownloadFileAsync();
+            string text = await ReadDownloadFileAsync().ConfigureAwait(false);
             Assert.Equal(MockRemoteStorageClient.FileContent, text);
             Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
         }
@@ -575,7 +575,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var result = File.ReadAllText(t_downloadFileName);
             return result;
 #else
-            var text = await File.ReadAllTextAsync(t_downloadFileName, _cancellationToken);
+            var text = await File.ReadAllTextAsync(t_downloadFileName, _cancellationToken).ConfigureAwait(false);
             return text;
 #endif
         }

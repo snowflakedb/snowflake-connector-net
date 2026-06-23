@@ -25,7 +25,7 @@ public class SFTestCaseRunner : XunitTestCaseRunnerBase<SFCaseRunnerContext, IXu
         ExplicitOption explicitOption,
         object[] constructorArguments)
     {
-        var tests = await aggregator.RunAsync(testCase.CreateTests, []);
+        var tests = await aggregator.RunAsync(testCase.CreateTests, []).ConfigureAwait(false);
 
         if (aggregator.ToException() is { } ex)
         {
@@ -49,9 +49,9 @@ public class SFTestCaseRunner : XunitTestCaseRunnerBase<SFCaseRunnerContext, IXu
 
         await using var ctxt = new SFCaseRunnerContext(maxRetries, testCase, tests, messageBus, aggregator, cancellationTokenSource,
             displayName, skipReason, explicitOption, constructorArguments);
-        await ctxt.InitializeAsync();
+        await ctxt.InitializeAsync().ConfigureAwait(false);
 
-        return await Run(ctxt);
+        return await Run(ctxt).ConfigureAwait(false);
     }
 
     protected override async ValueTask<RunSummary> RunTest(
@@ -79,7 +79,7 @@ public class SFTestCaseRunner : XunitTestCaseRunnerBase<SFCaseRunnerContext, IXu
                 aggregator,
                 ctxt.CancellationTokenSource,
                 ctxt.BeforeAfterTestAttributes
-            );
+            ).ConfigureAwait(false);
 
             if (!(aggregator.HasExceptions || result.Failed != 0) || ++runCount >= maxRetries)
             {

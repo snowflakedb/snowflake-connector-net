@@ -48,11 +48,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
             using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
             {
                 conn.ConnectionString = _fixture.ConnectionString;
-                await conn.OpenAsync(CancellationToken.None);
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 _adapter = new SnowflakeDbDataAdapter("select 1 as col1, 2 AS col2", conn);
                 _adapter.Fill(ds);
-                await conn.CloseAsync(CancellationToken.None);
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
             Assert.Equal("Table", ds.Tables[0].TableName);
             Assert.Equal(ds.Tables[0].Rows[0].ItemArray[0], 1L);

@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests
 
         public virtual async TaskOrValueTask InitializeAsync()
         {
-            await IntegrationTestEnvironment.StartIntegrationTest();
+            await IntegrationTestEnvironment.StartIntegrationTest().ConfigureAwait(false);
             _anyTestStarted = true;
             testConfig = TestConfigSingleton.TestConfig;
             _stopwatch = new Stopwatch();
@@ -80,8 +80,8 @@ namespace Snowflake.Data.Tests
 
             // TODO
             //_envFixture.RecordTestPerformance(testName, _stopwatch.Elapsed);
-            await RemoveTables();
-            await IntegrationTestEnvironment.EndIntegrationTest();
+            await RemoveTables().ConfigureAwait(false);
+            await IntegrationTestEnvironment.EndIntegrationTest().ConfigureAwait(false);
         }
 
         private async Task RemoveTables()
@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests
                 foreach (var table in _tablesToRemove)
                 {
                     cmd.CommandText = $"DROP TABLE IF EXISTS {table}";
-                    await cmd.ExecuteNonQueryAsync();
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             }
         }
@@ -115,7 +115,7 @@ namespace Snowflake.Data.Tests
             var cmd = conn.CreateCommand();
             cmd.CommandText = $"CREATE OR REPLACE {tableType} TABLE {tableName}({columnsStr}) {additionalQueryStr}";
             s_logger.Debug(cmd.CommandText);
-            await cmd.ExecuteNonQueryAsync();
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
             _tablesToRemove.Push(tableName);
         }

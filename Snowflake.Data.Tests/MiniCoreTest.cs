@@ -27,13 +27,13 @@ namespace Snowflake.Data.Tests
         {
             SfMiniCore.StartLoading();
             for (int i = 0; i < 100 && !SfMiniCore.IsLoaded; i++)
-                await Task.Delay(10);
+                await Task.Delay(10).ConfigureAwait(false);
         }
 
         [SFFact]
         public async Task TestMinicoreLoadsAndTelemetryIsCorrect()
         {
-            await WaitForMiniCoreToLoad();
+            await WaitForMiniCoreToLoad().ConfigureAwait(false);
 
             var clientEnv = SFEnvironment.ClientEnv.CloneForSession();
             var loadError = SfMiniCore.GetLoadError();
