@@ -105,7 +105,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         Assert.Empty(attestation.UserIdentifierComponents);
     }
 
-    [SFFact]
+    [SFFact(SkipCondition.SkipOnJenkins)]
     public void TestFailAttestationWhenStsCallFails()
     {
         // arrange - STS returns empty token
@@ -154,7 +154,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         Assert.Contains("Could not find AWS region", thrown.Message);
     }
 
-    [SFFact]
+    [SFFact(SkipCondition.SkipOnJenkins)]
     public void TestSuccessfulAwsTransitiveImpersonation()
     {
         // arrange
@@ -170,7 +170,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         AssertSessionSuccessfullyCreated(session);
     }
 
-    [SFFact]
+    [SFFact(SkipCondition.SkipOnJenkins)]
     public void TestSuccessfulAwsTransitiveImpersonationAttestation()
     {
         // arrange
