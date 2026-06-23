@@ -47,15 +47,15 @@ public abstract class NumberOverflowAsStringIT : SFBaseTestAsync
         var tableNameSuffix = Guid.NewGuid().ToString("N");
         var tableName = _fixture.TableNameBaseName + "_" + tableNameSuffix;
         using var conn = OpenConnectionWithFlag();
-        await _fixture.CreateOrReplaceTable(conn, tableName, [$"cola NUMBER({precision},{scale})"]);
+        await _fixture.CreateOrReplaceTable(conn, tableName, [$"cola NUMBER({precision},{scale})"]).ConfigureAwait(false);
         var cmd1 = conn.CreateCommand();
         cmd1.CommandText = $"INSERT INTO {tableName} VALUES ('{insert}'::NUMBER({precision},{scale}))";
-        await cmd1.ExecuteNonQueryAsync();
+        await cmd1.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         var cmd = conn.CreateCommand();
         cmd.CommandText = $"SELECT cola FROM {tableName}";
-        using var reader = await cmd.ExecuteReaderAsync();
-        Assert.True(await reader.ReadAsync());
+        using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+        Assert.True(await reader.ReadAsync().ConfigureAwait(false));
         var value = reader.GetValue(0);
         Assert.IsType<string>(value);
         Assert.Equal(insert, (string)value);
@@ -67,15 +67,15 @@ public abstract class NumberOverflowAsStringIT : SFBaseTestAsync
         var tableNameSuffix = Guid.NewGuid().ToString("N");
         var tableName = _fixture.TableNameBaseName + "_" + tableNameSuffix;
         using var conn = OpenConnectionWithoutFlag();
-        await _fixture.CreateOrReplaceTable(conn, tableName, ["cola NUMBER(38,0)"]);
+        await _fixture.CreateOrReplaceTable(conn, tableName, ["cola NUMBER(38,0)"]).ConfigureAwait(false);
         var cmd1 = conn.CreateCommand();
         cmd1.CommandText = $"INSERT INTO {tableName} VALUES ('{BigNumber}'::NUMBER(38,0))";
-        await cmd1.ExecuteNonQueryAsync();
+        await cmd1.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         var cmd = conn.CreateCommand();
         cmd.CommandText = $"SELECT cola FROM {tableName}";
         using var reader = await cmd.ExecuteReaderAsync();
-        Assert.True(await reader.ReadAsync());
+        Assert.True(await reader.ReadAsync().ConfigureAwait(false));
         Assert.Throws<OverflowException>(() => reader.GetValue(0));
     }
 
@@ -85,15 +85,15 @@ public abstract class NumberOverflowAsStringIT : SFBaseTestAsync
         using var conn = OpenConnectionWithoutFlag();
         var tableNameSuffix = Guid.NewGuid().ToString("N");
         var tableName = _fixture.TableNameBaseName + "_" + tableNameSuffix;
-        await _fixture.CreateOrReplaceTable(conn, tableName, ["cola NUMBER(38,0)"]);
+        await _fixture.CreateOrReplaceTable(conn, tableName, ["cola NUMBER(38,0)"]).ConfigureAwait(false);
         var cmd1 = conn.CreateCommand();
         cmd1.CommandText = $"INSERT INTO {tableName} VALUES ('{BigNumber}'::NUMBER(38,0))";
-        await cmd1.ExecuteNonQueryAsync();
+        await cmd1.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         var cmd = conn.CreateCommand();
         cmd.CommandText = $"SELECT cola FROM {tableName}";
-        using var reader = await cmd.ExecuteReaderAsync();
-        Assert.True(await reader.ReadAsync());
+        using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+        Assert.True(await reader.ReadAsync().ConfigureAwait(false));
         Assert.Equal(BigNumber, reader.GetString(0));
     }
 
@@ -103,10 +103,10 @@ public abstract class NumberOverflowAsStringIT : SFBaseTestAsync
         using var conn = OpenConnectionWithoutFlag();
         var tableNameSuffix = Guid.NewGuid().ToString("N");
         var tableName = _fixture.TableNameBaseName + "_" + tableNameSuffix;
-        await _fixture.CreateOrReplaceTable(conn, tableName, ["cola NUMBER(38,0)"]);
+        await _fixture.CreateOrReplaceTable(conn, tableName, ["cola NUMBER(38,0)"]).ConfigureAwait(false);
         var cmd = conn.CreateCommand();
         cmd.CommandText = $"INSERT INTO {tableName} VALUES ('{BigNumber}'::NUMBER(38,0))";
-        await cmd.ExecuteNonQueryAsync();
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         var adapter = new SnowflakeDbDataAdapter($"SELECT cola FROM {tableName}", conn);
         var dataTable = new DataTable();
@@ -119,10 +119,10 @@ public abstract class NumberOverflowAsStringIT : SFBaseTestAsync
         using var conn = OpenConnectionWithFlag();
         var tableNameSuffix = Guid.NewGuid().ToString("N");
         var tableName = _fixture.TableNameBaseName + "_" + tableNameSuffix;
-        await _fixture.CreateOrReplaceTable(conn, tableName, ["cola NUMBER(38,0)"]);
+        await _fixture.CreateOrReplaceTable(conn, tableName, ["cola NUMBER(38,0)"]).ConfigureAwait(false);
         var cmd = conn.CreateCommand();
         cmd.CommandText = $"INSERT INTO {tableName} VALUES ('{BigNumber}'::NUMBER(38,0))";
-        await cmd.ExecuteNonQueryAsync();
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         // Pre-declare the column as string so the adapter can store the
         // string returned by GetValue() without an Int64 coercion attempt.
@@ -145,15 +145,15 @@ public abstract class NumberOverflowAsStringIT : SFBaseTestAsync
         var tableName = _fixture.TableNameBaseName + "_" + tableNameSuffix;
 
         using var conn = OpenConnectionWithFlag();
-        await _fixture.CreateOrReplaceTable(conn, tableName, ["cola NUMBER(38,0)"]);
+        await _fixture.CreateOrReplaceTable(conn, tableName, ["cola NUMBER(38,0)"]).ConfigureAwait(false);
         var cmd = conn.CreateCommand();
         cmd.CommandText =
             $"INSERT INTO {tableName} VALUES ('{SmallNumber}'::NUMBER(38,0)), ('{BigNumber}'::NUMBER(38,0))";
-        await cmd.ExecuteNonQueryAsync();
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         cmd.CommandText = $"SELECT cola FROM {tableName} ORDER BY cola";
-        using var reader = await cmd.ExecuteReaderAsync();
-        Assert.True(await reader.ReadAsync());
+        using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+        Assert.True(await reader.ReadAsync().ConfigureAwait(false));
         // Small value fits — JSON returns Int64, Arrow returns decimal
         // (NUMBER(38,0) columns always use Decimal128 in Arrow).
         var smallVal = reader.GetValue(0);
@@ -162,12 +162,12 @@ public abstract class NumberOverflowAsStringIT : SFBaseTestAsync
         else
             Assert.Equal(42m, smallVal);
 
-        Assert.True(await reader.ReadAsync());
+        Assert.True(await reader.ReadAsync().ConfigureAwait(false));
         // Large value overflows — returned as string
         Assert.IsType<string>(reader.GetValue(0));
         Assert.Equal(BigNumber, (string)reader.GetValue(0));
 
-        Assert.False(await reader.ReadAsync());
+        Assert.False(await reader.ReadAsync().ConfigureAwait(false));
     }
 
     private SnowflakeDbConnection OpenConnectionWithFlag()
