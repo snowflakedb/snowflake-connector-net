@@ -64,9 +64,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
                 case "ExecuteReader": cmd.ExecuteReader().Dispose(); break;
             }
 
-            await conn.CloseAsync();
+            await conn.CloseAsync().ConfigureAwait(false);
 
-            var logs = await GetTelemetryLogsAsync();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             var matching = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName && l.StatusCode == "OK").ToList();
             Assert.NotEmpty(matching);
             Assert.Equal("client_activity", matching.First().Type);
@@ -93,7 +93,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
-            var logs = await GetTelemetryLogsAsync();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             var matching = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName && l.StatusCode == "OK").ToList();
             Assert.NotEmpty(matching);
             Assert.Equal("client_activity", matching.First().Type);
@@ -109,9 +109,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             cmd.CommandText = "SELECT 1";
             cmd.ExecuteNonQuery();
 
-            await conn.CloseAsync();
+            await conn.CloseAsync().ConfigureAwait(false);
 
-            var logs = await GetTelemetryLogsAsync();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             Assert.NotEmpty(logs);
 
             var log = logs.First();
@@ -132,9 +132,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             cmd.CommandText = "SELECT 1";
             cmd.ExecuteNonQuery();
 
-            await conn.CloseAsync();
+            await conn.CloseAsync().ConfigureAwait(false);
 
-            var logs = await GetTelemetryLogsAsync();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             Assert.NotEmpty(logs);
 
             var log = logs.First();
@@ -155,9 +155,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             cmd.CommandText = "SELECT 1";
             cmd.ExecuteNonQuery();
 
-            await conn.CloseAsync();
+            await conn.CloseAsync().ConfigureAwait(false);
 
-            var logs = await GetTelemetryLogsAsync();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             Assert.NotEmpty(logs); //"Server override should enable telemetry even when client disabled it"
         }
 
@@ -173,9 +173,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             cmd.CommandText = "SELECT 1";
             cmd.ExecuteNonQuery();
 
-            await conn.CloseAsync();
+            await conn.CloseAsync().ConfigureAwait(false);
 
-            var telemetryRequests = await GetWiremockRequestsBodiesToAsync("/telemetry/send", noRequestsExpected: true);
+            var telemetryRequests = await GetWiremockRequestsBodiesToAsync("/telemetry/send", noRequestsExpected: true).ConfigureAwait(false);
             Assert.Empty(telemetryRequests); // "Server override should enable telemetry even when client disabled it"
         }
 
@@ -189,9 +189,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             cmd.CommandText = "SELECT 1";
             cmd.ExecuteNonQuery();
 
-            await conn.CloseAsync();
+            await conn.CloseAsync().ConfigureAwait(false);
 
-            var telemetryRequests = await GetWiremockRequestsToAsync("/telemetry/send");
+            var telemetryRequests = await GetWiremockRequestsToAsync("/telemetry/send").ConfigureAwait(false);
             Assert.NotEmpty(telemetryRequests);
 
             var authHeader = telemetryRequests.First().Headers["Authorization"]?.ToString();
@@ -211,9 +211,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             Assert.Throws<SnowflakeDbException>(() => cmd.ExecuteNonQuery());
 
-            await conn.CloseAsync();
+            await conn.CloseAsync().ConfigureAwait(false);
 
-            var logs = await GetTelemetryLogsAsync();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             var errorLogs = logs.Where(l => l.StatusCode == "ERROR").ToList();
             Assert.NotEmpty(errorLogs); //"Expected at least one ERROR telemetry log when command fails"
         }
@@ -236,9 +236,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             cmd.CommandText = "SELECT 1";
             cmd.ExecuteNonQuery();
 
-            await conn.CloseAsync();
+            await conn.CloseAsync().ConfigureAwait(false);
 
-            var logs = await GetTelemetryLogsAsync();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
 
             // Internal telemetry
             var internalLogs = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName).ToList();
@@ -405,9 +405,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
                 parentActvity?.SetSuccess();
             }
 
-            await conn.CloseAsync();
+            await conn.CloseAsync().ConfigureAwait(false);
 
-            var logs = await GetTelemetryLogsAsync();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
 
             // Internal command telemetry
             var internalLogs = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName).ToList();
@@ -444,7 +444,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
         private async Task<List<TelemetryLogEntry>> GetTelemetryLogsAsync()
         {
-            var requests = await GetWiremockRequestsBodiesToAsync("/telemetry/send");
+            var requests = await GetWiremockRequestsBodiesToAsync("/telemetry/send").ConfigureAwait(false);
             var logs = new List<TelemetryLogEntry>();
             foreach (var req in requests)
             {
@@ -468,13 +468,13 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
                 if (noRequestsExpected && alreadyRetriedCount == 3) return new List<IRequestMessage>();
                 if (jsons.Count != 0) return jsons;
 
-                await Task.Delay(500);
+                await Task.Delay(500).ConfigureAwait(false);
             }
         }
 
         private async Task<List<JToken>> GetWiremockRequestsBodiesToAsync(string urlPath, int alreadyRetriedCount = 0, bool noRequestsExpected = false)
         {
-            var requests = await GetWiremockRequestsToAsync(urlPath, alreadyRetriedCount, noRequestsExpected);
+            var requests = await GetWiremockRequestsToAsync(urlPath, alreadyRetriedCount, noRequestsExpected).ConfigureAwait(false);
             return requests.Where(x => x.Path.Contains(urlPath))
                 .Where(x => x.Body != null)
                 .Select(x => x.Body)
