@@ -3,7 +3,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Moq;
 using Newtonsoft.Json;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
@@ -11,30 +10,7 @@ using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    [CollectionDefinition(nameof(RestRequesterWiremockTestFixture), DisableParallelization = true)]
-    public sealed class RestRequesterWiremockTestFixture : ICollectionFixture<RestRequesterWiremockTestFixture>, IDisposable
-    {
-        internal IWiremockRunner Runner;
-
-        public RestRequesterWiremockTestFixture()
-        {
-            if (SkipConditionEvaluator.Evaluate(SkipCondition.SkipOnJenkins).ShouldSkip)
-            {
-                Runner = new Mock<IWiremockRunner>().Object;
-                return;
-            }
-
-            Runner = WiremockRunner.NewWiremock();
-        }
-
-        public void Dispose()
-        {
-            Runner.Stop();
-        }
-    }
-
-    [Collection(nameof(RestRequesterWiremockTestFixture))]
-    public sealed class RestRequesterWiremockTest
+    public sealed class RestRequesterWiremockTest : IDisposable
     {
         private readonly IWiremockRunner _runner;
         private static readonly string s_mappingPath = Path.Combine("wiremock", "RestRequester");
@@ -42,9 +18,9 @@ namespace Snowflake.Data.Tests.UnitTests
         private static readonly string s_queryTruncatedThenValid = Path.Combine(s_mappingPath, "query_truncated_then_valid.json");
         private static readonly string s_queryTruncatedAlways = Path.Combine(s_mappingPath, "query_truncated_always.json");
 
-        public RestRequesterWiremockTest(RestRequesterWiremockTestFixture fixture)
+        public RestRequesterWiremockTest()
         {
-            _runner = fixture.Runner;
+            _runner = WiremockRunner.NewWiremock();
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
@@ -106,6 +82,11 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Append(uri.Scheme)
                 .Append(";")
                 .ToString();
+        }
+
+        public void Dispose()
+        {
+            _runner?.Dispose();
         }
     }
 }

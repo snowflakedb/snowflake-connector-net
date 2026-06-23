@@ -2,8 +2,7 @@
     "mappings": [
         {
             "scenarioName": "HTTP 308 retry",
-            "requiredScenarioState": "Started",
-            "newScenarioState": "Query attempt with HTTP 308 response",
+            "setStateTo": "Query attempt with HTTP 308 response",
             "request": {
                 "urlPathPattern": "/queries/v1/query-request.*",
                 "method": "POST"
@@ -17,10 +16,10 @@
         },
         {
             "scenarioName": "HTTP 308 retry",
-            "requiredScenarioState": "Query attempt with HTTP 308 response",
-            "newScenarioState": "308 redirect followed and times out",
+            "whenStateIs": "Query attempt with HTTP 308 response",
+            "setStateTo": "Query attempt with HTTP 308 response",
             "request": {
-                "urlPathPattern": "/temp-redirect-1",
+                "urlPathPattern": "/temp-redirect-1.*",
                 "method": "POST"
             },
             "response": {
@@ -29,8 +28,8 @@
         },
         {
             "scenarioName": "HTTP 308 retry",
-            "requiredScenarioState": "308 redirect followed and times out",
-            "newScenarioState": "Retry attempt successful",
+            "whenStateIs": "Query attempt with HTTP 308 response",
+            "setStateTo": "Retry attempt successful",
             "request": {
                 "urlPathPattern": "/queries/v1/query-request.*",
                 "method": "POST"

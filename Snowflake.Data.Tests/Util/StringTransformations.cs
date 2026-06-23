@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 namespace Snowflake.Data.Tests.Util
 {
-    public class StringTransformations
+    public sealed class StringTransformations
     {
-        private List<StringTransformation> _transformations = new();
+        private readonly List<StringTransformation> _transformations = new();
 
         public static readonly StringTransformations NoTransformationsInstance = new StringTransformations();
 

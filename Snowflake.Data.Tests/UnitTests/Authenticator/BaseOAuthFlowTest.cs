@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Xunit;
 using Snowflake.Data.Client;
@@ -8,14 +9,17 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    public class BaseOAuthFlowTest
+    public abstract class BaseOAuthFlowTest : IDisposable
     {
         protected static readonly string s_oauthMappingPath = Path.Combine("wiremock", "OAuth");
         protected static readonly string s_oauthSnowflakeLoginSuccessMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_successful_login.json");
         protected static readonly string s_oauthSnowflakeLoginInvalidTokenMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_invalid_token_login.json");
         protected static readonly string s_oauthAuthorizationCodeMappingPath = Path.Combine(s_oauthMappingPath, "AuthorizationCode");
         protected static readonly string s_refreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "refresh_token.json");
-        protected static readonly string s_externalTokenRequestUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/token-request";
+
+        protected abstract IWiremockRunner Runner { get; }
+
+        protected string ExternalTokenRequestUrl => $"{Runner.WiremockBaseHttpUrl}/oauth/token-request";
 
         protected const string MasterToken = "masterToken123";
         protected const string SessionToken = "sessionToken123";
@@ -23,12 +27,21 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         protected const string RefreshToken = "refresh-token-123";
         protected const string NewAccessToken = "new-access-token-123";
         protected const string NewRefreshToken = "new-refresh-token-123";
-        protected const string InvalidAccessToken = "invalid-access-token-123";
         protected const string SessionId = "1234567890";
         protected const string User = "testUser";
         protected const string AuthorizationScope = "session:role:ANALYST";
         protected const string TokenHost = "localhost";
         protected const string ClientSecret = "123";
+
+        protected BaseOAuthFlowTest()
+        {
+            Runner.ResetMapping();
+        }
+
+        public void Dispose()
+        {
+            Runner.Stop();
+        }
 
         internal void AssertSessionSuccessfullyCreated(SFSession session)
         {

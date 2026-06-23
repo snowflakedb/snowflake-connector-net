@@ -10,42 +10,14 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests.Authenticator
 {
-    [CollectionDefinition(nameof(WorkflowIdentityFederationAuthenticatorOidcTestFixture), DisableParallelization = true)]
-    public sealed class WorkflowIdentityFederationAuthenticatorOidcTestFixture : ICollectionFixture<WorkflowIdentityFederationAuthenticatorOidcTestFixture.Fixture>
-    {
-        public sealed class Fixture : IDisposable
-        {
-            internal readonly WiremockRunner Runner;
-
-            public Fixture()
-            {
-                Runner = WiremockRunner.NewWiremock();
-            }
-
-            public void Dispose()
-            {
-                Runner.Stop();
-            }
-        }
-    }
-
-    [Collection(nameof(WorkflowIdentityFederationAuthenticatorOidcTestFixture))]
     public sealed class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadIdentityFederationAuthenticatorTest
     {
-        private readonly WorkflowIdentityFederationAuthenticatorOidcTestFixture.Fixture _fixture;
-
-        public WorkflowIdentityFederationAuthenticatorOidcTest(WorkflowIdentityFederationAuthenticatorOidcTestFixture.Fixture fixture)
-        {
-            _fixture = fixture;
-            _fixture.Runner.ResetMapping();
-        }
-
         [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestSuccessfulOidcAuthentication()
         {
             // arrange
             var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
-            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.OIDC, token);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.OIDC, token);
             var session = CreateSessionForOidc(token);
 
             // act
@@ -60,7 +32,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
-            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.OIDC, token);
+            SetupSnowflakeAuthentication(Runner, AttestationProvider.OIDC, token);
             var session = CreateSessionForOidc(token);
 
             // act

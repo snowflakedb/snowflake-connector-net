@@ -3,7 +3,7 @@
         {
             "scenarioName": "Successful PAT authentication flow",
             "request": {
-                "urlPathPattern": "/session/v1/login-request.*",
+                "urlPathPattern": "/session/v1/login-request",
                 "method": "POST",
                 "headers": {
                     "Authorization": {
@@ -11,17 +11,10 @@
                     }
                 },
                 "bodyPatterns": [
-                    {
-                        "equalToJson" : {
-                            "data": {
-                                "ACCOUNT_NAME": "MOCK_ACCOUNT_NAME",
-                                "TOKEN": "MOCK_TOKEN",
-                                "LOGIN_NAME": "MOCK_USERNAME",
-                                "AUTHENTICATOR": "programmatic_access_token"
-                            }
-                        },
-                        "ignoreExtraElements" : true
-                    }
+                    { "matchesJsonPath": "$.data[?(@.ACCOUNT_NAME == 'MOCK_ACCOUNT_NAME')]" },
+                    { "matchesJsonPath": "$.data[?(@.TOKEN == 'MOCK_TOKEN')]" },
+                    { "matchesJsonPath": "$.data[?(@.LOGIN_NAME == 'MOCK_USERNAME')]" },
+                    { "matchesJsonPath": "$.data[?(@.AUTHENTICATOR == 'programmatic_access_token')]" }
                 ]
             },
             "response": {
