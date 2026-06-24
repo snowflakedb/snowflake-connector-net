@@ -19,27 +19,22 @@ jobs:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
         run: |
-          # Escape special characters in title and body
-          TITLE=$(echo '${{ github.event.issue.title }}' | sed 's/"/\\"/g' | sed "s/'/\\\'/g")
-          BODY=$(echo '${{ github.event.issue.body }}' | sed 's/"/\\"/g' | sed "s/'/\\\'/g")
-
-          # Create JIRA issue using REST API
-          RESPONSE=$(curl -s -X POST \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
-            "$JIRA_BASE_URL/rest/api/2/issue" \
-            -d '{
+          # Build the JSON payload with jq so quotes, control characters,
+          # and nested JSON inside the title or body are encoded safely.
+          PAYLOAD=$(jq -n \
+            --arg title "$ISSUE_TITLE" \
+            --arg body  "$ISSUE_BODY" \
+            --arg url   "$ISSUE_URL" \
+            '{
               "fields": {
-                "project": {
-                  "key": "SNOW"
-                },
-                "issuetype": {
-                  "name": "Bug"
-                },
-                "summary": "'"$TITLE"'",
-                "description": "'"$BODY"' \\\\ \\\\ _Created from GitHub Action_ for ${{ github.event.issue.html_url }}",
+                "project": { "key": "SNOW" },
+                "issuetype": { "name": "Bug" },
+                "summary": $title,
+                "description": ($body + " \\\\ \\\\ _Created from GitHub Action_ for " + $url),
                 "customfield_11401": {"id": "14723"},
                 "assignee": {"id": "712020:e527ae71-55cc-4e02-9217-1ca4ca8028a2"},
                 "components": [{"id": "19292"}],
@@ -47,6 +42,14 @@ jobs:
                 "priority": {"id": "10001"}
               }
             }')
+
+          # Create JIRA issue using REST API
+          RESPONSE=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
+            "$JIRA_BASE_URL/rest/api/2/issue" \
+            -d "$PAYLOAD")
 
           # Extract JIRA issue key from response
           JIRA_KEY=$(echo "$RESPONSE" | jq -r '.key')
@@ -63,12 +66,19 @@ jobs:
       - name: Update GitHub Issue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_KEY: ${{ steps.create.outputs.jira_key }}
+          GITHUB_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           # Add comment to GitHub issue with JIRA link
+          COMMENT_BODY=$(jq -n \
+            --arg key "$JIRA_KEY" \
+            --arg url "$JIRA_BASE_URL/browse/$JIRA_KEY" \
+            '{ body: "JIRA ticket created: [\($key)](\($url))" }')
+
           curl -s -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments" \
-            -d '{
-              "body": "JIRA ticket created: [${{ steps.create.outputs.jira_key }}](${{ secrets.JIRA_BASE_URL }}/browse/${{ steps.create.outputs.jira_key }})"
-            }'
+            "https://api.github.com/repos/${GITHUB_REPO}/issues/${ISSUE_NUMBER}/comments" \
+            -d "$COMMENT_BODY"
