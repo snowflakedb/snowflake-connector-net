@@ -70,15 +70,25 @@ jobs:
           JIRA_KEY: ${{ steps.create.outputs.jira_key }}
           GITHUB_REPO: ${{ github.repository }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
         run: |
-          # Add comment to GitHub issue with JIRA link
-          COMMENT_BODY=$(jq -n \
-            --arg key "$JIRA_KEY" \
-            --arg url "$JIRA_BASE_URL/browse/$JIRA_KEY" \
-            '{ body: "JIRA ticket created: [\($key)](\($url))" }')
+          TITLE=$(echo "${ISSUE_TITLE//`/\\`}" | sed 's/"/\\"/g' | sed "s/'/\\\'/g")
+          PAYLOAD=$(jq -n \
+          --arg issuetitle "$TITLE" \
+          --arg jirakey "$JIRA_KEY" \
+          '{
+            title: ($jirakey + ": " + $issuetitle)
+           }')
 
-          curl -s -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${GITHUB_REPO}/issues/${ISSUE_NUMBER}/comments" \
-            -d "$COMMENT_BODY"
+          # Update Github issue title with jira id
+          curl -s -X PATCH \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPOSITORY/issues/$ISSUE_NUMBER" \
+            -d "$PAYLOAD"
+
+          if [ "$?" != 0 ]; then
+            echo "Failed to update GH issue. Payload was:"
+            echo "$PAYLOAD"
+            exit 1
+          fi
