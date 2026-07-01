@@ -8,6 +8,7 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
@@ -1065,29 +1066,26 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestCloseAsyncFailure()
     {
-        using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
+        using var conn = new MockSnowflakeDbConnection(new MockCloseSessionException());
+        conn.ConnectionString = _fixture.ConnectionString;
+        Assert.Equal(ConnectionState.Closed, conn.State);
+
+        // Open the connection
+        await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+        Assert.Equal(ConnectionState.Open, conn.State);
+
+        // Close the opened connection
+        var closeTask = conn.CloseAsync(CancellationToken.None);
+        try
         {
-            conn.ConnectionString = _fixture.ConnectionString;
-            Assert.Equal(ConnectionState.Closed, conn.State);
-
-            // Open the connection
-            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            Assert.Equal(ConnectionState.Open, conn.State);
-
-            // Close the opened connection
-            var closeTask = conn.CloseAsync(CancellationToken.None);
-            try
-            {
-                await closeTask.ConfigureAwait(false);
-                Assert.Fail();
-            }
-            catch (AggregateException e)
-            {
-                Assert.Equal(MockCloseSessionException.SESSION_CLOSE_ERROR,
-                    ((SnowflakeDbException)e.InnerException).ErrorCode);
-            }
-            Assert.Equal(ConnectionState.Open, conn.State);
+            await closeTask.ConfigureAwait(false);
+            Assert.Fail();
         }
+        catch (SnowflakeDbException e)
+        {
+            Assert.Equal(MockCloseSessionException.SESSION_CLOSE_ERROR, e.ErrorCode);
+        }
+        Assert.Equal(ConnectionState.Broken, conn.State);
     }
 
     [SFFact]
@@ -1286,6 +1284,19 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         Assert.Single(restRequester.CloseRequests);
         Assert.True(watchClose.Elapsed.Duration() < TimeSpan.FromSeconds(5)); // close executed immediately
         Assert.True(watchClosedFinished.Elapsed.Duration() >= TimeSpan.FromSeconds(10)); // while background task took more time
+    }
+
+    [SFFact]
+    public async Task ShouldBeClosedIfCloseCancelled()
+    {
+        using var c = new SnowflakeDbConnection(_fixture.ConnectionString);
+        await c.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+        var mockRestRequester = new Mock<IMockRestRequester>();
+        mockRestRequester.Setup(x => x.PostAsync<CloseResponse>(It.IsAny<SFRestRequest>(), It.IsAny<CancellationToken>())).Throws<TaskCanceledException>();
+        c.SfSession = new SFSession(_fixture.ConnectionString, new(), EasyLoggingStarter.Instance, mockRestRequester.Object);
+        c.SfSession.sessionToken = "some token";
+        await Assert.ThrowsAsync<TaskCanceledException>(() => c.CloseAsync(CancellationToken.None)).ConfigureAwait(false);
+        Assert.Equal(ConnectionState.Closed, c.State);
     }
 
     private static void AssertConnectionIsNotOpen(SnowflakeDbConnection snowflakeDbConnection)
