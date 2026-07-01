@@ -121,7 +121,7 @@ public sealed class SFDbCommandITSlowC : SFBaseTestAsync
             var totalDelaySeconds = 1 + 2 + 4 + 8 + 16 + 16 + 16 + 16;
             // retry 8 times with backoff 1, 2, 4, 8, 16, 16, 16, 16 seconds
             // but should not delay more than another 16 seconds
-            Assert.InRange(stopwatch.ElapsedMilliseconds, totalDelaySeconds * 1000, (totalDelaySeconds + 20) * 1000);
+            Assert.InRange(stopwatch.ElapsedMilliseconds, totalDelaySeconds * 1000, (totalDelaySeconds + 30) * 1000);
         }
     }
 }

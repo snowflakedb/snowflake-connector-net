@@ -195,16 +195,28 @@ namespace Snowflake.Data.Client
         public override void Close()
         {
             logger.Debug("Close Connection.");
-            if (IsNonClosedWithSession())
+
+            try
             {
-                var returnedToPool = TryToReturnSessionToPool();
-                if (!returnedToPool)
+                if (IsNonClosedWithSession())
                 {
-                    SfSession.close();
+                    var returnedToPool = TryToReturnSessionToPool();
+                    if (!returnedToPool)
+                    {
+                        SfSession.close();
+                    }
+
+                    SfSession = null;
                 }
-                SfSession = null;
+
+                _connectionState = ConnectionState.Closed;
             }
-            _connectionState = ConnectionState.Closed;
+            catch (Exception exception)
+            {
+                logger.Error($"Close Connection failed: {exception.Message}");
+                _connectionState = ConnectionState.Broken;
+                throw;
+            }
         }
 
 #if NETCOREAPP3_0_OR_GREATER
@@ -219,55 +231,43 @@ namespace Snowflake.Data.Client
         public virtual async Task CloseAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Close Connection.");
-            TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
 
             if (cancellationToken.IsCancellationRequested)
+                return;
+
+            if (!IsNonClosedWithSession())
             {
-                taskCompletionSource.SetCanceled();
+                logger.Debug("Session not opened. Nothing to do.");
+                return;
             }
-            else
+
+            var returnedToPool = TryToReturnSessionToPool();
+            if (returnedToPool)
             {
-                if (IsNonClosedWithSession())
-                {
-                    var returnedToPool = TryToReturnSessionToPool();
-                    if (returnedToPool)
-                    {
-                        _connectionState = ConnectionState.Closed;
-                        taskCompletionSource.SetResult(null);
-                    }
-                    else
-                    {
-                        await SfSession.CloseAsync(cancellationToken).ContinueWith(
-                            previousTask =>
-                            {
-                                if (previousTask.IsFaulted)
-                                {
-                                    // Exception from SfSession.CloseAsync
-                                    logger.Error("Error closing the session", previousTask.Exception);
-                                    taskCompletionSource.SetException(previousTask.Exception);
-                                }
-                                else if (previousTask.IsCanceled)
-                                {
-                                    _connectionState = ConnectionState.Closed;
-                                    logger.Debug("Session close canceled");
-                                    taskCompletionSource.SetCanceled();
-                                }
-                                else
-                                {
-                                    logger.Debug("Session closed successfully");
-                                    _connectionState = ConnectionState.Closed;
-                                    taskCompletionSource.SetResult(null);
-                                }
-                            }, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    logger.Debug("Session not opened. Nothing to do.");
-                    taskCompletionSource.SetResult(null);
-                }
+                _connectionState = ConnectionState.Closed;
+                SfSession = null;
+                return;
             }
-            await taskCompletionSource.Task.ConfigureAwait(false);
+
+            try
+            {
+                await SfSession.CloseAsync(cancellationToken).ConfigureAwait(false);
+                logger.Debug("Session closed successfully");
+                _connectionState = ConnectionState.Closed;
+                SfSession = null;
+            }
+            catch (OperationCanceledException)
+            {
+                _connectionState = ConnectionState.Closed;
+                logger.Debug("Session close canceled");
+                throw;
+            }
+            catch (Exception exception)
+            {
+                _connectionState = ConnectionState.Broken;
+                logger.Error("Error closing the session", exception);
+                throw;
+            }
         }
 
         protected virtual bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)

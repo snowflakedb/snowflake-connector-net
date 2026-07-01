@@ -8,6 +8,7 @@
   -  AWS Workload Identity Federation attestation now defaults to a SigV4-presigned `GetCallerIdentity` request.
       The STS `GetWebIdentityToken` path (returning a signed JWT) is available as an opt-in by setting the
       `SNOWFLAKE_ENABLE_AWS_WIF_OUTBOUND_TOKEN=true` environment variable.
+  -  Bug fix: `CloseAsync` method of `SnowflakeDbConnection` now resets its state to `Closed` on cancellation and `Broken` on failures.
   -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
   -  Bug fix: Fixed incorrect DateTime conversion for timestamps preceding Unix epoch (1970-01-01) when fractional seconds are
     present.
