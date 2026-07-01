@@ -346,6 +346,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestValidateDefaultParameters()
     {
+        var expectedErrorCode = SFError.OBJ_NONEXISTANT_OR_NOT_AUTHORIZED.GetAttribute<SFErrorAttr>().errorCode;
         var connectionString = $"scheme={_fixture.testConfig.protocol};host={_fixture.testConfig.host};port={_fixture.testConfig.port};certRevocationCheckMode=enabled;account={_fixture.testConfig.account};role={_fixture.testConfig.role};db={_fixture.testConfig.database};schema={_fixture.testConfig.schema};warehouse=WAREHOUSE_NEVER_EXISTS;user={_fixture.testConfig.user};password={_fixture.testConfig.password};";
 
         // By default should validate parameters
@@ -359,7 +360,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         catch (SnowflakeDbException e)
         {
             var sfException = (SnowflakeDbException)((AggregateException)e.InnerException!).InnerExceptions[0];
-            Assert.Equal(390201, sfException.ErrorCode);
+            Assert.Equal(expectedErrorCode, sfException.ErrorCode);
         }
 
         // This should succeed
@@ -656,6 +657,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestInValidOAuthTokenConnection()
     {
+        var expectedErrorCode = SFError.EXT_OAUTH_ACCESS_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode;
         try
         {
             using var conn = new SnowflakeDbConnection();
@@ -669,7 +671,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             // Invalid OAuth access token
             var aggregateEx = ((AggregateException)e.InnerException);
             var innerEx = aggregateEx!.InnerException as SnowflakeDbException;
-            Assert.Equal(390303, innerEx!.ErrorCode);
+            Assert.Equal(expectedErrorCode, innerEx!.ErrorCode);
         }
     }
 
