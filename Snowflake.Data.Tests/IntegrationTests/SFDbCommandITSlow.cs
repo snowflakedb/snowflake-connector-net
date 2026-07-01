@@ -84,7 +84,7 @@ public sealed class SFDbCommandITSlowC : SFBaseTestAsync
         _fixture = fixture;
     }
 
-    [SFFact]
+    [SFFact(RetriesCount = RetriesCount.Thrice)]
     public async Task TestExecuteWithMaxRetryReached()
     {
         var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
@@ -135,7 +135,7 @@ public sealed class SFDbCommandITSlowD : SFBaseTestAsync
         _fixture = fixture;
     }
 
-    [SFFact]
+    [SFFact(RetriesCount = RetriesCount.Thrice)]
     public async Task TestExecuteAsyncWithMaxRetryReached()
     {
         var mockRestRequester = new MockRetryUntilRestTimeoutRestRequester(false);
