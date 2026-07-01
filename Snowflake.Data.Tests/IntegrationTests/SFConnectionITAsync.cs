@@ -346,41 +346,26 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestValidateDefaultParameters()
     {
-        string connectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
-                                                "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
-            _fixture.testConfig.protocol,
-            _fixture.testConfig.host,
-            _fixture.testConfig.port,
-            _fixture.testConfig.account,
-            _fixture.testConfig.role,
-            _fixture.testConfig.database,
-            _fixture.testConfig.schema,
-            "WAREHOUSE_NEVER_EXISTS",
-            _fixture.testConfig.user,
-            _fixture.testConfig.password);
+        var connectionString = $"scheme={_fixture.testConfig.protocol};host={_fixture.testConfig.host};port={_fixture.testConfig.port};certRevocationCheckMode=enabled;account={_fixture.testConfig.account};role={_fixture.testConfig.role};db={_fixture.testConfig.database};schema={_fixture.testConfig.schema};warehouse=WAREHOUSE_NEVER_EXISTS;user={_fixture.testConfig.user};password={_fixture.testConfig.password};";
 
         // By default should validate parameters
-        using (var conn = new SnowflakeDbConnection())
+        using var conn = new SnowflakeDbConnection();
+        try
         {
-            try
-            {
-                conn.ConnectionString = connectionString;
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                Assert.Fail();
-            }
-            catch (SnowflakeDbException e)
-            {
-                var aggregateEx = (AggregateException)((AggregateException)e.InnerException).InnerExceptions[0];
-                Assert.Equal(390201, ((SnowflakeDbException)aggregateEx.InnerExceptions[0]).ErrorCode);
-            }
+            conn.ConnectionString = connectionString;
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            Assert.Fail();
+        }
+        catch (SnowflakeDbException e)
+        {
+            var sfException = (SnowflakeDbException)((AggregateException)e.InnerException!).InnerExceptions[0];
+            Assert.Equal(390201, sfException.ErrorCode);
         }
 
         // This should succeed
-        using (var conn = new SnowflakeDbConnection())
-        {
-            conn.ConnectionString = connectionString + ";VALIDATE_DEFAULT_PARAMETERS=false";
-            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-        }
+        using var conn2 = new SnowflakeDbConnection();
+        conn2.ConnectionString = connectionString + ";VALIDATE_DEFAULT_PARAMETERS=false";
+        await conn2.OpenAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     [SFFact]
@@ -673,23 +658,18 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     {
         try
         {
-            using (var conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString
-                    = _fixture.ConnectionStringWithoutAuth
-                      + ";authenticator=oauth;token=notAValidOAuthToken";
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                Assert.Equal(ConnectionState.Open, conn.State);
-                Assert.Fail();
-            }
+            using var conn = new SnowflakeDbConnection();
+            conn.ConnectionString = $"{_fixture.ConnectionStringWithoutAuth};authenticator=oauth;token=notAValidOAuthToken";
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            Assert.Equal(ConnectionState.Open, conn.State);
+            Assert.Fail();
         }
         catch (SnowflakeDbException e)
         {
             // Invalid OAuth access token
             var aggregateEx = ((AggregateException)e.InnerException);
-            var aggregateEx2 = ((AggregateException)aggregateEx.InnerException);
-            var innerEx = aggregateEx2.InnerExceptions.First() as SnowflakeDbException;
-            Assert.Equal(390303, innerEx.ErrorCode);
+            var innerEx = aggregateEx!.InnerException as SnowflakeDbException;
+            Assert.Equal(390303, innerEx!.ErrorCode);
         }
     }
 
