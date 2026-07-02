@@ -89,11 +89,6 @@ namespace Snowflake.Data.Client
             return _connectionState == ConnectionState.Open && SfSession != null;
         }
 
-        private bool IsNonClosedWithSession()
-        {
-            return _connectionState != ConnectionState.Closed && SfSession != null;
-        }
-
         public override string Database => IsOpen() ? SfSession.database : string.Empty;
 
         public override int ConnectionTimeout => this._connectionTimeout;
@@ -196,19 +191,20 @@ namespace Snowflake.Data.Client
         {
             logger.Debug("Close Connection.");
 
+            if (SfSession == null || _connectionState is not ConnectionState.Open and not ConnectionState.Broken)
+            {
+                logger.Debug("Session not opened. Nothing to do.");
+                return;
+            }
+
             try
             {
-                if (IsNonClosedWithSession())
-                {
-                    var returnedToPool = TryToReturnSessionToPool();
-                    if (!returnedToPool)
-                    {
-                        SfSession.close();
-                    }
+                var returnedToPool = TryToReturnSessionToPool();
+                if (!returnedToPool)
+                    SfSession.close();
 
-                    SfSession = null;
-                }
-
+                logger.Debug("Session closed successfully");
+                SfSession = null;
                 _connectionState = ConnectionState.Closed;
             }
             catch (Exception exception)
@@ -235,30 +231,24 @@ namespace Snowflake.Data.Client
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            if (!IsNonClosedWithSession())
+            if (SfSession == null || _connectionState is not ConnectionState.Open and not ConnectionState.Broken)
             {
                 logger.Debug("Session not opened. Nothing to do.");
                 return;
             }
 
-            var returnedToPool = TryToReturnSessionToPool();
-            if (returnedToPool)
-            {
-                _connectionState = ConnectionState.Closed;
-                SfSession = null;
-                return;
-            }
-
             try
             {
-                await SfSession.CloseAsync(cancellationToken).ConfigureAwait(false);
+                var returnedToPool = TryToReturnSessionToPool();
+                if (!returnedToPool)
+                    await SfSession.CloseAsync(cancellationToken).ConfigureAwait(false);
+
                 logger.Debug("Session closed successfully");
-                _connectionState = ConnectionState.Closed;
                 SfSession = null;
+                _connectionState = ConnectionState.Closed;
             }
             catch (OperationCanceledException)
             {
-                _connectionState = ConnectionState.Closed;
                 logger.Debug("Session close canceled");
                 throw;
             }
@@ -279,6 +269,7 @@ namespace Snowflake.Data.Client
         public override void Open()
         {
             logger.Debug("Open Connection.");
+
             if (_connectionState != ConnectionState.Closed)
             {
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
