@@ -10,6 +10,7 @@
       `SNOWFLAKE_ENABLE_AWS_WIF_OUTBOUND_TOKEN=true` environment variable.
   -  `OpenAsync` method of `SnowflakeDbConnection` now throws the original exception on failure instead of wrapping it in an `AggregateException`.
   -  `CloseAsync` now throws the original exception on failure instead of wrapping it in an `AggregateException`.
+  -  Bug fix: Fixed non-windows builds with added NativeLibrary items in their transitively built projects that were no longer available to copy to output directory.
   -  Bug fix: `OpenAsync` method of `SnowflakeDbConnection` now resets its state to `Closed` on failures.
   -  Bug fix: `CloseAsync` method of `SnowflakeDbConnection` now resets its state to `Closed` on cancellation and `Broken` on failures.
   -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
