@@ -78,7 +78,7 @@ public sealed class PutGcsStageResolutionWiremockTest
         // arrange
         var tmpFileName = $"gcs_presigned_{Guid.NewGuid():N}.txt";
         var tmpFilePath = Path.Combine(Path.GetTempPath(), tmpFileName);
-        await File.WriteAllTextAsync(tmpFilePath, "presigned-test-data").ConfigureAwait(false);
+        File.WriteAllText(tmpFilePath, "presigned-test-data");
 
         try
         {
@@ -121,7 +121,7 @@ public sealed class PutGcsStageResolutionWiremockTest
         var fileNames = new[] { "a.txt", "b.txt", "c.txt" };
         foreach (var name in fileNames)
         {
-            await File.WriteAllTextAsync(Path.Combine(tmpDir, name), $"data-{name}");
+            File.WriteAllText(Path.Combine(tmpDir, name), $"data-{name}");
         }
 
         try
