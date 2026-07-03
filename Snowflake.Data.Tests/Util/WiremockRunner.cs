@@ -13,6 +13,7 @@ namespace Snowflake.Data.Tests.Util
     public interface IWiremockRunner : IDisposable
     {
         string WiremockBaseHttpUrl { get; }
+        string WiremockBaseHttpsUrl { get; }
         void Stop();
         void ResetMapping();
         void AddMappings(string file, StringTransformations transformations = null);
