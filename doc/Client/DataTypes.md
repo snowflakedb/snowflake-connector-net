@@ -39,3 +39,18 @@ The valid values for the parameter are:
 - ARROW
 - JSON (default)
 
+## Numeric overflow handling
+
+Snowflake `NUMBER(38, 0)` columns can hold values up to ±9.9×10³⁷, but the .NET `System.Decimal` type only supports values up to ~±7.9×10²⁸. When the driver reads a value that exceeds the `System.Decimal` range, it throws an `OverflowException` by default.
+
+To return overflowing numeric values as strings instead of throwing, set the `ALLOW_NUMBER_OVERFLOW_AS_STRING` connection property to `true`:
+
+```csharp
+conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;allow_number_overflow_as_string=true";
+```
+
+When enabled:
+- `GetValue()` returns the value as a `string` when it overflows `System.Decimal` or a narrower integer type.
+- `GetString()` always returns a string representation of the number, regardless of this setting.
+- `GetDecimal()`, `GetInt64()`, and other typed accessors still throw `OverflowException` for values outside their range.
+
