@@ -85,7 +85,7 @@ public sealed class PutGcsStageResolutionWiremockTest
             _runner.AddMappings(s_loginMapping);
             _runner.AddMappings(s_presignedMapping, new StringTransformations()
                 .ThenTransform("{{putFileName}}", tmpFileName)
-                .ThenTransform("{{putFilePath}}", tmpFilePath)
+                .ThenTransform("{{putFilePath}}", tmpFilePath.Replace("\\", "\\\\"))
                 .ThenTransform("{{wiremockHttpUrl}}", _runner.WiremockBaseHttpUrl));
 
             using var conn = new SnowflakeDbConnection();
@@ -130,7 +130,7 @@ public sealed class PutGcsStageResolutionWiremockTest
 
             _runner.AddMappings(s_loginMapping);
             _runner.AddMappings(s_downscopedMapping, new StringTransformations()
-                .ThenTransform("{{putGlob}}", putGlob)
+                .ThenTransform("{{putGlob}}", putGlob.Replace("\\", "\\\\"))
                 .ThenTransform("{{wiremockHttpsUrl}}", _runner.WiremockBaseHttpsUrl));
 
             using var conn = new SnowflakeDbConnection();
