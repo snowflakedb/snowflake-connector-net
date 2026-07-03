@@ -37,8 +37,8 @@ namespace Snowflake.Data.Core.Revocation
 
         public static FileCrlCache CreateInstance(TimeSpan removalDelay)
         {
-            var config = new FileCrlCacheConfig(EnvironmentOperations.Instance, UnixOperations.Instance);
-            var parser = new CrlParser(EnvironmentOperations.Instance);
+            var config = new FileCrlCacheConfig(EnvironmentFacade.Instance, UnixOperations.Instance);
+            var parser = new CrlParser(EnvironmentFacade.Instance);
             return new FileCrlCache(config, parser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, removalDelay);
         }
 

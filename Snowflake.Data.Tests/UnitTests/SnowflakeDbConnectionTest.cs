@@ -6,6 +6,7 @@ using Mono.Unix;
 using Moq;
 using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
@@ -24,13 +25,14 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
-            mockEnvironmentOperations.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            var mockFacade = new Mock<IEnvironmentFacade>();
+            mockFacade.Setup(x => x.GetString(EnvVars.DefaultConnectionName)).Returns(EnvVars.DefaultConnectionName.DefaultValue);
+            mockFacade.Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
                 .Returns($"{Path.DirectorySeparatorChar}home");
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.IsAny<string>(), It.IsAny<Action<UnixStream>>()))
                 .Returns("[default]\naccount=\"testaccount\"\nuser=\"testuser\"\npassword=\"testpassword\"\n");
-            var tomlConnectionBuilder = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var tomlConnectionBuilder = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             using (var conn = new SnowflakeDbConnection(tomlConnectionBuilder))
@@ -47,11 +49,11 @@ namespace Snowflake.Data.Tests.UnitTests
             // Arrange
             var connectionTest = "account=user1account;user=user1;password=user1password;";
             var mockFileOperations = new Mock<FileOperations>();
-            var mockEnvironmentOperations = new Mock<EnvironmentOperations>();
+            var mockFacade = new Mock<IEnvironmentFacade>();
             mockFileOperations.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
             mockFileOperations.Setup(f => f.ReadAllText(It.IsAny<string>()))
                 .Returns("[default]\naccount=\"testaccount\"\nuser=\"testuser\"\npassword=\"testpassword\"\n");
-            var tomlConnectionBuilder = new TomlConnectionBuilder(mockFileOperations.Object, mockEnvironmentOperations.Object);
+            var tomlConnectionBuilder = new TomlConnectionBuilder(mockFileOperations.Object, mockFacade.Object);
 
             // Act
             using (var conn = new SnowflakeDbConnection(tomlConnectionBuilder))

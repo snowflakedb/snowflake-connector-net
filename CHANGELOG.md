@@ -6,8 +6,13 @@
   -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
   -  Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
   -  Improved handling of certificates serial number matching and performance of CRL checkup.
-  -  Switched AWS Workload Identity Federation attestation from a SigV4-presigned `GetCallerIdentity` request to STS
-      `GetWebIdentityToken`, returning a signed JWT directly.
+  -  AWS Workload Identity Federation attestation now defaults to a SigV4-presigned `GetCallerIdentity` request.
+      The STS `GetWebIdentityToken` path (returning a signed JWT) is available as an opt-in by setting the
+      `SNOWFLAKE_ENABLE_AWS_WIF_OUTBOUND_TOKEN=true` environment variable.
+  -  `OpenAsync` method of `SnowflakeDbConnection` now throws the original exception on failure instead of wrapping it in an `AggregateException`.
+  -  `CloseAsync` now throws the original exception on failure instead of wrapping it in an `AggregateException`.
+  -  Bug fix: `OpenAsync` method of `SnowflakeDbConnection` now resets its state to `Closed` on failures.
+  -  Bug fix: `CloseAsync` method of `SnowflakeDbConnection` now resets its state to `Closed` on cancellation and `Broken` on failures.
   -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
   -  Bug fix: Fixed incorrect DateTime conversion for timestamps preceding Unix epoch (1970-01-01) when fractional seconds are
     present.

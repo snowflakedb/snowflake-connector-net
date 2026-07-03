@@ -113,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             var logPath = Path.Combine(logsDirectory, $"easy_logging_logs_{Path.GetRandomFileName()}", "dotnet");
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "true");
+            Environment.SetEnvironmentVariable(EnvVars.SkipWarnForFilePermissionsVerification.Name, "true");
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, logPath);
 
             var content = "random text";
@@ -131,7 +131,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var logLines = File.ReadLines(Logger.EasyLoggerManagerTest.FindLogFilePath(logPath));
             Assert.Equal(0, logLines.Count(s => s.Contains("File is readable by someone other than the owner")));
 
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
+            Environment.SetEnvironmentVariable(EnvVars.SkipWarnForFilePermissionsVerification.Name, "false");
         }
 
         [SFFact(SkipCondition.SkipOnWindows)]
@@ -139,7 +139,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             var logPath = Path.Combine(logsDirectory, $"easy_logging_logs_{Path.GetRandomFileName()}", "dotnet");
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
+            Environment.SetEnvironmentVariable(EnvVars.SkipWarnForFilePermissionsVerification.Name, "false");
             EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, logPath);
 
             var content = "random text";
@@ -157,7 +157,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             var logLines = File.ReadLines(Logger.EasyLoggerManagerTest.FindLogFilePath(logPath));
             Assert.Equal(1, logLines.Count(s => s.Contains("File is readable by someone other than the owner")));
 
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipWarningForReadPermissions, "false");
+            Environment.SetEnvironmentVariable(EnvVars.SkipWarnForFilePermissionsVerification.Name, "false");
         }
 
         [SFTheory(SkipCondition.SkipOnWindows)]
@@ -167,14 +167,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, "random text");
             Syscall.chmod(filePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupWrite));
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, skipValue);
+            Environment.SetEnvironmentVariable(EnvVars.SkipTokenFilePermissionsVerification.Name, skipValue);
 
             if (shouldThrow)
                 Assert.Throws<SecurityException>(() => _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions));
             else
                 _fixture.UnixOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
+            Environment.SetEnvironmentVariable(EnvVars.SkipTokenFilePermissionsVerification.Name, null);
         }
 
         [SFTheory(SkipCondition.SkipOnWindows)]
@@ -184,14 +184,14 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             var filePath = CreateConfigTempFile(_fixture.WorkingDirectory, "random text");
             Syscall.chmod(filePath, (FilePermissions)(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite | FileAccessPermissions.GroupWrite));
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, skipValue);
+            Environment.SetEnvironmentVariable(EnvVars.SkipTokenFilePermissionsVerification.Name, skipValue);
 
             if (shouldThrow)
                 Assert.Throws<SecurityException>(() => _fixture.UnixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions));
             else
                 _fixture.UnixOperations.WriteAllText(filePath, "test", SFCredentialManagerFileImpl.Instance.ValidateFilePermissions);
 
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SkipTokenFilePermissionsVerification, null);
+            Environment.SetEnvironmentVariable(EnvVars.SkipTokenFilePermissionsVerification.Name, null);
         }
 
         [SFTheory(SkipCondition.SkipOnWindows)]

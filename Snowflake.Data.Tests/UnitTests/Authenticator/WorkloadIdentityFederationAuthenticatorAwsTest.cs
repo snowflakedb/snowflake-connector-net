@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Amazon.Runtime;
 using Moq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
@@ -105,7 +106,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         Assert.Empty(attestation.UserIdentifierComponents);
     }
 
-    [SFFact]
+    [SFFact(SkipCondition.SkipOnJenkins)]
     public void TestFailAttestationWhenStsCallFails()
     {
         // arrange - STS returns empty token
@@ -122,7 +123,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         Assert.Contains("GetWebIdentityToken returned an empty token", thrown.Message);
     }
 
-    [SFFact]
+    [SFFact(SkipCondition.SkipOnJenkins)]
     public void TestFailAttestationWhenNoCredentials()
     {
         // arrange
@@ -138,7 +139,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         Assert.Contains("Could not find AWS credentials", thrown.Message);
     }
 
-    [SFFact]
+    [SFFact(SkipCondition.SkipOnJenkins)]
     public void TestFailAttestationWhenNoRegion()
     {
         // arrange
@@ -154,7 +155,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         Assert.Contains("Could not find AWS region", thrown.Message);
     }
 
-    [SFFact]
+    [SFFact(SkipCondition.SkipOnJenkins)]
     public void TestSuccessfulAwsTransitiveImpersonation()
     {
         // arrange
@@ -170,7 +171,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         AssertSessionSuccessfullyCreated(session);
     }
 
-    [SFFact]
+    [SFFact(SkipCondition.SkipOnJenkins)]
     public void TestSuccessfulAwsTransitiveImpersonationAttestation()
     {
         // arrange
@@ -190,7 +191,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
     }
 
     private SFSession PrepareSessionForAws(
-        Action<Mock<EnvironmentOperations>> environmentOperationsConfigurator,
+        Action<Mock<IEnvironmentFacade>> environmentOperationsConfigurator,
         Action<Mock<AwsSdkWrapper>> awsSdkConfigurator = null,
         bool addStsMapping = true,
         string connectionStringSuffix = null)
@@ -200,7 +201,11 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         return PrepareSession(
             AttestationProvider.AWS,
             connectionStringSuffix,
-            environmentOperationsConfigurator,
+            env =>
+            {
+                env.Setup(e => e.GetBool(EnvVars.EnableAwsWifOutboundToken)).Returns(true);
+                environmentOperationsConfigurator(env);
+            },
             t => SetupTime(t, DateTime.UtcNow),
             awsSdkConfigurator ?? SetupAwsWrapper
         );

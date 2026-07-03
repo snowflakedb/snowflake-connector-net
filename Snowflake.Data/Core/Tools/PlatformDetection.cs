@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Tools
@@ -14,10 +15,8 @@ namespace Snowflake.Data.Core.Tools
         private sealed class PlatformDetectionLogger { }
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<PlatformDetectionLogger>();
 
-        internal const string DisableEnvVar = "SNOWFLAKE_DISABLE_PLATFORM_DETECTION";
         internal const int DetectionTimeoutMs = 200;
 
-        // Internal for testing - allows overriding base URLs
         internal static string AzureMetadataBaseUrl = "http://169.254.169.254";
         internal static string GceMetadataRootUrl = "http://metadata.google.internal";
         internal static string GcpMetadataBaseUrl = "http://metadata.google.internal/computeMetadata/v1";
@@ -64,9 +63,9 @@ namespace Snowflake.Data.Core.Tools
 
         internal static async Task<string[]> RunDetectionAsync()
         {
-            if (string.Equals(Environment.GetEnvironmentVariable(DisableEnvVar), "true", StringComparison.OrdinalIgnoreCase))
+            if (EnvironmentFacade.Instance.GetBool(EnvVars.DisablePlatformDetection))
             {
-                s_logger.Debug("Platform detection disabled via " + DisableEnvVar);
+                s_logger.Debug($"Platform detection disabled via {EnvVars.DisablePlatformDetection.Name}");
                 return new[] { "disabled" };
             }
 
@@ -129,24 +128,24 @@ namespace Snowflake.Data.Core.Tools
         // --- Environment variable detectors ---
 
         internal static bool DetectAwsLambda() =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("LAMBDA_TASK_ROOT"));
+            !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.LambdaTaskRoot));
 
         internal static bool DetectGithubActions() =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
+            !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.GithubActions));
 
         internal static bool DetectAzureFunction() =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FUNCTIONS_WORKER_RUNTIME")) &&
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FUNCTIONS_EXTENSION_VERSION")) &&
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
+            !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.FunctionsWorkerRuntime)) &&
+            !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.FunctionsExtensionVersion)) &&
+            !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.AzureWebJobsStorage));
 
         internal static bool DetectGceCloudRunService() =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("K_SERVICE")) &&
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("K_REVISION")) &&
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("K_CONFIGURATION"));
+            !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.KService)) &&
+            !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.KRevision)) &&
+            !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.KConfiguration));
 
         internal static bool DetectGceCloudRunJob() =>
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CLOUD_RUN_JOB")) &&
-            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CLOUD_RUN_EXECUTION"));
+            !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.CloudRunJob)) &&
+            !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.CloudRunExecution));
 
         // --- HTTP-based detectors ---
         // Return value: true = detected, false = not detected, null = timed out
@@ -206,7 +205,7 @@ namespace Snowflake.Data.Core.Tools
             // On Azure Functions: managed identity is indicated solely by IDENTITY_HEADER.
             // Do not fall through to the VM IMDS endpoint - it is not applicable for Functions.
             if (DetectAzureFunction())
-                return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("IDENTITY_HEADER"));
+                return !string.IsNullOrEmpty(EnvironmentFacade.Instance.GetString(EnvVars.WifHeader));
 
             using var cts = new CancellationTokenSource(DetectionTimeoutMs);
             var client = httpClient ?? s_httpClient;

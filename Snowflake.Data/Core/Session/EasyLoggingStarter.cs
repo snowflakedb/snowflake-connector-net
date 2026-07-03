@@ -20,7 +20,7 @@ namespace Snowflake.Data.Core
 
         private readonly DirectoryOperations _directoryOperations;
 
-        private readonly EnvironmentOperations _environmentOperations;
+        private readonly IEnvironmentFacade _environmentFacade;
 
         private readonly object _lockForExclusiveInit = new object();
 
@@ -31,20 +31,20 @@ namespace Snowflake.Data.Core
         internal FileAccessPermissions _logFileUnixPermissions = DefaultFileUnixPermissions;
 
         public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
-            EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentOperations.Instance);
+            EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentFacade.Instance);
 
         internal EasyLoggingStarter(
             EasyLoggingConfigProvider easyLoggingConfigProvider,
             EasyLoggerManager easyLoggerManager,
             UnixOperations unixOperations,
             DirectoryOperations directoryOperations,
-            EnvironmentOperations environmentOperations)
+            IEnvironmentFacade environmentFacade)
         {
             _easyLoggingConfigProvider = easyLoggingConfigProvider;
             _easyLoggerManager = easyLoggerManager;
             _unixOperations = unixOperations;
             _directoryOperations = directoryOperations;
-            _environmentOperations = environmentOperations;
+            _environmentFacade = environmentFacade;
         }
 
         internal EasyLoggingStarter()
@@ -123,7 +123,7 @@ namespace Snowflake.Data.Core
             if (string.IsNullOrEmpty(logPath))
             {
                 s_logger.Warn("LogPath in client config not found. Using home directory as a default value");
-                logPathOrDefault = HomeDirectoryProvider.HomeDirectory(_environmentOperations);
+                logPathOrDefault = HomeDirectoryProvider.HomeDirectory(_environmentFacade);
                 if (string.IsNullOrEmpty(logPathOrDefault))
                 {
                     throw new Exception("No log path found for easy logging. Home directory is not configured and log path is not provided");

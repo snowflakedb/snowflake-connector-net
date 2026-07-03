@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon.Runtime;
 using Moq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 using Snowflake.Data.Core.Rest;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 using Xunit;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
@@ -114,7 +117,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         var awsSdkWrapper = new Mock<AwsSdkWrapper>();
         awsSdkWrapper.Setup(w => w.GetAwsRegion()).Returns("us-east-1");
         awsSdkWrapper.Setup(w => w.GetAwsCredentials()).Returns(new ImmutableCredentials("akid", "secret", "token"));
-        var retriever = CreateRetriever(restRequester.Object, awsSdkWrapper: awsSdkWrapper);
+        var retriever = CreateRetriever(restRequester.Object, awsSdkWrapper: awsSdkWrapper, envFacade: CreateOutboundTokenEnabledEnvOps());
 
         // act
         var attestation = retriever.CreateAttestationData(null, null);
@@ -124,6 +127,32 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Equal("fake.jwt.token", attestation.Credential);
         Assert.NotNull(attestation.UserIdentifierComponents);
         Assert.Empty(attestation.UserIdentifierComponents);
+    }
+
+    [SFFact]
+    public void TestCreateAttestationDataReturnsBase64SignedRequestWhenFlagOff()
+    {
+        // arrange - flag OFF (default), should use GetCallerIdentity path
+        var restRequester = CreateMockRestRequester(ValidGetIdentityTokenResponseXml);
+        var awsSdkWrapper = new Mock<AwsSdkWrapper>();
+        awsSdkWrapper.Setup(w => w.GetAwsRegion()).Returns("us-east-1");
+        awsSdkWrapper.Setup(w => w.GetAwsCredentials()).Returns(new ImmutableCredentials("akid", "secret", "token"));
+        var utcNow = new DateTime(2025, 6, 1, 10, 30, 0, DateTimeKind.Utc);
+        var retriever = CreateRetriever(restRequester.Object, awsSdkWrapper: awsSdkWrapper, utcNow: utcNow);
+
+        // act
+        var attestation = retriever.CreateAttestationData(null, null);
+
+        // assert
+        Assert.Equal(AttestationProvider.AWS, attestation.Provider);
+        Assert.NotNull(attestation.UserIdentifierComponents);
+        Assert.Empty(attestation.UserIdentifierComponents);
+
+        // Credential should be base64 encoded JSON of a signed GetCallerIdentity request
+        var decodedJson = Encoding.UTF8.GetString(Convert.FromBase64String(attestation.Credential));
+        Assert.Contains("GetCallerIdentity", decodedJson);
+        Assert.Contains("sts.us-east-1.amazonaws.com", decodedJson);
+        Assert.Contains("X-Snowflake-Audience", decodedJson);
     }
 
     [SFFact]
@@ -163,7 +192,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         var awsSdkWrapper = new Mock<AwsSdkWrapper>();
         awsSdkWrapper.Setup(w => w.GetAwsRegion()).Returns("us-east-1");
         awsSdkWrapper.Setup(w => w.GetAwsCredentials()).Returns(new ImmutableCredentials("akid", "secret", "token"));
-        var retriever = CreateRetriever(restRequester.Object, awsSdkWrapper: awsSdkWrapper);
+        var retriever = CreateRetriever(restRequester.Object, awsSdkWrapper: awsSdkWrapper, envFacade: CreateOutboundTokenEnabledEnvOps());
 
         // act
         var attestation = retriever.CreateAttestationData(null, null, impersonationPath: "");
@@ -203,7 +232,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         var awsSdkWrapper = new Mock<AwsSdkWrapper>();
         awsSdkWrapper.Setup(w => w.GetAwsRegion()).Returns("us-east-1");
         awsSdkWrapper.Setup(w => w.GetAwsCredentials()).Returns(new ImmutableCredentials("initial-akid", "initial-secret", "initial-token"));
-        var retriever = CreateRetriever(restRequester.Object, awsSdkWrapper: awsSdkWrapper);
+        var retriever = CreateRetriever(restRequester.Object, awsSdkWrapper: awsSdkWrapper, envFacade: CreateOutboundTokenEnabledEnvOps());
 
         // act
         var attestation = retriever.CreateAttestationData(null, null, impersonationPath: "arn:aws:iam::123456789012:role/TestRole");
@@ -271,7 +300,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         var awsSdkWrapper = new Mock<AwsSdkWrapper>();
         awsSdkWrapper.Setup(w => w.GetAwsRegion()).Returns("us-east-1");
         awsSdkWrapper.Setup(w => w.GetAwsCredentials()).Returns(new ImmutableCredentials("initial-akid", "initial-secret", "initial-token"));
-        var retriever = CreateRetriever(restRequester.Object, awsSdkWrapper: awsSdkWrapper);
+        var retriever = CreateRetriever(restRequester.Object, awsSdkWrapper: awsSdkWrapper, envFacade: CreateOutboundTokenEnabledEnvOps());
 
         // act
         var attestation = retriever.CreateAttestationData(null, null,
@@ -322,16 +351,26 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         return restRequester;
     }
 
+    private static Mock<IEnvironmentFacade> CreateOutboundTokenEnabledEnvOps()
+    {
+        var envOps = new Mock<IEnvironmentFacade>();
+        envOps.Setup(e => e.GetBool(EnvVars.EnableAwsWifOutboundToken)).Returns(true);
+        return envOps;
+    }
+
     private static WorkflowIdentityAwsAttestationRetriever CreateRetriever(
         IRestRequester restRequester,
         string stsHost = "https://localhost:12345",
         DateTime? utcNow = null,
-        Mock<AwsSdkWrapper> awsSdkWrapper = null)
+        Mock<AwsSdkWrapper> awsSdkWrapper = null,
+        Mock<IEnvironmentFacade> envFacade = null)
     {
         var timeProvider = new Mock<TimeProvider>();
         timeProvider.Setup(t => t.UtcNow()).Returns(utcNow ?? DateTime.UtcNow);
         var wrapper = awsSdkWrapper ?? new Mock<AwsSdkWrapper>();
-        return new WorkflowIdentityAwsAttestationRetriever(timeProvider.Object,
+        var envOps = envFacade ?? new Mock<IEnvironmentFacade>();
+        return new WorkflowIdentityAwsAttestationRetriever(envOps.Object,
+            timeProvider.Object,
             wrapper.Object,
             restRequester,
             stsHost);

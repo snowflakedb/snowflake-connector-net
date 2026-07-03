@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using Mono.Unix.Native;
 using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 using Tomlyn;
@@ -46,8 +48,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact]
         public async Task TestLocalDefaultConnectStringReadFromToml()
         {
-            var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, s_workingDirectory);
+            var snowflakeHome = Environment.GetEnvironmentVariable(EnvVars.SnowflakeHome.Name);
+            Environment.SetEnvironmentVariable(EnvVars.SnowflakeHome.Name, s_workingDirectory);
             try
             {
                 using (var conn = new SnowflakeDbConnection())
@@ -58,36 +60,34 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             finally
             {
-                Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, snowflakeHome);
+                Environment.SetEnvironmentVariable(EnvVars.SnowflakeHome.Name, snowflakeHome);
             }
         }
 
         [SFFact]
         public async Task TestThrowExceptionIfTomlNotFoundWithOtherConnectionString()
         {
-            var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
-            var connectionName = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName);
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, s_workingDirectory);
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName, "notfoundconnection");
+            var snowflakeHome = Environment.GetEnvironmentVariable(EnvVars.SnowflakeHome.Name);
+            var connectionName = Environment.GetEnvironmentVariable(EnvVars.DefaultConnectionName.Name);
+            Environment.SetEnvironmentVariable(EnvVars.SnowflakeHome.Name, s_workingDirectory);
+            Environment.SetEnvironmentVariable(EnvVars.DefaultConnectionName.Name, "notfoundconnection");
             try
             {
-                using (var conn = new SnowflakeDbConnection())
-                {
-                    await Assert.ThrowsAsync<Exception>(() => conn.OpenAsync()).ConfigureAwait(false);
-                }
+                using var conn = new SnowflakeDbConnection();
+                await Assert.ThrowsAsync<SnowflakeDbException>(conn.OpenAsync).ConfigureAwait(false);
             }
             finally
             {
-                Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, snowflakeHome);
-                Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeDefaultConnectionName, connectionName);
+                Environment.SetEnvironmentVariable(EnvVars.SnowflakeHome.Name, snowflakeHome);
+                Environment.SetEnvironmentVariable(EnvVars.DefaultConnectionName.Name, connectionName);
             }
         }
 
         [SFFact]
         public async Task TestThrowExceptionIfTomlFromNotFoundFromDbConnection()
         {
-            var snowflakeHome = Environment.GetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome);
-            Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, Path.Combine(s_workingDirectory, "InvalidFolder"));
+            var snowflakeHome = Environment.GetEnvironmentVariable(EnvVars.SnowflakeHome.Name);
+            Environment.SetEnvironmentVariable(EnvVars.SnowflakeHome.Name, Path.Combine(s_workingDirectory, "InvalidFolder"));
             try
             {
                 using (var conn = new SnowflakeDbConnection())
@@ -97,7 +97,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             finally
             {
-                Environment.SetEnvironmentVariable(TomlConnectionBuilder.SnowflakeHome, snowflakeHome);
+                Environment.SetEnvironmentVariable(EnvVars.SnowflakeHome.Name, snowflakeHome);
             }
         }
 
