@@ -11,7 +11,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    public class ArrowResultChunkTest
+    public sealed partial class ArrowResultChunkTest
     {
         private const int RowCountBatchOne = 10;
         private const int RowCountBatchTwo = 20;
@@ -23,6 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests
             .Append("Col_Int32", false, col => col.Int32(
                 array => array.AppendRange(Enumerable.Range(1, RowCountBatchTwo))))
             .Build();
+
         internal static readonly RecordBatch RecordBatchWithNullValue = new RecordBatch.Builder()
             .Append("Col_Int32", false, col => col.Int32(array => array.AppendNull()))
             .Build();
