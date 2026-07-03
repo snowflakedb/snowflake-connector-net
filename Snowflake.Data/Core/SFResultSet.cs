@@ -292,7 +292,9 @@ namespace Snowflake.Data.Core
             UTF8Buffer val = GetObjectInternal(ordinal);
             var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
             var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
-            return SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2, sessionTimezone);
+            var allowOverflow = sfStatement.SfSession.IsAllowNumberOverflowAsStringEnabled();
+            var context = new ConversionContext(types.Item1, types.Item2, sessionTimezone, allowOverflow);
+            return SFDataConverter.ConvertToCSharpVal(val, context);
         }
 
         private T GetValue<T>(int ordinal)
@@ -300,7 +302,9 @@ namespace Snowflake.Data.Core
             UTF8Buffer val = GetObjectInternal(ordinal);
             var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
             var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
-            return (T)SFDataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T), sessionTimezone);
+            var allowOverflow = sfStatement.SfSession.IsAllowNumberOverflowAsStringEnabled();
+            var context = new ConversionContext(types.Item1, typeof(T), sessionTimezone, allowOverflow);
+            return (T)SFDataConverter.ConvertToCSharpVal(val, context);
         }
 
         //
