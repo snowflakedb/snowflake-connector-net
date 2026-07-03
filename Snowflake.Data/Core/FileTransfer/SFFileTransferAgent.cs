@@ -11,6 +11,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Configuration;
+using Snowflake.Data.Core.FileTransfer.StorageClient;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core
@@ -191,7 +192,7 @@ namespace Snowflake.Data.Core
                 }
 
                 // Update the file metadata with GCS presigned URL
-                updatePresignedUrl();
+                UpdatePresignedUrl();
 
                 foreach (SFFileMetadata fileMetadata in FilesMetas)
                 {
@@ -249,7 +250,7 @@ namespace Snowflake.Data.Core
             }
 
             // Update the file metadata with GCS presigned URL
-            await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
+            await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
 
             foreach (SFFileMetadata fileMetadata in FilesMetas)
             {
@@ -431,83 +432,99 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// Get the presigned URL and update the file metadata.
         /// </summary>
-        private void updatePresignedUrl()
+        private void UpdatePresignedUrl()
         {
             // Presigned url only applies to GCS
-            if (TransferMetadata.stageInfo.locationType == "GCS")
+            if (TransferMetadata.stageInfo.locationType != "GCS")
+                return;
+
+            if (CommandTypes.DOWNLOAD == CommandType)
             {
-                if (CommandTypes.UPLOAD == CommandType)
+                for (var index = 0; index < FilesMetas.Count; index++)
                 {
-                    foreach (SFFileMetadata fileMeta in FilesMetas)
-                    {
-                        string filePathToReplace = getFilePathFromPutCommand(Query);
-                        string fileNameToReplaceWith = fileMeta.destFileName;
-                        string queryWithSingleFile = Query;
-                        queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
-
-                        SFStatement sfStatement = new SFStatement(Session);
-                        sfStatement.isPutGetQuery = true;
-
-                        PutGetExecResponse response =
-                            sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
-                                0,
-                                queryWithSingleFile,
-                                null,
-                                false);
-
-                        fileMeta.stageInfo = response.data.stageInfo;
-                        fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
-                    }
+                    FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
                 }
-                else if (CommandTypes.DOWNLOAD == CommandType)
-                {
-                    for (int index = 0; index < FilesMetas.Count; index++)
-                    {
-                        FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
-                    }
-                }
+
+                return;
+            }
+
+            if (CommandType != CommandTypes.UPLOAD)
+                return;
+
+            // Skip entirely in access-token mode: a downscoped token is folder-scoped and already covers every file, so there is nothing per-file to fetch.
+            if (TransferMetadata.stageInfo.stageCredentials?.TryGetValue(SFGCSClient.GCS_ACCESS_TOKEN, out var value) == true && !string.IsNullOrEmpty(value))
+                return;
+
+            foreach (var fileMeta in FilesMetas)
+            {
+                var filePathToReplace = getFilePathFromPutCommand(Query);
+                var fileNameToReplaceWith = fileMeta.destFileName;
+                var queryWithSingleFile = Query;
+                queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
+
+                var sfStatement = new SFStatement(Session);
+                sfStatement.isPutGetQuery = true;
+
+                var response =
+                    sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
+                        0,
+                        queryWithSingleFile,
+                        null,
+                        false);
+
+                fileMeta.stageInfo = response.data.stageInfo;
+                fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
             }
         }
 
         /// <summary>
         /// Get the presigned URL async method and update the file metadata.
         /// </summary>
-        internal async Task updatePresignedUrlAsync(CancellationToken cancellationToken)
+        private async Task UpdatePresignedUrlAsync(CancellationToken cancellationToken)
         {
             // Presigned url only applies to GCS
-            if (TransferMetadata.stageInfo.locationType == "GCS")
+            if (TransferMetadata.stageInfo.locationType != "GCS")
+                return;
+
+            if (CommandType == CommandTypes.DOWNLOAD)
             {
-                if (CommandTypes.UPLOAD == CommandType)
+                for (var index = 0; index < FilesMetas.Count; index++)
                 {
-                    foreach (SFFileMetadata fileMeta in FilesMetas)
-                    {
-                        string filePathToReplace = getFilePathFromPutCommand(Query);
-                        string fileNameToReplaceWith = fileMeta.destFileName;
-                        string queryWithSingleFile = Query;
-                        queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
-
-                        SFStatement sfStatement = new SFStatement(Session);
-                        sfStatement.isPutGetQuery = true;
-
-                        PutGetExecResponse response = await
-                            sfStatement.ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
-                                0,
-                                queryWithSingleFile,
-                                null,
-                                false,
-                                cancellationToken).ConfigureAwait(false);
-
-                        fileMeta.stageInfo = response.data.stageInfo;
-                        fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
-                    }
+                    FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
                 }
-                else if (CommandTypes.DOWNLOAD == CommandType)
+
+                return;
+            }
+
+            if (CommandType != CommandTypes.UPLOAD)
+                return;
+
+            // Skip entirely in access-token mode: a downscoped token is folder-scoped and already covers every file, so there is nothing per-file to fetch.
+            if (TransferMetadata.stageInfo.stageCredentials?.TryGetValue(SFGCSClient.GCS_ACCESS_TOKEN, out var value) == true && !string.IsNullOrEmpty(value))
+                return;
+
+            foreach (var fileMeta in FilesMetas)
+            {
+                var filePathToReplace = getFilePathFromPutCommand(Query);
+                var fileNameToReplaceWith = fileMeta.destFileName;
+                var queryWithSingleFile = Query;
+                queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
+
+                var sfStatement = new SFStatement(Session)
                 {
-                    for (int index = 0; index < FilesMetas.Count; index++)
-                    {
-                        FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
-                    }
-                }
+                    isPutGetQuery = true
+                };
+
+                var response = await
+                    sfStatement.ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
+                        0,
+                        queryWithSingleFile,
+                        null,
+                        false,
+                        cancellationToken).ConfigureAwait(false);
+
+                fileMeta.stageInfo = response.data.stageInfo;
+                fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
             }
         }
 
@@ -992,7 +1009,7 @@ namespace Snowflake.Data.Core
                 }
                 else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
                 {
-                    updatePresignedUrl();
+                    UpdatePresignedUrl();
                 }
 
                 // Break out of loop if file is successfully uploaded or already exists
@@ -1036,7 +1053,7 @@ namespace Snowflake.Data.Core
                 }
                 else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
                 {
-                    await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
+                    await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
                 }
 
                 // Break out of loop if file is successfully uploaded or already exists
@@ -1077,7 +1094,7 @@ namespace Snowflake.Data.Core
             }
             else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
             {
-                updatePresignedUrl();
+                UpdatePresignedUrl();
             }
 
             ResultsMetas.Add(resultMetadata);
@@ -1104,7 +1121,7 @@ namespace Snowflake.Data.Core
             }
             else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
             {
-                await updatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
+                await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
             }
 
             ResultsMetas.Add(resultMetadata);
