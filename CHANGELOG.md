@@ -2,6 +2,7 @@
 
 # Changelog
 - v5.8.0
+  -  Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
   -  Reduced synchronization context capture in library, minimizing the risk of deadlock occurrence across different code path executions.
   -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
   -  Improved handling of certificates serial number matching and performance of CRL checkup.
@@ -16,6 +17,7 @@
   -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
   -  Bug fix: Fixed incorrect DateTime conversion for timestamps preceding Unix epoch (1970-01-01) when fractional seconds are
     present.
+  -  Bug fix: Fixed an unnecessary second PUT (stage re-resolution) per file during GCS uploads when the server scopes upload credentials with an access token.
 - v5.7.0
     - Improved input handling in `ChangeDatabase` by using parameterized queries.
     - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.
