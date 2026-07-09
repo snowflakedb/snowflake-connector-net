@@ -31,17 +31,13 @@ namespace Snowflake.Data.Tests.Mock
         internal const int ContentLength = 9999;
 
         // Create AWS exception for mock requests
-        private static Exception CreateMockAwsResponseError(string awsErrorCode, bool isAsync)
+        private static Exception CreateMockAwsResponseError(string awsErrorCode)
         {
             var exception = awsErrorCode.Length > 0
                ? new AmazonS3Exception(S3ErrorMessage) { ErrorCode = awsErrorCode }
                : new Exception("Non-AWS exception");
 
-            if (isAsync)
-                return exception;
-
-            var exceptionContainingS3Error = new Exception(S3ErrorMessage, exception);
-            return exceptionContainingS3Error;  // S3 places the AmazonS3Exception on the InnerException property on non-async calls
+            return exception;
         }
 
         // Create mock response for GetFileHeader
@@ -62,7 +58,7 @@ namespace Snowflake.Data.Tests.Mock
             }
             else
             {
-                throw CreateMockAwsResponseError(statusCode, isAsync);
+                throw CreateMockAwsResponseError(statusCode);
             }
         }
 
@@ -75,7 +71,7 @@ namespace Snowflake.Data.Tests.Mock
             }
             else
             {
-                throw CreateMockAwsResponseError(awsStatusCode, isAsync);
+                throw CreateMockAwsResponseError(awsStatusCode);
             }
         }
 
@@ -92,7 +88,7 @@ namespace Snowflake.Data.Tests.Mock
             }
             else
             {
-                throw CreateMockAwsResponseError(statusCode, isAsync);
+                throw CreateMockAwsResponseError(statusCode);
             }
         }
     }
