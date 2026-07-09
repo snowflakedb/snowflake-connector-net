@@ -198,7 +198,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                HandleFileHeaderErr(ex.InnerException, fileMetadata); // S3 places the AmazonS3Exception on the InnerException on non-async calls
+                HandleFileHeaderErr(ex, fileMetadata);
                 return null;
             }
         }
