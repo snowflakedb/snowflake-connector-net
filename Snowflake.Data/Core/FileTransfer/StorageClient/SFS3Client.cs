@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Amazon.Runtime.Internal;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
@@ -519,31 +520,26 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         /// <param name="ex">Exception from file header.</param>
         /// <param name="fileMetadata">The file metadata.</param>
-        private void HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
+        private static void HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            Logger.Error("Failed to get file header: " + ex.Message);
+            Logger.Error($"Failed to get file header: {ex.Message}");
 
-            switch (ex)
+            fileMetadata.resultStatus = ex switch
             {
-                case AmazonS3Exception exAws:
-                    if (exAws.ErrorCode == EXPIRED_TOKEN || exAws.ErrorCode == HttpStatusCode.BadRequest.ToString())
-                    {
-                        fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                    }
-                    else if (exAws.ErrorCode == NO_SUCH_KEY)
-                    {
-                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                    }
-                    else
-                    {
-                        fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
-                    }
-
-                    break;
-                default:
-                    fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
-                    break;
-            }
+                AmazonS3Exception exAws => exAws.ErrorCode switch
+                {
+                    EXPIRED_TOKEN or nameof(HttpStatusCode.BadRequest) => nameof(ResultStatus.RENEW_TOKEN),
+                    NO_SUCH_KEY => nameof(ResultStatus.NOT_FOUND_FILE),
+                    _ => nameof(ResultStatus.ERROR)
+                },
+                HttpErrorResponseException exAws => exAws.Response?.StatusCode switch
+                {
+                    HttpStatusCode.BadRequest => nameof(ResultStatus.RENEW_TOKEN),
+                    HttpStatusCode.NotFound => nameof(ResultStatus.NOT_FOUND_FILE),
+                    _ => nameof(ResultStatus.ERROR)
+                },
+                _ => nameof(ResultStatus.ERROR)
+            };
         }
 
         /// <summary>

@@ -125,13 +125,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
-            mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
+            mockAmazonS3Client.Setup(client => client.GetObjectMetadataAsync(It.IsAny<GetObjectMetadataRequest>(), It.IsAny<CancellationToken>()))
                 .Returns(() => MockS3Client.CreateResponseForGetFileHeader(awsStatusCode, false));
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
 
             // Act
-            FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
+            var fileHeader = _client.GetFileHeader(_fileMetadata);
 
             // Assert
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
@@ -147,7 +147,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
-            mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
+            mockAmazonS3Client.Setup(client => client.GetObjectMetadataAsync(It.IsAny<GetObjectMetadataRequest>(), It.IsAny<CancellationToken>()))
                 .Returns(() => MockS3Client.CreateResponseForGetFileHeader(awsStatusCode, true));
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
