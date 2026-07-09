@@ -1,4 +1,4 @@
-﻿using Amazon.S3;
+using Amazon.S3;
 using Amazon.S3.Model;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
 using System;

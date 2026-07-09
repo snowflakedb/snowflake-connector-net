@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
