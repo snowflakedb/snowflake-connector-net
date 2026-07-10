@@ -1,4 +1,4 @@
-﻿using Snowflake.Data.Client;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core.FileTransfer;
 using Snowflake.Data.Log;
 using System;
