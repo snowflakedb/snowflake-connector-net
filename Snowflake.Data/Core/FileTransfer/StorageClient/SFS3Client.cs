@@ -513,13 +513,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 AmazonS3Exception exAws => exAws.ErrorCode switch
                 {
                     EXPIRED_TOKEN or nameof(HttpStatusCode.BadRequest) => nameof(ResultStatus.RENEW_TOKEN),
-                    NO_SUCH_KEY => nameof(ResultStatus.NOT_FOUND_FILE),
-                    _ => nameof(ResultStatus.ERROR)
-                },
-                HttpErrorResponseException exAws => exAws.Response?.StatusCode switch
-                {
-                    HttpStatusCode.BadRequest => nameof(ResultStatus.RENEW_TOKEN),
-                    HttpStatusCode.NotFound => nameof(ResultStatus.NOT_FOUND_FILE),
+                    NO_SUCH_KEY or nameof(HttpStatusCode.NotFound) => nameof(ResultStatus.NOT_FOUND_FILE),
                     _ => nameof(ResultStatus.ERROR)
                 },
                 _ => nameof(ResultStatus.ERROR)
