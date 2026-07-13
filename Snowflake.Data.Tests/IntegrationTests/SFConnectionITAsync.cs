@@ -1269,7 +1269,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    public async Task ShouldBeNotBeClosedIfCloseCancelled()
+    public async Task ShouldNotBeClosedIfCloseCancelled()
     {
         using var c = new SnowflakeDbConnection(_fixture.ConnectionString);
         await c.OpenAsync(CancellationToken.None).ConfigureAwait(false);
