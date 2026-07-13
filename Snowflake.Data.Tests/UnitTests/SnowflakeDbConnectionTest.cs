@@ -302,7 +302,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act & Assert
             var ex = Assert.ThrowsAny<Exception>(conn.Close);
-            Assert.True( ex is SnowflakeDbException or AggregateException { InnerException: SnowflakeDbException },
+            Assert.True(ex is SnowflakeDbException or AggregateException { InnerException: SnowflakeDbException },
                 $"Expected SnowflakeDbException but got {ex.GetType().Name}");
 
             Assert.Equal(ConnectionState.Broken, conn.State);
