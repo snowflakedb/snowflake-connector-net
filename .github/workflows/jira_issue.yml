@@ -73,7 +73,7 @@ jobs:
         run: |
           TITLE=$(echo "${ISSUE_TITLE//`/\\`}" | sed 's/"/\\"/g' | sed "s/'/\\\'/g")
           PAYLOAD=$(jq -n \
-          --arg issuetitle "$ISSUE_TITLE" \
+          --arg issuetitle "$TITLE" \
           --arg jirakey "$JIRA_KEY" \
           '{
             title: ($jirakey + ": " + $issuetitle)
