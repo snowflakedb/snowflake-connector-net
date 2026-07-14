@@ -7,9 +7,17 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Tests.IntegrationTests;
 
-#if NETFRAMEWORK
+#if NETFRAMEWORK || !NET8_0_OR_GREATER
 public static class FrameworkShims
 {
+    public static Task CancelAsync(this CancellationTokenSource cts)
+    {
+        cts.Cancel();
+        return Task.CompletedTask;
+    }
+
+#if NETFRAMEWORK
+
     public static Task<DbTransaction> BeginTransactionAsync(this SnowflakeDbConnection connection) => Task.FromResult(connection.BeginTransaction());
 
     public static Task CloseAsync(this DbConnection connection)
@@ -63,5 +71,6 @@ public static class FrameworkShims
         element = queue.Dequeue();
         return true;
     }
+#endif
 }
 #endif
