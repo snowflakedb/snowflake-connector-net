@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
@@ -8,51 +7,6 @@ namespace Snowflake.Data.Core;
 
 using Snowflake.Data.Client;
 using System.Threading.Tasks;
-
-internal sealed class FastStreamWrapper
-{
-    private readonly Stream _wrappedStream;
-    private readonly byte[] _buffer = new byte[32768]; //  2^15
-    private int _count;
-    private int _next;
-
-    public FastStreamWrapper(Stream s)
-    {
-        _wrappedStream = s;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public async Task<int> ReadByteAsync(CancellationToken cancelToken)
-    {
-        // fast path first
-        if (_next < _count)
-            return _buffer[_next++];
-
-        return await ReadByteSlowAsync(cancelToken).ConfigureAwait(false);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private async Task<int> ReadByteSlowAsync(CancellationToken cancelToken)
-    {
-        // fast path first
-        if (_next < _count)
-            return _buffer[_next++];
-
-        if (_count >= 0)
-        {
-            _next = 0;
-            _count = await _wrappedStream.ReadAsync(_buffer, 0, _buffer.Length, cancelToken).ConfigureAwait(false);
-        }
-
-        if (_count <= 0)
-        {
-            _count = -1;
-            return -1;
-        }
-
-        return _buffer[_next++];
-    }
-}
 
 /// <summary>
 /// Very fast parser, only supports strings and nulls

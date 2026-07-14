@@ -25,7 +25,7 @@ public sealed class FastStreamWrapperTest
         var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => wrapper.ReadByteAsync(cts.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await wrapper.ReadByteAsync(cts.Token).ConfigureAwait(false));
     }
 
     [SFFact]
@@ -71,7 +71,7 @@ public sealed class FastStreamWrapperTest
 
         // Next read should trigger second buffer fill which cancels
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => wrapper.ReadByteAsync(cts.Token));
+            async () => await wrapper.ReadByteAsync(cts.Token).ConfigureAwait(false));
     }
 
     [SFFact]

@@ -157,7 +157,7 @@ namespace Snowflake.Data.Core
                     {
                         if (string.Compare(encoding.First(), "gzip", StringComparison.OrdinalIgnoreCase) == 0)
                         {
-                            using Stream streamGzip = new GZipStream(stream, CompressionMode.Decompress);
+                            using var streamGzip = new GZipStream(stream, CompressionMode.Decompress);
                             await ParseStreamIntoChunkAsync(streamGzip, chunk, downloadContext.CancellationToken).ConfigureAwait(false);
                         }
                         else
