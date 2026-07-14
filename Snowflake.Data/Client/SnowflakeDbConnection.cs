@@ -281,7 +281,7 @@ namespace Snowflake.Data.Client
         /// Asynchronously closes the connection to the database with cancellation support.
         /// If connection pooling is enabled, the session may be returned to the pool.
         /// </summary>
-        /// <param name="cancellationToken">A token to cancel the asynchronous operation. If the operation is successfully canceled, <see cref="ConnectionState"/> of this connection will remain unchanged.</param>
+        /// <param name="cancellationToken">A token to cancel the asynchronous operation. If the operation is successfully canceled, <see cref="ConnectionState"/> of this connection will remain unchanged, Cancellation is not a rollback: if the close request already reached the server, the session may be terminated server-side even though this connection still reports <c>Open</c>.</param>
         /// <returns>A task representing the asynchronous close operation.</returns>
         public virtual async Task CloseAsync(CancellationToken cancellationToken)
         {
