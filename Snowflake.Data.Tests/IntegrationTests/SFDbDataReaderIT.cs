@@ -1593,7 +1593,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 var cmd = conn.CreateCommand();
                 cmd.CommandText = "ALTER SESSION SET ENABLE_FIX_1758055_ADD_ARROW_SUPPORT_FOR_MULTI_STMTS = TRUE";
-                await cmd.ExecuteNonQueryAsync();
+                await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                 cmd = conn.CreateCommand();
                 cmd.CommandText = "select 1;" +
