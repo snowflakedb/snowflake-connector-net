@@ -1,3 +1,4 @@
+﻿using System.Threading;
 using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core
@@ -8,6 +9,7 @@ namespace Snowflake.Data.Core
         ///     Parse source data stream, result will be store into SFResultChunk.rowset
         /// </summary>
         /// <param name="chunk"></param>
-        Task ParseChunk(IResultChunk chunk);
+        /// <param name="cancellationToken"></param>
+        Task ParseChunkAsync(IResultChunk chunk, CancellationToken cancellationToken);
     }
 }

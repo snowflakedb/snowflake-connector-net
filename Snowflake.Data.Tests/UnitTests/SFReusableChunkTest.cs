@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Threading;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -259,7 +260,7 @@ namespace Snowflake.Data.Tests.UnitTests
             SFReusableChunk chunk = new SFReusableChunk(colCount);
             chunk.Reset(chunkInfo, 0);
 
-            await parser.ParseChunk(chunk).ConfigureAwait(false);
+            await parser.ParseChunkAsync(chunk, CancellationToken.None).ConfigureAwait(false);
             return chunk;
         }
     }

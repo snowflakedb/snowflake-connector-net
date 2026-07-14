@@ -1,18 +1,14 @@
+using System.IO;
 using System.Linq;
+using System.Threading;
 using Apache.Arrow;
 using Apache.Arrow.Ipc;
+using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
-    using Xunit;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Configuration;
-    using Snowflake.Data.Core;
-    using System;
-    using System.IO;
-    using System.Text;
-    using System.Threading.Tasks;
     public class ArrowChunkParserTest
     {
         [SFTheory]
@@ -40,7 +36,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Act
             var chunk = new ArrowResultChunk(1);
-            var task = parser.ParseChunk(chunk);
+            var task = parser.ParseChunkAsync(chunk, CancellationToken.None);
             task.Wait();
 
             // Assert

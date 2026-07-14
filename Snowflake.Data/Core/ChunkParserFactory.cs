@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
@@ -7,7 +7,7 @@ namespace Snowflake.Data.Core
 {
     internal class ChunkParserFactory : IChunkParserFactory
     {
-        private static SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkParserFactory>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkParserFactory>();
         public static IChunkParserFactory Instance = new ChunkParserFactory();
 
         public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
