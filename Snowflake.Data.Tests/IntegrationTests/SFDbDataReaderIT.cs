@@ -1596,7 +1596,6 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await cmd.ExecuteNonQueryAsync();
 
                 cmd = conn.CreateCommand();
-                DbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "select 1;" +
                                   "select 1 where 1=2;" +
                                   "select 1;" +
