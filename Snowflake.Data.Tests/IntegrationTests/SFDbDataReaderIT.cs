@@ -1591,6 +1591,11 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
             {
+                var cmd = conn.CreateCommand();
+                cmd.CommandText = "ALTER SESSION SET ENABLE_FIX_1758055_ADD_ARROW_SUPPORT_FOR_MULTI_STMTS = TRUE";
+                await cmd.ExecuteNonQueryAsync();
+
+                cmd = conn.CreateCommand();
                 DbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "select 1;" +
                                   "select 1 where 1=2;" +
@@ -1605,7 +1610,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 DbDataReader reader = cmd.ExecuteReader();
 
-                Assert.Equal(_resultFormat, ((SnowflakeDbDataReader)reader).ResultFormat);
+                ValidateResultFormat(reader);
 
                 // select 1
                 Assert.True(reader.HasRows);
