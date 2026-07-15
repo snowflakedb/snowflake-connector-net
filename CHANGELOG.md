@@ -1,7 +1,8 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
-- v5.8.0
+- v6.0.0
+  -  Added `CancellationToken` support to chunk download and parsing pipeline. Query result fetching now respects cancellation during both JSON and Arrow chunk parsing.
   -  Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
   -  Reduced synchronization context capture in library, minimizing the risk of deadlock occurrence across different code path executions.
   -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
