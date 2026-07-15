@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +8,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {

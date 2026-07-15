@@ -7,11 +7,8 @@ using Apache.Arrow;
 using Apache.Arrow.Ipc;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 using Xunit;
-
-#if !NET8_0_OR_GREATER
-using Snowflake.Data.Tests.IntegrationTests;
-#endif
 
 namespace Snowflake.Data.Tests.UnitTests;
 

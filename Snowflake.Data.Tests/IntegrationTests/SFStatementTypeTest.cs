@@ -1,5 +1,6 @@
-using System.Threading;
+﻿using System.Threading;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {

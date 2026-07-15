@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 using Xunit;
 
 #if !NET8_0_OR_GREATER

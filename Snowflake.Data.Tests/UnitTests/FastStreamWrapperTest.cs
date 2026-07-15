@@ -5,11 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 using Xunit;
-
-#if !NET8_0_OR_GREATER
-using Snowflake.Data.Tests.IntegrationTests;
-#endif
 
 namespace Snowflake.Data.Tests.UnitTests;
 
@@ -59,7 +56,7 @@ public sealed class FastStreamWrapperTest
         // Create a stream larger than the internal buffer (32768 bytes)
         // so that a multiple ReadAsync calls are needed
         var data = new byte[32768 * 3];
-        Array.Fill(data, (byte)'x');
+        data.Fill((byte)'x');
         var cts = new CancellationTokenSource();
 
         var stream = new CancellingReadStream(data, cts, data.Length / 2 + 1);
