@@ -1269,7 +1269,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    public async Task ShouldBeClosedIfCloseCancelled()
+    public async Task ShouldBeOpenedIfCloseCancelled()
     {
         using var c = new SnowflakeDbConnection(_fixture.ConnectionString);
         await c.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -1278,7 +1278,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         c.SfSession = new SFSession(_fixture.ConnectionString, new(), EasyLoggingStarter.Instance, mockRestRequester.Object);
         c.SfSession.sessionToken = "some token";
         await Assert.ThrowsAsync<TaskCanceledException>(() => c.CloseAsync(CancellationToken.None)).ConfigureAwait(false);
-        Assert.Equal(ConnectionState.Closed, c.State);
+        Assert.Equal(ConnectionState.Open, c.State);
     }
 
     private static void AssertConnectionIsNotOpen(SnowflakeDbConnection snowflakeDbConnection)
