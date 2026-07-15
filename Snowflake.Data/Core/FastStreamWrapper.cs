@@ -5,18 +5,32 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core;
 
+/// <summary>
+/// Buffered wrapper around a <see cref="Stream"/> that provides efficient single-byte async reads.
+/// Uses a 32 KB internal buffer to minimize calls to the underlying stream.
+/// </summary>
 internal sealed class FastStreamWrapper
 {
     private readonly Stream _wrappedStream;
-    private readonly byte[] _buffer = new byte[32768]; //  2^15
+    private readonly byte[] _buffer = new byte[32768];
     private int _count;
     private int _next;
 
+    /// <summary>
+    /// Initializes a new instance wrapping the specified stream.
+    /// </summary>
+    /// <param name="s">The source stream to buffer reads from.</param>
     public FastStreamWrapper(Stream s)
     {
         _wrappedStream = s;
     }
 
+    /// <summary>
+    /// Reads a single byte from the buffered stream asynchronously.
+    /// Returns -1 when the end of the stream is reached.
+    /// </summary>
+    /// <param name="cancelToken">Token to cancel the read operation.</param>
+    /// <returns>The byte value or -1 if end of stream.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask<int> ReadByteAsync(CancellationToken cancelToken)
     {
@@ -27,7 +41,6 @@ internal sealed class FastStreamWrapper
         return ReadByteSlowAsync(cancelToken);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private async ValueTask<int> ReadByteSlowAsync(CancellationToken cancelToken)
     {
         // fast path first
