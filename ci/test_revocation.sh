@@ -23,11 +23,7 @@ REVOCATION_DIR="/tmp/revocation-validation"
 DOTNET_VERSION="${DOTNET_VERSION:-10}"
 
 rm -rf "$REVOCATION_DIR"
-if [ "$DOTNET_VERSION" = "10" ]; then
-    REVOCATION_BRANCH="SNOW-3470124/net10"
-else
-    REVOCATION_BRANCH="main"
-fi
+REVOCATION_BRANCH="main"
 
 CLONE_ARGS="--branch $REVOCATION_BRANCH"
 
