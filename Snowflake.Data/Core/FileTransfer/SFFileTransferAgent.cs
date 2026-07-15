@@ -373,7 +373,7 @@ namespace Snowflake.Data.Core
             if (0 < SmallFilesMetas.Count)
             {
                 Logger.Debug("Start uploading small files");
-                await UploadFilesInParallelAsync(SmallFilesMetas, TransferMetadata.parallel, cancellationToken).ConfigureAwait(false);
+                await UploadFilesInParallelAsync(SmallFilesMetas, cancellationToken).ConfigureAwait(false);
                 Logger.Debug("End uploading small files");
             }
         }
@@ -1038,9 +1038,9 @@ namespace Snowflake.Data.Core
         /// Upload a list of files in parallel using the given parallelization factor.
         /// </summary>
         /// <param name="fileMetadata">The metadata of the file to upload.</param>
+        /// <param name="cancellationToken">Cancellation support.</param>
         /// <returns>The result outcome for each file.</returns>
-        private async Task UploadFilesInSequentialAsync(
-            SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        private async Task UploadFilesInSequentialAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
             SFFileMetadata resultMetadata = await UploadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
             bool breakFlag = false;
@@ -1156,14 +1156,10 @@ namespace Snowflake.Data.Core
         /// Upload a list of files in parallel using the given parallelization factor.
         /// </summary>
         /// <param name="filesMetadata">The list of files to upload in parallel.</param>
-        /// <param name="parallel">The number of files to upload in parallel.</param>
+        /// <param name="cancellationToken">Cancellation support.</param>
         /// <returns>The result outcome for each file.</returns>
-        private async Task UploadFilesInParallelAsync(
-            List<SFFileMetadata> filesMetadata,
-            int parallel,
-            CancellationToken cancellationToken)
+        private async Task UploadFilesInParallelAsync(List<SFFileMetadata> filesMetadata, CancellationToken cancellationToken)
         {
-            var listOfActions = new List<Action>();
             foreach (SFFileMetadata fileMetadata in filesMetadata)
             {
                 await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
