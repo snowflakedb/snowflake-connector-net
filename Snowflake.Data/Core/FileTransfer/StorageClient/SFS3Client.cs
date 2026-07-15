@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Amazon.Runtime.Internal;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
@@ -89,8 +90,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             Logger.Debug("Setting up a new AWS client ");
 
             // Get the key id and secret key from the response
-            stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out string awsAccessKeyId);
-            stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out string awsSecretAccessKey);
+            stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out var awsAccessKeyId);
+            stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out var awsSecretAccessKey);
 
             AmazonS3Config clientConfig;
 
@@ -116,7 +117,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 parallel);
 
             // Get the AWS token value and create the S3 client
-            if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out string awsSessionToken))
+            if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out var awsSessionToken))
             {
                 S3Client = new AmazonS3Client(
                     awsAccessKeyId,
@@ -154,8 +155,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             //    stageLocation = Path.GetFullPath(stageLocation);
             //}
 
-            string bucketName = stageLocation;
-            string s3path = "";
+            var bucketName = stageLocation;
+            var s3path = "";
 
             // Split stage location as bucket name and path
             if (stageLocation.Contains("/"))
@@ -184,27 +185,20 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>The file header of the S3 file.</returns>
         public FileHeader GetFileHeader(SFFileMetadata fileMetadata)
         {
-            // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
+            var SFS3Client = (SFS3Client)fileMetadata.client;
+            var client = SFS3Client.S3Client;
 
-            GetObjectRequest request = GetFileHeaderRequest(ref client, fileMetadata);
+            var request = GetFileHeaderRequest(fileMetadata);
 
             try
             {
-                // Issue the GET request
-                var task = client.GetObjectAsync(request);
-                task.ConfigureAwait(false);
-                task.Wait();
-
-                using (GetObjectResponse response = task.Result)
-                {
-                    return HandleFileHeaderResponse(ref fileMetadata, response);
-                }
+                var taskAwaiter = client.GetObjectMetadataAsync(request).GetAwaiter();
+                var response = taskAwaiter.GetResult();
+                return HandleFileHeaderResponse(ref fileMetadata, response);
             }
             catch (Exception ex)
             {
-                HandleFileHeaderErr(ex.InnerException, fileMetadata); // S3 places the AmazonS3Exception on the InnerException on non-async calls
+                HandleFileHeaderErr(ex, fileMetadata);
                 return null;
             }
         }
@@ -217,25 +211,21 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <returns>The file header of the S3 file.</returns>
         public async Task<FileHeader> GetFileHeaderAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
         {
-            // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
+            var SFS3Client = (SFS3Client)fileMetadata.client;
+            var client = SFS3Client.S3Client;
 
-            GetObjectRequest request = GetFileHeaderRequest(ref client, fileMetadata);
+            var request = GetFileHeaderRequest(fileMetadata);
 
-            GetObjectResponse response = null;
             try
             {
-                // Issue the GET request
-                response = await client.GetObjectAsync(request, cancellationToken).ConfigureAwait(false);
+                var response = await client.GetObjectMetadataAsync(request, cancellationToken).ConfigureAwait(false);
+                return HandleFileHeaderResponse(ref fileMetadata, response);
             }
             catch (Exception ex)
             {
                 HandleFileHeaderErr(ex, fileMetadata); // S3 throws the AmazonS3Exception on async calls
                 return null;
             }
-
-            return HandleFileHeaderResponse(ref fileMetadata, response);
         }
 
         /// <summary>
@@ -244,16 +234,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="client">The Amazon S3 client.</param>
         /// <param name="fileMetadata">The S3 file metadata.</param>
         /// <returns>The file header request.</returns>
-        private GetObjectRequest GetFileHeaderRequest(ref AmazonS3Client client, SFFileMetadata fileMetadata)
+        private GetObjectMetadataRequest GetFileHeaderRequest(SFFileMetadata fileMetadata)
         {
-            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+            var stageInfo = fileMetadata.stageInfo;
+            var location = ExtractBucketNameAndPath(stageInfo.location);
 
             // Create the S3 request object
-            GetObjectRequest request = new GetObjectRequest
+            var request = new GetObjectMetadataRequest
             {
                 BucketName = location.bucket,
-                Key = location.key + fileMetadata.RemoteFileName()
+                Key = $"{location.key}{fileMetadata.RemoteFileName()}"
             };
             return request;
         }
@@ -264,12 +254,12 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <param name="fileMetadata">The S3 file metadata.</param>
         /// <param name="response">The Amazon S3 response.</param>
         /// <returns>The file header of the S3 file.</returns>
-        internal FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, GetObjectResponse response)
+        internal FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, GetObjectMetadataResponse response)
         {
             // Update the result status of the file metadata
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+            fileMetadata.resultStatus = nameof(ResultStatus.UPLOADED);
 
-            SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
+            var encryptionMetadata = new SFEncryptionMetadata
             {
                 iv = GetMetadataCaseInsensitive(response.Metadata, AMZ_IV),
                 key = GetMetadataCaseInsensitive(response.Metadata, AMZ_KEY),
@@ -312,9 +302,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             // Always return a regional URL
             clientConfig.USEast1RegionalEndpointValue = S3UsEast1RegionalEndpointValue.Regional;
-            if ((null != region) && (0 != region.Length))
+            if (!string.IsNullOrEmpty(region))
             {
-                RegionEndpoint regionEndpoint = RegionEndpoint.GetBySystemName(region);
+                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
                 clientConfig.RegionEndpoint = regionEndpoint;
             }
 
@@ -338,9 +328,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // The region information used to determine the endpoint for the service.
             // RegionEndpoint and ServiceURL are mutually exclusive properties.
             // If both stageInfo.endPoint and stageInfo.region have a value, the endPoint takes precedence
-            else if ((null != region) && (0 != region.Length))
+            else if (!string.IsNullOrEmpty(region))
             {
-                RegionEndpoint regionEndpoint = RegionEndpoint.GetBySystemName(region);
+                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
                 clientConfig.RegionEndpoint = regionEndpoint;
             }
 
@@ -358,25 +348,22 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
         {
             // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
-            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytesStream, encryptionMetadata);
+            var sfS3Client = (SFS3Client)fileMetadata.client;
+            var client = sfS3Client.S3Client;
+            var putObjectRequest = GetPutObjectRequest(fileMetadata, fileBytesStream, encryptionMetadata);
 
             try
             {
-                // Issue the POST/PUT request
-                var task = client.PutObjectAsync(putObjectRequest);
-                task.ConfigureAwait(false);
-                task.Wait();
+                _ = client.PutObjectAsync(putObjectRequest).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
-                HandleUploadFileErr(ex.InnerException, fileMetadata);
+                HandleUploadFileErr(ex, fileMetadata);
                 return;
             }
 
             fileMetadata.destFileSize = fileMetadata.uploadSize;
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+            fileMetadata.resultStatus = nameof(ResultStatus.UPLOADED);
         }
 
         /// <summary>
@@ -388,14 +375,14 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
         {
             // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
-            PutObjectRequest putObjectRequest = GetPutObjectRequest(ref client, fileMetadata, fileBytesStream, encryptionMetadata);
+            var sfS3Client = (SFS3Client)fileMetadata.client;
+            var client = sfS3Client.S3Client;
+            var putObjectRequest = GetPutObjectRequest(fileMetadata, fileBytesStream, encryptionMetadata);
 
             try
             {
                 // Issue the POST/PUT request
-                await client.PutObjectAsync(putObjectRequest).ConfigureAwait(false);
+                await client.PutObjectAsync(putObjectRequest, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -404,25 +391,24 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
 
             fileMetadata.destFileSize = fileMetadata.uploadSize;
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+            fileMetadata.resultStatus = nameof(ResultStatus.UPLOADED);
         }
 
         /// <summary>
         /// Upload the file to the S3 location.
         /// </summary>
-        /// <param name="client"> Amazon S3 client.</param>
         /// <param name="fileMetadata">The S3 file metadata.</param>
         /// <param name="fileBytesStream">The file bytes to upload.</param>
         /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
         /// <returns>The Put Object request.</returns>
-        private PutObjectRequest GetPutObjectRequest(ref AmazonS3Client client, SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
+        private PutObjectRequest GetPutObjectRequest(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
         {
-            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+            var stageInfo = fileMetadata.stageInfo;
+            var location = ExtractBucketNameAndPath(stageInfo.location);
 
             // Create S3 PUT request
             fileBytesStream.Position = 0;
-            PutObjectRequest putObjectRequest = new PutObjectRequest
+            var putObjectRequest = new PutObjectRequest
             {
                 BucketName = location.bucket,
                 Key = location.key + fileMetadata.destFileName,
@@ -450,33 +436,25 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
         {
             // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
-            GetObjectRequest getObjectRequest = GetGetObjectRequest(ref client, fileMetadata);
+            var sfS3Client = (SFS3Client)fileMetadata.client;
+            var client = sfS3Client.S3Client;
+            var getObjectRequest = GetGetObjectRequest(fileMetadata);
 
             try
             {
-                // Issue the GET request
-                var task = client.GetObjectAsync(getObjectRequest);
-                task.ConfigureAwait(false);
-                task.Wait();
+                var taskAwaiter = client.GetObjectAsync(getObjectRequest).GetAwaiter();
 
-                using (GetObjectResponse response = task.Result)
-                {
-                    // Write to file
-                    using (var fileStream = FileOperations.Instance.Create(fullDstPath))
-                    {
-                        response.ResponseStream.CopyTo(fileStream);
-                    }
-                }
+                using var response = taskAwaiter.GetResult();
+                using var fileStream = FileOperations.Instance.Create(fullDstPath);
+                response.ResponseStream.CopyTo(fileStream);
             }
             catch (Exception ex)
             {
-                HandleDownloadFileErr(ex.InnerException, fileMetadata);
+                HandleDownloadFileErr(ex, fileMetadata);
                 return;
             }
 
-            fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
+            fileMetadata.resultStatus = nameof(ResultStatus.DOWNLOADED);
         }
 
         /// <summary>
@@ -488,20 +466,16 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         public async Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken)
         {
             // Get the client
-            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-            AmazonS3Client client = SFS3Client.S3Client;
-            GetObjectRequest getObjectRequest = GetGetObjectRequest(ref client, fileMetadata);
+            var SFS3Client = (SFS3Client)fileMetadata.client;
+            var client = SFS3Client.S3Client;
+            var getObjectRequest = GetGetObjectRequest(fileMetadata);
 
             try
             {
                 // Issue the GET request
-                using (GetObjectResponse response = await client.GetObjectAsync(getObjectRequest, cancellationToken).ConfigureAwait(false))
-
-                // Write to file
-                using (var fileStream = FileOperations.Instance.Create(fullDstPath))
-                {
-                    response.ResponseStream.CopyTo(fileStream);
-                }
+                using var response = await client.GetObjectAsync(getObjectRequest, cancellationToken).ConfigureAwait(false);
+                using var fileStream = FileOperations.Instance.Create(fullDstPath);
+                response.ResponseStream.CopyTo(fileStream);
             }
             catch (Exception ex)
             {
@@ -509,19 +483,19 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 return;
             }
 
-            fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
+            fileMetadata.resultStatus = nameof(ResultStatus.DOWNLOADED);
         }
 
-        private GetObjectRequest GetGetObjectRequest(ref AmazonS3Client client, SFFileMetadata fileMetadata)
+        private GetObjectRequest GetGetObjectRequest(SFFileMetadata fileMetadata)
         {
-            PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-            RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+            var stageInfo = fileMetadata.stageInfo;
+            var location = ExtractBucketNameAndPath(stageInfo.location);
 
             // Create S3 GET request
             return new GetObjectRequest
             {
                 BucketName = location.bucket,
-                Key = location.key + fileMetadata.srcFileName,
+                Key = $"{location.key}{fileMetadata.srcFileName}",
             };
         }
 
@@ -530,31 +504,20 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         /// <param name="ex">Exception from file header.</param>
         /// <param name="fileMetadata">The file metadata.</param>
-        private void HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
+        private static void HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            Logger.Error("Failed to get file header: " + ex.Message);
+            Logger.Error($"Failed to get file header: {ex.Message}");
 
-            switch (ex)
+            fileMetadata.resultStatus = ex switch
             {
-                case AmazonS3Exception exAws:
-                    if (exAws.ErrorCode == EXPIRED_TOKEN || exAws.ErrorCode == HttpStatusCode.BadRequest.ToString())
-                    {
-                        fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                    }
-                    else if (exAws.ErrorCode == NO_SUCH_KEY)
-                    {
-                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                    }
-                    else
-                    {
-                        fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
-                    }
-
-                    break;
-                default:
-                    fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
-                    break;
-            }
+                AmazonS3Exception exAws => exAws.ErrorCode switch
+                {
+                    EXPIRED_TOKEN or nameof(HttpStatusCode.BadRequest) => nameof(ResultStatus.RENEW_TOKEN),
+                    NO_SUCH_KEY or nameof(HttpStatusCode.NotFound) => nameof(ResultStatus.NOT_FOUND_FILE),
+                    _ => nameof(ResultStatus.ERROR)
+                },
+                _ => nameof(ResultStatus.ERROR)
+            };
         }
 
         /// <summary>
@@ -562,7 +525,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         /// <param name="ex">Exception from file header.</param>
         /// <param name="fileMetadata">The file metadata.</param>
-        private void HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        private static void HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
             Logger.Error("Failed to upload file: " + ex.Message);
 
@@ -571,18 +534,18 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 case AmazonS3Exception exAws:
                     if (exAws.ErrorCode == EXPIRED_TOKEN)
                     {
-                        fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+                        fileMetadata.resultStatus = nameof(ResultStatus.RENEW_TOKEN);
                     }
                     else
                     {
                         fileMetadata.lastError = exAws;
-                        fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+                        fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
                     }
                     break;
 
                 case Exception exOther:
                     fileMetadata.lastError = exOther;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+                    fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
                     break;
             }
         }
@@ -592,27 +555,28 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         /// <param name="ex">Exception from file header.</param>
         /// <param name="fileMetadata">The file metadata.</param>
-        private void HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
+        private static void HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
         {
-            Logger.Error("Failed to download file: " + ex.Message);
+            Logger.Error($"Failed to download file: {ex.Message}");
 
             switch (ex)
             {
                 case AmazonS3Exception exAws:
-                    if (exAws.ErrorCode == EXPIRED_TOKEN)
+                    switch (exAws.ErrorCode)
                     {
-                        fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                    }
-                    else
-                    {
-                        fileMetadata.lastError = exAws;
-                        fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+                        case EXPIRED_TOKEN:
+                            fileMetadata.resultStatus = nameof(ResultStatus.RENEW_TOKEN);
+                            break;
+                        default:
+                            fileMetadata.lastError = exAws;
+                            fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
+                            break;
                     }
                     break;
 
-                case Exception exOther:
+                case { } exOther:
                     fileMetadata.lastError = exOther;
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+                    fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
                     break;
             }
         }
