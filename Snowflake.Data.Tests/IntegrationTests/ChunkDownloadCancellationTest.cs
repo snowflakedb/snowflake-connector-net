@@ -55,7 +55,7 @@ public sealed class ChunkDownloadCancellationTest : SFBaseTestAsync
                     // Read through all results - should be interrupted by cancellation
                     _ = reader.GetString(0);
                 }
-            });
+            }).ConfigureAwait(false);
         }
         finally
         {
@@ -93,7 +93,7 @@ public sealed class ChunkDownloadCancellationTest : SFBaseTestAsync
                 {
                     _ = reader.GetString(0);
                 }
-            });
+            }).ConfigureAwait(false);
         }
         finally
         {
@@ -122,12 +122,12 @@ public sealed class ChunkDownloadCancellationTest : SFBaseTestAsync
 
             cmd.CommandText = $"select * from {tableName}";
 
-            // Use an already-cancelled token
+            // Use an already-canceled token
             using var cts = new CancellationTokenSource();
-            await cts.CancelAsync();
+            await cts.CancelAsync().ConfigureAwait(false);
 
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                () => cmd.ExecuteReaderAsync(cts.Token));
+                () => cmd.ExecuteReaderAsync(cts.Token)).ConfigureAwait(false);
         }
         finally
         {

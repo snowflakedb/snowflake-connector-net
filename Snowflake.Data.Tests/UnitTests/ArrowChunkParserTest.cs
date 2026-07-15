@@ -30,7 +30,7 @@ public sealed class ArrowChunkParserTest
 
         // Act
         var chunk = new ArrowResultChunk(1);
-        await parser.ParseChunkAsync(chunk, CancellationToken.None);
+        await parser.ParseChunkAsync(chunk, CancellationToken.None).ConfigureAwait(false);
 
         // Assert
         Assert.Equal(numberOfRecordBatch, chunk.RecordBatch.Count);
@@ -49,10 +49,10 @@ public sealed class ArrowChunkParserTest
         var chunk = new ArrowResultChunk(1);
 
         var cts = new CancellationTokenSource();
-        await cts.CancelAsync();
+        await cts.CancelAsync().ConfigureAwait(false);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => parser.ParseChunkAsync(chunk, cts.Token));
+            () => parser.ParseChunkAsync(chunk, cts.Token)).ConfigureAwait(false);
     }
 
     [SFFact]
@@ -65,7 +65,7 @@ public sealed class ArrowChunkParserTest
         var chunk = new ArrowResultChunk(1);
 
         using var cts = new CancellationTokenSource();
-        await parser.ParseChunkAsync(chunk, cts.Token);
+        await parser.ParseChunkAsync(chunk, cts.Token).ConfigureAwait(false);
 
         Assert.Equal(BatchCount, chunk.RecordBatch.Count);
         for (var i = 0; i < BatchCount; i++)
@@ -84,7 +84,7 @@ public sealed class ArrowChunkParserTest
         var parser = new ArrowChunkParser(stream);
         var chunk = new ArrowResultChunk(1);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => parser.ParseChunkAsync(chunk, cts.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => parser.ParseChunkAsync(chunk, cts.Token)).ConfigureAwait(false);
     }
 
     private static MemoryStream CreateArrowStream(int batchCount, Func<int, int> rowsPerBatch)

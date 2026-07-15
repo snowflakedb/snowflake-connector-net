@@ -25,10 +25,10 @@ public sealed class ReusableChunkParserTest
         var chunk = CreateChunk(2, 2);
 
         var cts = new CancellationTokenSource();
-        await cts.CancelAsync();
+        await cts.CancelAsync().ConfigureAwait(false);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => parser.ParseChunkAsync(chunk, cts.Token));
+            () => parser.ParseChunkAsync(chunk, cts.Token)).ConfigureAwait(false);
     }
 
     [SFFact]
@@ -42,7 +42,7 @@ public sealed class ReusableChunkParserTest
         var chunk = CreateChunk(1, 100);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => parser.ParseChunkAsync(chunk, cts.Token));
+            () => parser.ParseChunkAsync(chunk, cts.Token)).ConfigureAwait(false);
     }
 
     [SFFact]
@@ -55,7 +55,7 @@ public sealed class ReusableChunkParserTest
         var chunk = CreateChunk(2, 2);
 
         using var cts = new CancellationTokenSource();
-        await parser.ParseChunkAsync(chunk, cts.Token);
+        await parser.ParseChunkAsync(chunk, cts.Token).ConfigureAwait(false);
 
         chunk.Next();
         Assert.Equal("hello", chunk.ExtractCell(0).SafeToString());
@@ -86,7 +86,7 @@ public sealed class ReusableChunkParserTest
         var chunk = CreateChunk(1, 100000);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => parser.ParseChunkAsync(chunk, cts.Token));
+            () => parser.ParseChunkAsync(chunk, cts.Token)).ConfigureAwait(false);
     }
 
     [SFFact]
@@ -98,7 +98,7 @@ public sealed class ReusableChunkParserTest
         var parser = new ReusableChunkParser(stream);
         var chunk = CreateChunk(2, 2);
 
-        await parser.ParseChunkAsync(chunk, CancellationToken.None);
+        await parser.ParseChunkAsync(chunk, CancellationToken.None).ConfigureAwait(false);
 
         chunk.Next();
         Assert.Null(chunk.ExtractCell(0).SafeToString());

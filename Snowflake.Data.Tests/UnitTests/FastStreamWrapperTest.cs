@@ -23,9 +23,9 @@ public sealed class FastStreamWrapperTest
         var wrapper = new FastStreamWrapper(stream);
 
         var cts = new CancellationTokenSource();
-        await cts.CancelAsync();
+        await cts.CancelAsync().ConfigureAwait(false);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await wrapper.ReadByteAsync(cts.Token).ConfigureAwait(false));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await wrapper.ReadByteAsync(cts.Token).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     [SFFact]
@@ -37,9 +37,9 @@ public sealed class FastStreamWrapperTest
 
         using var cts = new CancellationTokenSource();
 
-        Assert.Equal('A', await wrapper.ReadByteAsync(cts.Token));
-        Assert.Equal('B', await wrapper.ReadByteAsync(cts.Token));
-        Assert.Equal(-1, await wrapper.ReadByteAsync(cts.Token));
+        Assert.Equal('A', await wrapper.ReadByteAsync(cts.Token).ConfigureAwait(false));
+        Assert.Equal('B', await wrapper.ReadByteAsync(cts.Token).ConfigureAwait(false));
+        Assert.Equal(-1, await wrapper.ReadByteAsync(cts.Token).ConfigureAwait(false));
     }
 
     [SFFact]
@@ -48,7 +48,7 @@ public sealed class FastStreamWrapperTest
         var stream = new MemoryStream([]);
         var wrapper = new FastStreamWrapper(stream);
 
-        var result = await wrapper.ReadByteAsync(CancellationToken.None);
+        var result = await wrapper.ReadByteAsync(CancellationToken.None).ConfigureAwait(false);
 
         Assert.Equal(-1, result);
     }
@@ -67,11 +67,11 @@ public sealed class FastStreamWrapperTest
 
         // First and second buffer fill should work - read all bytes from first buffer
         for (var i = 0; i < 32768 * 2; i++)
-            Assert.Equal('x', await wrapper.ReadByteAsync(cts.Token));
+            Assert.Equal('x', await wrapper.ReadByteAsync(cts.Token).ConfigureAwait(false));
 
         // Next read should trigger second buffer fill which cancels
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => await wrapper.ReadByteAsync(cts.Token).ConfigureAwait(false));
+            async () => await wrapper.ReadByteAsync(cts.Token).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     [SFFact]
@@ -83,7 +83,7 @@ public sealed class FastStreamWrapperTest
 
         var result = new StringBuilder();
         int b;
-        while ((b = await wrapper.ReadByteAsync(CancellationToken.None)) >= 0)
+        while ((b = await wrapper.ReadByteAsync(CancellationToken.None).ConfigureAwait(false)) >= 0)
             result.Append((char)b);
 
         Assert.Equal("test data 123", result.ToString());
