@@ -58,7 +58,7 @@ public sealed class FastStreamWrapperTest
     {
         // Create a stream larger than the internal buffer (32768 bytes)
         // so that a multiple ReadAsync calls are needed
-        var data = new byte[32768*3];
+        var data = new byte[32768 * 3];
         Array.Fill(data, (byte)'x');
         var cts = new CancellationTokenSource();
 
@@ -66,7 +66,7 @@ public sealed class FastStreamWrapperTest
         var wrapper = new FastStreamWrapper(stream);
 
         // First and second buffer fill should work - read all bytes from first buffer
-        for (var i = 0; i < 32768*2; i++)
+        for (var i = 0; i < 32768 * 2; i++)
             Assert.Equal('x', await wrapper.ReadByteAsync(cts.Token));
 
         // Next read should trigger second buffer fill which cancels

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -66,50 +66,50 @@ internal class ReusableChunkParser : IChunkParser
                         inString = false;
                         break;
                     case '\\':
-                    {
-                        var caseU = false;
-                        // Process next character
-                        c = await input.ReadByteAsync(cancelToken).ConfigureAwait(false);
-                        switch (c)
                         {
-                            case 'n':
-                                c = '\n';
-                                break;
-                            case 'r':
-                                c = '\r';
-                                break;
-                            case 'b':
-                                c = '\b';
-                                break;
-                            case 't':
-                                c = '\t';
-                                break;
-                            case 'u':
-                                caseU = true;
-                                var byteStr = new StringBuilder("");
-                                for (var i = 0; i < 4; i++)
-                                {
-                                    var readByte = await input.ReadByteAsync(cancelToken).ConfigureAwait(false);
-                                    byteStr.Append((char)readByte);
-                                }
+                            var caseU = false;
+                            // Process next character
+                            c = await input.ReadByteAsync(cancelToken).ConfigureAwait(false);
+                            switch (c)
+                            {
+                                case 'n':
+                                    c = '\n';
+                                    break;
+                                case 'r':
+                                    c = '\r';
+                                    break;
+                                case 'b':
+                                    c = '\b';
+                                    break;
+                                case 't':
+                                    c = '\t';
+                                    break;
+                                case 'u':
+                                    caseU = true;
+                                    var byteStr = new StringBuilder("");
+                                    for (var i = 0; i < 4; i++)
+                                    {
+                                        var readByte = await input.ReadByteAsync(cancelToken).ConfigureAwait(false);
+                                        byteStr.Append((char)readByte);
+                                    }
 
-                                var ascii = int.Parse(byteStr.ToString(), System.Globalization.NumberStyles.HexNumber);
-                                var asciiChar = (char)ascii;
-                                ms.WriteByte((byte)asciiChar);
-                                break;
-                            case -1:
-                                throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
+                                    var ascii = int.Parse(byteStr.ToString(), System.Globalization.NumberStyles.HexNumber);
+                                    var asciiChar = (char)ascii;
+                                    ms.WriteByte((byte)asciiChar);
+                                    break;
+                                case -1:
+                                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
+                            }
+
+                            // The 'u' case already writes to stream so skip to prevent re-writing
+                            // If not skipped, unicode characters are added an extra u (e.g "/u007f" becomes "/u007fu")
+                            if (!caseU)
+                            {
+                                ms.WriteByte((byte)c);
+                            }
+
+                            break;
                         }
-
-                        // The 'u' case already writes to stream so skip to prevent re-writing
-                        // If not skipped, unicode characters are added an extra u (e.g "/u007f" becomes "/u007fu")
-                        if (!caseU)
-                        {
-                            ms.WriteByte((byte)c);
-                        }
-
-                        break;
-                    }
                     default:
                         ms.WriteByte((byte)c);
                         break;
