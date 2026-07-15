@@ -67,7 +67,7 @@ public sealed class ChunkDownloadCancellationTest : SFBaseTestAsync
     [SFFact]
     public async Task TestCancellationDuringArrowChunkDownloadThrows()
     {
-        const int TestRowCount = 20000;
+        const int TestRowCount = 100000;
         var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
 
         using var conn = new SnowflakeDbConnection();
