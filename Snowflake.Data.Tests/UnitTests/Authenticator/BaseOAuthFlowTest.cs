@@ -27,7 +27,8 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         protected const string SessionId = "1234567890";
         protected const string User = "testUser";
         protected const string AuthorizationScope = "session:role:ANALYST";
-        protected const string TokenHost = "localhost";
+        protected const string Role = "ANALYST";
+        protected const string SnowflakeHost = "localhost";
         protected const string ClientSecret = "123";
 
         internal void AssertSessionSuccessfullyCreated(SFSession session)
@@ -45,20 +46,29 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         internal string ExtractTokenFromCache(TokenType tokenType)
         {
-            var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(TokenHost, User, tokenType);
+            var cacheKey = BuildOAuthCacheKey(tokenType);
             return SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(cacheKey);
         }
 
         internal void SaveTokenToCache(TokenType tokenType, string token)
         {
-            var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(TokenHost, User, tokenType);
+            var cacheKey = BuildOAuthCacheKey(tokenType);
             SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(cacheKey, token);
         }
 
         internal void RemoveTokenFromCache(TokenType tokenType)
         {
-            var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(TokenHost, User, tokenType);
+            var cacheKey = BuildOAuthCacheKey(tokenType);
             SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKey);
         }
+
+        private string BuildOAuthCacheKey(TokenType tokenType) =>
+            SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+                tokenType: tokenType.GetAttribute<StringAttr>().value,
+                idp: s_externalTokenRequestUrl,
+                snowflake: SnowflakeHost,
+                username: User,
+                role: Role
+            ));
     }
 }

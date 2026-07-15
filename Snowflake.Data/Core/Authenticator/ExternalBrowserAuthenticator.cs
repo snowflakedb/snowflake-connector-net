@@ -56,10 +56,15 @@ namespace Snowflake.Data.Core.Authenticator
             var clientStoreTemporaryCredential = bool.Parse(session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
             if (!string.IsNullOrEmpty(user) && clientStoreTemporaryCredential)
             {
-                _idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(
-                    session.properties[SFSessionProperty.HOST],
-                    user,
-                    TokenType.IdToken);
+                var host = session.properties[SFSessionProperty.HOST];
+                session.properties.TryGetValue(SFSessionProperty.ROLE, out var role);
+                _idTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+                    tokenType: TokenType.IdToken.GetAttribute<StringAttr>().value,
+                    idp: host,
+                    snowflake: host,
+                    username: user,
+                    role: role ?? string.Empty
+                ));
             }
         }
 

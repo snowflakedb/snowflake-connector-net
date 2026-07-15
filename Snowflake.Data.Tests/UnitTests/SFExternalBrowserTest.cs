@@ -90,7 +90,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var user = "test";
             var host = $"{user}.snowflakecomputing.com";
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken.GetAttribute<StringAttr>().value, host, host, user, string.Empty));
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
             credentialManager.SaveCredentials(key, "mockIdToken");
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
@@ -119,7 +119,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedIdToken = "mockIdToken";
             var user = "testUser";
             var host = $"{user}.snowflakecomputing.com";
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken.GetAttribute<StringAttr>().value, host, host, user, string.Empty));
             SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(key);
             var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
@@ -149,7 +149,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedIdToken = "mockIdToken";
             var user = "testUser";
             var host = $"{user}.snowflakecomputing.com";
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken.GetAttribute<StringAttr>().value, host, host, user, string.Empty));
             SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(key);
             var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
@@ -180,7 +180,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedIdToken = "mockIdToken";
             var user = "test";
             var host = $"{user}.snowflakecomputing.com";
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken.GetAttribute<StringAttr>().value, host, host, user, string.Empty));
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
             credentialManager.SaveCredentials(key, invalidIdToken);
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
@@ -208,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedIdToken = "validIdToken";
             var user = "test";
             var host = $"{user}.snowflakecomputing.com";
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken.GetAttribute<StringAttr>().value, host, host, user, string.Empty));
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
             credentialManager.SaveCredentials(key, expectedIdToken);
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
@@ -371,7 +371,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var user = "test";
             var host = $"{user}.snowflakecomputing.com";
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken.GetAttribute<StringAttr>().value, host, host, user, string.Empty));
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
             credentialManager.SaveCredentials(key, "mockIdToken");
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
@@ -401,7 +401,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedIdToken = "mockIdToken";
             var user = "testUser";
             var host = $"{user}.snowflakecomputing.com";
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken.GetAttribute<StringAttr>().value, host, host, user, string.Empty));
             SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(key);
             var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
@@ -432,7 +432,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedIdToken = "mockIdToken";
             var user = "testUser";
             var host = $"{user}.snowflakecomputing.com";
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken.GetAttribute<StringAttr>().value, host, host, user, string.Empty));
             SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(key);
             var restRequester = new Mock.MockExternalBrowserRestRequester()
             {
@@ -464,7 +464,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedIdToken = "mockIdToken";
             var user = "test";
             var host = $"{user}.snowflakecomputing.com";
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken.GetAttribute<StringAttr>().value, host, host, user, string.Empty));
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
             credentialManager.SaveCredentials(key, invalidIdToken);
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
@@ -493,7 +493,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedIdToken = "validIdToken";
             var user = "test";
             var host = $"{user}.snowflakecomputing.com";
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken.GetAttribute<StringAttr>().value, host, host, user, string.Empty));
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
             credentialManager.SaveCredentials(key, expectedIdToken);
             SnowflakeCredentialManagerFactory.SetCredentialManager(credentialManager);
