@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Snowflake.Data.Tests.Util;
 
@@ -33,12 +32,9 @@ internal sealed class CancellingReadStream : Stream
             return 0;
 
         var toRead = Math.Min(count, _data.Length - _position);
-        System.Array.Copy(_data, _position, buffer, offset, toRead);
+        Array.Copy(_data, _position, buffer, offset, toRead);
         _position += toRead;
 
-#if NET10_0_OR_GREATER
-        TestContext.Current.TestOutputHelper.WriteLine($"[{DateTime.UtcNow:O}] REQUESTING {count}");
-#endif
         if (_position >= _bytesBeforeCancel)
             _cts.Cancel();
 
