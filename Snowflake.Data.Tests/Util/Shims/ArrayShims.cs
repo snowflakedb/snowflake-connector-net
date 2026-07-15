@@ -1,3 +1,5 @@
+using System;
+
 namespace Snowflake.Data.Tests.Util.Shims;
 
 internal static class ArrayShims
