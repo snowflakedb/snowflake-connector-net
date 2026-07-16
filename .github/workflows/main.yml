@@ -39,43 +39,43 @@ jobs:
         include:
           - dotnet: net6.0
             sdk: '6.0.x'
-            test_runner: 'dotnet test --framework net6.0'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
-            test_runner: 'dotnet test --framework net7.0'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
-            test_runner: 'dotnet run --framework net8.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             sdk: '9.0.x'
-            test_runner: 'dotnet run --framework net9.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             sdk: '10.0.x'
-            test_runner: 'dotnet run --framework net10.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net462
             sdk: '6.0.x'
-            test_runner: 'dotnet test --framework net462'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net471
             sdk: '6.0.x'
-            test_runner: 'dotnet test --framework net471'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net472
             sdk: '6.0.x'
-            test_runner: 'dotnet test --framework net472'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net48
             sdk: '6.0.x'
-            test_runner: 'dotnet test --framework net48'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net481
             sdk: '6.0.x'
-            test_runner: 'dotnet test --framework net481'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
     steps:
       - name: Checkout code
@@ -116,17 +116,22 @@ jobs:
           cd Snowflake.Data.Tests
           dotnet restore
           dotnet build -f ${{ matrix.dotnet }} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
+      - name: Setup xmllint
+        run: choco install xsltproc --no-progress -y
       - name: Run Tests
+        id: run-tests-windows
         shell: bash
-        run: |
-          cd Snowflake.Data.Tests
-          RESULTS_BASE="windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
-          ARGS='${{ matrix.test_args }}'
-          ARGS=${ARGS/\%s/$RESULTS_BASE}
-          dotnet-coverage collect "${{ matrix.test_runner }} ${ARGS}" --output windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+        run: ./ci/scripts/run_tests.sh windows
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
+          use_dotnet_run: ${{ matrix.use_dotnet_run }}
+          test_args: ${{ matrix.test_args }}
+      - name: Flaky Test Warning
+        if: steps.run-tests-windows.outputs.retried_tests != ''
+        shell: bash
+        run: |
+          echo "::warning::The following integration tests were flaky and passed on retry: ${{ steps.run-tests-windows.outputs.retried_tests }}"
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
@@ -161,23 +166,23 @@ jobs:
         include:
           - dotnet: net6.0
             sdk: '6.0.x'
-            test_runner: 'dotnet test --framework net6.0'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
-            test_runner: 'dotnet test --framework net7.0'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
-            test_runner: 'dotnet run --framework net8.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             sdk: '9.0.x'
-            test_runner: 'dotnet run --framework net9.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             sdk: '10.0.x'
-            test_runner: 'dotnet run --framework net10.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
@@ -217,15 +222,17 @@ jobs:
           dotnet restore
           dotnet build '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
       - name: Run Tests
-        run: |
-          cd Snowflake.Data.Tests
-          RESULTS_BASE="linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
-          ARGS='${{ matrix.test_args }}'
-          ARGS=${ARGS/\%s/$RESULTS_BASE}
-          dotnet-coverage collect "${{ matrix.test_runner }} ${ARGS}" --output linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+        id: run-tests-linux
+        run: ./ci/scripts/run_tests.sh linux
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
+          use_dotnet_run: ${{ matrix.use_dotnet_run }}
+          test_args: ${{ matrix.test_args }}
+      - name: Flaky Test Warning
+        if: steps.run-tests-linux.outputs.retried_tests != ''
+        run: |
+          echo "::warning::The following integration tests were flaky and passed on retry: ${{ steps.run-tests-linux.outputs.retried_tests }}"
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
@@ -260,23 +267,23 @@ jobs:
         include:
           - dotnet: net6.0
             sdk: '6.0.x'
-            test_runner: 'dotnet test --framework net6.0'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
-            test_runner: 'dotnet test --framework net7.0'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
-            test_runner: 'dotnet run --framework net8.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             sdk: '9.0.x'
-            test_runner: 'dotnet run --framework net9.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             sdk: '10.0.x'
-            test_runner: 'dotnet run --framework net10.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
@@ -316,15 +323,17 @@ jobs:
           dotnet restore
           dotnet build '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
       - name: Run Tests
-        run: |
-          cd Snowflake.Data.Tests
-          RESULTS_BASE="macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_results"
-          ARGS='${{ matrix.test_args }}'
-          ARGS=${ARGS/\%s/$RESULTS_BASE}
-          dotnet-coverage collect "${{ matrix.test_runner }} ${ARGS}" --output macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml --output-format cobertura --settings coverage.config
+        id: run-tests-mac
+        run: ./ci/scripts/run_tests.sh macos
         env:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
+          use_dotnet_run: ${{ matrix.use_dotnet_run }}
+          test_args: ${{ matrix.test_args }}
+      - name: Flaky Test Warning
+        if: steps.run-tests-mac.outputs.retried_tests != ''
+        run: |
+          echo "::warning::The following integration tests were flaky and passed on retry: ${{ steps.run-tests-mac.outputs.retried_tests }}"
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
@@ -358,32 +367,39 @@ jobs:
         cloud_env: ['AZURE', 'GCP', 'AWS']
         include:
           - dotnet: net6.0
-            test_runner: 'dotnet test --framework net6.0'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
-            test_runner: 'dotnet test --framework net7.0'
+            use_dotnet_run: 'false'
             test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
-            test_runner: 'dotnet run --framework net8.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
-            test_runner: 'dotnet run --framework net9.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
-            test_runner: 'dotnet run --framework net10.0'
+            use_dotnet_run: 'true'
             test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
       - name: Build and Run Tests in Docker
+        id: run-tests-rockylinux9
         run: ./ci/test_rockylinux9_docker.sh
         env:
           PARAMETER_SECRET: ${{ secrets.PARAMETER_SECRET }}
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
           DOTNET_COVERAGE_VERSION: "17.8.4"
-          TEST_RUNNER: ${{ matrix.test_runner }}
-          TEST_ARGS: ${{ matrix.test_args }}
+          use_dotnet_run: ${{ matrix.use_dotnet_run }}
+          test_args: ${{ matrix.test_args }}
         shell: bash
+      - name: Flaky Test Warning
+        if: hashFiles('Snowflake.Data.Tests/.retried_tests') != ''
+        shell: bash
+        run: |
+          RETRIED=$(cat Snowflake.Data.Tests/.retried_tests)
+          echo "::warning::The following integration tests were flaky and passed on retry: $RETRIED"
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:

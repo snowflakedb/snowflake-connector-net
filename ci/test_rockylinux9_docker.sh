@@ -44,8 +44,8 @@ docker run --network=host \
     -e PARAMETER_SECRET \
     -e net_version \
     -e snowflake_cloud_env \
-    -e TEST_RUNNER \
-    -e TEST_ARGS \
+    -e use_dotnet_run \
+    -e test_args \
     --mount type=bind,source="${CONNECTOR_DIR}",target=/home/user/snowflake-connector-net \
     ${CONTAINER_NAME}:1.0 \
     /home/user/snowflake-connector-net/ci/test_rockylinux9.sh
