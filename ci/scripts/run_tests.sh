@@ -22,6 +22,10 @@
 #
 
 PLATFORM="$1"
+if [[ "$PLATFORM" != "windows" && "$PLATFORM" != "linux" && "$PLATFORM" != "macos" && "$PLATFORM" != "rockylinux9" ]]; then
+    echo "[ERROR] Invalid platform: '$PLATFORM'. Must be one of: windows, linux, macos, rockylinux9"
+    exit 1
+fi
 cd Snowflake.Data.Tests
 
 RESULTS_BASE="${PLATFORM}_${net_version}_${snowflake_cloud_env}_results"
