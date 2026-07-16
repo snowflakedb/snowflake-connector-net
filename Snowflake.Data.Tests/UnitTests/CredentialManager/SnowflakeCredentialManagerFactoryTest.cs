@@ -12,8 +12,7 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         [SFFact]
         public void TestBuildCacheKeyGoldenHash()
         {
-            // quoted segments are preserved verbatim by NormalizeIdentifier — pre-uppercase them to match
-            // the canonical JSON: {"idp":"LOGIN...","role":"\"ANALYST ROLE WITH SPACES\":...","username":"\"FIRST LAST\"@..."}
+            // quoted segments are preserved verbatim by NormalizeIdentifier — pre-uppercase them to match the expected hash
             var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
                 tokenType: "DPOP_BUNDLED_ACCESS_TOKEN",
                 idp: "https://login.microsoftonline.com:443/tenant-id/oauth2/v2.0",

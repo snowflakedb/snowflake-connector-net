@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 
 namespace Snowflake.Data.Client
 {
-    /// <summary>Carries the five dimensions for a v2 token cache key.</summary>
+    /// <summary>Input parameters for building a v2 token cache key.</summary>
     internal sealed class CacheKeyInput
     {
         public string TokenType { get; }
@@ -43,7 +43,7 @@ namespace Snowflake.Data.Client
 
         /// <summary>
         /// Builds a v2 token cache key: <c>SnowflakeTokenCache.v2.&lt;sha256hex(canonical_json)&gt;</c>.
-        /// Normalizes all dimensions before hashing; hashing occurs exactly once here.
+        /// All inputs are normalized before hashing.
         /// </summary>
         internal static string BuildCacheKey(CacheKeyInput input)
         {
@@ -104,7 +104,7 @@ namespace Snowflake.Data.Client
             }
         }
 
-        [Obsolete("Use BuildCacheKey(CacheKeyInput) instead. This method produces a v1 key that is not cross-driver compatible.")]
+        [Obsolete("Use BuildCacheKey(CacheKeyInput) instead. This method produces a legacy key format.")]
         internal static string GetSecureCredentialKey(string host, string user, TokenType tokenType)
         {
             return $"{host.ToUpper()}:{user.ToUpper()}:{tokenType.ToString().ToUpper()}".ToSha256Hash();
