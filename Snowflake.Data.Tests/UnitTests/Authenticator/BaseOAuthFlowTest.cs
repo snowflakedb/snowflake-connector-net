@@ -28,7 +28,9 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         protected const string User = "testUser";
         protected const string AuthorizationScope = "session:role:ANALYST";
         protected const string Role = "ANALYST";
-        protected const string SnowflakeHost = "localhost";
+        // Must mirror the `host` set in the flow's connection string (WiremockRunner.Host), because the
+        // v2 cache key's `snowflake` dimension is taken from the HOST session property, not the IdP URL.
+        protected const string SnowflakeHost = WiremockRunner.Host;
         protected const string ClientSecret = "123";
 
         internal void AssertSessionSuccessfullyCreated(SFSession session)
