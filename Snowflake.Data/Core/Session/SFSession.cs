@@ -131,6 +131,7 @@ namespace Snowflake.Data.Core
                 if (bool.Parse(properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]) &&
                     !string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
+                    // Native SSO: Snowflake acts as its own IdP, so idp and snowflake are both the server host.
                     var idTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
                         tokenType: TokenType.IdToken.GetAttribute<StringAttr>().value,
                         idp: properties[SFSessionProperty.HOST],
@@ -143,6 +144,7 @@ namespace Snowflake.Data.Core
                 if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
                 {
                     _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
+                    // MFA: Snowflake is the IdP; role is not part of the MFA cache key.
                     var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
                         tokenType: TokenType.MFAToken.GetAttribute<StringAttr>().value,
                         idp: properties[SFSessionProperty.HOST],
@@ -171,6 +173,7 @@ namespace Snowflake.Data.Core
                 {
                     logger.Info($"Unable to use cached MFA token is expired or invalid. Fails with the {e.Message}. ", e);
                     _mfaToken = null;
+                    // MFA: Snowflake is the IdP; role is not part of the MFA cache key.
                     var mfaKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
                         tokenType: TokenType.MFAToken.GetAttribute<StringAttr>().value,
                         idp: properties[SFSessionProperty.HOST],
@@ -248,6 +251,7 @@ namespace Snowflake.Data.Core
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&
                     MFACacheAuthenticator.IsMfaCacheAuthenticator(_authenticatorType))
                 {
+                    // MFA: Snowflake is the IdP; role is not part of the MFA cache key.
                     var mfaKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
                         tokenType: TokenType.MFAToken.GetAttribute<StringAttr>().value,
                         idp: properties[SFSessionProperty.HOST],

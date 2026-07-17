@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
@@ -18,7 +17,7 @@ namespace Snowflake.Data.Client
     {
         public string TokenType { get; }
         public string Idp { get; }
-        public string Snowflake { get; }
+        public string SnowflakeUrl { get; }
         public string Username { get; }
         public string Role { get; }
 
@@ -26,7 +25,7 @@ namespace Snowflake.Data.Client
         {
             TokenType = tokenType;
             Idp = idp;
-            Snowflake = snowflake;
+            SnowflakeUrl = snowflake;
             Username = username;
             Role = role;
         }
@@ -47,16 +46,20 @@ namespace Snowflake.Data.Client
         /// </summary>
         internal static string BuildCacheKey(CacheKeyInput input)
         {
-            if (string.IsNullOrEmpty(input.Snowflake))
+            if (string.IsNullOrEmpty(input.SnowflakeUrl))
                 throw new ArgumentException("snowflake URL must not be empty");
             if (string.IsNullOrEmpty(input.Username))
                 throw new ArgumentException("username must not be empty");
+            // An empty idp would silently collapse the cross-IdP dimension of the key and
+            // reintroduce the collision class this format guards against, so it is rejected.
+            if (string.IsNullOrEmpty(input.Idp))
+                throw new ArgumentException("idp must not be empty");
 
             var keyData = new SortedDictionary<string, string>
             {
                 ["idp"]        = NormalizeUrl(input.Idp),
                 ["role"]       = NormalizeIdentifier(input.Role),
-                ["snowflake"]  = NormalizeUrl(input.Snowflake),
+                ["snowflake"]  = NormalizeUrl(input.SnowflakeUrl),
                 ["token_type"] = input.TokenType,
                 ["username"]   = NormalizeIdentifier(input.Username),
             };
@@ -66,31 +69,51 @@ namespace Snowflake.Data.Client
             return $"SnowflakeTokenCache.v2.{hash}";
         }
 
-        /// <summary>Strips scheme, userinfo, query, fragment; uppercases the remainder; trims a root-only trailing slash.</summary>
+        /// <summary>
+        /// Strips the scheme and any userinfo prefix, drops query and fragment, then uppercases the
+        /// remaining authority (host and any explicitly-stated port) and path, trimming trailing slashes.
+        /// The raw string is used (not a parsed URL) so an explicit default port such as <c>:443</c> is preserved.
+        /// </summary>
         internal static string NormalizeUrl(string url)
         {
             if (string.IsNullOrEmpty(url))
                 return string.Empty;
-            var s = Regex.Replace(url, @"^https?://", "");
-            var atIdx = s.IndexOf('@');
-            if (atIdx >= 0) s = s.Substring(atIdx + 1);
+
+            // Strip the scheme prefix ("scheme://") from the raw string, preserving any explicit port.
+            var schemeIdx = url.IndexOf("://", StringComparison.Ordinal);
+            var s = schemeIdx >= 0 ? url.Substring(schemeIdx + 3) : url;
+
+            // Drop query string and fragment; they never appear in cache keys.
             s = s.Split('?')[0].Split('#')[0];
-            s = s.TrimEnd('/');
-            return s.ToUpperInvariant();
+
+            // Strip userinfo ("user:pass@") from the authority only. The authority ends at the first
+            // '/', so an '@' before that slash is a userinfo delimiter; an '@' inside the path survives.
+            var slashIdx = s.IndexOf('/');
+            var authorityEnd = slashIdx >= 0 ? slashIdx : s.Length;
+            var authority = s.Substring(0, authorityEnd);
+            var path = s.Substring(authorityEnd);
+            var atIdx = authority.IndexOf('@');
+            if (atIdx >= 0)
+                authority = authority.Substring(atIdx + 1);
+
+            return (authority + path).TrimEnd('/').ToUpperInvariant();
         }
 
-        /// <summary>Uppercases unquoted segments; preserves the content of double-quoted segments verbatim (including surrounding quotes).</summary>
+        /// <summary>
+        /// Uppercases unquoted segments (ASCII only, matching Snowflake identifier case-folding);
+        /// preserves the content of double-quoted segments verbatim (including surrounding quotes).
+        /// </summary>
         internal static string NormalizeIdentifier(string identifier)
         {
             if (string.IsNullOrEmpty(identifier))
                 return string.Empty;
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(identifier.Length);
             bool inQuotes = false;
             foreach (char c in identifier)
             {
                 if (c == '"') { inQuotes = !inQuotes; sb.Append(c); }
                 else if (inQuotes) sb.Append(c);
-                else sb.Append(char.ToUpperInvariant(c));
+                else sb.Append(c >= 'a' && c <= 'z' ? (char)(c - ('a' - 'A')) : c);
             }
             return sb.ToString();
         }
@@ -109,7 +132,6 @@ namespace Snowflake.Data.Client
         {
             return $"{host.ToUpper()}:{user.ToUpper()}:{tokenType.ToString().ToUpper()}".ToSha256Hash();
         }
-
 
         public static void UseDefaultCredentialManager()
         {

@@ -52,6 +52,12 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         [SFFact]
+        public void TestBuildCacheKeyThrowsWhenIdpEmpty()
+        {
+            Assert.Throws<ArgumentException>(() => SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MFA_TOKEN", "", "snowflake", "user", "")));
+        }
+
+        [SFFact]
         public void TestDimensionIsolationDifferentSnowflakeHost()
         {
             var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OAUTH_ACCESS_TOKEN", "idp.example.com", "acct1.snowflakecomputing.com", "user", "role"));
@@ -68,7 +74,16 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         [SFFact]
-        public void TestDimensionIsolationMfaEmptyRoleIsStable()
+        public void TestDimensionIsolationDifferentIdp()
+        {
+            // Same Snowflake account and user, different IdP — the multi-account/shared-IdP collision case.
+            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OAUTH_ACCESS_TOKEN", "login.microsoftonline.com/tenantA", "acct.snowflakecomputing.com", "user", "role"));
+            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OAUTH_ACCESS_TOKEN", "login.microsoftonline.com/tenantB", "acct.snowflakecomputing.com", "user", "role"));
+            Assert.NotEqual(key1, key2);
+        }
+
+        [SFFact]
+        public void TestBuildCacheKeyIsDeterministic()
         {
             var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MFA_TOKEN", "host.snowflake.com", "host.snowflake.com", "user", ""));
             var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MFA_TOKEN", "host.snowflake.com", "host.snowflake.com", "user", ""));
@@ -94,12 +109,23 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         public void TestNormalizeUrlStripsUserinfo()
         {
             Assert.Equal("HOST.COM", SnowflakeCredentialManagerFactory.NormalizeUrl("https://user:pass@host.com"));
+            Assert.Equal("HOST.EXAMPLE.COM/PATH", SnowflakeCredentialManagerFactory.NormalizeUrl("https://user:pass@host.example.com/path"));
+        }
+
+        [SFFact]
+        public void TestNormalizeUrlPreservesAtSignInPath()
+        {
+            // An '@' after the authority is part of the path and must survive; only userinfo is stripped.
+            Assert.Equal("HOST.EXAMPLE.COM/OAUTH/@HANDLE/TOKEN",
+                SnowflakeCredentialManagerFactory.NormalizeUrl("https://host.example.com/oauth/@handle/token"));
         }
 
         [SFFact]
         public void TestNormalizeUrlDropsQueryAndFragment()
         {
             Assert.Equal("HOST.COM/PATH", SnowflakeCredentialManagerFactory.NormalizeUrl("https://host.com/path?q=1#frag"));
+            // An '@' inside the dropped query string must not be mistaken for userinfo.
+            Assert.Equal("HOST.COM/PATH", SnowflakeCredentialManagerFactory.NormalizeUrl("https://host.com/path?email=user@domain.com"));
         }
 
         [SFFact]
@@ -140,6 +166,21 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         public void TestNormalizeIdentifierEmptyReturnsEmpty()
         {
             Assert.Equal(string.Empty, SnowflakeCredentialManagerFactory.NormalizeIdentifier(string.Empty));
+        }
+
+        [SFFact]
+        public void TestNormalizeIdentifierUppercasesAsciiOnly()
+        {
+            // Matches the reference's ASCII-only case-folding: non-ASCII letters are left unchanged
+            // so keys stay byte-identical across drivers.
+            Assert.Equal("CAF\u00e9", SnowflakeCredentialManagerFactory.NormalizeIdentifier("caf\u00e9"));
+            Assert.Equal("STRA\u00dfE", SnowflakeCredentialManagerFactory.NormalizeIdentifier("stra\u00dfe"));
+        }
+
+        [SFFact]
+        public void TestNormalizeIdentifierPreservesSqlEscapedQuotes()
+        {
+            Assert.Equal("\"Foo\"\"Bar\":BAZ", SnowflakeCredentialManagerFactory.NormalizeIdentifier("\"Foo\"\"Bar\":baz"));
         }
 
 

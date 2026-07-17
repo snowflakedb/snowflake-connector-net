@@ -334,10 +334,10 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
 
     private void RemoveOAuthCache(TestConfig testConfig)
     {
-        var idpUrl = _fixture.testConfig.oauthTokenRequestUrl;
-        var snowflakeHost = _fixture.testConfig.host;
-        var user = _fixture.testConfig.user;
-        var role = _fixture.testConfig.role ?? string.Empty;
+        var idpUrl = testConfig.oauthTokenRequestUrl;
+        var snowflakeHost = testConfig.host;
+        var user = testConfig.user;
+        var role = testConfig.role ?? string.Empty;
         var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
         credentialManager.RemoveCredentials(SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
             tokenType: TokenType.OAuthAccessToken.GetAttribute<StringAttr>().value,

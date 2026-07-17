@@ -58,6 +58,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 var host = session.properties[SFSessionProperty.HOST];
                 session.properties.TryGetValue(SFSessionProperty.ROLE, out var role);
+                // Native SSO: Snowflake acts as its own IdP, so idp and snowflake are both the server host.
                 _idTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
                     tokenType: TokenType.IdToken.GetAttribute<StringAttr>().value,
                     idp: host,
