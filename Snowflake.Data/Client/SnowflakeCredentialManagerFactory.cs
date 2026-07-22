@@ -41,8 +41,14 @@ namespace Snowflake.Data.Client
         private static ISnowflakeCredentialManager s_credentialManager = s_defaultCredentialManager;
 
         /// <summary>
-        /// Builds a v2 token cache key: <c>SnowflakeTokenCache.v2.&lt;sha256hex(canonical_json)&gt;</c>.
-        /// All inputs are normalized before hashing.
+        /// Builds a v2 token cache key:
+        /// <c>SnowflakeTokenCache.v2.&lt;TOKEN_TYPE&gt;.&lt;sha256hex(canonical_json(keyData))&gt;</c>.
+        /// The token type appears in the readable prefix so keystore tooling can identify token
+        /// classes without decoding the opaque hash. <c>keyData</c> is flow-specific and never
+        /// contains <c>token_type</c>: OAuth flows include <c>idp</c>, <c>role</c>,
+        /// <c>snowflake</c>, and <c>username</c>; MFA and ID token flows include only
+        /// <c>snowflake</c> and <c>username</c> (role is not embedded in those auth calls and
+        /// authentication always targets the Snowflake host directly).
         /// </summary>
         internal static string BuildCacheKey(CacheKeyInput input)
         {
@@ -50,23 +56,34 @@ namespace Snowflake.Data.Client
                 throw new ArgumentException("snowflake URL must not be empty");
             if (string.IsNullOrEmpty(input.Username))
                 throw new ArgumentException("username must not be empty");
-            // An empty idp would silently collapse the cross-IdP dimension of the key and
-            // reintroduce the collision class this format guards against, so it is rejected.
-            if (string.IsNullOrEmpty(input.Idp))
-                throw new ArgumentException("idp must not be empty");
 
-            var keyData = new SortedDictionary<string, string>
+            bool isOAuth = input.TokenType is "OAUTH_ACCESS_TOKEN"
+                            or "OAUTH_REFRESH_TOKEN"
+                            or "DPOP_BUNDLED_ACCESS_TOKEN";
+
+            SortedDictionary<string, string> keyData;
+            if (isOAuth)
             {
-                ["idp"]        = NormalizeUrl(input.Idp),
-                ["role"]       = NormalizeIdentifier(input.Role),
-                ["snowflake"]  = NormalizeUrl(input.SnowflakeUrl),
-                ["token_type"] = input.TokenType,
-                ["username"]   = NormalizeIdentifier(input.Username),
-            };
+                keyData = new SortedDictionary<string, string>
+                {
+                    ["idp"]       = NormalizeUrl(input.Idp),
+                    ["role"]      = NormalizeIdentifier(input.Role),
+                    ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
+                    ["username"]  = NormalizeIdentifier(input.Username),
+                };
+            }
+            else  // MFA_TOKEN, ID_TOKEN
+            {
+                keyData = new SortedDictionary<string, string>
+                {
+                    ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
+                    ["username"]  = NormalizeIdentifier(input.Username),
+                };
+            }
 
             string json = JsonConvert.SerializeObject(keyData, Formatting.None);
             string hash = ToSha256HashLower(json);
-            return $"SnowflakeTokenCache.v2.{hash}";
+            return $"SnowflakeTokenCache.v2.{input.TokenType}.{hash}";
         }
 
         /// <summary>
