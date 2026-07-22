@@ -6,6 +6,7 @@ pushd %ROOT_DIR%
 echo [INFO] Running Unit Tests for Snowflake .NET Connector
 
 dotnet run ^
+    --framework net10.0 ^
     --project .\Snowflake.Data.Tests\Snowflake.Data.Tests.csproj ^
     -namespace "Snowflake.Data.Tests.UnitTests" ^
     --verbosity detailed ^
