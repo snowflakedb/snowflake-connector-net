@@ -2,7 +2,7 @@
 #
 # Run .NET connector tests with automatic retry for flaky integration tests.
 #
-# If fewer than 5 integration tests fail (and no unit tests fail), retries
+# If fewer than 3 integration tests fail (and no unit tests fail), retries
 # only those tests once. Produces a warning annotation on success-after-retry.
 #
 # Usage:
@@ -76,8 +76,8 @@ if [[ "$INTEGRATION_FAILURES" -eq 0 ]]; then
     exit 1
 fi
 
-if [[ "$INTEGRATION_FAILURES" -ge 5 ]]; then
-    echo "[RETRY] Too many failures ($INTEGRATION_FAILURES >= 5). Likely a real issue."
+if [[ "$INTEGRATION_FAILURES" -ge 3 ]]; then
+    echo "[RETRY] Too many failures ($INTEGRATION_FAILURES >= 3). Likely a real issue."
     exit 1
 fi
 
