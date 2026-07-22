@@ -22,7 +22,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         private static readonly DateTime s_nextUpdate = new(2026, 8, 10, 0, 0, 0, DateTimeKind.Utc);
         private static readonly DateTime s_revocationTime = s_thisUpdate;
         private static readonly DateTime s_downloadTime = new(2025, 8, 15, 8, 21, 33, DateTimeKind.Utc);
-        private static readonly CrlParser s_crlParser = new(TimeSpan.FromDays(10));
+        private static readonly CrlParser s_crlParser = new(TimeSpan.FromDays(10), TimeSpan.Zero);
         private static readonly TimeSpan s_removalDelay = TimeSpan.FromDays(7);
 
         [SFFact]

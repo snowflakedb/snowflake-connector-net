@@ -31,38 +31,34 @@ namespace Snowflake.Data.Tests.Mock
         internal const int ContentLength = 9999;
 
         // Create AWS exception for mock requests
-        static Exception CreateMockAwsResponseError(string awsErrorCode, bool isAsync)
+        private static Exception CreateMockAwsResponseError(string awsErrorCode)
         {
-            Exception exception = awsErrorCode.Length > 0
+            var exception = awsErrorCode.Length > 0
                ? new AmazonS3Exception(S3ErrorMessage) { ErrorCode = awsErrorCode }
                : new Exception("Non-AWS exception");
 
-            if (isAsync)
-            {
-                return exception; // S3 throws the AmazonS3Exception on async calls
-            }
-
-            Exception exceptionContainingS3Error = new Exception(S3ErrorMessage, exception);
-            return exceptionContainingS3Error;  // S3 places the AmazonS3Exception on the InnerException property on non-async calls
+            return exception;
         }
 
         // Create mock response for GetFileHeader
-        internal static Task<GetObjectResponse> CreateResponseForGetFileHeader(string statusCode, bool isAsync)
+        internal static Task<GetObjectMetadataResponse> CreateResponseForGetFileHeader(string statusCode, bool isAsync)
         {
-            if (statusCode == HttpStatusCode.OK.ToString())
+            if (statusCode == nameof(HttpStatusCode.OK))
             {
-                var getObjectResponse = new GetObjectResponse();
-                getObjectResponse.ContentLength = MockS3Client.ContentLength;
-                getObjectResponse.Metadata.Add(SFS3Client.AMZ_IV, MockS3Client.AmzIV);
-                getObjectResponse.Metadata.Add(SFS3Client.AMZ_KEY, MockS3Client.AmzKey);
-                getObjectResponse.Metadata.Add(SFS3Client.AMZ_MATDESC, MockS3Client.AmzMatdesc);
-                getObjectResponse.Metadata.Add(SFS3Client.SFC_DIGEST, MockS3Client.SfcDigest);
+                var getObjectResponse = new GetObjectMetadataResponse
+                {
+                    ContentLength = ContentLength
+                };
+                getObjectResponse.Metadata.Add(SFS3Client.AMZ_IV, AmzIV);
+                getObjectResponse.Metadata.Add(SFS3Client.AMZ_KEY, AmzKey);
+                getObjectResponse.Metadata.Add(SFS3Client.AMZ_MATDESC, AmzMatdesc);
+                getObjectResponse.Metadata.Add(SFS3Client.SFC_DIGEST, SfcDigest);
 
                 return Task.FromResult(getObjectResponse);
             }
             else
             {
-                throw CreateMockAwsResponseError(statusCode, isAsync);
+                throw CreateMockAwsResponseError(statusCode);
             }
         }
 
@@ -75,7 +71,7 @@ namespace Snowflake.Data.Tests.Mock
             }
             else
             {
-                throw CreateMockAwsResponseError(awsStatusCode, isAsync);
+                throw CreateMockAwsResponseError(awsStatusCode);
             }
         }
 
@@ -92,7 +88,7 @@ namespace Snowflake.Data.Tests.Mock
             }
             else
             {
-                throw CreateMockAwsResponseError(statusCode, isAsync);
+                throw CreateMockAwsResponseError(statusCode);
             }
         }
     }

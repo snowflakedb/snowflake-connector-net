@@ -61,9 +61,9 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var restRequester = new Mock.MockRestSessionExpired();
             var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
-            await sfSession.OpenAsync(CancellationToken.None);
+            await sfSession.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var statement = new SFStatement(sfSession);
-            var resultSet = await statement.GetResultWithIdAsync("mockId", CancellationToken.None);
+            var resultSet = await statement.GetResultWithIdAsync("mockId", CancellationToken.None).ConfigureAwait(false);
             Assert.True(resultSet.Next());
             Assert.Equal("abc", resultSet.GetString(0));
             Assert.Equal("new_session_token", sfSession.sessionToken);
@@ -75,9 +75,9 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var restRequester = new Mock.MockRestSessionExpired();
             var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
-            await sfSession.OpenAsync(CancellationToken.None);
+            await sfSession.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var statement = new SFStatement(sfSession);
-            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await statement.GetResultWithIdAsync("retryId", CancellationToken.None));
+            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await statement.GetResultWithIdAsync("retryId", CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
             Assert.Equal(thrown.ErrorCode, Mock.MockRestSessionExpired.SESSION_EXPIRED_CODE);
         }
 
@@ -356,11 +356,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var restRequester = new Mock.MockRestRequesterWithQccOnError();
             var session = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
-            await session.OpenAsync(CancellationToken.None);
+            await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var statement = new SFStatement(session);
 
             await Assert.ThrowsAsync<SnowflakeDbException>(async () =>
-                await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None));
+                await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
@@ -386,11 +386,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var restRequester = new Mock.MockSessionGone();
             var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
-            await sfSession.OpenAsync(CancellationToken.None);
+            await sfSession.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var statement = new SFStatement(sfSession);
 
             var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () =>
-                await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None));
+                await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
             Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
             Assert.True(sfSession.IsInvalidatedForPooling());
         }
@@ -412,11 +412,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var restRequester = new Mock.MockSessionGone();
             var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
-            await sfSession.OpenAsync(CancellationToken.None);
+            await sfSession.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var statement = new SFStatement(sfSession);
 
             var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () =>
-                await statement.GetResultWithIdAsync("mockId", CancellationToken.None));
+                await statement.GetResultWithIdAsync("mockId", CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
             Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
 
@@ -437,11 +437,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var restRequester = new Mock.MockSessionGone();
             var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
-            await sfSession.OpenAsync(CancellationToken.None);
+            await sfSession.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             var statement = new SFStatement(sfSession);
 
             var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () =>
-                await statement.GetQueryStatusAsync("mockQueryId", CancellationToken.None));
+                await statement.GetQueryStatusAsync("mockQueryId", CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
             Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
     }

@@ -52,7 +52,7 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
             _runner.AddMappings("wiremock/test_mapping.json");
 
             //act
-            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.WiremockBaseHttpsUrl + "/test")).Result;
+            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.WiremockBaseHttpsUrl + "/test").ConfigureAwait(false)).Result;
 
             // assert
             Assert.True(response.IsSuccessStatusCode);
@@ -63,16 +63,16 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         {
             // arrange
             _runner.AddMappings("wiremock/test_mapping.json");
-            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.WiremockBaseHttpsUrl + "/test")).Result;
+            var response = Task.Run(async () => await _httpClient.GetAsync(_runner.WiremockBaseHttpsUrl + "/test").ConfigureAwait(false)).Result;
             Assert.True(response.IsSuccessStatusCode);
 
             // act
             _runner.ResetMapping();
-            response = Task.Run(async () => await _httpClient.GetAsync(_runner.WiremockBaseHttpUrl + "/__admin/mappings")).Result;
+            response = Task.Run(async () => await _httpClient.GetAsync(_runner.WiremockBaseHttpUrl + "/__admin/mappings").ConfigureAwait(false)).Result;
 
             // assert
             Assert.True(response.IsSuccessStatusCode);
-            dynamic jsonObject = JsonConvert.DeserializeObject(Task.Run(async () => await response.Content.ReadAsStringAsync()).Result);
+            dynamic jsonObject = JsonConvert.DeserializeObject(Task.Run(async () => await response.Content.ReadAsStringAsync().ConfigureAwait(false)).Result);
             Assert.Equal("0", jsonObject?.meta.total.ToString());
         }
     }

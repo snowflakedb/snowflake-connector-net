@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net481;net8.0;net8.0-windows;net9.0;net9.0-windows;net10.0;net10.0-windows</TargetFrameworks>
     <Title>Snowflake.Data</Title>
@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <PackageReference Include="Apache.Arrow" Version="14.0.2" />
-    <PackageReference Include="AWSSDK.S3" Version="4.0.20.4" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.100.3" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.14.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="Azure.Storage.Common" Version="12.12.0" />

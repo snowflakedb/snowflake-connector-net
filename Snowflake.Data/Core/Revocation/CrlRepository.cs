@@ -1,4 +1,3 @@
-using System;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Revocation
@@ -7,27 +6,19 @@ namespace Snowflake.Data.Core.Revocation
     {
         private readonly CrlCacheManager _cacheManager;
 
-        internal CrlRepository(bool useMemoryCache, bool useFileCache)
+        internal CrlRepository(bool useMemoryCache, bool useFileCache) : this(EnvironmentFacade.Instance, useMemoryCache, useFileCache)
+        {
+        }
+
+        internal CrlRepository(IEnvironmentFacade environmentFacade, bool useMemoryCache, bool useFileCache)
         {
             if (!useMemoryCache && !useFileCache) return;
 
-            var parser = new CrlParser(EnvironmentOperations.Instance);
+            var parser = new CrlParser(environmentFacade);
             var cacheValidityTime = parser.GetCacheValidityTime();
-            var cleanupInterval = GetCleanupInterval();
+            var cleanupInterval = parser.GetCleanupInterval();
 
             _cacheManager = CrlCacheManager.Build(useMemoryCache, useFileCache, cleanupInterval, cacheValidityTime);
-        }
-
-        internal static TimeSpan GetCleanupInterval()
-        {
-            const string envName = "SF_CRL_CACHE_REMOVAL_DELAY";
-            const int defaultDays = 7;
-
-            var cleanupDays = ValuesExtractor.ExtractInt(
-                () => EnvironmentOperations.Instance.GetEnvironmentVariable(envName),
-                $"environmental variable {envName}",
-                defaultDays);
-            return TimeSpan.FromDays(cleanupDays);
         }
 
         public Crl Get(string crlUrl) => _cacheManager?.Get(crlUrl);

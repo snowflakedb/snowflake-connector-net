@@ -10,17 +10,16 @@ namespace Snowflake.Data.Configuration
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigFinder>();
 
         internal const string ClientConfigFileName = "sf_client_config.json";
-        internal const string ClientConfigEnvironmentName = "SF_CLIENT_CONFIG_FILE";
 
         private readonly FileOperations _fileOperations;
-        private readonly EnvironmentOperations _environmentOperations;
+        private readonly IEnvironmentFacade _environmentFacade;
 
-        public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, EnvironmentOperations.Instance);
+        public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, EnvironmentFacade.Instance);
 
-        internal EasyLoggingConfigFinder(FileOperations fileOperations, EnvironmentOperations environmentOperations)
+        internal EasyLoggingConfigFinder(FileOperations fileOperations, IEnvironmentFacade environmentFacade)
         {
             _fileOperations = fileOperations;
-            _environmentOperations = environmentOperations;
+            _environmentFacade = environmentFacade;
         }
 
         internal EasyLoggingConfigFinder()
@@ -38,7 +37,7 @@ namespace Snowflake.Data.Configuration
 
         private string GetFilePathEnvironmentVariable()
         {
-            var filePath = _environmentOperations.GetEnvironmentVariable(ClientConfigEnvironmentName);
+            var filePath = _environmentFacade.GetString(EnvVars.ClientConfigFile);
             return GetFilePathFromInputParameter(filePath, "environment variable");
         }
 
@@ -54,9 +53,9 @@ namespace Snowflake.Data.Configuration
             return filePath;
         }
 
-        private string GetHomeDirectory() => HomeDirectoryProvider.HomeDirectory(_environmentOperations);
+        private string GetHomeDirectory() => HomeDirectoryProvider.HomeDirectory(_environmentFacade);
 
-        private string GetFilePathFromDriverLocation() => SearchForConfigInDirectory(() => _environmentOperations.GetExecutionDirectory(), "driver");
+        private string GetFilePathFromDriverLocation() => SearchForConfigInDirectory(() => _environmentFacade.GetExecutionDirectory(), "driver");
 
         private string SearchForConfigInDirectory(Func<string> directoryProvider, string directoryDescription)
         {

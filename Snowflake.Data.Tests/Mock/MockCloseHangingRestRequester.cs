@@ -66,7 +66,7 @@ namespace Snowflake.Data.Tests.Mock
                     message = "Session no longer exists. New login required to access the service",
                     success = false
                 };
-                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
                 CloseRequests.Add(sfRequest);
                 return (T)(object)closeResponse;
             }

@@ -39,14 +39,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestGetEnumerator()
         {
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-            using (var conn = await CreateAndOpenConnectionAsync())
+            using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
             {
-                await CreateAndPopulateTestTableAsync(conn, tableName);
+                await CreateAndPopulateTestTableAsync(conn, tableName).ConfigureAwait(false);
 
                 string selectCommandText = $"select * from {tableName}";
                 var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = await selectCmd.ExecuteReaderAsync() as DbDataReader;
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
 
                 var enumerator = reader.GetEnumerator();
                 Assert.True(enumerator.MoveNext());
@@ -59,7 +59,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 reader.Close();
 
-                await DropTestTableAndCloseConnectionAsync(conn, tableName);
+                await DropTestTableAndCloseConnectionAsync(conn, tableName).ConfigureAwait(false);
             }
         }
 
@@ -67,21 +67,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestGetEnumeratorShouldBeEmptyWhenNotRowsReturned()
         {
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-            using (var conn = await CreateAndOpenConnectionAsync())
+            using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
             {
-                await CreateAndPopulateTestTableAsync(conn, tableName);
+                await CreateAndPopulateTestTableAsync(conn, tableName).ConfigureAwait(false);
 
                 string selectCommandText = $"select * from {tableName} WHERE cola > 10";
                 var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = await selectCmd.ExecuteReaderAsync() as DbDataReader;
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
 
                 var enumerator = reader.GetEnumerator();
                 Assert.False(enumerator.MoveNext());
                 Assert.Null(enumerator.Current);
 
                 reader.Close();
-                await DropTestTableAndCloseConnectionAsync(conn, tableName);
+                await DropTestTableAndCloseConnectionAsync(conn, tableName).ConfigureAwait(false);
             }
         }
 
@@ -89,21 +89,21 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestGetEnumeratorWithCastMethod()
         {
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-            using (var conn = await CreateAndOpenConnectionAsync())
+            using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
             {
-                await CreateAndPopulateTestTableAsync(conn, tableName);
+                await CreateAndPopulateTestTableAsync(conn, tableName).ConfigureAwait(false);
 
                 string selectCommandText = $"select * from {tableName}";
                 var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = await selectCmd.ExecuteReaderAsync() as DbDataReader;
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
 
                 var dataRecords = reader.Cast<DbDataRecord>().ToList();
                 Assert.Equal(3, dataRecords.Count);
 
                 reader.Close();
 
-                await DropTestTableAndCloseConnectionAsync(conn, tableName);
+                await DropTestTableAndCloseConnectionAsync(conn, tableName).ConfigureAwait(false);
             }
         }
 
@@ -111,22 +111,22 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestGetEnumeratorForEachShouldNotEnterWhenResultsIsEmpty()
         {
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-            using (var conn = await CreateAndOpenConnectionAsync())
+            using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
             {
-                await CreateAndPopulateTestTableAsync(conn, tableName);
+                await CreateAndPopulateTestTableAsync(conn, tableName).ConfigureAwait(false);
 
                 string selectCommandText = $"select * from {tableName} WHERE cola > 10";
                 var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = await selectCmd.ExecuteReaderAsync();
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false);
 
                 foreach (var record in reader)
                 {
                     Assert.Fail("Should not enter when results is empty");
                 }
 
-                await reader.CloseAsync();
-                await DropTestTableAndCloseConnectionAsync(conn, tableName);
+                await reader.CloseAsync().ConfigureAwait(false);
+                await DropTestTableAndCloseConnectionAsync(conn, tableName).ConfigureAwait(false);
             }
         }
 
@@ -134,14 +134,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
         public async Task TestGetEnumeratorShouldThrowNonSupportedExceptionWhenReset()
         {
             var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-            using (var conn = await CreateAndOpenConnectionAsync())
+            using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
             {
-                await CreateAndPopulateTestTableAsync(conn, tableName);
+                await CreateAndPopulateTestTableAsync(conn, tableName).ConfigureAwait(false);
 
                 string selectCommandText = $"select * from {tableName}";
                 var selectCmd = conn.CreateCommand();
                 selectCmd.CommandText = selectCommandText;
-                DbDataReader reader = await selectCmd.ExecuteReaderAsync() as DbDataReader;
+                DbDataReader reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
 
                 var enumerator = reader.GetEnumerator();
                 Assert.True(enumerator.MoveNext());
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 reader.Close();
 
-                await DropTestTableAndCloseConnectionAsync(conn, tableName);
+                await DropTestTableAndCloseConnectionAsync(conn, tableName).ConfigureAwait(false);
             }
         }
 
@@ -158,27 +158,27 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
             var cmd = conn.CreateCommand();
             cmd.CommandText = $"drop table if exists {tableName}";
-            var count = await cmd.ExecuteNonQueryAsync();
+            var count = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             Assert.Equal(0, count);
 
-            await CloseConnectionAsync(conn);
+            await CloseConnectionAsync(conn).ConfigureAwait(false);
         }
 
         private async Task CreateAndPopulateTestTableAsync(SnowflakeDbConnection conn, string tableName)
         {
-            await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola NUMBER" });
+            await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola NUMBER" }).ConfigureAwait(false);
 
             var cmd = conn.CreateCommand();
 
             string insertCommand = $"insert into {tableName} values (3),(5),(8)";
             cmd.CommandText = insertCommand;
-            await cmd.ExecuteNonQueryAsync();
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
 
         private async Task<SnowflakeDbConnection> CreateAndOpenConnectionAsync()
         {
             var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
-            await conn.OpenAsync(CancellationToken.None);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
             return conn;
         }
@@ -186,7 +186,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         private async Task CloseConnectionAsync(DbConnection conn)
         {
             SessionParameterAlterer.RestoreResultFormat(conn);
-            await conn.CloseAsync();
+            await conn.CloseAsync().ConfigureAwait(false);
         }
     }
 }

@@ -13,6 +13,7 @@ namespace Snowflake.Data.Tests.Util
     public interface IWiremockRunner : IDisposable
     {
         string WiremockBaseHttpUrl { get; }
+        string WiremockBaseHttpsUrl { get; }
         void Stop();
         void ResetMapping();
         void AddMappings(string file, StringTransformations transformations = null);
@@ -108,7 +109,7 @@ namespace Snowflake.Data.Tests.Util
             s_logger.Debug($"Checking if Wiremock responds on: {wiremockUri}");
             try
             {
-                var response = Task.Run(async () => await s_httpClient.GetAsync(wiremockUri, CancellationToken.None)).Result;
+                var response = Task.Run(async () => await s_httpClient.GetAsync(wiremockUri, CancellationToken.None).ConfigureAwait(false)).Result;
                 s_logger.Debug($"Wiremock responded with status code: {response.StatusCode}");
 
                 return response.IsSuccessStatusCode;
@@ -171,7 +172,7 @@ namespace Snowflake.Data.Tests.Util
 
         public void ResetMapping()
         {
-            var response = Task.Run(async () => await s_httpClient.PostAsync(WiremockBaseHttpUrl + "/__admin/reset", null)).Result;
+            var response = Task.Run(async () => await s_httpClient.PostAsync(WiremockBaseHttpUrl + "/__admin/reset", null).ConfigureAwait(false)).Result;
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"Unable to reset Wiremock mappings. Response status code: {response.StatusCode}");
@@ -188,7 +189,7 @@ namespace Snowflake.Data.Tests.Util
             var payload = new StringContent(transformedContent, Encoding.UTF8, "application/json");
             var response = Task.Run(async () => await s_httpClient.PostAsync(
                 WiremockBaseHttpUrl + "/__admin/mappings/import",
-                payload)
+                payload).ConfigureAwait(false)
             ).Result;
 
             if (!response.IsSuccessStatusCode)
@@ -222,7 +223,7 @@ namespace Snowflake.Data.Tests.Util
                     s_logger.Debug($"Wiremock v{WiremockVersion} not found. Starting download.");
                     Directory.CreateDirectory(s_wiremockPath);
                     var response = s_httpClient.GetAsync($"{s_wiremockUrl}");
-                    Task.Run(async () => await response.Result.Content.CopyToAsync(new FileStream(s_wiremockJarPath, FileMode.CreateNew))).Wait();
+                    Task.Run(async () => await response.Result.Content.CopyToAsync(new FileStream(s_wiremockJarPath, FileMode.CreateNew)).ConfigureAwait(false)).Wait();
                     s_logger.Debug($"Wiremock v{WiremockVersion} has been downloaded into {s_wiremockPath}.");
                 }
                 catch (Exception)

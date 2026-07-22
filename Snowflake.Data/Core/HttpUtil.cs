@@ -331,7 +331,7 @@ namespace Snowflake.Data.Core
                 TimeProvider.Instance,
                 GetHttpClientForCrlCheck(),
                 CertificateCrlDistributionPointsExtractor.Instance,
-                new CrlParser(EnvironmentOperations.Instance),
+                new CrlParser(EnvironmentFacade.Instance),
                 new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching));
             return new HttpClientHandler
             {

@@ -129,7 +129,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl2));
 
             // act
-            await Task.Delay(1500);
+            await Task.Delay(1500).ConfigureAwait(false);
 
             // assert
             Assert.Null(manager.Get(CrlUrl1));
@@ -168,7 +168,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl2));
 
             // act
-            await Task.Delay(1500);
+            await Task.Delay(1500).ConfigureAwait(false);
 
             // assert
             Assert.Null(manager.Get(CrlUrl1));
@@ -198,7 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             Assert.NotNull(manager.Get(CrlUrl1));
 
             // act
-            await Task.Delay(1500);
+            await Task.Delay(1500).ConfigureAwait(false);
 
             // assert
             Assert.NotNull(manager.Get(CrlUrl1));

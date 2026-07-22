@@ -111,7 +111,7 @@ namespace Snowflake.Data.Core
 
             if (_chunkDownloader != null)
             {
-                // GetNextChunk could be blocked if download result is not done yet. 
+                // GetNextChunk could be blocked if download result is not done yet.
                 // So put this piece of code in a seperate task
                 s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                                $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
@@ -154,9 +154,9 @@ namespace Snowflake.Data.Core
             return false;
         }
 
-        internal override async Task<bool> NextResultAsync(CancellationToken cancellationToken)
+        internal override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            return await Task.FromResult(false);
+            return Task.FromResult(false);
         }
 
         internal override bool HasRows()
@@ -292,7 +292,9 @@ namespace Snowflake.Data.Core
             UTF8Buffer val = GetObjectInternal(ordinal);
             var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
             var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
-            return SFDataConverter.ConvertToCSharpVal(val, types.Item1, types.Item2, sessionTimezone);
+            var allowOverflow = sfStatement.SfSession.IsAllowNumberOverflowAsStringEnabled();
+            var context = new ConversionContext(types.Item1, types.Item2, sessionTimezone, allowOverflow);
+            return SFDataConverter.ConvertToCSharpVal(val, context);
         }
 
         private T GetValue<T>(int ordinal)
@@ -300,7 +302,9 @@ namespace Snowflake.Data.Core
             UTF8Buffer val = GetObjectInternal(ordinal);
             var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
             var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
-            return (T)SFDataConverter.ConvertToCSharpVal(val, types.Item1, typeof(T), sessionTimezone);
+            var allowOverflow = sfStatement.SfSession.IsAllowNumberOverflowAsStringEnabled();
+            var context = new ConversionContext(types.Item1, typeof(T), sessionTimezone, allowOverflow);
+            return (T)SFDataConverter.ConvertToCSharpVal(val, context);
         }
 
         //

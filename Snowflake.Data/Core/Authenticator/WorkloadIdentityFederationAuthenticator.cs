@@ -14,7 +14,7 @@ namespace Snowflake.Data.Core.Authenticator
         public const string AuthName = "workload_identity";
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WorkloadIdentityFederationAuthenticator>();
 
-        private readonly EnvironmentOperations _environmentOperations;
+        private readonly IEnvironmentFacade _environmentFacade;
         private readonly TimeProvider _timeProvider;
         private readonly AwsSdkWrapper _awsSdkWrapper;
         private readonly string _metadataHost;
@@ -25,18 +25,18 @@ namespace Snowflake.Data.Core.Authenticator
         private string _impersonationPath;
         private WorkloadIdentityAttestationData _attestationData;
 
-        public WorkloadIdentityFederationAuthenticator(SFSession session) : this(session, EnvironmentOperations.Instance, TimeProvider.Instance, AwsSdkWrapper.Instance, null)
+        public WorkloadIdentityFederationAuthenticator(SFSession session) : this(session, EnvironmentFacade.Instance, TimeProvider.Instance, AwsSdkWrapper.Instance, null)
         {
         }
 
         internal WorkloadIdentityFederationAuthenticator(
             SFSession session,
-            EnvironmentOperations environmentOperations,
+            IEnvironmentFacade environmentFacade,
             TimeProvider timeProvider,
             AwsSdkWrapper awsSdkWrapper,
             string metadataHost) : base(session, AuthName)
         {
-            _environmentOperations = environmentOperations;
+            _environmentFacade = environmentFacade;
             _timeProvider = timeProvider;
             _awsSdkWrapper = awsSdkWrapper;
             _metadataHost = metadataHost;
@@ -86,9 +86,9 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return _provider switch
                 {
-                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_timeProvider, _awsSdkWrapper, session.restRequester, _metadataHost)
+                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentFacade, _timeProvider, _awsSdkWrapper, session.restRequester, _metadataHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
-                    AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentOperations, session.restRequester, _metadataHost)
+                    AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentFacade, session.restRequester, _metadataHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
                     AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(session.restRequester, _metadataHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),

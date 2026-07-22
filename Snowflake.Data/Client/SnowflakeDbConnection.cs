@@ -48,10 +48,17 @@ namespace Snowflake.Data.Client
             Failure
         }
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="SnowflakeDbConnection"/> with default settings.
+        /// </summary>
         public SnowflakeDbConnection() : this(TomlConnectionBuilder.Instance)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="SnowflakeDbConnection"/> with the specified connection string.
+        /// </summary>
+        /// <param name="connectionString">The connection string used to connect to Snowflake.</param>
         public SnowflakeDbConnection(string connectionString) : this()
         {
             ConnectionString = connectionString;
@@ -68,34 +75,54 @@ namespace Snowflake.Data.Client
             ExplicitTransaction = null;
         }
 
+        /// <summary>
+        /// Gets or sets the connection string used to connect to Snowflake.
+        /// </summary>
         public override string ConnectionString
         {
             get; set;
         }
 
+        /// <summary>
+        /// Gets or sets the password as a <see cref="SecureString"/> for authentication.
+        /// </summary>
         public SecureString Password
         {
             get; set;
         }
 
+        /// <summary>
+        /// Gets or sets the MFA passcode as a <see cref="SecureString"/> for multi-factor authentication.
+        /// </summary>
         public SecureString Passcode { get; set; }
 
+        /// <summary>
+        /// Gets or sets the OAuth client secret as a <see cref="SecureString"/> for OAuth authentication.
+        /// </summary>
         public SecureString OAuthClientSecret { get; set; }
 
+        /// <summary>
+        /// Gets or sets the OAuth token as a <see cref="SecureString"/> for token-based authentication.
+        /// </summary>
         public SecureString Token { get; set; }
 
+        /// <summary>
+        /// Returns whether the connection is currently open and has an active session.
+        /// </summary>
+        /// <returns><c>true</c> if the connection state is open and a session exists; otherwise, <c>false</c>.</returns>
         public bool IsOpen()
         {
             return _connectionState == ConnectionState.Open && SfSession != null;
         }
 
-        private bool IsNonClosedWithSession()
-        {
-            return _connectionState != ConnectionState.Closed && SfSession != null;
-        }
-
+        /// <summary>
+        /// Gets the name of the current database if the connection is open; otherwise, returns an empty string.
+        /// </summary>
         public override string Database => IsOpen() ? SfSession.database : string.Empty;
 
+        /// <summary>
+        /// Gets the connection timeout in seconds.
+        /// </summary>
         public override int ConnectionTimeout => this._connectionTimeout;
 
         /// <summary>
@@ -116,11 +143,21 @@ namespace Snowflake.Data.Client
             }
         }
 
+        /// <summary>
+        /// Gets the Snowflake server version if the connection is open; otherwise, returns an empty string.
+        /// </summary>
         public override string ServerVersion => IsOpen() ? SfSession.serverVersion : String.Empty;
 
+        /// <summary>
+        /// Gets the current state of the connection.
+        /// </summary>
         public override ConnectionState State => _connectionState;
         internal SnowflakeDbTransaction ExplicitTransaction { get; set; } // tracks only explicit transaction operations
 
+        /// <summary>
+        /// Marks the underlying session to not be returned to the connection pool when the connection is closed.
+        /// </summary>
+        /// <exception cref="Exception">Thrown when no session has been created for this connection.</exception>
         public void PreventPooling()
         {
             if (SfSession == null)
@@ -176,6 +213,10 @@ namespace Snowflake.Data.Client
             }
         }
 
+        /// <summary>
+        /// Changes the current database for an open connection by executing a USE DATABASE command.
+        /// </summary>
+        /// <param name="databaseName">The name of the database to switch to.</param>
         public override void ChangeDatabase(string databaseName)
         {
             logger.Debug($"ChangeDatabase to:{databaseName}");
@@ -192,22 +233,42 @@ namespace Snowflake.Data.Client
             }
         }
 
+        /// <summary>
+        /// Closes the connection to the database. If connection pooling is enabled, the session may be returned to the pool.
+        /// </summary>
         public override void Close()
         {
             logger.Debug("Close Connection.");
-            if (IsNonClosedWithSession())
+
+            if (SfSession == null || _connectionState is not ConnectionState.Open and not ConnectionState.Broken)
+            {
+                logger.Debug("Session not opened. Nothing to do.");
+                return;
+            }
+
+            try
             {
                 var returnedToPool = TryToReturnSessionToPool();
                 if (!returnedToPool)
-                {
                     SfSession.close();
-                }
+
+                logger.Debug("Session closed successfully");
                 SfSession = null;
+                _connectionState = ConnectionState.Closed;
             }
-            _connectionState = ConnectionState.Closed;
+            catch (Exception exception)
+            {
+                logger.Error($"Close Connection failed: {exception.Message}");
+                _connectionState = ConnectionState.Broken;
+                throw;
+            }
         }
 
 #if NETCOREAPP3_0_OR_GREATER
+        /// <summary>
+        /// Asynchronously closes the connection to the database.
+        /// </summary>
+        /// <returns>A task representing the asynchronous close operation.</returns>
         // CloseAsync was added to IDbConnection as part of .NET Standard 2.1, first supported by .NET Core 3.0.
         // Adding an override for CloseAsync will prevent the need for casting to SnowflakeDbConnection to call CloseAsync(CancellationToken).
         public override async Task CloseAsync()
@@ -216,58 +277,46 @@ namespace Snowflake.Data.Client
         }
 #endif
 
+        /// <summary>
+        /// Asynchronously closes the connection to the database with cancellation support.
+        /// If connection pooling is enabled, the session may be returned to the pool.
+        /// </summary>
+        /// <param name="cancellationToken">A token to cancel the asynchronous operation. If the operation is successfully canceled, <see cref="ConnectionState"/> of this connection will remain unchanged, Cancellation is not a rollback: if the close request already reached the server, the session may be terminated server-side even though this connection still reports <c>Open</c>.</param>
+        /// <returns>A task representing the asynchronous close operation.</returns>
         public virtual async Task CloseAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Close Connection.");
-            TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
 
             if (cancellationToken.IsCancellationRequested)
+                return;
+
+            if (SfSession == null || _connectionState is not ConnectionState.Open and not ConnectionState.Broken)
             {
-                taskCompletionSource.SetCanceled();
+                logger.Debug("Session not opened. Nothing to do.");
+                return;
             }
-            else
+
+            try
             {
-                if (IsNonClosedWithSession())
-                {
-                    var returnedToPool = TryToReturnSessionToPool();
-                    if (returnedToPool)
-                    {
-                        _connectionState = ConnectionState.Closed;
-                        taskCompletionSource.SetResult(null);
-                    }
-                    else
-                    {
-                        await SfSession.CloseAsync(cancellationToken).ContinueWith(
-                            previousTask =>
-                            {
-                                if (previousTask.IsFaulted)
-                                {
-                                    // Exception from SfSession.CloseAsync
-                                    logger.Error("Error closing the session", previousTask.Exception);
-                                    taskCompletionSource.SetException(previousTask.Exception);
-                                }
-                                else if (previousTask.IsCanceled)
-                                {
-                                    _connectionState = ConnectionState.Closed;
-                                    logger.Debug("Session close canceled");
-                                    taskCompletionSource.SetCanceled();
-                                }
-                                else
-                                {
-                                    logger.Debug("Session closed successfully");
-                                    _connectionState = ConnectionState.Closed;
-                                    taskCompletionSource.SetResult(null);
-                                }
-                            }, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    logger.Debug("Session not opened. Nothing to do.");
-                    taskCompletionSource.SetResult(null);
-                }
+                var returnedToPool = TryToReturnSessionToPool();
+                if (!returnedToPool)
+                    await SfSession.CloseAsync(cancellationToken).ConfigureAwait(false);
+
+                logger.Debug("Session closed successfully");
+                SfSession = null;
+                _connectionState = ConnectionState.Closed;
             }
-            await taskCompletionSource.Task;
+            catch (OperationCanceledException)
+            {
+                logger.Debug("Session close canceled");
+                throw;
+            }
+            catch (Exception exception)
+            {
+                _connectionState = ConnectionState.Broken;
+                logger.Error("Error closing the session", exception);
+                throw;
+            }
         }
 
         protected virtual bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
@@ -276,9 +325,14 @@ namespace Snowflake.Data.Client
                    transactionRollbackStatus == TransactionRollbackStatus.Success;
         }
 
+        /// <summary>
+        /// Opens a connection to the Snowflake.
+        /// </summary>
+        /// <exception cref="SnowflakeDbException">Thrown when the connection cannot be established.</exception>
         public override void Open()
         {
             logger.Debug("Open Connection.");
+
             if (_connectionState != ConnectionState.Closed)
             {
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
@@ -286,8 +340,8 @@ namespace Snowflake.Data.Client
             }
             try
             {
-                FillConnectionStringFromTomlConfigIfNotSet();
                 OnSessionConnecting();
+                FillConnectionStringFromTomlConfigIfNotSet();
                 var sessionContext = new SessionPropertiesContext
                 {
                     Password = Password,
@@ -324,16 +378,21 @@ namespace Snowflake.Data.Client
                 ConnectionString = _tomlConnectionBuilder.GetConnectionStringFromToml();
         }
 
-        public override Task OpenAsync(CancellationToken cancellationToken)
+        /// <summary>
+        /// Asynchronously opens a connection to the Snowflake.
+        /// </summary>
+        /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task representing the asynchronous open operation.</returns>
+        /// <exception cref="SnowflakeDbException">Thrown when the connection cannot be established.</exception>
+        /// <exception cref="TaskCanceledException">Thrown when the operation is canceled.</exception>
+        public override async Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Connection Async.");
             if (_connectionState != ConnectionState.Closed)
             {
                 logger.Debug($"Open with a connection already opened: {_connectionState}");
-                return Task.CompletedTask;
+                return;
             }
-            OnSessionConnecting();
-            FillConnectionStringFromTomlConfigIfNotSet();
             var sessionContext = new SessionPropertiesContext
             {
                 Password = Password,
@@ -342,36 +401,31 @@ namespace Snowflake.Data.Client
                 Token = Token
             };
 
-            return SnowflakeDbConnectionPool
-                .GetSessionAsync(ConnectionString, sessionContext, cancellationToken)
-                .ContinueWith(previousTask =>
-                {
-                    if (previousTask.IsFaulted)
-                    {
-                        // Exception from SfSession.OpenAsync
-                        Exception sfSessionEx = previousTask.Exception;
-                        _connectionState = ConnectionState.Closed;
-                        logger.Error("Unable to connect", sfSessionEx);
-                        throw new SnowflakeDbException(
-                            sfSessionEx,
-                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                            SFError.INTERNAL_ERROR,
-                            "Unable to connect");
-                    }
-                    else if (previousTask.IsCanceled)
-                    {
-                        _connectionState = ConnectionState.Closed;
-                        logger.Debug("Connection canceled");
-                        throw new TaskCanceledException("Connecting was cancelled");
-                    }
-                    else
-                    {
-                        // Only continue if the session was opened successfully
-                        SfSession = previousTask.Result;
-                        logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
-                        OnSessionEstablished();
-                    }
-                }, TaskContinuationOptions.None); // this continuation should be executed always (even if the whole operation was canceled) because it sets the proper state of the connection
+            try
+            {
+                OnSessionConnecting();
+                FillConnectionStringFromTomlConfigIfNotSet();
+                var session = await SnowflakeDbConnectionPool.GetSessionAsync(ConnectionString, sessionContext, cancellationToken).ConfigureAwait(false);
+                SfSession = session;
+                logger.Debug($"Connection open with pooled session: {SfSession.sessionId}");
+                OnSessionEstablished();
+            }
+            catch (OperationCanceledException)
+            {
+                _connectionState = ConnectionState.Closed;
+                logger.Debug("Connection canceled");
+                throw new TaskCanceledException("Connecting was cancelled");
+            }
+            catch (Exception ex)
+            {
+                _connectionState = ConnectionState.Closed;
+                logger.Error("Unable to connect", ex);
+
+                if (ex is SnowflakeDbException)
+                    throw;
+
+                throw new SnowflakeDbException(ex, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect");
+            }
         }
 
         public Mutex GetArrayBindingMutex()
@@ -448,11 +502,21 @@ namespace Snowflake.Data.Client
             base.Dispose(disposing);
         }
 
+        /// <summary>
+        /// Determines whether the given query status indicates the query is still running.
+        /// </summary>
+        /// <param name="status">The query status to check.</param>
+        /// <returns><c>true</c> if the query is still running; otherwise, <c>false</c>.</returns>
         public bool IsStillRunning(QueryStatus status)
         {
             return QueryStatusExtensions.IsStillRunning(status);
         }
 
+        /// <summary>
+        /// Determines whether the given query status indicates an error.
+        /// </summary>
+        /// <param name="status">The query status to check.</param>
+        /// <returns><c>true</c> if the query status represents an error; otherwise, <c>false</c>.</returns>
         public bool IsAnError(QueryStatus status)
         {
             return QueryStatusExtensions.IsAnError(status);

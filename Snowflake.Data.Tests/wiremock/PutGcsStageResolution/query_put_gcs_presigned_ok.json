@@ -1,0 +1,96 @@
+{
+    "mappings": [
+        {
+            "name": "Initial PUT command resolution (returns stageInfo with presignedUrl=null, forcing per-file re-resolution)",
+            "request": {
+                "urlPathPattern": "/queries/v1/query-request.*",
+                "method": "POST",
+                "bodyPatterns": [
+                    { "doesNotContain": "PUT file://{{putFileName}}" }
+                ]
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "jsonBody": {
+                    "data": {
+                        "command": "UPLOAD",
+                        "src_locations": ["{{putFilePath}}"],
+                        "parallel": 4,
+                        "autoCompress": false,
+                        "overwrite": true,
+                        "sourceCompression": "none",
+                        "stageInfo": {
+                            "locationType": "GCS",
+                            "location": "gcs-bucket/path/",
+                            "presignedUrl": null,
+                            "creds": {},
+                            "region": "us-central1"
+                        },
+                        "encryptionMaterial": null,
+                        "queryId": "fake-put-presigned-query-id",
+                        "statementTypeId": 4096
+                    },
+                    "code": null,
+                    "message": null,
+                    "success": true
+                }
+            }
+        },
+        {
+            "name": "Successful per-file presigned-URL refresh (returns a real presignedUrl)",
+            "request": {
+                "urlPathPattern": "/queries/v1/query-request.*",
+                "method": "POST",
+                "bodyPatterns": [
+                    { "contains": "PUT file://{{putFileName}}" }
+                ]
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "jsonBody": {
+                    "data": {
+                        "command": "UPLOAD",
+                        "src_locations": ["{{putFileName}}"],
+                        "parallel": 4,
+                        "autoCompress": false,
+                        "overwrite": true,
+                        "sourceCompression": "none",
+                        "stageInfo": {
+                            "locationType": "GCS",
+                            "location": "gcs-bucket/path/",
+                            "presignedUrl": "{{wiremockHttpUrl}}/fake-gcs-upload",
+                            "creds": {},
+                            "region": "us-central1"
+                        },
+                        "encryptionMaterial": null,
+                        "queryId": "fake-put-presigned-refresh-query-id",
+                        "statementTypeId": 4096
+                    },
+                    "code": null,
+                    "message": null,
+                    "success": true
+                }
+            }
+        },
+        {
+            "name": "Fake GCS upload endpoint (target of the refreshed presignedUrl)",
+            "request": {
+                "urlPathPattern": "/fake-gcs-upload",
+                "method": "PUT"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "jsonBody": {}
+            }
+        }
+    ]
+}

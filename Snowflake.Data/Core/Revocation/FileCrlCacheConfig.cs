@@ -15,9 +15,9 @@ namespace Snowflake.Data.Core.Revocation
 
         public long UnixGroupId { get; set; }
 
-        public FileCrlCacheConfig(EnvironmentOperations environmentOperations, UnixOperations unixOperations)
+        public FileCrlCacheConfig(IEnvironmentFacade environmentFacade, UnixOperations unixOperations)
         {
-            var homeDirectory = HomeDirectoryProvider.HomeDirectory(environmentOperations);
+            var homeDirectory = HomeDirectoryProvider.HomeDirectory(environmentFacade);
             if (string.IsNullOrEmpty(homeDirectory))
             {
                 throw new Exception("Could not determine home directory");
