@@ -8,7 +8,8 @@ echo [INFO] Building Unit Tests for Snowflake .NET Driver
 dotnet build ^
     -p:nodeReuse=false ^
     -p:Configuration=Debug ^
-    -p:Platform="Any CPU" ^
+    -p:Platform="x64" ^
+    -p:mt=false ^
     --framework net10.0
 
 echo [INFO] Running Unit Tests for Snowflake .NET Driver
