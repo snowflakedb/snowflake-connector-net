@@ -13,6 +13,14 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
 using Xunit;
 
+using TaskOrValueTask =
+#if NET8_0_OR_GREATER
+System.Threading.Tasks.ValueTask;
+#else
+System.Threading.Tasks.Task;
+#endif
+
+
 namespace Snowflake.Data.Tests.UnitTests;
 
 // A GCS upload session uses one credential style throughout: presigned URLs or a
@@ -54,22 +62,20 @@ public sealed class PutGcsStageResolutionWiremockFixture : ICollectionFixture<Pu
 }
 
 [Collection(nameof(PutGcsStageResolutionWiremockFixture))]
-public sealed class PutGcsStageResolutionWiremockTest
+public sealed class PutGcsStageResolutionWiremockTest : IAsyncLifetime
 {
+    private readonly PutGcsStageResolutionWiremockFixture _fixture;
     private static readonly string s_mappingDir = Path.Combine("wiremock", "PutGcsStageResolution");
     private static readonly string s_loginMapping = Path.Combine(s_mappingDir, "login_success.json");
     private static readonly string s_presignedMapping = Path.Combine(s_mappingDir, "query_put_gcs_presigned_ok.json");
     private static readonly string s_downscopedMapping = Path.Combine(s_mappingDir, "query_put_gcs_downscoped_ok.json");
     private static readonly HttpClient s_http = new();
 
-    private readonly IWiremockRunner _runner;
+    private IWiremockRunner _runner;
 
     public PutGcsStageResolutionWiremockTest(PutGcsStageResolutionWiremockFixture fixture)
     {
-        _runner = fixture.Runner;
-        _runner.ResetMapping();
-        // Clear the request journal so assertions only see requests from the current test
-        s_http.DeleteAsync($"{_runner.WiremockBaseHttpUrl}/__admin/requests").Result.EnsureSuccessStatusCode();
+        _fixture = fixture;
     }
 
     [SFFact(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
@@ -185,4 +191,15 @@ public sealed class PutGcsStageResolutionWiremockTest
             .Append("poolingEnabled=false;")
             .ToString();
     }
+
+    public async TaskOrValueTask InitializeAsync()
+    {
+        _runner = _fixture.Runner;
+        await _runner.ResetMappingAsync().ConfigureAwait(false);
+        // Clear the request journal so assertions only see requests from the current test
+        var result = await s_http.DeleteAsync($"{_runner.WiremockBaseHttpUrl}/__admin/requests").ConfigureAwait(false);
+        result.EnsureSuccessStatusCode();
+    }
+
+    public TaskOrValueTask DisposeAsync() => TaskOrValueTask.CompletedTask;
 }
