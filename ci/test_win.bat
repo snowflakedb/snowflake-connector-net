@@ -8,6 +8,7 @@ echo [INFO] Running Unit Tests for Snowflake .NET Connector
 dotnet build ^
     -p:nodeReuse=false ^
     -p:Configuration=Release ^
+    -p:Platform="Any CPU" ^
     --framework net10.0
 
 dotnet run ^
