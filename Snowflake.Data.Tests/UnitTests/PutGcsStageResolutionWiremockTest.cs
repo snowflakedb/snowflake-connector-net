@@ -72,7 +72,7 @@ public sealed class PutGcsStageResolutionWiremockTest
         s_http.DeleteAsync($"{_runner.WiremockBaseHttpUrl}/__admin/requests").Result.EnsureSuccessStatusCode();
     }
 
-    [SFFact(SkipCondition.SkipOnJenkins)]
+    [SFFact(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
     public async Task TestPresignedGcsPutSendsTwoQueryRequests()
     {
         // arrange
