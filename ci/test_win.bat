@@ -3,13 +3,15 @@ set ROOT_DIR=%THIS_DIR%..
 
 pushd %ROOT_DIR%
 
-echo [INFO] Running Unit Tests for Snowflake .NET Connector
+echo [INFO] Building Unit Tests for Snowflake .NET Driver
 
 dotnet build ^
     -p:nodeReuse=false ^
-    -p:Configuration=Release ^
+    -p:Configuration=Debug ^
     -p:Platform="Any CPU" ^
     --framework net10.0
+
+echo [INFO] Running Unit Tests for Snowflake .NET Driver
 
 dotnet run ^
     --no-build ^
