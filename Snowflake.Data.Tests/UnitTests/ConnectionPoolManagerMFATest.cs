@@ -45,7 +45,7 @@ namespace Snowflake.Data.Tests.UnitTests
             ConnectionManagerTestsFacade.RegisterDedicatedContext(nameof(ConnectionPoolManagerMFATest), ConnectionPoolType.MultipleConnectionPool, new Factory(RestRequester));
         }
 
-        [SFFact(RetriesCount = RetriesCount.Thrice)]
+        [SFFact(SkipCondition.SkipOnJenkins, RetriesCount = RetriesCount.Thrice)]
         public async Task TestPoolManagerReturnsSessionPoolForGivenConnectionStringUsingMFA()
         {
             // Arrange

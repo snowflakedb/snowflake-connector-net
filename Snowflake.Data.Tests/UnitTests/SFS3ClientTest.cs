@@ -125,13 +125,13 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
-            mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
+            mockAmazonS3Client.Setup(client => client.GetObjectMetadataAsync(It.IsAny<GetObjectMetadataRequest>(), It.IsAny<CancellationToken>()))
                 .Returns(() => MockS3Client.CreateResponseForGetFileHeader(awsStatusCode, false));
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
 
             // Act
-            FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
+            var fileHeader = _client.GetFileHeader(_fileMetadata);
 
             // Assert
             AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
@@ -147,7 +147,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // Arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
-            mockAmazonS3Client.Setup(client => client.GetObjectAsync(It.IsAny<GetObjectRequest>(), It.IsAny<CancellationToken>()))
+            mockAmazonS3Client.Setup(client => client.GetObjectMetadataAsync(It.IsAny<GetObjectMetadataRequest>(), It.IsAny<CancellationToken>()))
                 .Returns(() => MockS3Client.CreateResponseForGetFileHeader(awsStatusCode, true));
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
             _fileMetadata.client = _client;
@@ -355,7 +355,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
-            var response = new GetObjectResponse();
+            var response = new GetObjectMetadataResponse();
             response.Metadata.Add(SFS3Client.AMZ_IV.ToUpper(), "initVector");
             response.Metadata.Add(SFS3Client.AMZ_KEY.ToUpper(), "key");
             response.Metadata.Add(SFS3Client.AMZ_MATDESC.ToUpper(), "description");
@@ -365,7 +365,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, response);
 
             // assert
-            Assert.Equal(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(nameof(ResultStatus.UPLOADED), _fileMetadata.resultStatus);
             Assert.Equal("something", fileHeader.digest);
             Assert.Equal("initVector", fileHeader.encryptionMetadata.iv);
             Assert.Equal("key", fileHeader.encryptionMetadata.key);
@@ -378,7 +378,7 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var mockAmazonS3Client = new Mock<AmazonS3Client>(AwsKeyId, AwsSecretKey, AwsToken, _clientConfig);
             _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
-            var response = new GetObjectResponse();
+            var response = new GetObjectMetadataResponse();
             response.Metadata.Add(SFS3Client.AMZ_IV, "initVector");
             response.Metadata.Add(SFS3Client.AMZ_KEY, "key");
             response.Metadata.Add(SFS3Client.AMZ_MATDESC, "description");
@@ -387,7 +387,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, response);
 
             // assert
-            Assert.Equal(ResultStatus.UPLOADED.ToString(), _fileMetadata.resultStatus);
+            Assert.Equal(nameof(ResultStatus.UPLOADED), _fileMetadata.resultStatus);
             Assert.Null(fileHeader.digest);
             Assert.Equal("initVector", fileHeader.encryptionMetadata.iv);
             Assert.Equal("key", fileHeader.encryptionMetadata.key);

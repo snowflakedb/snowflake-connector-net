@@ -6,6 +6,7 @@
       scenarios by switching to a versioned, SHA256-hashed canonical-JSON key applied
       uniformly across Windows Credential Manager and file backends.
 - v5.8.0
+  -  Upgraded `AWSSDK.S3` dependency. Now getting object header invokes HEAD s3 call instead of GET.
   -  Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
   -  Reduced synchronization context capture in library, minimizing the risk of deadlock occurrence across different code path executions.
   -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
