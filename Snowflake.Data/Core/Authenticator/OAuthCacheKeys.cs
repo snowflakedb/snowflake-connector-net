@@ -13,14 +13,26 @@ namespace Snowflake.Data.Core.Authenticator
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthCacheKeys>();
 
-        public static OAuthCacheKeys CreateForAuthorizationCodeFlow(string host, string user, bool clientStoreTemporaryCredentials, Func<ISnowflakeCredentialManager> credentialManagerProvider)
+        public static OAuthCacheKeys CreateForAuthorizationCodeFlow(string idpUrl, string snowflakeHost, string user, string role, bool clientStoreTemporaryCredentials, Func<ISnowflakeCredentialManager> credentialManagerProvider)
         {
             string accessTokenKey = string.Empty;
             string refreshTokenKey = string.Empty;
             if (IsCacheAvailableForAuthorizationCodeFlow(user, clientStoreTemporaryCredentials, true))
             {
-                accessTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthAccessToken);
-                refreshTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, user, TokenType.OAuthRefreshToken);
+                accessTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+                    tokenType: TokenType.OAuthAccessToken.GetAttribute<StringAttr>().value,
+                    idp: idpUrl,
+                    snowflake: snowflakeHost,
+                    username: user,
+                    role: role ?? string.Empty
+                ));
+                refreshTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+                    tokenType: TokenType.OAuthRefreshToken.GetAttribute<StringAttr>().value,
+                    idp: idpUrl,
+                    snowflake: snowflakeHost,
+                    username: user,
+                    role: role ?? string.Empty
+                ));
             }
             return new OAuthCacheKeys(accessTokenKey, refreshTokenKey, credentialManagerProvider);
         }

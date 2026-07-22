@@ -1,6 +1,10 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- v5.9.0
+    - Fixed token cache key collisions for multi-account (shared IdP) and multi-role
+      scenarios by switching to a versioned, SHA256-hashed canonical-JSON key applied
+      uniformly across Windows Credential Manager and file backends.
 - v5.8.0
   -  Upgraded `AWSSDK.S3` dependency. Now getting object header invokes HEAD s3 call instead of GET.
   -  Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.

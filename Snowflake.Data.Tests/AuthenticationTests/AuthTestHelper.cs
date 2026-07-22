@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Data;
 using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Log;
 
@@ -204,9 +205,15 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
-        internal void RemoveTokenFromCache(string tokenHost, string user, TokenType tokenType)
+        internal void RemoveTokenFromCache(string idpUrl, string snowflakeHost, string user, string role, TokenType tokenType)
         {
-            var cacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(tokenHost, user, tokenType);
+            var cacheKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+                tokenType: tokenType.GetAttribute<StringAttr>().value,
+                idp: idpUrl,
+                snowflake: snowflakeHost,
+                username: user,
+                role: role ?? string.Empty
+            ));
             SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKey);
         }
 

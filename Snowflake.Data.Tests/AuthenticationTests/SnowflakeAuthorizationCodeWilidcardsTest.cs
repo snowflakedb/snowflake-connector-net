@@ -95,6 +95,10 @@ namespace Snowflake.Data.AuthenticationTests
             parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
             parameters[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL] = "true";
             var host = parameters[SFSessionProperty.HOST];
+            var port = parameters[SFSessionProperty.PORT];
+            var scheme = parameters.TryGetValue(SFSessionProperty.SCHEME, out var schemeVal) ? schemeVal : "https";
+            var role = parameters.TryGetValue(SFSessionProperty.ROLE, out var roleVal) ? roleVal : string.Empty;
+            var tokenEndpoint = $"{scheme}://{host}:{port}/oauth/token-request";
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
             Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
@@ -111,8 +115,8 @@ namespace Snowflake.Data.AuthenticationTests
             }
             finally
             {
-                authTestHelper.RemoveTokenFromCache(host, _login, TokenType.OAuthAccessToken);
-                authTestHelper.RemoveTokenFromCache(host, _login, TokenType.OAuthRefreshToken);
+                authTestHelper.RemoveTokenFromCache(tokenEndpoint, host, _login, role, TokenType.OAuthAccessToken);
+                authTestHelper.RemoveTokenFromCache(tokenEndpoint, host, _login, role, TokenType.OAuthRefreshToken);
             }
         }
     }

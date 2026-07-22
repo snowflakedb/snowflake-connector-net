@@ -334,12 +334,25 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
 
     private void RemoveOAuthCache(TestConfig testConfig)
     {
-        var host = new Uri(_fixture.testConfig.oauthTokenRequestUrl).Host;
-        var accessCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, _fixture.testConfig.user, TokenType.OAuthAccessToken);
-        var refreshCacheKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(host, _fixture.testConfig.user, TokenType.OAuthRefreshToken);
+        var idpUrl = testConfig.oauthTokenRequestUrl;
+        var snowflakeHost = testConfig.host;
+        var user = testConfig.user;
+        var role = testConfig.role ?? string.Empty;
         var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
-        credentialManager.RemoveCredentials(accessCacheKey);
-        credentialManager.RemoveCredentials(refreshCacheKey);
+        credentialManager.RemoveCredentials(SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+            tokenType: TokenType.OAuthAccessToken.GetAttribute<StringAttr>().value,
+            idp: idpUrl,
+            snowflake: snowflakeHost,
+            username: user,
+            role: role
+        )));
+        credentialManager.RemoveCredentials(SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+            tokenType: TokenType.OAuthRefreshToken.GetAttribute<StringAttr>().value,
+            idp: idpUrl,
+            snowflake: snowflakeHost,
+            username: user,
+            role: role
+        )));
     }
 
     private string ConnectionStringForOAuthFlows(TestConfig testConfig, string authenticator)
@@ -413,7 +426,13 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
                   + $";authenticator=externalbrowser;user={_fixture.testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;";
 
             // Create a credential manager and save a wrong token for the test user
-            var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(_fixture.testConfig.host, _fixture.testConfig.user, TokenType.IdToken);
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+                tokenType: TokenType.IdToken.GetAttribute<StringAttr>().value,
+                idp: _fixture.testConfig.host,
+                snowflake: _fixture.testConfig.host,
+                username: _fixture.testConfig.user,
+                role: string.Empty
+            ));
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
             credentialManager.SaveCredentials(key, "wrongToken");
 
