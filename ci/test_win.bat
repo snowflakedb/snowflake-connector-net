@@ -7,8 +7,7 @@ echo [INFO] Building Unit Tests for Snowflake .NET Driver
 
 dotnet build ^
     -p:nodeReuse=false ^
-    -p:Configuration=Debug ^
-    -p:mt=false 
+    -p:mt=false
 
 echo [INFO] Running Unit Tests for Snowflake .NET Driver
 
