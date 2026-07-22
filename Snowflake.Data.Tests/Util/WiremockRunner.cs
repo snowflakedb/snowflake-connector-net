@@ -92,6 +92,8 @@ namespace Snowflake.Data.Tests.Util
                     return runner;
                 }
                 retries++;
+                httpsPort++;
+                httpPort++;
                 Thread.Sleep(RetryInterval);
             }
 
