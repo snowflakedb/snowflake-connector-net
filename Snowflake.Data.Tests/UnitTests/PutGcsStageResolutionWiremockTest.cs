@@ -195,10 +195,18 @@ public sealed class PutGcsStageResolutionWiremockTest : IAsyncLifetime
     public async TaskOrValueTask InitializeAsync()
     {
         _runner = _fixture.Runner;
-        await _runner.ResetMappingAsync().ConfigureAwait(false);
-        // Clear the request journal so assertions only see requests from the current test
-        var result = await s_http.DeleteAsync($"{_runner.WiremockBaseHttpUrl}/__admin/requests").ConfigureAwait(false);
-        result.EnsureSuccessStatusCode();
+        try
+        {
+            await _runner.ResetMappingAsync().ConfigureAwait(false);
+            // Clear the request journal so assertions only see requests from the current test
+            var result = await s_http.DeleteAsync($"{_runner.WiremockBaseHttpUrl}/__admin/requests").ConfigureAwait(false);
+            result.EnsureSuccessStatusCode();
+        }
+        catch (TaskCanceledException)
+        {
+            // in case wiremock is unavailable (port conflicts, jvm gc pause, tp starvation or any other reason)
+            _runner = WiremockRunner.NewWiremock();
+        }
     }
 
     public TaskOrValueTask DisposeAsync() => TaskOrValueTask.CompletedTask;
