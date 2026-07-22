@@ -24,11 +24,11 @@ public sealed class ChunkDownloadCancellationTest : SFBaseTestAsync
         _fixture = fixture;
     }
 
-    [SFFact]
+    [SFFact(RetriesCount = RetriesCount.Thrice)]
     public async Task TestCancellationDuringJsonChunkDownloadThrows()
     {
         // Generate enough data to require chunked results (multiple chunks)
-        const int TestRowCount = 20000;
+        const int TestRowCount = 90000;
         var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
 
         using var conn = new SnowflakeDbConnection();
