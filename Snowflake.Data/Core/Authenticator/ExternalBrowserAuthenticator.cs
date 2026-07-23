@@ -58,7 +58,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 var host = session.properties[SFSessionProperty.HOST];
                 _idTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                    tokenType: TokenType.IdToken.GetAttribute<StringAttr>().value,
+                    tokenType: TokenType.IdToken.ToCacheKeyPrefix(),
                     idp: "",
                     snowflake: host,
                     username: user,

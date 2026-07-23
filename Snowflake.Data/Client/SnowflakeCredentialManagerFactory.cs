@@ -42,13 +42,12 @@ namespace Snowflake.Data.Client
 
         /// <summary>
         /// Builds a v2 token cache key:
-        /// <c>SnowflakeTokenCache.v2.&lt;TOKEN_TYPE&gt;.&lt;sha256hex(canonical_json(keyData))&gt;</c>.
-        /// The token type appears in the readable prefix so keystore tooling can identify token
-        /// classes without decoding the opaque hash. <c>keyData</c> is flow-specific and never
-        /// contains <c>token_type</c>: OAuth flows include <c>idp</c>, <c>role</c>,
-        /// <c>snowflake</c>, and <c>username</c>; MFA and ID token flows include only
-        /// <c>snowflake</c> and <c>username</c> (role is not embedded in those auth calls and
-        /// authentication always targets the Snowflake host directly).
+        /// <c>SnowflakeTokenCache.v2.&lt;TokenType&gt;.&lt;sha256hex(canonical_json(keyData))&gt;</c>.
+        /// The PascalCase token type appears in the readable prefix so keystore tooling can
+        /// identify token classes without decoding the opaque hash. <c>keyData</c> is
+        /// flow-specific and never contains the token type: OAuth flows include <c>idp</c>,
+        /// <c>role</c>, <c>snowflake</c>, and <c>username</c> (all lowercased); MFA and ID
+        /// token flows include only <c>snowflake</c> and <c>username</c>.
         /// </summary>
         internal static string BuildCacheKey(CacheKeyInput input)
         {
@@ -57,9 +56,9 @@ namespace Snowflake.Data.Client
             if (string.IsNullOrEmpty(input.Username))
                 throw new ArgumentException("username must not be empty");
 
-            bool isOAuth = input.TokenType is "OAUTH_ACCESS_TOKEN"
-                            or "OAUTH_REFRESH_TOKEN"
-                            or "DPOP_BUNDLED_ACCESS_TOKEN";
+            bool isOAuth = input.TokenType is "OauthAccessToken"
+                            or "OauthRefreshToken"
+                            or "DpopBundledAccessToken";
 
             SortedDictionary<string, string> keyData;
             if (isOAuth)
@@ -87,7 +86,7 @@ namespace Snowflake.Data.Client
         }
 
         /// <summary>
-        /// Strips the scheme and any userinfo prefix, drops query and fragment, then uppercases the
+        /// Strips the scheme and any userinfo prefix, drops query and fragment, then lowercases the
         /// remaining authority (host and any explicitly-stated port) and path, trimming trailing slashes.
         /// The raw string is used (not a parsed URL) so an explicit default port such as <c>:443</c> is preserved.
         /// </summary>
@@ -113,26 +112,21 @@ namespace Snowflake.Data.Client
             if (atIdx >= 0)
                 authority = authority.Substring(atIdx + 1);
 
-            return (authority + path).TrimEnd('/').ToUpperInvariant();
+            return (authority + path).TrimEnd('/').ToLowerInvariant();
         }
 
         /// <summary>
-        /// Uppercases unquoted segments (ASCII only, matching Snowflake identifier case-folding);
-        /// preserves the content of double-quoted segments verbatim (including surrounding quotes).
+        /// Normalizes a Snowflake identifier for use as a cache key field.
+        /// If the value contains any double-quote character (<c>"</c>), it is returned
+        /// verbatim — the quotes signal case-sensitive SQL semantics that must not be altered.
+        /// Otherwise the entire value is lowercased: unquoted identifiers are case-insensitive
+        /// in Snowflake so lowercasing produces a stable canonical form.
         /// </summary>
         internal static string NormalizeIdentifier(string identifier)
         {
             if (string.IsNullOrEmpty(identifier))
                 return string.Empty;
-            var sb = new StringBuilder(identifier.Length);
-            bool inQuotes = false;
-            foreach (char c in identifier)
-            {
-                if (c == '"') { inQuotes = !inQuotes; sb.Append(c); }
-                else if (inQuotes) sb.Append(c);
-                else sb.Append(c >= 'a' && c <= 'z' ? (char)(c - ('a' - 'A')) : c);
-            }
-            return sb.ToString();
+            return identifier.Contains("\"") ? identifier : identifier.ToLowerInvariant();
         }
 
         private static string ToSha256HashLower(string text)

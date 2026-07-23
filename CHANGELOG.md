@@ -6,6 +6,9 @@
       scenarios by switching to a versioned, SHA256-hashed canonical-JSON key with the
       token type in the key prefix, applied uniformly across Windows Credential Manager
       and file backends.
+    - Fixed token cache key normalization to use lowercase for consistency with
+      case-insensitive Snowflake identifiers; token type in the key prefix now uses
+      PascalCase (`MfaToken`, `OauthAccessToken`) instead of `SCREAMING_SNAKE_CASE`.
 - v5.8.0
   -  Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
   -  Reduced synchronization context capture in library, minimizing the risk of deadlock occurrence across different code path executions.

@@ -132,7 +132,7 @@ namespace Snowflake.Data.Core
                     !string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
                     var idTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                        tokenType: TokenType.IdToken.GetAttribute<StringAttr>().value,
+                        tokenType: TokenType.IdToken.ToCacheKeyPrefix(),
                         idp: "",
                         snowflake: properties[SFSessionProperty.HOST],
                         username: properties[SFSessionProperty.USER],
@@ -144,7 +144,7 @@ namespace Snowflake.Data.Core
                 {
                     _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
                     var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                        tokenType: TokenType.MFAToken.GetAttribute<StringAttr>().value,
+                        tokenType: TokenType.MFAToken.ToCacheKeyPrefix(),
                         idp: "",
                         snowflake: properties[SFSessionProperty.HOST],
                         username: properties[SFSessionProperty.USER],
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Core
                     logger.Info($"Unable to use cached MFA token is expired or invalid. Fails with the {e.Message}. ", e);
                     _mfaToken = null;
                     var mfaKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                        tokenType: TokenType.MFAToken.GetAttribute<StringAttr>().value,
+                        tokenType: TokenType.MFAToken.ToCacheKeyPrefix(),
                         idp: "",
                         snowflake: properties[SFSessionProperty.HOST],
                         username: properties[SFSessionProperty.USER],
@@ -249,7 +249,7 @@ namespace Snowflake.Data.Core
                     MFACacheAuthenticator.IsMfaCacheAuthenticator(_authenticatorType))
                 {
                     var mfaKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                        tokenType: TokenType.MFAToken.GetAttribute<StringAttr>().value,
+                        tokenType: TokenType.MFAToken.ToCacheKeyPrefix(),
                         idp: "",
                         snowflake: properties[SFSessionProperty.HOST],
                         username: properties[SFSessionProperty.USER],
