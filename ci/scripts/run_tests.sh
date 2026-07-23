@@ -13,7 +13,6 @@
 #
 # Required environment variables:
 #   use_dotnet_run      - "true" to use 'dotnet run', otherwise uses 'dotnet test'
-#   test_args           - Test arguments with %s placeholder for results base name
 #   net_version         - Target framework (e.g., "net8.0")
 #   snowflake_cloud_env - Cloud environment (e.g., "AWS", "AZURE", "GCP")
 #
@@ -32,12 +31,12 @@ RESULTS_BASE="${PLATFORM}_${net_version}_${snowflake_cloud_env}_results"
 COVERAGE_FILE="${PLATFORM}_${net_version}_${snowflake_cloud_env}_coverage.xml"
 JUNIT_XML="${RESULTS_BASE}.junit.xml"
 
-ARGS="${test_args/\%s/$RESULTS_BASE}"
-
 if [[ "$use_dotnet_run" == "true" ]]; then
     TEST_CMD="dotnet run"
+    ARGS="--no-build --verbosity detailed -junit ${RESULTS_BASE}.junit.xml"
 else
     TEST_CMD="dotnet test"
+    ARGS="--no-build --verbosity detailed --logger junit;LogFilePath=${RESULTS_BASE}.junit.xml"
 fi
 
 echo "[INFO] Running tests: platform=$PLATFORM, framework=$net_version, cloud=$snowflake_cloud_env, runner=$TEST_CMD"

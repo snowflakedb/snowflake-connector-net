@@ -40,43 +40,33 @@ jobs:
           - dotnet: net6.0
             sdk: '6.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             sdk: '9.0.x'
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             sdk: '10.0.x'
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net462
             sdk: '6.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net471
             sdk: '6.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net472
             sdk: '6.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net48
             sdk: '6.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net481
             sdk: '6.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -126,7 +116,6 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
-          test_args: ${{ matrix.test_args }}
       - name: Flaky Test Warning
         if: steps.run-tests-windows.outputs.retried_tests != ''
         shell: bash
@@ -167,23 +156,18 @@ jobs:
           - dotnet: net6.0
             sdk: '6.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             sdk: '9.0.x'
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             sdk: '10.0.x'
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -228,7 +212,6 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
-          test_args: ${{ matrix.test_args }}
       - name: Flaky Test Warning
         if: steps.run-tests-linux.outputs.retried_tests != ''
         run: |
@@ -268,23 +251,18 @@ jobs:
           - dotnet: net6.0
             sdk: '6.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             sdk: '7.0.x'
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             sdk: '8.0.x'
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             sdk: '9.0.x'
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             sdk: '10.0.x'
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -329,7 +307,6 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
-          test_args: ${{ matrix.test_args }}
       - name: Flaky Test Warning
         if: steps.run-tests-mac.outputs.retried_tests != ''
         run: |
@@ -368,19 +345,14 @@ jobs:
         include:
           - dotnet: net6.0
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net7.0
             use_dotnet_run: 'false'
-            test_args: '--no-build --verbosity detailed --logger junit;LogFilePath=%s.junit.xml'
           - dotnet: net8.0
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net9.0
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
           - dotnet: net10.0
             use_dotnet_run: 'true'
-            test_args: '--no-build -junit %s.junit.xml'
     steps:
       - uses: actions/checkout@v4
       - name: Build and Run Tests in Docker
@@ -392,7 +364,6 @@ jobs:
           net_version: ${{ matrix.dotnet }}
           DOTNET_COVERAGE_VERSION: "17.8.4"
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
-          test_args: ${{ matrix.test_args }}
         shell: bash
       - name: Flaky Test Warning
         if: hashFiles('Snowflake.Data.Tests/.retried_tests') != ''
