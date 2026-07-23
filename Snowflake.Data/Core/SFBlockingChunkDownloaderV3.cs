@@ -172,7 +172,7 @@ namespace Snowflake.Data.Core
                 }
                 catch (Exception e)
                 {
-                    if ((maxRetry <= 0) || (retryCount < maxRetry))
+                    if (!downloadContext.CancellationToken.IsCancellationRequested && (maxRetry <= 0 || retryCount < maxRetry))
                     {
                         s_logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
                         retry = true;
