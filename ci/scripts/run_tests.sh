@@ -33,16 +33,16 @@ JUNIT_XML="${RESULTS_BASE}.junit.xml"
 
 if [[ "$use_dotnet_run" == "true" ]]; then
     TEST_CMD="dotnet run"
-    ARGS="--no-build --verbosity detailed -junit ${RESULTS_BASE}.junit.xml"
+    ARGS="--framework $net_version --no-build --verbosity detailed -junit ${RESULTS_BASE}.junit.xml"
 else
     TEST_CMD="dotnet test"
-    ARGS="--no-build --verbosity detailed --logger junit;LogFilePath=${RESULTS_BASE}.junit.xml"
+    ARGS="--framework $net_version --no-build --verbosity detailed --logger junit;LogFilePath=${RESULTS_BASE}.junit.xml"
 fi
 
 echo "[INFO] Running tests: platform=$PLATFORM, framework=$net_version, cloud=$snowflake_cloud_env, runner=$TEST_CMD"
 
 set +e
-dotnet-coverage collect "$TEST_CMD --framework $net_version ${ARGS}" --output "$COVERAGE_FILE" --output-format cobertura --settings coverage.config
+dotnet-coverage collect "$TEST_CMD ${ARGS}" --output "$COVERAGE_FILE" --output-format cobertura --settings coverage.config
 TEST_EXIT=$?
 set -e
 
