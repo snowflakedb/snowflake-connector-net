@@ -172,7 +172,13 @@ namespace Snowflake.Data.Core
                 }
                 catch (Exception e)
                 {
-                    if (!downloadContext.CancellationToken.IsCancellationRequested && (maxRetry <= 0 || retryCount < maxRetry))
+                    if (e is OperationCanceledException || downloadContext.CancellationToken.IsCancellationRequested)
+                    {
+                        s_logger.Error($"Operation has been canceled. {e.Message}");
+                        throw;
+                    }
+
+                    if (maxRetry <= 0 || retryCount < maxRetry)
                     {
                         s_logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
                         retry = true;
