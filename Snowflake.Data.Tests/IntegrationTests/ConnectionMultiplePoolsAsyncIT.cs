@@ -10,6 +10,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {

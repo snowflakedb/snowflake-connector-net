@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Snowflake.Data.Tests.Util.Shims;
 using Xunit.Sdk;
 
 #if NET8_0_OR_GREATER

@@ -22,7 +22,7 @@ public sealed class SFFactAttribute : FactAttribute
 
     public RetriesCount RetriesCount { get; set; }
 
-    public SFFactAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = 0, [CallerFilePath] string sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
+    public SFFactAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = RetriesCount.Once, [CallerFilePath] string sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
 #if NET8_0_OR_GREATER
         : base(sourceFilePath, sourceLineNumber)
 #endif
@@ -47,7 +47,7 @@ public sealed class SFTheoryAttribute : TheoryAttribute
 
     public RetriesCount RetriesCount { get; set; }
 
-    public SFTheoryAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = 0, [CallerFilePath] string sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
+    public SFTheoryAttribute(SkipCondition skip = SkipCondition.None, bool dedicatedSessionPool = false, RetriesCount retriesCount = RetriesCount.Once, [CallerFilePath] string sourceFilePath = null, [CallerLineNumber] int sourceLineNumber = -1)
 #if NET8_0_OR_GREATER
         : base(sourceFilePath, sourceLineNumber)
 #endif
