@@ -106,8 +106,6 @@ jobs:
           cd Snowflake.Data.Tests
           dotnet restore
           dotnet build -f ${{ matrix.dotnet }} '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
-      - name: Setup xmllint
-        run: choco install xsltproc --no-progress -y
       - name: Run Tests
         id: run-tests-windows
         shell: bash
@@ -116,11 +114,6 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
-      - name: Flaky Test Warning
-        if: steps.run-tests-windows.outputs.retried_tests != ''
-        shell: bash
-        run: |
-          echo "::warning::The following integration tests were flaky and passed on retry: ${{ steps.run-tests-windows.outputs.retried_tests }}"
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
@@ -212,10 +205,6 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
-      - name: Flaky Test Warning
-        if: steps.run-tests-linux.outputs.retried_tests != ''
-        run: |
-          echo "::warning::The following integration tests were flaky and passed on retry: ${{ steps.run-tests-linux.outputs.retried_tests }}"
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
@@ -307,10 +296,6 @@ jobs:
           snowflake_cloud_env: ${{ matrix.cloud_env }}
           net_version: ${{ matrix.dotnet }}
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
-      - name: Flaky Test Warning
-        if: steps.run-tests-mac.outputs.retried_tests != ''
-        run: |
-          echo "::warning::The following integration tests were flaky and passed on retry: ${{ steps.run-tests-mac.outputs.retried_tests }}"
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
@@ -365,12 +350,6 @@ jobs:
           DOTNET_COVERAGE_VERSION: "17.8.4"
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
         shell: bash
-      - name: Flaky Test Warning
-        if: hashFiles('Snowflake.Data.Tests/.retried_tests') != ''
-        shell: bash
-        run: |
-          RETRIED=$(cat Snowflake.Data.Tests/.retried_tests)
-          echo "::warning::The following integration tests were flaky and passed on retry: $RETRIED"
       - name: Upload Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
