@@ -66,8 +66,8 @@ public class SFTestCaseRunner : XunitTestCaseRunnerBase<SFCaseRunnerContext, IXu
 
         for(;;)
         {
-            if (runCount > 1)
-                await Task.Delay(500).ConfigureAwait(false); //back-off
+            var backOffMs = 500 * ((1 << runCount) - 1);
+            await Task.Delay(backOffMs).ConfigureAwait(false);
 
             var delayedMessageBus = new SFDelayedMessageBus(ctxt.MessageBus);
             var aggregator = ctxt.Aggregator.Clone();
@@ -81,7 +81,7 @@ public class SFTestCaseRunner : XunitTestCaseRunnerBase<SFCaseRunnerContext, IXu
                 ctxt.BeforeAfterTestAttributes
             ).ConfigureAwait(false);
 
-            if (!(aggregator.HasExceptions || result.Failed != 0) || ++runCount >= maxRetries)
+            if (!(aggregator.HasExceptions || result.Failed != 0) || ++runCount > maxRetries)
             {
                 delayedMessageBus.Dispose();
                 return result;

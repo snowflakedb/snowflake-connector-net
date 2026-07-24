@@ -2,6 +2,7 @@
 
 # Changelog
 - v6.0.0
+  -  NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.
   -  Added `CancellationToken` support to chunk download and parsing pipeline. Query result fetching now respects cancellation during both JSON and Arrow chunk parsing.
   -  Upgraded `AWSSDK.S3` dependency. Now getting object header invokes HEAD s3 call instead of GET.
   -  Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
