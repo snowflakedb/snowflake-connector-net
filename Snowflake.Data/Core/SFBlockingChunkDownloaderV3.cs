@@ -210,11 +210,8 @@ namespace Snowflake.Data.Core
 
         private static async Task ParseStreamIntoChunkAsync(Stream content, BaseResultChunk resultChunk, CancellationToken cancellationToken)
         {
-            // TODO use timespan methods.
-            var idleTimeoutSeconds = EnvironmentFacade.Instance.GetInt(EnvVars.ChunkDownloadIdleTimeout);
-            var idleTimeout = TimeSpan.FromSeconds(idleTimeoutSeconds);
-            var readTimeoutSeconds = EnvironmentFacade.Instance.GetInt(EnvVars.ChunkDownloadReadTimeout);
-            var readTimeout = TimeSpan.FromSeconds(readTimeoutSeconds);
+            var idleTimeout = EnvironmentFacade.Instance.GetTimeSpan(EnvVars.ChunkDownloadIdleTimeout);
+            var readTimeout = EnvironmentFacade.Instance.GetTimeSpan(EnvVars.ChunkDownloadReadTimeout);
             using var timeoutStream = new IdleTimeoutReadStream(content, idleTimeout, readTimeout);
             var parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, timeoutStream);
             await parser.ParseChunkAsync(resultChunk, cancellationToken).ConfigureAwait(false);

@@ -105,9 +105,6 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270066)]
         WIF_ATTESTATION_ERROR,
 
-        [SFErrorAttr(errorCode = 270067)]
-        CHUNK_DOWNLOAD_IDLE_TIMEOUT,
-
         [SFErrorAttr(errorCode = 390111)]
         SESSION_GONE,
 

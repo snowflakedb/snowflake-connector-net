@@ -10,14 +10,14 @@ internal sealed class IdleTimeoutReadStream : Stream
     private readonly Stream _inner;
     private readonly TimeSpan _idleTimeout;
     private readonly TimeSpan _readTimeout;
-    private readonly CancellationTokenSource _timeoutCts;
+    private readonly CancellationTokenSource _idleCts;
 
     public IdleTimeoutReadStream(Stream inner, TimeSpan idleTimeout, TimeSpan readTimeout)
     {
         _inner = inner;
         _idleTimeout = idleTimeout;
         _readTimeout = readTimeout;
-        _timeoutCts = new CancellationTokenSource();
+        _idleCts = new CancellationTokenSource();
     }
 
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
@@ -25,28 +25,28 @@ internal sealed class IdleTimeoutReadStream : Stream
         if (_idleTimeout.Ticks <= 0 && _readTimeout.Ticks <= 0)
             return await _inner.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
 
-        if (_timeoutCts.IsCancellationRequested)
+        if (_idleCts.IsCancellationRequested)
             throw new TimeoutException($"No data received for {_idleTimeout.TotalSeconds} seconds");
 
-        CancellationTokenSource linkedCts = null;
-        CancellationToken linkedCancelToken;
+        CancellationTokenSource readCts = null;
+        CancellationToken readToken;
         if (_readTimeout.Ticks > 0)
         {
-            _timeoutCts.CancelAfter(_readTimeout);
-            linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _timeoutCts.Token);
-            linkedCancelToken = linkedCts.Token;
+            readCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            readCts.CancelAfter(_readTimeout);
+            readToken = readCts.Token;
         }
         else
         {
-            linkedCancelToken = cancellationToken;
+            readToken = cancellationToken;
         }
 
         try
         {
-            var result = await _inner.ReadAsync(buffer, offset, count, linkedCancelToken).ConfigureAwait(false);
+            var result = await _inner.ReadAsync(buffer, offset, count, readToken).ConfigureAwait(false);
 
             if (_idleTimeout.Ticks > 0)
-                _timeoutCts.CancelAfter(_idleTimeout);
+                _idleCts.CancelAfter(_idleTimeout);
 
             return result;
         }
@@ -56,7 +56,7 @@ internal sealed class IdleTimeoutReadStream : Stream
         }
         finally
         {
-            linkedCts?.Dispose();
+            readCts?.Dispose();
         }
     }
 
@@ -78,7 +78,7 @@ internal sealed class IdleTimeoutReadStream : Stream
         if (disposing)
         {
             _inner.Dispose();
-            _timeoutCts.Dispose();
+            _idleCts.Dispose();
         }
 
         base.Dispose(disposing);
