@@ -21,6 +21,8 @@ internal static class EnvVars
     internal static readonly EnvVar<bool> DisablePlatformDetection = new("SNOWFLAKE_DISABLE_PLATFORM_DETECTION", false);
     internal static readonly EnvVar<int> CrlValidityTime = new("SF_CRL_VALIDITY_TIME", 1);
     internal static readonly EnvVar<int> CrlCacheRemovalDelay = new("SF_CRL_CACHE_REMOVAL_DELAY", 7);
+    internal static readonly EnvVar<int> ChunkDownloadIdleTimeout = new("SF_CHUNK_DOWNLOAD_IDLE_TIMEOUT", 180);
+    internal static readonly EnvVar<int> ChunkDownloadReadTimeout = new("SF_CHUNK_DOWNLOAD_READ_TIMEOUT", 0);
 
     internal static readonly EnvVar<string> SnowflakeHome = new("SNOWFLAKE_HOME", string.Empty);
     internal static readonly EnvVar<string> DefaultConnectionName = new("SNOWFLAKE_DEFAULT_CONNECTION_NAME", "default");

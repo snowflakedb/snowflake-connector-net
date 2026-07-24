@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Configuration;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
@@ -208,7 +210,13 @@ namespace Snowflake.Data.Core
 
         private static async Task ParseStreamIntoChunkAsync(Stream content, BaseResultChunk resultChunk, CancellationToken cancellationToken)
         {
-            var parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, content);
+            // TODO use timespan methods.
+            var idleTimeoutSeconds = EnvironmentFacade.Instance.GetInt(EnvVars.ChunkDownloadIdleTimeout);
+            var idleTimeout = TimeSpan.FromSeconds(idleTimeoutSeconds);
+            var readTimeoutSeconds = EnvironmentFacade.Instance.GetInt(EnvVars.ChunkDownloadReadTimeout);
+            var readTimeout = TimeSpan.FromSeconds(readTimeoutSeconds);
+            using var timeoutStream = new IdleTimeoutReadStream(content, idleTimeout, readTimeout);
+            var parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, timeoutStream);
             await parser.ParseChunkAsync(resultChunk, cancellationToken).ConfigureAwait(false);
         }
     }

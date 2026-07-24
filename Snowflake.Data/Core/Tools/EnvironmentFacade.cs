@@ -9,6 +9,7 @@ internal interface IEnvironmentFacade
 {
     bool GetBool(EnvVar<bool> envVar);
     int GetInt(EnvVar<int> envVar);
+    // TODO add GetTimeSpan
     string GetString(EnvVar<string> envVar);
     string GetFolderPath(Environment.SpecialFolder folder);
     string GetExecutionDirectory();
