@@ -45,12 +45,12 @@ internal sealed class EnvironmentFacade : IEnvironmentFacade
     {
         var result = Extract(envVar, s =>
         {
-            if (!int.TryParse(s, out var parsed))
-                return (false, TimeSpan.Zero);
-
             return envVar.ParseMode switch
             {
-                EnvVarParseMode.FromSeconds => (true, TimeSpan.FromSeconds(parsed)),
+                EnvVarParseMode.FromSeconds => int.TryParse(s, out var parsed)
+                    ? (true, TimeSpan.FromSeconds(parsed))
+                    : (false, TimeSpan.Zero),
+                EnvVarParseMode.Default => (true, TimeSpan.Parse(s)),
                 _ => (false, TimeSpan.Zero)
             };
         });
