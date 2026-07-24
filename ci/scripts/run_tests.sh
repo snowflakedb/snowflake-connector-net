@@ -1,9 +1,7 @@
 #!/bin/bash
 #
-# Run .NET connector tests with automatic retry for flaky integration tests.
-#
-# If fewer than 3 integration tests fail (and no unit tests fail), retries
-# only those tests once. Produces a warning annotation on success-after-retry.
+# Run .NET connector tests.
+
 #
 # Usage:
 #   ./run_tests.sh <platform>
@@ -15,9 +13,6 @@
 #   use_dotnet_run      - "true" to use 'dotnet run', otherwise uses 'dotnet test'
 #   net_version         - Target framework (e.g., "net8.0")
 #   snowflake_cloud_env - Cloud environment (e.g., "AWS", "AZURE", "GCP")
-#
-# Dependencies:
-#   xmllint (pre-installed on Ubuntu, macOS, Rocky Linux)
 #
 
 PLATFORM="$1"
