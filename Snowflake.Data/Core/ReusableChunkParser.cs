@@ -1,109 +1,75 @@
+using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+using Snowflake.Data.Client;
+using System.Threading.Tasks;
+
+/// <summary>
+/// Very fast parser, only supports strings and nulls
+/// Never generates parsing errors
+/// </summary>
+internal class ReusableChunkParser : IChunkParser
 {
-    using Snowflake.Data.Client;
-    using System.Threading.Tasks;
+    private readonly Stream _stream;
 
-    internal class FastStreamWrapper
+    internal ReusableChunkParser(Stream stream)
     {
-        Stream wrappedStream;
-        byte[] buffer = new byte[32768];
-        int count = 0;
-        int next = 0;
-
-        public FastStreamWrapper(Stream s)
-        {
-            wrappedStream = s;
-        }
-
-        // Small method to encourage inlining
-        public int ReadByte()
-        {
-            // fast path first
-            if (next < count)
-                return buffer[next++];
-            else
-                return ReadByteSlow();
-        }
-
-        private int ReadByteSlow()
-        {
-            // fast path first
-            if (next < count)
-                return buffer[next++];
-
-            if (count >= 0)
-            {
-                next = 0;
-                count = wrappedStream.Read(buffer, 0, buffer.Length);
-            }
-
-            if (count <= 0)
-            {
-                count = -1;
-                return -1;
-            }
-
-            return buffer[next++];
-        }
+        _stream = stream;
     }
 
-    internal class ReusableChunkParser : IChunkParser
+    public Task ParseChunkAsync(IResultChunk chunk, CancellationToken cancellationToken)
     {
-        // Very fast parser, only supports strings and nulls
-        // Never generates parsing errors
+        var rc = (SFReusableChunk)chunk;
 
-        private readonly Stream stream;
+        var input = new FastStreamWrapper(_stream);
+        var ms = new FastMemoryStream();
 
-        internal ReusableChunkParser(Stream stream)
+        return Task.Run(() => ParseChunk(rc, input, ms, cancellationToken), cancellationToken);
+    }
+
+    private static async Task ParseChunk(SFReusableChunk rc, FastStreamWrapper input, FastMemoryStream ms, CancellationToken cancelToken)
+    {
+        var inString = false;
+        for (; ; )
         {
-            this.stream = stream;
-        }
+            var c = await input.ReadByteAsync(cancelToken).ConfigureAwait(false);
 
-        public async Task ParseChunk(IResultChunk chunk)
-        {
-            SFReusableChunk rc = (SFReusableChunk)chunk;
+            if (c < 0)
+                break;
 
-            bool inString = false;
-            int c;
-            var input = new FastStreamWrapper(stream);
-            var ms = new FastMemoryStream();
-            await Task.Run(() =>
+            if (!inString)
             {
-                while ((c = input.ReadByte()) >= 0)
+                switch (c)
                 {
-                    if (!inString)
-                    {
-                        // n means null
-                        // " quote means begin string
-                        // all else are ignored
-                        if (c == '"')
+                    case '"': // " quote means begin string
+                        inString = true;
+                        break;
+                    case 'n': // n means null
+                        rc.AddCell(null, 0);
+                        break;
+                }
+                // ignore anything else
+            }
+            else
+            {
+                switch (c)
+                {
+                    // Inside a string, look for end string
+                    // Anything else is saved in the buffer
+                    case '"':
+                        rc.AddCell(ms.GetBuffer(), ms.Length);
+                        ms.Clear();
+                        inString = false;
+                        break;
+                    case '\\':
                         {
-                            inString = true;
-                        }
-                        else if (c == 'n')
-                        {
-                            rc.AddCell(null, 0);
-                        }
-                        // ignore anything else
-                    }
-                    else
-                    {
-                        // Inside a string, look for end string
-                        // Anything else is saved in the buffer
-                        if (c == '"')
-                        {
-                            rc.AddCell(ms.GetBuffer(), ms.Length);
-                            ms.Clear();
-                            inString = false;
-                        }
-                        else if (c == '\\')
-                        {
-                            bool caseU = false;
+                            var caseU = false;
                             // Process next character
-                            c = input.ReadByte();
+                            c = await input.ReadByteAsync(cancelToken).ConfigureAwait(false);
                             switch (c)
                             {
                                 case 'n':
@@ -120,34 +86,38 @@ namespace Snowflake.Data.Core
                                     break;
                                 case 'u':
                                     caseU = true;
-                                    StringBuilder byteStr = new StringBuilder("");
-                                    for (int i = 0; i < 4; i++)
+                                    var byteStr = new StringBuilder("");
+                                    for (var i = 0; i < 4; i++)
                                     {
-                                        byteStr.Append((char)input.ReadByte());
+                                        var readByte = await input.ReadByteAsync(cancelToken).ConfigureAwait(false);
+                                        byteStr.Append((char)readByte);
                                     }
-                                    int ascii = int.Parse(byteStr.ToString(), System.Globalization.NumberStyles.HexNumber);
-                                    char asciiChar = (char)ascii;
+
+                                    var ascii = int.Parse(byteStr.ToString(), System.Globalization.NumberStyles.HexNumber);
+                                    var asciiChar = (char)ascii;
                                     ms.WriteByte((byte)asciiChar);
                                     break;
                                 case -1:
                                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
                             }
+
                             // The 'u' case already writes to stream so skip to prevent re-writing
                             // If not skipped, unicode characters are added an extra u (e.g "/u007f" becomes "/u007fu")
                             if (!caseU)
                             {
                                 ms.WriteByte((byte)c);
                             }
+
+                            break;
                         }
-                        else
-                        {
-                            ms.WriteByte((byte)c);
-                        }
-                    }
+                    default:
+                        ms.WriteByte((byte)c);
+                        break;
                 }
-                if (inString)
-                    throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in string");
-            }).ConfigureAwait(false);
+            }
         }
+
+        if (inString)
+            throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in string");
     }
 }

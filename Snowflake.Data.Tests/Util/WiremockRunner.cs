@@ -16,6 +16,7 @@ namespace Snowflake.Data.Tests.Util
         string WiremockBaseHttpsUrl { get; }
         void Stop();
         void ResetMapping();
+        Task ResetMappingAsync();
         void AddMappings(string file, StringTransformations transformations = null);
     }
 
@@ -91,6 +92,8 @@ namespace Snowflake.Data.Tests.Util
                     return runner;
                 }
                 retries++;
+                httpsPort++;
+                httpPort++;
                 Thread.Sleep(RetryInterval);
             }
 
@@ -170,14 +173,14 @@ namespace Snowflake.Data.Tests.Util
             IsAvailable = false;
         }
 
-        public void ResetMapping()
+        public async Task ResetMappingAsync()
         {
-            var response = Task.Run(async () => await s_httpClient.PostAsync(WiremockBaseHttpUrl + "/__admin/reset", null).ConfigureAwait(false)).Result;
+            var response = await s_httpClient.PostAsync(WiremockBaseHttpUrl + "/__admin/reset", null).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
-            {
                 throw new Exception($"Unable to reset Wiremock mappings. Response status code: {response.StatusCode}");
-            }
         }
+
+        public void ResetMapping() => ResetMappingAsync().GetAwaiter().GetResult();
 
         public void AddMappings(string file, StringTransformations transformations = null)
         {

@@ -1,126 +1,112 @@
 using System;
 using System.IO.Compression;
 using System.IO;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Http;
-using Newtonsoft.Json;
-using System.Diagnostics;
-using Newtonsoft.Json.Serialization;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
-    class SFBlockingChunkDownloaderV3 : IChunkDownloader
+    internal sealed class SFBlockingChunkDownloaderV3 : IChunkDownloader
     {
-        static private SFLogger logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloaderV3>();
+        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloaderV3>();
 
-        private List<BaseResultChunk> chunkDatas = new List<BaseResultChunk>();
+        private readonly List<BaseResultChunk> _chunkDatas = new();
 
-        private string qrmk;
+        private readonly string _qrmk;
 
-        private int nextChunkToDownloadIndex;
+        // External cancellation token, used to stop download
+        private readonly CancellationToken _externalCancellationToken;
 
-        private int nextChunkToConsumeIndex;
+        private readonly int _prefetchSlot;
+        private readonly IRestRequester _restRequester;
+        private readonly SFSessionProperties _sessionProperties;
+        private readonly Dictionary<string, string> _chunkHeaders;
+        private readonly SFBaseResultSet _resultSet;
+        private readonly List<ExecResponseChunk> _chunkInfos;
+        private readonly List<Task<BaseResultChunk>> _taskQueues;
 
-        // External cancellation token, used to stop donwload
-        private CancellationToken externalCancellationToken;
-
-        private readonly int prefetchSlot;
-
-        private readonly IRestRequester _RestRequester;
-
-        private readonly SFSessionProperties sessionProperies;
-
-        private Dictionary<string, string> chunkHeaders;
-
-        private readonly SFBaseResultSet ResultSet;
-
-        private readonly List<ExecResponseChunk> chunkInfos;
-
-        private readonly List<Task<BaseResultChunk>> taskQueues;
+        private int _nextChunkToDownloadIndex;
+        private int _nextChunkToConsumeIndex;
 
         public SFBlockingChunkDownloaderV3(int colCount,
             List<ExecResponseChunk> chunkInfos, string qrmk,
             Dictionary<string, string> chunkHeaders,
             CancellationToken cancellationToken,
-            SFBaseResultSet ResultSet,
+            SFBaseResultSet resultSet,
             ResultFormat resultFormat)
         {
-            this.qrmk = qrmk;
-            this.chunkHeaders = chunkHeaders;
-            this.nextChunkToDownloadIndex = 0;
-            this.ResultSet = ResultSet;
-            this._RestRequester = ResultSet.sfStatement.SfSession.restRequester;
-            this.sessionProperies = ResultSet.sfStatement.SfSession.properties;
-            this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
-            this.chunkInfos = chunkInfos;
-            this.nextChunkToConsumeIndex = 0;
-            this.taskQueues = new List<Task<BaseResultChunk>>();
-            externalCancellationToken = cancellationToken;
+            _qrmk = qrmk;
+            _chunkHeaders = chunkHeaders;
+            _nextChunkToDownloadIndex = 0;
+            _resultSet = resultSet;
+            _restRequester = resultSet.sfStatement.SfSession.restRequester;
+            _sessionProperties = resultSet.sfStatement.SfSession.properties;
+            _prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(resultSet));
+            _chunkInfos = chunkInfos;
+            _nextChunkToConsumeIndex = 0;
+            _taskQueues = [];
+            _externalCancellationToken = cancellationToken;
 
-            for (int i = 0; i < prefetchSlot; i++)
+            for (var i = 0; i < _prefetchSlot; i++)
             {
-                BaseResultChunk resultChunk =
+                var resultChunk =
                     resultFormat == ResultFormat.ARROW ? (BaseResultChunk)
                         new ArrowResultChunk(colCount) :
                         new SFReusableChunk(colCount);
 
-                resultChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
-                chunkDatas.Add(resultChunk);
+                resultChunk.Reset(chunkInfos[_nextChunkToDownloadIndex], _nextChunkToDownloadIndex);
+                _chunkDatas.Add(resultChunk);
 
-                taskQueues.Add(DownloadChunkAsync(new DownloadContextV3()
+                _taskQueues.Add(DownloadChunkAsync(new DownloadContextV3()
                 {
-                    chunk = resultChunk,
-                    qrmk = this.qrmk,
-                    chunkHeaders = this.chunkHeaders,
-                    cancellationToken = this.externalCancellationToken
+                    Chunk = resultChunk,
+                    Qrmk = _qrmk,
+                    ChunkHeaders = _chunkHeaders,
+                    CancellationToken = _externalCancellationToken
                 }));
 
-                nextChunkToDownloadIndex++;
+                _nextChunkToDownloadIndex++;
             }
         }
 
-        private int GetPrefetchThreads(SFBaseResultSet resultSet)
+        private static int GetPrefetchThreads(SFBaseResultSet resultSet)
         {
-            Dictionary<SFSessionParameter, object> sessionParameters = resultSet.sfStatement.SfSession.ParameterMap;
-            String val = (String)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
-            return Int32.Parse(val);
+            var sessionParameters = resultSet.sfStatement.SfSession.ParameterMap;
+            var val = (string)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
+            return int.Parse(val);
         }
 
         public async Task<BaseResultChunk> GetNextChunkAsync()
         {
-            logger.Debug($"NextChunkToConsume: {nextChunkToConsumeIndex}, NextChunkToDownload: {nextChunkToDownloadIndex}");
-            if (nextChunkToConsumeIndex < chunkInfos.Count)
+            s_logger.Debug($"NextChunkToConsume: {_nextChunkToConsumeIndex}, NextChunkToDownload: {_nextChunkToDownloadIndex}");
+            if (_nextChunkToConsumeIndex < _chunkInfos.Count)
             {
-                Task<BaseResultChunk> chunk = taskQueues[nextChunkToConsumeIndex % prefetchSlot];
+                var chunk = _taskQueues[_nextChunkToConsumeIndex % _prefetchSlot];
 
-                if (nextChunkToDownloadIndex < chunkInfos.Count && nextChunkToConsumeIndex > 0)
+                if (_nextChunkToDownloadIndex < _chunkInfos.Count && _nextChunkToConsumeIndex > 0)
                 {
-                    BaseResultChunk reusableChunk = chunkDatas[nextChunkToDownloadIndex % prefetchSlot];
-                    reusableChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
+                    var reusableChunk = _chunkDatas[_nextChunkToDownloadIndex % _prefetchSlot];
+                    reusableChunk.Reset(_chunkInfos[_nextChunkToDownloadIndex], _nextChunkToDownloadIndex);
 
-                    taskQueues[nextChunkToDownloadIndex % prefetchSlot] = DownloadChunkAsync(new DownloadContextV3()
+                    _taskQueues[_nextChunkToDownloadIndex % _prefetchSlot] = DownloadChunkAsync(new DownloadContextV3()
                     {
-                        chunk = reusableChunk,
-                        qrmk = this.qrmk,
-                        chunkHeaders = this.chunkHeaders,
-                        cancellationToken = externalCancellationToken
+                        Chunk = reusableChunk,
+                        Qrmk = _qrmk,
+                        ChunkHeaders = _chunkHeaders,
+                        CancellationToken = _externalCancellationToken
                     });
-                    nextChunkToDownloadIndex++;
+                    _nextChunkToDownloadIndex++;
 
                     // in case of one slot we need to return the chunk already downloaded
-                    if (prefetchSlot == 1)
+                    if (_prefetchSlot == 1)
                     {
-                        chunk = taskQueues[0];
+                        chunk = _taskQueues[0];
                     }
                 }
-                nextChunkToConsumeIndex++;
+                _nextChunkToConsumeIndex++;
                 return await chunk.ConfigureAwait(false);
             }
             else
@@ -131,105 +117,110 @@ namespace Snowflake.Data.Core
 
         private async Task<BaseResultChunk> DownloadChunkAsync(DownloadContextV3 downloadContext)
         {
-            BaseResultChunk chunk = downloadContext.chunk;
-            int backOffInSec = 1;
-            bool retry = false;
-            int retryCount = 0;
-            int maxRetry = int.Parse(sessionProperies[SFSessionProperty.MAXHTTPRETRIES]);
+            var chunk = downloadContext.Chunk;
+            var backOffInSec = 1;
+            var retry = false;
+            var retryCount = 0;
+            var maxRetry = int.Parse(_sessionProperties[SFSessionProperty.MAXHTTPRETRIES]);
 
             do
             {
                 retry = false;
 
-                S3DownloadRequest downloadRequest =
-                    new S3DownloadRequest()
+                var downloadRequest =
+                    new S3DownloadRequest
                     {
                         Url = new UriBuilder(chunk.Url).Uri,
-                        qrmk = downloadContext.qrmk,
+                        qrmk = downloadContext.Qrmk,
                         // s3 download request timeout to one hour
                         RestTimeout = TimeSpan.FromHours(1),
                         HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
-                        chunkHeaders = downloadContext.chunkHeaders,
-                        sid = ResultSet.sfStatement.SfSession.sessionId
+                        chunkHeaders = downloadContext.ChunkHeaders,
+                        sid = _resultSet.sfStatement.SfSession.sessionId
                     };
 
-                using (var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
-                               .ConfigureAwait(continueOnCapturedContext: false))
-                using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
-                    .ConfigureAwait(continueOnCapturedContext: false))
+                using var httpResponse = await _restRequester.GetAsync(downloadRequest, downloadContext.CancellationToken)
+                    .ConfigureAwait(continueOnCapturedContext: false);
+#if NET6_0_OR_GREATER
+                await using var stream = await httpResponse.Content.ReadAsStreamAsync(_externalCancellationToken).ConfigureAwait(false);
+#else
+                using var stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
+#endif
+
+                // retry on chunk downloading since the retry logic in HttpClient.RetryHandler
+                // doesn't cover this. The GET request could be succeeded but network error
+                // still could happen during reading chunk data from stream and that needs
+                // retry as well.
+                try
                 {
-                    // retry on chunk downloading since the retry logic in HttpClient.RetryHandler
-                    // doesn't cover this. The GET request could be succeeded but network error
-                    // still could happen during reading chunk data from stream and that needs
-                    // retry as well.
-                    try
+                    if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding))
                     {
-                        IEnumerable<string> encoding;
-                        if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
+                        if (string.Compare(encoding.First(), "gzip", StringComparison.OrdinalIgnoreCase) == 0)
                         {
-                            if (String.Compare(encoding.First(), "gzip", true) == 0)
-                            {
-                                using (Stream streamGzip = new GZipStream(stream, CompressionMode.Decompress))
-                                {
-                                    await ParseStreamIntoChunk(streamGzip, chunk).ConfigureAwait(false);
-                                }
-                            }
-                            else
-                            {
-                                await ParseStreamIntoChunk(stream, chunk).ConfigureAwait(false);
-                            }
+                            using var streamGzip = new GZipStream(stream, CompressionMode.Decompress);
+                            await ParseStreamIntoChunkAsync(streamGzip, chunk, downloadContext.CancellationToken).ConfigureAwait(false);
                         }
                         else
                         {
-                            await ParseStreamIntoChunk(stream, chunk).ConfigureAwait(false);
+                            await ParseStreamIntoChunkAsync(stream, chunk, downloadContext.CancellationToken).ConfigureAwait(false);
                         }
                     }
-                    catch (Exception e)
+                    else
                     {
-                        if ((maxRetry <= 0) || (retryCount < maxRetry))
+                        await ParseStreamIntoChunkAsync(stream, chunk, downloadContext.CancellationToken).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (e is OperationCanceledException || downloadContext.CancellationToken.IsCancellationRequested)
+                    {
+                        s_logger.Error($"Operation has been canceled. {e.Message}");
+                        throw;
+                    }
+
+                    if (maxRetry <= 0 || retryCount < maxRetry)
+                    {
+                        s_logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
+                        retry = true;
+                        // reset the chunk before retry in case there could be garbage
+                        // data left from last attempt
+                        chunk.ResetForRetry();
+                        await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.CancellationToken).ConfigureAwait(false);
+                        ++retryCount;
+                        // Set next backoff time
+                        backOffInSec *= 2;
+                        if (backOffInSec > HttpUtil.MAX_BACKOFF)
                         {
-                            logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
-                            retry = true;
-                            // reset the chunk before retry in case there could be garbage
-                            // data left from last attempt
-                            chunk.ResetForRetry();
-                            await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.cancellationToken).ConfigureAwait(false);
-                            ++retryCount;
-                            // Set next backoff time
-                            backOffInSec = backOffInSec * 2;
-                            if (backOffInSec > HttpUtil.MAX_BACKOFF)
-                            {
-                                backOffInSec = HttpUtil.MAX_BACKOFF;
-                            }
+                            backOffInSec = HttpUtil.MAX_BACKOFF;
                         }
-                        else
-                        {
-                            //parse error
-                            logger.Error("Failed retries of parse stream to chunk error: " + e.Message);
-                            throw new Exception("Parse stream to chunk error: " + e.Message);
-                        }
+                    }
+                    else
+                    {
+                        //parse error
+                        s_logger.Error("Failed retries of parse stream to chunk error: " + e.Message);
+                        throw new Exception("Parse stream to chunk error: " + e.Message);
                     }
                 }
             } while (retry);
-            logger.Debug($"Succeed downloading chunk #{chunk.ChunkIndex}");
+            s_logger.Debug($"Succeed downloading chunk #{chunk.ChunkIndex}");
             return chunk;
         }
 
-        private async Task ParseStreamIntoChunk(Stream content, BaseResultChunk resultChunk)
+        private static async Task ParseStreamIntoChunkAsync(Stream content, BaseResultChunk resultChunk, CancellationToken cancellationToken)
         {
-            IChunkParser parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, content);
-            await parser.ParseChunk(resultChunk).ConfigureAwait(false);
+            var parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, content);
+            await parser.ParseChunkAsync(resultChunk, cancellationToken).ConfigureAwait(false);
         }
     }
 
-    class DownloadContextV3
+    internal class DownloadContextV3
     {
-        public BaseResultChunk chunk { get; set; }
+        public BaseResultChunk Chunk { get; set; }
 
-        public string qrmk { get; set; }
+        public string Qrmk { get; set; }
 
-        public Dictionary<string, string> chunkHeaders { get; set; }
+        public Dictionary<string, string> ChunkHeaders { get; set; }
 
-        public CancellationToken cancellationToken { get; set; }
+        public CancellationToken CancellationToken { get; set; }
     }
 }

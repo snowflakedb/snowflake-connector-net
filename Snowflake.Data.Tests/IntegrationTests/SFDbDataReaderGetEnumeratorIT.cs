@@ -1,15 +1,13 @@
 using System;
 using System.Linq;
 using System.Data.Common;
-using System.Data;
-using System.Globalization;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
