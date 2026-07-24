@@ -3,15 +3,14 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
+using Snowflake.Data.Tests.Util;
 using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests;
 
 public sealed class IdleTimeoutReadStreamTest
 {
-    // --- Idle timeout tests ---
-
-    [Fact]
+    [SFFact]
     public async Task TestReadAsyncCompletesNormallyWhenStreamResponds()
     {
         var data = new byte[] { 1, 2, 3, 4, 5 };
@@ -19,13 +18,13 @@ public sealed class IdleTimeoutReadStreamTest
         using var stream = new IdleTimeoutReadStream(inner, TimeSpan.FromSeconds(5), TimeSpan.Zero);
 
         var buffer = new byte[5];
-        var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
+        var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
 
         Assert.Equal(5, read);
         Assert.Equal(data, buffer);
     }
 
-    [Fact]
+    [SFFact]
     public async Task TestReadAsyncWithZeroIdleTimeoutDisablesIdleCheck()
     {
         var data = new byte[] { 1, 2, 3 };
@@ -33,13 +32,13 @@ public sealed class IdleTimeoutReadStreamTest
         using var stream = new IdleTimeoutReadStream(inner, TimeSpan.Zero, TimeSpan.Zero);
 
         var buffer = new byte[3];
-        var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
+        var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
 
         Assert.Equal(3, read);
         Assert.Equal(data, buffer);
     }
 
-    [Fact]
+    [SFFact]
     public async Task TestIdleTimeoutFiresBetweenReads()
     {
         var data = new byte[20];
@@ -48,34 +47,35 @@ public sealed class IdleTimeoutReadStreamTest
         using var stream = new IdleTimeoutReadStream(inner, TimeSpan.FromMilliseconds(50), TimeSpan.Zero);
 
         var buffer = new byte[10];
-        await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
+        await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
 
         // Wait longer than idle timeout between reads
-        await Task.Delay(100);
+        await Task.Delay(100).ConfigureAwait(false);
 
         var ex = await Assert.ThrowsAsync<TimeoutException>(
-            () => stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None));
+            () => stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None)).ConfigureAwait(false);
 
         Assert.Contains("No data received for", ex.Message);
     }
 
-    [Fact]
+    [SFFact]
     public async Task TestIdleTimeoutResetsAfterEachSuccessfulRead()
     {
-        var data = new byte[100];
+        var data = new byte[100 * 100];
         Array.Fill(data, (byte)0xAB);
         using var inner = new MemoryStream(data);
         using var stream = new IdleTimeoutReadStream(inner, TimeSpan.FromMilliseconds(200), TimeSpan.Zero);
 
-        var buffer = new byte[10];
-        for (var i = 0; i < 10; i++)
+        var buffer = new byte[100];
+        for (var i = 0; i < 100; i++)
         {
-            var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
-            Assert.Equal(10, read);
+            var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
+            await Task.Delay(10).ConfigureAwait(false);
+            Assert.Equal(100, read);
         }
     }
 
-    [Fact]
+    [SFFact]
     public async Task TestCallerCancellationPropagatesWithIdleTimeout()
     {
         using var inner = new NeverEndingStream();
@@ -85,12 +85,10 @@ public sealed class IdleTimeoutReadStreamTest
 
         var buffer = new byte[10];
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => stream.ReadAsync(buffer, 0, buffer.Length, cts.Token));
+            () => stream.ReadAsync(buffer, 0, buffer.Length, cts.Token)).ConfigureAwait(false);
     }
 
-    // --- Read timeout tests ---
-
-    [Fact]
+    [SFFact]
     public async Task TestReadTimeoutFiresWhenReadExceedsDeadline()
     {
         using var inner = new NeverEndingStream();
@@ -98,27 +96,13 @@ public sealed class IdleTimeoutReadStreamTest
 
         var buffer = new byte[10];
         var ex = await Assert.ThrowsAsync<TimeoutException>(
-            () => stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None));
+            () => stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None)).ConfigureAwait(false);
 
         Assert.Contains("Read took longer than", ex.Message);
         Assert.IsType<TaskCanceledException>(ex.InnerException);
     }
 
-    [Fact]
-    public async Task TestZeroReadTimeoutDisablesPerReadDeadline()
-    {
-        var data = new byte[] { 7, 8, 9 };
-        using var inner = new MemoryStream(data);
-        using var stream = new IdleTimeoutReadStream(inner, TimeSpan.Zero, TimeSpan.Zero);
-
-        var buffer = new byte[3];
-        var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
-
-        Assert.Equal(3, read);
-        Assert.Equal(data, buffer);
-    }
-
-    [Fact]
+    [SFFact]
     public async Task TestReadCompletesBeforeReadTimeoutDeadline()
     {
         var data = new byte[] { 1, 2, 3, 4, 5 };
@@ -126,13 +110,13 @@ public sealed class IdleTimeoutReadStreamTest
         using var stream = new IdleTimeoutReadStream(inner, TimeSpan.Zero, TimeSpan.FromSeconds(5));
 
         var buffer = new byte[5];
-        var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
+        var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
 
         Assert.Equal(5, read);
         Assert.Equal(data, buffer);
     }
 
-    [Fact]
+    [SFFact]
     public async Task TestBothTimeoutsConfiguredReadHangsTriggersReadTimeout()
     {
         using var inner = new NeverEndingStream();
@@ -140,14 +124,12 @@ public sealed class IdleTimeoutReadStreamTest
 
         var buffer = new byte[10];
         var ex = await Assert.ThrowsAsync<TimeoutException>(
-            () => stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None));
+            () => stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None)).ConfigureAwait(false);
 
         Assert.Contains("Read took longer than", ex.Message);
     }
 
-    // --- Edge cases ---
-
-    [Fact]
+    [SFFact]
     public async Task TestBothTimeoutsZeroActsAsPassthrough()
     {
         var data = new byte[] { 42, 43, 44 };
@@ -155,13 +137,13 @@ public sealed class IdleTimeoutReadStreamTest
         using var stream = new IdleTimeoutReadStream(inner, TimeSpan.Zero, TimeSpan.Zero);
 
         var buffer = new byte[3];
-        var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
+        var read = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
 
         Assert.Equal(3, read);
         Assert.Equal(data, buffer);
     }
 
-    [Fact]
+    [SFFact]
     public async Task TestDisposeDoesNotThrowAfterTimeout()
     {
         using var inner = new NeverEndingStream();
@@ -169,17 +151,17 @@ public sealed class IdleTimeoutReadStreamTest
 
         var buffer = new byte[10];
         await Assert.ThrowsAsync<TimeoutException>(
-            () => stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None));
+            () => stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None)).ConfigureAwait(false);
 
         stream.Dispose();
     }
 
-    [Fact]
+    [SFFact]
     public void TestSyncReadDelegatesToInnerWithoutTimeout()
     {
         var data = new byte[] { 10, 20, 30 };
         using var inner = new MemoryStream(data);
-        using var stream = new IdleTimeoutReadStream(inner, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+        using var stream = new IdleTimeoutReadStream(inner, TimeSpan.FromTicks(5), TimeSpan.FromTicks(5));
 
         var buffer = new byte[3];
         var read = stream.Read(buffer, 0, buffer.Length);
@@ -195,7 +177,7 @@ public sealed class IdleTimeoutReadStreamTest
     {
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await Task.Delay(Timeout.Infinite, cancellationToken);
+            await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
             throw new NotSupportedException("This should be unreachable.");
         }
 
