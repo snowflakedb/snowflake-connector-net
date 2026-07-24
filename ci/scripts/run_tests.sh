@@ -39,7 +39,7 @@ else
     ARGS="--framework $net_version --no-build --verbosity detailed --logger junit;LogFilePath=${RESULTS_BASE}.junit.xml"
 fi
 
-echo "[INFO] Running tests: platform=$PLATFORM, framework=$net_version, cloud=$snowflake_cloud_env, runner=$TEST_CMD"
+echo "[INFO] Running tests: platform=$PLATFORM, framework=$net_version, cloud=$snowflake_cloud_env"
 
 set +e
 dotnet-coverage collect "$TEST_CMD ${ARGS}" --output "$COVERAGE_FILE" --output-format cobertura --settings coverage.config
@@ -61,12 +61,12 @@ INTEGRATION_FAILURES=$(xmllint --xpath 'count(//testcase[failure or error][start
 # xmllint may return floats like "3.0"
 TOTAL_FAILURES=${TOTAL_FAILURES%%.*}
 INTEGRATION_FAILURES=${INTEGRATION_FAILURES%%.*}
-UNIT_FAILURES=$((TOTAL_FAILURES - INTEGRATION_FAILURES))
+OTHER_FAILURES=$((TOTAL_FAILURES - INTEGRATION_FAILURES))
 
-echo "[RETRY] Failure summary: total=$TOTAL_FAILURES, integration=$INTEGRATION_FAILURES, unit=$UNIT_FAILURES"
+echo "[RETRY] Failure summary: total=$TOTAL_FAILURES, integration=$INTEGRATION_FAILURES, other=$OTHER_FAILURES"
 
-if [[ "$UNIT_FAILURES" -gt 0 ]]; then
-    echo "[RETRY] Unit test failures detected ($UNIT_FAILURES). Not retrying."
+if [[ "$OTHER_FAILURES" -gt 0 ]]; then
+    echo "[RETRY] Other test failures detected ($OTHER_FAILURES). Not retrying."
     exit 1
 fi
 
@@ -96,27 +96,27 @@ done
 echo "[RETRY] Will retry $INTEGRATION_FAILURES integration test(s):"
 echo "$FAILED_TESTS" | while read -r t; do echo "[RETRY]   - $t"; done
 
-# Build retry command as array
-RETRY_CMD=()
 if [[ "$use_dotnet_run" == "true" ]]; then
-    RETRY_CMD=(dotnet run --framework "$net_version" --no-build)
-    while IFS= read -r t; do
-        RETRY_CMD+=(-method "$t")
-    done <<< "$FAILED_TESTS"
+    FILTER=""
+        while IFS= read -r t; do
+            [[ -n "$FILTER" ]] && FILTER="${FILTER}|"
+            FILTER="${FILTER} -class ${t}"
+        done <<< "$FAILED_TESTS"
+        RETRY_CMD="dotnet run --framework "$net_version" --no-build $FILTER"
 else
     FILTER=""
     while IFS= read -r t; do
         [[ -n "$FILTER" ]] && FILTER="${FILTER}|"
         FILTER="${FILTER}FullyQualifiedName=${t}"
     done <<< "$FAILED_TESTS"
-    RETRY_CMD=(dotnet test --framework "$net_version" --no-build --filter "$FILTER")
+    RETRY_CMD="dotnet test --framework "$net_version" --no-build --filter \"$FILTER\""
 fi
 
-echo "[RETRY] Command: ${RETRY_CMD[*]}"
+echo "[RETRY] Command: ${RETRY_CMD}"
 echo "[RETRY] ============================================"
 
 set +e
-"${RETRY_CMD[@]}"
+"${RETRY_CMD}"
 RETRY_EXIT=$?
 set -e
 

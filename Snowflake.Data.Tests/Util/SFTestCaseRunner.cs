@@ -81,7 +81,7 @@ public class SFTestCaseRunner : XunitTestCaseRunnerBase<SFCaseRunnerContext, IXu
                 ctxt.BeforeAfterTestAttributes
             ).ConfigureAwait(false);
 
-            if (!(aggregator.HasExceptions || result.Failed != 0) || ++runCount >= maxRetries)
+            if (!(aggregator.HasExceptions || result.Failed != 0) || ++runCount > maxRetries)
             {
                 delayedMessageBus.Dispose();
                 return result;
