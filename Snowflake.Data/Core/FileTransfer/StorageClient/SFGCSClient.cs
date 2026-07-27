@@ -34,7 +34,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The attribute in the credential map containing the access token.
         /// </summary>
-        private static readonly string GCS_ACCESS_TOKEN = "GCS_ACCESS_TOKEN";
+        internal static readonly string GCS_ACCESS_TOKEN = "GCS_ACCESS_TOKEN";
 
         /// <summary>
         /// The logger.

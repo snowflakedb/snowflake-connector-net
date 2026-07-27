@@ -123,6 +123,9 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 390129)]
         EXT_AUTHN_EXCEPTION,
 
+        [SFErrorAttr(errorCode = 390201)]
+        OBJ_NONEXISTANT_OR_NOT_AUTHORIZED,
+
         [SFErrorAttr(errorCode = 390318)]
         EXT_OAUTH_ACCESS_TOKEN_EXPIRED,
 

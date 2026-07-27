@@ -1161,6 +1161,26 @@ namespace Snowflake.Data.Tests.UnitTests
             return defaultNonWindowsValue ?? defaultValue;
         }
 
+        [SFFact]
+        public void TestAllowNumberOverflowAsStringDefaultIsFalse()
+        {
+            var properties = SFSessionProperties.ParseConnectionString(
+                "ACCOUNT=test;USER=testUser;PASSWORD=testPassword;",
+                new SessionPropertiesContext());
+            Assert.Equal("false", properties[SFSessionProperty.ALLOW_NUMBER_OVERFLOW_AS_STRING]);
+        }
+
+        [SFTheory]
+        [InlineData("true")]
+        [InlineData("false")]
+        public void TestAllowNumberOverflowAsStringIsParsed(string value)
+        {
+            var properties = SFSessionProperties.ParseConnectionString(
+                $"ACCOUNT=test;USER=testUser;PASSWORD=testPassword;ALLOW_NUMBER_OVERFLOW_AS_STRING={value};",
+                new SessionPropertiesContext());
+            Assert.Equal(value, properties[SFSessionProperty.ALLOW_NUMBER_OVERFLOW_AS_STRING]);
+        }
+
         public class TestCase
         {
             public string ConnectionString { get; set; }

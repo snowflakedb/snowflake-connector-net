@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 using Xunit;
 
 namespace Snowflake.Data.Tests.IntegrationTests

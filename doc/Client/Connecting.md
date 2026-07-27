@@ -341,3 +341,4 @@ Special characters in TOML values:
 | MAXTLS                            | 🟢 Optional | Maximum TLS version. Values: `TLS12`, `TLS13` (default). |
 | SERVICE_POINT_CONNECTION_LIMIT    | 🟢 Optional | Maximum connections for the ServicePoint object. Default: 20. Only the limit from the first connection string takes effect. |
 | HONORSESSIONTIMEZONE              | 🟢 Optional | When `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter instead of the local machine timezone. Default: `false`. |
+| ALLOW_NUMBER_OVERFLOW_AS_STRING   | 🟢 Optional | When `true`, numeric values that overflow `System.Decimal` (e.g. NUMBER(38,0) values exceeding ~7.9×10²⁸) are returned as strings instead of throwing `OverflowException`. Default: `false`. |

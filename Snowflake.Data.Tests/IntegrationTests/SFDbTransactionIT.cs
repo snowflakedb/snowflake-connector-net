@@ -1,15 +1,15 @@
+using System;
+using System.Data;
+using System.Data.Common;
 using System.Threading;
+using System.Threading.Tasks;
+using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
+using Xunit;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
-    using System.Data;
-    using System.Data.Common;
-    using System;
-    using Xunit;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
-    using System.Threading.Tasks;
     public class SFDbTransactionIT : SFBaseTestAsync
     {
         private readonly SFBaseTestAsyncFixture _fixture;

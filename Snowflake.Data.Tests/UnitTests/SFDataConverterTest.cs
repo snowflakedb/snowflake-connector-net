@@ -23,6 +23,9 @@ namespace Snowflake.Data.Tests.UnitTests
             return new UTF8Buffer(b2, 100, b1.Length);
         }
 
+        private static ConversionContext GetCtx(SFDataType srcType, Type destType, TimeZoneInfo tz = null, bool allowOverflow = false)
+            => new(srcType, destType, tz, allowOverflow);
+
         [SFFact]
         public void TestConvertBindToSFValFinlandLocale()
         {
@@ -50,7 +53,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("anything else", false)]
         public void TestConvertBoolean(string inputBooleanString, bool expected)
         {
-            var actual = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputBooleanString), SFDataType.BOOLEAN, typeof(bool));
+            var actual = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputBooleanString), GetCtx(SFDataType.BOOLEAN, typeof(bool)));
             Assert.Equal(expected, actual);
         }
 
@@ -78,7 +81,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             var tickDiff = inputTime.Ticks - unixEpoch.Ticks;
             var inputStringAsItWasFromDatabase = (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
-            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputStringAsItWasFromDatabase), SFDataType.TIMESTAMP_NTZ, typeof(DateTime));
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputStringAsItWasFromDatabase), GetCtx(SFDataType.TIMESTAMP_NTZ, typeof(DateTime)));
             Assert.Equal(inputTime, result);
         }
 
@@ -110,7 +113,7 @@ namespace Snowflake.Data.Tests.UnitTests
             inputStringAsItComesBackFromDatabase += inputTimeStr.Substring(8, inputTimeStr.Length - 8);
 
             // Run the conversion
-            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputStringAsItComesBackFromDatabase), SFDataType.TIME, typeof(TimeSpan));
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(inputStringAsItComesBackFromDatabase), GetCtx(SFDataType.TIME, typeof(TimeSpan)));
 
             // Verify the result
             Assert.Equal(expected, result);
@@ -161,7 +164,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("999999999999999999")]
         public void TestConvertToInt64(string s)
         {
-            Int64 actual = (Int64)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64));
+            Int64 actual = (Int64)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64)));
             Int64 expected = Convert.ToInt64(s);
             Assert.Equal(expected, actual);
         }
@@ -173,7 +176,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("0")]
         public void TestConvertToInt32(string s)
         {
-            Int32 actual = (Int32)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32));
+            Int32 actual = (Int32)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int32)));
             Int32 expected = Convert.ToInt32(s);
             Assert.Equal(expected, actual);
         }
@@ -185,7 +188,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("0")]
         public void TestConvertToInt16(string s)
         {
-            Int16 actual = (Int16)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int16));
+            Int16 actual = (Int16)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int16)));
             Int16 expected = Convert.ToInt16(s);
             Assert.Equal(expected, actual);
         }
@@ -195,7 +198,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("0")]
         public void TestConvertToByte(string s)
         {
-            byte actual = (byte)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte));
+            byte actual = (byte)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(byte)));
             byte expected = Convert.ToByte(s);
             Assert.Equal(expected, actual);
         }
@@ -205,7 +208,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("-1")]
         public void TestOverflowByte(string s)
         {
-            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte)));
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(byte))));
         }
 
         [SFTheory]
@@ -213,7 +216,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("-32769")]
         public void TestOverflowInt16(string s)
         {
-            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int16)));
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int16))));
         }
 
         [SFTheory]
@@ -221,7 +224,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("-2147483649")]
         public void TestOverflowInt32(string s)
         {
-            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32)));
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int32))));
         }
 
         [SFTheory]
@@ -229,7 +232,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("-9223372036854775809")]
         public void TestOverflowInt64(string s)
         {
-            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64)));
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64))));
         }
 
         [SFTheory]
@@ -239,15 +242,15 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("999999999999999999.000000000000100000000000")]
         [InlineData("4294967295.4294967296")]
         [InlineData("-0.999")]
-        [InlineData("307.48100000000000000000")]
+        [InlineData("307.4810000000000000000")]
         [InlineData("79228162514264337593543950335")] // Max decimal value
         [InlineData("-79228162514264337593543950335")] // Min decimal value
         [InlineData("9.9999999999999999999999999999")] // The scaling factor range is 0 to 28
-        [InlineData("-9.9999999999999999999999999999")] // The scaling factor range is 0 to 28
+        [InlineData("-9.999999999999999999999999999")] // The scaling factor range is 0 to 28
         [InlineData("79228162514264337593543950334.9999999999999999999999999999")] //A Decimal object has 29 digits of precision. If s represents a number that has more than 29 digits, but has a fractional part and is within the range of MaxValue and MinValue, the number is rounded
         public void TestConvertToDecimal(string s)
         {
-            decimal actual = (decimal)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal));
+            decimal actual = (decimal)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(decimal)));
             decimal expected = Convert.ToDecimal(s, CultureInfo.InvariantCulture);
 
             Assert.Equal(expected, actual);
@@ -259,7 +262,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("79228162514264337593543950335.9999999999999999999999999999")] // The scaling factor range is 0 to 28. Scaling factor = 29 and fractional part > MaxValue
         public void TestOverflowDecimal(string s)
         {
-            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
+            Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(decimal))));
         }
 
         [SFTheory]
@@ -276,12 +279,12 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("NaN")]
         public void TestConvertToFloat(string s)
         {
-            double actualDouble = (double)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(double));
+            double actualDouble = (double)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(double)));
             double expectedDoulbe = Convert.ToDouble(s, CultureInfo.InvariantCulture);
 
             Assert.Equal(actualDouble, expectedDoulbe);
 
-            float actualFloat = (float)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(float));
+            float actualFloat = (float)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(float)));
             float expectedFloat = Convert.ToSingle(s, CultureInfo.InvariantCulture);
 
             Assert.Equal(expectedFloat, actualFloat);
@@ -299,18 +302,18 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("NaN")]
         public void TestInvalidConversionInvalidInt(string s)
         {
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int32)));
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int64)));
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(Int16)));
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(byte)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int32))));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64))));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int16))));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(byte))));
         }
 
         [SFTheory]
         [InlineData("thisIsNotAValidValue")]
         public void TestInvalidConversionInvalidFloat(string s)
         {
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(float)));
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(double)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(float))));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(double))));
         }
 
         [SFTheory]
@@ -322,7 +325,7 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData("NaN")]
         public void TestInvalidConversionInvalidDecimal(string s)
         {
-            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), SFDataType.FIXED, typeof(decimal)));
+            Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(decimal))));
         }
 
         private string DateTimeToLtzWireFormat(DateTime utcDateTime)
@@ -338,7 +341,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var wireValue = DateTimeToLtzWireFormat(utcDateTime);
 
             var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
-                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Local);
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Local));
 
             var expected = new DateTimeOffset(utcDateTime).ToLocalTime();
             Assert.Equal(expected, result);
@@ -352,7 +355,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var wireValue = DateTimeToLtzWireFormat(utcDateTime);
 
             var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
-                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), tokyoTz);
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), tokyoTz));
 
             Assert.Equal(TimeSpan.FromHours(9), result.Offset);
             Assert.Equal(utcDateTime, result.UtcDateTime);
@@ -365,7 +368,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var wireValue = DateTimeToLtzWireFormat(utcDateTime);
 
             var result = (DateTime)SFDataConverter.ConvertToCSharpVal(
-                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTime), TimeZoneInfo.Local);
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_LTZ, typeof(DateTime), TimeZoneInfo.Local));
 
             var expected = new DateTimeOffset(utcDateTime).ToLocalTime().DateTime;
             Assert.Equal(expected, result);
@@ -379,7 +382,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var wireValue = DateTimeToLtzWireFormat(utcDateTime);
 
             var result = (DateTime)SFDataConverter.ConvertToCSharpVal(
-                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTime), warsawTz);
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_LTZ, typeof(DateTime), warsawTz));
 
             var expected = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, warsawTz);
             Assert.Equal(expected, result);
@@ -393,7 +396,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var wireValue = DateTimeToLtzWireFormat(utcDateTime);
 
             var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
-                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Utc);
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Utc));
 
             Assert.Equal(TimeSpan.Zero, result.Offset);
             Assert.Equal(utcDateTime, result.UtcDateTime);
@@ -412,7 +415,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var wireValue = DateTimeToLtzWireFormat(utcDateTime);
 
             var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
-                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Utc);
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), TimeZoneInfo.Utc));
 
             Assert.Equal(utcDateTime, result.UtcDateTime);
         }
@@ -426,7 +429,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expected = DateTime.ParseExact(expectedStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
 
             var result = (DateTime)SFDataConverter.ConvertToCSharpVal(
-                ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_NTZ, typeof(DateTime));
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_NTZ, typeof(DateTime)));
 
             Assert.Equal(expected, result);
         }
@@ -438,11 +441,11 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Assert.Throws<SnowflakeDbException>(() =>
                 SFDataConverter.ConvertToCSharpVal(
-                    ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), null));
+                    ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), null)));
 
             Assert.Throws<SnowflakeDbException>(() =>
                 SFDataConverter.ConvertToCSharpVal(
-                    ConvertToUTF8Buffer(wireValue), SFDataType.TIMESTAMP_LTZ, typeof(DateTime), null));
+                    ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_LTZ, typeof(DateTime), null)));
         }
 
         [SFTheory]
@@ -575,14 +578,14 @@ namespace Snowflake.Data.Tests.UnitTests
         [SFFact]
         public void TestConvertToCSharpValNullReturnsDbNull()
         {
-            var result = SFDataConverter.ConvertToCSharpVal(null, SFDataType.TEXT, typeof(string));
+            var result = SFDataConverter.ConvertToCSharpVal(null, GetCtx(SFDataType.TEXT, typeof(string)));
             Assert.Equal(DBNull.Value, result);
         }
 
         [SFFact]
         public void TestConvertToCSharpValString()
         {
-            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("hello world"), SFDataType.TEXT, typeof(string));
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("hello world"), GetCtx(SFDataType.TEXT, typeof(string)));
             Assert.Equal("hello world", result);
         }
 
@@ -590,7 +593,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestConvertToCSharpValGuid()
         {
             var expected = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
-            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("a1b2c3d4-e5f6-7890-abcd-ef1234567890"), SFDataType.TEXT, typeof(Guid));
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("a1b2c3d4-e5f6-7890-abcd-ef1234567890"), GetCtx(SFDataType.TEXT, typeof(Guid)));
             Assert.Equal(expected, result);
         }
 
@@ -599,7 +602,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var expected = new byte[] { 0xCA, 0xFE, 0xBA, 0xBE };
             var hex = "cafebabe";
-            var result = (byte[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(hex), SFDataType.BINARY, typeof(byte[]));
+            var result = (byte[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(hex), GetCtx(SFDataType.BINARY, typeof(byte[])));
             Assert.Equal(expected, result);
         }
 
@@ -608,7 +611,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             var input = "hello";
             var expected = Encoding.UTF8.GetBytes(input);
-            var result = (byte[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(input), SFDataType.TEXT, typeof(byte[]));
+            var result = (byte[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(input), GetCtx(SFDataType.TEXT, typeof(byte[])));
             Assert.Equal(expected, result);
         }
 
@@ -616,7 +619,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestConvertToCSharpValCharArrayFromBinary()
         {
             var hex = "68656c6c6f"; // "hello" in hex
-            var result = (char[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(hex), SFDataType.BINARY, typeof(char[]));
+            var result = (char[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(hex), GetCtx(SFDataType.BINARY, typeof(char[])));
             Assert.Equal("hello".ToCharArray(), result);
         }
 
@@ -624,7 +627,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestConvertToCSharpValCharArrayFromNonBinary()
         {
             var input = "hello";
-            var result = (char[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(input), SFDataType.TEXT, typeof(char[]));
+            var result = (char[])SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(input), GetCtx(SFDataType.TEXT, typeof(char[])));
             Assert.Equal("hello".ToCharArray(), result);
         }
 
@@ -633,7 +636,7 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // DATE type: value is days since Unix epoch
             var daysStr = "19723"; // 2024-01-01 = 19723 days since 1970-01-01
-            var result = (DateTime)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(daysStr), SFDataType.DATE, typeof(DateTime));
+            var result = (DateTime)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(daysStr), GetCtx(SFDataType.DATE, typeof(DateTime)));
             Assert.Equal(new DateTime(2024, 1, 1), result);
             Assert.Equal(DateTimeKind.Unspecified, result.Kind);
         }
@@ -642,7 +645,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestConvertToCSharpValInvalidDestTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
-                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("1"), SFDataType.FIXED, typeof(uint)));
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("1"), GetCtx(SFDataType.FIXED, typeof(uint))));
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INTERNAL_ERROR);
         }
 
@@ -650,7 +653,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestConvertToCSharpValTimeSpanWithNonTimeTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
-                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.FIXED, typeof(TimeSpan)));
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), GetCtx(SFDataType.FIXED, typeof(TimeSpan))));
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
@@ -658,7 +661,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestConvertToCSharpValDateTimeWithUnsupportedSrcTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
-                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.FIXED, typeof(DateTime)));
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), GetCtx(SFDataType.FIXED, typeof(DateTime))));
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
@@ -666,7 +669,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestConvertToCSharpValDateTimeOffsetWithUnsupportedSrcTypeThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
-                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.FIXED, typeof(DateTimeOffset)));
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), GetCtx(SFDataType.FIXED, typeof(DateTimeOffset))));
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
         }
 
@@ -674,7 +677,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestConvertToCSharpValTimestampTzMissingSpaceThrows()
         {
             var ex = Assert.Throws<SnowflakeDbException>(() =>
-                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), SFDataType.TIMESTAMP_TZ, typeof(DateTimeOffset)));
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer("12345"), GetCtx(SFDataType.TIMESTAMP_TZ, typeof(DateTimeOffset))));
             SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INTERNAL_ERROR);
         }
 
@@ -802,6 +805,80 @@ namespace Snowflake.Data.Tests.UnitTests
             var dt = new DateTime(2024, 1, 1, 0, 0, 0);
             var result = SFDataConverter.CSharpValToSfVal(SFDataType.TIME, dt);
             Assert.Equal("0", result);
+        }
+
+        [SFTheory]
+        [InlineData("9223372036854775808")]   // Int64.MaxValue + 1
+        [InlineData("-9223372036854775809")]  // Int64.MinValue - 1
+        public void TestOverflowInt64WithFlagReturnsString(string s)
+        {
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64), allowOverflow: true));
+            Assert.Equal(s, result);
+        }
+
+        [SFTheory]
+        [InlineData("2147483648")]   // Int32.MaxValue + 1
+        [InlineData("-2147483649")]  // Int32.MinValue - 1
+        public void TestOverflowInt32WithFlagReturnsString(string s)
+        {
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int32), allowOverflow: true));
+            Assert.Equal(s, result);
+        }
+
+        [SFTheory]
+        [InlineData("32768")]   // Int16.MaxValue + 1
+        [InlineData("-32769")]  // Int16.MinValue - 1
+        public void TestOverflowInt16WithFlagReturnsString(string s)
+        {
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int16), allowOverflow: true));
+            Assert.Equal(s, result);
+        }
+
+        [SFTheory]
+        [InlineData("256")]  // byte.MaxValue + 1
+        [InlineData("-1")]   // below byte range
+        public void TestOverflowByteWithFlagReturnsString(string s)
+        {
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(byte), allowOverflow: true));
+            Assert.Equal(s, result);
+        }
+
+        [SFTheory]
+        [InlineData("79228162514264337593543950336")]   // decimal.MaxValue + 1
+        [InlineData("-79228162514264337593543950336")]  // decimal.MinValue - 1
+        public void TestOverflowDecimalWithFlagReturnsString(string s)
+        {
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(decimal), allowOverflow: true));
+            Assert.Equal(s, result);
+        }
+
+        [SFTheory]
+        [InlineData("79228162514264337593543950335.9999999999999999999999999999")]  // fractional part pushes past max precision
+        [InlineData("99999999999999999999999999999.99")]                            // 31 digits total
+        [InlineData("-79228162514264337593543950336.1")]                            // negative fractional overflow
+        public void TestOverflowDecimalFractionalWithFlagReturnsString(string s)
+        {
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(decimal), allowOverflow: true));
+            Assert.Equal(s, result);
+        }
+
+        [SFTheory]
+        [InlineData("9223372036854775808")]
+        [InlineData("-9223372036854775809")]
+        public void TestOverflowWithoutFlagStillThrows(string s)
+        {
+            Assert.Throws<OverflowException>(() =>
+                SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64))));
+        }
+
+        [SFTheory]
+        [InlineData("42")]
+        [InlineData("-100")]
+        public void TestNoOverflowWithFlagReturnsTypedValue(string s)
+        {
+            // When there's no overflow, flag has no effect — returns the typed value normally
+            var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64), allowOverflow: true));
+            Assert.Equal(Convert.ToInt64(s), result);
         }
     }
 }

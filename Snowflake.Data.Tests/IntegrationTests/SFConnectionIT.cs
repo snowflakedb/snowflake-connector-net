@@ -245,6 +245,19 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Assert.False(conn.HasActiveExplicitTransaction());
             }
         }
+
+        [SFTheory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task ShouldBeClosedIfConnectionFails(bool isAsync)
+        {
+            // invalid connection string
+            var connectionString = "ACCOUNT=testaccount;user=testuser;password=fake;connection_timeout=5;maxHttpRetries=0;";
+            using var connection = new SnowflakeDbConnection(connectionString);
+            if (isAsync) await Assert.ThrowsAsync<SnowflakeDbException>(connection.OpenAsync).ConfigureAwait(false);
+            else Assert.Throws<SnowflakeDbException>(connection.Open);
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
     }
 }
 

@@ -43,11 +43,16 @@ timestamps {
 
     stage('Test') {
       parallel(
-        'Test': {
+        'Test Linux': {
           stage('Test') {
             build job: 'RT-LanguageDotnet-PC', parameters: params
           }
         },
+        'Test WIN': {
+          stage('Test') {
+            build job: 'RT-LanguageDotnet-Windows-PC', parameters: params
+           }
+          },
         'Test Authentication': {
           stage('Test Authentication') {
             withCredentials([

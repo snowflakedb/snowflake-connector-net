@@ -73,10 +73,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             Environment.SetEnvironmentVariable(EnvVars.DefaultConnectionName.Name, "notfoundconnection");
             try
             {
-                using (var conn = new SnowflakeDbConnection())
-                {
-                    await Assert.ThrowsAsync<Exception>(() => conn.OpenAsync()).ConfigureAwait(false);
-                }
+                using var conn = new SnowflakeDbConnection();
+                await Assert.ThrowsAsync<SnowflakeDbException>(conn.OpenAsync).ConfigureAwait(false);
             }
             finally
             {

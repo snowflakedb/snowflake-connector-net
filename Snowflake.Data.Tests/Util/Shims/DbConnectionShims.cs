@@ -1,14 +1,13 @@
-using System.Collections.Generic;
+#if NETFRAMEWORK
 using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
 
-namespace Snowflake.Data.Tests.IntegrationTests;
+namespace Snowflake.Data.Tests.Util.Shims;
 
-#if NETFRAMEWORK
-public static class FrameworkShims
+internal static class DbConnectionShims
 {
     public static Task<DbTransaction> BeginTransactionAsync(this SnowflakeDbConnection connection) => Task.FromResult(connection.BeginTransaction());
 
@@ -52,16 +51,6 @@ public static class FrameworkShims
     {
         transaction.Rollback();
         return Task.CompletedTask;
-    }
-
-    public static bool TryDequeue<T>(this Queue<T> queue, out T element)
-    {
-        element = default(T);
-        if (queue.Count == 0)
-            return false;
-
-        element = queue.Dequeue();
-        return true;
     }
 }
 #endif

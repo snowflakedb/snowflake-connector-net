@@ -1,5 +1,7 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using Apache.Arrow;
 using Apache.Arrow.Types;
@@ -600,7 +602,47 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
-        /// Extracts a DECFLOAT value from Arrow format as a string.
+        /// Extracts a FIXED/Decimal128 column value as a culture-invariant decimal string,
+        /// bypassing the System.Decimal conversion that would throw OverflowException for
+        /// values exceeding the ±7.9×10²⁸ range. Used as a fallback when
+        /// ALLOW_NUMBER_OVERFLOW_AS_STRING is enabled.
+        /// </summary>
+        /// <param name="columnIndex">Zero-based column ordinal.</param>
+        /// <param name="scale">
+        /// Number of fractional digits. The raw 128-bit integer is divided by 10^scale
+        /// to produce the decimal string (e.g., raw 12345 with scale=2 → "123.45").
+        /// </param>
+        /// <returns>
+        /// The numeric value formatted as a plain decimal string (e.g., "999999999999999999999999999.99").
+        /// Returns the unscaled integer string when scale is 0.
+        /// </returns>
+        internal string ExtractDecimal128CellAsString(int columnIndex, int scale)
+        {
+            var array = (Decimal128Array)RecordBatch[_currentBatchIndex].Column(columnIndex);
+            // Arrow Decimal128 is stored as 16-byte little-endian two's complement.
+            var span = array.ValueBuffer.Span.Slice(_currentRecordIndex * 16, 16);
+            var bi = new BigInteger(span.ToArray());
+
+            if (scale == 0)
+                return bi.ToString();
+
+            var isNegative = bi.Sign < 0;
+            var digits = BigInteger.Abs(bi).ToString();
+
+            // Insert decimal point at (digits.Length - scale) from the left.
+            // If the value has fewer digits than scale, pad with leading zeros.
+            if (digits.Length <= scale)
+            {
+                var fracPart = digits.PadLeft(scale, '0');
+                return $"{(isNegative ? "-" : "")}0.{fracPart}";
+            }
+
+            var intPart = digits.Substring(0, digits.Length - scale);
+            var frac = digits.Substring(digits.Length - scale);
+            return $"{(isNegative ? "-" : "")}{intPart}.{frac}";
+        }
+
+        /// <summary>
         /// DECFLOAT is serialized as a STRUCT containing:
         /// - INT16 for the exponent
         /// - Variable-length BINARY for the significand (2's complement big endian)
@@ -612,7 +654,7 @@ namespace Snowflake.Data.Core
             var exponentArray = (Int16Array)structArray.Fields[0];
             var significandArray = (BinaryArray)structArray.Fields[1];
 
-            short exponent = exponentArray.GetValue(index).Value;
+            var exponent = exponentArray.GetValue(index).Value;
             var significandBytes = significandArray.GetBytes(index);
 
             if (significandBytes.Length == 0)
@@ -622,7 +664,7 @@ namespace Snowflake.Data.Core
 
             // Convert 2's complement big endian to BigInteger (little endian)
             var littleEndianBytes = new byte[significandBytes.Length + 1];
-            for (int i = 0; i < significandBytes.Length; i++)
+            for (var i = 0; i < significandBytes.Length; i++)
             {
                 littleEndianBytes[significandBytes.Length - 1 - i] = significandBytes[i];
             }
@@ -633,7 +675,7 @@ namespace Snowflake.Data.Core
                 littleEndianBytes[significandBytes.Length] = 0xFF;
             }
 
-            var significand = new System.Numerics.BigInteger(littleEndianBytes);
+            var significand = new BigInteger(littleEndianBytes);
 
             return FormatDecfloatAsString(significand, exponent);
         }
@@ -643,7 +685,7 @@ namespace Snowflake.Data.Core
         /// - If total digits in plain format ≤ 38: use decimal notation
         /// - Otherwise: use scientific notation
         /// </summary>
-        private static string FormatDecfloatAsString(System.Numerics.BigInteger significand, short exponent)
+        private static string FormatDecfloatAsString(BigInteger significand, short exponent)
         {
             if (significand == 0)
             {
@@ -651,7 +693,7 @@ namespace Snowflake.Data.Core
             }
 
             bool isNegative = significand < 0;
-            string digits = System.Numerics.BigInteger.Abs(significand).ToString();
+            string digits = BigInteger.Abs(significand).ToString();
             string sign = isNegative ? "-" : "";
 
             // Calculate total digits in plain decimal format

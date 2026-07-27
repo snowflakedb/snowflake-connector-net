@@ -155,7 +155,9 @@ namespace Snowflake.Data.Core
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         HONORSESSIONTIMEZONE,
         [SFSessionPropertyAttr(required = false, defaultValue = "true")]
-        CLIENT_TELEMETRY_ENABLED
+        CLIENT_TELEMETRY_ENABLED,
+        [SFSessionPropertyAttr(required = false, defaultValue = "false")]
+        ALLOW_NUMBER_OVERFLOW_AS_STRING,
     }
 
     class SFSessionPropertyAttr : Attribute
