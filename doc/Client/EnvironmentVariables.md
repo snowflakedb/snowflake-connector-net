@@ -71,6 +71,8 @@ Maximum time (in seconds) the driver waits without receiving any data between co
 
 The idle timer resets after each successful read. This detects stalled connections where the server stops sending data mid-transfer.
 
+> **Note:** The idle timeout only fires between read operations — it cannot interrupt a single read that is blocked mid-flight. To protect against reads that hang indefinitely, also configure `SF_CHUNK_DOWNLOAD_READ_TIMEOUT`.
+
 ### SF_CHUNK_DOWNLOAD_READ_TIMEOUT
 
 Maximum time (in seconds) a single read operation may take during result set chunk downloads. If an individual read call does not complete within this deadline, the download is aborted.

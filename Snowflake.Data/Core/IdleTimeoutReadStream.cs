@@ -18,7 +18,7 @@ internal sealed class IdleTimeoutReadStream : Stream
         _inner = inner;
         _idleTimeout = idleTimeout;
         _readTimeout = readTimeout;
-        _idleTimer = new(_ => _idleExpired = true, null, idleTimeout.Ticks == 0 ? Timeout.InfiniteTimeSpan : _idleTimeout, Timeout.InfiniteTimeSpan);
+        _idleTimer = new(_ => _idleExpired = true, null, idleTimeout.Ticks <= 0 ? Timeout.InfiniteTimeSpan : _idleTimeout, Timeout.InfiniteTimeSpan);
     }
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)

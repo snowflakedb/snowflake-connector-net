@@ -14,6 +14,8 @@ namespace Snowflake.Data.Core
     internal sealed class SFBlockingChunkDownloaderV3 : IChunkDownloader
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloaderV3>();
+        private static readonly TimeSpan s_chunkStreamIdleTimeout = EnvironmentFacade.Instance.GetTimeSpan(EnvVars.ChunkDownloadIdleTimeout);
+        private static readonly TimeSpan s_chunkStreamReadTimeout = EnvironmentFacade.Instance.GetTimeSpan(EnvVars.ChunkDownloadReadTimeout);
 
         private readonly List<BaseResultChunk> _chunkDatas = new();
 
@@ -204,9 +206,7 @@ namespace Snowflake.Data.Core
 
         private static async Task ParseStreamIntoChunkAsync(Stream content, BaseResultChunk resultChunk, CancellationToken cancellationToken)
         {
-            var idleTimeout = EnvironmentFacade.Instance.GetTimeSpan(EnvVars.ChunkDownloadIdleTimeout);
-            var readTimeout = EnvironmentFacade.Instance.GetTimeSpan(EnvVars.ChunkDownloadReadTimeout);
-            using var timeoutStream = new IdleTimeoutReadStream(content, idleTimeout, readTimeout);
+            using var timeoutStream = new IdleTimeoutReadStream(content, s_chunkStreamIdleTimeout, s_chunkStreamReadTimeout);
             var parser = ChunkParserFactory.Instance.GetParser(resultChunk.ResultFormat, timeoutStream);
             await parser.ParseChunkAsync(resultChunk, cancellationToken).ConfigureAwait(false);
         }
