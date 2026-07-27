@@ -2,12 +2,6 @@ using System;
 
 namespace Snowflake.Data.Configuration;
 
-internal enum EnvVarParseMode
-{
-    Default,
-    FromSeconds
-}
-
 internal readonly record struct EnvVar<T>
 {
     public readonly string Name;

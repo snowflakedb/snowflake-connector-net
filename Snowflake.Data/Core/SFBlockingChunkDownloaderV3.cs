@@ -121,7 +121,7 @@ namespace Snowflake.Data.Core
         {
             var chunk = downloadContext.Chunk;
             var backOffInSec = 1;
-            var retry = false;
+            bool retry;
             var retryCount = 0;
             var maxRetry = int.Parse(_sessionProperties[SFSessionProperty.MAXHTTPRETRIES]);
 
@@ -172,36 +172,30 @@ namespace Snowflake.Data.Core
                         await ParseStreamIntoChunkAsync(stream, chunk, downloadContext.CancellationToken).ConfigureAwait(false);
                     }
                 }
+                catch (Exception e) when (e is OperationCanceledException || downloadContext.CancellationToken.IsCancellationRequested)
+                {
+                    s_logger.Error($"Operation has been canceled. {e.Message}");
+                    throw;
+                }
                 catch (Exception e)
                 {
-                    if (e is OperationCanceledException || downloadContext.CancellationToken.IsCancellationRequested)
+                    if (maxRetry > 0 && retryCount >= maxRetry)
                     {
-                        s_logger.Error($"Operation has been canceled. {e.Message}");
-                        throw;
+                        s_logger.Error($"Failed retries of parse stream to chunk error: {e.Message}");
+                        throw new Exception($"Parse stream to chunk error: {e.Message}");
                     }
 
-                    if (maxRetry <= 0 || retryCount < maxRetry)
-                    {
-                        s_logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: " + e.Message);
-                        retry = true;
-                        // reset the chunk before retry in case there could be garbage
-                        // data left from last attempt
-                        chunk.ResetForRetry();
-                        await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.CancellationToken).ConfigureAwait(false);
-                        ++retryCount;
-                        // Set next backoff time
-                        backOffInSec *= 2;
-                        if (backOffInSec > HttpUtil.MAX_BACKOFF)
-                        {
-                            backOffInSec = HttpUtil.MAX_BACKOFF;
-                        }
-                    }
-                    else
-                    {
-                        //parse error
-                        s_logger.Error("Failed retries of parse stream to chunk error: " + e.Message);
-                        throw new Exception("Parse stream to chunk error: " + e.Message);
-                    }
+                    s_logger.Debug($"Retry {retryCount}/{maxRetry} of parse stream to chunk error: {e.Message}");
+                    retry = true;
+                    // reset the chunk before retry in case there could be garbage
+                    // data left from last attempt
+                    chunk.ResetForRetry();
+                    await Task.Delay(TimeSpan.FromSeconds(backOffInSec), downloadContext.CancellationToken).ConfigureAwait(false);
+                    ++retryCount;
+                    // Set next backoff time
+                    backOffInSec *= 2;
+                    if (backOffInSec > HttpUtil.MAX_BACKOFF)
+                        backOffInSec = HttpUtil.MAX_BACKOFF;
                 }
             } while (retry);
             s_logger.Debug($"Succeed downloading chunk #{chunk.ChunkIndex}");

@@ -47,7 +47,7 @@ public sealed class IdleTimeoutReadStreamTest
         using var stream = new IdleTimeoutReadStream(inner, TimeSpan.FromMilliseconds(50), TimeSpan.Zero);
 
         var buffer = new byte[10];
-        await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
+        _ = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
 
         // Wait longer than idle timeout between reads
         await Task.Delay(100).ConfigureAwait(false);
@@ -152,6 +152,22 @@ public sealed class IdleTimeoutReadStreamTest
         var buffer = new byte[10];
         await Assert.ThrowsAsync<TimeoutException>(
             () => stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None)).ConfigureAwait(false);
+
+        stream.Dispose();
+    }
+
+    [SFTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task TestDisposeDoesNotThrowWithTimeoutsDisabled(bool disposeAfterRead)
+    {
+        var data = new byte[] { 1, 2, 3 };
+        using var inner = new MemoryStream(data);
+        using var stream = new IdleTimeoutReadStream(inner, TimeSpan.Zero, TimeSpan.Zero);
+
+        var buffer = new byte[3];
+        if (disposeAfterRead)
+            _ = await stream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
 
         stream.Dispose();
     }
