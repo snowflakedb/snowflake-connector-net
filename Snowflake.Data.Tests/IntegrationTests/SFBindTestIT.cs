@@ -929,7 +929,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
                 conn.ExecuteNonQuery($"alter session set DOTNET_QUERY_RESULT_FORMAT = {resultFormat}");
-                if (!timeZone.IsNullOrEmpty()) // Driver ignores this setting and relies on local environment timezone
+                if (!string.IsNullOrEmpty(timeZone)) // Driver ignores this setting and relies on local environment timezone
                     conn.ExecuteNonQuery($"alter session set TIMEZONE = '{timeZone}'");
 
                 // prepare initial column

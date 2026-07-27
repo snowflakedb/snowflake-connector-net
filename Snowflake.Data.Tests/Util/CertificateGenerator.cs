@@ -12,6 +12,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
+using Org.BouncyCastle.X509.Extension;
 
 namespace Snowflake.Data.Tests.Util
 {
@@ -20,7 +21,7 @@ namespace Snowflake.Data.Tests.Util
         public const string SHA256WithRsaAlgorithm = "SHA256withRSA";
         public const string SHA256WithECDSA = "SHA256withECDSA";
 
-        public static X509Certificate2 LoadFromFile(string filePath) => new(filePath);
+        public static X509Certificate2 LoadFromFile(string filePath) => X509CertificateLoader.LoadCertificateFromFile(filePath);
 
         public static X509Certificate2 GenerateSelfSignedCertificateWithDefaultSubject(
             string cn,
@@ -70,7 +71,7 @@ namespace Snowflake.Data.Tests.Util
             if (isCA && includeSubjectKeyIdentifier)
             {
                 var spki = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(keyPair.Public);
-                certGenerator.AddExtension(X509Extensions.SubjectKeyIdentifier, false, new SubjectKeyIdentifier(spki));
+                certGenerator.AddExtension(X509Extensions.SubjectKeyIdentifier, false, X509ExtensionUtilities.CreateSubjectKeyIdentifier(spki));
             }
             if (crlUrls?.Length > 0)
             {
@@ -159,7 +160,7 @@ namespace Snowflake.Data.Tests.Util
             crlGenerator.SetNextUpdate(nextUpdateUtc);
             crlGenerator.AddCrlEntry(new BigInteger("12345"), revocationTimeUtc, CrlReason.KeyCompromise);
             var akiSpki = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(authorityKeyIdentifierPublicKey);
-            crlGenerator.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifier(akiSpki));
+            crlGenerator.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, X509ExtensionUtilities.CreateAuthorityKeyIdentifier(akiSpki));
             var signatureFactory = new Asn1SignatureFactory(signatureAlgorithm, caPrivateKey);
             return crlGenerator.Generate(signatureFactory);
         }

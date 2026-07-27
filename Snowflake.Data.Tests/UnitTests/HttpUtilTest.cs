@@ -184,6 +184,8 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(handler.UseProxy);
             Assert.Null(handler.Proxy);
         }
+
+#pragma warning disable SYSLIB0014
         [SFFact]
         public void TestDefaultConnectionLimitIsNotChangedWhenOver50()
         {
@@ -209,9 +211,6 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestDefaultConnectionLimitIsChangedToDefaultWhenUnder50()
         {
             // arrange
-#if NET9_0_OR_GREATER
-            Skip.When(true, "TODO SNOW-3662960");
-#endif
             var originalLimit = ServicePointManager.DefaultConnectionLimit;
             ServicePointManager.DefaultConnectionLimit = 49;
 
@@ -229,4 +228,5 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
     }
+#pragma warning restore SYSLIB0014
 }
