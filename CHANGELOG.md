@@ -1,26 +1,26 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- v6.1.0
+  - NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.
 - v6.0.0
-  -  NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.
-  -  Added `CancellationToken` support to chunk download and parsing pipeline. Query result fetching now respects cancellation during both JSON and Arrow chunk parsing.
-  -  Upgraded `AWSSDK.S3` dependency. Now getting object header invokes HEAD s3 call instead of GET.
-  -  Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
-  -  Reduced synchronization context capture in library, minimizing the risk of deadlock occurrence across different code path executions.
-  -  Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
-  -  Improved handling of certificates serial number matching and performance of CRL checkup.
-  -  AWS Workload Identity Federation attestation now defaults to a SigV4-presigned `GetCallerIdentity` request.
-      The STS `GetWebIdentityToken` path (returning a signed JWT) is available as an opt-in by setting the
+  - Added `CancellationToken` support to chunk download and parsing pipeline. Query result fetching now respects cancellation during both JSON and Arrow chunk parsing.
+  - Upgraded `AWSSDK.S3` dependency. Now getting object header invokes HEAD s3 call instead of GET.
+  - Added `AllowNumberOverflowAsString` connection property. When set to `true`, numeric values that exceed the range of `System.Decimal` (or a narrower integer type) are returned as strings from `GetValue()` instead of throwing `OverflowException`.
+  - Reduced synchronization context capture in library, minimizing the risk of deadlock occurrence across different code path executions.
+  - Replaced NUnit tests with Xunit in order to modernize and stabilize existing CI/CD setup.
+  - Improved handling of certificates serial number matching and performance of CRL checkup.
+  - AWS Workload Identity Federation attestation now defaults to a SigV4-presigned `GetCallerIdentity` request. The STS `GetWebIdentityToken` path (returning a signed JWT) is available as an opt-in by setting the
       `SNOWFLAKE_ENABLE_AWS_WIF_OUTBOUND_TOKEN=true` environment variable.
-  -  `OpenAsync` method of `SnowflakeDbConnection` now throws the original exception on failure instead of wrapping it in an `AggregateException`.
-  -  `CloseAsync` now throws the original exception on failure instead of wrapping it in an `AggregateException`.
-  -  Bug fix: Fixed non-windows builds with added NativeLibrary items in their transitively built projects that were no longer available to copy to output directory.
-  -  Bug fix: `OpenAsync` method of `SnowflakeDbConnection` now resets its state to `Closed` on failures.
-  -  Bug fix: `CloseAsync` method of `SnowflakeDbConnection` now resets its state to `Closed` on cancellation and `Broken` on failures.
-  -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
-  -  Bug fix: Fixed incorrect DateTime conversion for timestamps preceding Unix epoch (1970-01-01) when fractional seconds are
+  - `OpenAsync` method of `SnowflakeDbConnection` now throws the original exception on failure instead of wrapping it in an `AggregateException`.
+  - `CloseAsync` now throws the original exception on failure instead of wrapping it in an `AggregateException`.
+  - Bug fix: Fixed non-windows builds with added NativeLibrary items in their transitively built projects that were no longer available to copy to output directory.
+  - Bug fix: `OpenAsync` method of `SnowflakeDbConnection` now resets its state to `Closed` on failures.
+  - Bug fix: `CloseAsync` method of `SnowflakeDbConnection` now resets its state to `Closed` on cancellation and `Broken` on failures.
+  - Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
+  - Bug fix: Fixed incorrect DateTime conversion for timestamps preceding Unix epoch (1970-01-01) when fractional seconds are
     present.
-  -  Bug fix: Fixed an unnecessary second PUT (stage re-resolution) per file during GCS uploads when the server scopes upload credentials with an access token.
+  - Bug fix: Fixed an unnecessary second PUT (stage re-resolution) per file during GCS uploads when the server scopes upload credentials with an access token.
 - v5.7.0
     - Improved input handling in `ChangeDatabase` by using parameterized queries.
     - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.
