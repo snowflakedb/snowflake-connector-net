@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests;
@@ -42,7 +43,7 @@ public sealed class IdleTimeoutReadStreamTest
     public async Task TestIdleTimeoutFiresBetweenReads()
     {
         var data = new byte[20];
-        Array.Fill(data, (byte)0xAA);
+        data.Fill((byte)0xAA);
         using var inner = new MemoryStream(data);
         using var stream = new IdleTimeoutReadStream(inner, TimeSpan.FromMilliseconds(50), TimeSpan.Zero);
 
@@ -62,7 +63,7 @@ public sealed class IdleTimeoutReadStreamTest
     public async Task TestIdleTimeoutResetsAfterEachSuccessfulRead()
     {
         var data = new byte[100 * 100];
-        Array.Fill(data, (byte)0xAB);
+        data.Fill((byte)0xAB);
         using var inner = new MemoryStream(data);
         using var stream = new IdleTimeoutReadStream(inner, TimeSpan.FromMilliseconds(200), TimeSpan.Zero);
 
