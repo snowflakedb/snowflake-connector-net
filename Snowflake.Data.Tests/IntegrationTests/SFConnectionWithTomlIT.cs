@@ -120,7 +120,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             {
                 using (var writer = File.CreateText(filePath))
                 {
-                    writer.Write(Toml.FromModel(tomlModel));
+                    var fromModel = TomlSerializer.Serialize(tomlModel);
+                    writer.Write(fromModel);
                 }
             }
             else
@@ -132,7 +133,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 Syscall.chmod(filePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
                 using (var writer = File.CreateText(filePath))
                 {
-                    writer.Write(Toml.FromModel(tomlModel));
+                    var fromModel = TomlSerializer.Serialize(tomlModel);
+                    writer.Write(fromModel);
                 }
                 Syscall.chmod(filePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
             }
