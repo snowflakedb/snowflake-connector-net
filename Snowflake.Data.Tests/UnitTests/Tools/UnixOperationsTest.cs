@@ -320,6 +320,22 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         }
 
         [SFFact(SkipCondition.SkipOnWindows)]
+        public void TestWriteAllTextDoesNotEmitUtf8Bom()
+        {
+            // arrange
+            var content = "{\"token\":\"abc\"}";
+            var filePath = Path.Combine(_fixture.WorkingDirectory, $"no_bom_{Path.GetRandomFileName()}");
+
+            // act
+            _fixture.UnixOperations.WriteAllText(filePath, content, _ => { });
+
+            // assert
+            var bytes = File.ReadAllBytes(filePath);
+            Assert.False(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF);
+            Assert.Equal(content, _fixture.UnixOperations.ReadAllText(filePath, _ => { }));
+        }
+
+        [SFFact(SkipCondition.SkipOnWindows)]
         public void TestReadBytesFromEmptyFile()
         {
             // arrange
