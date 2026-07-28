@@ -131,7 +131,7 @@ namespace Snowflake.Data.Core
             }
 
             var tomlContent = _fileOperations.ReadAllText(tomlPath, ValidateFilePermissions) ?? string.Empty;
-            var toml = Toml.ToModel(tomlContent);
+            var toml = TomlSerializer.Deserialize<TomlTable>(tomlContent);
             if (string.IsNullOrEmpty(connectionName))
             {
                 connectionName = _environmentFacade.GetString(EnvVars.DefaultConnectionName);
