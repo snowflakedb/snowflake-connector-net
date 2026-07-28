@@ -118,12 +118,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
             }
             else
             {
-                using (var writer = File.CreateText(filePath))
-                {
-                    writer.Write(string.Empty);
-                }
                 Syscall.chmod(filePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
-                using var writer = File.CreateText(filePath))
+                using var writer = File.CreateText(filePath);
                 writer.Write(TomlSerializer.Serialize(tomlModel));
                 Syscall.chmod(filePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
             }
