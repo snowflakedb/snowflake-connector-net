@@ -207,6 +207,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 ServicePointManager.DefaultConnectionLimit = originalLimit;
             }
         }
+#if !NET9_0_OR_GREATER
+
         [SFFact]
         public void TestDefaultConnectionLimitIsChangedToDefaultWhenUnder50()
         {
@@ -227,6 +229,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 ServicePointManager.DefaultConnectionLimit = originalLimit;
             }
         }
+#endif
     }
 #pragma warning restore SYSLIB0014
 }
