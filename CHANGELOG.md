@@ -3,6 +3,7 @@
 # Changelog
 - v6.1.0
   - NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.
+  - Bug fix: Token cache file on Linux/macOS is now written as UTF-8 without a BOM for cross-driver compatibility.
 - v6.0.0
   - Added `CancellationToken` support to chunk download and parsing pipeline. Query result fetching now respects cancellation during both JSON and Arrow chunk parsing.
   - Upgraded `AWSSDK.S3` dependency. Now getting object header invokes HEAD s3 call instead of GET.
