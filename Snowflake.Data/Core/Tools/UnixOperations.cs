@@ -14,6 +14,7 @@ namespace Snowflake.Data.Core.Tools
     {
         public static readonly UnixOperations Instance = new UnixOperations();
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<UnixOperations>();
+        private static readonly Encoding Utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
         public virtual void CreateDirectoryWithPermissions(string path, FileAccessPermissions permissions, bool logEnabled = true)
         {
@@ -167,7 +168,7 @@ namespace Snowflake.Data.Core.Tools
             using (var handle = fileInfo.Open(FileMode.Create, FileAccess.ReadWrite, FilePermissions.S_IWUSR | FilePermissions.S_IRUSR))
             {
                 validator?.Invoke(handle);
-                using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
+                using (var streamWriter = new StreamWriter(handle, Utf8NoBom))
                 {
                     streamWriter.Write(content);
                 }
@@ -195,7 +196,7 @@ namespace Snowflake.Data.Core.Tools
             using (var handle = fileInfo.Open(FileMode.Append, FileAccess.ReadWrite, (FilePermissions)permissions))
             {
                 validator?.Invoke(handle);
-                using (var streamWriter = new StreamWriter(handle, Encoding.UTF8))
+                using (var streamWriter = new StreamWriter(handle, Utf8NoBom))
                 {
                     streamWriter.Write(mainContent);
                     if (additionalContent != null)

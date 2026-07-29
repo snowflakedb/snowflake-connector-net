@@ -190,8 +190,8 @@ public sealed class SFTestCases : LongLivedMarshalByRefObject, IXunitTestCase
         RunSummary baseResult;
         do
         {
-            if (retriesCount > 1)
-                await Task.Delay(500, cancellationTokenSource.Token).ConfigureAwait(false); // back-off
+            var backOffMs = 500 * ((1 << retriesCount) - 1);
+            await Task.Delay(backOffMs, cancellationTokenSource.Token).ConfigureAwait(false);
 
             baseResult = await _xunitTestCaseImplementation
                 .RunAsync(diagnosticMessageSink, messageBusDecorator, constructorArguments, aggregator, cancellationTokenSource)
