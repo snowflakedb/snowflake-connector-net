@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
+using System.Text;
 using Mono.Unix;
 using Mono.Unix.Native;
 using Xunit;
@@ -331,7 +332,8 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             // assert
             var bytes = File.ReadAllBytes(filePath);
-            Assert.False(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF);
+            var bom = Encoding.UTF8.GetPreamble();
+            Assert.False(bytes.Take(bom.Length).SequenceEqual(bom), "File should not contain BOM for cross-driver interoperability");
             Assert.Equal(content, _fixture.UnixOperations.ReadAllText(filePath, _ => { }));
         }
 
