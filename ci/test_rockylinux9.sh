@@ -63,16 +63,9 @@ dotnet restore
 dotnet build '-p:DefineAdditionalConstants=SF_PUBLIC_ENVIRONMENT'
 popd
 
-# Run tests from Snowflake.Data.Tests directory
+# Run tests
 echo "[INFO] Running tests for ${net_version}"
-pushd "${CONNECTOR_DIR}/Snowflake.Data.Tests"
-RESULTS_BASE="rockylinux9_${net_version}_${snowflake_cloud_env}_results"
-ARGS=${TEST_ARGS/\%s/$RESULTS_BASE}
-dotnet-coverage collect \
-    "${TEST_RUNNER} ${ARGS}" \
-    --output "rockylinux9_${net_version}_${snowflake_cloud_env}_coverage.xml" \
-    --output-format cobertura \
-    --settings coverage.config
-popd
+cd "${CONNECTOR_DIR}"
+./ci/scripts/run_tests.sh rockylinux9
 
 echo "[INFO] Tests completed successfully"
