@@ -19,7 +19,6 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
         private static readonly string s_relativeWorkingDirectory = $"file_operations_test_{Path.GetRandomFileName()}";
         private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
         private static readonly string s_content = "random text";
-        private static readonly string s_fileName = "testfile";
 
         private static void Before()
         {

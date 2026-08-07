@@ -46,7 +46,6 @@ namespace Snowflake.Data.Tests
         private const string ConnectionStringJwtContentFmt = ";authenticator=snowflake_jwt;user={0};private_key={1};";
         private const string UninitializedClassName = "UNINITIALIZED";
         private readonly ConcurrentStack<string> _tablesToRemove;
-        private bool _anyTestStarted;
         private Stopwatch _stopwatch;
         private string _className = UninitializedClassName;
 
@@ -66,7 +65,6 @@ namespace Snowflake.Data.Tests
         public virtual async TaskOrValueTask InitializeAsync()
         {
             await IntegrationTestEnvironment.StartIntegrationTest().ConfigureAwait(false);
-            _anyTestStarted = true;
             testConfig = TestConfigSingleton.TestConfig;
             _stopwatch = new Stopwatch();
             _stopwatch.Start();

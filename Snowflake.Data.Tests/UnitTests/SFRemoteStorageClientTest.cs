@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _cancellationToken = new CancellationToken();
         }
 
-        public new void Dispose()
+        public void Dispose()
         {
             // Delete temporary files from upload
             if (File.Exists(_fileMetadata.realSrcFilePath))
