@@ -101,7 +101,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://test.okta.com;host=test.okta.com", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
             }
-            catch (SnowflakeDbException e)
+            catch (SnowflakeDbException)
             {
                 Assert.Fail("Should pass without exception");
             }
@@ -124,7 +124,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Task connectTask = sfSession.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
             }
-            catch (SnowflakeDbException e)
+            catch (SnowflakeDbException)
             {
                 Assert.Fail("Should pass without exception");
             }
@@ -146,7 +146,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 var sfSession = new SFSession("disable_saml_url_check=true;account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", new SessionPropertiesContext(), restRequester);
                 sfSession.Open();
             }
-            catch (SnowflakeDbException e)
+            catch (SnowflakeDbException)
             {
                 Assert.Fail("Should pass without exception");
             }
@@ -169,7 +169,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 Task connectTask = sfSession.OpenAsync(CancellationToken.None);
                 connectTask.Wait();
             }
-            catch (SnowflakeDbException e)
+            catch (SnowflakeDbException)
             {
                 Assert.Fail("Should pass without exception");
             }

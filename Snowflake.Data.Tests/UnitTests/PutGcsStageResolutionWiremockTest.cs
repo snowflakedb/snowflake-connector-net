@@ -48,6 +48,7 @@ public sealed class PutGcsStageResolutionWiremockFixture : ICollectionFixture<Pu
         }
 
         // Trust WireMock's self-signed certificate for WebRequest-based GCS uploads (HTTPS)
+#pragma warning disable SYSLIB0014
         _previousCallback = ServicePointManager.ServerCertificateValidationCallback;
         ServicePointManager.ServerCertificateValidationCallback = (_, _, _, _) => true;
 
@@ -57,6 +58,7 @@ public sealed class PutGcsStageResolutionWiremockFixture : ICollectionFixture<Pu
     public void Dispose()
     {
         ServicePointManager.ServerCertificateValidationCallback = _previousCallback;
+#pragma warning restore SYSLIB0014
         Runner.Stop();
     }
 }

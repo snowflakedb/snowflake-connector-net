@@ -9,8 +9,6 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
-using Snowflake.Data.Core.Tools;
-using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 using Tomlyn;
 using Tomlyn.Model;
@@ -25,19 +23,16 @@ namespace Snowflake.Data.Tests.IntegrationTests
         {
         }
 
-        private readonly SFBaseTestAsyncFixture _fixture;
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
         private static string s_workingDirectory;
 
         public SFConnectionWithTomlIT(SFBaseTestAsyncFixture fixture) : base(fixture)
         {
-            _fixture = fixture;
             s_workingDirectory ??= Path.Combine(AppContext.BaseDirectory, "../../..", "toml_config_folder");
             if (!Directory.Exists(s_workingDirectory))
             {
                 Directory.CreateDirectory(s_workingDirectory);
             }
-            CreateTomlConfigBaseOnConnectionString(_fixture.ConnectionString);
+            CreateTomlConfigBaseOnConnectionString(fixture.ConnectionString);
         }
 
         public void Dispose()
@@ -118,24 +113,14 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                using (var writer = File.CreateText(filePath))
-                {
-                    var fromModel = TomlSerializer.Serialize(tomlModel);
-                    writer.Write(fromModel);
-                }
+                using var writer = File.CreateText(filePath);
+                writer.Write(TomlSerializer.Serialize(tomlModel));
             }
             else
             {
-                using (var writer = File.CreateText(filePath))
-                {
-                    writer.Write(string.Empty);
-                }
                 Syscall.chmod(filePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
-                using (var writer = File.CreateText(filePath))
-                {
-                    var fromModel = TomlSerializer.Serialize(tomlModel);
-                    writer.Write(fromModel);
-                }
+                using var writer = File.CreateText(filePath);
+                writer.Write(TomlSerializer.Serialize(tomlModel));
                 Syscall.chmod(filePath, FilePermissions.S_IRUSR | FilePermissions.S_IWUSR);
             }
         }

@@ -85,7 +85,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 connection.ConnectionString = connStr;
                 // call openAsync but do not wait and destroy it direct
                 // so the session is initialized with empty token
-                connection.OpenAsync();
+                _ = connection.OpenAsync();
             }
 
             // use the same connection string to make a new connection
