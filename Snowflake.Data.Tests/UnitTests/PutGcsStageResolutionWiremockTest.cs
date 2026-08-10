@@ -1,14 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Text;
 using System.Threading.Tasks;
 using Moq;
-using Newtonsoft.Json.Linq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
 using Xunit;
@@ -51,8 +48,9 @@ public sealed class PutGcsStageResolutionWiremockFixture : ICollectionFixture<Pu
 #pragma warning disable SYSLIB0014
         _previousCallback = ServicePointManager.ServerCertificateValidationCallback;
         ServicePointManager.ServerCertificateValidationCallback = (_, _, _, _) => true;
-
-        Runner = WiremockRunner.NewWiremock();
+        var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator };
+        var httpClient = new HttpClient(handler);
+        Runner = WiremockRunner.NewWiremock(httpClient: httpClient);
     }
 
     public void Dispose()
@@ -71,7 +69,6 @@ public sealed class PutGcsStageResolutionWiremockTest : IAsyncLifetime
     private static readonly string s_loginMapping = Path.Combine(s_mappingDir, "login_success.json");
     private static readonly string s_presignedMapping = Path.Combine(s_mappingDir, "query_put_gcs_presigned_ok.json");
     private static readonly string s_downscopedMapping = Path.Combine(s_mappingDir, "query_put_gcs_downscoped_ok.json");
-    private static readonly HttpClient s_http = new();
 
     private IWiremockRunner _runner;
 
@@ -107,11 +104,11 @@ public sealed class PutGcsStageResolutionWiremockTest : IAsyncLifetime
             cmd.ExecuteNonQuery();
 
             // assert — 2 query-requests: initial resolution + per-file presigned URL refresh
-            var queryRequests = GetWiremockRequestsTo("/queries/v1/query-request");
+            var queryRequests = await _fixture.Runner.GetWiremockRequestsToAsync("/queries/v1/query-request", "POST").ConfigureAwait(false);
             Assert.Equal(2, queryRequests.Count);
 
             // assert — 1 PUT to the fake GCS upload endpoint
-            var uploadRequests = GetWiremockRequestsTo("/fake-gcs-upload", method: "PUT");
+            var uploadRequests = await _fixture.Runner.GetWiremockRequestsToAsync("/fake-gcs-upload", method: "PUT").ConfigureAwait(false);
             Assert.Single(uploadRequests);
         }
         finally
@@ -123,6 +120,8 @@ public sealed class PutGcsStageResolutionWiremockTest : IAsyncLifetime
     [SFFact(SkipCondition.SkipOnJenkins)]
     public async Task TestDownscopedGcsPutSendsOneQueryRequest()
     {
+        Skip.WhenOnTfm(Skip.Tfm.Net9 | Skip.Tfm.Net10 | Skip.Tfm.Net8, "Newer TFMs can't be controlled via ServicePointManager and this test might fail on SSL negotiation.");
+
         // arrange
         var tmpDir = Path.Combine(Path.GetTempPath(), $"gcs_downscoped_{Guid.NewGuid():N}");
         Directory.CreateDirectory(tmpDir);
@@ -152,33 +151,17 @@ public sealed class PutGcsStageResolutionWiremockTest : IAsyncLifetime
             cmd.ExecuteNonQuery();
 
             // assert — exactly 1 query-request: single resolution, no per-file refresh
-            var queryRequests = GetWiremockRequestsTo("/queries/v1/query-request");
+            var queryRequests = await _fixture.Runner.GetWiremockRequestsToAsync("/queries/v1/query-request", "POST").ConfigureAwait(false);
             Assert.Single(queryRequests);
 
             // assert — 3 PUT requests to GCS bucket (one per file)
-            var uploadRequests = GetWiremockRequestsTo("/gcs-bucket/", method: "PUT");
+            var uploadRequests = await _fixture.Runner.GetWiremockRequestsToAsync("/gcs-bucket/", method: "PUT").ConfigureAwait(false);
             Assert.Equal(3, uploadRequests.Count);
         }
         finally
         {
             Directory.Delete(tmpDir, recursive: true);
         }
-    }
-
-    private List<JToken> GetWiremockRequestsTo(string urlPath, string method = "POST")
-    {
-        var requestBody = JObject.FromObject(new
-        {
-            urlPathPattern = $"{urlPath}.*",
-            method
-        }).ToString();
-
-        var response = s_http.PostAsync(
-            _runner.WiremockBaseHttpUrl + "/__admin/requests/find",
-            new StringContent(requestBody, Encoding.UTF8, "application/json")).Result;
-
-        var json = JObject.Parse(response.Content.ReadAsStringAsync().Result);
-        return (json["requests"] as JArray)?.ToList() ?? new List<JToken>();
     }
 
     private static string BuildConnectionString()
@@ -198,9 +181,6 @@ public sealed class PutGcsStageResolutionWiremockTest : IAsyncLifetime
     {
         _runner = _fixture.Runner;
         await _runner.ResetMappingAsync().ConfigureAwait(false);
-        // Clear the request journal so assertions only see requests from the current test
-        var result = await s_http.DeleteAsync($"{_runner.WiremockBaseHttpUrl}/__admin/requests").ConfigureAwait(false);
-        result.EnsureSuccessStatusCode();
     }
 
     public TaskOrValueTask DisposeAsync() => TaskOrValueTask.CompletedTask;
