@@ -2,6 +2,7 @@
 
 # Changelog
 - v6.1.0
+  - Performance improvements in parsing query status for given result set.
   - NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.
   - Bug fix: Token cache file on Linux/macOS is now written as UTF-8 without a BOM for cross-driver compatibility.
 - v6.0.0

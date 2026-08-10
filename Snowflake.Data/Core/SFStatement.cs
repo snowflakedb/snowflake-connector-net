@@ -52,12 +52,15 @@ namespace Snowflake.Data.Core
 
     internal static class QueryStatusExtensions
     {
+        private static readonly Dictionary<string, QueryStatus> s_queryStatusMap = Enum.GetValues(typeof(QueryStatus))
+            .Cast<QueryStatus>()
+            .ToDictionary(v => v.GetAttribute<StringAttr>().value, v => v, StringComparer.OrdinalIgnoreCase);
+
         internal static QueryStatus GetQueryStatusByStringValue(string stringValue)
         {
-            var statuses = Enum.GetValues(typeof(QueryStatus))
-                .Cast<QueryStatus>()
-                .Where(v => v.GetAttribute<StringAttr>().value.Equals(stringValue, StringComparison.OrdinalIgnoreCase));
-            return statuses.Any() ? statuses.First() : throw new Exception("The query status returned by the server is not recognized");
+            return s_queryStatusMap.TryGetValue(stringValue, out var status)
+                ? status
+                : throw new Exception("The query status returned by the server is not recognized");
         }
 
         internal static bool IsStillRunning(QueryStatus status)
