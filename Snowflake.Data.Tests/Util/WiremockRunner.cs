@@ -128,11 +128,6 @@ namespace Snowflake.Data.Tests.Util
             return (json["requests"] as JArray)?.ToList() ?? new List<JToken>();
         }
 
-        public void GeleteWiremockRequests()
-        {
-
-        }
-
         private bool CheckIfResponds()
         {
             var wiremockUri = new Uri(WiremockBaseHttpUrl + "/__admin/mappings");
