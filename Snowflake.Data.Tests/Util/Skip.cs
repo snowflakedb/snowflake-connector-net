@@ -13,30 +13,30 @@ public static class Skip
 
     public static void WhenOnTfm(Tfm tfm, string rationale)
     {
-        #if NETFRAMEWORK
+#if NETFRAMEWORK
         var skip = tfm.HasFlag(Tfm.Framework);
         When(skip, rationale);
-        #endif
-        #if NET6_0
+#endif
+#if NET6_0
         var skip = tfm.HasFlag(Tfm.Net6);
         When(skip, rationale);
-        #endif
-        #if NET7_0
+#endif
+#if NET7_0
         var skip = tfm.HasFlag(Tfm.Net7);
         When(skip, rationale);
-        #endif
-        #if NET8_0
+#endif
+#if NET8_0
         var skip = tfm.HasFlag(Tfm.Net8);
         When(skip, rationale);
-        #endif
-        #if NET9_0
+#endif
+#if NET9_0
         var skip = tfm.HasFlag(Tfm.Net9);
         When(skip, rationale);
-        #endif
-        #if NET10_0
+#endif
+#if NET10_0
         var skip = tfm.HasFlag(Tfm.Net10);
         When(skip, rationale);
-        #endif
+#endif
     }
 
     [Flags]
