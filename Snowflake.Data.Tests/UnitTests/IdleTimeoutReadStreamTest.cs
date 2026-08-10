@@ -9,6 +9,13 @@ using Xunit;
 
 namespace Snowflake.Data.Tests.UnitTests;
 
+[CollectionDefinition(nameof(IdleTimeoutReadStreamCollectionFixture), DisableParallelization = true)]
+public sealed class IdleTimeoutReadStreamCollectionFixture : ICollectionFixture<IdleTimeoutReadStreamCollectionFixture.Fixture>
+{
+    public sealed class Fixture { }
+}
+
+[Collection(nameof(IdleTimeoutReadStreamCollectionFixture))]
 public sealed class IdleTimeoutReadStreamTest
 {
     [SFFact]
