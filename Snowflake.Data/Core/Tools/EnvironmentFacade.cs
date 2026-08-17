@@ -9,6 +9,7 @@ internal interface IEnvironmentFacade
 {
     bool GetBool(EnvVar<bool> envVar);
     int GetInt(EnvVar<int> envVar);
+    TimeSpan GetTimeSpan(EnvVar<TimeSpan> envVar);
     string GetString(EnvVar<string> envVar);
     string GetFolderPath(Environment.SpecialFolder folder);
     string GetExecutionDirectory();
@@ -19,7 +20,6 @@ internal sealed class EnvironmentFacade : IEnvironmentFacade
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EnvironmentFacade>();
 
     internal static IEnvironmentFacade Instance { get; } = new EnvironmentFacade();
-
 
     public bool GetBool(EnvVar<bool> envVar)
     {
@@ -37,6 +37,22 @@ internal sealed class EnvironmentFacade : IEnvironmentFacade
         {
             var parseResult = int.TryParse(s, out var parsed);
             return (parseResult, parsed);
+        });
+        return result;
+    }
+
+    public TimeSpan GetTimeSpan(EnvVar<TimeSpan> envVar)
+    {
+        var result = Extract(envVar, s =>
+        {
+            return envVar.ParseMode switch
+            {
+                EnvVarParseMode.FromSeconds => int.TryParse(s, out var parsed)
+                    ? (true, TimeSpan.FromSeconds(parsed))
+                    : (false, TimeSpan.Zero),
+                EnvVarParseMode.Default => (true, TimeSpan.Parse(s)),
+                _ => (false, TimeSpan.Zero)
+            };
         });
         return result;
     }
