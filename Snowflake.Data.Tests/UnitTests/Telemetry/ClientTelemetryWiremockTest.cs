@@ -57,22 +57,20 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             $"account=testaccount;user=dummyuser;password=testpwd;host=localhost;port={WiremockRunner.DefaultHttpPort};scheme=http;poolingEnabled=false;CLIENT_TELEMETRY_ENABLED=false;";
         private static readonly HttpClient s_http = new();
 
-        private IWiremockRunner _wiremock;
-        private readonly ClientTelemetryWiremockTestFixture.Fixture _fixture;
+        private readonly IWiremockRunner _wiremock;
 
         public ClientTelemetryWiremockTest(ClientTelemetryWiremockTestFixture.Fixture fixture)
         {
-            _fixture = fixture;
-            _wiremock = _fixture.Runner;
-            _fixture.Runner.ResetMapping();
-            _fixture.Runner.AddMappings(s_mappingPath);
+            _wiremock = fixture.Runner;
+            fixture.Runner.ResetMapping();
+            fixture.Runner.AddMappings(s_mappingPath);
         }
 
         [SFTheory(SkipCondition.SkipOnJenkins)]
         [InlineData("ExecuteNonQuery")]
         [InlineData("ExecuteScalar")]
         [InlineData("ExecuteReader")]
-        public void TestSyncCommandSendsTelemetryToServer(string method)
+        public async Task TestSyncCommandSendsTelemetryToServer(string method)
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
             conn.Open();
@@ -89,7 +87,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             conn.Close();
 
-            var logs = GetTelemetryLogs();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             var matching = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName && l.StatusCode == "OK").ToList();
             Assert.NotEmpty(matching);
             Assert.Equal("client_activity", matching.First().Type);
@@ -116,14 +114,14 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
-            var logs = GetTelemetryLogs();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             var matching = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName && l.StatusCode == "OK").ToList();
             Assert.NotEmpty(matching);
             Assert.Equal("client_activity", matching.First().Type);
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestTelemetryPayloadContainsSessionTags()
+        public async Task TestTelemetryPayloadContainsSessionTags()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
             conn.Open();
@@ -134,7 +132,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             conn.Close();
 
-            var logs = GetTelemetryLogs();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             Assert.NotEmpty(logs);
 
             var log = logs.First();
@@ -146,7 +144,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestTelemetryPayloadContainsDriverMetadata()
+        public async Task TestTelemetryPayloadContainsDriverMetadata()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
             conn.Open();
@@ -157,7 +155,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             conn.Close();
 
-            var logs = GetTelemetryLogs();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             Assert.NotEmpty(logs);
 
             var log = logs.First();
@@ -167,7 +165,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestServerOverridesClientTelemetrySetting()
+        public async Task TestServerOverridesClientTelemetrySetting()
         {
             // Client disables telemetry, but server responds with CLIENT_TELEMETRY_ENABLED=true
             // Server wins — telemetry should be sent
@@ -180,12 +178,12 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             conn.Close();
 
-            var logs = GetTelemetryLogs();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             Assert.NotEmpty(logs); //"Server override should enable telemetry even when client disabled it"
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestServerDisabledTelemetrySendsNothingToServer()
+        public async Task TestServerDisabledTelemetrySendsNothingToServer()
         {
             _wiremock.AddMappings(s_telemetryDisabledMappingPath);
 
@@ -198,12 +196,12 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             conn.Close();
 
-            var telemetryRequests = GetWiremockRequestsTo("/telemetry/send", noRequestsExpected: true);
+            var telemetryRequests = await GetWiremockRequestsToAsync("/telemetry/send", noRequestsExpected: true).ConfigureAwait(false);
             Assert.Empty(telemetryRequests); // "Server override should enable telemetry even when client disabled it"
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestTelemetrySentWithCorrectAuthToken()
+        public async Task TestTelemetrySentWithCorrectAuthToken()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
             conn.Open();
@@ -214,7 +212,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             conn.Close();
 
-            var telemetryRequests = GetWiremockRequestsTo("/telemetry/send");
+            var telemetryRequests = await GetWiremockRequestsToAsync("/telemetry/send").ConfigureAwait(false);
             Assert.NotEmpty(telemetryRequests);
 
             var authHeader = telemetryRequests.First()["headers"]?["Authorization"]?.ToString();
@@ -222,7 +220,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestCommandFailureSendsTelemetryWithErrorStatus()
+        public async Task TestCommandFailureSendsTelemetryWithErrorStatus()
         {
             _wiremock.AddMappings(s_failingQueryMappingPath);
 
@@ -236,13 +234,13 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             conn.Close();
 
-            var logs = GetTelemetryLogs();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
             var errorLogs = logs.Where(l => l.StatusCode == "ERROR").ToList();
             Assert.NotEmpty(errorLogs); //"Expected at least one ERROR telemetry log when command fails"
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestPublicStartActivityWithSuccessDoesNotInterfereWithInternalTelemetry()
+        public async Task TestPublicStartActivityWithSuccessDoesNotInterfereWithInternalTelemetry()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
             conn.Open();
@@ -261,7 +259,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             conn.Close();
 
-            var logs = GetTelemetryLogs();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
 
             // Internal telemetry
             var internalLogs = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName).ToList();
@@ -391,7 +389,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestPublicStartActivityWithNestedActivitiesAndCommandExecution()
+        public async Task TestPublicStartActivityWithNestedActivitiesAndCommandExecution()
         {
             using var conn = new SnowflakeDbConnection(s_connectionString);
             conn.Open();
@@ -430,7 +428,7 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
             conn.Close();
 
-            var logs = GetTelemetryLogs();
+            var logs = await GetTelemetryLogsAsync().ConfigureAwait(false);
 
             // Internal command telemetry
             var internalLogs = logs.Where(l => l.Source == ActivityStarter.ActivitySourceName).ToList();
@@ -465,9 +463,9 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
 
         #region Helpers
 
-        private List<TelemetryLogEntry> GetTelemetryLogs()
+        private async Task<List<TelemetryLogEntry>> GetTelemetryLogsAsync()
         {
-            var requests = GetWiremockRequestsTo("/telemetry/send");
+            var requests = await GetWiremockRequestsToAsync("/telemetry/send").ConfigureAwait(false);
             var logs = new List<TelemetryLogEntry>();
             foreach (var req in requests)
             {
@@ -480,18 +478,13 @@ namespace Snowflake.Data.Tests.UnitTests.Telemetry
             return logs;
         }
 
-        private List<JToken> GetWiremockRequestsTo(string urlPath, int alreadyRetriedCount = 0, bool noRequestsExpected = false)
+        private async Task<List<JToken>> GetWiremockRequestsToAsync(string urlPath, int alreadyRetriedCount = 0, bool noRequestsExpected = false)
         {
             for (; ; )
             {
                 if (alreadyRetriedCount++ == 3) throw new TimeoutException("Wiremock returns no data!");
 
-                var requestBody = $"{{\"urlPathPattern\": \"{urlPath}\"}}";
-                var baseUrl = _wiremock.WiremockBaseHttpUrl + "/__admin/requests/find";
-                var response = s_http.PostAsync(baseUrl, new StringContent(requestBody, System.Text.Encoding.UTF8, "application/json")).Result;
-                var json = JObject.Parse(response.Content.ReadAsStringAsync().Result);
-                var wiremockRequestsTo = (json["requests"] as JArray)?.ToList();
-
+                var wiremockRequestsTo = await _wiremock.GetWiremockRequestsToAsync(urlPath, "POST").ConfigureAwait(false);
                 if (noRequestsExpected) return wiremockRequestsTo;
                 if (wiremockRequestsTo != null && wiremockRequestsTo.Count != 0) return wiremockRequestsTo;
 

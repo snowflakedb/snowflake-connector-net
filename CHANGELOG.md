@@ -2,6 +2,7 @@
 
 # Changelog
 - v6.1.0
+  - Performance improvements in parsing query status for given result set.
   - NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.
   - Added configurable timeouts for chunk download stream reads. `SF_CHUNK_DOWNLOAD_IDLE_TIMEOUT` (default 180s) detects stalled connections between reads; `SF_CHUNK_DOWNLOAD_READ_TIMEOUT` (default disabled) sets a per-read deadline. Both are configured in seconds; set to `0` to disable.
   - Bug fix: Token cache file on Linux/macOS is now written as UTF-8 without a BOM for cross-driver compatibility.
