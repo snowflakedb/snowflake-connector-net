@@ -13,11 +13,9 @@
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Authors>Snowflake</Authors>
-    <Version>5.7.0</Version>
+    <Version>6.0.0</Version>
     <DebugType>Full</DebugType>
     <LangVersion>13</LangVersion>
-      <!-- SNOW-3560694 !-->
-    <NoWarn>$(NoWarn);CA2022</NoWarn>
   </PropertyGroup>
 
   <!-- Define WINDOWS_BUILD for all Windows-specific targets -->
@@ -27,18 +25,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Apache.Arrow" Version="14.0.2" />
-    <PackageReference Include="AWSSDK.S3" Version="4.0.100.3" />
-    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.14.0" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
-    <PackageReference Include="Azure.Storage.Common" Version="12.12.0" />
+    <PackageReference Include="Apache.Arrow" Version="23.0.0" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.101.4" />
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.15.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.29.1" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.21.0" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="TimeZoneConverter" Version="7.2.0" />
-    <PackageReference Include="Tomlyn.Signed" Version="0.17.0" />
+    <PackageReference Include="Tomlyn.Signed" Version="2.10.1" />
   </ItemGroup>
 
   <!-- Mono.Unix dependency ONLY for Unix/Linux platforms (netstandard2.0, net8.0 and net10.0) -->

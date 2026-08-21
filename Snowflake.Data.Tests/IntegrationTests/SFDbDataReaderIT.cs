@@ -10,6 +10,7 @@ using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {

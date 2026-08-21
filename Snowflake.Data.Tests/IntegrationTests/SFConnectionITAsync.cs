@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -17,6 +16,7 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
+using Snowflake.Data.Tests.Util.Shims;
 using Xunit;
 
 namespace Snowflake.Data.Tests.IntegrationTests;

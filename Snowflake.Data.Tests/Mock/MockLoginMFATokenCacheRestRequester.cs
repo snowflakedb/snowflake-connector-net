@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,7 +47,7 @@ namespace Snowflake.Data.Tests.Mock
             if (sfRequest.jsonBody is LoginRequest)
             {
                 LoginRequests.Enqueue((LoginRequest)sfRequest.jsonBody);
-                var responseData = this.LoginResponses.IsNullOrEmpty() ? new LoginResponseData()
+                var responseData = this.LoginResponses?.Any() != true ? new LoginResponseData()
                 {
                     token = "session_token",
                     masterToken = "master_token",

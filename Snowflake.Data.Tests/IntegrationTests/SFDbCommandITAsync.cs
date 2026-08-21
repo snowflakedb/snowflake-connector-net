@@ -7,6 +7,7 @@ using Snowflake.Data.Core;
 using System.Linq;
 using System.IO;
 using Snowflake.Data.Telemetry;
+using Snowflake.Data.Tests.Util.Shims;
 
 namespace Snowflake.Data.Tests.IntegrationTests
 {
@@ -1011,22 +1012,12 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
         private void ThreadProcess1(string connstr, string tableName)
         {
-            ArrayBindTest(connstr, tableName, 15000);
+            ArrayBindTest(connstr, tableName, 15000).Wait();
         }
 
         private void ThreadProcess2(string connstr, string tableName)
         {
-            ArrayBindTest(connstr, tableName, 15000);
-        }
-
-        private void ThreadProcess3(string connstr, string tableName)
-        {
-            ArrayBindTest(connstr, tableName, 20000);
-        }
-
-        private void ThreadProcess4(string connstr, string tableName)
-        {
-            ArrayBindTest(connstr, tableName, 25000);
+            ArrayBindTest(connstr, tableName, 15000).Wait();
         }
 
         [SFFact]

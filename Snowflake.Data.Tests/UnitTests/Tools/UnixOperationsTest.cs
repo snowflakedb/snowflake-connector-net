@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
+using System.Text;
 using Mono.Unix;
 using Mono.Unix.Native;
 using Xunit;
@@ -317,6 +318,23 @@ namespace Snowflake.Data.Tests.UnitTests.Tools
 
             // assert
             Assert.False(result);
+        }
+
+        [SFFact(SkipCondition.SkipOnWindows)]
+        public void TestWriteAllTextDoesNotEmitUtf8Bom()
+        {
+            // arrange
+            var content = "{\"token\":\"abc\"}";
+            var filePath = Path.Combine(_fixture.WorkingDirectory, $"no_bom_{Path.GetRandomFileName()}");
+
+            // act
+            _fixture.UnixOperations.WriteAllText(filePath, content, _ => { });
+
+            // assert
+            var bytes = File.ReadAllBytes(filePath);
+            var bom = Encoding.UTF8.GetPreamble();
+            Assert.False(bytes.Take(bom.Length).SequenceEqual(bom), "File should not contain BOM for cross-driver interoperability");
+            Assert.Equal(content, _fixture.UnixOperations.ReadAllText(filePath, _ => { }));
         }
 
         [SFFact(SkipCondition.SkipOnWindows)]
