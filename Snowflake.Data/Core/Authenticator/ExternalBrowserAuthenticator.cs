@@ -57,14 +57,12 @@ namespace Snowflake.Data.Core.Authenticator
             if (!string.IsNullOrEmpty(user) && clientStoreTemporaryCredential)
             {
                 var host = session.properties[SFSessionProperty.HOST];
-                session.properties.TryGetValue(SFSessionProperty.ROLE, out var role);
-                // Native SSO: Snowflake acts as its own IdP, so idp and snowflake are both the server host.
                 _idTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                    tokenType: TokenType.IdToken.GetAttribute<StringAttr>().value,
-                    idp: host,
+                    tokenType: TokenType.IdToken.ToCacheKeyPrefix(),
+                    idp: "",
                     snowflake: host,
                     username: user,
-                    role: role ?? string.Empty
+                    role: ""
                 ));
             }
         }

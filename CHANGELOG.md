@@ -7,8 +7,12 @@
   - Added configurable timeouts for chunk download stream reads. `SF_CHUNK_DOWNLOAD_IDLE_TIMEOUT` (default 180s) detects stalled connections between reads; `SF_CHUNK_DOWNLOAD_READ_TIMEOUT` (default disabled) sets a per-read deadline. Both are configured in seconds; set to `0` to disable.
   - Bug fix: Token cache file on Linux/macOS is now written as UTF-8 without a BOM for cross-driver compatibility.
   - Fixed token cache key collisions for multi-account (shared IdP) and multi-role
-    scenarios by switching to a versioned, SHA256-hashed canonical-JSON key applied
-    uniformly across Windows Credential Manager and file backends.
+    scenarios by switching to a versioned, SHA256-hashed canonical-JSON key with the
+    token type in the key prefix, applied uniformly across Windows Credential Manager
+    and file backends.
+  - Fixed token cache key normalization to use lowercase for consistency with
+    case-insensitive Snowflake identifiers; token type in the key prefix now uses
+    PascalCase (`MfaToken`, `OauthAccessToken`) instead of `SCREAMING_SNAKE_CASE`.
 - v6.0.0
   -  Added `CancellationToken` support to chunk download and parsing pipeline. Query result fetching now respects cancellation during both JSON and Arrow chunk parsing.
   -  Upgraded `AWSSDK.S3` dependency. Now getting object header invokes HEAD s3 call instead of GET.
