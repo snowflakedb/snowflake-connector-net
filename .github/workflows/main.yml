@@ -69,9 +69,9 @@ jobs:
             use_dotnet_run: 'false'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
             distribution: 'temurin'
             java-version: 17
@@ -82,7 +82,7 @@ jobs:
           dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
       - name: Setup dotnet-coverage
@@ -115,12 +115,12 @@ jobs:
           net_version: ${{ matrix.dotnet }}
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
       - name: Upload Code Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: code-coverage-report_windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tests-performance_windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests\windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
@@ -162,9 +162,9 @@ jobs:
             sdk: '10.0.x'
             use_dotnet_run: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
             distribution: 'temurin'
             java-version: 17
@@ -175,7 +175,7 @@ jobs:
           dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
       - name: Setup dotnet-coverage
@@ -206,12 +206,12 @@ jobs:
           net_version: ${{ matrix.dotnet }}
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
       - name: Upload Code Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: code-coverage-report_linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tests-performance_linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
@@ -253,9 +253,9 @@ jobs:
             sdk: '10.0.x'
             use_dotnet_run: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
             distribution: 'temurin'
             java-version: 17
@@ -266,7 +266,7 @@ jobs:
           dotnet-version: ${{ matrix.sdk }}
           dotnet-quality: 'ga'
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
       - name: Setup dotnet-coverage
@@ -297,12 +297,12 @@ jobs:
           net_version: ${{ matrix.dotnet }}
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
       - name: Upload Code Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: code-coverage-report_macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tests-performance_macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
@@ -339,7 +339,7 @@ jobs:
           - dotnet: net10.0
             use_dotnet_run: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build and Run Tests in Docker
         id: run-tests-rockylinux9
         run: ./ci/test_rockylinux9_docker.sh
@@ -351,12 +351,12 @@ jobs:
           use_dotnet_run: ${{ matrix.use_dotnet_run }}
         shell: bash
       - name: Upload Code Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: code-coverage-report_rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload Test Performance Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tests-performance_rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}
           path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_performance.csv
