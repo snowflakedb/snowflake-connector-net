@@ -56,14 +56,7 @@ namespace Snowflake.Data.Core.Authenticator
             var clientStoreTemporaryCredential = bool.Parse(session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
             if (!string.IsNullOrEmpty(user) && clientStoreTemporaryCredential)
             {
-                var host = session.properties[SFSessionProperty.HOST];
-                _idTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                    tokenType: TokenType.IdToken.ToCacheKeyPrefix(),
-                    idp: "",
-                    snowflake: host,
-                    username: user,
-                    role: ""
-                ));
+                _idTokenKey = BuildIdTokenCacheKey();
             }
         }
 
@@ -307,5 +300,13 @@ namespace Snowflake.Data.Core.Authenticator
             }
             return Convert.ToBase64String(randomness);
         }
+
+        private string BuildIdTokenCacheKey() =>
+            SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+                TokenType: TokenType.IdToken.ToCacheKeyPrefix(),
+                Idp: "",
+                SnowflakeUrl: session.properties[SFSessionProperty.HOST],
+                Username: session.properties[SFSessionProperty.USER],
+                Role: ""));
     }
 }

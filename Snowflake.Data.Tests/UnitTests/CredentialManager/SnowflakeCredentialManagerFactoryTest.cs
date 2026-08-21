@@ -15,11 +15,11 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             // Vector A: OAuth flow — 4-field keyData, lowercase normalization, quoted values verbatim.
             // "DpopBundledAccessToken" passed directly — no named constant for this type.
             var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                tokenType: "DpopBundledAccessToken",
-                idp: "https://login.microsoftonline.com:443/tenant-id/oauth2/v2.0",
-                snowflake: "https://myorg-myaccount.privatelink.snowflakecomputing.com",
-                username: "\"First Last\"@long-corporate-domain.example.com",
-                role: "\"Analyst Role With Spaces\":north_america:prod:readonly"
+                TokenType: "DpopBundledAccessToken",
+                Idp: "https://login.microsoftonline.com:443/tenant-id/oauth2/v2.0",
+                SnowflakeUrl: "https://myorg-myaccount.privatelink.snowflakecomputing.com",
+                Username: "\"First Last\"@long-corporate-domain.example.com",
+                Role: "\"Analyst Role With Spaces\":north_america:prod:readonly"
             ));
             Assert.Equal("SnowflakeTokenCache.v2.DpopBundledAccessToken.741b6d66d252666d6821bfd19e0151511cf4efdaaeba2b3c87673aa4de6d2c0b", key);
         }
@@ -29,11 +29,11 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         {
             // Vector B: MFA flow — 2-field keyData, lowercase normalization, quoted username verbatim.
             var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                tokenType: "MfaToken",
-                idp: "",
-                snowflake: "https://myorg-myaccount.privatelink.snowflakecomputing.com",
-                username: "\"First Last\"@long-corporate-domain.example.com",
-                role: ""
+                TokenType: "MfaToken",
+                Idp: "",
+                SnowflakeUrl: "https://myorg-myaccount.privatelink.snowflakecomputing.com",
+                Username: "\"First Last\"@long-corporate-domain.example.com",
+                Role: ""
             ));
             Assert.Equal("SnowflakeTokenCache.v2.MfaToken.10c5dde84bb8f584c0df06ea826d418c4f580e08f9db10187c0cb5e2a732a0d6", key);
         }

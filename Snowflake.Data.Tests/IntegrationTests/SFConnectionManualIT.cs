@@ -340,18 +340,18 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         var role = testConfig.role ?? string.Empty;
         var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
         credentialManager.RemoveCredentials(SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-            tokenType: TokenType.OAuthAccessToken.GetAttribute<StringAttr>().value,
-            idp: idpUrl,
-            snowflake: snowflakeHost,
-            username: user,
-            role: role
+            TokenType: TokenType.OAuthAccessToken.GetAttribute<StringAttr>().value,
+            Idp: idpUrl,
+            SnowflakeUrl: snowflakeHost,
+            Username: user,
+            Role: role
         )));
         credentialManager.RemoveCredentials(SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-            tokenType: TokenType.OAuthRefreshToken.GetAttribute<StringAttr>().value,
-            idp: idpUrl,
-            snowflake: snowflakeHost,
-            username: user,
-            role: role
+            TokenType: TokenType.OAuthRefreshToken.GetAttribute<StringAttr>().value,
+            Idp: idpUrl,
+            SnowflakeUrl: snowflakeHost,
+            Username: user,
+            Role: role
         )));
     }
 
@@ -427,11 +427,11 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
 
             // Create a credential manager and save a wrong token for the test user
             var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                tokenType: TokenType.IdToken.GetAttribute<StringAttr>().value,
-                idp: _fixture.testConfig.host,
-                snowflake: _fixture.testConfig.host,
-                username: _fixture.testConfig.user,
-                role: string.Empty
+                TokenType: TokenType.IdToken.GetAttribute<StringAttr>().value,
+                Idp: _fixture.testConfig.host,
+                SnowflakeUrl: _fixture.testConfig.host,
+                Username: _fixture.testConfig.user,
+                Role: string.Empty
             ));
             var credentialManager = SFCredentialManagerInMemoryImpl.Instance;
             credentialManager.SaveCredentials(key, "wrongToken");

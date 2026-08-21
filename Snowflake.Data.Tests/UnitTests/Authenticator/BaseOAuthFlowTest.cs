@@ -66,11 +66,11 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         private string BuildOAuthCacheKey(TokenType tokenType) =>
             SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                tokenType: tokenType.GetAttribute<StringAttr>().value,
-                idp: s_externalTokenRequestUrl,
-                snowflake: SnowflakeHost,
-                username: User,
-                role: Role
+                TokenType: tokenType.GetAttribute<StringAttr>().value,
+                Idp: s_externalTokenRequestUrl,
+                SnowflakeUrl: SnowflakeHost,
+                Username: User,
+                Role: Role
             ));
     }
 }

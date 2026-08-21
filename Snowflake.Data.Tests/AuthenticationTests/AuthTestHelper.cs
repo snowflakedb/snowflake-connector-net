@@ -208,11 +208,11 @@ namespace Snowflake.Data.AuthenticationTests
         internal void RemoveTokenFromCache(string idpUrl, string snowflakeHost, string user, string role, TokenType tokenType)
         {
             var cacheKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                tokenType: tokenType.GetAttribute<StringAttr>().value,
-                idp: idpUrl,
-                snowflake: snowflakeHost,
-                username: user,
-                role: role ?? string.Empty
+                TokenType: tokenType.GetAttribute<StringAttr>().value,
+                Idp: idpUrl,
+                SnowflakeUrl: snowflakeHost,
+                Username: user,
+                Role: role ?? string.Empty
             ));
             SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKey);
         }

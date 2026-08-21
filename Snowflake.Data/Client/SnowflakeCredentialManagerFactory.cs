@@ -13,23 +13,7 @@ using Newtonsoft.Json;
 namespace Snowflake.Data.Client
 {
     /// <summary>Input parameters for building a v2 token cache key.</summary>
-    internal sealed class CacheKeyInput
-    {
-        public string TokenType { get; }
-        public string Idp { get; }
-        public string SnowflakeUrl { get; }
-        public string Username { get; }
-        public string Role { get; }
-
-        public CacheKeyInput(string tokenType, string idp, string snowflake, string username, string role)
-        {
-            TokenType = tokenType;
-            Idp = idp;
-            SnowflakeUrl = snowflake;
-            Username = username;
-            Role = role;
-        }
-    }
+    internal readonly record struct CacheKeyInput(string TokenType, string Idp, string SnowflakeUrl, string Username, string Role);
 
     public class SnowflakeCredentialManagerFactory
     {
@@ -56,32 +40,26 @@ namespace Snowflake.Data.Client
             if (string.IsNullOrEmpty(input.Username))
                 throw new ArgumentException("username must not be empty");
 
-            bool isOAuth = input.TokenType is "OauthAccessToken"
-                            or "OauthRefreshToken"
-                            or "DpopBundledAccessToken";
+            var isOAuth = input.TokenType is "OauthAccessToken"
+                           or "OauthRefreshToken"
+                           or "DpopBundledAccessToken";
 
-            SortedDictionary<string, string> keyData;
-            if (isOAuth)
-            {
-                keyData = new SortedDictionary<string, string>
-                {
-                    ["idp"]       = NormalizeUrl(input.Idp),
-                    ["role"]      = NormalizeIdentifier(input.Role),
-                    ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
-                    ["username"]  = NormalizeIdentifier(input.Username),
-                };
-            }
-            else  // MFA_TOKEN, ID_TOKEN
-            {
-                keyData = new SortedDictionary<string, string>
-                {
-                    ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
-                    ["username"]  = NormalizeIdentifier(input.Username),
-                };
-            }
+            var keyData = isOAuth
+                ? new SortedDictionary<string, string>
+                  {
+                      ["idp"]       = NormalizeUrl(input.Idp),
+                      ["role"]      = NormalizeIdentifier(input.Role),
+                      ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
+                      ["username"]  = NormalizeIdentifier(input.Username),
+                  }
+                : new SortedDictionary<string, string>
+                  {
+                      ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
+                      ["username"]  = NormalizeIdentifier(input.Username),
+                  };
 
-            string json = JsonConvert.SerializeObject(keyData, Formatting.None);
-            string hash = ToSha256HashLower(json);
+            var json = JsonConvert.SerializeObject(keyData, Formatting.None);
+            var hash = ToSha256HashLower(json);
             return $"SnowflakeTokenCache.v2.{input.TokenType}.{hash}";
         }
 
@@ -119,6 +97,7 @@ namespace Snowflake.Data.Client
         /// Normalizes a Snowflake identifier for use as a cache key field.
         /// If the value contains any double-quote character (<c>"</c>), it is returned
         /// verbatim — the quotes signal case-sensitive SQL semantics that must not be altered.
+        /// SQL escaped-quotes (<c>""</c>) contain a <c>"</c> and are therefore also returned verbatim.
         /// Otherwise the entire value is lowercased: unquoted identifiers are case-insensitive
         /// in Snowflake so lowercasing produces a stable canonical form.
         /// </summary>
@@ -131,17 +110,9 @@ namespace Snowflake.Data.Client
 
         private static string ToSha256HashLower(string text)
         {
-            using (var sha = SHA256.Create())
-            {
-                var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(text));
-                return BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant();
-            }
-        }
-
-        [Obsolete("Use BuildCacheKey(CacheKeyInput) instead. This method produces a legacy key format.")]
-        internal static string GetSecureCredentialKey(string host, string user, TokenType tokenType)
-        {
-            return $"{host.ToUpper()}:{user.ToUpper()}:{tokenType.ToString().ToUpper()}".ToSha256Hash();
+            using var sha = SHA256.Create();
+            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(text));
+            return BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant();
         }
 
         public static void UseDefaultCredentialManager()
