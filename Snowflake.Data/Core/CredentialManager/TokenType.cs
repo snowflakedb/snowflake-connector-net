@@ -22,8 +22,8 @@ namespace Snowflake.Data.Core.CredentialManager
         /// </summary>
         internal static string ToCacheKeyPrefix(this TokenType tokenType) => tokenType switch
         {
-            TokenType.IdToken          => "IdToken",
-            TokenType.MFAToken         => "MfaToken",
+            TokenType.IdToken => "IdToken",
+            TokenType.MFAToken => "MfaToken",
             TokenType.OAuthAccessToken => "OauthAccessToken",
             TokenType.OAuthRefreshToken => "OauthRefreshToken",
             _ => throw new System.ArgumentOutOfRangeException(nameof(tokenType), tokenType, "Unknown TokenType")

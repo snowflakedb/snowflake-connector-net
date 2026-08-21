@@ -340,14 +340,14 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         var role = testConfig.role ?? string.Empty;
         var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
         credentialManager.RemoveCredentials(SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-            TokenType: TokenType.OAuthAccessToken.GetAttribute<StringAttr>().value,
+            TokenType: TokenType.OAuthAccessToken.ToCacheKeyPrefix(),
             Idp: idpUrl,
             SnowflakeUrl: snowflakeHost,
             Username: user,
             Role: role
         )));
         credentialManager.RemoveCredentials(SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-            TokenType: TokenType.OAuthRefreshToken.GetAttribute<StringAttr>().value,
+            TokenType: TokenType.OAuthRefreshToken.ToCacheKeyPrefix(),
             Idp: idpUrl,
             SnowflakeUrl: snowflakeHost,
             Username: user,
@@ -427,7 +427,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
 
             // Create a credential manager and save a wrong token for the test user
             var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                TokenType: TokenType.IdToken.GetAttribute<StringAttr>().value,
+                TokenType: TokenType.IdToken.ToCacheKeyPrefix(),
                 Idp: _fixture.testConfig.host,
                 SnowflakeUrl: _fixture.testConfig.host,
                 Username: _fixture.testConfig.user,

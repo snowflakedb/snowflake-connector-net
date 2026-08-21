@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Tests.Util;
 
@@ -119,6 +120,51 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
             var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OauthAccessToken", "idp.example.com", "acct.snowflakecomputing.com", "user", "role"));
             var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OauthRefreshToken", "idp.example.com", "acct.snowflakecomputing.com", "user", "role"));
             Assert.NotEqual(key1, key2);
+        }
+
+        [SFFact]
+        public void TestToCacheKeyPrefixOAuthStringsMatchIsOAuthDispatch()
+        {
+            // The BuildCacheKey dispatch uses literal string matching; these must stay in sync.
+            Assert.Equal("OauthAccessToken", TokenType.OAuthAccessToken.ToCacheKeyPrefix());
+            Assert.Equal("OauthRefreshToken", TokenType.OAuthRefreshToken.ToCacheKeyPrefix());
+            // MFA and ID are non-OAuth — different prefix, different key shape
+            Assert.Equal("MfaToken", TokenType.MFAToken.ToCacheKeyPrefix());
+            Assert.Equal("IdToken", TokenType.IdToken.ToCacheKeyPrefix());
+        }
+
+        [SFFact]
+        public void TestMfaKeyIgnoresIdpAndRole()
+        {
+            var base_ = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", ""));
+            var withIdp = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "idp.example.com", "host.snowflake.com", "user", ""));
+            var withRole = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", "analyst"));
+            Assert.Equal(base_, withIdp);
+            Assert.Equal(base_, withRole);
+        }
+
+        [SFFact]
+        public void TestUsernameIsCaseFoldedInKey()
+        {
+            var lower = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", ""));
+            var upper = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "HOST.SNOWFLAKE.COM", "USER", ""));
+            Assert.Equal(lower, upper);
+        }
+
+        [SFFact]
+        public void TestDimensionIsolationDifferentUsername()
+        {
+            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "alice", ""));
+            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "bob", ""));
+            Assert.NotEqual(key1, key2);
+        }
+
+        [SFFact]
+        public void TestDimensionIsolationIdTokenVsMfaToken()
+        {
+            var idKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("IdToken", "", "host.snowflake.com", "user", ""));
+            var mfaKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", ""));
+            Assert.NotEqual(idKey, mfaKey);
         }
 
         [SFFact]

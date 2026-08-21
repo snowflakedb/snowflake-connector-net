@@ -46,17 +46,17 @@ namespace Snowflake.Data.Client
 
             var keyData = isOAuth
                 ? new SortedDictionary<string, string>
-                  {
-                      ["idp"]       = NormalizeUrl(input.Idp),
-                      ["role"]      = NormalizeIdentifier(input.Role),
-                      ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
-                      ["username"]  = NormalizeIdentifier(input.Username),
-                  }
+                {
+                    ["idp"] = NormalizeUrl(input.Idp),
+                    ["role"] = NormalizeIdentifier(input.Role),
+                    ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
+                    ["username"] = NormalizeIdentifier(input.Username),
+                }
                 : new SortedDictionary<string, string>
-                  {
-                      ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
-                      ["username"]  = NormalizeIdentifier(input.Username),
-                  };
+                {
+                    ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
+                    ["username"] = NormalizeIdentifier(input.Username),
+                };
 
             var json = JsonConvert.SerializeObject(keyData, Formatting.None);
             var hash = ToSha256HashLower(json);
