@@ -56,10 +56,12 @@ You can close this window now and go back where you started from.
 
         protected override OAuthCacheKeys GetOAuthCacheKeys()
         {
-            var host = new Uri(GetTokenEndpoint()).Host;
+            var tokenEndpoint = GetTokenEndpoint();
+            var snowflakeHost = session.properties[SFSessionProperty.HOST];
             var user = session.properties[SFSessionProperty.USER];
+            session.properties.TryGetValue(SFSessionProperty.ROLE, out var role);
             var clientStoreTemporaryCredentials = bool.Parse(session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
-            return OAuthCacheKeys.CreateForAuthorizationCodeFlow(host, user, clientStoreTemporaryCredentials, SnowflakeCredentialManagerFactory.GetCredentialManager);
+            return OAuthCacheKeys.CreateForAuthorizationCodeFlow(tokenEndpoint, snowflakeHost, user, role ?? string.Empty, clientStoreTemporaryCredentials, SnowflakeCredentialManagerFactory.GetCredentialManager);
         }
 
         protected override OAuthAccessTokenRequest RunFlowToAccessTokenRequest()

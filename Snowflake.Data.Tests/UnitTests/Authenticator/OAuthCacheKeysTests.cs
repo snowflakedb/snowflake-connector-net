@@ -21,8 +21,10 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         public void TestCacheAvailableForAuthorizationCodeFlow(string user, bool clientStoreTemporaryCredentials, bool expectedIsAvailable)
         {
             // arrange
-            var host = "snowflakecomputing.com";
-            var cacheKeys = OAuthCacheKeys.CreateForAuthorizationCodeFlow(host, user, clientStoreTemporaryCredentials, SnowflakeCredentialManagerFactory.GetCredentialManager);
+            var idpUrl = "https://idp.snowflakecomputing.com/oauth/token";
+            var snowflakeHost = "snowflakecomputing.com";
+            var role = "PUBLIC";
+            var cacheKeys = OAuthCacheKeys.CreateForAuthorizationCodeFlow(idpUrl, snowflakeHost, user, role, clientStoreTemporaryCredentials, SnowflakeCredentialManagerFactory.GetCredentialManager);
 
             // act
             var isAvailable = cacheKeys.IsAvailable();
@@ -49,7 +51,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var credentialManager = new Mock<ISnowflakeCredentialManager>();
-            var cacheKeys = OAuthCacheKeys.CreateForAuthorizationCodeFlow(null, null, false, () => credentialManager.Object);
+            var cacheKeys = OAuthCacheKeys.CreateForAuthorizationCodeFlow(null, null, null, null, false, () => credentialManager.Object);
 
             // act
             cacheKeys.GetAccessToken();
@@ -84,7 +86,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var credentialManager = new SFCredentialManagerInMemoryImpl();
-            var cacheKeys = OAuthCacheKeys.CreateForAuthorizationCodeFlow("snowflakecomputing.com", "testUser", true, () => credentialManager);
+            var cacheKeys = OAuthCacheKeys.CreateForAuthorizationCodeFlow("https://idp.snowflakecomputing.com/oauth/token", "snowflakecomputing.com", "testUser", "PUBLIC", true, () => credentialManager);
 
             // act/assert
             Assert.True(cacheKeys.IsAvailable());
@@ -100,7 +102,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var credentialManager = new SFCredentialManagerInMemoryImpl();
-            var cacheKeys = OAuthCacheKeys.CreateForAuthorizationCodeFlow("snowflakecomputing.com", "testUser", true, () => credentialManager);
+            var cacheKeys = OAuthCacheKeys.CreateForAuthorizationCodeFlow("https://idp.snowflakecomputing.com/oauth/token", "snowflakecomputing.com", "testUser", "PUBLIC", true, () => credentialManager);
 
             // act/assert
             Assert.True(cacheKeys.IsAvailable());

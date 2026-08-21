@@ -59,6 +59,36 @@ SnowflakeCredentialManagerFactory.UseFileCredentialManager();
 SnowflakeCredentialManagerFactory.SetCredentialManager(CustomCredentialManagerImplementation);
 ```
 
+A custom implementation receives the cache key as an opaque string. The key format is the same for every backend.
+
+### Cache Keys
+
+Cached tokens are stored under a versioned key, used by the Windows Credential Manager, file-based, in-memory, and custom backends:
+
+```
+SnowflakeTokenCache.v2.<TokenType>.<sha256>
+```
+
+`<TokenType>` is a readable PascalCase label so you can tell token classes apart without decoding the hash:
+
+| Token type | Used for |
+|------------|----------|
+| `IdToken` | SSO (`externalbrowser`) |
+| `MfaToken` | MFA (`username_password_mfa`) |
+| `OauthAccessToken` | OAuth authorization code access token |
+| `OauthRefreshToken` | OAuth authorization code refresh token |
+
+The hash is SHA-256 of a canonical JSON object (`keyData`). Which fields go into `keyData` depends on the flow:
+
+- **OAuth:** `idp`, `role`, `snowflake`, `username`
+- **SSO and MFA:** `snowflake`, `username` (`idp` and `role` are not used)
+
+`snowflake` is the Snowflake host from the connection. For OAuth, `idp` is the token request URL of the Identity Provider.
+
+User and role values are lowercased unless they contain a double quote (`"`), in which case they are stored exactly as provided (including SQL `""` escaped quotes). Host and IdP URLs have the scheme and any userinfo stripped, then are lowercased.
+
+Tokens written with the previous key format are not migrated. After upgrading the driver, the first authentication for each identity prompts again and writes a new cache entry.
+
 ## Certificate Revocation List (CRL) Caching
 
 Starting with version 5.0.0, Snowflake .NET driver uses by default a new algorithm for Certificate Revocation List-driven revocation checks.

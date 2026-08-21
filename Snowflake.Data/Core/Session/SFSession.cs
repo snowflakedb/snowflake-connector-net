@@ -131,14 +131,14 @@ namespace Snowflake.Data.Core
                 if (bool.Parse(properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]) &&
                     !string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
                 {
-                    var idTokenKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.IdToken);
-                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(idTokenKey, authnResponse.data.idToken);
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(
+                        BuildTokenCacheKey(TokenType.IdToken), authnResponse.data.idToken);
                 }
                 if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
                 {
                     _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
-                    var key = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken);
-                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(key, authnResponse.data.mfaToken);
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(
+                        BuildTokenCacheKey(TokenType.MFAToken), authnResponse.data.mfaToken);
                 }
                 logger.Debug($"Session opened: {sessionId}");
                 _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -159,8 +159,8 @@ namespace Snowflake.Data.Core
                 {
                     logger.Info($"Unable to use cached MFA token is expired or invalid. Fails with the {e.Message}. ", e);
                     _mfaToken = null;
-                    var mfaKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken);
-                    SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(mfaKey);
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(
+                        BuildTokenCacheKey(TokenType.MFAToken));
                 }
                 throw e;
             }
@@ -230,8 +230,8 @@ namespace Snowflake.Data.Core
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&
                     MFACacheAuthenticator.IsMfaCacheAuthenticator(_authenticatorType))
                 {
-                    var mfaKey = SnowflakeCredentialManagerFactory.GetSecureCredentialKey(properties[SFSessionProperty.HOST], properties[SFSessionProperty.USER], TokenType.MFAToken);
-                    _mfaToken = SecureStringHelper.Encode(SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(mfaKey));
+                    _mfaToken = SecureStringHelper.Encode(
+                        SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(BuildTokenCacheKey(TokenType.MFAToken)));
                 }
             }
             catch (SnowflakeDbException e)
@@ -819,5 +819,13 @@ namespace Snowflake.Data.Core
         internal virtual bool IsInvalidatedForPooling() => _invalidatedForPooling;
 
         internal virtual bool IsClientTelemetryEnabled() => !string.IsNullOrEmpty(sessionId) && _isClientTelemetryEnabled;
+
+        private string BuildTokenCacheKey(TokenType tokenType) =>
+            SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+                TokenType: tokenType.ToCacheKeyPrefix(),
+                Idp: "",
+                SnowflakeUrl: properties[SFSessionProperty.HOST],
+                Username: properties[SFSessionProperty.USER],
+                Role: ""));
     }
 }

@@ -1,13 +1,20 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
+using Newtonsoft.Json;
 
 namespace Snowflake.Data.Client
 {
+    /// <summary>Input parameters for building a v2 token cache key.</summary>
+    internal readonly record struct CacheKeyInput(string TokenType, string Idp, string SnowflakeUrl, string Username, string Role);
+
     public class SnowflakeCredentialManagerFactory
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerFactory>();
@@ -17,11 +24,96 @@ namespace Snowflake.Data.Client
 
         private static ISnowflakeCredentialManager s_credentialManager = s_defaultCredentialManager;
 
-        internal static string GetSecureCredentialKey(string host, string user, TokenType tokenType)
+        /// <summary>
+        /// Builds a v2 token cache key:
+        /// <c>SnowflakeTokenCache.v2.&lt;TokenType&gt;.&lt;sha256hex(canonical_json(keyData))&gt;</c>.
+        /// The PascalCase token type appears in the readable prefix so keystore tooling can
+        /// identify token classes without decoding the opaque hash. <c>keyData</c> is
+        /// flow-specific and never contains the token type: OAuth flows include <c>idp</c>,
+        /// <c>role</c>, <c>snowflake</c>, and <c>username</c> (all lowercased); MFA and ID
+        /// token flows include only <c>snowflake</c> and <c>username</c>.
+        /// </summary>
+        internal static string BuildCacheKey(CacheKeyInput input)
         {
-            return $"{host.ToUpper()}:{user.ToUpper()}:{tokenType.ToString().ToUpper()}".ToSha256Hash();
+            if (string.IsNullOrEmpty(input.SnowflakeUrl))
+                throw new ArgumentException("snowflake URL must not be empty");
+            if (string.IsNullOrEmpty(input.Username))
+                throw new ArgumentException("username must not be empty");
+
+            var isOAuth = input.TokenType is "OauthAccessToken"
+                           or "OauthRefreshToken"
+                           or "DpopBundledAccessToken";
+
+            var keyData = isOAuth
+                ? new SortedDictionary<string, string>
+                {
+                    ["idp"] = NormalizeUrl(input.Idp),
+                    ["role"] = NormalizeIdentifier(input.Role),
+                    ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
+                    ["username"] = NormalizeIdentifier(input.Username),
+                }
+                : new SortedDictionary<string, string>
+                {
+                    ["snowflake"] = NormalizeUrl(input.SnowflakeUrl),
+                    ["username"] = NormalizeIdentifier(input.Username),
+                };
+
+            var json = JsonConvert.SerializeObject(keyData, Formatting.None);
+            var hash = ToSha256HashLower(json);
+            return $"SnowflakeTokenCache.v2.{input.TokenType}.{hash}";
         }
 
+        /// <summary>
+        /// Strips the scheme and any userinfo prefix, drops query and fragment, then lowercases the
+        /// remaining authority (host and any explicitly-stated port) and path, trimming trailing slashes.
+        /// The raw string is used (not a parsed URL) so an explicit default port such as <c>:443</c> is preserved.
+        /// </summary>
+        internal static string NormalizeUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                return string.Empty;
+
+            // Strip the scheme prefix ("scheme://") from the raw string, preserving any explicit port.
+            var schemeIdx = url.IndexOf("://", StringComparison.Ordinal);
+            var s = schemeIdx >= 0 ? url.Substring(schemeIdx + 3) : url;
+
+            // Drop query string and fragment; they never appear in cache keys.
+            s = s.Split('?')[0].Split('#')[0];
+
+            // Strip userinfo ("user:pass@") from the authority only. The authority ends at the first
+            // '/', so an '@' before that slash is a userinfo delimiter; an '@' inside the path survives.
+            var slashIdx = s.IndexOf('/');
+            var authorityEnd = slashIdx >= 0 ? slashIdx : s.Length;
+            var authority = s.Substring(0, authorityEnd);
+            var path = s.Substring(authorityEnd);
+            var atIdx = authority.IndexOf('@');
+            if (atIdx >= 0)
+                authority = authority.Substring(atIdx + 1);
+
+            return (authority + path).TrimEnd('/').ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// Normalizes a Snowflake identifier for use as a cache key field.
+        /// If the value contains any double-quote character (<c>"</c>), it is returned
+        /// verbatim — the quotes signal case-sensitive SQL semantics that must not be altered.
+        /// SQL escaped-quotes (<c>""</c>) contain a <c>"</c> and are therefore also returned verbatim.
+        /// Otherwise the entire value is lowercased: unquoted identifiers are case-insensitive
+        /// in Snowflake so lowercasing produces a stable canonical form.
+        /// </summary>
+        internal static string NormalizeIdentifier(string identifier)
+        {
+            if (string.IsNullOrEmpty(identifier))
+                return string.Empty;
+            return identifier.Contains("\"") ? identifier : identifier.ToLowerInvariant();
+        }
+
+        private static string ToSha256HashLower(string text)
+        {
+            using var sha = SHA256.Create();
+            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(text));
+            return BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant();
+        }
 
         public static void UseDefaultCredentialManager()
         {

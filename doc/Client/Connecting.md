@@ -108,6 +108,7 @@ var connectionString = "account=testaccount;db=\"\"\"test\"\"db\"\"\";";
   A browser is opened for the authorization endpoint; after the user authenticates, the driver exchanges the authorization code for an access token.
 
   Tokens are cached when `CLIENT_STORE_TEMPORARY_CREDENTIAL=true` (default on Windows, `false` on Mac/Linux), reducing repeated browser interactions.
+  Cached access and refresh tokens are scoped to the Identity Provider, Snowflake host, user, and role, so switching any of those uses a separate cache entry.
 
   ```csharp
   using var conn = new SnowflakeDbConnection();
@@ -196,6 +197,8 @@ var connectionString = "account=testaccount;db=\"\"\"test\"\"db\"\"\";";
   ```
 
   Override the default browser timeout with `BROWSER_RESPONSE_TIMEOUT` (in seconds).
+
+  SSO ID tokens are cached when `CLIENT_STORE_TEMPORARY_CREDENTIAL=true` (default on Windows, `false` on Mac/Linux). Cache entries are scoped to the Snowflake host and user.
 
   Note: On Mac/Linux the browser is started via `open`/`xdg-open`. Ensure the command is on your `PATH`.
 
@@ -318,7 +321,7 @@ Special characters in TOML values:
 | EXPIRATIONTIMEOUT                 | 🟢 Optional | Maximum lifetime of a pooled connection. Supports units: `360000ms`, `3600s`, `60m` (default unit: seconds). Default: 1 hour. Set to `0` for immediate expiration. |
 | POOLINGENABLED                    | 🟢 Optional | Enable or disable connection pooling. Default: `true`. |
 | DISABLE_SAML_URL_CHECK            | 🟢 Optional | Skip SAML postback URL validation against the connection string host. Default: `false`. |
-| CLIENT_STORE_TEMPORARY_CREDENTIAL | 🟢 Optional | Cache tokens for external browser or OAuth authorization code flow. Default: `true`. |
+| CLIENT_STORE_TEMPORARY_CREDENTIAL | 🟢 Optional | Cache tokens for external browser or OAuth authorization code flow. Default: `true` on Windows, `false` on Linux and Mac. MFA (`username_password_mfa`) caching is always enabled. See [Cache](Cache.md). |
 | PASSCODE                          | 🟢 Optional | Passcode from a 2FA application for Multi-Factor Authentication. |
 | PASSCODEINPASSWORD                | 🟢 Optional | Whether the MFA passcode is appended to the password. |
 | OAUTHCLIENTID                     | 🔶 Depends | Client ID for OAuth flows. Required for OAuth Authorization Code Flow and OAuth Client Credentials Flow. Auto-filled with `LOCAL_APPLICATION` for Snowflake-provided OAuth when neither OAUTHCLIENTID nor OAUTHCLIENTSECRET are set. |
