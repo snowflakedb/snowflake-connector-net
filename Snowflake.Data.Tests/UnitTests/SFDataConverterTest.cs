@@ -334,13 +334,6 @@ namespace Snowflake.Data.Tests.UnitTests
             return (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
         }
 
-        private string DateTimeToTzWireFormat(DateTime utcDateTime, int offsetMinutes)
-        {
-            // TIMESTAMP_TZ wire format: "<seconds since epoch, in UTC> <offsetMinutes + 1440>"
-            var seconds = DateTimeToLtzWireFormat(utcDateTime);
-            return $"{seconds} {offsetMinutes + 1440}";
-        }
-
         [SFFact]
         public void TestConvertTimestampLtzToDateTimeOffsetWithLocalTimezone()
         {
@@ -420,7 +413,8 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // SNOW-3977560: sub-hour offsets must not be truncated to whole hours.
             var utcDateTime = new DateTime(2028, 2, 29, 6, 30, 0, DateTimeKind.Utc);
-            var wireValue = DateTimeToTzWireFormat(utcDateTime, offsetMinutes);
+            // TIMESTAMP_TZ wire format: "<seconds since epoch, in UTC> <offsetMinutes + 1440>"
+            var wireValue = $"{DateTimeToLtzWireFormat(utcDateTime)} {offsetMinutes + 1440}";
 
             var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
                 ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_TZ, typeof(DateTimeOffset)));
