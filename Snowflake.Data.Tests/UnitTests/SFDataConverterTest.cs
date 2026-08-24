@@ -334,6 +334,13 @@ namespace Snowflake.Data.Tests.UnitTests
             return (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
         }
 
+        private string DateTimeToTzWireFormat(DateTime utcDateTime, int offsetMinutes)
+        {
+            // TIMESTAMP_TZ wire format: "<seconds since epoch, in UTC> <offsetMinutes + 1440>"
+            var seconds = DateTimeToLtzWireFormat(utcDateTime);
+            return $"{seconds} {offsetMinutes + 1440}";
+        }
+
         [SFFact]
         public void TestConvertTimestampLtzToDateTimeOffsetWithLocalTimezone()
         {
@@ -400,6 +407,28 @@ namespace Snowflake.Data.Tests.UnitTests
 
             Assert.Equal(TimeSpan.Zero, result.Offset);
             Assert.Equal(utcDateTime, result.UtcDateTime);
+        }
+
+        [SFTheory]
+        [InlineData(330)]   // +05:30 India / Sri Lanka
+        [InlineData(-210)]  // -03:30 Newfoundland
+        [InlineData(345)]   // +05:45 Nepal
+        [InlineData(765)]   // +12:45 Chatham
+        [InlineData(60)]    // +01:00 whole-hour sanity
+        [InlineData(0)]     // UTC
+        public void TestConvertTimestampTzToDateTimeOffsetPreservesSubHourOffset(int offsetMinutes)
+        {
+            // SNOW-3977560: sub-hour offsets must not be truncated to whole hours.
+            var utcDateTime = new DateTime(2028, 2, 29, 6, 30, 0, DateTimeKind.Utc);
+            var wireValue = DateTimeToTzWireFormat(utcDateTime, offsetMinutes);
+
+            var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_TZ, typeof(DateTimeOffset)));
+
+            var expectedOffset = TimeSpan.FromMinutes(offsetMinutes);
+            Assert.Equal(expectedOffset, result.Offset);
+            Assert.Equal(utcDateTime, result.UtcDateTime);
+            Assert.Equal(utcDateTime + expectedOffset, result.DateTime);
         }
 
         [SFTheory]

@@ -6,6 +6,7 @@
   - NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.
   - Added configurable timeouts for chunk download stream reads. `SF_CHUNK_DOWNLOAD_IDLE_TIMEOUT` (default 180s) detects stalled connections between reads; `SF_CHUNK_DOWNLOAD_READ_TIMEOUT` (default disabled) sets a per-read deadline. Both are configured in seconds; set to `0` to disable.
   - Bug fix: Token cache file on Linux/macOS is now written as UTF-8 without a BOM for cross-driver compatibility.
+  - Bug fix: Fixed TIMESTAMP_TZ sub-hour timezone offsets (e.g. +05:30) being truncated to whole hours in JSON result format.
 - v6.0.0
   -  Added `CancellationToken` support to chunk download and parsing pipeline. Query result fetching now respects cancellation during both JSON and Arrow chunk parsing.
   -  Upgraded `AWSSDK.S3` dependency. Now getting object header invokes HEAD s3 call instead of GET.

@@ -537,6 +537,8 @@ namespace Snowflake.Data.Tests.UnitTests
                 DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 -0500"),
                 DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 +1400"),
                 DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 -1400"),
+                DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 +0530"), // SNOW-3977560 sub-hour offset
+                DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 -0330"),
                 DateTimeOffset.Parse("0001-01-01 00:00:00.0000000 +0000"),
                 DateTimeOffset.Parse("9999-12-31 23:59:59.9999999 +0000"),
             };
