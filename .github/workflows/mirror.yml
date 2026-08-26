@@ -1,0 +1,562 @@
+# AUTO-GENERATED — do not edit manually.
+# Regenerate by running: python3 ci/mirroring/scripts/generate_mirror_config.py
+name: Mirror to public repo
+
+# Mirrors snowflake-eng/snowflake-connector-net -> snowflakedb/snowflake-connector-net
+# (will be flipped to snowflakedb/snowflake-connector-net once validated).
+#
+# Scope: master + every release/* branch.
+
+on:
+  schedule:
+    # 09:00 and 14:00 Warsaw time (CEST = UTC+2, active late-Mar – late-Oct).
+    # In winter (CET = UTC+1) these fire at 08:00 and 13:00 Warsaw time.
+    - cron: "0 7 * * *"
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Single branch to mirror (default: master + all release/*)"
+        required: false
+        default: ""
+      last_rev:
+        description: "Origin SHA to anchor Copybara's replay at (--last-rev). Useful for the first run after a destination wipe, or to recover when GitOrigin-RevId tracking is lost. Leave blank to let Copybara resume from destination state."
+        required: false
+        default: ""
+      dry_run:
+        description: "Pass --dry-run to Copybara: runs the full migration including filtering and verify_match transformations but does NOT push to the destination. Use to preview what would be mirrored without changing the public repo."
+        type: boolean
+        required: false
+        default: false
+      force:
+        description: "Pass --force to Copybara. Required for first-ever mirror run or after a history rewrite. Normally leave disabled — Copybara resumes from GitOrigin-RevId state without it."
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: mirror-public
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  MIRROR_DESTINATION_URL: https://github.com/snowflakedb/snowflake-connector-net
+  # Pin to a specific Copybara snapshot release so mirror behavior is
+  # reproducible. Bump deliberately; verify SHA below when bumping.
+  COPYBARA_RELEASE: v20260504
+  COPYBARA_JAR_SHA256: a87af86f628d2754135fc6e3e0b5ee3f22aa781de4fc7a1039e0a69180576c0e
+
+jobs:
+  check-generator-staleness:
+    name: Check mirror config staleness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Compare generator hash
+        env:
+          SNOWFLAKE_EMU_TOKEN: ${{ secrets.SNOWFLAKE_EMU_TOKEN }}
+        run: |
+          set -euo pipefail
+          HASH_FILE="ci/mirroring/.generator-hash"
+          if [[ ! -f "${HASH_FILE}" ]]; then
+            echo "::warning::No stored generator hash found (${HASH_FILE}). Run ci/mirroring/scripts/sync-mirror-config.sh to initialize."
+            exit 0
+          fi
+          STORED_HASH="$(cat "${HASH_FILE}")"
+          # Fetch the generator via shallow sparse clone (private repo).
+          UPSTREAM_DIR="$(mktemp -d)"
+          git clone --depth 1 --filter=blob:none --sparse --branch main \
+            "https://x-access-token:${SNOWFLAKE_EMU_TOKEN}@github.com/snowflake-eng/drivers.git" \
+            "${UPSTREAM_DIR}/drivers" --quiet
+          git -C "${UPSTREAM_DIR}/drivers" sparse-checkout set ci/mirroring/scripts
+          CURRENT_HASH="$(find "${UPSTREAM_DIR}/drivers/ci/mirroring/scripts" -type f | sort | xargs cat | shasum -a 256 | cut -d' ' -f1)"
+          rm -rf "${UPSTREAM_DIR}"
+          if [[ "${STORED_HASH}" != "${CURRENT_HASH}" ]]; then
+            echo "::error::Mirror config is stale — the upstream generator has changed. Run: bash ci/mirroring/scripts/sync-mirror-config.sh"
+            exit 1
+          else
+            echo "Mirror config is up to date (hash: ${STORED_HASH:0:12}...)."
+          fi
+
+  mirror-main:
+    needs: check-generator-staleness
+    name: Mirror master
+    runs-on: ubuntu-latest
+    environment:
+      name: snowflakedb-mirror
+      url: https://github.com/snowflakedb/snowflake-connector-net
+      # Skip deployment record on dry runs
+      deployment: ${{ github.event.inputs.dry_run != 'true' }}
+    steps:
+      - name: Validate ref input
+        if: ${{ github.event.inputs.ref != '' }}
+        env:
+          REF_INPUT: ${{ github.event.inputs.ref }}
+        run: |
+          set -euo pipefail
+          if ! git check-ref-format --allow-onelevel "refs/heads/${REF_INPUT}"; then
+            echo "::error::Invalid ref input: '${REF_INPUT}' is not a valid branch name."
+            exit 1
+          fi
+
+      - name: Checkout source (full history)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Create mirror token
+        uses: actions/create-github-app-token@v1
+        id: mirror-token
+        with:
+          app-id: ${{ secrets.MIRRORING_APP_ID }}
+          private-key: ${{ secrets.MIRRORING_APP_PRIVATE_KEY }}
+          owner: snowflakedb
+          repositories: snowflake-connector-net
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Copybara image
+        uses: docker/build-push-action@v7
+        with:
+          context: ci/mirroring
+          file: ci/mirroring/Dockerfile.copybara
+          push: false
+          load: true
+          tags: copybara:local
+          build-args: |
+            COPYBARA_RELEASE=${{ env.COPYBARA_RELEASE }}
+            COPYBARA_JAR_SHA256=${{ env.COPYBARA_JAR_SHA256 }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Configure git for Copybara
+        env:
+          SNOWFLAKE_EMU_TOKEN: ${{ secrets.SNOWFLAKE_EMU_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global user.name  "Mirror Bot"
+          git config --global user.email "mirror-bot@snowflake.com"
+          # Authenticate origin fetches against snowflake-eng by injecting a
+          # URL-scoped global http.<url>.extraHeader. This is more reliable
+          # than credential.helper=store because Copybara invokes git from
+          # its own working directory; a global config option applies
+          # unconditionally regardless of cwd.
+          #
+          # The URL prefix is snowflake-eng/ so the header does NOT leak
+          # onto the destination push to snowflakedb/snowflake-connector-net, which
+          # authenticates with the mirror app token inlined into
+          # the destination URL on the next step.
+          B64=$(printf 'x-access-token:%s' "${SNOWFLAKE_EMU_TOKEN}" | base64 -w0)
+          git config --global "http.https://github.com/snowflake-eng/.extraHeader" "Authorization: Basic ${B64}"
+
+      - name: Run Copybara (master)
+        if: ${{ github.event.inputs.ref == '' || github.event.inputs.ref == 'master' }}
+        env:
+          # snowflake-eng-scoped token: reads github.com API for origin metadata.
+          GITHUB_TOKEN: ${{ secrets.SNOWFLAKE_EMU_TOKEN }}
+          # Mirror destination token (contents:write on snowflakedb/snowflake-connector-net).
+          # Inlined into the destination URL so the push authenticates
+          # against the public org, not the internal one.
+          MIRROR_TOKEN: ${{ steps.mirror-token.outputs.token }}
+          LAST_REV: ${{ github.event.inputs.last_rev }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          FORCE: ${{ github.event.inputs.force }}
+        run: |
+          set -euo pipefail
+          extra_args=()
+          if [[ -n "${LAST_REV}" ]]; then
+            echo "Anchoring replay at --last-rev=${LAST_REV}"
+            extra_args+=(--last-rev "${LAST_REV}")
+          fi
+          # --dry-run runs the migration end-to-end (filtering, verify_match,
+          # tree composition) but does NOT push to the destination. Use to
+          # preview which files would reach the mirror without changing it.
+          if [[ "${DRY_RUN}" == "true" ]]; then
+            echo "::notice::Dry run requested — Copybara will not push to the destination."
+            extra_args+=(--dry-run)
+          fi
+          if [[ "${FORCE}" == "true" ]]; then
+            echo "::notice::Force mode — passing --force to Copybara."
+            extra_args+=(--force)
+          fi
+          set +e
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/workdir" \
+            -v "${HOME}/.gitconfig:/root/.gitconfig:ro" \
+            -e GITHUB_TOKEN \
+            copybara:local migrate ci/mirroring/copy.bara.sky mirror \
+            --git-destination-url="https://x-access-token:${MIRROR_TOKEN}@github.com/snowflakedb/snowflake-connector-net.git" \
+            "${extra_args[@]}"
+          rc=$?
+          set -e
+          # Copybara exits 4 (NO_OP) when there are no new changes to migrate —
+          # the steady state whenever master hasn't advanced since the last run.
+          # Always treat it as success; only other non-zero codes are failures.
+          if [[ "${rc}" -eq 0 ]]; then
+            echo "Copybara: mirrored new changes to master."
+          elif [[ "${rc}" -eq 4 ]]; then
+            echo "::notice::Copybara: no new changes to mirror (NO_OP, exit 4) — treating as success."
+          else
+            echo "::error::Copybara failed for master (exit ${rc})."
+            exit "${rc}"
+          fi
+
+  mirror-release-branches:
+    name: Mirror release/* branches
+    needs: mirror-main
+    runs-on: ubuntu-latest
+    # Skip when the user explicitly asked to mirror a single non-release ref.
+    if: ${{ github.event.inputs.ref == '' || startsWith(github.event.inputs.ref, 'release/') }}
+    outputs:
+      failed_branches: ${{ steps.run_per_branch.outputs.failed_branches }}
+    steps:
+      - name: Checkout source (full history)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Create mirror token
+        uses: actions/create-github-app-token@v1
+        id: mirror-token
+        with:
+          app-id: ${{ secrets.MIRRORING_APP_ID }}
+          private-key: ${{ secrets.MIRRORING_APP_PRIVATE_KEY }}
+          owner: snowflakedb
+          repositories: snowflake-connector-net
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Copybara image
+        uses: docker/build-push-action@v7
+        with:
+          context: ci/mirroring
+          file: ci/mirroring/Dockerfile.copybara
+          push: false
+          load: true
+          tags: copybara:local
+          build-args: |
+            COPYBARA_RELEASE=${{ env.COPYBARA_RELEASE }}
+            COPYBARA_JAR_SHA256=${{ env.COPYBARA_JAR_SHA256 }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Configure git for Copybara
+        env:
+          SNOWFLAKE_EMU_TOKEN: ${{ secrets.SNOWFLAKE_EMU_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global user.name  "Mirror Bot"
+          git config --global user.email "mirror-bot@snowflake.com"
+          # Authenticate origin fetches against snowflake-eng by injecting a
+          # URL-scoped global http.<url>.extraHeader. This is more reliable
+          # than credential.helper=store because Copybara invokes git from
+          # its own working directory; a global config option applies
+          # unconditionally regardless of cwd.
+          #
+          # The URL prefix is snowflake-eng/ so the header does NOT leak
+          # onto the destination push to snowflakedb/snowflake-connector-net, which
+          # authenticates with the mirror app token inlined into
+          # the destination URL on the next step.
+          B64=$(printf 'x-access-token:%s' "${SNOWFLAKE_EMU_TOKEN}" | base64 -w0)
+          git config --global "http.https://github.com/snowflake-eng/.extraHeader" "Authorization: Basic ${B64}"
+
+      - name: Enumerate release branches
+        id: branches
+        env:
+          REF_INPUT: ${{ github.event.inputs.ref }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${REF_INPUT}" ]]; then
+            echo "branches=${REF_INPUT}" >> "$GITHUB_OUTPUT"
+          else
+            # Space-separated list of release/* branches on origin.
+            branches=$(git branch -r --list 'origin/release/*' \
+              | sed 's|[[:space:]]*origin/||' \
+              | tr '\n' ' ' \
+              | sed 's/[[:space:]]*$//')
+            echo "branches=${branches}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Copybara per release branch
+        id: run_per_branch
+        if: ${{ steps.branches.outputs.branches != '' }}
+        env:
+          # snowflake-eng-scoped token: reads github.com API for origin metadata.
+          GITHUB_TOKEN: ${{ secrets.SNOWFLAKE_EMU_TOKEN }}
+          # Mirror destination token (contents:write on snowflakedb/snowflake-connector-net).
+          # Inlined into the destination URL so the push authenticates
+          # against the public org, not the internal one.
+          MIRROR_TOKEN: ${{ steps.mirror-token.outputs.token }}
+          BRANCHES: ${{ steps.branches.outputs.branches }}
+          # `last_rev` only makes sense when mirroring a single branch:
+          # it's a SHA on that branch's source history. Applied only when
+          # the user dispatched with exactly one release/* ref.
+          LAST_REV: ${{ github.event.inputs.last_rev }}
+          SINGLE_REF: ${{ github.event.inputs.ref }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          FORCE: ${{ github.event.inputs.force }}
+        run: |
+          set -euo pipefail
+          extra_args=()
+          if [[ -n "${LAST_REV}" && -n "${SINGLE_REF}" ]]; then
+            echo "Anchoring replay at --last-rev=${LAST_REV} for ${SINGLE_REF}"
+            extra_args+=(--last-rev "${LAST_REV}")
+          elif [[ -n "${LAST_REV}" ]]; then
+            echo "::warning::last_rev=${LAST_REV} ignored — only applied when a single branch is dispatched via the 'ref' input."
+          fi
+          # See main job's Run Copybara step for the --dry-run rationale.
+          if [[ "${DRY_RUN}" == "true" ]]; then
+            echo "::notice::Dry run requested — Copybara will not push to the destination."
+            extra_args+=(--dry-run)
+          fi
+          if [[ "${FORCE}" == "true" ]]; then
+            extra_args+=(--force)
+          fi
+
+          DEST_URL="https://x-access-token:${MIRROR_TOKEN}@github.com/snowflakedb/snowflake-connector-net.git"
+          # actions/checkout injects a local `http.https://github.com/.extraheader`
+          # carrying the github-actions[bot] token. That header OVERRIDES the
+          # x-access-token credentials embedded in DEST_URL, so host-side git
+          # pushes authenticate as the bot — which has no write access to
+          # snowflakedb and is rejected with 403. Reset the header (an empty
+          # value clears the multi-valued list) so DEST_URL's token is used.
+          # Local-only git ops below (merge-base, log of refs/mirror/master)
+          # touch no remote and don't need it.
+          git_mirror=(git -c http.https://github.com/.extraheader=)
+          # Local view of the mirror's master, used only to seed brand-new
+          # release branches (see below). Fetched into a private ref so the
+          # tokenized URL is not persisted as a named remote.
+          "${git_mirror[@]}" fetch --quiet "${DEST_URL}" "+refs/heads/master:refs/mirror/master" || true
+
+          failures=0
+          # Space-separated list of branches that fail below, so the
+          # notify-on-failure job can attribute the alert to the right
+          # driver-specific Slack handle(s) instead of guessing.
+          failed_branches=""
+          for branch in ${BRANCHES}; do
+            echo "::group::Mirror ${branch}"
+
+            # First-mirror seeding. Copybara's ITERATIVE mode resumes from the
+            # GitOrigin-RevId trailer on the destination branch tip. A branch
+            # that does not exist on the mirror yet has no such baseline, so
+            # Copybara aborts: "Previous revision label GitOrigin-RevId could
+            # not be found ... --last-rev or --init-history flags were not
+            # passed".
+            #
+            # We deliberately avoid --init-history (it replays the branch's
+            # entire history as fresh commits that share no SHAs with the
+            # mirrored master, producing a divergent duplicate). Instead, create
+            # the branch on the mirror from the commit that ALREADY corresponds
+            # to its fork point on master — located via the GitOrigin-RevId
+            # trailer Copybara stamps on every mirrored commit. The mirror's
+            # release branch then shares history with master and Copybara's
+            # normal iterative replay takes over from there with no flags.
+            if ! "${git_mirror[@]}" ls-remote --exit-code "${DEST_URL}" "refs/heads/${branch}" >/dev/null 2>&1; then
+              forkpoint="$(git merge-base origin/master "origin/${branch}" || true)"
+              seed=""
+              if [[ -n "${forkpoint}" ]]; then
+                seed="$(git log refs/mirror/master --grep "GitOrigin-RevId: ${forkpoint}" --format=%H -1 || true)"
+              fi
+              if [[ -z "${seed}" ]]; then
+                echo "::error::Cannot seed ${branch}: its fork point (${forkpoint:-unknown}) is not yet on the mirror's main. Mirror main first, then retry."
+                failures=$((failures + 1)); failed_branches="${failed_branches:+${failed_branches} }${branch}"
+                echo "::endgroup::"; continue
+              fi
+              if [[ "${DRY_RUN}" == "true" ]]; then
+                echo "::notice::[dry-run] ${branch} is not on the mirror; would seed it from ${seed} (GitOrigin-RevId ${forkpoint}). Skipping replay preview (the seed commit must exist on the mirror first)."
+                echo "::endgroup::"; continue
+              fi
+              echo "Seeding ${branch} on the mirror from ${seed} (corresponds to fork point ${forkpoint})."
+              "${git_mirror[@]}" push "${DEST_URL}" "${seed}:refs/heads/${branch}"
+            fi
+
+            # Direct push: destination branch name matches the source branch
+            # (e.g. release/8.1 -> release/8.1 on the mirror).
+            #
+            # The origin ref is passed as the positional `source_ref` argument
+            # (migrate <config> <workflow> [source_ref]) to override the
+            # `ref = "master"` baked into copy.bara.sky. Copybara has no `--ref`
+            # flag — passing one is silently consumed as the positional refspec
+            # and fails with "Invalid refspec: --ref=...".
+            set +e
+            docker run --rm \
+              -v "${GITHUB_WORKSPACE}:/workdir" \
+              -v "${HOME}/.gitconfig:/root/.gitconfig:ro" \
+              -e GITHUB_TOKEN \
+              copybara:local migrate ci/mirroring/copy.bara.sky mirror "${branch}" \
+              --git-destination-url="${DEST_URL}" \
+              --git-destination-push="${branch}" \
+              "${extra_args[@]}"
+            rc=$?
+            set -e
+            # Copybara exits 4 (NO_OP) when there are no new changes — e.g. a
+            # freshly-seeded branch whose tip equals its fork point. Always
+            # treat it as success; only other non-zero codes are failures.
+            case "${rc}" in
+              0) echo "Mirrored ${branch}." ;;
+              4) echo "::notice::No new changes for ${branch} (NO_OP, exit 4) — treating as success." ;;
+              *)
+                echo "::error::Copybara failed for ${branch} (exit ${rc})."
+                failures=$((failures + 1)); failed_branches="${failed_branches:+${failed_branches} }${branch}"
+                ;;
+            esac
+            echo "::endgroup::"
+          done
+
+          # Written unconditionally (even on full success, as an empty
+          # string) so the job output always exists for the downstream
+          # notify-on-failure job to read.
+          echo "failed_branches=${failed_branches}" >> "$GITHUB_OUTPUT"
+
+          if [[ "${failures}" -gt 0 ]]; then
+            echo "::error::${failures} release branch(es) failed to mirror."
+            exit 1
+          fi
+
+  audit:
+    name: Audit log
+    needs: [mirror-main, mirror-release-branches]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Write run summary
+        run: |
+          set -euo pipefail
+          mode="push"
+          if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
+            mode="dry-run (no push to destination)"
+          fi
+          {
+            echo "## Mirror Sync Report"
+            echo ""
+            echo "- **Mode:** ${mode}"
+            echo "- **Time (UTC):** $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo "- **Trigger:** ${{ github.event_name }}"
+            echo "- **Actor:** ${{ github.actor }}"
+            echo "- **Source master SHA:** $(git rev-parse refs/remotes/origin/master)"
+            echo "- **Release branches:** $(git branch -r --list 'origin/release/*' | wc -l)"
+            echo "- **Destination:** ${MIRROR_DESTINATION_URL}"
+            echo ""
+            echo "- **mirror-main result:** ${{ needs.mirror-main.result }}"
+            echo "- **mirror-release-branches result:** ${{ needs.mirror-release-branches.result }}"
+            echo ""
+            echo "Commits were pushed directly to the destination repo — check its commit log to verify."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  notify-on-failure:
+    name: Notify Slack on failure
+    needs: [mirror-main, mirror-release-branches]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      # mirror-main failing means the whole-repo main sync broke — not
+      # attributable to one driver, so no driver-specific handle is added
+      # for that case (see mention-selection step below).
+      #
+      # mirror-release-branches loops over every release/* branch in a
+      # single job and only fails the job at the end if any branch failed,
+      # so a job-level failure can mean 1..N branches failed, each
+      # potentially a different driver (see its failed_branches output,
+      # populated by the "Run Copybara per release branch" step).
+      - name: Select driver-specific mentions
+        id: mention
+        env:
+          RELEASE_BRANCHES_RESULT: ${{ needs.mirror-release-branches.result }}
+          FAILED_BRANCHES: ${{ needs.mirror-release-branches.outputs.failed_branches }}
+        run: |
+          set -euo pipefail
+          driver_mentions=""
+          if [[ "${RELEASE_BRANCHES_RESULT}" == "failure" ]]; then
+            for branch in ${FAILED_BRANCHES}; do
+              # Release branches are named release/<lang>-v<version>, e.g.
+              # release/jdbc-v0.0.1, release/odbc-v0.0.9,
+              # release/python-v5.0.0b6 — the branch name itself names the
+              # driver unambiguously, so this is the one case safe to page
+              # a specific team on. Any branch name that doesn't match this
+              # convention contributes no handle rather than a guess.
+              lang="${branch#release/}"
+              lang="${lang%%-v*}"
+              handle=""
+              # <!subteam^ID> renders as a real, notification-triggering
+              # mention; plain "@drivers-jdbc" text does not (Slack only
+              # auto-links this exact syntax). IDs from Slack Admin > User
+              # Groups (each group's settings page URL), 2026-08-12.
+              case "${lang}" in
+                jdbc)   handle="<!subteam^S09P0PG7NEN>" ;;
+                odbc)   handle="<!subteam^S09P4A2L1FE>" ;;
+                python) handle="<!subteam^S09P4A6EEJ0>" ;;
+                nodejs) handle="<!subteam^S09NK9XSB6K>" ;;
+                dotnet) handle="<!subteam^S09NXA3KC85>" ;;
+                go)     handle="<!subteam^S09NYMY9V2A>" ;;
+                php)    handle="<!subteam^S09NX9VMJJH>" ;;
+                *)
+                  # Unrecognized driver prefix (e.g. a new language added
+                  # without updating this map) — surface it loudly in the
+                  # run log rather than silently falling back to on-call-only.
+                  echo "::warning::No Slack handle mapped for driver prefix '${lang}' (from branch ${branch}) — add a case above. Falling back to on-call-only mention."
+                  ;;
+              esac
+              if [[ -n "${handle}" ]]; then
+                case " ${driver_mentions} " in
+                  *" ${handle} "*) ;; # already added, dedupe
+                  *) driver_mentions="${driver_mentions} ${handle}" ;;
+                esac
+              fi
+            done
+          fi
+          echo "driver_mentions=${driver_mentions}" >> "$GITHUB_OUTPUT"
+
+      # <!subteam^S077RA1UXAS> is @snow-drivers-warsaw-oncall's resolved ID
+      # (Slack Admin > User Groups, 2026-08-12). Confirmed via live test that
+      # plain "@handle" text does not render as a real mention — only this
+      # syntax does. The bot token lacks usergroups:read, so these IDs are
+      # hardcoded rather than resolved dynamically at runtime; re-resolve by
+      # hand if a group is ever recreated (its ID would change).
+      - name: Post Slack alert
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          DRIVER_MENTIONS: ${{ steps.mention.outputs.driver_mentions }}
+          MIRROR_MAIN_RESULT: ${{ needs.mirror-main.result }}
+          RELEASE_BRANCHES_RESULT: ${{ needs.mirror-release-branches.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          text="Copybara mirror failed: snowflake-eng/snowflake-connector-net -> snowflakedb/snowflake-connector-net
+          mirror-main: ${MIRROR_MAIN_RESULT} | mirror-release-branches: ${RELEASE_BRANCHES_RESULT}
+          cc <!subteam^S077RA1UXAS>${DRIVER_MENTIONS}
+          ${RUN_URL}"
+          payload=$(jq -n --arg channel "C092X1UAAMB" --arg text "${text}" '{channel: $channel, text: $text}')
+          # Slack's API returns HTTP 200 even for logical failures (e.g. the
+          # bot not being a member of the channel), so `curl -f` alone does
+          # NOT catch a failed post — it only fails on HTTP-level errors.
+          # Check the `.ok` field explicitly and fail the step (loudly, in
+          # GitHub Actions' own UI) if Slack rejected it; otherwise this
+          # notification job could report green while silently posting
+          # nothing, the exact failure mode it exists to prevent.
+          #
+          # --retry: retry on transient network/5xx errors only (not on a
+          # logical {"ok":false} response, which is still HTTP 200 and
+          # caught by the .ok check below) so a blip doesn't fail the whole
+          # notify job before Slack is even given a second chance.
+          response=$(curl -s -X POST https://slack.com/api/chat.postMessage \
+            --retry 3 --retry-delay 2 \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "${payload}")
+          echo "Slack API response: ${response}"
+          if [[ "$(echo "${response}" | jq -r '.ok')" != "true" ]]; then
+            echo "::error::Slack chat.postMessage failed: ${response}"
+            exit 1
+          fi
