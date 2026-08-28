@@ -1,0 +1,282 @@
+# AUTO-GENERATED — do not edit manually.
+# Regenerate by running: python3 ci/mirroring/scripts/generate_mirror_config.py
+#
+# Copybara config: two workflows.
+#
+# 1. `mirror`  — outbound: snowflake-eng/snowflake-connector-net -> snowflakedb/snowflake-connector-net
+#                (ITERATIVE, direct push, denylist filter + internal-marker guards)
+#                Runs daily via .github/workflows/mirror.yml.
+#
+# 2. `import`  — inbound: mirror PRs with the `ok-to-import` label become PRs
+#                on the internal repo so they can run against internal CI
+#                before merge. Runs on demand via
+#                .github/workflows/mirror-inbound.yml.
+#
+SOURCE_REPO = "https://github.com/snowflake-eng/snowflake-connector-net"
+MIRROR_REPO = "https://github.com/snowflakedb/snowflake-connector-net"
+
+load("import_paths", "IMPORT_FILE_GLOBS", "IMPORT_AS_DRAFT")
+
+# DENYLIST: mirror everything except the paths below.
+#
+# Policy (decided 2026-06-18): publish the full repo — CI/build infrastructure
+# included (.github/, ci/, scripts/, .buildkite/, .ci/, shell.nix) — except the
+# small internal-only set below. New files are PUBLIC by default; put anything
+# internal-only below a directory named NOMIRROR or under another excluded
+# prefix.
+#
+# The GPG-encrypted e2e credential bundle (.github/secrets/*.gpg) IS published:
+# the files decrypt only with the PARAMETERS_SECRET CI secret, so they're inert
+# in the open repo (same practice as snowflakedb/snowflake-connector-python).
+# Mirroring them is what lets the mirror's e2e jobs decode creds without a
+# manual per-release seeding step.
+#
+# Safety net (independent of this list):
+#   1. ArcticOwl reviewer (`universal-driver-mirror-privacy`) flags new files in
+#      public paths whose content looks internal. See
+#      `.ai/review/universal-driver-mirror-privacy.yaml`.
+#   2. The verify_match guards in the `mirror` workflow below FAIL the sync if a
+#      mirrored file names the internal repo, an internal hostname, or the
+#      internal 1Password vault.
+NOMIRROR_PATHS = [
+    # Internal-only material — never published. Both patterns are required:
+    # the first matches the root directory and the second matches an exact
+    # NOMIRROR path element anywhere below the root.
+    "NOMIRROR/**",
+    "**/NOMIRROR/**",
+]
+
+# Mirror orchestration — internal-only, no purpose on the public repo:
+#   - ci/mirroring/** is the Copybara config + runner image; copy.bara.sky
+#     also names the internal vault in its own guard regex, which would
+#     self-trip the vault verify_match below if mirrored.
+#   - mirror.yml runs the outbound sync on a daily SCHEDULE with no
+#     repository_owner guard — published to the mirror it would fire there
+#     daily and fail (no destination token; snowflakedb -> snowflakedb).
+#   - mirror-inbound.yml is the manual import half of the same loop.
+# CODEOWNERS routes to the internal team @snowflake-eng/snow-drivers-warsaw,
+# which doesn't exist in the public org — a mirrored copy is just a broken
+# CODEOWNERS. Re-include + scrub to a public team if external-review routing
+# is ever wanted.
+# Pre-disclosure sign-off gate: the workflows `uses:` an org-internal
+# action the public org cannot resolve, and the roster names who can
+# authorize a disclosure. Listed explicitly rather than moved below a
+# NOMIRROR/ directory because GitHub only reads workflows from
+# .github/workflows/ and the action expects its default roster path.
+# See NOMIRROR/security-signoff.md.
+# Internal bug-regression tracking: Jira ticket catalogs, analysis status
+# annotations, and the generated HTML report.
+EXCLUDED_PATHS = NOMIRROR_PATHS + [
+    ".ai/**",
+    ".cursor/**",
+    ".claude/**",
+    "scripts/mirror/**",
+    "ci/mirroring/**",
+    ".github/workflows/mirror.yml",
+    ".github/workflows/mirror-inbound.yml",
+    ".github/CODEOWNERS",
+    ".github/workflows/security-signoff.yml",
+    ".github/workflows/security-label.yml",
+    ".github/security-partners.yml",
+    "tests/bugs_analysis/**",
+]
+
+# Per-path overrides that re-include specific files from inside an EXCLUDED_PATHS
+# prefix. NOMIRROR_PATHS remain excluded even if an override names one of them.
+# Kept as a seam (unioned into origin_files below): add a path here to republish
+# a single file from an otherwise-excluded prefix without reopening the whole
+# prefix.
+EXCLUDED_PATH_OVERRIDES = []
+
+
+# ┌─────────────────────────────────────────────────────────────────────┐
+# │ OUTBOUND: internal master -> public mirror master                       │
+# └─────────────────────────────────────────────────────────────────────┘
+core.workflow(
+    name = "mirror",
+    # ITERATIVE preserves linear source history — one destination commit
+    # per origin commit, original author and message. Copybara still writes
+    # a `GitOrigin-RevId: <sha>` trailer on each commit for tracking.
+    mode = "ITERATIVE",
+    origin = git.github_origin(
+        url = SOURCE_REPO,
+        ref = "master",
+    ),
+    # Direct push — no PR gate. Safety relies on the denylist + the
+    # verify_match checks below, plus environment approval on dispatch,
+    # plus the `universal-driver-mirror-privacy` ArcticOwl reviewer
+    # which flags new files in public paths whose content looks internal.
+    destination = git.github_destination(
+        url = MIRROR_REPO,
+        push = "master",
+    ),
+    authoring = authoring.pass_thru(
+        "Mirror Bot <mirror-bot@snowflake.com>"
+    ),
+    # Default-deny denylist + override seam: mirror everything except
+    # EXCLUDED_PATHS, then re-include any EXCLUDED_PATH_OVERRIDES (empty today).
+    # The override glob repeats the NOMIRROR exclusion to keep that directory
+    # convention unconditional.
+    origin_files = glob(["**"], exclude = EXCLUDED_PATHS) + glob(
+        EXCLUDED_PATH_OVERRIDES,
+        exclude = NOMIRROR_PATHS,
+    ),
+    transformations = [
+        # Strip GitHub-appended PR numbers (e.g. " (#123)") from commit messages.
+        metadata.scrubber(
+            regex = "\\s*\\(#\\d+\\)",
+            replacement = "",
+        ),
+        # Rewrite the internal org reference to the public one in any mirrored
+        # file. This handles historical commits where the reference was present
+        # before the source was cleaned up, and guards against future slips.
+        # IGNORE_NOOP because most commits don't contain the pattern.
+        core.transform(
+            [
+                core.replace(
+                    before = "snowflake-eng/snowflake-connector-net",
+                    after = "snowflakedb/snowflake-connector-net",
+                ),
+                # Scrub the internal 1Password vault name from the local-dev
+                # fallback in scripts/decode_secrets.sh (and encode_secrets.sh).
+                # CI sets PARAMETERS_SECRET directly, so the fallback is never
+                # hit there; this only keeps the internal vault name out of the
+                # public mirror.
+                core.replace(
+                    before = "op://Eng - Snow Drivers Warsaw/PARAMETERS_SECRET/password",
+                    after = "op://<vault>/PARAMETERS_SECRET/password",
+                ),
+                # ci/test_revocation.sh clones an internal-only framework repo.
+                # The script runs only on internal Jenkins (ci/Jenkinsfile.vpn-
+                # tests), never on the mirror, so rewriting the org just keeps
+                # the internal repo URL off the public mirror.
+                core.replace(
+                    before = "snowflake-eng/revocation-validation",
+                    after = "snowflakedb/revocation-validation",
+                ),
+            ],
+            noop_behavior = "IGNORE_NOOP",
+        ),
+        # Fail the sync if any mirrored file references the internal repo.
+        # The mirror workflow itself is excluded because it legitimately
+        # names the source repository.
+        core.verify_match(
+            regex = "snowflake-eng/snowflake-connector-net",
+            paths = glob(["**"], exclude = [".github/workflows/mirror*"]),
+            verify_no_match = True,
+        ),
+        # Fail the sync if any mirrored file references internal hostnames.
+        core.verify_match(
+            regex = "\\.snowflakecomputing\\.internal|\\.corp\\.snowflake",
+            verify_no_match = True,
+        ),
+        # Defense-in-depth for the expanded CI surface: fail the sync if a
+        # mirrored file still names the internal 1Password vault after the
+        # scrub above. Not covered by the repo/hostname guards.
+        # (Internal runner labels like `ubuntu-slim` are intentionally NOT
+        # guarded here: mirror-notify-pr.yml already ships with that label, and
+        # rewriting it would force a workflow-file push the mirror token can't
+        # make. Tracked as a separate follow-up.)
+        core.verify_match(
+            regex = "Eng - Snow Drivers Warsaw",
+            verify_no_match = True,
+        ),
+    ],
+)
+
+
+# ┌─────────────────────────────────────────────────────────────────────┐
+# │ INBOUND: labeled mirror PR -> PR on internal repo                   │
+# ├─────────────────────────────────────────────────────────────────────┤
+# │ Gate: required_labels = ["ok-to-import"]. External code never       │
+# │ enters the internal repo without a maintainer explicitly labeling   │
+# │ the mirror PR. Invocation:                                          │
+# │                                                                     │
+# │   copybara migrate ci/mirroring/copy.bara.sky import <PR_NUMBER>   │
+# │                                                                     │
+# │ Contributor authorship is preserved on the imported commits         │
+# │ (authoring.pass_thru). The resulting internal PR runs against full  │
+# │ internal CI before merge; when merged to master the outbound `mirror` │
+# │ workflow pushes the change back to the mirror on its next run,      │
+# │ closing the loop.                                                   │
+# └─────────────────────────────────────────────────────────────────────┘
+core.workflow(
+    name = "import",
+    mode = "CHANGE_REQUEST",
+    origin = git.github_pr_origin(
+        url = MIRROR_REPO,
+        required_labels = ["ok-to-import"],
+        # Pull only open PRs — merged or closed PRs don't need importing.
+        state = "OPEN",
+        branch = "master",
+    ),
+    # Create a PR on the internal repo so internal CI and reviewers see it.
+    #
+    # NOTE: pr_branch is intentionally omitted — Copybara's `pr_branch`
+    # field does NOT interpolate ${LABEL} placeholders. Without it,
+    # github_pr_destination derives a unique per-PR branch automatically.
+    #
+    # Only labels that git.github_pr_origin actually exposes may appear
+    # in title/body: GITHUB_PR_NUMBER, GITHUB_PR_TITLE, GITHUB_PR_BODY,
+    # GITHUB_PR_URL, GITHUB_PR_HEAD_SHA. Author login is NOT available
+    # as a label — Copybara carries it on the imported commit's author
+    # metadata instead (via authoring.pass_thru below).
+    destination = git.github_pr_destination(
+        url = SOURCE_REPO,
+        destination_ref = "master",
+        draft = IMPORT_AS_DRAFT,
+        title = "Import mirror PR #${GITHUB_PR_NUMBER}: ${GITHUB_PR_TITLE}",
+        body = "Imported from ${GITHUB_PR_URL}.\n\n"
+               + "Original PR body:\n\n"
+               + "${GITHUB_PR_BODY}\n\n"
+               + "---\n"
+               + "Internal CI validates this change before merge. "
+               + "On merge to master the outbound mirror will push the commit "
+               + "back to the public repo; close the original mirror PR "
+               + "with a link to the mirrored commit.",
+        integrates = [],
+    ),
+    # pass_thru preserves the external contributor's authorship on
+    # imported commits. The string argument is the fallback identity used
+    # only when the origin commit has no author metadata.
+    authoring = authoring.pass_thru(
+        "Mirror Bot <mirror-bot@snowflake.com>"
+    ),
+    # Imported PRs are scoped to the mirror PR's changed files (not the full
+    # denylist): IMPORT_FILE_GLOBS is generated per run by
+    # ci/mirroring/scripts/prepare_import_paths.py from the mirror PR file list.
+    # Merge-import baseline flags reconcile every managed path; scoping to
+    # the PR diff avoids unrelated org-string drift on untouched files.
+    # destination_files must mirror origin_files exactly, else copybara treats
+    # every destination file as managed and generates spurious deletions.
+    origin_files = glob(IMPORT_FILE_GLOBS),
+    destination_files = glob(IMPORT_FILE_GLOBS),
+    transformations = [
+        # Defensive: internal hostnames should never appear in a mirror PR,
+        # but fail loudly if they somehow do.
+        core.verify_match(
+            regex = "\\.snowflakecomputing\\.internal|\\.corp\\.snowflake",
+            verify_no_match = True,
+        ),
+
+        # Stamp the imported commit message with trailers identifying the
+        # mirror PR and the exact source SHA that was imported. The
+        # mirror-side close-imported-pr.yml workflow (shipped to the mirror
+        # via Copybara — see .github/workflows/close-imported-pr.yml)
+        # reads these trailers after the outbound mirror replays the
+        # squash-merge back to the mirror, auto-closes the original PR,
+        # and comments with a link to the mirrored commit.
+        metadata.expose_label(
+            name = "GITHUB_PR_NUMBER",
+            new_name = "Imported-From-Mirror-PR",
+            separator = ": ",
+            ignore_label_not_found = False,
+        ),
+        metadata.expose_label(
+            name = "GITHUB_PR_HEAD_SHA",
+            new_name = "Imported-From-Mirror-SHA",
+            separator = ": ",
+            ignore_label_not_found = False,
+        ),
+    ],
+)

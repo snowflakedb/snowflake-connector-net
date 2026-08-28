@@ -1,0 +1,35 @@
+# AUTO-GENERATED — do not edit manually.
+# Regenerate by running: python3 ci/mirroring/scripts/generate_mirror_config.py
+#
+# Copybara runtime image used by the mirror GitHub Actions workflows.
+#
+# Build args:
+#   COPYBARA_RELEASE       Copybara release tag (e.g. v20260504).
+#   COPYBARA_JAR_SHA256    Expected SHA-256 of copybara_deploy.jar. Committed
+#                          in the generator so a compromised upstream release
+#                          (jar + .sha256 replaced together) is caught at
+#                          build time. Bump both when upgrading Copybara.
+#
+# Runtime: `docker run --rm <image> <copybara CLI args>`. Caller must bind
+# the repo into /workdir and /root (or similar) if it wants to provide
+# git credentials.
+
+FROM eclipse-temurin:21-jre
+
+ARG COPYBARA_RELEASE=v20260504
+ARG COPYBARA_JAR_SHA256=a87af86f628d2754135fc6e3e0b5ee3f22aa781de4fc7a1039e0a69180576c0e
+
+# git is needed by Copybara to shell out for fetches/pushes. curl to pull
+# the jar. No rust toolchain, no dev headers — this image is single-purpose.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git curl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN set -eu; \
+    curl -fsSL -o /opt/copybara_deploy.jar \
+      "https://github.com/google/copybara/releases/download/${COPYBARA_RELEASE}/copybara_deploy.jar"; \
+    echo "${COPYBARA_JAR_SHA256}  /opt/copybara_deploy.jar" | sha256sum -c -
+
+WORKDIR /workdir
+
+ENTRYPOINT ["java", "-jar", "/opt/copybara_deploy.jar"]
