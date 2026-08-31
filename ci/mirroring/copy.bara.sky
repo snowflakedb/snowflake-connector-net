@@ -66,10 +66,15 @@ NOMIRROR_PATHS = [
 # See NOMIRROR/security-signoff.md.
 # Internal bug-regression tracking: Jira ticket catalogs, analysis status
 # annotations, and the generated HTML report.
+# Security-context bundle (.security/**): architecture, trust boundaries,
+# threat model, and invariant status with citations into this code.
+# Publishing it would hand an external reader a curated map of attack
+# surface and exactly which controls it relies on.
 EXCLUDED_PATHS = NOMIRROR_PATHS + [
     ".ai/**",
     ".cursor/**",
     ".claude/**",
+    ".security/**",
     "scripts/mirror/**",
     "ci/mirroring/**",
     ".github/workflows/mirror.yml",
@@ -154,14 +159,23 @@ core.workflow(
                     before = "snowflake-eng/revocation-validation",
                     after = "snowflakedb/revocation-validation",
                 ),
+                # ci/Jenkinsfile.usut-tests clones the internal monorepo. The
+                # script runs only on internal Jenkins, never on the mirror,
+                # so rewriting the org keeps the internal URL private without
+                # changing behavior that can run publicly.
+                core.replace(
+                    before = "snowflake-eng/snowflake",
+                    after = "snowflakedb/snowflake",
+                ),
             ],
             noop_behavior = "IGNORE_NOOP",
         ),
-        # Fail the sync if any mirrored file references the internal repo.
-        # The mirror workflow itself is excluded because it legitimately
-        # names the source repository.
+        # Fail the sync if any mirrored file references an internal repo.
+        # Targeted rewrites above handle known intentional references; a hit
+        # here is a new leak and must be explicitly rewritten or excluded.
+        # Mirror workflows are exempt because they name the source org.
         core.verify_match(
-            regex = "snowflake-eng/snowflake-connector-net",
+            regex = "snowflake-eng/",
             paths = glob(["**"], exclude = [".github/workflows/mirror*"]),
             verify_no_match = True,
         ),

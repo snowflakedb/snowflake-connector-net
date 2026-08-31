@@ -81,8 +81,8 @@ files reach the mirror by default; anything matching the denylist does
 not.
 
 Safety nets (independent of the denylist):
-1. `verify_match` guards FAIL the sync if a mirrored file names the
-   internal repo, an internal hostname, or the internal 1Password vault.
+1. `verify_match` guards FAIL the sync if a mirrored file names any
+   `snowflake-eng` repo, an internal hostname, or the internal 1Password vault.
 2. The `NOMIRROR/` convention: put any new internal-only material
    under a directory named `NOMIRROR` (at any depth) and it is excluded
    without touching the config.
