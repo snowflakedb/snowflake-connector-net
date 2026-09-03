@@ -214,7 +214,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     public async Task TestConnectString()
     {
         var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-        var schemaName = "dlSchema_" + Guid.NewGuid().ToString().Replace("-", "_");
+        var schemaName = ("dlSchema_" + Guid.NewGuid().ToString().Replace("-", "_")).ToUpper();
         var conn = new SnowflakeDbConnection();
         conn.ConnectionString = _fixture.ConnectionString;
         await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -238,20 +238,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
 
         using (var conn1 = new SnowflakeDbConnection())
         {
-            conn1.ConnectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
-                                                   "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
-                _fixture.testConfig.protocol,
-                _fixture.testConfig.host,
-                _fixture.testConfig.port,
-                _fixture.testConfig.account,
-                _fixture.testConfig.role,
-                //"\"dlTest\"",
-                _fixture.testConfig.database,
-                $"\"{schemaName}\"",
-                //_fixture.testConfig.schema,
-                _fixture.testConfig.warehouse,
-                _fixture.testConfig.user,
-                _fixture.testConfig.password);
+            conn1.ConnectionString = _fixture.ConnectionString.Replace($"schema={_fixture.testConfig.schema}", $"schema={schemaName}");
             Assert.Equal(ConnectionState.Closed, conn1.State);
 
             await conn1.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -348,7 +335,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     public async Task TestValidateDefaultParameters()
     {
         var expectedErrorCode = SFError.OBJ_NONEXISTANT_OR_NOT_AUTHORIZED.GetAttribute<SFErrorAttr>().errorCode;
-        var connectionString = $"scheme={_fixture.testConfig.protocol};host={_fixture.testConfig.host};port={_fixture.testConfig.port};certRevocationCheckMode=enabled;account={_fixture.testConfig.account};role={_fixture.testConfig.role};db={_fixture.testConfig.database};schema={_fixture.testConfig.schema};warehouse=WAREHOUSE_NEVER_EXISTS;user={_fixture.testConfig.user};password={_fixture.testConfig.password};";
+        var connectionString = _fixture.ConnectionString.Replace($"warehouse={_fixture.testConfig.warehouse}", "warehouse=WAREHOUSE_NEVER_EXISTS");
 
         // By default should validate parameters
         using var conn = new SnowflakeDbConnection();
@@ -492,19 +479,12 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestConnectWithoutHost()
     {
-        using (var conn = new SnowflakeDbConnection())
-        {
-            string connStrFmt = "account={0};user={1};password={2};certRevocationCheckMode=enabled;";
-            conn.ConnectionString = string.Format(connStrFmt, _fixture.testConfig.account,
-                _fixture.testConfig.user, _fixture.testConfig.password);
-            // Check that connection succeeds if host is not specified in test configs, i.e. default should work.
-            if (string.IsNullOrEmpty(_fixture.testConfig.host))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                Assert.Equal(ConnectionState.Open, conn.State);
-                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-        }
+        using var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = _fixture.ConnectionString.Replace($"host={_fixture.testConfig.host}", string.Empty);
+        // Check that connection succeeds if host is not specified in test configs, i.e. default should work.
+        await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+        Assert.Equal(ConnectionState.Open, conn.State);
+        await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     [SFFact]
@@ -518,18 +498,8 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 host = $"{_fixture.testConfig.account}.snowflakecomputing.com";
             }
 
-            string connStrFmt = "scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
-                                "user={3};password={4};account={5};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED;validate_default_parameters=false";
-
-            conn.ConnectionString = string.Format(
-                connStrFmt,
-                _fixture.testConfig.protocol,
-                _fixture.testConfig.host,
-                _fixture.testConfig.port,
-                _fixture.testConfig.user,
-                _fixture.testConfig.password,
-                _fixture.testConfig.account
-            );
+            conn.ConnectionString = _fixture.ConnectionString
+                .Replace($"role={_fixture.testConfig.role}", "role=public") ;
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
 
@@ -539,14 +509,13 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 Assert.Equal("PUBLIC", (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
 
                 command.CommandText = "select current_database()";
-                Assert.Contains((await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString(), new[] { "SNOWFLAKE_SAMPLE_DATA", "" });
+                Assert.Contains((await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString(), new[] { _fixture.testConfig.database, "" });
 
                 command.CommandText = "select current_schema()";
-                Assert.Contains((await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString(), new[] { "INFORMATION_SCHEMA", "" });
+                Assert.Contains((await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString(), new[] { _fixture.testConfig.schema.ToUpper(), "" });
 
                 command.CommandText = "select current_warehouse()";
-                // Command will return empty string if the hardcoded warehouse does not exist.
-                Assert.Equal("", (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
+                Assert.Equal(_fixture.testConfig.warehouse, (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString());
             }
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }

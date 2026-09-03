@@ -123,20 +123,24 @@ namespace Snowflake.Data.Tests
             _tablesToRemove.Push(tableName);
         }
 
-        public string ConnectionStringWithoutAuth => string.Format(ConnectionStringWithoutAuthFmt,
-            testConfig.protocol,
-            testConfig.host,
-            testConfig.port,
-            testConfig.account,
-            testConfig.role,
-            testConfig.database,
-            testConfig.schema,
-            testConfig.warehouse,
+        private static string GetConnectionStringWithoutAuth(TestConfig config) => string.Format(ConnectionStringWithoutAuthFmt,
+            config.protocol,
+            config.host,
+            config.port,
+            config.account,
+            config.role,
+            config.database,
+            config.schema,
+            config.warehouse,
             "false");
 
-        public string ConnectionString => ConnectionStringWithoutAuth + GetAuthenticationString();
+        public string ConnectionStringWithoutAuth => GetConnectionStringWithoutAuth(testConfig);
 
-        private string GetAuthenticationString()
+        public static string GetConnectionString(TestConfig testConfig) => GetConnectionStringWithoutAuth(testConfig) + GetAuthenticationString(testConfig);
+
+        public string ConnectionString => ConnectionStringWithoutAuth + GetAuthenticationString(testConfig);
+
+        private static string GetAuthenticationString(TestConfig testConfig)
         {
             // 1. Jenkins override - always use password authentication
             if (IsRunningInJenkins())
@@ -175,7 +179,7 @@ namespace Snowflake.Data.Tests
                 testConfig.password);
         }
 
-        private string DiscoverRsaKeyFile()
+        private static string DiscoverRsaKeyFile()
         {
             // Search locations in priority order - start with CI/CD location first
             string[] searchPaths =
@@ -212,7 +216,7 @@ namespace Snowflake.Data.Tests
             return null;
         }
 
-        private bool IsRunningInJenkins()
+        private static bool IsRunningInJenkins()
         {
             // Jenkins typically sets these environment variables
             return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JENKINS_URL")) ||

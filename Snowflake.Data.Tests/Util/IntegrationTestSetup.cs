@@ -87,41 +87,33 @@ public static class IntegrationTestEnvironment
 
     private static async Task ModifySchemaAsync(string schemaName, SchemaAction schemaAction)
     {
-        using (IDbConnection conn = new SnowflakeDbConnection())
+        using IDbConnection conn = new SnowflakeDbConnection();
+        var connectionString = SFBaseTestAsyncFixture.GetConnectionString(TestConfigSingleton.TestConfig);
+        connectionString = connectionString.Replace($"schema={TestConfigSingleton.TestConfig.schema}", string.Empty);
+        conn.ConnectionString = connectionString;
+        await ((SnowflakeDbConnection)conn).OpenAsync(CancellationToken.None).ConfigureAwait(false);
+        var dbCommand = conn.CreateCommand();
+
+        switch (schemaAction)
         {
-            conn.ConnectionString = BuildConnectionString(TestConfigSingleton.TestConfig);
-            await ((SnowflakeDbConnection)conn).OpenAsync(CancellationToken.None).ConfigureAwait(false);
-            var dbCommand = conn.CreateCommand();
-
-            switch (schemaAction)
-            {
-                case SchemaAction.Create:
-                    dbCommand.CommandText = $"CREATE OR REPLACE SCHEMA {schemaName}";
-                    break;
-                case SchemaAction.Drop:
-                    dbCommand.CommandText = $"DROP SCHEMA IF EXISTS {schemaName}";
-                    break;
-                default:
-                    Assert.Fail($"Not supported action on schema: {schemaAction}");
-                    break;
-            }
-
-            try
-            {
-                dbCommand.ExecuteNonQuery();
-            }
-            catch (InvalidOperationException e)
-            {
-                Assert.Fail($"Unable to {schemaAction.ToString().ToLower()} schema {schemaName}:\n{e.StackTrace}");
-            }
+            case SchemaAction.Create:
+                dbCommand.CommandText = $"CREATE OR REPLACE SCHEMA {schemaName}";
+                break;
+            case SchemaAction.Drop:
+                dbCommand.CommandText = $"DROP SCHEMA IF EXISTS {schemaName}";
+                break;
+            default:
+                Assert.Fail($"Not supported action on schema: {schemaAction}");
+                break;
         }
-    }
 
-    private static string BuildConnectionString(TestConfig config)
-    {
-        return $"scheme={config.protocol};host={config.host};port={config.port};" +
-               $"certRevocationCheckMode=enabled;account={config.account};role={config.role};" +
-               $"db={config.database};warehouse={config.warehouse};" +
-               $"user={config.user};password={config.password};";
+        try
+        {
+            dbCommand.ExecuteNonQuery();
+        }
+        catch (InvalidOperationException e)
+        {
+            Assert.Fail($"Unable to {schemaAction.ToString().ToLower()} schema {schemaName}:\n{e.StackTrace}");
+        }
     }
 }
