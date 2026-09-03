@@ -82,6 +82,19 @@ namespace Snowflake.Data.Core.Authenticator
 
         internal WorkloadIdentityAttestationData CreateAttestation()
         {
+            var host = session.properties.TryGetValue(SFSessionProperty.HOST, out var configuredHost) ? configuredHost : null;
+            var extraAllowedSuffixes = SnowflakeHost.GetExtraAllowedHostSuffixes(_environmentFacade);
+            if (extraAllowedSuffixes.Count > 0)
+            {
+                s_logger.Info($"SNOWFLAKE_WIF_ALLOWED_HOST_SUFFIXES is set. Additionally allowing WORKLOAD_IDENTITY host suffixes: {string.Join(", ", extraAllowedSuffixes)}");
+            }
+            if (!SnowflakeHost.IsSnowflakeHostForWorkloadIdentity(host, _environmentFacade))
+            {
+                var rejectionMessage = $"WORKLOAD_IDENTITY requires a recognized Snowflake host (*.snowflakecomputing.com, .cn or .mil). Got: '{host}'";
+                s_logger.Error(rejectionMessage);
+                throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, new object[] { _provider, rejectionMessage });
+            }
+
             try
             {
                 return _provider switch

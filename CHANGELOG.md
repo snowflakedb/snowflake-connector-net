@@ -2,6 +2,7 @@
 
 # Changelog
 - v6.1.0
+  - Restricted the `WORKLOAD_IDENTITY` authenticator to recognized Snowflake hosts (`*.snowflakecomputing.com`/`.cn`/`.mil`), normalizing the host before a suffix-anchored match. The `SNOWFLAKE_WIF_ALLOWED_HOST_SUFFIXES` environment variable additively extends the recognized-host list.
   - Performance improvements in parsing query status for given result set.
   - NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.
   - Added configurable timeouts for chunk download stream reads. `SF_CHUNK_DOWNLOAD_IDLE_TIMEOUT` (default 180s) detects stalled connections between reads; `SF_CHUNK_DOWNLOAD_READ_TIMEOUT` (default disabled) sets a per-read deadline. Both are configured in seconds; set to `0` to disable.
@@ -25,7 +26,6 @@
   -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
   -  Bug fix: Fixed incorrect DateTime conversion for timestamps preceding Unix epoch (1970-01-01) when fractional seconds are
     present.
-  -  Bug fix: Fixed an unnecessary second PUT (stage re-resolution) per file during GCS uploads when the server scopes upload credentials with an access token.
 - v5.7.0
     - Improved input handling in `ChangeDatabase` by using parameterized queries.
     - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.

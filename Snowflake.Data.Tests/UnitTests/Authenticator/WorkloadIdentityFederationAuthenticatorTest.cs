@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Moq;
 using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
@@ -38,6 +39,13 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var sessionContext = new SessionPropertiesContext();
             var session = new SFSession(connectionString, sessionContext);
             var environmentOperations = new Mock<IEnvironmentFacade>();
+            // Tests in this file (and its provider-specific subclasses) talk to a local Wiremock
+            // instance via host=localhost. Allow that host for the WORKLOAD_IDENTITY host-allowlist
+            // guard by default, standing in for a real Snowflake host in this test-only context.
+            // Individual tests can still override this via environmentOperationsConfigurator.
+            environmentOperations
+                .Setup(e => e.GetString(EnvVars.WifAllowedHostSuffixes))
+                .Returns("localhost");
             environmentOperationsConfigurator(environmentOperations);
             var timeProvider = new Mock<TimeProvider>();
             timeProviderConfigurator(timeProvider);
@@ -71,9 +79,38 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             Assert.Contains("Retrieving attestation for AWS failed. Not available", exception?.Message);
         }
 
+        [SFFact(SkipCondition.SkipOnJenkins)]
+        public async Task TestRefusesToCreateAttestationForNonSnowflakeHost()
+        {
+            // arrange: the host-allowlist guard runs before any attestation retriever is constructed,
+            // so no ambient credential is fetched/minted for a host that is not a recognized Snowflake host.
+            Mock<AwsSdkWrapper> capturedAwsSdkWrapper = null;
+            var session = PrepareSession(AttestationProvider.AWS, null, DisallowLocalhost, SetupSystemTime, mock =>
+            {
+                SetupAwsSdkDisabled(mock);
+                capturedAwsSdkWrapper = mock;
+            });
+
+            // act
+            var exception = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None)).ConfigureAwait(false);
+
+            // assert: rejected with a clear, non-secret-bearing message naming the host and reason
+            Assert.Contains("requires a recognized Snowflake host", exception?.Message);
+            Assert.Contains("localhost", exception?.Message);
+
+            // assert: the ambient credential was never fetched/minted for the rejected host
+            capturedAwsSdkWrapper.Verify(a => a.GetAwsCredentials(), Times.Never);
+            capturedAwsSdkWrapper.Verify(a => a.GetAwsRegion(), Times.Never);
+        }
+
         internal void NoEnvironmentSetup(Mock<IEnvironmentFacade> environmentOperations)
         {
         }
+
+        internal void DisallowLocalhost(Mock<IEnvironmentFacade> environmentOperations) =>
+            environmentOperations
+                .Setup(e => e.GetString(EnvVars.WifAllowedHostSuffixes))
+                .Returns(string.Empty);
 
         internal void SetupSystemTime(Mock<TimeProvider> timeProvider) =>
             timeProvider
