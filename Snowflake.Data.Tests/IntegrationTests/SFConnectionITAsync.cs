@@ -499,7 +499,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             }
 
             conn.ConnectionString = _fixture.ConnectionString
-                .Replace($"role={_fixture.testConfig.role}", "role=public") ;
+                .Replace($"role={_fixture.testConfig.role}", "role=public");
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
 
