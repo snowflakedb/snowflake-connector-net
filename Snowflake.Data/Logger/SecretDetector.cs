@@ -82,6 +82,8 @@ namespace Snowflake.Data.Log
         private static readonly Regex s_awsTokenPattern = new(@"(accessToken|tempToken|keySecret)\""\s*:\s*\""([a-z0-9/+]{32,}={0,2})\""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex s_awsServerSidePattern = new(@"((x-amz-server-side-encryption)([a-z0-9\-])*)\s*(:|=)\s*([a-z0-9/_\-+:=])+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex s_sasTokenPattern = new(@"(sig|signature|AWSAccessKeyId|password|passcode)=([a-z0-9%/+]{16,})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_sigV4QueryPattern = new(@"(x-amz-credential|x-amz-security-token)=([a-z0-9%/+=._-]{8,})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_gcsQueryPattern = new(@"(x-goog-signature|x-goog-credential)=([a-z0-9%/+=._-]{8,})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex s_privateKeyPattern = new(@"-----BEGIN PRIVATE KEY-----\n([a-z0-9/+=\n]{32,})\n-----END PRIVATE KEY-----", RegexOptions.IgnoreCase | RegexOptions.Multiline); // pragma: allowlist secret
         private static readonly Regex s_privateKeyDataPattern = new(@"""privateKeyData"": ""([a-z0-9/+=\n]{10,})""", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
         private static readonly Regex s_privateKeyPropertyPrefixPattern = new(@"(private_key\s*=)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -94,6 +96,8 @@ namespace Snowflake.Data.Log
             MaskAWSServerSide,
             MaskAWSKeys,
             MaskSASTokens,
+            MaskSigV4QueryParams,
+            MaskGcsQueryParams,
             MaskAWSTokens,
             MaskPrivateKey,
             MaskPrivateKeyData,
@@ -111,6 +115,10 @@ namespace Snowflake.Data.Log
         private static string MaskAWSServerSide(string text) => s_awsServerSidePattern.Replace(text, @"$1:....");
 
         private static string MaskSASTokens(string text) => s_sasTokenPattern.Replace(text, @"$1=****");
+
+        private static string MaskSigV4QueryParams(string text) => s_sigV4QueryPattern.Replace(text, @"$1=****");
+
+        private static string MaskGcsQueryParams(string text) => s_gcsQueryPattern.Replace(text, @"$1=****");
 
         private static string MaskPrivateKey(string text) => s_privateKeyPattern.Replace(text, "-----BEGIN PRIVATE KEY-----\\\\nXXXX\\\\n-----END PRIVATE KEY-----");
 

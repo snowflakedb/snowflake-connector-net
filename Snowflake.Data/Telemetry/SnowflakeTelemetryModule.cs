@@ -20,7 +20,7 @@ namespace Snowflake.Data.Telemetry;
 /// </summary>
 internal static class SnowflakeTelemetryModule
 {
-    private static readonly SFLogger s_logger = SFLoggerFactory.GetSFLogger<SessionTelemetryModule>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionTelemetryModule>();
 
     private static readonly LockObject s_lock = new();
     private static readonly Dictionary<string, SessionTelemetryModule> s_sessions = new();

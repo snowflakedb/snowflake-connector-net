@@ -2,6 +2,7 @@
 
 # Changelog
 - v6.1.0
+  - Extended log secret-masking to cover additional cloud-storage URL query parameters, and routed the telemetry loggers through the shared masking pipeline.
   - Restricted the `WORKLOAD_IDENTITY` authenticator to recognized Snowflake hosts (`*.snowflakecomputing.com`/`.cn`/`.mil`), normalizing the host before a suffix-anchored match. The `SNOWFLAKE_WIF_ALLOWED_HOST_SUFFIXES` environment variable additively extends the recognized-host list.
   - Performance improvements in parsing query status for given result set.
   - NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.

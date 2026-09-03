@@ -153,6 +153,34 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
+        public void TestSigV4QueryParams()
+        {
+            // X-Amz-Credential is masked by the SigV4 pattern.
+            BasicMasking(
+                @"X-Amz-Credential=AKIAIOSFODNN7EXAMPLE%2F20260728%2Fus-east-1%2Fs3%2Faws4_request", // pragma: allowlist secret
+                @"X-Amz-Credential=****");
+
+            // X-Amz-Security-Token is masked (also covered by the token= pattern; the SigV4 rule adds parity).
+            BasicMasking(
+                @"X-Amz-Security-Token=IQoJb3JpZ2luX2VjEND%2F%2F%2F%2FwEaCXVzLWVhc3QtMQ", // pragma: allowlist secret
+                @"X-Amz-Security-Token=****");
+        }
+
+        [SFFact]
+        public void TestGcsQueryParams()
+        {
+            // X-Goog-Credential is masked by the GCS pattern.
+            BasicMasking(
+                @"X-Goog-Credential=GOOG1EEXAMPLEKEYID%2F20260728%2Fauto%2Fstorage%2Fgoog4_request", // pragma: allowlist secret
+                @"X-Goog-Credential=****");
+
+            // X-Goog-Signature is masked (via the signature= pattern; the GCS rule is a parity guard).
+            BasicMasking(
+                @"X-Goog-Signature=4a5b6c7d8e9f0011223344556677889900aabbccddeeff0011223344556677", // pragma: allowlist secret
+                @"X-Goog-Signature=****");
+        }
+
+        [SFFact]
         public void TestPrivateKey()
         {
             // Verify that all allowed characters are correctly supported
