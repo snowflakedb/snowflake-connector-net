@@ -18,7 +18,7 @@ namespace Snowflake.Data.Telemetry;
 
 internal sealed class SessionTelemetryModule : ISessionTelemetryModule
 {
-    private static readonly SFLogger s_logger = SFLoggerFactory.GetSFLogger<SessionTelemetryModule>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionTelemetryModule>();
 
     private static volatile int s_flushSize = 100;
     private static volatile int s_flushIntervalMs = 60 * 1_000;
