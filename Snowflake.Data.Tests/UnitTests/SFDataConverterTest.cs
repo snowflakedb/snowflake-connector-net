@@ -403,6 +403,29 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFTheory]
+        [InlineData(330)]   // +05:30 India / Sri Lanka
+        [InlineData(-210)]  // -03:30 Newfoundland
+        [InlineData(345)]   // +05:45 Nepal
+        [InlineData(765)]   // +12:45 Chatham
+        [InlineData(60)]    // +01:00 whole-hour sanity
+        [InlineData(0)]     // UTC
+        public void TestConvertTimestampTzToDateTimeOffsetPreservesSubHourOffset(int offsetMinutes)
+        {
+            // SNOW-3977560: sub-hour offsets must not be truncated to whole hours.
+            var utcDateTime = new DateTime(2028, 2, 29, 6, 30, 0, DateTimeKind.Utc);
+            // TIMESTAMP_TZ wire format: "<seconds since epoch, in UTC> <offsetMinutes + 1440>"
+            var wireValue = $"{DateTimeToLtzWireFormat(utcDateTime)} {offsetMinutes + 1440}";
+
+            var result = (DateTimeOffset)SFDataConverter.ConvertToCSharpVal(
+                ConvertToUTF8Buffer(wireValue), GetCtx(SFDataType.TIMESTAMP_TZ, typeof(DateTimeOffset)));
+
+            var expectedOffset = TimeSpan.FromMinutes(offsetMinutes);
+            Assert.Equal(expectedOffset, result.Offset);
+            Assert.Equal(utcDateTime, result.UtcDateTime);
+            Assert.Equal(utcDateTime + expectedOffset, result.DateTime);
+        }
+
+        [SFTheory]
         [InlineData("1969-12-31 23:59:59.1234567")]
         [InlineData("1960-06-15 10:30:45.5000000")]
         [InlineData("1900-01-01 00:00:00.0000001")]

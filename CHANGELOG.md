@@ -1,11 +1,7 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
-- v6.1.0
-  - Performance improvements in parsing query status for given result set.
-  - NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.
-  - Added configurable timeouts for chunk download stream reads. `SF_CHUNK_DOWNLOAD_IDLE_TIMEOUT` (default 180s) detects stalled connections between reads; `SF_CHUNK_DOWNLOAD_READ_TIMEOUT` (default disabled) sets a per-read deadline. Both are configured in seconds; set to `0` to disable.
-  - Bug fix: Token cache file on Linux/macOS is now written as UTF-8 without a BOM for cross-driver compatibility.
+- Upcoming version  
   - Fixed token cache key collisions for multi-account (shared IdP) and multi-role
     scenarios by switching to a versioned, SHA256-hashed canonical-JSON key
     (`SnowflakeTokenCache.v2.<PascalCaseType>.<sha256>`) with flow-specific
@@ -13,6 +9,14 @@
     backends. Identifiers are normalised to lowercase; quoted values (including SQL
     `""` escaped quotes) are returned verbatim. Token type in the key prefix uses
     PascalCase (`MfaToken`, `OauthAccessToken`) instead of `SCREAMING_SNAKE_CASE`.
+- v6.1.0
+  - Extended log secret-masking to cover additional cloud-storage URL query parameters, and routed the telemetry loggers through the shared masking pipeline.
+  - Restricted the `WORKLOAD_IDENTITY` authenticator to recognized Snowflake hosts (`*.snowflakecomputing.com`/`.cn`/`.mil`), normalizing the host before a suffix-anchored match. The `SNOWFLAKE_WIF_ALLOWED_HOST_SUFFIXES` environment variable additively extends the recognized-host list.
+  - Performance improvements in parsing query status for given result set.
+  - NuGet package now publishes `.snupkg` symbol packages, enabling source-link debugging for consumers.
+  - Added configurable timeouts for chunk download stream reads. `SF_CHUNK_DOWNLOAD_IDLE_TIMEOUT` (default 180s) detects stalled connections between reads; `SF_CHUNK_DOWNLOAD_READ_TIMEOUT` (default disabled) sets a per-read deadline. Both are configured in seconds; set to `0` to disable.
+  - Bug fix: Token cache file on Linux/macOS is now written as UTF-8 without a BOM for cross-driver compatibility.
+  - Bug fix: Fixed TIMESTAMP_TZ sub-hour timezone offsets (e.g. +05:30) being truncated to whole hours in JSON result format.
 - v6.0.0
   -  Added `CancellationToken` support to chunk download and parsing pipeline. Query result fetching now respects cancellation during both JSON and Arrow chunk parsing.
   -  Upgraded `AWSSDK.S3` dependency. Now getting object header invokes HEAD s3 call instead of GET.
@@ -31,7 +35,6 @@
   -  Bug fix: Fixed session creation token leak when `GetSessionAsync` is cancelled.
   -  Bug fix: Fixed incorrect DateTime conversion for timestamps preceding Unix epoch (1970-01-01) when fractional seconds are
     present.
-  -  Bug fix: Fixed an unnecessary second PUT (stage re-resolution) per file during GCS uploads when the server scopes upload credentials with an access token.
 - v5.7.0
     - Improved input handling in `ChangeDatabase` by using parameterized queries.
     - Improved input validation in `QueryResultsAwaiter` with stricter UUID format checks.

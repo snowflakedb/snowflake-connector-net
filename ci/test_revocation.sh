@@ -28,9 +28,9 @@ REVOCATION_BRANCH="main"
 CLONE_ARGS="--branch $REVOCATION_BRANCH"
 
 if [ -n "$GITHUB_USER" ] && [ -n "$GITHUB_TOKEN" ]; then
-    git clone $CLONE_ARGS "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/snowflake-eng/revocation-validation.git" "$REVOCATION_DIR"
+    git clone $CLONE_ARGS "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/snowflakedb/revocation-validation.git" "$REVOCATION_DIR"
 else
-    git clone $CLONE_ARGS "https://github.com/snowflake-eng/revocation-validation.git" "$REVOCATION_DIR"
+    git clone $CLONE_ARGS "https://github.com/snowflakedb/revocation-validation.git" "$REVOCATION_DIR"
 fi
 
 cd "$REVOCATION_DIR"

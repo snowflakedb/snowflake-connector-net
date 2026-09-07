@@ -217,7 +217,8 @@ namespace Snowflake.Data.Core
                         spaceIndex -= srcVal.offset;
                         UTF8Buffer timeVal = new UTF8Buffer(srcVal.Buffer, srcVal.offset, spaceIndex);
                         int offset = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset + spaceIndex + 1, srcVal.length - spaceIndex - 1);
-                        TimeSpan offSetTimespan = new TimeSpan((offset - 1440) / 60, 0, 0);
+                        // offset is minutes biased by +1440; FromMinutes keeps sub-hour offsets (e.g. +05:30). SNOW-3977560
+                        TimeSpan offSetTimespan = TimeSpan.FromMinutes(offset - 1440);
                         return new DateTimeOffset(UnixEpoch.Ticks + GetTicksFromSecondAndNanosecond(timeVal), TimeSpan.Zero).ToOffset(offSetTimespan);
                     }
                 case SFDataType.TIMESTAMP_LTZ:
