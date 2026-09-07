@@ -1,0 +1,12 @@
+[
+  ".github/workflows/close-imported-pr.yml",
+  ".github/workflows/mirror-inbound.yml",
+  ".github/workflows/mirror.yml",
+  "ci/mirroring/Dockerfile.copybara",
+  "ci/mirroring/copy.bara.sky",
+  "ci/mirroring/generated_files.json",
+  "ci/mirroring/import_paths.bara.sky",
+  "ci/mirroring/mirror_config.json",
+  "ci/mirroring/mirroring.md",
+  "ci/mirroring/scripts/prepare_import_paths.py"
+]

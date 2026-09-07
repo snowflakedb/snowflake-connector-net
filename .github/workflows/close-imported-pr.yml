@@ -2,7 +2,7 @@
 # Regenerate by running: python3 ci/mirroring/scripts/generate_mirror_config.py
 name: Close imported PRs
 
-# Operates on the MIRROR repo (snowflakedb/snowflake-connector-net). Triggers when the outbound mirror
+# Operates on the MIRROR repo (snowflake-eng/snowflake-connector-net). Triggers when the outbound mirror
 # pushes a replayed squash-merge to master, scans the new commit messages
 # for `Imported-From-Mirror-PR` / `Imported-From-Mirror-SHA` trailers
 # (written by copy.bara.sky's `import` workflow via metadata.expose_label),
@@ -49,7 +49,7 @@ jobs:
     # the trailers. Skip direct human pushes. Replace `mirror-bot` with
     # the actual login or app slug used to push from the outbound job.
     if: >-
-      github.repository == 'snowflakedb/snowflake-connector-net'
+      github.repository == 'snowflake-eng/snowflake-connector-net'
       && (github.event_name == 'workflow_dispatch' || github.actor == 'sfc-gh-drivers-sa')
     runs-on: ubuntu-latest
     steps:

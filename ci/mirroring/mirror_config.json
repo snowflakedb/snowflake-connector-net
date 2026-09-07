@@ -1,0 +1,19 @@
+{
+  "mirror_repo": "snowflakedb/snowflake-connector-net",
+  "nomirror_paths": [
+    "NOMIRROR/**",
+    "**/NOMIRROR/**"
+  ],
+  "import_excluded_paths": [
+    ".ai/**",
+    ".cursor/**",
+    ".claude/**",
+    ".buildkite/**",
+    ".ci/**",
+    ".github/**",
+    "ci/**",
+    "scripts/**",
+    "shell.nix"
+  ],
+  "import_excluded_path_overrides": []
+}
