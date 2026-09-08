@@ -822,7 +822,7 @@ namespace Snowflake.Data.Core
 
         private string BuildTokenCacheKey(TokenType tokenType) =>
             SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                TokenType: tokenType.ToCacheKeyPrefix(),
+                TokenType: tokenType,
                 Idp: "",
                 SnowflakeUrl: properties[SFSessionProperty.HOST],
                 Username: properties[SFSessionProperty.USER],

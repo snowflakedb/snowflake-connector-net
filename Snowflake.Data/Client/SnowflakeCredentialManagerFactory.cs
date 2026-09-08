@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 namespace Snowflake.Data.Client
 {
     /// <summary>Input parameters for building a v2 token cache key.</summary>
-    internal readonly record struct CacheKeyInput(string TokenType, string Idp, string SnowflakeUrl, string Username, string Role);
+    internal readonly record struct CacheKeyInput(TokenType TokenType, string Idp, string SnowflakeUrl, string Username, string Role);
 
     public class SnowflakeCredentialManagerFactory
     {
@@ -40,9 +40,9 @@ namespace Snowflake.Data.Client
             if (string.IsNullOrEmpty(input.Username))
                 throw new ArgumentException("username must not be empty");
 
-            var isOAuth = input.TokenType is "OauthAccessToken"
-                           or "OauthRefreshToken"
-                           or "DpopBundledAccessToken";
+            var isOAuth = input.TokenType is TokenType.OAuthAccessToken
+                or TokenType.OAuthRefreshToken
+                or TokenType.DpopBundledAccessToken;
 
             var keyData = isOAuth
                 ? new SortedDictionary<string, string>
@@ -60,37 +60,44 @@ namespace Snowflake.Data.Client
 
             var json = JsonConvert.SerializeObject(keyData, Formatting.None);
             var hash = ToSha256HashLower(json);
-            return $"SnowflakeTokenCache.v2.{input.TokenType}.{hash}";
+            return $"SnowflakeTokenCache.v2.{input.TokenType.ToCacheKeyPrefix()}.{hash}";
         }
 
         /// <summary>
-        /// Strips the scheme and any userinfo prefix, drops query and fragment, then lowercases the
-        /// remaining authority (host and any explicitly-stated port) and path, trimming trailing slashes.
-        /// The raw string is used (not a parsed URL) so an explicit default port such as <c>:443</c> is preserved.
+        /// Returns a lowercase host, explicitly stated port, and path, without scheme,
+        /// userinfo, query, fragment, or trailing slashes.
         /// </summary>
         internal static string NormalizeUrl(string url)
         {
             if (string.IsNullOrEmpty(url))
                 return string.Empty;
 
-            // Strip the scheme prefix ("scheme://") from the raw string, preserving any explicit port.
-            var schemeIdx = url.IndexOf("://", StringComparison.Ordinal);
-            var s = schemeIdx >= 0 ? url.Substring(schemeIdx + 3) : url;
+            var uri = new Uri(url, UriKind.RelativeOrAbsolute);
+            uri = uri.IsAbsoluteUri ? uri : new Uri($"https://{uri}");
 
-            // Drop query string and fragment; they never appear in cache keys.
-            s = s.Split('?')[0].Split('#')[0];
+            var schemeIndex = url.IndexOf("://", StringComparison.Ordinal);
+            var authorityStart = schemeIndex >= 0 ? schemeIndex + 3 : 0;
+            var queryOrFragmentIndex = url.IndexOfAny(new[] { '?', '#' }, authorityStart);
+            var pathIndex = url.IndexOf('/', authorityStart);
+            var pathEnd = queryOrFragmentIndex >= 0 ? queryOrFragmentIndex : url.Length;
+            var authorityEnd = pathIndex >= 0 &&
+                (queryOrFragmentIndex < 0 || pathIndex < queryOrFragmentIndex)
+                ? pathIndex
+                : queryOrFragmentIndex;
+            authorityEnd = authorityEnd >= 0 ? authorityEnd : url.Length;
+            var authority = url.Substring(authorityStart, authorityEnd - authorityStart);
+            var hasExplicitPort = authority.EndsWith($":{uri.Port}", StringComparison.Ordinal);
+            var hostComponent = !uri.IsDefaultPort || hasExplicitPort
+                ? UriComponents.HostAndPort
+                : UriComponents.Host;
+            var host = uri.GetComponents(hostComponent, UriFormat.UriEscaped);
 
-            // Strip userinfo ("user:pass@") from the authority only. The authority ends at the first
-            // '/', so an '@' before that slash is a userinfo delimiter; an '@' inside the path survives.
-            var slashIdx = s.IndexOf('/');
-            var authorityEnd = slashIdx >= 0 ? slashIdx : s.Length;
-            var authority = s.Substring(0, authorityEnd);
-            var path = s.Substring(authorityEnd);
-            var atIdx = authority.IndexOf('@');
-            if (atIdx >= 0)
-                authority = authority.Substring(atIdx + 1);
-
-            return (authority + path).TrimEnd('/').ToLowerInvariant();
+            // Preserve the escaped path exactly. Uri canonicalizes escaped unreserved
+            // characters (for example, "%7E" to "~"), which would change the cache hash.
+            var path = pathIndex >= 0 && pathIndex < pathEnd
+                ? url.Substring(pathIndex, pathEnd - pathIndex)
+                : string.Empty;
+            return (host + path).TrimEnd('/').ToLowerInvariant();
         }
 
         /// <summary>

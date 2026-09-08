@@ -303,7 +303,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         private string BuildIdTokenCacheKey() =>
             SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                TokenType: TokenType.IdToken.ToCacheKeyPrefix(),
+                TokenType: TokenType.IdToken,
                 Idp: "",
                 SnowflakeUrl: session.properties[SFSessionProperty.HOST],
                 Username: session.properties[SFSessionProperty.USER],

@@ -11,12 +11,11 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
     public class SnowflakeCredentialManagerFactoryTest : IDisposable
     {
         [SFFact]
-        public void TestBuildCacheKeyGoldenHashA_OAuth()
+        public void TestBuildCacheKeyMatchesCrossDriverOAuthGoldenVector()
         {
             // Vector A: OAuth flow — 4-field keyData, lowercase normalization, quoted values verbatim.
-            // "DpopBundledAccessToken" passed directly — no named constant for this type.
             var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                TokenType: "DpopBundledAccessToken",
+                TokenType: TokenType.DpopBundledAccessToken,
                 Idp: "https://login.microsoftonline.com:443/tenant-id/oauth2/v2.0",
                 SnowflakeUrl: "https://myorg-myaccount.privatelink.snowflakecomputing.com",
                 Username: "\"First Last\"@long-corporate-domain.example.com",
@@ -26,11 +25,11 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         [SFFact]
-        public void TestBuildCacheKeyGoldenHashB_Mfa()
+        public void TestBuildCacheKeyMatchesCrossDriverMfaGoldenVector()
         {
             // Vector B: MFA flow — 2-field keyData, lowercase normalization, quoted username verbatim.
             var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                TokenType: "MfaToken",
+                TokenType: TokenType.MFAToken,
                 Idp: "",
                 SnowflakeUrl: "https://myorg-myaccount.privatelink.snowflakecomputing.com",
                 Username: "\"First Last\"@long-corporate-domain.example.com",
@@ -42,14 +41,14 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         [SFFact]
         public void TestBuildCacheKeyHasCorrectPrefix()
         {
-            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", ""));
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", ""));
             Assert.StartsWith("SnowflakeTokenCache.v2.MfaToken.", key);
         }
 
         [SFFact]
         public void TestBuildCacheKeyHashIsLowercaseHex()
         {
-            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", ""));
+            var key = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", ""));
             var segments = key.Split('.');
             // Format: SnowflakeTokenCache.v2.<TokenType>.<hash>
             Assert.Equal(4, segments.Length);
@@ -61,13 +60,13 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         [SFFact]
         public void TestBuildCacheKeyThrowsWhenSnowflakeEmpty()
         {
-            Assert.Throws<ArgumentException>(() => SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "", "user", "")));
+            Assert.Throws<ArgumentException>(() => SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "", "user", "")));
         }
 
         [SFFact]
         public void TestBuildCacheKeyThrowsWhenUsernameEmpty()
         {
-            Assert.Throws<ArgumentException>(() => SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "snowflake", "", "")));
+            Assert.Throws<ArgumentException>(() => SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "snowflake", "", "")));
         }
 
         [SFFact]
@@ -75,25 +74,25 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         {
             // MFA and OAuth for the same user/host must produce different keys (different prefix + field set).
             var mfaKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                "MfaToken", "", "acct.snowflakecomputing.com", "user", ""));
+                TokenType.MFAToken, "", "acct.snowflakecomputing.com", "user", ""));
             var oauthKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                "OauthAccessToken", "idp.example.com", "acct.snowflakecomputing.com", "user", ""));
+                TokenType.OAuthAccessToken, "idp.example.com", "acct.snowflakecomputing.com", "user", ""));
             Assert.NotEqual(mfaKey, oauthKey);
         }
 
         [SFFact]
         public void TestDimensionIsolationDifferentSnowflakeHost()
         {
-            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OauthAccessToken", "idp.example.com", "acct1.snowflakecomputing.com", "user", "role"));
-            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OauthAccessToken", "idp.example.com", "acct2.snowflakecomputing.com", "user", "role"));
+            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com", "acct1.snowflakecomputing.com", "user", "role"));
+            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com", "acct2.snowflakecomputing.com", "user", "role"));
             Assert.NotEqual(key1, key2);
         }
 
         [SFFact]
         public void TestDimensionIsolationDifferentRole()
         {
-            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OauthAccessToken", "idp.example.com", "acct.snowflakecomputing.com", "user", "analyst"));
-            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OauthAccessToken", "idp.example.com", "acct.snowflakecomputing.com", "user", "engineer"));
+            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com", "acct.snowflakecomputing.com", "user", "analyst"));
+            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com", "acct.snowflakecomputing.com", "user", "engineer"));
             Assert.NotEqual(key1, key2);
         }
 
@@ -101,34 +100,33 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         public void TestDimensionIsolationDifferentIdp()
         {
             // Same Snowflake account and user, different IdP — the multi-account/shared-IdP collision case.
-            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OauthAccessToken", "login.microsoftonline.com/tenantA", "acct.snowflakecomputing.com", "user", "role"));
-            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OauthAccessToken", "login.microsoftonline.com/tenantB", "acct.snowflakecomputing.com", "user", "role"));
+            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "login.microsoftonline.com/tenantA", "acct.snowflakecomputing.com", "user", "role"));
+            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "login.microsoftonline.com/tenantB", "acct.snowflakecomputing.com", "user", "role"));
             Assert.NotEqual(key1, key2);
         }
 
         [SFFact]
         public void TestBuildCacheKeyIsDeterministic()
         {
-            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", ""));
-            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", ""));
+            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", ""));
+            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", ""));
             Assert.Equal(key1, key2);
         }
 
         [SFFact]
         public void TestDimensionIsolationDifferentTokenType()
         {
-            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OauthAccessToken", "idp.example.com", "acct.snowflakecomputing.com", "user", "role"));
-            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("OauthRefreshToken", "idp.example.com", "acct.snowflakecomputing.com", "user", "role"));
+            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com", "acct.snowflakecomputing.com", "user", "role"));
+            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthRefreshToken, "idp.example.com", "acct.snowflakecomputing.com", "user", "role"));
             Assert.NotEqual(key1, key2);
         }
 
         [SFFact]
         public void TestToCacheKeyPrefixOAuthStringsMatchIsOAuthDispatch()
         {
-            // The BuildCacheKey dispatch uses literal string matching; these must stay in sync.
             Assert.Equal("OauthAccessToken", TokenType.OAuthAccessToken.ToCacheKeyPrefix());
             Assert.Equal("OauthRefreshToken", TokenType.OAuthRefreshToken.ToCacheKeyPrefix());
-            // MFA and ID are non-OAuth — different prefix, different key shape
+            Assert.Equal("DpopBundledAccessToken", TokenType.DpopBundledAccessToken.ToCacheKeyPrefix());
             Assert.Equal("MfaToken", TokenType.MFAToken.ToCacheKeyPrefix());
             Assert.Equal("IdToken", TokenType.IdToken.ToCacheKeyPrefix());
         }
@@ -136,9 +134,9 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         [SFFact]
         public void TestMfaKeyIgnoresIdpAndRole()
         {
-            var base_ = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", ""));
-            var withIdp = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "idp.example.com", "host.snowflake.com", "user", ""));
-            var withRole = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", "analyst"));
+            var base_ = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", ""));
+            var withIdp = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "idp.example.com", "host.snowflake.com", "user", ""));
+            var withRole = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", "analyst"));
             Assert.Equal(base_, withIdp);
             Assert.Equal(base_, withRole);
         }
@@ -146,24 +144,24 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         [SFFact]
         public void TestUsernameIsCaseFoldedInKey()
         {
-            var lower = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", ""));
-            var upper = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "HOST.SNOWFLAKE.COM", "USER", ""));
+            var lower = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", ""));
+            var upper = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "HOST.SNOWFLAKE.COM", "USER", ""));
             Assert.Equal(lower, upper);
         }
 
         [SFFact]
         public void TestDimensionIsolationDifferentUsername()
         {
-            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "alice", ""));
-            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "bob", ""));
+            var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "alice", ""));
+            var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "bob", ""));
             Assert.NotEqual(key1, key2);
         }
 
         [SFFact]
         public void TestDimensionIsolationIdTokenVsMfaToken()
         {
-            var idKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("IdToken", "", "host.snowflake.com", "user", ""));
-            var mfaKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput("MfaToken", "", "host.snowflake.com", "user", ""));
+            var idKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.IdToken, "", "host.snowflake.com", "user", ""));
+            var mfaKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", ""));
             Assert.NotEqual(idKey, mfaKey);
         }
 
@@ -209,6 +207,15 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         {
             Assert.Equal("login.microsoftonline.com:443/tenant-id/oauth2/v2.0",
                 SnowflakeCredentialManagerFactory.NormalizeUrl("https://login.microsoftonline.com:443/tenant-id/oauth2/v2.0"));
+            Assert.Equal("login.microsoftonline.com:8443/tenant-id/oauth2/v2.0",
+                SnowflakeCredentialManagerFactory.NormalizeUrl("https://login.microsoftonline.com:8443/tenant-id/oauth2/v2.0"));
+        }
+
+        [SFFact]
+        public void TestNormalizeUrlPreservesEscapedPath()
+        {
+            Assert.Equal("example.com/oauth/a%2fb/%7euser",
+                SnowflakeCredentialManagerFactory.NormalizeUrl("https://example.com/oauth/a%2Fb/%7Euser"));
         }
 
         [SFFact]

@@ -9,7 +9,9 @@ namespace Snowflake.Data.Core.CredentialManager
         [StringAttr(value = "OAUTH_ACCESS_TOKEN")]
         OAuthAccessToken,
         [StringAttr(value = "OAUTH_REFRESH_TOKEN")]
-        OAuthRefreshToken
+        OAuthRefreshToken,
+        [StringAttr(value = "DPOP_BUNDLED_ACCESS_TOKEN")]
+        DpopBundledAccessToken
     }
 
     internal static class TokenTypeExtensions
@@ -26,6 +28,7 @@ namespace Snowflake.Data.Core.CredentialManager
             TokenType.MFAToken => "MfaToken",
             TokenType.OAuthAccessToken => "OauthAccessToken",
             TokenType.OAuthRefreshToken => "OauthRefreshToken",
+            TokenType.DpopBundledAccessToken => "DpopBundledAccessToken",
             _ => throw new System.ArgumentOutOfRangeException(nameof(tokenType), tokenType, "Unknown TokenType")
         };
     }

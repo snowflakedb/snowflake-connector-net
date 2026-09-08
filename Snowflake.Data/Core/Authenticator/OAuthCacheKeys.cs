@@ -20,14 +20,14 @@ namespace Snowflake.Data.Core.Authenticator
             if (IsCacheAvailableForAuthorizationCodeFlow(user, clientStoreTemporaryCredentials, true))
             {
                 accessTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                    TokenType: TokenType.OAuthAccessToken.ToCacheKeyPrefix(),
+                    TokenType: TokenType.OAuthAccessToken,
                     Idp: idpUrl,
                     SnowflakeUrl: snowflakeHost,
                     Username: user,
                     Role: role ?? string.Empty
                 ));
                 refreshTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                    TokenType: TokenType.OAuthRefreshToken.ToCacheKeyPrefix(),
+                    TokenType: TokenType.OAuthRefreshToken,
                     Idp: idpUrl,
                     SnowflakeUrl: snowflakeHost,
                     Username: user,

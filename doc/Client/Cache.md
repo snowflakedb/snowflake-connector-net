@@ -78,14 +78,14 @@ SnowflakeTokenCache.v2.<TokenType>.<sha256>
 | `OauthAccessToken` | OAuth authorization code access token |
 | `OauthRefreshToken` | OAuth authorization code refresh token |
 
-The hash is SHA-256 of a canonical JSON object (`keyData`). Which fields go into `keyData` depends on the flow:
+The hash is SHA-256 of a canonical JSON object (`keyData`). Authentication flow determines values of the serialized key object, as follows:
 
-- **OAuth:** `idp`, `role`, `snowflake`, `username`
-- **SSO and MFA:** `snowflake`, `username` (`idp` and `role` are not used)
-
-`snowflake` is the Snowflake host from the connection. For OAuth, `idp` is the token request URL of the Identity Provider.
-
-User and role values are lowercased unless they contain a double quote (`"`), in which case they are stored exactly as provided (including SQL `""` escaped quotes). Host and IdP URLs have the scheme and any userinfo stripped, then are lowercased.
+| Field | OAuth | SSO / MFA | Notes |
+|-------|-------|-----------|-------|
+| `idp` | yes | no | Token request URL of the Identity Provider. Scheme and userinfo are stripped, then the value is lowercased. |
+| `role` | yes | no | Lowercased unless it contains `"`, otherwise stored as-is (including SQL `""` escapes). |
+| `snowflake` | yes | yes | Snowflake host from the connection. Scheme and userinfo are stripped, then the value is lowercased. |
+| `username` | yes | yes | Lowercased unless it contains `"`, otherwise stored as-is (including SQL `""` escapes). |
 
 Tokens written with the previous key format are not migrated. After upgrading the driver, the first authentication for each identity prompts again and writes a new cache entry.
 

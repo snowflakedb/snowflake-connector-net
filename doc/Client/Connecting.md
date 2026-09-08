@@ -108,7 +108,7 @@ var connectionString = "account=testaccount;db=\"\"\"test\"\"db\"\"\";";
   A browser is opened for the authorization endpoint; after the user authenticates, the driver exchanges the authorization code for an access token.
 
   Tokens are cached when `CLIENT_STORE_TEMPORARY_CREDENTIAL=true` (default on Windows, `false` on Mac/Linux), reducing repeated browser interactions.
-  Cached access and refresh tokens are scoped to the Identity Provider, Snowflake host, user, and role, so switching any of those uses a separate cache entry.
+  Cached access and refresh tokens are scoped to the Identity Provider, Snowflake host, user, and role. Connections differing in any of these fields resolve to separate cache entries.
 
   ```csharp
   using var conn = new SnowflakeDbConnection();
