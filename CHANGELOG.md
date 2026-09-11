@@ -1,6 +1,8 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- v6.1.1
+  - Bug fix: `ExecuteReader(CommandBehavior.SchemaOnly)` now sends `describeOnly=true` to the server, returning column metadata without executing the query. Previously the `CommandBehavior` parameter was ignored.
 - v6.1.0
   - Extended log secret-masking to cover additional cloud-storage URL query parameters, and routed the telemetry loggers through the shared masking pipeline.
   - Restricted the `WORKLOAD_IDENTITY` authenticator to recognized Snowflake hosts (`*.snowflakecomputing.com`/`.cn`/`.mil`), normalizing the host before a suffix-anchored match. The `SNOWFLAKE_WIF_ALLOWED_HOST_SUFFIXES` environment variable additively extends the recognized-host list.

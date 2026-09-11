@@ -22,6 +22,8 @@ namespace Snowflake.Data.Client
 
         private bool isClosed;
 
+        private readonly bool _schemaOnly;
+
         private DataTable SchemaTable;
 
         private int RecordsAffectedInternal;
@@ -31,12 +33,18 @@ namespace Snowflake.Data.Client
         private const int MaxStringLength = 16777216; // Default maximum allowed length for VARCHAR
 
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
+            : this(command, resultSet, schemaOnly: false)
+        {
+        }
+
+        internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet, bool schemaOnly)
         {
             this.dbCommand = command;
             this.resultSet = resultSet;
+            this._schemaOnly = schemaOnly;
             this.isClosed = false;
             this.SchemaTable = PopulateSchemaTable(resultSet);
-            RecordsAffectedInternal = resultSet.CalculateUpdateCount();
+            RecordsAffectedInternal = schemaOnly ? -1 : resultSet.CalculateUpdateCount();
         }
 
         public override object this[string name]
@@ -87,6 +95,11 @@ namespace Snowflake.Data.Client
             }
         }
 
+        /// <summary>
+        /// Gets the number of rows changed, inserted, or deleted by execution of the SQL statement.
+        /// Returns -1 for SELECT statements and when the reader was opened with
+        /// <see cref="CommandBehavior.SchemaOnly"/>.
+        /// </summary>
         public override int RecordsAffected { get { return RecordsAffectedInternal; } }
 
         public override DataTable GetSchemaTable()
@@ -366,7 +379,7 @@ namespace Snowflake.Data.Client
             if (resultSet.NextResult())
             {
                 this.SchemaTable = PopulateSchemaTable(resultSet);
-                RecordsAffectedInternal = resultSet.CalculateUpdateCount();
+                RecordsAffectedInternal = _schemaOnly ? -1 : resultSet.CalculateUpdateCount();
                 return true;
             }
             return false;
@@ -377,7 +390,7 @@ namespace Snowflake.Data.Client
             if (await resultSet.NextResultAsync(cancellationToken).ConfigureAwait(false))
             {
                 this.SchemaTable = PopulateSchemaTable(resultSet);
-                RecordsAffectedInternal = resultSet.CalculateUpdateCount();
+                RecordsAffectedInternal = _schemaOnly ? -1 : resultSet.CalculateUpdateCount();
                 return true;
             }
             return false;
