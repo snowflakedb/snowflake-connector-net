@@ -321,9 +321,10 @@ namespace Snowflake.Data.Client
             using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteDbDataReader);
             try
             {
-                SFBaseResultSet resultSet = ExecuteInternal();
+                var schemaOnly = behavior.HasFlag(CommandBehavior.SchemaOnly);
+                var resultSet = ExecuteInternal(describeOnly: schemaOnly);
                 activity?.SetSuccess();
-                return new SnowflakeDbDataReader(this, resultSet);
+                return new SnowflakeDbDataReader(this, resultSet, schemaOnly);
             }
             catch (Exception ex)
             {
@@ -338,9 +339,10 @@ namespace Snowflake.Data.Client
             using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteDbDataReaderAsync);
             try
             {
-                var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
+                var schemaOnly = behavior.HasFlag(CommandBehavior.SchemaOnly);
+                var result = await ExecuteInternalAsync(cancellationToken, describeOnly: schemaOnly).ConfigureAwait(false);
                 activity?.SetSuccess();
-                return new SnowflakeDbDataReader(this, result);
+                return new SnowflakeDbDataReader(this, result, schemaOnly);
             }
             catch (Exception ex)
             {
