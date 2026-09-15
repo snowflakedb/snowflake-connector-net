@@ -3,6 +3,7 @@
 # Changelog
 - v6.1.1
   - Bug fix: `ExecuteReader(CommandBehavior.SchemaOnly)` now sends `describeOnly=true` to the server, returning column metadata without executing the query. Previously the `CommandBehavior` parameter was ignored.
+  - Added the opt-in `WORKLOAD_IDENTITY_HOST` connection property, overriding the AWS STS endpoint used by `WORKLOAD_IDENTITY` authentication. It accepts a bare host or a full URL and applies no partition or domain-suffix mapping; the value is normalized (the scheme defaults to `https`, a default port and trailing slashes are dropped) and applies to every AWS attestation flow. When unset - the default - the regional endpoint is used exactly as before. It is rejected for non-AWS workload identity providers.
 - v6.1.0
   - Extended log secret-masking to cover additional cloud-storage URL query parameters, and routed the telemetry loggers through the shared masking pipeline.
   - Restricted the `WORKLOAD_IDENTITY` authenticator to recognized Snowflake hosts (`*.snowflakecomputing.com`/`.cn`/`.mil`), normalizing the host before a suffix-anchored match. The `SNOWFLAKE_WIF_ALLOWED_HOST_SUFFIXES` environment variable additively extends the recognized-host list.

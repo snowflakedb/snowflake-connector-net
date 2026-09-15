@@ -133,12 +133,11 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
         private string CreateSignedGetCallerIdentityRequest(string region, ImmutableCredentials credentials)
         {
-            var domain = region.StartsWith("cn-") ? "amazonaws.com.cn" : "amazonaws.com";
-            var stsHostName = $"sts.{region}.{domain}";
-            var uri = new Uri($"https://{stsHostName}/?Action=GetCallerIdentity&Version={AmazonApiVersion}");
+            var endpoint = ResolveStsEndpoint(region);
+            var uri = new Uri($"{endpoint.BaseUrl}/?Action=GetCallerIdentity&Version={AmazonApiVersion}");
             var headers = new Dictionary<string, string>
             {
-                { "Host", stsHostName },
+                { "Host", endpoint.Host },
                 { "X-Snowflake-Audience", SnowflakeAudience }
             };
             var requestBuilder = new AttestationRequest
@@ -232,13 +231,11 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
 
         internal HttpRequestMessage BuildStsRequest(string region, string queryParams, ImmutableCredentials credentials, params KeyValuePair<string, string>[] additionalHeaders)
         {
-            var domain = region.StartsWith("cn-") ? "amazonaws.com.cn" : "amazonaws.com";
-            var stsHostName = $"sts.{region}.{domain}";
-            var baseUrl = string.IsNullOrEmpty(_stsHost) ? $"https://{stsHostName}" : _stsHost;
-            var uri = new Uri($"{baseUrl}/?{queryParams}");
+            var endpoint = ResolveStsEndpoint(region);
+            var uri = new Uri($"{endpoint.BaseUrl}/?{queryParams}");
 
             var headers = additionalHeaders
-                .Concat([new("Host", stsHostName)])
+                .Concat([new("Host", endpoint.Host)])
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
             var attestationRequest = new AttestationRequest
@@ -266,6 +263,23 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, s_defaultTimeout);
 
             return request;
+        }
+
+        /// <summary>
+        /// The STS endpoint every AWS attestation flow talks to: the WORKLOAD_IDENTITY_HOST override when
+        /// configured, otherwise the regional endpoint.
+        /// </summary>
+        private AwsStsEndpoint ResolveStsEndpoint(string region)
+        {
+            if (string.IsNullOrWhiteSpace(_stsHost))
+                return AwsStsEndpoint.ForRegion(region);
+            if (!AwsStsEndpoint.TryParse(_stsHost, out var endpoint, out var problem))
+            {
+                var errorMessage = $"Parameter {SFSessionProperty.WORKLOAD_IDENTITY_HOST.ToString()} '{_stsHost}' {problem}";
+                s_logger.Error(errorMessage);
+                throw AttestationError(errorMessage);
+            }
+            return endpoint;
         }
 
         private ImmutableCredentials GetAwsCredentials()

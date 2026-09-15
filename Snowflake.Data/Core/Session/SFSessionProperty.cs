@@ -132,6 +132,8 @@ namespace Snowflake.Data.Core
         WORKLOAD_IDENTITY_ENTRA_RESOURCE,
         [SFSessionPropertyAttr(required = false)]
         WORKLOAD_IMPERSONATION_PATH,
+        [SFSessionPropertyAttr(required = false)]
+        WORKLOAD_IDENTITY_HOST,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         OAUTHENABLESINGLEUSEREFRESHTOKENS,
         [SFSessionPropertyAttr(required = false, defaultValue = "20")]
@@ -551,6 +553,25 @@ namespace Snowflake.Data.Core
             if (attestationProvider == AttestationProvider.OIDC)
             {
                 CheckRequiredProperty(SFSessionProperty.TOKEN, properties);
+            }
+            ValidateWorkloadIdentityHost(attestationProvider, properties);
+        }
+
+        private static void ValidateWorkloadIdentityHost(AttestationProvider? attestationProvider, SFSessionProperties properties)
+        {
+            if (!properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_HOST, out var workloadIdentityHost) ||
+                string.IsNullOrWhiteSpace(workloadIdentityHost))
+                return;
+            if (attestationProvider != AttestationProvider.AWS)
+            {
+                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING,
+                    $"Parameter {SFSessionProperty.WORKLOAD_IDENTITY_HOST.ToString()} is supported only for the AWS workload identity provider.");
+            }
+            // Parsed here so a bad value fails while the connection string is validated; attestation re-parses it.
+            if (!AwsStsEndpoint.TryParse(workloadIdentityHost, out _, out var problem))
+            {
+                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING,
+                    $"Parameter {SFSessionProperty.WORKLOAD_IDENTITY_HOST.ToString()} '{workloadIdentityHost}' {problem}");
             }
         }
 
