@@ -587,6 +587,9 @@ namespace Snowflake.Data.Tests.UnitTests
         [SFTheory]
         [InlineData("authenticator=workload_identity;account=test;workload_identity_provider=abc;", "Connection string is invalid: Unknown value of workload_identity_provider parameter.")]
         [InlineData("authenticator=workload_identity;account=test;workload_identity_provider=OIDC;", "Required property TOKEN is not provided.")]
+        [InlineData("authenticator=workload_identity;account=test;workload_identity_provider=AWS;workload_identity_host=ftp://sts.example.com;", "must use https or http")]
+        [InlineData("authenticator=workload_identity;account=test;workload_identity_provider=GCP;workload_identity_host=sts.sc2s.sgov.gov;", "Parameter WORKLOAD_IDENTITY_HOST is supported only for the AWS workload identity provider.")]
+        [InlineData("authenticator=workload_identity;account=test;workload_identity_provider=AZURE;workload_identity_host=sts.sc2s.sgov.gov;", "Parameter WORKLOAD_IDENTITY_HOST is supported only for the AWS workload identity provider.")]
         public void TestFailOnWrongWifConfiguration(string connectionString, string expectedErrorMessage)
         {
             // act
@@ -594,6 +597,28 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // assert
             Assert.Contains(expectedErrorMessage, thrown.Message);
+        }
+
+        [SFTheory]
+        [InlineData("authenticator=workload_identity;account=test;workload_identity_provider=AWS;workload_identity_host=sts.sc2s.sgov.gov;", "sts.sc2s.sgov.gov")]
+        [InlineData("authenticator=workload_identity;account=test;workload_identity_provider=AWS;workload_identity_host=https://sts.sc2s.sgov.gov/;", "https://sts.sc2s.sgov.gov/")]
+        public void TestParseWorkloadIdentityHost(string connectionString, string expectedHost)
+        {
+            // act
+            var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
+
+            // assert: kept verbatim, so a new AWS partition needs no driver release
+            Assert.Equal(expectedHost, properties[SFSessionProperty.WORKLOAD_IDENTITY_HOST]);
+        }
+
+        [SFFact]
+        public void TestWorkloadIdentityHostIsNotSetByDefault()
+        {
+            // act
+            var properties = SFSessionProperties.ParseConnectionString("authenticator=workload_identity;account=test;workload_identity_provider=AWS;", new SessionPropertiesContext());
+
+            // assert
+            Assert.False(properties.ContainsKey(SFSessionProperty.WORKLOAD_IDENTITY_HOST));
         }
 
         [SFTheory]

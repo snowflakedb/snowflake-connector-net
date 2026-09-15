@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Amazon.Runtime;
 using Moq;
+using Newtonsoft.Json;
 using Snowflake.Data.Client;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core;
@@ -138,7 +139,7 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         awsSdkWrapper.Setup(w => w.GetAwsRegion()).Returns("us-east-1");
         awsSdkWrapper.Setup(w => w.GetAwsCredentials()).Returns(new ImmutableCredentials("akid", "secret", "token"));
         var utcNow = new DateTime(2025, 6, 1, 10, 30, 0, DateTimeKind.Utc);
-        var retriever = CreateRetriever(restRequester.Object, awsSdkWrapper: awsSdkWrapper, utcNow: utcNow);
+        var retriever = CreateRetriever(restRequester.Object, stsHost: null, awsSdkWrapper: awsSdkWrapper, utcNow: utcNow);
 
         // act
         var attestation = retriever.CreateAttestationData(null, null);
@@ -153,6 +154,70 @@ public sealed class WorkflowIdentityAwsAttestationRetrieverTest
         Assert.Contains("GetCallerIdentity", decodedJson);
         Assert.Contains("sts.us-east-1.amazonaws.com", decodedJson);
         Assert.Contains("X-Snowflake-Audience", decodedJson);
+    }
+
+    [SFFact]
+    public void TestCreateAttestationDataSignsGetCallerIdentityForConfiguredWorkloadIdentityHost()
+    {
+        // arrange - flag OFF, so the default GetCallerIdentity path runs against a custom STS host
+        var restRequester = CreateMockRestRequester(ValidGetIdentityTokenResponseXml);
+        var awsSdkWrapper = new Mock<AwsSdkWrapper>();
+        awsSdkWrapper.Setup(w => w.GetAwsRegion()).Returns("us-east-1");
+        awsSdkWrapper.Setup(w => w.GetAwsCredentials()).Returns(new ImmutableCredentials("akid", "secret", "token"));
+        var retriever = CreateRetriever(restRequester.Object, stsHost: "sts.sc2s.sgov.gov", awsSdkWrapper: awsSdkWrapper);
+
+        // act
+        var attestation = retriever.CreateAttestationData(null, null);
+
+        // assert: Snowflake replays this request, so the configured endpoint has to be the one embedded in it
+        var decodedJson = Encoding.UTF8.GetString(Convert.FromBase64String(attestation.Credential));
+        Assert.Contains("GetCallerIdentity", decodedJson);
+        Assert.Contains("https://sts.sc2s.sgov.gov/", decodedJson);
+        Assert.DoesNotContain("amazonaws.com", decodedJson);
+
+        // assert: the signed Host header names the endpoint the request is sent to, otherwise SigV4 fails there
+        var request = JsonConvert.DeserializeObject<AttestationRequest>(decodedJson);
+        Assert.Equal("sts.sc2s.sgov.gov", request.Headers["Host"]);
+    }
+
+    [SFFact]
+    public void TestCreateAttestationDataFailsForUnusableWorkloadIdentityHost()
+    {
+        // arrange: connection string validation rejects this earlier, so reaching attestation with a bad
+        // value means it came from somewhere else - it must still fail as an attestation error, not leak
+        // an unrelated exception type out of the WIF flow
+        var restRequester = CreateMockRestRequester(ValidGetIdentityTokenResponseXml);
+        var awsSdkWrapper = new Mock<AwsSdkWrapper>();
+        awsSdkWrapper.Setup(w => w.GetAwsRegion()).Returns("us-east-1");
+        awsSdkWrapper.Setup(w => w.GetAwsCredentials()).Returns(new ImmutableCredentials("akid", "secret", "token"));
+        var retriever = CreateRetriever(restRequester.Object, stsHost: "ftp://sts.example.com", awsSdkWrapper: awsSdkWrapper);
+
+        // act
+        var exception = Assert.Throws<SnowflakeDbException>(() => retriever.CreateAttestationData(null, null));
+
+        // assert
+        SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.WIF_ATTESTATION_ERROR);
+        Assert.Contains("WORKLOAD_IDENTITY_HOST", exception.Message);
+        Assert.Contains("must use https or http", exception.Message);
+    }
+
+    [SFTheory]
+    [InlineData("sts.sc2s.sgov.gov", "https://sts.sc2s.sgov.gov", "sts.sc2s.sgov.gov")]
+    [InlineData("https://sts.sc2s.sgov.gov/", "https://sts.sc2s.sgov.gov", "sts.sc2s.sgov.gov")]
+    public void TestBuildStsRequestUsesConfiguredWorkloadIdentityHost(string configuredHost, string expectedBaseUrl, string expectedHostHeader)
+    {
+        // arrange
+        var restRequester = CreateMockRestRequester(ValidGetIdentityTokenResponseXml);
+        var retriever = CreateRetriever(restRequester.Object, stsHost: configuredHost);
+        var credentials = new ImmutableCredentials("akid", "secret", "session-token");
+        var queryParams = "Action=GetWebIdentityToken&Version=2011-06-15";
+
+        // act
+        var request = retriever.BuildStsRequest("us-east-1", queryParams, credentials);
+
+        // assert
+        Assert.StartsWith($"{expectedBaseUrl}/?{queryParams}", request.RequestUri.ToString());
+        Assert.Equal(expectedHostHeader, request.Headers.GetValues("Host").First());
     }
 
     [SFFact]
