@@ -32,11 +32,6 @@ namespace Snowflake.Data.Client
 
         private const int MaxStringLength = 16777216; // Default maximum allowed length for VARCHAR
 
-        internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
-            : this(command, resultSet, schemaOnly: false)
-        {
-        }
-
         internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet, bool schemaOnly)
         {
             this.dbCommand = command;

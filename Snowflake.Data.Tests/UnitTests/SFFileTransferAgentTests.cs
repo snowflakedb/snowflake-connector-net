@@ -1,6 +1,11 @@
+using System.Linq;
+using Moq;
 using Snowflake.Data.Client;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Session;
+using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
+using System.IO.Compression;
 
 namespace Snowflake.Data.Tests.UnitTests
 {
@@ -48,9 +53,6 @@ namespace Snowflake.Data.Tests.UnitTests
         List<string> _srcLocations;
         const string AutoDetect = "auto_detect";
         const int Parallel = 1;
-
-        // Token for async tests
-        CancellationToken _cancellationToken;
 
         // Mock response data
         PutGetResponseData _responseData;
@@ -123,8 +125,6 @@ namespace Snowflake.Data.Tests.UnitTests
                 threshold = 20971520 // Server default threshold
             };
 
-            _cancellationToken = new CancellationToken();
-
             _session = new SFSession(ConnectionStringMock, new SessionPropertiesContext());
         }
 
@@ -175,8 +175,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.command = CommandTypes.UPLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData);
 
             // Act
             _fileTransferAgent.execute();
@@ -203,11 +202,10 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.command = CommandTypes.UPLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData);
 
             // Act
-            await _fileTransferAgent.executeAsync(_cancellationToken).ConfigureAwait(false);
+            await _fileTransferAgent.executeAsync(CancellationToken.None).ConfigureAwait(false);
             SFResultSet result = _fileTransferAgent.result();
             result.Next();
 
@@ -234,10 +232,7 @@ namespace Snowflake.Data.Tests.UnitTests
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
                 _session,
                 _responseData,
-                ref memoryStream,
-                null,
-                null,
-                _cancellationToken);
+                new BorrowedMemoryStream(memoryStream, false));
 
             // Act
             _fileTransferAgent.execute();
@@ -246,12 +241,8 @@ namespace Snowflake.Data.Tests.UnitTests
 
             // Assert
             Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
-            // Check the name of the source file and destination file are the same
-            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
-            // Check the file size of the source file and destination file are the same
-            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
-            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
+            Assert.Matches("stream.realSrcFilePath_[0-9]*\\.txt", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Matches("stream.realSrcFilePath_[0-9]*\\.txt", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
         }
 
         [SFFact]
@@ -267,24 +258,18 @@ namespace Snowflake.Data.Tests.UnitTests
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
                 _session,
                 _responseData,
-                ref memoryStream,
-                null,
-                null,
-                _cancellationToken);
+                new BorrowedMemoryStream(memoryStream, false)
+                );
 
             // Act
-            await _fileTransferAgent.executeAsync(_cancellationToken).ConfigureAwait(false);
+            await _fileTransferAgent.executeAsync(CancellationToken.None).ConfigureAwait(false);
             SFResultSet result = _fileTransferAgent.result();
             result.Next();
 
             // Assert
             Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
-            // Check the name of the source file and destination file are the same
-            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
-            Assert.Equal(t_realSourceFilePath, GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
-            // Check the file size of the source file and destination file are the same
-            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
-            Assert.Equal(_sourceFileSize.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
+            Assert.Matches("stream.realSrcFilePath_[0-9]*\\.txt", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Matches("stream.realSrcFilePath_[0-9]*\\.txt", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
         }
 
         [SFFact]
@@ -299,8 +284,8 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.command = CommandTypes.UPLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData
+                );
 
             // Act
             _fileTransferAgent.execute();
@@ -314,6 +299,204 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.Equal(t_realSourceFilePath + ".gz", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
             // Check the source file compression is none and the destination file compression is gzip
             Assert.Equal("none", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+            Assert.Equal("gzip", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+        }
+
+        [SFFact]
+        public void TestUploadMemoryStreamWithGZIPCompression()
+        {
+            // Arrange
+            UploadSetUpFile();
+
+            _responseData.autoCompress = true;
+            _responseData.command = CommandTypes.UPLOAD.ToString();
+            var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
+
+            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+                _session,
+                _responseData,
+                new BorrowedMemoryStream(memoryStream, false)
+                );
+
+            // Act
+            _fileTransferAgent.execute();
+            SFResultSet result = _fileTransferAgent.result();
+            result.Next();
+
+            // Assert
+            Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Matches("stream.realSrcFilePath_[0-9]*\\.txt", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Matches("stream.realSrcFilePath_[0-9]*\\.txt.gz", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+            Assert.Equal("none", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+            Assert.Equal("gzip", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+        }
+
+        [SFFact]
+        public void TestUploadMemoryStreamWithGZIPCompressionDisabledByEnvVar()
+        {
+            // Arrange
+            UploadSetUpFile();
+
+            _responseData.autoCompress = true;
+            _responseData.command = CommandTypes.UPLOAD.ToString();
+            var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
+
+            var mockEnv = new Mock<IEnvironmentFacade>();
+            mockEnv.Setup(e => e.GetBool(EnvVars.PutDisableInMemoryCompress)).Returns(true);
+
+            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+                _session,
+                _responseData,
+                new BorrowedMemoryStream(memoryStream, false),
+                mockEnv.Object);
+
+            // Act
+            _fileTransferAgent.execute();
+            SFResultSet result = _fileTransferAgent.result();
+            result.Next();
+
+            // Assert - compression still happens but via temp files, not in-memory
+            Assert.Equal(ResultStatus.UPLOADED.ToString(), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Matches("stream.realSrcFilePath_[0-9]*\\.txt", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Matches("stream.realSrcFilePath_[0-9]*\\.txt.gz", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+            Assert.Equal("none", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+            Assert.Equal("gzip", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+        }
+
+        [SFFact]
+        public void TestUploadMemoryStreamWithSpillToFileCompressesCorrectly()
+        {
+            // Arrange — use a large repetitive payload so gzip is noticeably smaller
+            UploadSetUpFile();
+
+            _responseData.autoCompress = true;
+            _responseData.command = nameof(CommandTypes.UPLOAD);
+            var payload = string.Concat(Enumerable.Repeat("AAAAAAAAAA,BBBBBBBBBB,CCCCCCCCCC\n", 200));
+            var rawBytes = Encoding.UTF8.GetBytes(payload);
+            var memoryStream = new MemoryStream(rawBytes);
+
+            var mockEnv = new Mock<IEnvironmentFacade>();
+            mockEnv.Setup(e => e.GetBool(EnvVars.PutDisableInMemoryCompress)).Returns(true);
+
+            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+                _session,
+                _responseData,
+                new BorrowedMemoryStream(memoryStream, false),
+                mockEnv.Object);
+
+            // Act
+            _fileTransferAgent.execute();
+            var result = _fileTransferAgent.result();
+            result.Next();
+
+            // Assert — dest (compressed) must be smaller than source (raw)
+            var srcSize = long.Parse(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize));
+            var destSize = long.Parse(GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize));
+            Assert.Equal(rawBytes.Length, srcSize);
+            Assert.True(destSize < srcSize, $"Compressed size {destSize} should be smaller than raw size {srcSize}");
+            Assert.Equal("gzip", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+
+            // The caller's stream must still be usable
+            Assert.True(memoryStream.CanRead, "Caller's stream should not be disposed");
+        }
+
+        [SFFact]
+        public void TestGetQueryWithMemoryStreamThrowsNotSupportedException()
+        {
+            // Arrange
+            _responseData.command = nameof(CommandTypes.DOWNLOAD);
+            var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
+
+            // Act & Assert
+            Assert.Throws<NotSupportedException>(() =>
+                new SFFileTransferAgent(GetQuery, _session, _responseData, new BorrowedMemoryStream(memoryStream, false)));
+        }
+
+        [SFFact]
+        public void TestUploadMemoryStreamWithPathInPutCommand()
+        {
+            // Arrange
+            UploadSetUpFile();
+
+            _responseData.command = nameof(CommandTypes.UPLOAD);
+            _responseData.src_locations = new List<string> { "subdir/data.csv" };
+            var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
+
+            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+                _session,
+                _responseData,
+                new BorrowedMemoryStream(memoryStream, false));
+
+            // Act
+            _fileTransferAgent.execute();
+            var result = _fileTransferAgent.result();
+            result.Next();
+
+            // Assert - only the file name (not the directory) is preserved with "stream." prefix
+            Assert.Equal(nameof(ResultStatus.UPLOADED), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Equal("stream.data.csv", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceFileName));
+            Assert.Equal("stream.data.csv", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName));
+        }
+
+        [SFFact]
+        public void TestUploadDriversOwnMemoryStreamWithGZIPCompressionSpillsToFile()
+        {
+            // Arrange
+            UploadSetUpFile();
+
+            _responseData.autoCompress = true;
+            _responseData.command = nameof(CommandTypes.UPLOAD);
+            var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
+
+            // IsDriversOwn=true means canCompressSpillToFile=true, compression goes to temp file not in-memory
+            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+                _session,
+                _responseData,
+                new BorrowedMemoryStream(memoryStream, true));
+
+            // Act
+            _fileTransferAgent.execute();
+            var result = _fileTransferAgent.result();
+            result.Next();
+
+            // Assert
+            Assert.Equal(nameof(ResultStatus.UPLOADED), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.Equal("none", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+            Assert.Equal("gzip", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
+        }
+
+        [SFFact]
+        public void TestUploadPreGzippedMemoryStreamDoesNotDisposeCallersStream()
+        {
+            // Arrange
+            UploadSetUpFile();
+
+            _responseData.autoCompress = true;
+            _responseData.command = nameof(CommandTypes.UPLOAD);
+
+            // Create a pre-gzipped memory stream
+            var gzippedStream = new MemoryStream();
+            using (var gzip = new GZipStream(gzippedStream, CompressionMode.Compress, leaveOpen: true))
+                gzip.Write(Encoding.UTF8.GetBytes(FileContent));
+            gzippedStream.Position = 0;
+
+            // FILE_TRANSFER_MEMORY_THRESHOLD=-1 means all in-memory (no spill-to-file)
+            _session = new SFSession(ConnectionStringMock + "FILE_TRANSFER_MEMORY_THRESHOLD=-1;", new SessionPropertiesContext());
+
+            _fileTransferAgent = new SFFileTransferAgent(_putQuery,
+                _session,
+                _responseData,
+                new BorrowedMemoryStream(gzippedStream, false));
+
+            // Act
+            _fileTransferAgent.execute();
+            var result = _fileTransferAgent.result();
+            result.Next();
+
+            // Assert - caller's stream must not be disposed
+            Assert.Equal(nameof(ResultStatus.UPLOADED), GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            Assert.True(gzippedStream.CanRead, "Caller's stream should not be disposed after upload");
+            Assert.Equal("gzip", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
             Assert.Equal("gzip", GetResultValue(result, SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
         }
 
@@ -345,8 +528,8 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.command = CommandTypes.UPLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData
+                );
 
             // Act
             _fileTransferAgent.execute();
@@ -395,8 +578,8 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.command = CommandTypes.UPLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData
+                );
 
             // Act
             _fileTransferAgent.execute();
@@ -446,8 +629,8 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.command = CommandTypes.UPLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData
+                );
 
             // Act
             _fileTransferAgent.execute();
@@ -500,8 +683,8 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.queryId = Guid.NewGuid().ToString();
             _fileTransferAgent = new SFFileTransferAgent(_putQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData
+                );
 
             // Act
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
@@ -538,8 +721,8 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.command = CommandTypes.DOWNLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(GetQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData
+                );
 
             // Act
             _fileTransferAgent.execute();
@@ -563,11 +746,11 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.command = CommandTypes.DOWNLOAD.ToString();
             _fileTransferAgent = new SFFileTransferAgent(GetQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData
+                );
 
             // Act
-            await _fileTransferAgent.executeAsync(_cancellationToken).ConfigureAwait(false);
+            await _fileTransferAgent.executeAsync(CancellationToken.None).ConfigureAwait(false);
             SFResultSet result = _fileTransferAgent.result();
             result.Next();
 
@@ -595,8 +778,8 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.queryId = Guid.NewGuid().ToString();
             _fileTransferAgent = new SFFileTransferAgent(GetQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData
+                );
 
             // Act
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
@@ -627,8 +810,8 @@ namespace Snowflake.Data.Tests.UnitTests
             _responseData.queryId = Guid.NewGuid().ToString();
             _fileTransferAgent = new SFFileTransferAgent(GetQuery,
                 _session,
-                _responseData,
-                _cancellationToken);
+                _responseData
+                );
 
             // Act
             SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());

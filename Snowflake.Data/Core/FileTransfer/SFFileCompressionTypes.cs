@@ -70,32 +70,18 @@ namespace Snowflake.Data.Core.FileTransfer
         private static readonly byte[][] zstd_magics = new[] { ZSTD_MAGIC };
         private static readonly byte[][] brotli_magics = new[] { BROTLI_MAGIC };
 
-        public struct SFFileCompressionType
+        public record struct SFFileCompressionType(
+            string FileExtension,
+            string Name,
+            byte[][] MagicNumbers,
+            short MagicBytes,
+            bool IsSupported)
         {
             public SFFileCompressionType(
                 string fileExtension,
                 string name,
-                byte[][] magicNumbers,
-                short magicBytes,
-                bool isSupported)
+                bool isSupported) : this(fileExtension, name, null, 0, isSupported)
             {
-                FileExtension = fileExtension;
-                IsSupported = isSupported;
-                _magicNumbers = magicNumbers;
-                _magicBytes = magicBytes;
-                Name = name;
-            }
-
-            public SFFileCompressionType(
-                string fileExtension,
-                string name,
-                bool isSupported)
-            {
-                FileExtension = fileExtension;
-                IsSupported = isSupported;
-                _magicNumbers = null;
-                _magicBytes = 0;
-                Name = name;
             }
 
             /// <summary>
@@ -105,20 +91,14 @@ namespace Snowflake.Data.Core.FileTransfer
             /// <returns></returns>
             public bool matchMagicNumber(byte[] header)
             {
-                if (_magicNumbers != null && _magicNumbers.Length > 0)
-                    foreach (byte[] m in _magicNumbers)
+                if (MagicNumbers is { Length: > 0 })
+                    foreach (byte[] m in MagicNumbers)
                         if (m != null && header != null && m.Length > 0 && header.Length > 0)
                             if (new ReadOnlySpan<byte>(m).SequenceEqual(new ReadOnlySpan<byte>(header, 0, m.Length)))
                                 return true;
 
                 return false;
             }
-
-            internal string FileExtension { get; }
-            internal string Name { get; }
-            private readonly byte[][] _magicNumbers;
-            private readonly short _magicBytes;
-            internal bool IsSupported { get; }
         }
 
         public static readonly SFFileCompressionType GZIP =
@@ -181,11 +161,35 @@ namespace Snowflake.Data.Core.FileTransfer
                 PARQUET
             };
 
+
+        /// <summary>
+        /// Guess the compression type of in-memory stream by reading its magic bytes.
+        /// The stream position is reset to the beginning (offset = 0) after reading.
+        /// </summary>
+        /// <returns>The detected compression type, or <see cref="NONE"/> if unrecognized.</returns>
+        public static SFFileCompressionType GuessCompressionType(Stream stream)
+        {
+            if (stream.Length < MAX_MAGIC_BYTES)
+                return NONE;
+
+            // read first 4 bytes to determine compression type
+            var header = new byte[MAX_MAGIC_BYTES];
+#if NET9_0_OR_GREATER
+            stream.ReadExactly(header, 0, header.Length);
+#else
+            stream.Read(header, 0, header.Length);
+#endif
+            stream.Position = 0;
+
+            var compType = compressionTypes.FirstOrDefault(x => x.matchMagicNumber(header));
+            return compType == default ? NONE : compType;
+        }
+
         public static SFFileCompressionType GuessCompressionType(string filePath)
         {
             // read first 4 bytes to determine compression type
-            byte[] header = new byte[MAX_MAGIC_BYTES];
-            using (FileStream fs = File.OpenRead(filePath))
+            var header = new byte[MAX_MAGIC_BYTES];
+            using (var fs = File.OpenRead(filePath))
             {
 #if NET9_0_OR_GREATER
                 fs.ReadExactly(header, 0, header.Length);
@@ -194,22 +198,20 @@ namespace Snowflake.Data.Core.FileTransfer
 #endif
             }
 
-            foreach (SFFileCompressionType compType in compressionTypes)
+            foreach (var compType in compressionTypes)
             {
-                if (compType.matchMagicNumber(header))
+                if (!compType.matchMagicNumber(header))
+                    continue;
+
+                // Found the compression type for this file
+                var extension = Path.GetExtension(filePath);
+                if (!string.IsNullOrEmpty(extension) &&
+                    string.Equals(BROTLI.FileExtension, extension, StringComparison.OrdinalIgnoreCase))
                 {
-                    // Found the compression type for this file
-                    string extension = Path.GetExtension(filePath);
-                    if (!String.IsNullOrEmpty(extension) &&
-                        String.Equals(BROTLI.FileExtension, extension, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return BROTLI;
-                    }
-                    else
-                    {
-                        return compType;
-                    }
+                    return BROTLI;
                 }
+
+                return compType;
             }
 
             // Couldn't find a match, last fallback using the file name extension

@@ -23,6 +23,7 @@ internal static class EnvVars
     internal static readonly EnvVar<bool> SkipTokenFilePermissionsVerification = new("SKIP_TOKEN_FILE_PERMISSIONS_VERIFICATION", false);
     internal static readonly EnvVar<bool> SkipWarnForFilePermissionsVerification = new("SF_SKIP_WARNING_FOR_READ_PERMISSIONS_ON_CONFIG_FILE", false);
     internal static readonly EnvVar<bool> DisablePlatformDetection = new("SNOWFLAKE_DISABLE_PLATFORM_DETECTION", false);
+    internal static readonly EnvVar<bool> PutDisableInMemoryCompress = new("SF_PUT_DISABLE_IN_MEMORY_COMPRESS", false);
     internal static readonly EnvVar<int> CrlValidityTime = new("SF_CRL_VALIDITY_TIME", 1);
     internal static readonly EnvVar<int> CrlCacheRemovalDelay = new("SF_CRL_CACHE_REMOVAL_DELAY", 7);
     internal static readonly EnvVar<TimeSpan> ChunkDownloadIdleTimeout = new("SF_CHUNK_DOWNLOAD_IDLE_TIMEOUT", TimeSpan.FromSeconds(180), EnvVarParseMode.FromSeconds);
