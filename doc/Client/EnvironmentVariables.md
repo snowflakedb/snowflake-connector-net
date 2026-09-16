@@ -17,6 +17,7 @@ The Snowflake .NET driver reads a number of environment variables to control its
 | `SF_SKIP_WARNING_FOR_READ_PERMISSIONS_ON_CONFIG_FILE` | bool | `false` | Suppresses warnings about overly permissive file permissions |
 | `SNOWFLAKE_ENABLE_AWS_WIF_OUTBOUND_TOKEN` | bool | `false` | Use JWT-based AWS WIF attestation instead of signed request |
 | `MANAGED_IDENTITY_CLIENT_ID` | string | _(empty)_ | Azure Managed Identity client ID for WIF authentication |
+| `SF_PUT_DISABLE_IN_MEMORY_COMPRESS` | bool | `false` | Forces PUT from memory stream to use temp files for compression |
 | `SF_CRL_VALIDITY_TIME` | int (days) | `1` | How long a cached CRL is considered fresh |
 | `SF_CRL_CACHE_REMOVAL_DELAY` | int (days) | `7` | Interval for cleaning up expired CRL entries |
 | `SF_TEMPORARY_CREDENTIAL_CACHE_DIR` | string | _(empty)_ | Custom directory for credential cache storage |
@@ -81,6 +82,18 @@ Maximum time (in seconds) a single read operation may take during result set chu
 - **Default:** `0` (disabled)
 
 Unlike the idle timeout which measures gaps between reads, this timeout applies to each individual read operation independently.
+
+### SF_PUT_DISABLE_IN_MEMORY_COMPRESS
+
+Forces the driver to use temporary files for compression when uploading data from a `MemoryStream` via `ExecuteDbDataReaderWithMemoryStream`.
+
+- **Type:** Boolean (`true`/`false`)
+- **Default:** `false`
+
+By default, when a PUT command uploads from an in-memory stream with `AUTO_COMPRESS=TRUE`, compression is performed entirely in memory.
+Setting this to `true` writes the stream to a temporary file first and compresses on disk, which reduces peak memory usage at the cost of disk I/O.
+
+> **Note:** Even when compression stays in memory, the **encryption** step may still spill to a temporary file if the encrypted payload exceeds the `FILE_TRANSFER_MEMORY_THRESHOLD` connection parameter (default: 1 MB). To keep the entire upload pipeline in memory (compression and encryption), set `FILE_TRANSFER_MEMORY_THRESHOLD=-1` in the connection string (see [Stage Files — PUT from in-memory stream](StageFiles.md#put-from-in-memory-stream)).
 
 ---
 

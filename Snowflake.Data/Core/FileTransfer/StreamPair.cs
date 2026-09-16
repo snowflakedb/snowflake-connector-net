@@ -1,24 +1,24 @@
 using System;
 using System.IO;
 
-namespace Snowflake.Data.Core.FileTransfer
-{
-    /*
-     * StreamPair class has been introduced to solve the issue for a stream which is meant to be returned from a method,
-     * but another helper stream is created in this method and is tightly coupled with the main stream,
-     * so the helper stream cannot be closed in this method because it would close the main stream as well
-     * (if CryptoStream in EncryptionProvider class would be disposed it would close the base stream as well).
-     * The solution is to return both streams and dispose both of them together when processing of the main stream is over.
-     */
-    internal class StreamPair : IDisposable
-    {
-        public Stream MainStream { get; set; }
-        public Stream HelperStream { get; set; }
+namespace Snowflake.Data.Core.FileTransfer;
 
-        public void Dispose()
-        {
-            MainStream?.Dispose();
-            HelperStream?.Dispose();
-        }
+/// <summary>
+/// Pairs a main stream with a tightly coupled helper stream (e.g. a <see cref="System.Security.Cryptography.CryptoStream"/>)
+/// so both can be disposed together once the caller is done reading the main stream.
+/// Without this, disposing the helper inside the producing method would also close the main stream.
+/// </summary>
+internal class StreamPair : IDisposable
+{
+    /// <summary>The primary stream the caller reads from.</summary>
+    public Stream MainStream { get; init; }
+
+    /// <summary>A coupled stream (e.g. CryptoStream) that must stay alive until <see cref="MainStream"/> is consumed.</summary>
+    public Stream HelperStream { get; init; }
+
+    public void Dispose()
+    {
+        MainStream?.Dispose();
+        HelperStream?.Dispose();
     }
 }

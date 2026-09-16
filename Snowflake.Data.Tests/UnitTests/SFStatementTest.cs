@@ -23,7 +23,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             var statement = new SFStatement(sfSession);
-            var resultSet = statement.Execute(0, "select 1", null, false, false);
+            var resultSet = statement.Execute(StatementContext.Default with { CommandText = "select 1" }, null);
             Assert.True(resultSet.Next());
             Assert.Equal("1", resultSet.GetString(0));
             Assert.Equal("new_session_token", sfSession.sessionToken);
@@ -89,7 +89,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
             sfSession.Open();
             var statement = new SFStatement(sfSession);
-            var resultSet = statement.Execute(0, "select 1", null, false, false);
+            var resultSet = statement.Execute(StatementContext.Default with { CommandText = "select 1" }, null);
             Assert.True(resultSet.Next());
             Assert.Equal("1", resultSet.GetString(0));
         }
@@ -109,7 +109,7 @@ namespace Snowflake.Data.Tests.UnitTests
             for (var i = 0; i < 5; i++)
             {
                 var statement = new SFStatement(sfSession);
-                var resultSet = statement.Execute(0, "SELECT 1", null, false, false);
+                var resultSet = statement.Execute(StatementContext.Default with { CommandText = "SELECT 1" }, null);
                 expectServiceName += "a";
                 Assert.Equal(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
             }
@@ -343,7 +343,7 @@ namespace Snowflake.Data.Tests.UnitTests
             session.Open();
             var statement = new SFStatement(session);
 
-            Assert.Throws<SnowflakeDbException>(() => statement.Execute(0, "select 1", null, false, false));
+            Assert.Throws<SnowflakeDbException>(() => statement.Execute(StatementContext.Default with { CommandText = "select 1" }, null));
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
@@ -360,7 +360,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var statement = new SFStatement(session);
 
             await Assert.ThrowsAsync<SnowflakeDbException>(async () =>
-                await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
+                await statement.ExecuteAsync(StatementContext.Default with { CommandText = "select 1" }, null, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
 
             var cachedContext = session.GetQueryContextRequest();
             Assert.NotNull(cachedContext);
@@ -376,7 +376,7 @@ namespace Snowflake.Data.Tests.UnitTests
             sfSession.Open();
             var statement = new SFStatement(sfSession);
 
-            var thrown = Assert.Throws<SnowflakeDbException>(() => statement.Execute(0, "select 1", null, false, false));
+            var thrown = Assert.Throws<SnowflakeDbException>(() => statement.Execute(StatementContext.Default with { CommandText = "select 1" }, null));
             Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
             Assert.True(sfSession.IsInvalidatedForPooling());
         }
@@ -390,7 +390,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var statement = new SFStatement(sfSession);
 
             var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () =>
-                await statement.ExecuteAsync(0, "select 1", null, false, false, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
+                await statement.ExecuteAsync(StatementContext.Default with { CommandText = "select 1" }, null, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
             Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
             Assert.True(sfSession.IsInvalidatedForPooling());
         }

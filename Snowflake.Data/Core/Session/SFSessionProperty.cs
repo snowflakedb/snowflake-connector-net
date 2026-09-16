@@ -905,11 +905,11 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(e, SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
             }
 
-            if (maxBytesInMemory <= 0)
+            if (maxBytesInMemory is < -1 or 0)
             {
-                logger.Error($"Value for parameter {propertyName} should be greater than 0");
+                logger.Error($"Value for parameter {propertyName} should be positive or -1");
                 throw new SnowflakeDbException(
-                    new Exception($"Value for parameter {propertyName} should be greater than 0"),
+                    new Exception($"Value for parameter {propertyName} should be positive or -1"),
                     SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
             }
         }

@@ -110,6 +110,9 @@ namespace Snowflake.Data.Core.FileTransfer
         /// The temporary directory to store files to upload/download.
         public string tmpDir { get; set; }
 
+        /// Whether compression could use temporary files for larger payloads.
+        public bool canCompressSpillToFile { get; set; }
+
         /// Storage client to use for uploading/downloading files.
         public ISFRemoteStorageClient client { get; set; }
 
@@ -121,7 +124,7 @@ namespace Snowflake.Data.Core.FileTransfer
 
         public bool sourceFromStream { get; set; }
 
-        public MemoryStream memoryStream { get; set; }
+        public BorrowedMemoryStream memoryStream { get; set; }
 
         // Proxy credentials of the remote storage client.
         public ProxyCredentials proxyCredentials { get; set; }

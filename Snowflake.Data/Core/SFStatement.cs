@@ -8,6 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 using Snowflake.Data.Core.Extensions;
+using Snowflake.Data.Core.FileTransfer;
+using static System.Int32;
 
 namespace Snowflake.Data.Core
 {
@@ -132,10 +134,6 @@ namespace Snowflake.Data.Core
 
         MemoryStream _uploadStream = null;
 
-        string _destFilename = null;
-
-        string _stagePath = null;
-
         string _bindStage = null;
 
         // the query id of the last query
@@ -180,13 +178,13 @@ namespace Snowflake.Data.Core
                 _requestId = null;
         }
 
-        private SFRestRequest BuildQueryRequest(string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
+        private SFRestRequest BuildQueryRequest(StatementContext statementContext, Dictionary<string, BindingDTO> bindings)
         {
             AssignQueryRequestId();
 
-            TimeSpan startTime = DateTime.UtcNow - new DateTime(1970, 1, 1);
-            string secondsSinceEpoch = Convert.ToInt64(startTime.TotalMilliseconds).ToString();
-            Dictionary<string, string> parameters = new Dictionary<string, string>()
+            var startTime = DateTime.UtcNow - new DateTime(1970, 1, 1);
+            var secondsSinceEpoch = Convert.ToInt64(startTime.TotalMilliseconds).ToString();
+            var parameters = new Dictionary<string, string>()
             {
                 { RestParams.SF_QUERY_REQUEST_ID, _requestId },
                 { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
@@ -197,11 +195,12 @@ namespace Snowflake.Data.Core
 
             Dictionary<string, string> bodyParameters = null;
             // Get MULTI_STATEMENT_COUNT from parameter bindings
-            if ((bindings != null) && (bindings.ContainsKey(SF_PARAM_MULTI_STATEMENT_COUNT)))
+            if (bindings != null && bindings.ContainsKey(SF_PARAM_MULTI_STATEMENT_COUNT))
             {
-                bodyParameters = new Dictionary<string, string>();
-                bodyParameters[SF_PARAM_MULTI_STATEMENT_COUNT] =
-                    bindings[SF_PARAM_MULTI_STATEMENT_COUNT].value.ToString();
+                bodyParameters = new Dictionary<string, string>
+                {
+                    [SF_PARAM_MULTI_STATEMENT_COUNT] = bindings[SF_PARAM_MULTI_STATEMENT_COUNT].value.ToString()
+                };
                 // remove it from parameter bindings so it won't break
                 // parameter binding feature
                 bindings.Remove(SF_PARAM_MULTI_STATEMENT_COUNT);
@@ -209,19 +208,16 @@ namespace Snowflake.Data.Core
 
             if (_queryTag != null)
             {
-                if (bodyParameters == null)
-                {
-                    bodyParameters = new Dictionary<string, string>();
-                }
+                bodyParameters ??= new Dictionary<string, string>();
                 bodyParameters[SF_PARAM_QUERY_TAG] = _queryTag;
             }
 
-            QueryRequest postBody = new QueryRequest();
-            postBody.sqlText = sql;
-            postBody.describeOnly = describeOnly;
+            var postBody = new QueryRequest();
+            postBody.sqlText = statementContext.CommandText;
+            postBody.describeOnly = statementContext.DescribeOnly;
             postBody.parameters = bodyParameters;
             postBody.QueryContextDTO = SfSession.GetQueryContextRequest();
-            postBody.asyncExec = asyncExec;
+            postBody.asyncExec = statementContext.AsyncExec;
             if (_bindStage == null)
             {
                 postBody.parameterBindings = bindings;
@@ -238,7 +234,8 @@ namespace Snowflake.Data.Core
                 Url = queryUri,
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
                 serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
-                                ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
+                    ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]
+                    : null,
                 jsonBody = postBody,
                 HttpTimeout = Timeout.InfiniteTimeSpan,
                 RestTimeout = Timeout.InfiniteTimeSpan,
@@ -275,6 +272,7 @@ namespace Snowflake.Data.Core
                 _linkedCancellationTokenSource.Dispose();
                 _linkedCancellationTokenSource = null;
             }
+
             if (_timeoutTokenSource != null)
             {
                 _timeoutTokenSource.Dispose();
@@ -288,6 +286,7 @@ namespace Snowflake.Data.Core
             {
                 _lastQueryId = response.data.queryId;
             }
+
             if (response.success)
             {
                 if ((response.data.resultIds != null) && (response.data.resultIds.Length > 0))
@@ -310,14 +309,15 @@ namespace Snowflake.Data.Core
             {
                 SfSession.UpdateQueryContextCache(response.data.QueryContext);
             }
+
             throw new SnowflakeDbException(response.data?.sqlState,
                 response.code, response.message, response.data?.queryId);
         }
 
         private void SetTimeout(int timeout)
         {
-            this._timeoutTokenSource = timeout > 0 ? new CancellationTokenSource(timeout * 1000) :
-                                                     new CancellationTokenSource(Timeout.InfiniteTimeSpan);
+            this._timeoutTokenSource =
+                timeout > 0 ? new CancellationTokenSource(timeout * 1000) : new CancellationTokenSource(Timeout.InfiniteTimeSpan);
         }
 
         /// <summary>
@@ -348,36 +348,33 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec,
-                                                          CancellationToken cancellationToken)
+        internal async Task<SFBaseResultSet> ExecuteAsync(StatementContext statementContext, Dictionary<string, BindingDTO> bindings, CancellationToken cancellationToken)
         {
             // Trim the sql query and check if this is a PUT/GET command
-            string trimmedSql = TrimSql(sql);
+            var trimmedSql = TrimSql(statementContext.CommandText);
 
             if (IsPutOrGetCommand(trimmedSql))
-            {
                 throw new NotImplementedException("Get and Put are not supported in async calls.  Use Execute() instead of ExecuteAsync().");
-            }
 
-            registerQueryCancellationCallback(timeout, cancellationToken);
+            registerQueryCancellationCallback(statementContext.CommandTimeout, cancellationToken);
 
-            int arrayBindingThreshold = 0;
-            if (SfSession.ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
+            var arrayBindingThreshold = 0;
+            if (SfSession.ParameterMap.TryGetValue(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD, out var value))
             {
-                String val = (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
-                arrayBindingThreshold = Int32.Parse(val);
+                var val = (string)value;
+                arrayBindingThreshold = Parse(val);
             }
 
-            int numBinding = GetBindingCount(bindings);
+            var numBinding = GetBindingCount(bindings);
 
             if (0 < arrayBindingThreshold
-                        && arrayBindingThreshold <= numBinding
-                        && !describeOnly)
+                && arrayBindingThreshold <= numBinding
+                && !statementContext.DescribeOnly)
             {
                 try
                 {
                     AssignQueryRequestId();
-                    SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
+                    var uploader = new SFBindUploader(SfSession, _requestId);
                     await uploader.UploadAsync(bindings, cancellationToken).ConfigureAwait(false);
                     _bindStage = uploader.getStagePath();
                 }
@@ -391,11 +388,11 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
+            var queryRequest = BuildQueryRequest(statementContext, bindings);
             try
             {
                 QueryExecResponse response = null;
-                bool receivedFirstQueryResponse = false;
+                var receivedFirstQueryResponse = false;
                 while (!receivedFirstQueryResponse)
                 {
                     response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
@@ -408,7 +405,7 @@ namespace Snowflake.Data.Core
 
                 var lastResultUrl = response.data?.getResultUrl;
 
-                if (!asyncExec)
+                if (!statementContext.AsyncExec)
                 {
                     while (response.IsQueryInProgress() || response.IsSessionExpired())
                     {
@@ -440,22 +437,21 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
+        internal SFBaseResultSet Execute(StatementContext statementContext, Dictionary<string, BindingDTO> bindings)
         {
             // Trim the sql query and check if this is a PUT/GET command
-            string trimmedSql = TrimSql(sql);
+            var trimmedSql = TrimSql(statementContext.CommandText);
             try
             {
                 if (IsPutOrGetCommand(trimmedSql))
                 {
-                    if (asyncExec)
-                    {
+                    if (statementContext.AsyncExec)
                         throw new NotImplementedException("Get and Put are not supported in async execution mode");
-                    }
-                    return ExecuteSqlWithPutGet(timeout, sql, trimmedSql, bindings, describeOnly);
+
+                    return ExecuteSqlWithPutGet(statementContext, trimmedSql, bindings);
                 }
 
-                return ExecuteSqlOtherThanPutGet(timeout, sql, bindings, describeOnly, asyncExec);
+                return ExecuteSqlOtherThanPutGet(statementContext, bindings);
             }
             finally
             {
@@ -464,22 +460,19 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private SFBaseResultSet ExecuteSqlWithPutGet(int timeout, string sql, string trimmedSql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+        private SFBaseResultSet ExecuteSqlWithPutGet(StatementContext statementContext, string trimmedSql, Dictionary<string, BindingDTO> bindings)
         {
             try
             {
                 isPutGetQuery = true;
-                PutGetExecResponse response =
-                    ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
-                        timeout,
-                        sql,
-                        bindings,
-                        describeOnly);
+                var response = ExecuteHelper<PutGetExecResponse, PutGetResponseData>(statementContext, bindings);
 
-                logger.Debug("PUT/GET queryId: " + (response.data != null ? response.data.queryId : "Unknown"));
+                var dataQueryId = response.data?.queryId ?? "Unknown";
+                logger.Debug($"PUT/GET queryId: {dataQueryId}");
 
-                SFFileTransferAgent fileTransferAgent =
-                    new SFFileTransferAgent(trimmedSql, SfSession, response.data, CancellationToken.None);
+                var fileTransferAgent = statementContext.Stream != null
+                    ? new SFFileTransferAgent(trimmedSql, SfSession, response.data, new BorrowedMemoryStream(statementContext.Stream, false))
+                    : new SFFileTransferAgent(trimmedSql, SfSession, response.data);
 
                 // Start the file transfer
                 fileTransferAgent.execute();
@@ -497,6 +490,10 @@ namespace Snowflake.Data.Core
                 HandleExceptionForSession(ex);
                 throw;
             }
+            catch (NotSupportedException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.Error("Query execution failed.", ex);
@@ -505,34 +502,33 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private SFBaseResultSet ExecuteSqlOtherThanPutGet(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
+        private SFBaseResultSet ExecuteSqlOtherThanPutGet(StatementContext statementContext, Dictionary<string, BindingDTO> bindings)
         {
+            var numBinding = GetBindingCount(bindings);
             try
             {
-                int arrayBindingThreshold = 0;
-                if (SfSession.ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
+                var arrayBindingThreshold = 0;
+                if (SfSession.ParameterMap.TryGetValue(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD, out var value))
                 {
-                    String val =
-                        (String)SfSession.ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD];
-                    arrayBindingThreshold = Int32.Parse(val);
+                    var val = (string)value;
+                    arrayBindingThreshold = Parse(val);
                 }
-
-                int numBinding = GetBindingCount(bindings);
 
                 if (0 < arrayBindingThreshold
                     && arrayBindingThreshold <= numBinding
-                    && !describeOnly)
+                    && !statementContext.DescribeOnly)
                 {
                     try
                     {
                         AssignQueryRequestId();
-                        SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
+                        var uploader = new SFBindUploader(SfSession, _requestId);
                         uploader.Upload(bindings);
                         _bindStage = uploader.getStagePath();
                     }
                     catch (Exception e)
                     {
-                        logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
+                        logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " +
+                                    e.Message);
                     }
                     finally
                     {
@@ -540,14 +536,7 @@ namespace Snowflake.Data.Core
                     }
                 }
 
-                QueryExecResponse response =
-                    ExecuteHelper<QueryExecResponse, QueryExecResponseData>(
-                        timeout,
-                        sql,
-                        bindings,
-                        describeOnly,
-                        asyncExec);
-
+                var response = ExecuteHelper<QueryExecResponse, QueryExecResponseData>(statementContext, bindings);
                 return BuildResultSet(response, CancellationToken.None);
             }
             catch (Exception ex)
@@ -557,6 +546,7 @@ namespace Snowflake.Data.Core
                 {
                     _lastQueryId = snowflakeDbException.QueryId ?? _lastQueryId;
                 }
+
                 HandleExceptionForSession(ex);
                 throw;
             }
@@ -576,6 +566,7 @@ namespace Snowflake.Data.Core
                 else
                     stopRetrying = true;
             }
+
             return BuildResultSet(response, cancellationToken);
         }
 
@@ -644,53 +635,49 @@ namespace Snowflake.Data.Core
             {
                 logger.Warn("Query cancellation failed.");
             }
+
             CleanUpCancellationTokenSources();
         }
 
         /// <summary>
         /// Execute a sql query and return the response.
         /// </summary>
-        /// <param name="timeout">The query timeout.</param>
-        /// <param name="sql">The sql query.</param>
+        /// <param name="statementContext">Execution context carrying command text, timeout, and optional stream.</param>
         /// <param name="bindings">Parameter bindings or null if no parameters.</param>
-        /// <param name="describeOnly">Flag indicating if this will only return the metadata.</param>
         /// <returns>The response data.</returns>
         /// <exception>The http request fails or the response code is not succes</exception>
-        internal T ExecuteHelper<T, U>(
-            int timeout,
-            string sql,
-            Dictionary<string, BindingDTO> bindings,
-            bool describeOnly,
-            bool asyncExec = false)
-            where T : BaseQueryExecResponse<U>
-            where U : IQueryExecResponseData
+        internal TResponse ExecuteHelper<TResponse, TResponseData>(
+            StatementContext statementContext,
+            Dictionary<string, BindingDTO> bindings)
+            where TResponse : BaseQueryExecResponse<TResponseData>
+            where TResponseData : IQueryExecResponseData
         {
-            registerQueryCancellationCallback(timeout, CancellationToken.None);
-            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
+            registerQueryCancellationCallback(statementContext.CommandTimeout, CancellationToken.None);
+            var queryRequest = BuildQueryRequest(statementContext, bindings);
             try
             {
-                T response = null;
-                bool receivedFirstQueryResponse = false;
+                TResponse response = null;
+                var receivedFirstQueryResponse = false;
                 while (!receivedFirstQueryResponse)
                 {
-                    response = _restRequester.Post<T>(queryRequest);
+                    response = _restRequester.Post<TResponse>(queryRequest);
                     if (RenewSessionIfNeeded(response))
                         queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
                     else
                         receivedFirstQueryResponse = true;
                 }
 
-                if (typeof(T) == typeof(QueryExecResponse))
+                if (typeof(TResponse) == typeof(QueryExecResponse))
                 {
                     QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
-                    if (!asyncExec)
+                    if (!statementContext.AsyncExec)
                     {
                         var lastResultUrl = queryResponse.data?.getResultUrl;
 
                         while (response.IsQueryInProgress() || response.IsSessionExpired())
                         {
                             var req = BuildResultRequest(lastResultUrl);
-                            response = _restRequester.Get<T>(req);
+                            response = _restRequester.Get<TResponse>(req);
 
                             if (!RenewSessionIfNeeded(response))
                                 lastResultUrl = queryResponse.data?.getResultUrl;
@@ -704,6 +691,7 @@ namespace Snowflake.Data.Core
                     {
                         SfSession.UpdateQueryContextCache(queryData.QueryContext);
                     }
+
                     throw new SnowflakeDbException(
                         response.data.sqlState,
                         response.code,
@@ -728,29 +716,25 @@ namespace Snowflake.Data.Core
         /// <summary>
         /// Execute Async a sql query and return the response.
         /// </summary>
-        /// <param name="timeout">The query timeout.</param>
-        /// <param name="sql">The sql query.</param>
+        /// <param name="statementContext">Execution context carrying command text, timeout, and optional stream.</param>
         /// <param name="bindings">Parameter bindings or null if no parameters.</param>
-        /// <param name="describeOnly">Flag indicating if this will only return the metadata.</param>
+        /// <param name="cancellationToken">Token to cancel the async operation.</param>
         /// <returns>The response data.</returns>
         /// <exception>The http request fails or the response code is not succes</exception>
         internal async Task<T> ExecuteAsyncHelper<T, U>(
-            int timeout,
-            string sql,
+            StatementContext statementContext,
             Dictionary<string, BindingDTO> bindings,
-            bool describeOnly,
-            CancellationToken cancellationToken,
-            bool asyncExec = false
-            )
+            CancellationToken cancellationToken
+        )
             where T : BaseQueryExecResponse<U>
             where U : IQueryExecResponseData
         {
-            registerQueryCancellationCallback(timeout, CancellationToken.None);
-            var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
+            registerQueryCancellationCallback(statementContext.CommandTimeout, CancellationToken.None);
+            var queryRequest = BuildQueryRequest(statementContext, bindings);
             try
             {
                 T response = null;
-                bool receivedFirstQueryResponse = false;
+                var receivedFirstQueryResponse = false;
                 while (!receivedFirstQueryResponse)
                 {
                     response = await _restRequester.PostAsync<T>(queryRequest, cancellationToken).ConfigureAwait(false);
@@ -763,8 +747,8 @@ namespace Snowflake.Data.Core
 
                 if (typeof(T) == typeof(QueryExecResponse))
                 {
-                    QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
-                    if (!asyncExec)
+                    var queryResponse = (QueryExecResponse)(object)response;
+                    if (!statementContext.AsyncExec)
                     {
                         var lastResultUrl = queryResponse.data?.getResultUrl;
 
@@ -785,6 +769,7 @@ namespace Snowflake.Data.Core
                     {
                         SfSession.UpdateQueryContextCache(queryData.QueryContext);
                     }
+
                     throw new SnowflakeDbException(
                         response.data.sqlState,
                         response.code,
@@ -820,7 +805,8 @@ namespace Snowflake.Data.Core
                 Url = queryUri,
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
                 serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
-                                ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
+                    ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]
+                    : null,
                 HttpTimeout = Timeout.InfiniteTimeSpan,
                 RestTimeout = Timeout.InfiniteTimeSpan,
                 sid = SfSession.sessionId,
@@ -978,8 +964,7 @@ namespace Snowflake.Data.Core
 
                 builder.Append(sqlQueryBuf[idx]);
                 idx++;
-            }
-            while (idx < sqlQueryLen);
+            } while (idx < sqlQueryLen);
 
             var trimmedQuery = builder.ToString();
             trimmedQuery = trimmedQuery.Trim();
@@ -996,7 +981,7 @@ namespace Snowflake.Data.Core
         private bool IsPutOrGetCommand(string query)
         {
             return (query.Substring(0, 3).ToUpper() == "PUT") ||
-                (query.Substring(0, 3).ToUpper() == "GET");
+                   (query.Substring(0, 3).ToUpper() == "GET");
         }
 
         private static int GetBindingCount(Dictionary<string, BindingDTO> binding)
@@ -1018,42 +1003,36 @@ namespace Snowflake.Data.Core
             {
                 return false;
             }
+
             foreach (BindingDTO bindingDTO in binding.Values)
             {
                 if (bindingDTO.value == null)
                 {
                     return false;
                 }
+
                 if (bindingDTO.value.GetType() != typeof(List<object>))
                 {
                     return false;
                 }
             }
+
             return true;
         }
 
-        internal void SetUploadStream(MemoryStream stream, string destFilename, string stagePath)
+        internal void SetUploadStream(MemoryStream stream)
         {
             _uploadStream = stream;
-            _destFilename = destFilename;
-            _stagePath = stagePath;
         }
 
         internal SFBaseResultSet ExecuteTransfer(string sql)
         {
             isPutGetQuery = true;
-            PutGetExecResponse response =
-                ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
-                     0,
-                     sql,
-                     null,
-                     false);
+            var response = ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
+                    StatementContext.Default with { CommandText = sql },
+                    null);
 
-            PutGetStageInfo stageInfo = new PutGetStageInfo();
-
-            SFFileTransferAgent fileTransferAgent =
-                        new SFFileTransferAgent(sql, SfSession, response.data, ref _uploadStream, _destFilename, _stagePath, CancellationToken.None);
-
+            var fileTransferAgent = new SFFileTransferAgent(sql, SfSession, response.data, new BorrowedMemoryStream(_uploadStream, true));
             fileTransferAgent.execute();
 
             return fileTransferAgent.result();
@@ -1062,28 +1041,19 @@ namespace Snowflake.Data.Core
         internal async Task<SFBaseResultSet> ExecuteTransferAsync(string sql, CancellationToken cancellationToken)
         {
             isPutGetQuery = true;
-            PutGetExecResponse response =
+            var response =
                 await ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
-                     0,
-                     sql,
-                     null,
-                     false,
-                     cancellationToken).ConfigureAwait(false);
+                    StatementContext.Default with { CommandText = sql },
+                    null,
+                    cancellationToken).ConfigureAwait(false);
 
-            PutGetStageInfo stageInfo = new PutGetStageInfo();
-
-            SFFileTransferAgent fileTransferAgent =
-                        new SFFileTransferAgent(sql, SfSession, response.data, ref _uploadStream, _destFilename, _stagePath, cancellationToken);
-
+            var fileTransferAgent = new SFFileTransferAgent(sql, SfSession, response.data, new BorrowedMemoryStream(_uploadStream, true));
             fileTransferAgent.execute();
 
             return fileTransferAgent.result();
         }
 
-        internal string GetQueryId()
-        {
-            return _lastQueryId;
-        }
+        internal string GetQueryId() => _lastQueryId;
 
         private void HandleExceptionForSession(Exception ex)
         {

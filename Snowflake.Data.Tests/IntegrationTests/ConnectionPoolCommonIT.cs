@@ -69,7 +69,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
             await Task.Delay(100).ConfigureAwait(false);
             SFStatement statement = new SFStatement(conn1.SfSession);
-            SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
+            SFBaseResultSet resultSet = statement.Execute(StatementContext.Default with { CommandText = "select 1" }, null);
             Assert.True(await resultSet.NextAsync().ConfigureAwait(false));
             Assert.Equal("1", resultSet.GetString(0));
             await conn1.CloseAsync(CancellationToken.None).ConfigureAwait(false);

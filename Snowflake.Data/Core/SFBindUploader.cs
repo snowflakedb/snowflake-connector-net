@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Client;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
@@ -205,7 +206,7 @@ namespace Snowflake.Data.Core
             string putStmt = string.Format(PUT_STATEMENT, destFileName, stageName);
 
             SFStatement statement = new SFStatement(session);
-            statement.SetUploadStream(stream, destFileName, stagePath);
+            statement.SetUploadStream(stream);
             statement.ExecuteTransfer(putStmt);
 
         }
@@ -226,7 +227,7 @@ namespace Snowflake.Data.Core
             string putStmt = string.Format(PUT_STATEMENT, destFileName, stageName);
 
             SFStatement statement = new SFStatement(session);
-            statement.SetUploadStream(stream, destFileName, stagePath);
+            statement.SetUploadStream(stream);
             await statement.ExecuteTransferAsync(putStmt, cancellationToken).ConfigureAwait(false);
         }
 
@@ -314,8 +315,9 @@ namespace Snowflake.Data.Core
                 {
                     try
                     {
-                        SFStatement statement = new SFStatement(session);
-                        SFBaseResultSet resultSet = statement.Execute(0, CREATE_STAGE_STMT, null, false, false);
+                        var statement = new SFStatement(session);
+                        var ctx = StatementContext.Default with { CommandText = CREATE_STAGE_STMT };
+                        _ = statement.Execute(ctx, null);
                         session.SetArrayBindStage(STAGE_NAME);
                     }
                     catch (Exception e)
@@ -338,8 +340,9 @@ namespace Snowflake.Data.Core
             {
                 try
                 {
-                    SFStatement statement = new SFStatement(session);
-                    var resultSet = await statement.ExecuteAsync(0, CREATE_STAGE_STMT, null, false, false, cancellationToken).ConfigureAwait(false);
+                    var statement = new SFStatement(session);
+                    var statementContext = StatementContext.Default with { CommandText = CREATE_STAGE_STMT };
+                    var resultSet = await statement.ExecuteAsync(statementContext, null, cancellationToken).ConfigureAwait(false);
                     session.SetArrayBindStage(STAGE_NAME);
                 }
                 catch (Exception e)
