@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
@@ -59,7 +57,7 @@ namespace Snowflake.Data.Client
                 };
 
             var json = JsonConvert.SerializeObject(keyData, Formatting.None);
-            var hash = ToSha256HashLower(json);
+            var hash = json.ToSha256Hash().ToLowerInvariant();
             return $"SnowflakeTokenCache.v2.{input.TokenType.ToCacheKeyPrefix()}.{hash}";
         }
 
@@ -72,31 +70,29 @@ namespace Snowflake.Data.Client
             if (string.IsNullOrEmpty(url))
                 return string.Empty;
 
+            const UriComponents Zero = 0;
             var uri = new Uri(url, UriKind.RelativeOrAbsolute);
-            uri = uri.IsAbsoluteUri ? uri : new Uri($"https://{uri}");
+            var hasExplicitScheme = uri.IsAbsoluteUri;
+            if (!hasExplicitScheme)
+                uri = new Uri($"https://{uri}");
 
-            var schemeIndex = url.IndexOf("://", StringComparison.Ordinal);
-            var authorityStart = schemeIndex >= 0 ? schemeIndex + 3 : 0;
-            var queryOrFragmentIndex = url.IndexOfAny(new[] { '?', '#' }, authorityStart);
-            var pathIndex = url.IndexOf('/', authorityStart);
-            var pathEnd = queryOrFragmentIndex >= 0 ? queryOrFragmentIndex : url.Length;
-            var authorityEnd = pathIndex >= 0 &&
-                (queryOrFragmentIndex < 0 || pathIndex < queryOrFragmentIndex)
-                ? pathIndex
-                : queryOrFragmentIndex;
-            authorityEnd = authorityEnd >= 0 ? authorityEnd : url.Length;
-            var authority = url.Substring(authorityStart, authorityEnd - authorityStart);
-            var hasExplicitPort = authority.EndsWith($":{uri.Port}", StringComparison.Ordinal);
-            var hostComponent = !uri.IsDefaultPort || hasExplicitPort
-                ? UriComponents.HostAndPort
-                : UriComponents.Host;
-            var host = uri.GetComponents(hostComponent, UriFormat.UriEscaped);
+            // Non-default ports are always part of the authority. Default ports (e.g. :443)
+            // are kept only when they were written explicitly in the original URL.
+            var hasExplicitPort = !uri.IsDefaultPort ||
+                url.IndexOf($"{uri.Host}:{uri.Port}", StringComparison.Ordinal) >= 0;
 
-            // Preserve the escaped path exactly. Uri canonicalizes escaped unreserved
-            // characters (for example, "%7E" to "~"), which would change the cache hash.
-            var path = pathIndex >= 0 && pathIndex < pathEnd
-                ? url.Substring(pathIndex, pathEnd - pathIndex)
-                : string.Empty;
+            var resultComponents = UriComponents.Host | (hasExplicitPort ? UriComponents.Port : Zero);
+            // Slice the path from the original string so percent-encoding is preserved
+            // (Uri canonicalizes escaped unreserved characters, e.g. "%7E" → "~").
+            var pathStartIndex = uri.GetComponents(
+                resultComponents | UriComponents.UserInfo | (hasExplicitScheme ? UriComponents.Scheme : Zero),
+                UriFormat.Unescaped).Length;
+            var pathEnd = url.IndexOfAny(['?', '#'], pathStartIndex);
+            if (pathEnd < 0)
+                pathEnd = url.Length;
+
+            var host = uri.GetComponents(resultComponents, UriFormat.Unescaped);
+            var path = url.Substring(pathStartIndex, pathEnd - pathStartIndex);
             return (host + path).TrimEnd('/').ToLowerInvariant();
         }
 
@@ -113,13 +109,6 @@ namespace Snowflake.Data.Client
             if (string.IsNullOrEmpty(identifier))
                 return string.Empty;
             return identifier.Contains("\"") ? identifier : identifier.ToLowerInvariant();
-        }
-
-        private static string ToSha256HashLower(string text)
-        {
-            using var sha = SHA256.Create();
-            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(text));
-            return BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant();
         }
 
         public static void UseDefaultCredentialManager()

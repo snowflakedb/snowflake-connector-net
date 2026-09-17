@@ -173,6 +173,15 @@ namespace Snowflake.Data.Tests.UnitTests.CredentialManager
         }
 
         [SFFact]
+        public void TestNormalizeUrlBareHostnameWithoutScheme()
+        {
+            Assert.Equal("host.snowflake.com", SnowflakeCredentialManagerFactory.NormalizeUrl("host.snowflake.com"));
+            Assert.Equal(
+                SnowflakeCredentialManagerFactory.NormalizeUrl("https://host.snowflake.com"),
+                SnowflakeCredentialManagerFactory.NormalizeUrl("host.snowflake.com"));
+        }
+
+        [SFFact]
         public void TestNormalizeUrlStripsUserinfo()
         {
             Assert.Equal("host.com", SnowflakeCredentialManagerFactory.NormalizeUrl("https://user:pass@host.com"));
