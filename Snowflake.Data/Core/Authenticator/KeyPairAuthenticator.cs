@@ -130,9 +130,10 @@ namespace Snowflake.Data.Core.Authenticator
                     throw new SnowflakeDbException(
                         e,
                         SFError.JWT_ERROR_READING_PK,
+                        args: [
                         hasPkPath ? pkPath : "with value passed in connection string",
                         (pkContent == null) ? e.ToString() : "incorrect private key value or " +
-                        "private key format: use \"\\n\" for newlines and double the equals sign.");
+                        "private key format: use \"\\n\" for newlines and double the equals sign."]);
                 }
             }
 

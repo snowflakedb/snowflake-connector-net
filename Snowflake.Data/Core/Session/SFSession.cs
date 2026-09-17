@@ -84,6 +84,10 @@ namespace Snowflake.Data.Core
 
         internal TimeSpan _maxRetryTimeout;
 
+        internal readonly TimeSpan _cleanupWait;
+
+        internal readonly TimeSpan _abortRequestTimeout;
+
         private string _user;
 
         internal bool _disableSamlUrlCheck;
@@ -226,6 +230,8 @@ namespace Snowflake.Data.Core
                 _maxRetryCount = extractedProperties.maxHttpRetries;
                 _maxRetryTimeout = extractedProperties.retryTimeout;
                 _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
+                _cleanupWait = extractedProperties.cleanupWait;
+                _abortRequestTimeout = extractedProperties.abortRequestTimeout;
 
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&
                     MFACacheAuthenticator.IsMfaCacheAuthenticator(_authenticatorType))

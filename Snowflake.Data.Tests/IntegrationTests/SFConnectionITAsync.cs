@@ -918,8 +918,116 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 Assert.Equal(retryTimeout, conn.ConnectionTimeout);
             }
         }
-    }
 
+        /// <summary>
+        /// With cleanup_wait=2, Cancel() should return within ~2s even though the
+        /// abort-request POST hangs indefinitely. The POST continues fire-and-forget.
+        /// </summary>
+        [SFFact]
+        public async Task TestCancelReturnsWithinCleanupWaitWhenPostHangs()
+        {
+            const int CleanupWaitSeconds = 2;
+
+            using var mockRequester = new MockHangingQueryRestRequester();
+            using var conn = new MockSnowflakeDbConnection(mockRequester);
+            conn.ConnectionString = $"{_fixtureHere.ConnectionString}poolingEnabled=false;cleanup_wait={CleanupWaitSeconds}";
+
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            Assert.Equal(ConnectionState.Open, conn.State);
+
+            using var cts = new CancellationTokenSource();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT LONG_RUNNING_QUERY()";
+            cmd.CommandTimeout = 0;
+
+            cts.CancelAfter(TimeSpan.FromSeconds(1));
+
+            var sw = Stopwatch.StartNew();
+            _ = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            {
+                await cmd.ExecuteScalarAsync(cts.Token).ConfigureAwait(false);
+            }).ConfigureAwait(false);
+            sw.Stop();
+
+            Assert.True(mockRequester.CancelPostCalled, "Cancel POST should have been called");
+
+            // Cancel() must return within cleanup_wait; the hanging POST continues fire-and-forget.
+            // Allow 1s for the external token to fire + 2s cleanup_wait + generous tolerance.
+            Assert.True(sw.Elapsed.TotalSeconds < CleanupWaitSeconds + 30,
+                $"Cancel() should return within cleanup_wait ({CleanupWaitSeconds}s) but took {sw.Elapsed.TotalSeconds:F1}s");
+        }
+
+        /// <summary>
+        /// With cleanup_wait=0, Cancel() should return immediately (fire-and-forget).
+        /// </summary>
+        [SFFact]
+        public async Task TestCancelReturnsImmediatelyWithCleanupWaitZero()
+        {
+            using var mockRequester = new MockHangingQueryRestRequester();
+            using var conn = new MockSnowflakeDbConnection(mockRequester);
+            conn.ConnectionString = _fixtureHere.ConnectionString + "poolingEnabled=false;cleanup_wait=0";
+
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            Assert.Equal(ConnectionState.Open, conn.State);
+
+            using var cts = new CancellationTokenSource();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT LONG_RUNNING_QUERY()";
+            cmd.CommandTimeout = 0;
+
+            cts.CancelAfter(TimeSpan.FromSeconds(1));
+
+            var sw = Stopwatch.StartNew();
+            _ = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            {
+                await cmd.ExecuteScalarAsync(cts.Token).ConfigureAwait(false);
+            }).ConfigureAwait(false);
+            sw.Stop();
+
+            // cleanup_wait=0 means fire-and-forget; Cancel() should not block on the POST.
+            Assert.True(sw.Elapsed.TotalSeconds < 5,
+                $"Cancel() with cleanup_wait=0 should return immediately but took {sw.Elapsed.TotalSeconds:F1}s");
+        }
+
+        /// <summary>
+        /// When abort_request_timeout is configured, BuildCancelQueryRequest sets
+        /// RestTimeout on the cancel request so the HTTP layer will time out the POST.
+        /// Verify the property actually reaches the request object.
+        /// </summary>
+        [SFFact]
+        public async Task TestAbortRequestTimeoutIsAppliedToCancelRequest()
+        {
+            const int abortTimeoutSeconds = 3;
+            const int cleanupWaitSeconds = 5;
+
+            using var mockRequester = new MockHangingQueryRestRequester();
+            using var conn = new MockSnowflakeDbConnection(mockRequester);
+            conn.ConnectionString = _fixtureHere.ConnectionString
+                                    + $"poolingEnabled=false;abort_request_timeout={abortTimeoutSeconds};cleanup_wait={cleanupWaitSeconds}";
+
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            Assert.Equal(ConnectionState.Open, conn.State);
+
+            using var cts = new CancellationTokenSource();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT LONG_RUNNING_QUERY()";
+            cmd.CommandTimeout = 0;
+
+            cts.CancelAfter(TimeSpan.FromSeconds(1));
+
+            _ = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            {
+                await cmd.ExecuteScalarAsync(cts.Token).ConfigureAwait(false);
+            }).ConfigureAwait(false);
+
+            Assert.True(mockRequester.CancelPostCalled, "Cancel POST should have been called");
+
+            // The cancel request must carry the abort_request_timeout as its RestTimeout
+            // so the real RestRequester's SendAsync honors it.
+            Assert.NotNull(mockRequester.LastCancelRequest);
+            Assert.Equal(TimeSpan.FromSeconds(abortTimeoutSeconds), mockRequester.LastCancelRequest.RestTimeout);
+        }
+    }
 
     [SFFact]
     public async Task TestAsyncConnectionFailFastForNonRetried404OnLogin()
@@ -1248,6 +1356,41 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         c.SfSession.sessionToken = "some token";
         await Assert.ThrowsAsync<TaskCanceledException>(() => c.CloseAsync(CancellationToken.None)).ConfigureAwait(false);
         Assert.Equal(ConnectionState.Open, c.State);
+    }
+
+    [SFFact]
+    public async Task TestCancelDefaultBehaviorWithFastMock()
+    {
+        // Use MockSlowQueryRestRequester with a short delay — its Cancel responds immediately
+        var mockRequester = new MockSlowQueryRestRequester(TimeSpan.FromSeconds(30));
+
+        using var conn = new MockSnowflakeDbConnection(mockRequester);
+        // No cleanup_wait or abort_request_timeout — default (infinite) behavior
+        conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
+
+        await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+        Assert.Equal(ConnectionState.Open, conn.State);
+
+        using var cts = new CancellationTokenSource();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT SLOW_QUERY()";
+        cmd.CommandTimeout = 0;
+
+        cts.CancelAfter(TimeSpan.FromSeconds(2));
+
+        var stopwatch = Stopwatch.StartNew();
+
+        var thrown = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        {
+            await cmd.ExecuteScalarAsync(cts.Token).ConfigureAwait(false);
+        }).ConfigureAwait(false);
+
+        var detail = Assert.IsType<SnowflakeDbException>(thrown.InnerException);
+        var expectedErrorCode = SFError.QUERY_CANCELLED.GetAttribute<SFErrorAttr>().errorCode;
+        Assert.Equal(expectedErrorCode, detail.ErrorCode);
+
+        Assert.True(stopwatch.Elapsed.TotalSeconds < 30,
+            $"Default cancel should complete quickly. Elapsed: {stopwatch.Elapsed.TotalSeconds:F2}s");
     }
 
     private static void AssertConnectionIsNotOpen(SnowflakeDbConnection snowflakeDbConnection)

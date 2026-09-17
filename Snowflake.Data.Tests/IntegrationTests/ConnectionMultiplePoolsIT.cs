@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Moq;
 using Xunit;
 using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
@@ -228,8 +229,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             else
                 cts.Cancel();
 
-            // operation canceled properly
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task).ConfigureAwait(false);
+            // operation canceled properly — OperationCanceledException wraps SnowflakeDbException
+            var oce = await Assert.ThrowsAsync<OperationCanceledException>(() => task).ConfigureAwait(false);
+            var dbException = Assert.IsType<SnowflakeDbException>(oce.InnerException);
+            SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(dbException, SFError.QUERY_CANCELLED);
 
             // one idle session
             Assert.Equal(1, pool.GetCurrentState().IdleSessionsCount);

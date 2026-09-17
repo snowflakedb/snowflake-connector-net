@@ -40,18 +40,36 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
                 // external cancellation should be triggered before timeout
                 cmd.CommandTimeout = 10;
-                try
-                {
-                    await cmd.ExecuteScalarAsync(externalCancel.Token).ConfigureAwait(false);
-                    Assert.Fail();
-                }
-                catch
-                {
-                    // assert that cancel is not triggered by timeout, but external cancellation
-                    Assert.True(externalCancel.IsCancellationRequested);
-                }
+                var thrown = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                    await cmd.ExecuteScalarAsync(externalCancel.Token).ConfigureAwait(false)).ConfigureAwait(false);
+
+                var detail = Assert.IsType<SnowflakeDbException>(thrown.InnerException);
+                Assert.Equal(SFError.QUERY_CANCELLED.GetAttribute<SFErrorAttr>().errorCode, detail.ErrorCode);
+                Assert.True(externalCancel.IsCancellationRequested);
                 await Task.Delay(2000).ConfigureAwait(false);
                 await conn.CloseAsync().ConfigureAwait(false);
+            }
+        }
+
+        [SFFact]
+        public async Task TestCommandTimeoutThrowsRequestTimeout()
+        {
+            using (var conn = new SnowflakeDbConnection())
+            {
+                conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
+                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+                using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
+                cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 60)) v";
+                cmd.CommandTimeout = 10;
+
+                var thrown = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                    await cmd.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
+
+                var detail = Assert.IsType<SnowflakeDbException>(thrown.InnerException);
+                Assert.Equal(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, detail.ErrorCode);
+
+                await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
 

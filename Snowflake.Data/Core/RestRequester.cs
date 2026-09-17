@@ -151,7 +151,7 @@ namespace Snowflake.Data.Core
                 response?.Dispose();
                 if (restRequestTimeout.IsCancellationRequested)
                 {
-                    throw new SnowflakeDbException(e, SFError.REQUEST_TIMEOUT);
+                    throw new SnowflakeDbException(e, SFError.REQUEST_TIMEOUT, args: [restTimeout.TotalSeconds.ToString("F0")]);
                 }
                 throw;
             }
