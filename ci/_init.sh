@@ -1,10 +1,10 @@
 #!/bin/bash -e
 
 export PLATFORM=$(echo $(uname) | tr '[:upper:]' '[:lower:]')
-export INTERNAL_REPO=artifactory.ci1.us-west-2.aws-dev.app.snowflake.com/internal-development-docker-drivers-local
+export INTERNAL_REPO=artifactory.ci1.us-west-2.aws-dev.app.snowflake.com/internal-production-docker-snowflake-virtual
 if [[ -z "$GITHUB_ACTIONS" ]]; then
     # Use the internal Docker Registry
-    export DOCKER_REGISTRY_NAME=$INTERNAL_REPO/snowflakedb
+    export DOCKER_REGISTRY_NAME=$INTERNAL_REPO/docker
     export WORKSPACE=${WORKSPACE:-/tmp}
 else
     # Use Docker Hub
