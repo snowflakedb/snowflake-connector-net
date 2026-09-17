@@ -43,7 +43,7 @@ namespace Snowflake.Data.Client
         }
 
         public SnowflakeDbException(SFError error, string queryId, Exception innerException)
-            : base(FormatExceptionMessage(error, new object[] { innerException.Message }, string.Empty, queryId), innerException)
+            : base(FormatExceptionMessage(error, [innerException.Message], string.Empty, queryId), innerException)
         {
             VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
             QueryId = queryId;
@@ -73,6 +73,31 @@ namespace Snowflake.Data.Client
         {
             VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
             SqlState = sqlState;
+        }
+
+        private SnowflakeDbException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        /// <summary>
+        /// Creates a SnowflakeDbException with a specific query ID and an inner exception.
+        /// Used to attach the server-side query identifier to timeout and cancellation errors
+        /// so callers can correlate client exceptions with the Snowflake query history.
+        /// </summary>
+        /// <param name="innerException">The exception that caused this error.</param>
+        /// <param name="error">The driver error descriptor.</param>
+        /// <param name="queryId">The Snowflake query ID, or null if not yet available.</param>
+        /// <param name="args">Format arguments for the error message template.</param>
+        internal static SnowflakeDbException WithQueryId(Exception innerException, SFError error, string queryId, params object[] args)
+        {
+            var formatExceptionMessage = FormatExceptionMessage(error, args, string.Empty, queryId);
+            var result = new SnowflakeDbException(formatExceptionMessage, innerException)
+            {
+                VendorCode = error.GetAttribute<SFErrorAttr>().errorCode,
+                QueryId = queryId
+            };
+
+            return result;
         }
 
         static string FormatExceptionMessage(SFError error,

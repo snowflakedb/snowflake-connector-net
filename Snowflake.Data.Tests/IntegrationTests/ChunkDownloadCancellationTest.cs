@@ -127,8 +127,9 @@ public sealed class ChunkDownloadCancellationTest : SFBaseTestAsync
             using var cts = new CancellationTokenSource();
             cts.Cancel();
 
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                () => cmd.ExecuteReaderAsync(cts.Token)).ConfigureAwait(false);
+            var oce = await Assert.ThrowsAsync<OperationCanceledException>(() => cmd.ExecuteReaderAsync(cts.Token)).ConfigureAwait(false);
+            var dbException = Assert.IsType<SnowflakeDbException>(oce.InnerException);
+            SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(dbException, SFError.QUERY_CANCELLED);
         }
         finally
         {

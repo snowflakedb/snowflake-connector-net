@@ -444,5 +444,164 @@ namespace Snowflake.Data.Tests.UnitTests
                 await statement.GetQueryStatusAsync("mockQueryId", CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
             Assert.Equal(SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         }
+
+        [SFFact(RetriesCount = RetriesCount.Thrice)]
+        public async Task TestExecuteAsyncTimeoutThrowsRequestTimeoutWithQueryId()
+        {
+            // arrange — mock delays 300s, timeout is 3s
+            var restRequester = new Mock.MockSlowQueryRestRequester(TimeSpan.FromSeconds(300));
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            await sfSession.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            var statement = new SFStatement(sfSession);
+            var statementCtx = new StatementContext(null, false, false, "select 1", 3, null);
+
+            // act
+            var thrown = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                await statement.ExecuteAsync(statementCtx, null, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
+
+            // assert
+            var detail = Assert.IsType<SnowflakeDbException>(thrown.InnerException);
+            Assert.Equal(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, detail.ErrorCode);
+            Assert.Contains("3", thrown.Message);
+        }
+
+        [SFFact]
+        public async Task TestExecuteAsyncCancellationThrowsQueryCancelled()
+        {
+            // arrange — mock delays 10s, cancel after 1s
+            var restRequester = new Mock.MockSlowQueryRestRequester(TimeSpan.FromSeconds(10));
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            await sfSession.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            var statement = new SFStatement(sfSession);
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            var statementCtx = new StatementContext(null, false, false, "select 1", 0, null);
+
+            // act — no CommandTimeout (0 = infinite), cancellation via external token
+            var thrown = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                await statement.ExecuteAsync(statementCtx, null, cts.Token).ConfigureAwait(false)).ConfigureAwait(false);
+
+            // assert
+            var detail = Assert.IsType<SnowflakeDbException>(thrown.InnerException);
+            Assert.Equal(SFError.QUERY_CANCELLED.GetAttribute<SFErrorAttr>().errorCode, detail.ErrorCode);
+        }
+
+        [SFFact]
+        public async Task TestExecuteAsyncTimeoutBeforeResponseHasNullQueryId()
+        {
+            // arrange — server never responds, timeout is 10s
+            var restRequester = new Mock.MockNeverRespondingRestRequester();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            await sfSession.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            var statement = new SFStatement(sfSession);
+            var statementCtx = new StatementContext(null, false, false, "select 1", 10, null);
+
+            // act
+            var thrown = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                await statement.ExecuteAsync(statementCtx, null, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
+
+            // assert
+            var detail = Assert.IsType<SnowflakeDbException>(thrown.InnerException);
+            Assert.Equal(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, detail.ErrorCode);
+            Assert.Null(detail.QueryId);
+        }
+
+        [SFFact]
+        public void TestSyncExecuteTimeoutDuringPollingPreservesQueryId()
+        {
+            // arrange — mock returns "in progress" with queryId, then OCE on polling
+            var restRequester = new Mock.MockTimeoutDuringPollingRestRequester();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            sfSession.Open();
+            var statement = new SFStatement(sfSession);
+            var statementCtx = new StatementContext(null, false, false, "select 1", 30, null);
+
+            // act
+            var thrown = Assert.Throws<OperationCanceledException>(() =>
+                statement.Execute(statementCtx, null));
+
+            // assert — the OCE wraps a SnowflakeDbException with REQUEST_TIMEOUT and the queryId
+            var detail = Assert.IsType<SnowflakeDbException>(thrown.InnerException);
+            Assert.Equal(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, detail.ErrorCode);
+            Assert.Equal(Mock.MockTimeoutDuringPollingRestRequester.MockQueryId, detail.QueryId);
+            // ExecuteSqlOtherThanPutGet extracts queryId from OCE.InnerException chain
+            Assert.Equal(Mock.MockTimeoutDuringPollingRestRequester.MockQueryId, statement.GetQueryId());
+        }
+
+        [SFFact]
+        public async Task TestAsyncExecuteTimeoutDuringPollingPreservesQueryId()
+        {
+            // arrange — mock returns "in progress" with queryId, then OCE on polling
+            var restRequester = new Mock.MockTimeoutDuringPollingRestRequester();
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            await sfSession.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            var statement = new SFStatement(sfSession);
+            var statementCtx = new StatementContext(null, false, false, "select 1", 30, null);
+
+            // act
+            var thrown = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                await statement.ExecuteAsync(statementCtx, null, CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
+
+            // assert
+            var detail = Assert.IsType<SnowflakeDbException>(thrown.InnerException);
+            Assert.Equal(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, detail.ErrorCode);
+            Assert.Equal(Mock.MockTimeoutDuringPollingRestRequester.MockQueryId, detail.QueryId);
+        }
+
+        [SFFact]
+        public void TestPutGetExecuteWrapsOceInInternalError()
+        {
+            // arrange — mock throws OCE with a SnowflakeDbException inner on query Post
+            var restRequester = new Mock.MockPutGetOceRestRequester(throwOceOnQuery: true);
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            sfSession.Open();
+            var statement = new SFStatement(sfSession);
+            var statementCtx = new StatementContext(null, false, false, "PUT file:///tmp/data @~", 30, null);
+
+            // act — "PUT " prefix triggers the PUT/GET code path
+            var thrown = Assert.Throws<SnowflakeDbException>(() =>
+                statement.Execute(statementCtx, null));
+
+            // assert — ExecuteSqlWithPutGet wraps OCE in INTERNAL_ERROR
+            Assert.Equal(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+            Assert.IsType<OperationCanceledException>(thrown.InnerException);
+        }
+
+        [SFFact]
+        public void TestPutGetExecuteOcePreservesQueryIdFromInnerException()
+        {
+            // arrange — mock throws OCE whose InnerException is SnowflakeDbException with QueryId
+            var restRequester = new Mock.MockPutGetOceRestRequester(throwOceOnQuery: true);
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            sfSession.Open();
+            var statement = new SFStatement(sfSession);
+            var statementCtx = new StatementContext(null, false, false, "PUT file:///tmp/data @~", 30, null);
+
+            // act
+            Assert.Throws<SnowflakeDbException>(() =>
+                statement.Execute(statementCtx, null));
+
+            // assert — the queryId from the OCE's inner SnowflakeDbException is preserved
+            Assert.Equal(Mock.MockPutGetOceRestRequester.MockQueryId, statement.GetQueryId());
+        }
+
+        [SFFact]
+        public void TestPutGetExecuteNonOceExceptionWrapsInInternalError()
+        {
+            // arrange — mock returns a PutGetExecResponse with incomplete data;
+            // SFFileTransferAgent will throw due to missing fields
+            var restRequester = new Mock.MockPutGetOceRestRequester(throwOceOnQuery: false);
+            var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+            sfSession.Open();
+            var statement = new SFStatement(sfSession);
+            var statementCtx = new StatementContext(null, false, false, "PUT file:///tmp/data @~", 0, null);
+
+            // act — the file transfer agent will fail due to incomplete response data
+            var thrown = Assert.Throws<SnowflakeDbException>(() =>
+                statement.Execute(statementCtx, null));
+
+            // assert — SFFileTransferAgent throws IO_ERROR_ON_GETPUT_COMMAND for incomplete data,
+            // caught by the SnowflakeDbException catch block and re-thrown as-is
+            Assert.Equal(SFError.IO_ERROR_ON_GETPUT_COMMAND.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+        }
     }
 }

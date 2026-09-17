@@ -60,13 +60,13 @@ namespace Snowflake.Data.Tests.Mock
                         _connectionState = ConnectionState.Closed;
                         logger.Error("Unable to connect", sfSessionEx);
                         throw //sfSessionEx.InnerException;
-                        new SnowflakeDbException(sfSessionEx, SFError.INTERNAL_ERROR, "Unable to connect");
+                        new SnowflakeDbException(sfSessionEx, SFError.INTERNAL_ERROR, args: "Unable to connect");
                     }
                     if (previousTask.IsCanceled)
                     {
                         _connectionState = ConnectionState.Closed;
                         logger.Debug("Connection canceled");
-                        throw new SnowflakeDbException(SFError.REQUEST_TIMEOUT, "Unable to connect");
+                        throw new SnowflakeDbException(SFError.REQUEST_TIMEOUT, args: ["N/A", "N/A"]);
                     }
                     else
                     {

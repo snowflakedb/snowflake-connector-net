@@ -160,6 +160,10 @@ namespace Snowflake.Data.Core
         CLIENT_TELEMETRY_ENABLED,
         [SFSessionPropertyAttr(required = false, defaultValue = "false")]
         ALLOW_NUMBER_OVERFLOW_AS_STRING,
+        [SFSessionPropertyAttr(required = false, defaultValue = "-1")]
+        CLEANUP_WAIT,
+        [SFSessionPropertyAttr(required = false, defaultValue = "-1")]
+        ABORT_REQUEST_TIMEOUT,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -245,7 +249,7 @@ namespace Snowflake.Data.Core
                 logger.Warn("Invalid connectionString", e);
                 throw new SnowflakeDbException(e,
                                 SFError.INVALID_CONNECTION_STRING,
-                                e.Message);
+                                args: e.Message);
             }
             var properties = new SFSessionProperties();
 
@@ -289,7 +293,7 @@ namespace Snowflake.Data.Core
                     logger.Error("Unable to connect", e);
                     throw new SnowflakeDbException(e,
                                 SFError.INVALID_CONNECTION_STRING,
-                                e.Message);
+                                args: e.Message);
                 }
             }
 
@@ -477,8 +481,7 @@ namespace Snowflake.Data.Core
                     throw new SnowflakeDbException(
                         new Exception(errorMessage),
                         SFError.INVALID_CONNECTION_PARAMETER_VALUE,
-                        "",
-                        SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL.ToString());
+                        args: ["", SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL.ToString()]);
                 }
             }
         }
@@ -603,7 +606,7 @@ namespace Snowflake.Data.Core
             throw new SnowflakeDbException(
                 new Exception(errorMessage),
                 SFError.MISSING_CONNECTION_PROPERTY,
-                $"{SFSessionProperty.OAUTHSCOPE.ToString()} or {SFSessionProperty.ROLE.ToString()}");
+                args: $"{SFSessionProperty.OAUTHSCOPE.ToString()} or {SFSessionProperty.ROLE.ToString()}");
         }
 
         private static bool ValidateOAuthUrlsReturningIfTheyAreSnowflake(SFSessionProperties properties)
@@ -729,8 +732,7 @@ namespace Snowflake.Data.Core
                     throw new SnowflakeDbException(
                         new Exception(errorMessage),
                         SFError.INVALID_CONNECTION_PARAMETER_VALUE,
-                        "",
-                        SFSessionProperty.PASSCODEINPASSWORD.ToString());
+                        args: ["", SFSessionProperty.PASSCODEINPASSWORD.ToString()]);
                 }
             }
         }
@@ -826,8 +828,7 @@ namespace Snowflake.Data.Core
             throw new SnowflakeDbException(
                 new Exception("Invalid account"),
                 SFError.INVALID_CONNECTION_PARAMETER_VALUE,
-                account,
-                SFSessionProperty.ACCOUNT);
+                args: [account, SFSessionProperty.ACCOUNT]);
         }
 
         private static bool IsAccountRegexMatched(string account) =>
@@ -902,7 +903,7 @@ namespace Snowflake.Data.Core
             catch (Exception e)
             {
                 logger.Error($"Value for parameter {propertyName} could not be parsed");
-                throw new SnowflakeDbException(e, SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
+                throw new SnowflakeDbException(e, SFError.INVALID_CONNECTION_PARAMETER_VALUE, args: [maxBytesInMemoryString, propertyName]);
             }
 
             if (maxBytesInMemory is < -1 or 0)
@@ -910,7 +911,7 @@ namespace Snowflake.Data.Core
                 logger.Error($"Value for parameter {propertyName} should be positive or -1");
                 throw new SnowflakeDbException(
                     new Exception($"Value for parameter {propertyName} should be positive or -1"),
-                    SFError.INVALID_CONNECTION_PARAMETER_VALUE, maxBytesInMemoryString, propertyName);
+                    SFError.INVALID_CONNECTION_PARAMETER_VALUE, args: [maxBytesInMemoryString, propertyName]);
             }
         }
 
@@ -925,8 +926,7 @@ namespace Snowflake.Data.Core
                     throw new SnowflakeDbException(
                         new Exception(errorMessage),
                         SFError.INVALID_CONNECTION_PARAMETER_VALUE,
-                        "",
-                        SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT.ToString());
+                        args: ["", SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT.ToString()]);
                 }
             }
         }

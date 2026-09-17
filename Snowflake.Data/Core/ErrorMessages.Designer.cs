@@ -126,7 +126,7 @@ namespace Snowflake.Data.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Query has been cancelled..
+        ///   Looks up a localized string similar to Query was cancelled..
         /// </summary>
         internal static string QUERY_CANCELLED {
             get {
@@ -135,7 +135,7 @@ namespace Snowflake.Data.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Request reach its timeout..
+        ///   Looks up a localized string similar to Request timed out after {0}s..
         /// </summary>
         internal static string REQUEST_TIMEOUT {
             get {
