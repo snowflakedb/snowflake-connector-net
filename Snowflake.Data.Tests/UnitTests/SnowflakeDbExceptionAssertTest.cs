@@ -65,7 +65,7 @@ public sealed class SnowflakeDbExceptionAssertTest
     public void TestHasErrorCodeInExceptionChain_DirectException_Passes()
     {
         // arrange
-        var exception = new SnowflakeDbException(SFError.REQUEST_TIMEOUT, "timed out");
+        var exception = new SnowflakeDbException(SFError.REQUEST_TIMEOUT, "30", "test-query-id");
 
         // act & assert
         SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(exception, SFError.REQUEST_TIMEOUT);
@@ -186,5 +186,37 @@ public sealed class SnowflakeDbExceptionAssertTest
         // act & assert
         Assert.ThrowsAny<XunitException>(() =>
             SnowflakeDbExceptionAssert.HasMessageInExceptionChain(null, "anything"));
+    }
+
+    [SFFact]
+    public void TestConstructorWithInnerExceptionAndQueryId()
+    {
+        // arrange
+        var inner = new OperationCanceledException("timeout");
+
+        // act — mirrors WrapCancellationException production call: WithQueryId(ex, REQUEST_TIMEOUT, queryId, timeout)
+        var ex = SnowflakeDbException.WithQueryId(inner, SFError.REQUEST_TIMEOUT, "test-query-id-123", "30");
+
+        // assert
+        Assert.Equal(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
+        Assert.Equal("test-query-id-123", ex.QueryId);
+        Assert.Same(inner, ex.InnerException);
+        Assert.Contains("30", ex.Message);
+    }
+
+    [SFFact]
+    public void TestConstructorWithInnerExceptionAndNullQueryId()
+    {
+        // arrange
+        var inner = new OperationCanceledException("timeout");
+
+        // act — mirrors WrapCancellationException production call: WithQueryId(ex, REQUEST_TIMEOUT, queryId, timeout)
+        var ex = SnowflakeDbException.WithQueryId(inner, SFError.REQUEST_TIMEOUT, null, "5");
+
+        // assert
+        Assert.Equal(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
+        Assert.Null(ex.QueryId);
+        Assert.Same(inner, ex.InnerException);
+        Assert.Contains("5", ex.Message);
     }
 }

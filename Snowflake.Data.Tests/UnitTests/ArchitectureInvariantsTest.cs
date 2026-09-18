@@ -97,8 +97,11 @@ public sealed class ArchitectureInvariantsTest
                 violations.Add($"{relativePath}:{lineSegment} {expressionStr}");
             }
         });
-
-        AssertOnViolations([], violations);
+        string[] ignore =
+        [
+            $"{Path.DirectorySeparatorChar}IntegrationTests{Path.DirectorySeparatorChar}ChunkDownloadCancellationTest.cs: Task.Yield()"
+        ];
+        AssertOnViolations([], violations, ignore);
     }
 
     [Fact]

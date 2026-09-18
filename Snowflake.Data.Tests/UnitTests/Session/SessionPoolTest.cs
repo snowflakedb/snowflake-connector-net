@@ -443,7 +443,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // act — execute a query through SFStatement (the real production code path)
             var statement = new SFStatement(session);
             Assert.ThrowsAny<Exception>(() =>
-                statement.Execute(0, "SELECT 1", null, false, false));
+                statement.Execute(StatementContext.Default with { CommandText = "SELECT 1" }, null));
 
             // the session should now be invalidated by SFStatement's catch block
             Assert.True(session.IsInvalidatedForPooling());

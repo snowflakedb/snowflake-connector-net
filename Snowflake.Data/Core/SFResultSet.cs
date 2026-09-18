@@ -76,7 +76,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+        public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement) : base()
         {
             responseData.rowType = new List<ExecResponseRowType>();
             InitializePutGetRowType(responseData.rowType);

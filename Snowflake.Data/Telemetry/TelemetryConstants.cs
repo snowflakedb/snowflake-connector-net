@@ -17,6 +17,7 @@ internal static class TelemetryActivities
     internal const string GetQueryStatusAsync = "GetQueryStatusAsync";
     internal const string GetResultsFromQueryId = "GetResultsFromQueryId";
     internal const string GetResultsFromQueryIdAsync = "GetResultsFromQueryIdAsync";
+    internal const string ExecuteWithCustomUploadStream = "ExecuteWithCustomUploadStream";
 }
 
 /// <summary>

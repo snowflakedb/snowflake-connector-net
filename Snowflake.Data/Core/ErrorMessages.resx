@@ -154,10 +154,10 @@
     <value>Required property {0} is not provided.</value>
   </data>
   <data name="QUERY_CANCELLED" xml:space="preserve">
-    <value>Query has been cancelled.</value>
+    <value>Query was cancelled.</value>
   </data>
   <data name="REQUEST_TIMEOUT" xml:space="preserve">
-    <value>Request reach its timeout.</value>
+    <value>Request timed out after {0}s.</value>
   </data>
   <data name="STATEMENT_ALREADY_RUNNING_QUERY" xml:space="preserve">
     <value>Another query is already running against this statement.</value>

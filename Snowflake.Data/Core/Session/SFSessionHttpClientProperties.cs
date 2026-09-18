@@ -52,6 +52,8 @@ namespace Snowflake.Data.Core
         private long _crlDownloadMaxSize;
         internal string _minTlsProtocol;
         internal string _maxTlsProtocol;
+        internal TimeSpan cleanupWait;
+        internal TimeSpan abortRequestTimeout;
 
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
@@ -291,7 +293,9 @@ namespace Snowflake.Data.Core
                     _crlDownloadTimeout = int.Parse(propertiesDictionary[SFSessionProperty.CRLDOWNLOADTIMEOUT]),
                     _crlDownloadMaxSize = long.Parse(propertiesDictionary[SFSessionProperty.CRLDOWNLOADMAXSIZE]),
                     _minTlsProtocol = propertiesDictionary[SFSessionProperty.MINTLS],
-                    _maxTlsProtocol = propertiesDictionary[SFSessionProperty.MAXTLS]
+                    _maxTlsProtocol = propertiesDictionary[SFSessionProperty.MAXTLS],
+                    cleanupWait = extractor.ExtractTimeout(SFSessionProperty.CLEANUP_WAIT),
+                    abortRequestTimeout = extractor.ExtractTimeout(SFSessionProperty.ABORT_REQUEST_TIMEOUT)
                 };
             }
 

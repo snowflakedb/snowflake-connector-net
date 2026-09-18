@@ -14,6 +14,7 @@ namespace Snowflake.Data.Core.FileTransfer
         internal const int TagSizeInBytes = TagSizeInBits / 8;
         private const int InitVectorSizeInBytes = 12;
         private const string AesGcmNoPaddingCipher = "AES/GCM/NoPadding";
+        private static int DefaultBufferSize = 1 << 20;
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<GcmEncryptionProvider>();
 
@@ -114,11 +115,12 @@ namespace Snowflake.Data.Core.FileTransfer
             FileTransferConfiguration transferConfiguration)
         {
             var contentCipher = BuildAesGcmNoPaddingCipher(true, fileKeyBytes, contentIV, contentAad);
-            var targetStream = new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
+            var (targetStream, buffer) = transferConfiguration.MaxBytesInMemory == -1
+                ? ((Stream)new MemoryStream(), new byte[DefaultBufferSize])
+                : (new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir), new byte[transferConfiguration.MaxBytesInMemory]);
             try
             {
                 var cipherStream = new CipherStream(targetStream, null, contentCipher);
-                byte[] buffer = new byte[transferConfiguration.MaxBytesInMemory];
                 int bytesRead;
                 while ((bytesRead = inputStream.Read(buffer, 0, buffer.Length)) > 0)
                 {
@@ -150,11 +152,12 @@ namespace Snowflake.Data.Core.FileTransfer
             FileTransferConfiguration transferConfiguration)
         {
             var contentCipher = BuildAesGcmNoPaddingCipher(false, fileKeyBytes, contentIV, contentAad);
-            var targetStream = new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
+            var (targetStream, buffer) = transferConfiguration.MaxBytesInMemory == -1
+                ? ((Stream)new MemoryStream(), new byte[DefaultBufferSize])
+                : (new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir), new byte[transferConfiguration.MaxBytesInMemory]);
             try
             {
                 var cipherStream = new CipherStream(targetStream, null, contentCipher);
-                byte[] buffer = new byte[transferConfiguration.MaxBytesInMemory];
                 int bytesRead;
                 while ((bytesRead = inputStream.Read(buffer, 0, buffer.Length)) > 0)
                 {
