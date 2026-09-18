@@ -1,0 +1,50 @@
+# Publishes the `security-signoff` commit status: success unless the PR carries
+# `security-signoff-required` without an approval from a security partner on its
+# current head commit. Branch protection requires the status, so a labeled PR
+# cannot merge until a partner clears it for public disclosure. On block the
+# action also requests one random eligible partner and upserts a sticky comment
+# (needs pull-requests: write).
+#
+# Roster: .github/security-partners.yml.
+name: Security sign-off
+
+on:
+  pull_request:
+    # ready_for_review is required because drafts are skipped below: without
+    # it, marking a PR ready would not start the gate until the next push.
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review]
+  # Makes the status flip the moment a partner approves, rather than waiting
+  # for the next push or label change.
+  pull_request_review:
+    types: [submitted, dismissed, edited]
+
+permissions:
+  contents: read # read the roster from the base branch
+  # write: read labels/reviews; request one security-partner reviewer; upsert
+  # the sticky guidance comment (security-signoff-action@v0.3.0+).
+  pull-requests: write
+  statuses: write # publish the commit status
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Safe to cancel despite writing a status: every run recomputes the verdict
+  # from live PR state, so letting the newest event win avoids an older run
+  # landing a stale verdict after a newer one.
+  cancel-in-progress: true
+
+jobs:
+  signoff:
+    name: Security sign-off
+    # Excluded from the mirror in ci/mirroring/copy.bara.sky; this keeps the job
+    # inert rather than failing every PR if that exclusion ever lapses.
+    # Drafts cannot merge, so leaving the commit status unreported is fine.
+    # Running would request a partner and post a sticky comment too early.
+    if: github.repository_owner != 'snowflakedb' && github.event.pull_request.draft == false
+    # Docker container action, built at run time, so it needs a Docker-capable
+    # runner — not the ubuntu-slim this repo uses for script-only bot jobs.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # All inputs left at their defaults; no checkout needed, since the action
+      # reads PR state and the roster through the API.
+      - uses: snowflake-eng/security-signoff-action@v0

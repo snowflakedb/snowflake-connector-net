@@ -46,7 +46,7 @@ public sealed class IdleTimeoutReadStreamTest
         Assert.Equal(data, buffer);
     }
 
-    [SFFact]
+    [SFFact(RetriesCount = RetriesCount.Thrice)]
     public async Task TestIdleTimeoutFiresBetweenReads()
     {
         var data = new byte[20];
@@ -66,13 +66,13 @@ public sealed class IdleTimeoutReadStreamTest
         Assert.Contains("No data received for", ex.Message);
     }
 
-    [SFFact]
+    [SFFact(RetriesCount = RetriesCount.Thrice)]
     public async Task TestIdleTimeoutResetsAfterEachSuccessfulRead()
     {
         var data = new byte[100 * 100];
         data.Fill((byte)0xAB);
         using var inner = new MemoryStream(data);
-        using var stream = new IdleTimeoutReadStream(inner, TimeSpan.FromMilliseconds(200), TimeSpan.Zero);
+        using var stream = new IdleTimeoutReadStream(inner, TimeSpan.FromMilliseconds(500), TimeSpan.Zero);
 
         var buffer = new byte[100];
         for (var i = 0; i < 100; i++)

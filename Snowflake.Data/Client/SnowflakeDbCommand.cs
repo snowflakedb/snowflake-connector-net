@@ -3,6 +3,7 @@ using Snowflake.Data.Core;
 using System.Data.Common;
 using System.Data;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
@@ -26,8 +27,6 @@ namespace Snowflake.Data.Client
         public SnowflakeDbCommand()
         {
             logger.Debug("Constructing SnowflakeDbCommand class");
-            // by default, no query timeout
-            this.CommandTimeout = 0;
             parameterCollection = new SnowflakeDbParameterCollection();
         }
 
@@ -38,30 +37,18 @@ namespace Snowflake.Data.Client
 
         public SnowflakeDbCommand(SnowflakeDbConnection connection, string cmdText) : this(connection)
         {
-            this.CommandText = cmdText;
+            CommandText = cmdText;
         }
 
-        public override string CommandText
-        {
-            get; set;
-        }
+        public override string CommandText { get; set; }
 
-        public override int CommandTimeout
-        {
-            get; set;
-        }
+        public override int CommandTimeout { get; set; }
 
-        public string QueryTag
-        {
-            get; set;
-        }
+        public string QueryTag { get; set; }
 
         public override CommandType CommandType
         {
-            get
-            {
-                return CommandType.Text;
-            }
+            get => CommandType.Text;
 
             set
             {
@@ -74,17 +61,11 @@ namespace Snowflake.Data.Client
 
         public override bool DesignTimeVisible
         {
-            get
-            {
-                return false;
-            }
-
+            get => false;
             set
             {
                 if (value)
-                {
                     throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-                }
             }
         }
 
@@ -95,9 +76,7 @@ namespace Snowflake.Data.Client
             set
             {
                 if (value != UpdateRowSource.None)
-                {
                     throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-                }
             }
         }
 
@@ -118,13 +97,12 @@ namespace Snowflake.Data.Client
                     throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
                 }
 
-                if (!(value is SnowflakeDbConnection))
+                if (value is not SnowflakeDbConnection sfc)
                 {
                     // Must be of type SnowflakeDbConnection.
                     throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
                 }
 
-                var sfc = (SnowflakeDbConnection)value;
                 if (connection != null && connection != sfc)
                 {
                     // Connection already set.
@@ -139,20 +117,9 @@ namespace Snowflake.Data.Client
             }
         }
 
-        protected override DbParameterCollection DbParameterCollection
-        {
-            get
-            {
-                return this.parameterCollection;
-            }
-        }
+        protected override DbParameterCollection DbParameterCollection => parameterCollection;
 
-        protected override DbTransaction DbTransaction
-        {
-            get;
-
-            set;
-        }
+        protected override DbTransaction DbTransaction { get; set; }
 
         public override void Cancel()
         {
@@ -160,13 +127,15 @@ namespace Snowflake.Data.Client
             sfStatement?.Cancel();
         }
 
-        public override int ExecuteNonQuery()
+        public override int ExecuteNonQuery() => ExecuteNonQuery(GetStatementContext());
+
+        private int ExecuteNonQuery(StatementContext statementContext)
         {
             logger.Debug("ExecuteNonQuery");
             using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteNonQuery);
             try
             {
-                SFBaseResultSet resultSet = ExecuteInternal();
+                var resultSet = ExecuteInternal(statementContext);
                 long total = 0;
                 do
                 {
@@ -209,7 +178,8 @@ namespace Snowflake.Data.Client
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
+                var statementContext = GetStatementContext();
+                var resultSet = await ExecuteInternalAsync(statementContext, cancellationToken).ConfigureAwait(false);
                 long total = 0;
                 do
                 {
@@ -249,7 +219,8 @@ namespace Snowflake.Data.Client
             using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteScalar);
             try
             {
-                var resultSet = ExecuteInternal();
+                var statementContext = GetStatementContext();
+                var resultSet = ExecuteInternal(statementContext);
 
                 object result;
                 if (resultSet.Next())
@@ -275,7 +246,8 @@ namespace Snowflake.Data.Client
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var resultSet = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
+                var statementContext = GetStatementContext();
+                var resultSet = await ExecuteInternalAsync(statementContext, cancellationToken).ConfigureAwait(false);
 
                 object result;
                 if (await resultSet.NextAsync().ConfigureAwait(false))
@@ -315,15 +287,15 @@ namespace Snowflake.Data.Client
             return new SnowflakeDbParameter();
         }
 
-        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+        private DbDataReader ExecuteDbDataReader(StatementContext statementContext)
         {
             logger.Debug("ExecuteDbDataReader");
             using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteDbDataReader);
             try
             {
-                SFBaseResultSet resultSet = ExecuteInternal();
+                var resultSet = ExecuteInternal(statementContext);
                 activity?.SetSuccess();
-                return new SnowflakeDbDataReader(this, resultSet);
+                return new SnowflakeDbDataReader(this, resultSet, statementContext.DescribeOnly);
             }
             catch (Exception ex)
             {
@@ -332,20 +304,57 @@ namespace Snowflake.Data.Client
             }
         }
 
+        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+        {
+            var schemaOnly = behavior.HasFlag(CommandBehavior.SchemaOnly);
+            var statementContext = GetStatementContext() with { DescribeOnly = schemaOnly };
+            return ExecuteDbDataReader(statementContext);
+        }
+
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             logger.Debug("ExecuteDbDataReaderAsync");
             using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteDbDataReaderAsync);
             try
             {
-                var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
+                var schemaOnly = behavior.HasFlag(CommandBehavior.SchemaOnly);
+                var statementContext = GetStatementContext() with { DescribeOnly = schemaOnly };
+                var result = await ExecuteInternalAsync(statementContext, cancellationToken).ConfigureAwait(false);
                 activity?.SetSuccess();
-                return new SnowflakeDbDataReader(this, result);
+                return new SnowflakeDbDataReader(this, result, schemaOnly);
             }
             catch (Exception ex)
             {
                 activity?.SetException(ex);
                 logger.Error("The command failed to execute.", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Executes a PUT command uploading data from the provided in-memory stream instead of a local file.
+        /// The caller is responsible for disposing the stream and ensuring thread-safe access to it.
+        /// </summary>
+        /// <returns>A <see cref="DbDataReader"/> containing the upload result metadata.</returns>
+        public DbDataReader ExecuteDbDataReaderWithMemoryStream(MemoryStream stream)
+        {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+            if (!stream.CanRead)
+                throw new ObjectDisposedException(nameof(stream), "The stream has been disposed or is not readable.");
+            if (stream.Position != 0)
+                throw new InvalidOperationException($"{nameof(stream)} needs to be positioned before reading.");
+
+            logger.Debug($"{nameof(ExecuteDbDataReaderWithMemoryStream)}");
+            using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteWithCustomUploadStream);
+            try
+            {
+                var statementContext = GetStatementContext() with { Stream = stream };
+                return ExecuteDbDataReader(statementContext);
+            }
+            catch (Exception ex)
+            {
+                activity?.SetException(ex);
                 throw;
             }
         }
@@ -361,7 +370,8 @@ namespace Snowflake.Data.Client
             using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteInAsyncMode);
             try
             {
-                SFBaseResultSet resultSet = ExecuteInternal(asyncExec: true);
+                var statementContext = GetStatementContext() with { AsyncExec = true };
+                var resultSet = ExecuteInternal(statementContext);
                 activity?.SetSuccess();
                 return resultSet.queryId;
             }
@@ -384,7 +394,8 @@ namespace Snowflake.Data.Client
             using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteAsyncInAsyncMode);
             try
             {
-                var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
+                var statementContext = GetStatementContext() with { AsyncExec = true };
+                var resultSet = await ExecuteInternalAsync(statementContext, cancellationToken).ConfigureAwait(false);
                 activity?.SetSuccess();
                 return resultSet.queryId;
             }
@@ -458,7 +469,7 @@ namespace Snowflake.Data.Client
                 SFBaseResultSet resultSet = sfStatement.GetResultWithId(queryId);
 
                 activity?.SetSuccess();
-                return new SnowflakeDbDataReader(this, resultSet);
+                return new SnowflakeDbDataReader(this, resultSet, false);
             }
             catch (Exception ex)
             {
@@ -485,7 +496,7 @@ namespace Snowflake.Data.Client
                 SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
 
                 activity?.SetSuccess();
-                return new SnowflakeDbDataReader(this, resultSet);
+                return new SnowflakeDbDataReader(this, resultSet, false);
             }
             catch (Exception ex)
             {
@@ -569,40 +580,42 @@ namespace Snowflake.Data.Client
                 throw new SnowflakeDbException(SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
             }
 
-            var session = (connection as SnowflakeDbConnection).SfSession;
+            var session = connection.SfSession;
 
             // SetStatement is called when executing a command. If SfSession is null
             // the connection has never been opened. Exception might be a bit vague.
             if (session == null)
                 throw new SnowflakeDbException(SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
 
-            this.sfStatement = new SFStatement(session, QueryTag);
+            sfStatement = new SFStatement(session, QueryTag);
         }
 
-        private SFBaseResultSet ExecuteInternal(bool describeOnly = false, bool asyncExec = false)
+        private SFBaseResultSet ExecuteInternal(StatementContext statementContext)
         {
             CheckIfCommandTextIsSet();
             SetStatement();
-            return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, asyncExec);
+            return sfStatement.Execute(statementContext, convertToBindList(parameterCollection.parameterList));
         }
 
-        private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false, bool asyncExec = false)
+        private Task<SFBaseResultSet> ExecuteInternalAsync(StatementContext statementContext, CancellationToken cancellationToken)
         {
             CheckIfCommandTextIsSet();
             SetStatement();
-            return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, asyncExec, cancellationToken);
+            return sfStatement.ExecuteAsync(statementContext, convertToBindList(parameterCollection.parameterList), cancellationToken);
         }
 
         private void CheckIfCommandTextIsSet()
         {
-            if (string.IsNullOrEmpty(CommandText))
-            {
-                var errorMessage = "Unable to execute command due to command text not being set";
-                logger.Error(errorMessage);
-                throw new Exception(errorMessage);
-            }
+            if (!string.IsNullOrEmpty(CommandText))
+                return;
+
+            var errorMessage = "Unable to execute command due to command text not being set";
+            logger.Error(errorMessage);
+            throw new Exception(errorMessage);
         }
 
         internal string GetBindStage() => sfStatement?.GetBindStage();
+
+        private StatementContext GetStatementContext() => new(null, false, false, CommandText, CommandTimeout, QueryTag);
     }
 }

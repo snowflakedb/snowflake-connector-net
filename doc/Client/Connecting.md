@@ -171,6 +171,9 @@ var connectionString = "account=testaccount;db=\"\"\"test\"\"db\"\"\";";
   // AWS
   using var connAws = new SnowflakeDbConnection("authenticator=workload_identity;workload_identity_provider=aws;account=test;");
 
+  // AWS (custom STS host, for partitions whose STS domain is not amazonaws.com)
+  using var connAwsCustomSts = new SnowflakeDbConnection("authenticator=workload_identity;workload_identity_provider=aws;workload_identity_host=sts.sc2s.sgov.gov;account=test;");
+
   // Azure (default entra resource)
   using var connAzure = new SnowflakeDbConnection("authenticator=workload_identity;workload_identity_provider=azure;account=test;");
 
@@ -333,6 +336,7 @@ Special characters in TOML values:
 | WORKLOAD_IDENTITY_PROVIDER        | 🔶 Depends | Attestation provider for Workload Identity Federation: `OIDC`, `AZURE`, `AWS`, or `GCP`. Required when AUTHENTICATOR is `workload_identity`. |
 | WORKLOAD_IDENTITY_ENTRA_RESOURCE  | 🟢 Optional | Entra resource for Azure Workload Identity Federation. Default: `api://fd3f753b-eed3-462c-b6a7-a4b5bb650aad`. |
 | WORKLOAD_IMPERSONATION_PATH       | 🟢 Optional | Comma-separated identities for transitive service account impersonation. **AWS and GCP only.** For GCP: service account emails. For AWS: IAM role ARNs. Each identity needs permissions to impersonate the next. |
+| WORKLOAD_IDENTITY_HOST            | 🟢 Optional | STS host used for attestation, replacing the regional default (`sts.{region}.amazonaws.com`). **AWS only.** Accepts a bare host (`sts.sc2s.sgov.gov`) or a full URL (`https://sts.sc2s.sgov.gov`). The host is used as given: no partition or domain-suffix mapping is applied. The scheme defaults to `https`; a default port and trailing slashes are dropped; user info, a query, a fragment or a path are rejected. When unset, the regional endpoint is used. |
 | OAUTHENABLESINGLEUSEREFRESHTOKENS | 🟢 Optional | Request single-use refresh tokens in OAuth Authorization Code Flow. Default: `false`. |
 | CERTREVOCATIONCHECKMODE           | 🟢 Optional | Certificate revocation check mode. Values: `disabled` (default), `enabled`, `advisory`, `native`. `Advisory` allows connections when CRL check encounters errors but blocks revoked certificates. `Native` uses `System.Net.Http.HttpClientHandler`. |
 | ENABLECRLDISKCACHING              | 🟢 Optional | Enable file-based CRL cache when driver CRL checks are active. Default: `true`. |
@@ -345,3 +349,5 @@ Special characters in TOML values:
 | SERVICE_POINT_CONNECTION_LIMIT    | 🟢 Optional | Maximum connections for the ServicePoint object. Default: 20. Only the limit from the first connection string takes effect. |
 | HONORSESSIONTIMEZONE              | 🟢 Optional | When `true`, TIMESTAMP_LTZ values honor the session TIMEZONE parameter instead of the local machine timezone. Default: `false`. |
 | ALLOW_NUMBER_OVERFLOW_AS_STRING   | 🟢 Optional | When `true`, numeric values that overflow `System.Decimal` (e.g. NUMBER(38,0) values exceeding ~7.9×10²⁸) are returned as strings instead of throwing `OverflowException`. Default: `false`. |
+| CLEANUP_WAIT                      | 🟢 Optional | How long `Cancel()` blocks waiting for the abort-request POST to complete. When the deadline expires, `Cancel()` returns and the POST continues fire-and-forget in the background. Set to `0` for immediate return. Supports units: `1000ms`, `15s`, `2m` (default unit: seconds). Default: not set (blocks until the cancel request completes). |
+| ABORT_REQUEST_TIMEOUT             | 🟢 Optional | HTTP-level timeout for the query cancellation POST (`/queries/v1/abort-request`). When set, the HTTP request is cancelled after the specified duration instead of using the driver's default 120-second REST timeout. Supports units: `1000ms`, `15s`, `2m` (default unit: seconds). Default: not set (uses the driver's default 120-second REST timeout). |

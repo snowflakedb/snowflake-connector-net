@@ -18,6 +18,7 @@ namespace Snowflake.Data.Core.Authenticator
         private readonly TimeProvider _timeProvider;
         private readonly AwsSdkWrapper _awsSdkWrapper;
         private readonly string _metadataHost;
+        private readonly string _awsStsHost;
 
         private AttestationProvider? _provider;
         private string _entraResource;
@@ -40,6 +41,13 @@ namespace Snowflake.Data.Core.Authenticator
             _timeProvider = timeProvider;
             _awsSdkWrapper = awsSdkWrapper;
             _metadataHost = metadataHost;
+            // metadataHost is the test seam pointing every provider at a local mock. In production it is
+            // null and the AWS STS endpoint comes from the WORKLOAD_IDENTITY_HOST connection property,
+            // which the connection string validation already restricted to the AWS provider.
+            _awsStsHost = metadataHost
+                          ?? (session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_HOST, out var workloadIdentityHost)
+                              ? workloadIdentityHost
+                              : null);
             if (session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER, out var provider) && !string.IsNullOrEmpty(provider))
             {
                 _provider = (AttestationProvider)Enum.Parse(typeof(AttestationProvider), provider, true);
@@ -99,7 +107,7 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return _provider switch
                 {
-                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentFacade, _timeProvider, _awsSdkWrapper, session.restRequester, _metadataHost)
+                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentFacade, _timeProvider, _awsSdkWrapper, session.restRequester, _awsStsHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
                     AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentFacade, session.restRequester, _metadataHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),

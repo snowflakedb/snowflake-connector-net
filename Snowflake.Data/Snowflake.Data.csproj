@@ -13,7 +13,7 @@
     <Company>Snowflake Computing, Inc</Company>
     <Product>Snowflake Connector for .NET</Product>
     <Authors>Snowflake</Authors>
-    <Version>6.1.0</Version>
+    <Version>6.2.0</Version>
     <DebugType>Full</DebugType>
     <LangVersion>13</LangVersion>
   </PropertyGroup>
@@ -48,6 +48,7 @@
   <!-- Exclude platform shims from all targets by default (SDK auto-includes all .cs files) -->
   <ItemGroup>
     <Compile Remove="PlatformShims\**\*.cs" />
+    <Compile Include="PlatformShims\IsExternalInit.cs" />
   </ItemGroup>
 
   <!-- Include Mono.Unix Windows shim for all Windows targets -->

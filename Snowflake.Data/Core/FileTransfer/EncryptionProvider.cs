@@ -15,6 +15,7 @@ namespace Snowflake.Data.Core.FileTransfer
         // The default block size for AES
         private const int AES_BLOCK_SIZE = 128;
         private const int blockSize = AES_BLOCK_SIZE / 8;  // in bytes
+        private const int DefaultBufferSize = 1 << 20;
 
         /// <summary>
         /// The logger.
@@ -143,11 +144,12 @@ namespace Snowflake.Data.Core.FileTransfer
                 aes.IV = iv;
                 inputStream.Position = 0;
 
-                var targetStream = new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
+                var (targetStream, buffer) = transferConfiguration.MaxBytesInMemory == -1
+                        ? ((Stream)new MemoryStream(), new byte[DefaultBufferSize])
+                        : (new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir), new byte[transferConfiguration.MaxBytesInMemory]);
                 using (var encryptor = aes.CreateEncryptor())
                 {
                     CryptoStream cryptoStream = new CryptoStream(targetStream, encryptor, CryptoStreamMode.Write);
-                    byte[] buffer = new byte[transferConfiguration.MaxBytesInMemory];
                     int bytesRead;
                     while ((bytesRead = inputStream.Read(buffer, 0, buffer.Length)) > 0)
                     {
@@ -258,7 +260,9 @@ namespace Snowflake.Data.Core.FileTransfer
                 aes.Padding = PaddingMode.PKCS7;
                 aes.IV = iv;
 
-                var targetStream = new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
+                var targetStream = transferConfiguration.MaxBytesInMemory == -1
+                    ? (Stream)new MemoryStream()
+                    : new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
                 using (var decryptor = aes.CreateDecryptor())
                 {
                     CryptoStream cryptoStream = new CryptoStream(targetStream, decryptor, CryptoStreamMode.Write);

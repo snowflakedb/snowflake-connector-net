@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
-using Snowflake.Data.Tests.Util.Shims;
 using Xunit;
 
 namespace Snowflake.Data.Tests.IntegrationTests;
@@ -93,6 +92,7 @@ public sealed class ChunkDownloadCancellationTest : SFBaseTestAsync
                 while (await reader.ReadAsync(cts.Token).ConfigureAwait(false))
                 {
                     _ = reader.GetString(0);
+                    await Task.Yield();
                 }
             }).ConfigureAwait(false);
         }
@@ -125,10 +125,11 @@ public sealed class ChunkDownloadCancellationTest : SFBaseTestAsync
 
             // Use an already-canceled token
             using var cts = new CancellationTokenSource();
-            await cts.CancelAsync().ConfigureAwait(false);
+            cts.Cancel();
 
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                () => cmd.ExecuteReaderAsync(cts.Token)).ConfigureAwait(false);
+            var oce = await Assert.ThrowsAsync<OperationCanceledException>(() => cmd.ExecuteReaderAsync(cts.Token)).ConfigureAwait(false);
+            var dbException = Assert.IsType<SnowflakeDbException>(oce.InnerException);
+            SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(dbException, SFError.QUERY_CANCELLED);
         }
         finally
         {

@@ -326,7 +326,7 @@ namespace Snowflake.Data.Core.Authenticator
             errorMessage += " while trying to authenticate through Okta";
 
             s_logger.Error(errorMessage);
-            throw new SnowflakeDbException(lastRetryException, SFError.INTERNAL_ERROR, errorMessage);
+            throw new SnowflakeDbException(lastRetryException, SFError.INTERNAL_ERROR, args: errorMessage);
         }
     }
 

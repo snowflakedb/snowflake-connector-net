@@ -77,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 destFileName = t_downloadFileName,
                 localLocation = LocalLocation,
                 MaxBytesInMemory = 1024,
-                memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(MockRemoteStorageClient.FileContent)),
+                memoryStream = new BorrowedMemoryStream(new MemoryStream(Encoding.UTF8.GetBytes(MockRemoteStorageClient.FileContent)), true),
                 parallel = Parallel,
                 realSrcFilePath = t_realSourceFilePath,
                 stageInfo = new PutGetStageInfo()
