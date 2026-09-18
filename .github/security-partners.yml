@@ -1,0 +1,10 @@
+# GitHub logins allowed to clear PRs labeled `security-signoff-required`.
+#
+# Read from the PR's base branch, never the head, so a pull request cannot edit
+# the list that governs its own sign-off. Use the `_snow` login each partner
+# reviews with in snowflake-eng. Keep the list small.
+partners:
+  - bartosz-oler_snow
+  - krzysztof-katowicz-k_snow
+  - michal-hofman_snow
+  - ruslan-savenok_snow
