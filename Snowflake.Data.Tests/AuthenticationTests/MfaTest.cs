@@ -30,7 +30,8 @@ namespace Snowflake.Data.AuthenticationTests
             cacheTestHelper.ConnectAndExecuteSimpleQuery(connectionString);
             cacheTestHelper.VerifyExceptionIsNotThrown();
 
-            authTestHelper.RemoveTokenFromCache(parameters[SFSessionProperty.HOST], parameters[SFSessionProperty.USER], TokenType.MFAToken);
+            var mfaHost = parameters[SFSessionProperty.HOST];
+            authTestHelper.RemoveTokenFromCache(mfaHost, mfaHost, parameters[SFSessionProperty.USER], string.Empty, TokenType.MFAToken);
         }
     }
 }

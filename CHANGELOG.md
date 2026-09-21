@@ -1,6 +1,14 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- Upcoming version  
+  - Fixed token cache key collisions for multi-account (shared IdP) and multi-role
+    scenarios by switching to a versioned, SHA256-hashed canonical-JSON key
+    (`SnowflakeTokenCache.v2.<PascalCaseType>.<sha256>`) with flow-specific
+    `keyData` fields, applied uniformly across Windows Credential Manager and file
+    backends. Identifiers are normalised to lowercase; quoted values (including SQL
+    `""` escaped quotes) are returned verbatim. Token type in the key prefix uses
+    PascalCase (`MfaToken`, `OauthAccessToken`) instead of `SCREAMING_SNAKE_CASE`.
 - v6.2.0
   - Added `cleanup_wait` connection string property. Controls how long `Cancel()` blocks when sending the abort-request to the server. When set (in seconds), `Cancel()` returns after the deadline and lets the HTTP request finish in the background as fire-and-forget. Set to `0` for immediate return. Default: not set (blocks until the cancel request completes, preserving existing behavior). Prevents `DbCommand.Cancel()` and `CancellationToken` callbacks from hanging indefinitely when the server is unresponsive.
   - Added `abort_request_timeout` connection string property. Sets the HTTP-level timeout (in seconds) on the query cancellation POST (`/queries/v1/abort-request`). When set, the cancel request fails with a timeout error after the specified duration instead of using the default 120-second REST timeout. Default: not set (uses the driver's default 120-second REST timeout).
