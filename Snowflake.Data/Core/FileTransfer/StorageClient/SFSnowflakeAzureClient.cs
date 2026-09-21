@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Azure;
+using Azure.Core.Pipeline;
 using Azure.Storage.Blobs.Models;
+using System.Security.Authentication;
 using Newtonsoft.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,7 +41,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// Azure client without client-side encryption.
         /// </summary>
         /// <param name="stageInfo">The command stage info.</param>
-        public SFSnowflakeAzureClient(PutGetStageInfo stageInfo)
+        public SFSnowflakeAzureClient(PutGetStageInfo stageInfo, SslProtocols tlsProtocols = SslProtocols.None,
+            bool tlsProtocolsExplicitlyRequested = false, ProxyCredentials proxyCredentials = null)
         {
             Logger.Debug("Setting up a new Azure client ");
 
@@ -48,7 +51,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 string blobEndpoint = string.Format("https://{0}.{1}", stageInfo.storageAccount, stageInfo.endPoint);
                 blobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
-                    new AzureSasCredential(sasToken));
+                    new AzureSasCredential(sasToken),
+                    BuildClientOptions(tlsProtocols, tlsProtocolsExplicitlyRequested, proxyCredentials));
             }
         }
 
@@ -56,6 +60,33 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         {
             // Inject the mock BlobServiceClient
             blobServiceClient = blobServiceClientMock;
+        }
+
+        /// <summary>
+        /// BlobClientOptions carries no TLS setting, so the requested protocols can only be applied
+        /// by replacing the transport. Returns null unless MINTLS/MAXTLS were given in the connection
+        /// string, leaving the SDK defaults - transport, proxy and handler pipeline - untouched for
+        /// everyone else. The effective protocols always carry the defaults and are therefore never
+        /// SslProtocols.None, so they cannot be used to tell a request from a default.
+        ///
+        /// The client is not shared: HttpClientTransport.Dispose disposes the HttpClient it was given,
+        /// and this Azure.Core version offers no way to keep ownership, so a shared instance could be
+        /// disposed underneath later transfers. The handler behind it is shared, so the connection
+        /// pool still is.
+        /// </summary>
+        private static BlobClientOptions BuildClientOptions(SslProtocols tlsProtocols, bool tlsProtocolsExplicitlyRequested,
+            ProxyCredentials proxyCredentials)
+        {
+            if (!tlsProtocolsExplicitlyRequested)
+            {
+                return null;
+            }
+
+            return new BlobClientOptions
+            {
+                Transport = new HttpClientTransport(
+                    HttpUtil.Instance.CreateStorageHttpClientShared(tlsProtocols, proxyCredentials))
+            };
         }
 
         /// <summary>

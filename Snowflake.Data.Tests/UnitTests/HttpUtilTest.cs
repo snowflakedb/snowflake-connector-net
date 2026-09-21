@@ -9,6 +9,7 @@ using System;
 using System.Security.Authentication;
 using Moq;
 using Moq.Protected;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Tests.Util;
 
@@ -184,6 +185,134 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.False(handler.UseProxy);
             Assert.Null(handler.Proxy);
         }
+
+        [SFTheory]
+        [InlineData("tls12", "tls13", SslProtocols.Tls12 | SslProtocolsExtensions.Tls13)]
+        [InlineData("tls12", "tls12", SslProtocols.Tls12)]
+        [InlineData("tls13", "tls13", SslProtocolsExtensions.Tls13)]
+        public void TestRequestedTlsProtocolsAreAppliedOnHandler(string minTls, string maxTls, SslProtocols expectedProtocols)
+        {
+            // arrange
+            Skip.When(!CanRuntimeApplyTlsProtocols(), TlsProtocolsUnsupportedRationale);
+            var config = CreateConfigWithTlsProtocols(minTls, maxTls);
+
+            // act
+            var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
+
+            // assert
+            Assert.Equal(expectedProtocols, handler.SslProtocols);
+        }
+
+        [SFFact]
+        public void TestFallbackHandlerKeepsRequestedTlsProtocols()
+        {
+            // arrange
+            Skip.When(!CanRuntimeApplyTlsProtocols(), TlsProtocolsUnsupportedRationale);
+            var config = CreateConfigWithTlsProtocols("tls13", "tls13");
+
+            // act - a runtime rejecting only CheckCertificateRevocationList still applies TLS protocols
+            var handler = HttpUtil.Instance.CreateFallbackHttpClientHandler(
+                config, new PlatformNotSupportedException(), canApplyTlsProtocols: true);
+
+            // assert
+            Assert.Equal(SslProtocolsExtensions.Tls13, handler.SslProtocols);
+        }
+
+        [SFTheory]
+        [InlineData("tls13", "tls13", "MINTLS=TLS13, MAXTLS=TLS13")]
+        [InlineData("tls12", "tls13", "MINTLS=TLS12, MAXTLS=TLS13")]
+        public void TestFallbackHandlerFailsWhenTlsProtocolsCannotBeApplied(string minTls, string maxTls, string expectedProtocolsInMessage)
+        {
+            // arrange
+            var config = CreateConfigWithTlsProtocols(minTls, maxTls);
+            var cause = new PlatformNotSupportedException();
+
+            // act
+            var exception = Assert.Throws<SnowflakeDbException>(() => HttpUtil.Instance.CreateFallbackHttpClientHandler(
+                config, cause, canApplyTlsProtocols: false));
+
+            // assert - no silent fallback to the protocols chosen by the OS
+            SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.TLS_CONFIGURATION_NOT_SUPPORTED);
+            Assert.Contains(expectedProtocolsInMessage, exception.Message);
+            Assert.Same(cause, exception.InnerException);
+        }
+
+        [SFFact]
+        public void TestFallbackHandlerAcceptsDefaultedTlsProtocolsThatCannotBeApplied()
+        {
+            // arrange - MINTLS/MAXTLS always carry defaults, so a connection that never asked for a
+            // TLS restriction must keep working on runtimes that cannot apply one
+            var config = CreateConfigWithTlsProtocols(null, null);
+
+            // act
+            var handler = HttpUtil.Instance.CreateFallbackHttpClientHandler(
+                config, new PlatformNotSupportedException(), canApplyTlsProtocols: false);
+
+            // assert - protocol selection is left to the OS instead of failing
+            Assert.NotNull(handler);
+        }
+
+        [SFFact]
+        public void TestTlsConfigurationErrorIsRecognizedSoItIsNeverSwallowed()
+        {
+            // arrange - callers that fall back on failure (e.g. the bind stage upload) must let this
+            // one through, otherwise the requested TLS restriction is silently dropped
+            var config = CreateConfigWithTlsProtocols("tls13", "tls13");
+            var tlsException = Assert.Throws<SnowflakeDbException>(() => HttpUtil.Instance.CreateFallbackHttpClientHandler(
+                config, new PlatformNotSupportedException(), canApplyTlsProtocols: false));
+
+            // act, assert
+            Assert.True(tlsException.IsTlsConfigurationNotSupported());
+            Assert.False(new PlatformNotSupportedException().IsTlsConfigurationNotSupported());
+            Assert.False(new SnowflakeDbException(SFError.SESSION_GONE).IsTlsConfigurationNotSupported());
+        }
+
+        [SFFact]
+        public void TestMinAndMaxTlsProtocolsAreParsedIndependently()
+        {
+            // arrange, act
+            var config = CreateConfigWithTlsProtocols(null, "tls13");
+
+            // assert - a missing minimum falls back to its default without discarding the requested
+            // maximum, and asking for either counts as an explicit request
+            Assert.Equal(SslProtocols.Tls12, config.MinTlsProtocol);
+            Assert.Equal(SslProtocolsExtensions.Tls13, config.MaxTlsProtocol);
+            Assert.True(config.TlsProtocolsExplicitlyRequested);
+        }
+
+        private const string TlsProtocolsUnsupportedRationale =
+            "This runtime does not support setting TLS protocols on HttpClientHandler (.NET Framework 4.6.2 and 4.7.1).";
+
+        private static bool CanRuntimeApplyTlsProtocols()
+        {
+            try
+            {
+                using var handler = new HttpClientHandler();
+                handler.SslProtocols = SslProtocols.Tls12 | SslProtocolsExtensions.Tls13;
+                return true;
+            }
+            catch (PlatformNotSupportedException)
+            {
+                return false;
+            }
+        }
+
+        // Null min/max mean the connection string carried neither, i.e. only the defaults apply.
+        private static HttpClientConfig CreateConfigWithTlsProtocols(string minTls, string maxTls) =>
+            new HttpClientConfig(
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                7,
+                20,
+                minTlsProtocol: minTls,
+                maxTlsProtocol: maxTls,
+                tlsProtocolsExplicitlyRequested: minTls != null || maxTls != null
+            );
 
 #pragma warning disable SYSLIB0014
         [SFFact]

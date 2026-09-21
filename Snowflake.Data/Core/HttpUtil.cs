@@ -3,12 +3,17 @@ using System.Net.Http;
 using System.Net;
 using System;
 using System.Threading;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Security.Cryptography;
+using System.Text;
+using Snowflake.Data.Core.FileTransfer;
 using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
 using System.Linq;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Revocation;
@@ -36,8 +41,9 @@ namespace Snowflake.Data.Core
             bool allowCertificatesWithoutCrlUrl = true,
             int crlDownloadTimeout = 10,
             long crlDownloadMaxSize = 209715200,
-            string minTlsProtocol = "TLS12",
-            string maxTlsProtocol = "TLS13"
+            string minTlsProtocol = null,
+            string maxTlsProtocol = null,
+            bool tlsProtocolsExplicitlyRequested = false
         )
         {
             ProxyHost = proxyHost;
@@ -56,8 +62,9 @@ namespace Snowflake.Data.Core
             AllowCertificatesWithoutCrlUrl = allowCertificatesWithoutCrlUrl;
             CrlDownloadTimeout = crlDownloadTimeout;
             CrlDownloadMaxSize = crlDownloadMaxSize;
-            MinTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(minTlsProtocol) : SslProtocols.None;
-            MaxTlsProtocol = minTlsProtocol != null ? SslProtocolsExtensions.FromString(maxTlsProtocol) : SslProtocols.None;
+            TlsProtocolsExplicitlyRequested = tlsProtocolsExplicitlyRequested;
+            MinTlsProtocol = SslProtocolsExtensions.FromString(minTlsProtocol ?? SFSessionProperty.MINTLS.GetDefaultValue());
+            MaxTlsProtocol = SslProtocolsExtensions.FromString(maxTlsProtocol ?? SFSessionProperty.MAXTLS.GetDefaultValue());
 
             ConfKey = string.Join(";",
                 new string[]
@@ -79,7 +86,8 @@ namespace Snowflake.Data.Core
                     crlDownloadTimeout.ToString(),
                     crlDownloadMaxSize.ToString(),
                     minTlsProtocol,
-                    maxTlsProtocol
+                    maxTlsProtocol,
+                    tlsProtocolsExplicitlyRequested.ToString()
                 });
         }
 
@@ -101,6 +109,12 @@ namespace Snowflake.Data.Core
         internal readonly long CrlDownloadMaxSize;
         internal readonly SslProtocols MinTlsProtocol;
         internal readonly SslProtocols MaxTlsProtocol;
+
+        /// <summary>
+        /// True when MINTLS or MAXTLS came from the connection string rather than from the defaults.
+        /// Only an explicit request is worth failing over when it cannot be applied.
+        /// </summary>
+        internal readonly bool TlsProtocolsExplicitlyRequested;
 
         // Key used to identify the HttpClient with the configuration matching the settings
         public readonly string ConfKey;
@@ -161,6 +175,15 @@ namespace Snowflake.Data.Core
 
         private readonly object _httpClientProviderLock = new object();
 
+        // Handlers for the cloud storage SDKs. They live here with the session registry so that one
+        // type owns every HttpClient and handler lifetime in the driver, but they are built
+        // differently on purpose: no RetryHandler, because the storage SDKs retry themselves and
+        // wrapping them would retry a stage transfer twice, and no revocation settings, which have
+        // never applied to stage transfers. Keyed on the storage identity - TLS protocols, proxy,
+        // redirect and connection limit - rather than on a session ConfKey.
+        private readonly ConcurrentDictionary<string, HttpClientHandler> _storageHandlers =
+            new ConcurrentDictionary<string, HttpClientHandler>();
+
         private Dictionary<string, HttpClient> _HttpClients = new Dictionary<string, HttpClient>();
 
         private IRestRequester _restRequesterForCrlCheck;
@@ -195,6 +218,123 @@ namespace Snowflake.Data.Core
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
+
+        /// <summary>
+        /// Returns an HttpClient for a cloud storage SDK over a shared handler. The caller may dispose
+        /// it - the handler, and with it the connection pool, survives, which matters because some SDK
+        /// transports dispose the client they are given. The timeout is infinite: the SDKs apply their
+        /// own per-request deadlines, and a client level timeout would cut large transfers short.
+        /// </summary>
+        internal HttpClient CreateStorageHttpClientShared(
+            SslProtocols tlsProtocols,
+            ProxyCredentials proxyCredentials = null,
+            bool allowAutoRedirect = false,
+            int? maxConnectionsPerServer = null) =>
+            new HttpClient(
+                _storageHandlers.GetOrAdd(
+                    BuildStorageHandlerKey(tlsProtocols, proxyCredentials, allowAutoRedirect, maxConnectionsPerServer),
+                    _ => CreateStorageHandler(tlsProtocols, proxyCredentials, allowAutoRedirect, maxConnectionsPerServer)),
+                disposeHandler: false)
+            {
+                Timeout = Timeout.InfiniteTimeSpan
+            };
+
+        /// <summary>
+        /// Creates a storage handler which is not shared. Used where an SDK takes ownership of it.
+        /// </summary>
+        internal static HttpClientHandler CreateStorageHandler(
+            SslProtocols tlsProtocols,
+            ProxyCredentials proxyCredentials = null,
+            bool allowAutoRedirect = false,
+            int? maxConnectionsPerServer = null)
+        {
+            var handler = new HttpClientHandler { AllowAutoRedirect = allowAutoRedirect };
+            if (maxConnectionsPerServer.HasValue)
+            {
+                handler.MaxConnectionsPerServer = maxConnectionsPerServer.Value;
+            }
+
+            ApplyTlsProtocols(handler, tlsProtocols);
+            ApplyStorageProxy(handler, proxyCredentials);
+            return handler;
+        }
+
+        internal static void ApplyTlsProtocols(HttpClientHandler handler, SslProtocols tlsProtocols)
+        {
+            if (tlsProtocols == SslProtocols.None) // no protocol restriction to put on the handler
+            {
+                return;
+            }
+
+            try
+            {
+                handler.SslProtocols = tlsProtocols;
+            }
+            catch (PlatformNotSupportedException cause)
+            {
+                // The transfer fails rather than silently running on the protocols chosen by the OS.
+                throw TlsProtocolsNotSupported(tlsProtocols,
+                    "this runtime does not support setting TLS protocols on HTTP connections.", cause);
+            }
+        }
+
+        /// <summary>
+        /// Builds the error raised wherever requested TLS protocols cannot be applied, so that every
+        /// storage path reports the same error code and shape.
+        /// </summary>
+        internal static SnowflakeDbException TlsProtocolsNotSupported(SslProtocols tlsProtocols, string reason, Exception cause = null)
+        {
+            var exception = new SnowflakeDbException(cause, SFError.TLS_CONFIGURATION_NOT_SUPPORTED,
+                tlsProtocols.ToDisplayString(), reason);
+            logger.Error(exception.Message, exception);
+            return exception;
+        }
+
+        private static void ApplyStorageProxy(HttpClientHandler handler, ProxyCredentials proxyCredentials)
+        {
+            // The storage SDKs stop applying their own proxy configuration once a transport is
+            // injected, so it has to be repeated here.
+            if (proxyCredentials == null || string.IsNullOrEmpty(proxyCredentials.ProxyHost))
+            {
+                return;
+            }
+
+            var proxy = new WebProxy(proxyCredentials.ProxyHost, proxyCredentials.ProxyPort);
+            if (!string.IsNullOrEmpty(proxyCredentials.ProxyUser))
+            {
+                proxy.Credentials = new NetworkCredential(proxyCredentials.ProxyUser, proxyCredentials.ProxyPassword);
+            }
+
+            handler.Proxy = proxy;
+            handler.UseProxy = true;
+        }
+
+        internal static string BuildStorageHandlerKey(
+            SslProtocols tlsProtocols,
+            ProxyCredentials proxyCredentials,
+            bool allowAutoRedirect,
+            int? maxConnectionsPerServer) =>
+            string.Join(";",
+                ((int)tlsProtocols).ToString(),
+                allowAutoRedirect.ToString(),
+                maxConnectionsPerServer?.ToString(),
+                proxyCredentials?.ProxyHost,
+                proxyCredentials?.ProxyPort.ToString(),
+                // The credentials must not appear in a key kept for the lifetime of the process, but
+                // handlers still have to be told apart when only the credentials differ.
+                HashProxyCredentials(proxyCredentials));
+
+        private static string HashProxyCredentials(ProxyCredentials proxyCredentials)
+        {
+            if (proxyCredentials == null || string.IsNullOrEmpty(proxyCredentials.ProxyUser))
+            {
+                return null;
+            }
+
+            using var sha256 = SHA256.Create();
+            var material = Encoding.UTF8.GetBytes($"{proxyCredentials.ProxyUser}\0{proxyCredentials.ProxyPassword}");
+            return BitConverter.ToString(sha256.ComputeHash(material)).Replace("-", string.Empty);
+        }
 
 
         private IRestRequester GetHttpClientForCrlCheck()
@@ -291,7 +431,7 @@ namespace Snowflake.Data.Core
             }
             // special logic for .NET framework 4.7.1 that
             // CheckCertificateRevocationList and SslProtocols are not supported
-            catch (PlatformNotSupportedException)
+            catch (PlatformNotSupportedException exception)
             {
                 if (customizedCrlCheck)
                 {
@@ -299,14 +439,71 @@ namespace Snowflake.Data.Core
                         "Could not use customized Crl revocation check. Probably you are using old .net framework 4.6.2 or 4.7.1 where revocation check is done by Windows OS");
                 }
 
-                return new HttpClientHandler
-                {
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    UseCookies = false, // Disable cookies
-                    UseProxy = false,
-                    AllowAutoRedirect = true
-                };
+                return CreateFallbackHttpClientHandler(config, exception, CanApplyTlsProtocols(config.GetRequestedTlsProtocolsRange()));
             }
+        }
+
+        /// <summary>
+        /// Checks whether the requested TLS protocols can be applied on the current runtime.
+        /// The setting is probed on its own so that a runtime rejecting only CheckCertificateRevocationList
+        /// does not cost us the requested TLS protocol restriction.
+        /// </summary>
+        private static bool CanApplyTlsProtocols(SslProtocols requestedTlsProtocols)
+        {
+            if (requestedTlsProtocols == SslProtocols.None) // nothing requested, protocol selection is left to the OS
+            {
+                return true;
+            }
+
+            try
+            {
+                using var probedHandler = new HttpClientHandler();
+                probedHandler.SslProtocols = requestedTlsProtocols;
+                return true;
+            }
+            catch (PlatformNotSupportedException)
+            {
+                return false;
+            }
+        }
+
+        internal HttpClientHandler CreateFallbackHttpClientHandler(HttpClientConfig config, Exception cause, bool canApplyTlsProtocols)
+        {
+            if (!canApplyTlsProtocols)
+            {
+                var protocols = $"MINTLS={config.MinTlsProtocol.ToDisplayString()}, MAXTLS={config.MaxTlsProtocol.ToDisplayString()}";
+                if (config.TlsProtocolsExplicitlyRequested)
+                {
+                    // Falling back to the protocols chosen by the OS would silently drop the
+                    // requested TLS restriction, so the connection is failed instead.
+                    var exception = new SnowflakeDbException(cause, SFError.TLS_CONFIGURATION_NOT_SUPPORTED,
+                        protocols,
+                        "this runtime does not support setting TLS protocols on HTTP connections (.NET Framework 4.6.2 and 4.7.1). Run the driver on .NET Framework 4.8 or newer, or on a modern .NET runtime.");
+                    logger.Error(exception.Message, exception);
+                    throw exception;
+                }
+
+                // Nothing was requested, only the defaults apply, so protocol selection is left to
+                // the OS as it was before MINTLS/MAXTLS existed.
+                logger.Warn($"This runtime does not support setting TLS protocols on HTTP connections. Default protocols ({protocols}) are not applied and the operating system chooses them instead");
+            }
+
+            logger.Warn("Revocation check settings are not supported on this runtime. Creating HttpClientHandler without them, the requested TLS protocols are preserved");
+            var handler = new HttpClientHandler
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                UseCookies = false, // Disable cookies
+                UseProxy = false,
+                AllowAutoRedirect = true
+            };
+
+            var requestedTlsProtocols = config.GetRequestedTlsProtocolsRange();
+            if (canApplyTlsProtocols && requestedTlsProtocols != SslProtocols.None)
+            {
+                handler.SslProtocols = requestedTlsProtocols;
+            }
+
+            return handler;
         }
 
         private HttpClientHandler CreateHttpClientHandlerWithDotnetCrlCheck(HttpClientConfig config)

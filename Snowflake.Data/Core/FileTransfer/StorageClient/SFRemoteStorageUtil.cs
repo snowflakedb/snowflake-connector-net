@@ -1,6 +1,7 @@
 using Snowflake.Data.Core.FileTransfer.StorageClient;
 using System;
 using System.IO;
+using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core.Tools;
@@ -45,7 +46,8 @@ namespace Snowflake.Data.Core.FileTransfer
         /// </summary>
         /// <param name="stageInfo">The stage info used to create the client.</param>
         /// <returns>A new instance of the storage client.</returns>
-        internal static ISFRemoteStorageClient GetRemoteStorage(PutGetResponseData response, ProxyCredentials proxyCredentials = null)
+        internal static ISFRemoteStorageClient GetRemoteStorage(PutGetResponseData response, ProxyCredentials proxyCredentials = null,
+            SslProtocols tlsProtocols = SslProtocols.None, bool tlsProtocolsExplicitlyRequested = false)
         {
             PutGetStageInfo stageInfo = response.stageInfo;
             string stageLocationType = stageInfo.locationType;
@@ -60,16 +62,18 @@ namespace Snowflake.Data.Core.FileTransfer
                 return new SFS3Client(stageInfo,
                     DEFAULT_MAX_RETRY,
                     response.parallel,
-                    proxyCredentials
+                    proxyCredentials,
+                    tlsProtocols,
+                    tlsProtocolsExplicitlyRequested
                     );
             }
             else if (stageLocationType == AZURE_FS)
             {
-                return new SFSnowflakeAzureClient(stageInfo);
+                return new SFSnowflakeAzureClient(stageInfo, tlsProtocols, tlsProtocolsExplicitlyRequested, proxyCredentials);
             }
             else if (stageLocationType == GCS_FS)
             {
-                return new SFGCSClient(stageInfo);
+                return new SFGCSClient(stageInfo, tlsProtocols, tlsProtocolsExplicitlyRequested);
             }
             else
             {

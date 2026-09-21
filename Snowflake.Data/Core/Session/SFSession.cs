@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
+using System.Security.Authentication;
 using System.Web;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
@@ -37,6 +38,17 @@ namespace Snowflake.Data.Core
         internal string masterToken;
 
         internal IRestRequester restRequester { get; private set; }
+
+        /// <summary>
+        /// TLS protocols requested by MINTLS/MAXTLS. Cloud storage SDKs do not accept them through
+        /// their own configuration objects, so they are handed the protocols separately.
+        /// </summary>
+        internal SslProtocols TlsProtocols { get; private set; }
+
+        /// <summary>
+        /// True when MINTLS/MAXTLS came from the connection string rather than from the defaults.
+        /// </summary>
+        internal bool TlsProtocolsExplicitlyRequested { get; private set; }
 
         internal IAuthenticator authenticator;
 
@@ -220,6 +232,8 @@ namespace Snowflake.Data.Core
             {
                 var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
                 var httpClientConfig = extractedProperties.BuildHttpClientConfig();
+                TlsProtocols = httpClientConfig.GetRequestedTlsProtocolsRange();
+                TlsProtocolsExplicitlyRequested = httpClientConfig.TlsProtocolsExplicitlyRequested;
                 ParameterMap = extractedProperties.ToParameterMap();
                 _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(_HttpClient);

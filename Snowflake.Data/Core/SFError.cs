@@ -105,6 +105,9 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270066)]
         WIF_ATTESTATION_ERROR,
 
+        [SFErrorAttr(errorCode = 270067)]
+        TLS_CONFIGURATION_NOT_SUPPORTED,
+
         [SFErrorAttr(errorCode = 390111)]
         SESSION_GONE,
 
@@ -149,6 +152,17 @@ namespace Snowflake.Data.Core
     {
         public static bool IsSessionGone(this Exception exception) =>
             exception is SnowflakeDbException sfException && SFError.SESSION_GONE.GetAttribute<SFErrorAttr>().errorCode == sfException.ErrorCode;
+    }
+
+    internal static class TlsConfigurationErrorExtensions
+    {
+        /// <summary>
+        /// A rejected TLS configuration must never be turned into a fallback: doing so would hide
+        /// exactly what MINTLS/MAXTLS asks the driver to enforce.
+        /// </summary>
+        public static bool IsTlsConfigurationNotSupported(this Exception exception) =>
+            exception is SnowflakeDbException sfException &&
+            SFError.TLS_CONFIGURATION_NOT_SUPPORTED.GetAttribute<SFErrorAttr>().errorCode == sfException.ErrorCode;
     }
 
     class SFMFATokenErrors

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Authentication;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -232,19 +233,56 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         [SFTheory]
-        [InlineData("account=test;user=test;password=test;minTls=tls13;maxTls=tls13", "tls13", "tls13")]
-        [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", "tls12", "tls13")]
-        [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls12", "tls12", "tls12")]
-        [InlineData("account=test;user=test;password=test", "tls12", "tls13")]
-        public void TestSslProperties(string connectionString, string expectedMinTls, string expectedMaxTls)
+        [InlineData("account=test;user=test;password=test;minTls=tls13;maxTls=tls13", "tls13", "tls13", true)]
+        [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", "tls12", "tls13", true)]
+        [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls12", "tls12", "tls12", true)]
+        [InlineData("account=test;user=test;password=test;minTls=tls13", "tls13", "tls13", true)]
+        [InlineData("account=test;user=test;password=test", "tls12", "tls13", false)]
+        public void TestSslProperties(string connectionString, string expectedMinTls, string expectedMaxTls, bool expectedExplicit)
         {
             // arrange
             var properties = SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext());
             // act
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+            // assert - protocols are the post-default dictionary values; the bool is captured before that fill-in
+            Assert.Equal(expectedMinTls, extractedProperties._minTlsProtocol);
+            Assert.Equal(expectedMaxTls, extractedProperties._maxTlsProtocol);
+            Assert.Equal(expectedExplicit, extractedProperties._tlsProtocolsExplicitlyRequested);
+        }
+
+        [SFTheory]
+        // Whatever was requested, the effective protocols always carry the defaults, so the driver
+        // keeps pinning TLS 1.2 as a floor even when nothing was asked for.
+        [InlineData("account=test;user=test;password=test", SslProtocols.Tls12, SslProtocolsExtensions.Tls13)]
+        [InlineData("account=test;user=test;password=test;minTls=tls13", SslProtocolsExtensions.Tls13, SslProtocolsExtensions.Tls13)]
+        [InlineData("account=test;user=test;password=test;maxTls=tls12", SslProtocols.Tls12, SslProtocols.Tls12)]
+        public void TestEffectiveTlsProtocolsAlwaysResolveDefaults(string connectionString, SslProtocols expectedMin, SslProtocols expectedMax)
+        {
+            // arrange, act
+            var config = SFSessionHttpClientProperties
+                .ExtractAndValidate(SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()))
+                .BuildHttpClientConfig();
+
             // assert
-            Assert.Equal(extractedProperties._minTlsProtocol, expectedMinTls);
-            Assert.Equal(extractedProperties._maxTlsProtocol, expectedMaxTls);
+            Assert.Equal(expectedMin, config.MinTlsProtocol);
+            Assert.Equal(expectedMax, config.MaxTlsProtocol);
+        }
+
+        [SFTheory]
+        [InlineData("account=test;user=test;password=test", false)]
+        [InlineData("account=test;user=test;password=test;minTls=tls13", true)]
+        [InlineData("account=test;user=test;password=test;maxTls=tls13", true)]
+        [InlineData("account=test;user=test;password=test;minTls=tls12;maxTls=tls13", true)]
+        public void TestTlsProtocolsAreRecognizedAsRequestedOnlyWhenInConnectionString(string connectionString, bool expectedRequested)
+        {
+            // arrange, act - MINTLS/MAXTLS always end up populated by their defaults, so only the
+            // connection string can tell a request to restrict TLS apart from the driver's defaults
+            var config = SFSessionHttpClientProperties
+                .ExtractAndValidate(SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()))
+                .BuildHttpClientConfig();
+
+            // assert
+            Assert.Equal(expectedRequested, config.TlsProtocolsExplicitlyRequested);
         }
 
         [SFFact]

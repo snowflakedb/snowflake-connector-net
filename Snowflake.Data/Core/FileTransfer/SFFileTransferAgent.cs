@@ -651,7 +651,7 @@ namespace Snowflake.Data.Core
                     /// This is only needed for remote storage types
                     if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
                     {
-                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
                     }
 
                     if (!fileMetadata.requireCompress)
@@ -718,7 +718,7 @@ namespace Snowflake.Data.Core
                     /// This is only needed for remote storage types
                     if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
                     {
-                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata);
+                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
 
                         FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
 
@@ -1014,7 +1014,7 @@ namespace Snowflake.Data.Core
 
             RenewClientMutex.ReleaseMutex();
 
-            return SFRemoteStorageUtil.GetRemoteStorage(response.data, proxyCredentials);
+            return SFRemoteStorageUtil.GetRemoteStorage(response.data, proxyCredentials, Session.TlsProtocols, Session.TlsProtocolsExplicitlyRequested);
         }
 
         /// <summary>
@@ -1031,7 +1031,7 @@ namespace Snowflake.Data.Core
                     null,
                     cancellationToken).ConfigureAwait(false);
 
-            return SFRemoteStorageUtil.GetRemoteStorage(response.data);
+            return SFRemoteStorageUtil.GetRemoteStorage(response.data, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
         }
 
         /// <summary>

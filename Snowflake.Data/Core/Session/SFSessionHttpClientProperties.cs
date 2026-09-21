@@ -50,6 +50,7 @@ namespace Snowflake.Data.Core
         internal bool _allowCertificatesWithoutCrlUrl;
         private int _crlDownloadTimeout;
         private long _crlDownloadMaxSize;
+        internal bool _tlsProtocolsExplicitlyRequested;
         internal string _minTlsProtocol;
         internal string _maxTlsProtocol;
         internal TimeSpan cleanupWait;
@@ -224,7 +225,8 @@ namespace Snowflake.Data.Core
                 _crlDownloadTimeout,
                 _crlDownloadMaxSize,
                 _minTlsProtocol,
-                _maxTlsProtocol
+                _maxTlsProtocol,
+                _tlsProtocolsExplicitlyRequested
                 );
         }
 
@@ -294,6 +296,7 @@ namespace Snowflake.Data.Core
                     _crlDownloadMaxSize = long.Parse(propertiesDictionary[SFSessionProperty.CRLDOWNLOADMAXSIZE]),
                     _minTlsProtocol = propertiesDictionary[SFSessionProperty.MINTLS],
                     _maxTlsProtocol = propertiesDictionary[SFSessionProperty.MAXTLS],
+                    _tlsProtocolsExplicitlyRequested = propertiesDictionary.TlsProtocolsExplicitlyRequested,
                     cleanupWait = extractor.ExtractTimeout(SFSessionProperty.CLEANUP_WAIT),
                     abortRequestTimeout = extractor.ExtractTimeout(SFSessionProperty.ABORT_REQUEST_TIMEOUT)
                 };

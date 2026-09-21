@@ -213,6 +213,9 @@
   <data name="WIF_ATTESTATION_ERROR" xml:space="preserve">
     <value>Retrieving attestation for {0} failed. {1}</value>
   </data>
+  <data name="TLS_CONFIGURATION_NOT_SUPPORTED" xml:space="preserve">
+    <value>The requested TLS protocols ({0}) cannot be applied: {1} The request was rejected instead of continuing on the TLS protocols chosen by the operating system.</value>
+  </data>
   <data name="SESSION_GONE" xml:space="preserve">
     <value>Session no longer exists.</value>
   </data>

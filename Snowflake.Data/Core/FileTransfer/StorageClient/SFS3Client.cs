@@ -7,9 +7,12 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
+using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon.Runtime.Internal;
+using Snowflake.Data.Client;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
@@ -85,7 +88,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             PutGetStageInfo stageInfo,
             int maxRetry,
             int parallel,
-            ProxyCredentials proxyCredentials)
+            ProxyCredentials proxyCredentials,
+            SslProtocols tlsProtocols = SslProtocols.None,
+            bool tlsProtocolsExplicitlyRequested = false)
         {
             Logger.Debug("Setting up a new AWS client ");
 
@@ -116,6 +121,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 maxRetry,
                 parallel);
 
+            ApplyTlsProtocols(clientConfig, tlsProtocols, proxyCredentials, tlsProtocolsExplicitlyRequested);
+
             // Get the AWS token value and create the S3 client
             if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out var awsSessionToken))
             {
@@ -141,6 +148,57 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // Inject the mock S3Client
             S3Client = amazonS3ClientMock;
         }
+
+        /// <summary>
+        /// AmazonS3Config carries no TLS setting, so the requested protocols can only be applied by
+        /// supplying the HttpClient. The factory also reapplies the proxy, which the SDK stops
+        /// reading from the config once a factory is set.
+        ///
+        /// On .NET Framework the AWS SDK runs on its HttpWebRequest pipeline and exposes no
+        /// HttpClientFactory at all, so there is nothing to inject there. Rather than let the
+        /// transfer run on the protocols chosen by the OS, it is rejected - the same choice the
+        /// connection itself makes in HttpUtil.
+        /// </summary>
+        private static void ApplyTlsProtocols(AmazonS3Config clientConfig, SslProtocols tlsProtocols, ProxyCredentials proxyCredentials,
+            bool tlsProtocolsExplicitlyRequested)
+        {
+            // Nothing was asked for, so the SDK keeps its own transport untouched. Note that the
+            // effective protocols always carry the MINTLS/MAXTLS defaults and are therefore never
+            // SslProtocols.None - only the connection string can tell a request from a default.
+            if (!tlsProtocolsExplicitlyRequested)
+            {
+                return;
+            }
+
+#if NETFRAMEWORK
+            throw TlsProtocolsNotSupported(tlsProtocols, null);
+#else
+            try
+            {
+                SetTlsConfiguredHttpClientFactory(clientConfig, tlsProtocols, proxyCredentials);
+            }
+            // The netstandard2.0 build of this driver can also be loaded on .NET Framework, where
+            // NuGet resolves the AWS net472 assets which carry no HttpClientFactory. The type then
+            // fails to load, and the reference sits in its own method so that this is catchable.
+            catch (Exception exception) when (exception is TypeLoadException || exception is MissingMemberException)
+            {
+                throw TlsProtocolsNotSupported(tlsProtocols, exception);
+            }
+#endif
+        }
+
+#if !NETFRAMEWORK
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void SetTlsConfiguredHttpClientFactory(AmazonS3Config clientConfig, SslProtocols tlsProtocols,
+            ProxyCredentials proxyCredentials)
+        {
+            clientConfig.HttpClientFactory = new TlsConfiguredAwsHttpClientFactory(tlsProtocols, proxyCredentials);
+        }
+#endif
+
+        private static SnowflakeDbException TlsProtocolsNotSupported(SslProtocols tlsProtocols, Exception cause) =>
+            HttpUtil.TlsProtocolsNotSupported(tlsProtocols,
+                "the AWS SDK available on this runtime offers no configurable HTTP transport for stage transfers.", cause);
 
         /// <summary>
         /// Extract the bucket name and path from the stage location.

@@ -375,7 +375,9 @@ namespace Snowflake.Data.Core
                 {
                     throw;
                 }
-                catch (Exception e)
+                // A rejected TLS configuration is not a reason to fall back to binds in the
+                // payload - that would silently drop the requested TLS restriction.
+                catch (Exception e) when (!e.IsTlsConfigurationNotSupported())
                 {
                     logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
                 }
@@ -537,7 +539,9 @@ namespace Snowflake.Data.Core
                         uploader.Upload(bindings);
                         _bindStage = uploader.getStagePath();
                     }
-                    catch (Exception e)
+                    // A rejected TLS configuration is not a reason to fall back to binds in the
+                    // payload - that would silently drop the requested TLS restriction.
+                    catch (Exception e) when (!e.IsTlsConfigurationNotSupported())
                     {
                         logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " +
                                     e.Message);

@@ -1180,7 +1180,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private static string DefaultValue(SFSessionProperty property)
         {
-            var defaultValue = property.GetAttribute<SFSessionPropertyAttr>().defaultValue;
+            var defaultValue = property.GetDefaultValue();
             var defaultNonWindowsValue = property.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return defaultValue;

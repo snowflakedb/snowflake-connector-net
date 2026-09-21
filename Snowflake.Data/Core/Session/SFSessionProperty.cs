@@ -150,6 +150,8 @@ namespace Snowflake.Data.Core
         CRLDOWNLOADTIMEOUT,
         [SFSessionPropertyAttr(required = false, defaultValue = "20971520")]
         CRLDOWNLOADMAXSIZE,
+        // Applied to Snowflake connections and to S3 and Azure stage transfers. GCS stage transfers
+        // cannot apply them - see SFGCSClient - and neither can .NET Framework 4.6.2 and 4.7.1.
         [SFSessionPropertyAttr(required = false, defaultValue = "tls12")]
         MINTLS,
         [SFSessionPropertyAttr(required = false, defaultValue = "tls13")]
@@ -184,6 +186,13 @@ namespace Snowflake.Data.Core
         internal string ConnectionStringWithoutSecrets { get; set; }
 
         internal bool IsPoolingEnabledValueProvided { get; set; }
+
+        /// <summary>
+        /// True when MINTLS or MAXTLS was in the connection string. Captured before
+        /// CheckSessionProperties fills the defaults, which would make the dictionary look the same
+        /// either way.
+        /// </summary>
+        internal bool TlsProtocolsExplicitlyRequested { get; set; }
 
         // Connection string properties to obfuscate in the log
         private static readonly List<string> s_secretProps = Enum.GetValues(typeof(SFSessionProperty))
@@ -316,6 +325,9 @@ namespace Snowflake.Data.Core
             ValidateClientStoreTemporaryCredential(properties);
             ValidatePasscodeInPassword(properties);
             properties.IsPoolingEnabledValueProvided = properties.IsNonEmptyValueProvided(SFSessionProperty.POOLINGENABLED);
+            properties.TlsProtocolsExplicitlyRequested =
+                properties.IsNonEmptyValueProvided(SFSessionProperty.MINTLS) ||
+                properties.IsNonEmptyValueProvided(SFSessionProperty.MAXTLS);
             CheckSessionProperties(properties);
             ValidateFileTransferMaxBytesInMemoryProperty(properties);
             ValidateAccountDomain(properties);
@@ -848,7 +860,7 @@ namespace Snowflake.Data.Core
                 }
 
                 // add default value to the map
-                string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
+                string defaultVal = sessionProperty.GetDefaultValue();
                 string defaultNonWindowsVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
                 if (!properties.ContainsKey(sessionProperty))
                 {
@@ -981,7 +993,7 @@ namespace Snowflake.Data.Core
 
         private static bool ParseAllowUnderscoresInHost(SFSessionProperties properties)
         {
-            var allowUnderscoresInHost = bool.Parse(SFSessionProperty.ALLOWUNDERSCORESINHOST.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            var allowUnderscoresInHost = bool.Parse(SFSessionProperty.ALLOWUNDERSCORESINHOST.GetDefaultValue());
             if (!properties.TryGetValue(SFSessionProperty.ALLOWUNDERSCORESINHOST, out var property))
                 return allowUnderscoresInHost;
             try
@@ -1014,5 +1026,8 @@ namespace Snowflake.Data.Core
             var attributes = memInfo[0].GetCustomAttributes(typeof(TAttribute), false);
             return (attributes.Length > 0) ? (TAttribute)attributes[0] : null;
         }
+
+        public static string GetDefaultValue(this SFSessionProperty property) =>
+            property.GetAttribute<SFSessionPropertyAttr>().defaultValue;
     }
 }

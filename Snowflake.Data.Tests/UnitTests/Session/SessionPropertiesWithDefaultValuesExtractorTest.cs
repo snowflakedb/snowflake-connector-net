@@ -207,6 +207,6 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         }
 
         private int GetDefaultIntSessionProperty(SFSessionProperty property) =>
-            int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().defaultValue);
+            int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetDefaultValue());
     }
 }

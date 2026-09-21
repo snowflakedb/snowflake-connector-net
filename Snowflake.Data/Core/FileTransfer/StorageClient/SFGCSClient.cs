@@ -6,6 +6,7 @@ using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
 using System.Net;
+using System.Security.Authentication;
 using Google.Apis.Storage.v1;
 using Google.Cloud.Storage.V1;
 using Snowflake.Data.Core.Tools;
@@ -51,15 +52,38 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// </summary>
         private WebRequest _customWebRequest = null;
 
+        /// <summary>
+        /// TLS protocols requested by MINTLS/MAXTLS. GCS cannot apply them: the storage SDK hands back
+        /// a delegating handler that exposes no SslProtocols setting, and the upload/download path
+        /// below uses WebRequest, which exposes none either. Kept only to report that (SNOW-3662960).
+        /// </summary>
+        private readonly SslProtocols _tlsProtocols;
+        private readonly bool _tlsProtocolsExplicitlyRequested;
+
         private static readonly string[] s_scopes = new[] { StorageService.Scope.DevstorageFullControl };
 
         /// <summary>
         /// GCS client with access token.
         /// </summary>
         /// <param name="stageInfo">The command stage info.</param>
-        public SFGCSClient(PutGetStageInfo stageInfo)
+        /// <param name="tlsProtocols">TLS protocols to apply to the calls made by the GCS SDK. The
+        /// upload/download data path uses WebRequest, which exposes no TLS setting, so it is not
+        /// covered until that path moves to HttpClient (SNOW-3662960).</param>
+        /// <param name="tlsProtocolsExplicitlyRequested">Whether the protocols come from
+        /// MINTLS/MAXTLS in the connection string rather than from their defaults. Only an explicit
+        /// request fails a transfer when the protocols cannot be applied.</param>
+        public SFGCSClient(PutGetStageInfo stageInfo, SslProtocols tlsProtocols = SslProtocols.None,
+            bool tlsProtocolsExplicitlyRequested = false)
         {
             Logger.Debug("Setting up a new GCS client ");
+            _tlsProtocols = tlsProtocols;
+            _tlsProtocolsExplicitlyRequested = tlsProtocolsExplicitlyRequested;
+            if (_tlsProtocolsExplicitlyRequested)
+            {
+                Logger.Warn($"GCS stage transfers cannot apply the requested TLS protocols ({_tlsProtocols.ToDisplayString()}): "
+                    + "the storage SDK exposes no TLS protocol setting and the upload/download path uses WebRequest. "
+                    + "The transfer proceeds on the protocols chosen by the operating system (SNOW-3662960)");
+            }
 
             if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out string accessToken))
             {
