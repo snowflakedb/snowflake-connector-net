@@ -19,7 +19,8 @@ namespace Snowflake.Data.Tests.UnitTests
             Skip.When(!CanRuntimeApplyTlsProtocols(), TlsProtocolsUnsupportedRationale);
 
             // act
-            using var handler = HttpUtil.CreateStorageHandler(SslProtocolsExtensions.Tls13);
+            using var handler = Assert.IsType<HttpClientHandler>(
+                HttpUtil.CreateStorageHandler(SslProtocolsExtensions.Tls13));
 
             // assert
             Assert.Equal(SslProtocolsExtensions.Tls13, handler.SslProtocols);
@@ -32,7 +33,8 @@ namespace Snowflake.Data.Tests.UnitTests
             Skip.When(!CanRuntimeApplyTlsProtocols(), TlsProtocolsUnsupportedRationale);
 
             // act
-            using var handler = HttpUtil.CreateStorageHandler(SslProtocols.None);
+            using var handler = Assert.IsType<HttpClientHandler>(
+                HttpUtil.CreateStorageHandler(SslProtocols.None));
 
             // assert
             Assert.Equal(SslProtocols.None, handler.SslProtocols);
@@ -51,7 +53,8 @@ namespace Snowflake.Data.Tests.UnitTests
             };
 
             // act
-            using var handler = HttpUtil.CreateStorageHandler(SslProtocols.None, proxyCredentials);
+            using var handler = Assert.IsType<HttpClientHandler>(
+                HttpUtil.CreateStorageHandler(SslProtocols.None, proxyCredentials));
 
             // assert
             Assert.True(handler.UseProxy);

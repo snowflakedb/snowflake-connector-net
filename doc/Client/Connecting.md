@@ -351,3 +351,15 @@ Special characters in TOML values:
 | ALLOW_NUMBER_OVERFLOW_AS_STRING   | 🟢 Optional | When `true`, numeric values that overflow `System.Decimal` (e.g. NUMBER(38,0) values exceeding ~7.9×10²⁸) are returned as strings instead of throwing `OverflowException`. Default: `false`. |
 | CLEANUP_WAIT                      | 🟢 Optional | How long `Cancel()` blocks waiting for the abort-request POST to complete. When the deadline expires, `Cancel()` returns and the POST continues fire-and-forget in the background. Set to `0` for immediate return. Supports units: `1000ms`, `15s`, `2m` (default unit: seconds). Default: not set (blocks until the cancel request completes). |
 | ABORT_REQUEST_TIMEOUT             | 🟢 Optional | HTTP-level timeout for the query cancellation POST (`/queries/v1/abort-request`). When set, the HTTP request is cancelled after the specified duration instead of using the driver's default 120-second REST timeout. Supports units: `1000ms`, `15s`, `2m` (default unit: seconds). Default: not set (uses the driver's default 120-second REST timeout). |
+
+### TLS cipher suites
+
+Set the process environment variable `SNOWFLAKE_TLS_CIPHERS` to restrict the cipher suites offered by the driver. The value is a colon-separated list shared with the Python driver: use IANA names beginning with `TLS_` for TLS 1.3 suites and OpenSSL names for TLS 1.2 suites. The supported TLS 1.2 names are `ECDHE-ECDSA-AES128-GCM-SHA256`, `ECDHE-ECDSA-AES256-GCM-SHA384`, `ECDHE-RSA-AES128-GCM-SHA256`, `ECDHE-RSA-AES256-GCM-SHA384`, `ECDHE-ECDSA-CHACHA20-POLY1305`, `ECDHE-RSA-CHACHA20-POLY1305`, `DHE-RSA-AES128-GCM-SHA256`, `DHE-RSA-AES256-GCM-SHA384`, `AES128-GCM-SHA256`, and `AES256-GCM-SHA384`. For example:
+
+```text
+SNOWFLAKE_TLS_CIPHERS=TLS_AES_256_GCM_SHA384:ECDHE-RSA-AES256-GCM-SHA384
+```
+
+Leaving the variable unset or empty preserves the operating system defaults. When set, the value is the complete allowlist: if it contains suites for only one TLS version, the other version has no allowed cipher suite. Invalid cipher names are rejected rather than ignored. The setting is supported by .NET 8 and newer on Linux with OpenSSL 1.1.1 or newer, and on macOS. When it is set on Windows, .NET Framework, or another unsupported platform, the connection fails; configure the operating system TLS policy on those platforms instead.
+
+The restriction applies to Snowflake API, authentication, chunk-download, S3 stage-transfer, and Azure stage-transfer connections. GCS stage transfers are not covered because the Google SDK and its `WebRequest` upload/download path do not expose per-connection cipher configuration; the driver logs a warning and uses the operating system cipher policy for those transfers.

@@ -9,6 +9,7 @@ using System.Net;
 using System.Security.Authentication;
 using Google.Apis.Storage.v1;
 using Google.Cloud.Storage.V1;
+using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.FileTransfer.StorageClient
@@ -83,6 +84,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 Logger.Warn($"GCS stage transfers cannot apply the requested TLS protocols ({_tlsProtocols.ToDisplayString()}): "
                     + "the storage SDK exposes no TLS protocol setting and the upload/download path uses WebRequest. "
                     + "The transfer proceeds on the protocols chosen by the operating system (SNOW-3662960)");
+            }
+            var cipherPolicy = TlsCipherPolicy.FromEnvironment();
+            if (cipherPolicy != null)
+            {
+                Logger.Warn($"GCS stage transfers cannot apply {EnvVars.TlsCiphers.Name} ({cipherPolicy.RawValue}): "
+                    + "the storage SDK and upload/download WebRequest path do not expose TLS cipher configuration. "
+                    + "The transfer proceeds on the cipher suites chosen by the operating system (SNOW-3662960)");
             }
 
             if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out string accessToken))

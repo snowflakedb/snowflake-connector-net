@@ -162,26 +162,41 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private static void ApplyTlsProtocols(AmazonS3Config clientConfig, SslProtocols tlsProtocols, ProxyCredentials proxyCredentials,
             bool tlsProtocolsExplicitlyRequested)
         {
+            var cipherPolicy = TlsCipherPolicy.FromEnvironment();
             // Nothing was asked for, so the SDK keeps its own transport untouched. Note that the
             // effective protocols always carry the MINTLS/MAXTLS defaults and are therefore never
             // SslProtocols.None - only the connection string can tell a request from a default.
-            if (!tlsProtocolsExplicitlyRequested)
+            if (!tlsProtocolsExplicitlyRequested && cipherPolicy == null)
             {
                 return;
             }
 
 #if NETFRAMEWORK
+            if (cipherPolicy != null)
+            {
+                throw cipherPolicy.Unsupported(
+                    "the AWS SDK uses HttpWebRequest on .NET Framework, which does not expose per-connection TLS cipher configuration.");
+            }
             throw TlsProtocolsNotSupported(tlsProtocols, null);
 #else
             try
             {
-                SetTlsConfiguredHttpClientFactory(clientConfig, tlsProtocols, proxyCredentials);
+                SetTlsConfiguredHttpClientFactory(
+                    clientConfig,
+                    tlsProtocolsExplicitlyRequested ? tlsProtocols : SslProtocols.None,
+                    proxyCredentials);
             }
             // The netstandard2.0 build of this driver can also be loaded on .NET Framework, where
             // NuGet resolves the AWS net472 assets which carry no HttpClientFactory. The type then
             // fails to load, and the reference sits in its own method so that this is catchable.
             catch (Exception exception) when (exception is TypeLoadException || exception is MissingMemberException)
             {
+                if (cipherPolicy != null)
+                {
+                    throw cipherPolicy.Unsupported(
+                        "the AWS SDK transport available on this runtime does not expose per-connection TLS cipher configuration.",
+                        exception);
+                }
                 throw TlsProtocolsNotSupported(tlsProtocols, exception);
             }
 #endif

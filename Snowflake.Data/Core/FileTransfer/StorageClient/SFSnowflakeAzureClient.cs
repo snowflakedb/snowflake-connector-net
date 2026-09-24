@@ -77,7 +77,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         private static BlobClientOptions BuildClientOptions(SslProtocols tlsProtocols, bool tlsProtocolsExplicitlyRequested,
             ProxyCredentials proxyCredentials)
         {
-            if (!tlsProtocolsExplicitlyRequested)
+            if (!tlsProtocolsExplicitlyRequested && TlsCipherPolicy.FromEnvironment() == null)
             {
                 return null;
             }
@@ -85,7 +85,9 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             return new BlobClientOptions
             {
                 Transport = new HttpClientTransport(
-                    HttpUtil.Instance.CreateStorageHttpClientShared(tlsProtocols, proxyCredentials))
+                    HttpUtil.Instance.CreateStorageHttpClientShared(
+                        tlsProtocolsExplicitlyRequested ? tlsProtocols : SslProtocols.None,
+                        proxyCredentials))
             };
         }
 

@@ -39,6 +39,7 @@ internal static class EnvVars
     internal static readonly EnvVar<string> TemporaryCredentialDir = new("SF_TEMPORARY_CREDENTIAL_CACHE_DIR", string.Empty);
     internal static readonly EnvVar<string> CommonCacheDirectory = new("XDG_CACHE_HOME", string.Empty);
     internal static readonly EnvVar<string> Home = new("HOME", string.Empty);
+    internal static readonly EnvVar<string> TlsCiphers = new("SNOWFLAKE_TLS_CIPHERS", string.Empty);
     // Read only from the process environment - never from the DSN, connection parameters or configuration
     // files - so connection configuration cannot influence the allowlist (SnowflakeHost.IsSnowflakeHostForWorkloadIdentity).
     // Entries are additive: they extend the recognized-host list and cannot disable it.

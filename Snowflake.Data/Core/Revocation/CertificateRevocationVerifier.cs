@@ -58,6 +58,16 @@ namespace Snowflake.Data.Core.Revocation
             return CheckCertificateRevocationStatus(certificate, chain);
         }
 
+        public bool SslStreamCertificateValidationCallback(object _, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            if (sslPolicyErrors != SslPolicyErrors.None)
+                return false;
+            if (certificate is X509Certificate2 certificate2)
+                return CheckCertificateRevocationStatus(certificate2, chain);
+            using var convertedCertificate = new X509Certificate2(certificate);
+            return CheckCertificateRevocationStatus(convertedCertificate, chain);
+        }
+
         internal bool CheckCertificateRevocationStatus(X509Certificate2 certificate, X509Chain chain)
         {
             var joinedChainSubjects = GetJoinedChainSubjects(chain);

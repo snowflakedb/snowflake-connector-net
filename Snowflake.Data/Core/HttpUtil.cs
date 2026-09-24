@@ -12,6 +12,8 @@ using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
 using System.Linq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
@@ -43,7 +45,8 @@ namespace Snowflake.Data.Core
             long crlDownloadMaxSize = 209715200,
             string minTlsProtocol = null,
             string maxTlsProtocol = null,
-            bool tlsProtocolsExplicitlyRequested = false
+            bool tlsProtocolsExplicitlyRequested = false,
+            TlsCipherPolicy tlsCipherPolicy = null
         )
         {
             ProxyHost = proxyHost;
@@ -65,6 +68,8 @@ namespace Snowflake.Data.Core
             TlsProtocolsExplicitlyRequested = tlsProtocolsExplicitlyRequested;
             MinTlsProtocol = SslProtocolsExtensions.FromString(minTlsProtocol ?? SFSessionProperty.MINTLS.GetDefaultValue());
             MaxTlsProtocol = SslProtocolsExtensions.FromString(maxTlsProtocol ?? SFSessionProperty.MAXTLS.GetDefaultValue());
+            CipherPolicy = tlsCipherPolicy ?? TlsCipherPolicy.FromEnvironment();
+            CipherPolicy?.WarnIfInconsistentWith(MinTlsProtocol, MaxTlsProtocol);
 
             ConfKey = string.Join(";",
                 new string[]
@@ -87,7 +92,8 @@ namespace Snowflake.Data.Core
                     crlDownloadMaxSize.ToString(),
                     minTlsProtocol,
                     maxTlsProtocol,
-                    tlsProtocolsExplicitlyRequested.ToString()
+                    tlsProtocolsExplicitlyRequested.ToString(),
+                    CipherPolicy?.CanonicalValue
                 });
         }
 
@@ -109,6 +115,7 @@ namespace Snowflake.Data.Core
         internal readonly long CrlDownloadMaxSize;
         internal readonly SslProtocols MinTlsProtocol;
         internal readonly SslProtocols MaxTlsProtocol;
+        internal readonly TlsCipherPolicy CipherPolicy;
 
         /// <summary>
         /// True when MINTLS or MAXTLS came from the connection string rather than from the defaults.
@@ -181,8 +188,8 @@ namespace Snowflake.Data.Core
         // wrapping them would retry a stage transfer twice, and no revocation settings, which have
         // never applied to stage transfers. Keyed on the storage identity - TLS protocols, proxy,
         // redirect and connection limit - rather than on a session ConfKey.
-        private readonly ConcurrentDictionary<string, HttpClientHandler> _storageHandlers =
-            new ConcurrentDictionary<string, HttpClientHandler>();
+        private readonly ConcurrentDictionary<string, HttpMessageHandler> _storageHandlers =
+            new ConcurrentDictionary<string, HttpMessageHandler>();
 
         private Dictionary<string, HttpClient> _HttpClients = new Dictionary<string, HttpClient>();
 
@@ -229,25 +236,40 @@ namespace Snowflake.Data.Core
             SslProtocols tlsProtocols,
             ProxyCredentials proxyCredentials = null,
             bool allowAutoRedirect = false,
-            int? maxConnectionsPerServer = null) =>
-            new HttpClient(
+            int? maxConnectionsPerServer = null)
+        {
+            var cipherPolicy = TlsCipherPolicy.FromEnvironment();
+            return new HttpClient(
                 _storageHandlers.GetOrAdd(
-                    BuildStorageHandlerKey(tlsProtocols, proxyCredentials, allowAutoRedirect, maxConnectionsPerServer),
-                    _ => CreateStorageHandler(tlsProtocols, proxyCredentials, allowAutoRedirect, maxConnectionsPerServer)),
+                    BuildStorageHandlerKey(tlsProtocols, proxyCredentials, allowAutoRedirect, maxConnectionsPerServer, cipherPolicy),
+                    _ => CreateStorageHandler(tlsProtocols, proxyCredentials, allowAutoRedirect, maxConnectionsPerServer, cipherPolicy)),
                 disposeHandler: false)
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
+        }
 
         /// <summary>
         /// Creates a storage handler which is not shared. Used where an SDK takes ownership of it.
         /// </summary>
-        internal static HttpClientHandler CreateStorageHandler(
+        internal static HttpMessageHandler CreateStorageHandler(
             SslProtocols tlsProtocols,
             ProxyCredentials proxyCredentials = null,
             bool allowAutoRedirect = false,
-            int? maxConnectionsPerServer = null)
+            int? maxConnectionsPerServer = null,
+            TlsCipherPolicy cipherPolicy = null)
         {
+            cipherPolicy ??= TlsCipherPolicy.FromEnvironment();
+            if (cipherPolicy != null)
+            {
+                return CreateSocketsHttpHandler(
+                    tlsProtocols,
+                    cipherPolicy,
+                    proxyCredentials,
+                    allowAutoRedirect,
+                    maxConnectionsPerServer);
+            }
+
             var handler = new HttpClientHandler { AllowAutoRedirect = allowAutoRedirect };
             if (maxConnectionsPerServer.HasValue)
             {
@@ -276,6 +298,36 @@ namespace Snowflake.Data.Core
                 throw TlsProtocolsNotSupported(tlsProtocols,
                     "this runtime does not support setting TLS protocols on HTTP connections.", cause);
             }
+        }
+
+        private static HttpMessageHandler CreateSocketsHttpHandler(
+            SslProtocols tlsProtocols,
+            TlsCipherPolicy cipherPolicy,
+            ProxyCredentials proxyCredentials,
+            bool allowAutoRedirect,
+            int? maxConnectionsPerServer)
+        {
+#if NET8_0_OR_GREATER
+            var handler = new SocketsHttpHandler
+            {
+                AllowAutoRedirect = allowAutoRedirect,
+                SslOptions = new SslClientAuthenticationOptions
+                {
+                    EnabledSslProtocols = tlsProtocols,
+                    CipherSuitesPolicy = cipherPolicy.CreatePlatformPolicy(),
+                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck
+                }
+            };
+            if (maxConnectionsPerServer.HasValue)
+            {
+                handler.MaxConnectionsPerServer = maxConnectionsPerServer.Value;
+            }
+            ApplyProxy(handler, proxyCredentials);
+            return handler;
+#else
+            throw cipherPolicy.Unsupported(
+                "this .NET target does not expose per-connection TLS cipher configuration. Run the driver on .NET 8 or newer on Linux or macOS.");
+#endif
         }
 
         /// <summary>
@@ -309,13 +361,34 @@ namespace Snowflake.Data.Core
             handler.UseProxy = true;
         }
 
+#if NET8_0_OR_GREATER
+        private static void ApplyProxy(SocketsHttpHandler handler, ProxyCredentials proxyCredentials)
+        {
+            if (proxyCredentials == null || string.IsNullOrEmpty(proxyCredentials.ProxyHost))
+            {
+                return;
+            }
+
+            var proxy = new WebProxy(proxyCredentials.ProxyHost, proxyCredentials.ProxyPort);
+            if (!string.IsNullOrEmpty(proxyCredentials.ProxyUser))
+            {
+                proxy.Credentials = new NetworkCredential(proxyCredentials.ProxyUser, proxyCredentials.ProxyPassword);
+            }
+
+            handler.Proxy = proxy;
+            handler.UseProxy = true;
+        }
+#endif
+
         internal static string BuildStorageHandlerKey(
             SslProtocols tlsProtocols,
             ProxyCredentials proxyCredentials,
             bool allowAutoRedirect,
-            int? maxConnectionsPerServer) =>
+            int? maxConnectionsPerServer,
+            TlsCipherPolicy cipherPolicy = null) =>
             string.Join(";",
                 ((int)tlsProtocols).ToString(),
+                (cipherPolicy ?? TlsCipherPolicy.FromEnvironment())?.CanonicalValue,
                 allowAutoRedirect.ToString(),
                 maxConnectionsPerServer?.ToString(),
                 proxyCredentials?.ProxyHost,
@@ -361,6 +434,11 @@ namespace Snowflake.Data.Core
         {
             if (customHandler != null)
             {
+                if (config.CipherPolicy != null)
+                {
+                    throw config.CipherPolicy.Unsupported(
+                        "a custom HTTP handler was supplied, so the driver cannot apply the requested cipher suites.");
+                }
                 return customHandler;
             }
 
@@ -407,17 +485,20 @@ namespace Snowflake.Data.Core
                     proxy.BypassList = bypassList;
                 }
 
-                HttpClientHandler httpHandlerWithProxy = (HttpClientHandler)httpHandler;
-                httpHandlerWithProxy.UseProxy = true;
-                httpHandlerWithProxy.Proxy = proxy;
-                return httpHandlerWithProxy;
+                ApplyProxy(httpHandler, proxy);
+                return httpHandler;
             }
 
             return httpHandler;
         }
 
-        private HttpClientHandler CreateHttpClientHandler(HttpClientConfig config)
+        private HttpMessageHandler CreateHttpClientHandler(HttpClientConfig config)
         {
+            if (config.CipherPolicy != null)
+            {
+                return CreateSocketsHttpHandler(config);
+            }
+
             bool customizedCrlCheck = false;
             try
             {
@@ -440,6 +521,58 @@ namespace Snowflake.Data.Core
                 }
 
                 return CreateFallbackHttpClientHandler(config, exception, CanApplyTlsProtocols(config.GetRequestedTlsProtocolsRange()));
+            }
+        }
+
+        private HttpMessageHandler CreateSocketsHttpHandler(HttpClientConfig config)
+        {
+#if NET8_0_OR_GREATER
+            CertificateRevocationVerifier revocationVerifier = null;
+            if (config.IsCustomCrlCheckConfigured())
+            {
+                revocationVerifier = CreateCertificateRevocationVerifier(config);
+            }
+
+            return new SocketsHttpHandler
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                UseCookies = false,
+                UseProxy = false,
+                AllowAutoRedirect = true,
+                SslOptions = new SslClientAuthenticationOptions
+                {
+                    EnabledSslProtocols = config.GetRequestedTlsProtocolsRange(),
+                    CipherSuitesPolicy = config.CipherPolicy.CreatePlatformPolicy(),
+                    CertificateRevocationCheckMode = config.IsDotnetCrlCheckEnabled()
+                        ? X509RevocationMode.Online
+                        : X509RevocationMode.NoCheck,
+                    RemoteCertificateValidationCallback = revocationVerifier == null
+                        ? null
+                        : revocationVerifier.SslStreamCertificateValidationCallback
+                }
+            };
+#else
+            throw config.CipherPolicy.Unsupported(
+                "this .NET target does not expose per-connection TLS cipher configuration. Run the driver on .NET 8 or newer on Linux or macOS.");
+#endif
+        }
+
+        private static void ApplyProxy(HttpMessageHandler handler, IWebProxy proxy)
+        {
+            switch (handler)
+            {
+                case HttpClientHandler httpClientHandler:
+                    httpClientHandler.UseProxy = true;
+                    httpClientHandler.Proxy = proxy;
+                    break;
+#if NET8_0_OR_GREATER
+                case SocketsHttpHandler socketsHttpHandler:
+                    socketsHttpHandler.UseProxy = true;
+                    socketsHttpHandler.Proxy = proxy;
+                    break;
+#endif
+                default:
+                    throw new InvalidOperationException($"Cannot configure a proxy on HTTP handler type {handler.GetType().FullName}.");
             }
         }
 
@@ -523,13 +656,7 @@ namespace Snowflake.Data.Core
         private HttpClientHandler CreateHttpClientHandlerWithCustomizedCrlCheck(HttpClientConfig config)
         {
             logger.Debug("Creating HttpClientHandler with customized CRL check");
-            var revocationVerifier = new CertificateRevocationVerifier(
-                config,
-                TimeProvider.Instance,
-                GetHttpClientForCrlCheck(),
-                CertificateCrlDistributionPointsExtractor.Instance,
-                new CrlParser(EnvironmentFacade.Instance),
-                new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching));
+            var revocationVerifier = CreateCertificateRevocationVerifier(config);
             return new HttpClientHandler
             {
                 CheckCertificateRevocationList = false,
@@ -541,6 +668,15 @@ namespace Snowflake.Data.Core
                 AllowAutoRedirect = true
             };
         }
+
+        private CertificateRevocationVerifier CreateCertificateRevocationVerifier(HttpClientConfig config) =>
+            new CertificateRevocationVerifier(
+                config,
+                TimeProvider.Instance,
+                GetHttpClientForCrlCheck(),
+                CertificateCrlDistributionPointsExtractor.Instance,
+                new CrlParser(EnvironmentFacade.Instance),
+                new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching));
 
         /// <summary>
         /// UriUpdater would update the uri in each retry. During construction, it would take in an uri that would later
