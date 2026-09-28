@@ -38,7 +38,8 @@ timestamps {
       string(name: 'client_git_branch', value: scmInfo.GIT_BRANCH),
       string(name: 'TARGET_DOCKER_TEST_IMAGE', value: 'dotnet-ubuntu264-net10'),
       string(name: 'parent_job', value: env.JOB_NAME),
-      string(name: 'parent_build_number', value: env.BUILD_NUMBER)
+      string(name: 'parent_build_number', value: env.BUILD_NUMBER),
+      string(name: 'organization', value: 'snowflake-eng')
     ]
 
     stage('Test') {
@@ -66,6 +67,12 @@ timestamps {
           }
         },
         'Test WIF': {
+          stage('Build WIF Artifacts') {
+            sh '''\
+            |#!/bin/bash -e
+            |$WORKSPACE/ci/build_wif_artifacts.sh
+            '''.stripMargin()
+          }
           stage('Test WIF') {
             withCredentials([
               string(credentialsId: 'sfctest0-parameters-secret', variable: 'PARAMETERS_SECRET')

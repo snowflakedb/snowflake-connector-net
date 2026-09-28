@@ -24,9 +24,8 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [SFFact(SkipCondition.SkipOnCI)]
+        [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
         public void TestAuthenticateSnowflakeAuthorizationCodeSuccessful()
-
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
             Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
@@ -36,7 +35,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [SFFact(SkipCondition.SkipOnCI)]
+        [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
         public void TestAuthenticateSnowflakeAuthorizationCodeMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -53,7 +52,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token.");
         }
 
-        [SFFact(SkipCondition.SkipOnCI)]
+        [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
         public void TestAuthenticateSnowflakeAuthorizationCodeWrongCredentials()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -85,7 +84,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
 
-        [SFFact(SkipCondition.SkipOnCI)]
+        [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
         public void TestAuthenticateSnowflakeAuthorizationCodeWithTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -120,7 +119,7 @@ namespace Snowflake.Data.AuthenticationTests
             }
         }
 
-        [SFFact(SkipCondition.SkipOnCI)]
+        [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
         public void TestAuthenticateSnowflakeAuthorizationCodeWithoutTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();

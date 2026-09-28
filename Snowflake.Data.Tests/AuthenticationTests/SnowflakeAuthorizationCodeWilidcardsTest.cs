@@ -24,7 +24,7 @@ namespace Snowflake.Data.AuthenticationTests
             _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
         }
 
-        [SFFact(SkipCondition.SkipOnCI)]
+        [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
         public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsSuccessful()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -36,7 +36,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsNotThrown();
         }
 
-        [SFFact(SkipCondition.SkipOnCI)]
+        [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
         public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsMismatchedUser()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
@@ -85,7 +85,7 @@ namespace Snowflake.Data.AuthenticationTests
             authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 1 seconds");
         }
 
-        [SFFact(SkipCondition.SkipOnCI)]
+        [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
         public void TestAuthenticateSnowflakeAuthorizationCodeWildcardsWithTokenCache()
         {
             AuthTestHelper authTestHelper = new AuthTestHelper();
