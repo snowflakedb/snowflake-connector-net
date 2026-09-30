@@ -252,7 +252,9 @@ namespace Snowflake.Data.Core.Authenticator
 
         private void VerifyUrls(Uri tokenOrSsoUrl, Uri sessionUrl)
         {
-            if (tokenOrSsoUrl.Scheme != sessionUrl.Scheme || tokenOrSsoUrl.Host != sessionUrl.Host)
+            if (tokenOrSsoUrl.Scheme != sessionUrl.Scheme ||
+                tokenOrSsoUrl.Host != sessionUrl.Host ||
+                tokenOrSsoUrl.Port != sessionUrl.Port)
             {
                 var e = new SnowflakeDbException(
                     SFError.IDP_SSO_TOKEN_URL_MISMATCH, tokenOrSsoUrl.ToString(), _oktaUrl.ToString());
@@ -282,8 +284,11 @@ namespace Snowflake.Data.Core.Authenticator
 
             string sessionHost = session.properties[SFSessionProperty.HOST];
             string sessionScheme = session.properties[SFSessionProperty.SCHEME];
-            if (postBackUrl.Host != sessionHost ||
-                postBackUrl.Scheme != sessionScheme)
+            session.properties.TryGetValue(SFSessionProperty.PORT, out var portStr);
+            int.TryParse(portStr, out var sessionPort);
+            if (!string.Equals(postBackUrl.Host, sessionHost, StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(postBackUrl.Scheme, sessionScheme, StringComparison.OrdinalIgnoreCase) ||
+                (sessionPort > 0 && postBackUrl.Port != sessionPort))
             {
                 var e = new SnowflakeDbException(
                     SFError.IDP_SAML_POSTBACK_INVALID,

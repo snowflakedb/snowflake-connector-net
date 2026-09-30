@@ -1,0 +1,17 @@
+{
+    "mappings": [
+        {
+            "scenarioName": "Login redirect loop",
+            "request": {
+                "urlPathPattern": "/session/v1/login-request.*",
+                "method": "POST"
+            },
+            "response": {
+                "status": 307,
+                "headers": {
+                    "Location": "/session/v1/login-request?looped=true"
+                }
+            }
+        }
+    ]
+}

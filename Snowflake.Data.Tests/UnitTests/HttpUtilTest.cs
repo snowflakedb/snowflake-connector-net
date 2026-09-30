@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
 using System;
+using System.Security;
 using System.Security.Authentication;
 using Moq;
 using Moq.Protected;
@@ -64,6 +65,10 @@ namespace Snowflake.Data.Tests.UnitTests
         [InlineData(HttpStatusCode.ServiceUnavailable, false, true)]
         [InlineData(HttpStatusCode.TemporaryRedirect, false, true)]
         [InlineData((HttpStatusCode)308, false, true)]  // HttpStatusCode.PermanentRedirect is not available on .NET Framework
+        [InlineData(HttpStatusCode.Ambiguous, false, true)]
+        [InlineData(HttpStatusCode.Found, false, true)]
+        [InlineData(HttpStatusCode.Moved, false, true)]
+        [InlineData(HttpStatusCode.SeeOther, false, true)]
         public async Task TestIsRetryableHTTPCode(HttpStatusCode statusCode, bool forceRetryOn404, bool expectedIsRetryable)
         {
             var mockHttp = new MockHttpMessageHandler();
@@ -72,7 +77,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var client = mockHttp.ToHttpClient();
             var response = await client.GetAsync("https://test.snowflakecomputing.com").ConfigureAwait(false);
 
-            bool actualIsRetryable = HttpUtil.isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
+            bool actualIsRetryable = HttpUtil.IsRetryableHTTPCode(response.StatusCode, forceRetryOn404);
 
             Assert.Equal(expectedIsRetryable, actualIsRetryable);
         }
@@ -184,6 +189,338 @@ namespace Snowflake.Data.Tests.UnitTests
             // assert
             Assert.False(handler.UseProxy);
             Assert.Null(handler.Proxy);
+        }
+
+        [SFFact]
+        public void TestCreateHttpClientHandlerDisablesAutoRedirect()
+        {
+            // arrange
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 7, 20);
+
+            // act
+            var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
+
+            // assert
+            Assert.False(handler.AllowAutoRedirect);
+        }
+
+        [SFFact]
+        public void TestFallbackHandlerDisablesAutoRedirect()
+        {
+            // arrange
+            var config = CreateConfigWithTlsProtocols(null, null);
+
+            // act
+            var handler = HttpUtil.Instance.CreateFallbackHttpClientHandler(
+                config, new PlatformNotSupportedException(), canApplyTlsProtocols: false);
+
+            // assert
+            Assert.False(handler.AllowAutoRedirect);
+        }
+
+        [SFTheory]
+        // Same-origin HTTPS -> true
+        [InlineData("https://account.snowflakecomputing.com/queries/v1/query-request", "/temp-redirect-1", true)]
+        [InlineData("https://account.snowflakecomputing.com/queries/v1/query-request", "https://account.snowflakecomputing.com/temp-redirect-1", true)]
+        [InlineData("https://account.snowflakecomputing.com:443/queries/v1/query-request", "https://account.snowflakecomputing.com:443/temp-redirect-1", true)]
+        // Same-origin HTTP -> true
+        [InlineData("http://localhost:8080/queries/v1/query-request", "/temp-redirect-1", true)]
+        [InlineData("http://localhost:8080/queries/v1/query-request", "http://localhost:8080/temp-redirect-1", true)]
+        // Cross-origin host mismatch -> false
+        [InlineData("https://account.snowflakecomputing.com/queries/v1/query-request", "https://attacker.com/steal", false)]
+        [InlineData("https://account.okta.com/api/v1/authn", "https://attacker.okta.com/api/v1/authn", false)]
+        [InlineData("https://account.snowflakecomputing.com/queries/v1/query-request", "//attacker.com/steal", false)]
+        // HTTPS downgrade to HTTP -> false
+        [InlineData("https://account.snowflakecomputing.com/queries/v1/query-request", "http://account.snowflakecomputing.com/temp-redirect-1", false)]
+        [InlineData("https://account.okta.com/api/v1/authn", "http://account.okta.com/api/v1/authn", false)]
+        // Port mismatch -> false
+        [InlineData("https://account.snowflakecomputing.com/queries/v1/query-request", "https://account.snowflakecomputing.com:8443/temp-redirect-1", false)]
+        [InlineData("http://localhost:8080/queries/v1/query-request", "http://localhost:9090/temp-redirect-1", false)]
+        // Non-http schemes -> false
+        [InlineData("https://account.snowflakecomputing.com/queries/v1/query-request", "ftp://account.snowflakecomputing.com/temp-redirect-1", false)]
+        [InlineData("https://account.snowflakecomputing.com/queries/v1/query-request", "javascript:alert(1)", false)]
+        public void TestIsSafeRedirect(string requestUrl, string locationUrl, bool expectedIsSafe)
+        {
+            // arrange
+            var requestUri = new Uri(requestUrl);
+            var locationUri = new Uri(locationUrl, UriKind.RelativeOrAbsolute);
+
+            // act
+            bool actualIsSafe = HttpUtil.IsSafeRedirect(requestUri, locationUri);
+
+            // assert
+            Assert.Equal(expectedIsSafe, actualIsSafe);
+        }
+
+        [SFFact]
+        public void TestIsSafeRedirectWithNullOrRelativeRequest()
+        {
+            var requestUri = new Uri("https://account.snowflakecomputing.com/queries/v1/query-request");
+            Assert.False(HttpUtil.IsSafeRedirect(null, new Uri("/temp", UriKind.Relative)));
+            Assert.False(HttpUtil.IsSafeRedirect(requestUri, null));
+            Assert.False(HttpUtil.IsSafeRedirect(null, null));
+            Assert.False(HttpUtil.IsSafeRedirect(new Uri("/relative/path", UriKind.Relative), new Uri("/temp", UriKind.Relative)));
+        }
+
+        [SFTheory]
+        [InlineData("https://attacker.com/steal")]
+        [InlineData("http://test.snowflakecomputing.com/temp-redirect-1")]
+        [InlineData("https://test.snowflakecomputing.com:8443/temp-redirect-1")]
+        public async Task TestRetryHandlerDoesNotFollowUnsafeRedirect(string redirectTarget)
+        {
+            // arrange
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request")
+                .Respond(_ =>
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
+                    response.Headers.Location = new Uri(redirectTarget, UriKind.RelativeOrAbsolute);
+                    return response;
+                });
+            var unsafeTargetRequest = mockHttp.When(redirectTarget)
+                .Respond(HttpStatusCode.OK);
+
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
+
+            // act & assert: unsafe redirect throws SecurityException, target never contacted
+            await Assert.ThrowsAsync<SecurityException>(() => client.SendAsync(request)).ConfigureAwait(false);
+            Assert.Equal(0, mockHttp.GetMatchCount(unsafeTargetRequest));
+        }
+
+        [SFFact]
+        public async Task TestRetryHandlerDoesNotFollowProtocolRelativeRedirect()
+        {
+            // arrange
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request")
+                .Respond(_ =>
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
+                    response.Headers.Location = new Uri("//attacker.com/steal", UriKind.RelativeOrAbsolute);
+                    return response;
+                });
+            var attackerRequest = mockHttp.When("https://attacker.com/*")
+                .Respond(HttpStatusCode.OK);
+
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
+
+            // act & assert: protocol-relative redirect to different origin throws SecurityException
+            await Assert.ThrowsAsync<SecurityException>(() => client.SendAsync(request)).ConfigureAwait(false);
+            Assert.Equal(0, mockHttp.GetMatchCount(attackerRequest));
+        }
+
+        [SFFact]
+        public async Task TestRetryHandlerFollowsSafeSameOriginRedirect()
+        {
+            // arrange
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request")
+                .Respond(_ =>
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
+                    response.Headers.Location = new Uri("/temp-redirect-1", UriKind.Relative);
+                    return response;
+                });
+            var redirectedRequest = mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/temp-redirect-1")
+                .Respond(HttpStatusCode.OK);
+
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
+
+            // act
+            var response = await client.SendAsync(request).ConfigureAwait(false);
+
+            // assert: safe relative redirect is followed to same origin
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(1, mockHttp.GetMatchCount(redirectedRequest));
+        }
+
+        [SFFact]
+        public async Task TestRetryHandlerFollows300WithSameOriginLocation()
+        {
+            // arrange
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request")
+                .Respond(_ =>
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.Ambiguous); // 300
+                    response.Headers.Location = new Uri("/alternate", UriKind.Relative);
+                    return response;
+                });
+            var redirectedRequest = mockHttp.When(HttpMethod.Get, "https://test.snowflakecomputing.com/alternate")
+                .Respond(HttpStatusCode.OK);
+
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
+
+            // act
+            var response = await client.SendAsync(request).ConfigureAwait(false);
+
+            // assert: 300 with a same-origin Location is followed and method is downgraded to GET
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(1, mockHttp.GetMatchCount(redirectedRequest));
+        }
+
+        [SFFact]
+        public async Task TestRetryHandlerReturns300WithoutLocation()
+        {
+            // arrange - 300 without a Location header cannot be followed as a redirect
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request")
+                .Respond(_ => new HttpResponseMessage(HttpStatusCode.Ambiguous)); // 300, no Location
+
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
+
+            // act & assert: 300 without Location — IsSafeRedirect(_, null) is false, throws SecurityException
+            await Assert.ThrowsAsync<SecurityException>(() => client.SendAsync(request)).ConfigureAwait(false);
+        }
+
+        [SFFact]
+        public async Task TestRetryHandlerFollowsSamePathDifferentQueryRedirect()
+        {
+            // arrange - a 307 redirect to the same path with different query parameters is
+            // followed, matching .NET's native HttpClientHandler auto-redirect behavior
+            var callCount = 0;
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request*")
+                .Respond(_ =>
+                {
+                    if (++callCount != 1)
+                        return new HttpResponseMessage(HttpStatusCode.OK);
+
+                    var redirect = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
+                    redirect.Headers.Location = new Uri(
+                        "https://test.snowflakecomputing.com/session/v1/login-request?token=abc",
+                        UriKind.Absolute);
+                    return redirect;
+                });
+
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
+
+            // act
+            var response = await client.SendAsync(request).ConfigureAwait(false);
+
+            // assert: same-path redirect with different query is followed
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(2, callCount); // first call -> 307, second call -> 200
+        }
+
+        [SFFact]
+        public async Task TestRetryHandlerThrowsOnRedirectHopLimitExceeded()
+        {
+            // arrange - server keeps redirecting to a new same-origin path on every hop
+            var hopCount = 0;
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/*")
+                .Respond(_ =>
+                {
+                    hopCount++;
+                    var response = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
+                    response.Headers.Location = new Uri($"/hop-{hopCount}", UriKind.Relative);
+                    return response;
+                });
+
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 0, 20);
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(60));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(300));
+
+            // act & assert: redirect loop is bounded by hop counter, not just by timeout
+            var ex = await Assert.ThrowsAsync<SecurityException>(
+                () => client.SendAsync(request)).ConfigureAwait(false);
+            Assert.Contains("Redirect loop detected", ex.Message);
+        }
+
+        [SFFact]
+        public async Task TestRetryHandlerResetsRedirectHopCounterAfterRetryableError()
+        {
+            // arrange - the consecutive redirect hop counter resets when a non-redirect retryable
+            // response (e.g. 503) interrupts the redirect chain; without the reset a long-lived
+            // request that alternates between redirects and retryable errors would falsely trip
+            // the hop limit even though no single chain was longer than MaxRedirectsCount
+            var callCount = 0;
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/*")
+                .Respond(_ =>
+                {
+                    if (++callCount == 5)
+                        return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+
+                    if (callCount >= 10)
+                        return new HttpResponseMessage(HttpStatusCode.OK);
+
+                    var r = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
+                    r.Headers.Location = new Uri($"/chain1-hop{callCount}", UriKind.Relative);
+                    return r;
+                });
+
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 1, 20);
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(30));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
+
+            // act
+            var response = await client.SendAsync(request).ConfigureAwait(false);
+
+            // assert: 8 total redirects across two chains succeed because neither chain exceeded
+            // the hop limit on its own — the 503 in between reset the counter
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [SFFact]
+        public async Task TestRetryHandlerFollowsRedirectEvenWhenRetryIsDisabled()
+        {
+            // arrange - disableRetry=true must not prevent following safe redirects;
+            // the old condition (isRetrying && !isRetryable || disableRetry) had a precedence bug
+            // that treated disableRetry=true as "stop on any non-success", including redirects
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request")
+                .Respond(_ =>
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
+                    response.Headers.Location = new Uri("/redirected-login", UriKind.Relative);
+                    return response;
+                });
+            var redirectedRequest = mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/redirected-login")
+                .Respond(HttpStatusCode.OK);
+
+            //                                                         disableRetry=true ↓
+            var config = new HttpClientConfig(null, null, null, null, null, true, false, 3, 20);
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
+            request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
+            request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
+
+            // act
+            var response = await client.SendAsync(request).ConfigureAwait(false);
+
+            // assert: redirect is followed despite retry being disabled
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(1, mockHttp.GetMatchCount(redirectedRequest));
         }
 
         [SFTheory]
@@ -359,6 +696,30 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 #endif
+        [SFFact]
+        public void TestRejectsCustomHandlerWithAutoRedirect()
+        {
+            var innerHandler = new HttpClientHandler { AllowAutoRedirect = true };
+            var customHandler = new CustomDelegatingHandler(innerHandler);
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+
+            var ex = Assert.Throws<SecurityException>(() =>
+                HttpUtil.Instance.CreateNewHttpClient(config, customHandler));
+
+            Assert.Contains("AllowAutoRedirect", ex.Message);
+        }
+
+        [SFFact]
+        public void TestAcceptsCustomHandlerWithAutoRedirectDisabled()
+        {
+            var innerHandler = new HttpClientHandler { AllowAutoRedirect = false };
+            var customHandler = new CustomDelegatingHandler(innerHandler);
+            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+
+            using var client = HttpUtil.Instance.CreateNewHttpClient(config, customHandler);
+
+            Assert.NotNull(client);
+        }
     }
 #pragma warning restore SYSLIB0014
 }

@@ -39,6 +39,50 @@ namespace Snowflake.Data.Tests.UnitTests
         }
 
         [SFFact]
+        public void TestTokenUrlPortMismatch()
+        {
+            try
+            {
+                var restRequester = new Mock.MockOktaRestRequester()
+                {
+                    TokenUrl = "https://snowflake.okta.com:8443/api/v1/sessions?additionalFields=cookieToken",
+                    SSOUrl = "https://snowflake.okta.com/app/snowflake_testaccountdev_1/blah/sso/saml",
+                    MaxRetryCount = MaxRetryCount,
+                    MaxRetryTimeout = MaxRetryTimeout
+                };
+                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflake.okta.com", new SessionPropertiesContext(), restRequester);
+                sfSession.Open();
+                Assert.Fail("Should not pass");
+            }
+            catch (SnowflakeDbException e)
+            {
+                Assert.Equal(SFError.IDP_SSO_TOKEN_URL_MISMATCH.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+            }
+        }
+
+        [SFFact]
+        public void TestSsoUrlPortMismatch()
+        {
+            try
+            {
+                var restRequester = new Mock.MockOktaRestRequester()
+                {
+                    TokenUrl = "https://snowflake.okta.com/api/v1/sessions?additionalFields=cookieToken",
+                    SSOUrl = "https://snowflake.okta.com:8443/app/snowflake_testaccountdev_1/blah/sso/saml",
+                    MaxRetryCount = MaxRetryCount,
+                    MaxRetryTimeout = MaxRetryTimeout
+                };
+                var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflake.okta.com", new SessionPropertiesContext(), restRequester);
+                sfSession.Open();
+                Assert.Fail("Should not pass");
+            }
+            catch (SnowflakeDbException e)
+            {
+                Assert.Equal(SFError.IDP_SSO_TOKEN_URL_MISMATCH.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+            }
+        }
+
+        [SFFact]
         public void TestMissingPostbackUrl()
         {
             try

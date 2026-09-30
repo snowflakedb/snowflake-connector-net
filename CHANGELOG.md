@@ -1,14 +1,9 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
-- Upcoming version  
-  - Fixed token cache key collisions for multi-account (shared IdP) and multi-role
-    scenarios by switching to a versioned, SHA256-hashed canonical-JSON key
-    (`SnowflakeTokenCache.v2.<PascalCaseType>.<sha256>`) with flow-specific
-    `keyData` fields, applied uniformly across Windows Credential Manager and file
-    backends. Identifiers are normalised to lowercase; quoted values (including SQL
-    `""` escaped quotes) are returned verbatim. Token type in the key prefix uses
-    PascalCase (`MfaToken`, `OauthAccessToken`) instead of `SCREAMING_SNAKE_CASE`.
+- Upcoming version
+  - Prevented credential and request payload replaying to cross-origin destinations or unencrypted HTTP during IdP authentication and HTTP retry redirects by disabling automatic HTTP redirects across HTTP client handlers, validating redirect locations against the origin (scheme, host, and port) of the initial request, and enforcing port matching in Okta authenticator URL verification.
+  - Fixed token cache key collisions for multi-account (shared IdP) and multi-role scenarios by switching to a versioned, SHA256-hashed canonical-JSON key (`SnowflakeTokenCache.v2.<PascalCaseType>.<sha256>`) with flow-specific `keyData` fields, applied uniformly across Windows Credential Manager and file  backends. Identifiers are normalised to lowercase; quoted values (including SQL `""` escaped quotes) are returned verbatim. Token type in the key prefix uses  PascalCase (`MfaToken`, `OauthAccessToken`) instead of `SCREAMING_SNAKE_CASE`.
   - When `MINTLS`/`MAXTLS` are set in the connection string but cannot be applied, the driver now fails instead of silently continuing on the TLS protocols chosen by the operating system. This affects .NET Framework 4.6.2 and 4.7.1, which cannot apply the setting to any connection, and stage transfers to S3 on .NET Framework, where the AWS SDK offers no configurable transport. Connections that do not set either parameter are unaffected and keep their previous behaviour.
   - `MINTLS`/`MAXTLS` are now applied to stage transfers on S3 and Azure, by supplying those SDKs with a transport the driver configures. This happens only when either parameter is given in the connection string; otherwise the SDKs keep their own transports, exactly as before. Where a requested restriction cannot reach an S3 connection - .NET Framework, where the AWS SDK offers no configurable transport - the transfer is rejected rather than run outside it.
   - Known limitation: GCS stage transfers do not honour `MINTLS`/`MAXTLS`. The storage SDK hands back a delegating handler that exposes no TLS protocol setting, and the upload/download path uses `WebRequest`, which exposes none either, so those transfers negotiate on whatever the operating system allows. The driver logs a warning when the parameters are set and the transfer proceeds.

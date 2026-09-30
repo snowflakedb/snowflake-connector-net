@@ -5,6 +5,7 @@ using System;
 using System.Threading;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using Snowflake.Data.Core.FileTransfer;
@@ -439,6 +440,7 @@ namespace Snowflake.Data.Core
                     throw config.CipherPolicy.Unsupported(
                         "a custom HTTP handler was supplied, so the driver cannot apply the requested cipher suites.");
                 }
+                RejectAutoRedirect(customHandler);
                 return customHandler;
             }
 
@@ -492,6 +494,27 @@ namespace Snowflake.Data.Core
             return httpHandler;
         }
 
+        private static void RejectAutoRedirect(HttpMessageHandler handler)
+        {
+            var current = handler;
+            while (current is DelegatingHandler delegating)
+                current = delegating.InnerHandler;
+
+            var autoRedirect = current switch
+            {
+                HttpClientHandler h => h.AllowAutoRedirect,
+#if NET8_0_OR_GREATER
+                SocketsHttpHandler s => s.AllowAutoRedirect,
+#endif
+                _ => false
+            };
+
+            if (autoRedirect)
+                throw new SecurityException(
+                    "Custom HTTP handler has AllowAutoRedirect enabled. " +
+                    "This bypasses the driver's redirect safety checks and must be disabled.");
+        }
+
         private HttpMessageHandler CreateHttpClientHandler(HttpClientConfig config)
         {
             if (config.CipherPolicy != null)
@@ -538,7 +561,7 @@ namespace Snowflake.Data.Core
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false,
                 UseProxy = false,
-                AllowAutoRedirect = true,
+                AllowAutoRedirect = false,
                 SslOptions = new SslClientAuthenticationOptions
                 {
                     EnabledSslProtocols = config.GetRequestedTlsProtocolsRange(),
@@ -627,7 +650,7 @@ namespace Snowflake.Data.Core
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
                 UseProxy = false,
-                AllowAutoRedirect = true
+                AllowAutoRedirect = false
             };
 
             var requestedTlsProtocols = config.GetRequestedTlsProtocolsRange();
@@ -649,7 +672,7 @@ namespace Snowflake.Data.Core
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
                 UseProxy = false,
-                AllowAutoRedirect = true
+                AllowAutoRedirect = false
             };
         }
 
@@ -665,7 +688,7 @@ namespace Snowflake.Data.Core
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 UseCookies = false, // Disable cookies
                 UseProxy = false,
-                AllowAutoRedirect = true
+                AllowAutoRedirect = false
             };
         }
 
@@ -733,23 +756,24 @@ namespace Snowflake.Data.Core
             /// <summary>
             /// RetryReasonRule would update the retryReason parameter
             /// </summary>
-            class RetryReasonRule : IRule
+            private class RetryReasonRule : IRule
             {
-                int retryReason;
+                private HttpStatusCode _retryReason;
 
                 internal RetryReasonRule()
                 {
-                    retryReason = 0;
+                    _retryReason = 0;
                 }
 
-                public void SetRetryReason(int reason)
+                public void SetRetryReason(HttpStatusCode reason)
                 {
-                    retryReason = reason;
+                    _retryReason = reason;
                 }
 
                 void IRule.apply(NameValueCollection queryParams)
                 {
-                    queryParams.Set(RestParams.SF_QUERY_RETRY_REASON, retryReason.ToString());
+                    var retryCode = ((int)_retryReason).ToString();
+                    queryParams.Set(RestParams.SF_QUERY_RETRY_REASON, retryCode);
                 }
             }
 
@@ -776,15 +800,27 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            internal Uri Update(int retryReason = 0, Uri requestUri = null, Uri location = null)
+            internal void Update(ref HttpRequestMessage requestMessage, HttpStatusCode retryReason, Uri location)
             {
                 if (IsRedirectHTTPCode(retryReason))
-                    return GetRedirectedUri(requestUri, location);
+                {
+                    var redirectUri = GetRedirectedUri(requestMessage.RequestUri, location);
+                    if ((requestMessage.Method == HttpMethod.Post || retryReason == HttpStatusCode.SeeOther) && retryReason != HttpStatusCode.TemporaryRedirect && retryReason != (HttpStatusCode)308)
+                    {
+                        requestMessage.Method = HttpMethod.Get;
+                        requestMessage.Content?.Dispose();
+                        requestMessage.Content = null;
+                    }
+
+                    requestMessage.RequestUri = redirectUri;
+                    return;
+                }
 
                 // Optimization to bypass parsing if there is no rules at all.
                 if (rules.Count == 0)
                 {
-                    return uriBuilder.Uri;
+                    requestMessage.RequestUri = uriBuilder.Uri;
+                    return;
                 }
 
                 var queryParams = HttpUtility.ParseQueryString(uriBuilder.Query);
@@ -801,20 +837,34 @@ namespace Snowflake.Data.Core
 
                 uriBuilder.Query = queryParams.ToString();
 
-                return uriBuilder.Uri;
+                requestMessage.RequestUri = uriBuilder.Uri;
             }
 
             private Uri GetRedirectedUri(Uri requestUri, Uri location)
             {
-                if (requestUri.AbsolutePath != location.ToString())
-                    return new Uri(uriBuilder.Uri, location);
-                return uriBuilder.Uri;
+                if (requestUri == null || location == null)
+                    return uriBuilder.Uri;
+
+                Uri targetUrl;
+                if (location.IsAbsoluteUri)
+                {
+                    targetUrl = location;
+                }
+                else if (!Uri.TryCreate(requestUri, location, out targetUrl))
+                {
+                    logger.Error($"Redirect URI resolution failed for location '{location.ToMaskedString()}' against request '{requestUri.ToMaskedString()}'. Falling back to {uriBuilder.Uri.ToMaskedString()}!");
+                    return uriBuilder.Uri;
+                }
+
+                return targetUrl;
             }
         }
 
         private class RetryHandler : DelegatingHandler
         {
-            static private SFLogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
+            private static SFLogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
+
+            private const int MaxRedirectsCount = 20;
 
             private bool disableRetry;
             private bool forceRetryOn404;
@@ -862,14 +912,15 @@ namespace Snowflake.Data.Core
                 CancellationTokenSource childCts = null;
 
                 var updater = new UriUpdater(requestMessage.RequestUri, includeRetryReason);
-                var retryCount = 0;
+                var (retryCount, redirectsCount) = (0, 0);
 
-                var startTimeInMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                var startTime = DateTimeOffset.UtcNow;
                 while (true)
                 {
                     try
                     {
                         childCts = null;
+                        response = null;
 
                         if (!httpTimeout.Equals(Timeout.InfiniteTimeSpan))
                         {
@@ -911,11 +962,12 @@ namespace Snowflake.Data.Core
                         }
                     }
 
-                    var totalRetryTime = (int)((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startTimeInMilliseconds) / 1000);
+                    var isRedirecting = false;
+                    var totalRetryTime = (int)(DateTimeOffset.UtcNow - startTime).TotalSeconds;
 
                     childCts?.Dispose();
 
-                    var errorReason = 0;
+                    HttpStatusCode errorReason = default;
 
                     if (response != null)
                     {
@@ -933,16 +985,33 @@ namespace Snowflake.Data.Core
                         else
                         {
                             logger.Debug($"Failed Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
-                            bool isRetryable = isRetryableHTTPCode((int)response.StatusCode, forceRetryOn404);
+                            var isRetryable = IsRetryableHTTPCode(response.StatusCode, forceRetryOn404);
 
-                            if (!isRetryable || disableRetry)
+                            if (IsRedirectHTTPCode(response.StatusCode))
+                            {
+                                if (!IsSafeRedirect(requestMessage.RequestUri, response.Headers?.Location))
+                                {
+                                    logger.Warn($"Unsafe redirect location '{response.Headers?.Location.ToMaskedString()}' for request '{requestMessage.RequestUri.ToMaskedString()}'. Stopping retry.");
+                                    throw new SecurityException($"Unsafe redirect rejected: '{response.Headers?.Location.ToMaskedString()}' is not a safe redirect target for '{requestMessage.RequestUri.ToMaskedString()}'");
+                                }
+
+                                if (++redirectsCount > MaxRedirectsCount)
+                                {
+                                    logger.Warn($"Maximum redirect hops ({MaxRedirectsCount}) exceeded for request '{requestMessage.RequestUri.ToMaskedString()}'. Stopping..");
+                                    throw new SecurityException($"Redirect loop detected: more than {MaxRedirectsCount} consecutive redirects from '{requestMessage.RequestUri.ToMaskedString()}'");
+                                }
+
+                                isRedirecting = true;
+                            }
+
+                            if (!isRedirecting && (!isRetryable || disableRetry))
                             {
                                 // No need to keep retrying, stop here
                                 return response;
                             }
                         }
 
-                        errorReason = (int)response.StatusCode;
+                        errorReason = response.StatusCode;
                     }
                     else
                     {
@@ -969,8 +1038,10 @@ namespace Snowflake.Data.Core
                         backOffInSec = (int)restTimeout.TotalSeconds - totalRetryTime;
                     }
 
-                    retryCount++;
-                    if ((maxRetryCount > 0) && (retryCount > maxRetryCount))
+                    retryCount += isRedirecting ? 0 : 1;
+                    var waitingTime = isRedirecting ? 0 : backOffInSec;
+                    redirectsCount *= isRedirecting ? 1 : 0;
+                    if (maxRetryCount > 0 && (retryCount > maxRetryCount))
                     {
                         logger.Debug($"stop retry as maxHttpRetries {maxRetryCount} reached");
                         if (response != null)
@@ -984,15 +1055,14 @@ namespace Snowflake.Data.Core
                         throw new OperationCanceledException(errorMessage);
                     }
 
-                    requestMessage.RequestUri = updater.Update(errorReason, requestMessage.RequestUri, response?.Headers?.Location);
+                    updater.Update(ref requestMessage, errorReason, response?.Headers?.Location);
 
                     // Disposing of the response if not null now that we don't need it anymore
                     response?.Dispose();
 
+                    logger.Debug($"Sleep {waitingTime} seconds and then retry the request, retryCount: {retryCount}");
 
-                    logger.Debug($"Sleep {backOffInSec} seconds and then retry the request, retryCount: {retryCount}");
-
-                    await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromSeconds(waitingTime), cancellationToken).ConfigureAwait(false);
 
                     var jitter = GetJitter(backOffInSec);
 
@@ -1025,31 +1095,97 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
-        /// Check whether or not the error is retryable or not.
+        /// Check whether the error is retryable or not.
         /// </summary>
         /// <param name="statusCode">The http status code.</param>
+        /// <param name="forceRetryOn404">Should 404 be retried.</param>
         /// <returns>True if the request should be retried, false otherwise.</returns>
-        static public bool isRetryableHTTPCode(int statusCode, bool forceRetryOn404)
+        public static bool IsRetryableHTTPCode(HttpStatusCode statusCode, bool forceRetryOn404)
         {
-            if (forceRetryOn404 && statusCode == 404)
+            if (forceRetryOn404 && statusCode == HttpStatusCode.NotFound)
                 return true;
-            return (500 <= statusCode && statusCode < 600) ||
-                   // Forbidden
-                   (statusCode == 403) ||
-                   // Request timeout
-                   (statusCode == 408) ||
-                   // Too many requests
-                   (statusCode == 429) ||
+            return statusCode is >= HttpStatusCode.InternalServerError and < (HttpStatusCode)600 ||
+                   statusCode == HttpStatusCode.Forbidden ||
+                   statusCode == HttpStatusCode.RequestTimeout ||
+                   statusCode == (HttpStatusCode)429 || // Too many requests
                    IsRedirectHTTPCode(statusCode);
         }
 
-        static public bool IsRedirectHTTPCode(int statusCode)
+        /// <summary>
+        /// All 3xx codes that carry a Location header the driver should follow. Includes 300
+        /// (Multiple Choices / Ambiguous): although RFC 9110 section 15.4.1 does not mandate a
+        /// Location header for 300, in practice servers that return 300 with a Location expect
+        /// the client to follow it. The IsSafeRedirect guard rejects the redirect when Location
+        /// is null, so a 300 without one is harmlessly returned to the caller.
+        /// </summary>
+        public static bool IsRedirectHTTPCode(HttpStatusCode statusCode)
         {
             return
-                // Temporary redirect
-                (statusCode == 307) ||
-                // Permanent redirect
-                (statusCode == 308);
+                statusCode is HttpStatusCode.TemporaryRedirect
+                    or (HttpStatusCode)308 // Permanent redirect
+                    or HttpStatusCode.SeeOther
+                    or HttpStatusCode.Redirect
+                    or HttpStatusCode.Moved
+                    or HttpStatusCode.Ambiguous;
+        }
+
+        /// <summary>
+        /// Validates that a redirect target URL is safe to follow:
+        /// 1. Both request URI and redirect location are non-null and request URI is absolute.
+        /// 2. Scheme is HTTP or HTTPS and matches the original request scheme (prevents HTTPS -> HTTP downgrade).
+        /// 3. Host matches the original request host (prevents cross-origin redirect).
+        /// 4. Port matches the original request port.
+        /// </summary>
+        /// <param name="requestUri">The original request URI.</param>
+        /// <param name="location">The redirect location URI.</param>
+        /// <returns>True if the redirect is safe to follow, false otherwise.</returns>
+        internal static bool IsSafeRedirect(Uri requestUri, Uri location)
+        {
+            if (requestUri == null || location == null || !requestUri.IsAbsoluteUri)
+                return false;
+
+            try
+            {
+                var targetUri = location.IsAbsoluteUri ? location : new Uri(requestUri, location);
+
+                if (!targetUri.IsAbsoluteUri)
+                {
+                    logger.Warn($"Redirect rejected: resolved location '{location.ToMaskedString()}' is not an absolute URI for request '{requestUri.ToMaskedString()}'");
+                    return false;
+                }
+
+                if (!string.Equals(targetUri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(targetUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.Warn($"Redirect rejected: non-HTTP scheme '{targetUri.Scheme}' in location '{targetUri.ToMaskedString()}' for request '{requestUri.ToMaskedString()}'");
+                    return false;
+                }
+
+                if (!string.Equals(requestUri.Scheme, targetUri.Scheme, StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.Warn($"Redirect rejected: scheme mismatch ('{requestUri.Scheme}' -> '{targetUri.Scheme}') in location '{targetUri.ToMaskedString()}' for request '{requestUri.ToMaskedString()}'");
+                    return false;
+                }
+
+                if (!string.Equals(requestUri.Host, targetUri.Host, StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.Warn($"Redirect rejected: different origin ('{requestUri.Host}' -> '{targetUri.Host}') in location '{targetUri.ToMaskedString()}' for request '{requestUri.ToMaskedString()}'");
+                    return false;
+                }
+
+                if (requestUri.Port != targetUri.Port)
+                {
+                    logger.Warn($"Redirect rejected: port mismatch ('{requestUri.Port}' -> '{targetUri.Port}') in location '{targetUri.ToMaskedString()}' for request '{requestUri.ToMaskedString()}'");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (UriFormatException exception)
+            {
+                logger.Error($"Redirect rejected: failed to resolve location '{location.ToMaskedString()}' against request '{requestUri.ToMaskedString()}': {exception.Message}");
+                return false;
+            }
         }
 
         /// <summary>

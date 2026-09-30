@@ -79,7 +79,7 @@ namespace Snowflake.Data.Tests.UnitTests
             {
                 ClientCertificateOptions = ClientCertificateOption.Manual,
                 ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
-                AllowAutoRedirect = true,
+                AllowAutoRedirect = false,
             });
             return HttpUtil.Instance.CreateNewHttpClient(config, handler);
         }
