@@ -1,7 +1,13 @@
 using System;
+using System.Collections.Specialized;
+using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
+using Newtonsoft.Json;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 using System.Collections.Generic;
@@ -21,6 +27,13 @@ namespace Snowflake.Data.Core.Authenticator
         public const string AUTH_NAME = "externalbrowser";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
         private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
+        private const string OriginHeader = "Origin";
+        private const string AccessControlRequestMethodHeader = "Access-Control-Request-Method";
+        private const string AccessControlRequestHeadersHeader = "Access-Control-Request-Headers";
+        private const string AccessControlAllowOriginHeader = "Access-Control-Allow-Origin";
+        private const string AccessControlAllowMethodsHeader = "Access-Control-Allow-Methods";
+        private const string AccessControlAllowHeadersHeader = "Access-Control-Allow-Headers";
+        private const string AllowedCorsMethods = "POST, GET, OPTIONS";
 
         private static readonly string SuccessResponse =
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
@@ -36,6 +49,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         // The saml token to send in the login request.
         private string _samlResponseToken;
+        private string _postCallbackToken;
         // The proof key to send in the login request.
         private string _proofKey;
 
@@ -199,8 +213,15 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             var timeout = TimeSpan.FromSeconds(timeoutInSec);
-            var extractor = new Func<HttpListenerRequest, Result<ExternalBrowserToken, IBrowserError>>(ValidateAndExtractToken);
-            using (var browserListener = new WebBrowserListener<ExternalBrowserToken>(httpListener, extractor, SuccessResponse, ErrorResponse))
+            var accountUrl = session.BuildUri(string.Empty);
+            logger.Debug($"External browser callback account origin: {accountUrl.Scheme}://{accountUrl.Host}:{accountUrl.Port}");
+            using (var browserListener = new WebBrowserListener<ExternalBrowserToken>(
+                httpListener,
+                context => HandleCallbackRequest(context, accountUrl)
+                    ? null
+                    : ValidateAndExtractToken(context.Request),
+                SuccessResponse,
+                ErrorResponse))
             {
                 logger.Debug("Open browser");
                 _browserStarter.StartBrowser(new Url(loginUrl));
@@ -211,9 +232,137 @@ namespace Snowflake.Data.Core.Authenticator
         private static string[] GetLocalhostEndpoints(int port) =>
             new[] { $"http://{IPAddress.Loopback}:{port}/", $"http://localhost:{port}/" };
 
+        private bool HandleCallbackRequest(HttpListenerContext context, Uri accountUrl)
+        {
+            var request = context.Request;
+            var origin = request.Headers[OriginHeader];
+
+            if (request.HttpMethod.Equals(HttpMethod.Options.Method, StringComparison.OrdinalIgnoreCase))
+            {
+                HandlePreflight(context.Response, origin, request.Headers, accountUrl);
+                return true;
+            }
+
+            var isOriginless = string.IsNullOrEmpty(origin) || string.Equals(origin, "null", StringComparison.OrdinalIgnoreCase);
+            var isPost = request.HttpMethod.Equals(HttpMethod.Post.Method, StringComparison.OrdinalIgnoreCase);
+            if ((isPost || !isOriginless) && !OriginMatchesAccount(origin, accountUrl))
+            {
+                logger.Warn("Ignoring external browser callback with an unexpected Origin.");
+                CloseResponse(context.Response, HttpStatusCode.Forbidden);
+                return true;
+            }
+
+            if (isPost)
+            {
+                var postToken = TryExtractTokenFromPost(request);
+                if (string.IsNullOrEmpty(postToken))
+                {
+                    logger.Warn("Ignoring external browser callback POST without a token.");
+                    CloseResponse(context.Response, HttpStatusCode.OK);
+                    return true;
+                }
+
+                _postCallbackToken = postToken;
+                ApplyCorsOrigin(context.Response, origin, isOriginless);
+                return false;
+            }
+
+            if (!request.HttpMethod.Equals(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase))
+            {
+                logger.Warn("Ignoring external browser callback with an unexpected HTTP method.");
+                CloseResponse(context.Response, HttpStatusCode.MethodNotAllowed);
+                return true;
+            }
+
+            if (!HasTokenQueryParameter(request))
+            {
+                logger.Warn("Ignoring external browser callback GET without a token.");
+                CloseResponse(context.Response, HttpStatusCode.OK);
+                return true;
+            }
+
+            ApplyCorsOrigin(context.Response, origin, isOriginless);
+            return false;
+        }
+
+        private static void ApplyCorsOrigin(HttpListenerResponse response, string origin, bool isOriginless)
+        {
+            if (isOriginless)
+            {
+                return;
+            }
+
+            response.Headers[AccessControlAllowOriginHeader] = origin;
+            response.Headers["Vary"] = OriginHeader;
+        }
+
+        private static void HandlePreflight(HttpListenerResponse response, string origin, NameValueCollection headers, Uri accountUrl)
+        {
+            var requestedMethod = headers[AccessControlRequestMethodHeader];
+            var requestedHeaders = headers[AccessControlRequestHeadersHeader];
+            if (!OriginMatchesAccount(origin, accountUrl) ||
+                !string.Equals(requestedMethod, HttpMethod.Post.Method, StringComparison.OrdinalIgnoreCase) ||
+                !AreRequestedHeadersAllowed(requestedHeaders))
+            {
+                CloseResponse(response, HttpStatusCode.BadRequest);
+                return;
+            }
+
+            response.StatusCode = (int)HttpStatusCode.NoContent;
+            response.Headers[AccessControlAllowOriginHeader] = origin;
+            response.Headers[AccessControlAllowMethodsHeader] = AllowedCorsMethods;
+            response.Headers["Vary"] = OriginHeader;
+            if (!string.IsNullOrWhiteSpace(requestedHeaders))
+            {
+                response.Headers[AccessControlAllowHeadersHeader] = string.Join(
+                    ", ",
+                    requestedHeaders.Split(',').Select(header => header.Trim()).Where(header => header.Length > 0));
+            }
+            response.Close();
+        }
+
+        private static void CloseResponse(HttpListenerResponse response, HttpStatusCode statusCode)
+        {
+            response.StatusCode = (int)statusCode;
+            response.ContentLength64 = 0;
+            response.Close();
+        }
+
+        private static bool AreRequestedHeadersAllowed(string requestedHeaders) =>
+            string.IsNullOrWhiteSpace(requestedHeaders) ||
+            requestedHeaders.Split(',')
+                .Select(header => header.Trim())
+                .Where(header => header.Length > 0)
+                .All(header => string.Equals(header, "Content-Type", StringComparison.OrdinalIgnoreCase));
+
+        internal static bool OriginMatchesAccount(string origin, Uri accountUrl)
+        {
+            if (string.IsNullOrEmpty(origin) ||
+                string.Equals(origin, "null", StringComparison.OrdinalIgnoreCase) ||
+                !Uri.TryCreate(origin, UriKind.Absolute, out var originUrl) ||
+                !string.IsNullOrEmpty(originUrl.UserInfo) ||
+                originUrl.AbsolutePath != "/" ||
+                !string.IsNullOrEmpty(originUrl.Query) ||
+                !string.IsNullOrEmpty(originUrl.Fragment))
+            {
+                return false;
+            }
+
+            return string.Equals(originUrl.Scheme, accountUrl.Scheme, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(originUrl.IdnHost, accountUrl.IdnHost, StringComparison.OrdinalIgnoreCase) &&
+                originUrl.Port == accountUrl.Port;
+        }
+
         private Result<ExternalBrowserToken, IBrowserError> ValidateAndExtractToken(HttpListenerRequest request)
         {
-            if (request.HttpMethod != "GET")
+            if (!string.IsNullOrEmpty(_postCallbackToken))
+            {
+                var postToken = _postCallbackToken;
+                _postCallbackToken = null;
+                return Result<ExternalBrowserToken, IBrowserError>.CreateResult(new ExternalBrowserToken(postToken));
+            }
+
+            if (request.HttpMethod != HttpMethod.Get.Method)
             {
                 logger.Error("Failed to extract token due to invalid HTTP method.");
                 return Result<ExternalBrowserToken, IBrowserError>.CreateError(new BrowserError
@@ -243,6 +392,55 @@ namespace Snowflake.Data.Core.Authenticator
                 });
             }
             return Result<ExternalBrowserToken, IBrowserError>.CreateResult(new ExternalBrowserToken(token));
+        }
+
+        private static bool HasTokenQueryParameter(HttpListenerRequest request) =>
+            request.QueryString["token"] != null;
+
+        internal static string TryExtractTokenFromPost(string body)
+        {
+            if (string.IsNullOrEmpty(body))
+            {
+                return null;
+            }
+
+            try
+            {
+                var payload = JsonConvert.DeserializeObject<ExternalBrowserPostPayload>(body);
+                if (payload != null && !string.IsNullOrEmpty(payload.Token))
+                {
+                    return payload.Token;
+                }
+            }
+            catch (JsonException e)
+            {
+                logger.Warn("POST callback body is not valid JSON; falling back to form-encoded parsing.", e);
+            }
+
+            var formToken = HttpUtility.ParseQueryString(body)["token"];
+            return string.IsNullOrEmpty(formToken) ? null : formToken;
+        }
+
+        private static string TryExtractTokenFromPost(HttpListenerRequest request)
+        {
+            if (!request.HasEntityBody)
+            {
+                return null;
+            }
+
+            using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+            {
+                return TryExtractTokenFromPost(reader.ReadToEnd());
+            }
+        }
+
+        private class ExternalBrowserPostPayload
+        {
+            [JsonProperty(PropertyName = "token")]
+            public string Token { get; set; }
+
+            [JsonProperty(PropertyName = "consent")]
+            public bool? Consent { get; set; }
         }
 
         private SFRestRequest BuildAuthenticatorRestRequest(int port)

@@ -138,9 +138,11 @@ You can close this window now and go back where you started from.
         {
             var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             var timeout = TimeSpan.FromSeconds(timeoutInSec);
-            var extractor = new Func<HttpListenerRequest, Result<OAuthAuthorizationCodeResponse, IBrowserError>>(httpRequest => ValidateAndExtractAuthorizationCodeResult(httpRequest, request.State));
             using (var httpListener = StartListenerUpdatingRedirectUri(request))
-            using (var browserListener = new WebBrowserListener<OAuthAuthorizationCodeResponse>(httpListener, extractor, BrowserSuccessResponse, BrowserUnexpectedErrorResponse))
+            using (var browserListener = new WebBrowserListener<OAuthAuthorizationCodeResponse>(
+                httpListener,
+                context => ValidateAndExtractAuthorizationCodeResult(context.Request, request.State),
+                BrowserSuccessResponse, BrowserUnexpectedErrorResponse))
             {
                 var authorizationCodeUrl = request.GetUrl();
                 _browserStarter.StartBrowser(authorizationCodeUrl);

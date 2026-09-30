@@ -8,25 +8,46 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Authenticator.Browser
 {
+    /// <summary>
+    /// Listens on an <see cref="HttpListener"/> for browser callback requests, dispatches each
+    /// one through a handler, and signals the waiting thread when a terminal response is received.
+    /// </summary>
     internal class WebBrowserListener<T> : IDisposable
         where T : class
     {
         private readonly HttpListener _httpListener;
-        private readonly Func<HttpListenerRequest, Result<T, IBrowserError>> _extractor;
+        /// <summary>
+        /// Called for every incoming request. Returns <c>null</c> to continue listening for the
+        /// next request, or a <see cref="Result{T,IBrowserError}"/> to deliver a terminal outcome
+        /// and stop the listener.
+        /// </summary>
+        private readonly Func<HttpListenerContext, Result<T, IBrowserError>> _handler;
         private readonly string _successResponse;
         private readonly string _unexpectedErrorResponse;
         private readonly ManualResetEvent _successEvent;
+        private readonly object _wakeEventLock = new object();
         private T _result;
         private string _browserError;
         private Exception _exception;
-        private bool _isDisposed;
+        private volatile bool _isDisposed;
+        private volatile bool _isShuttingDown;
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WebBrowserListener<T>>();
 
-        public WebBrowserListener(HttpListener httpListener, Func<HttpListenerRequest, Result<T, IBrowserError>> extractor, string successResponse, string unexpectedErrorResponse)
+        /// <summary>
+        /// Initialises the listener with the already-started <paramref name="httpListener"/>,
+        /// a handler that processes each request and either returns <c>null</c> to keep listening
+        /// or a <see cref="Result{T,IBrowserError}"/> to stop, and HTML bodies for the terminal
+        /// success and error responses.
+        /// </summary>
+        public WebBrowserListener(
+            HttpListener httpListener,
+            Func<HttpListenerContext, Result<T, IBrowserError>> handler,
+            string successResponse,
+            string unexpectedErrorResponse)
         {
             _httpListener = httpListener;
-            _extractor = extractor;
+            _handler = handler;
             _successResponse = successResponse;
             _unexpectedErrorResponse = unexpectedErrorResponse;
             _successEvent = new ManualResetEvent(false);
@@ -34,8 +55,14 @@ namespace Snowflake.Data.Core.Authenticator.Browser
             _browserError = null;
             _exception = null;
             _isDisposed = false;
+            _isShuttingDown = false;
         }
 
+        /// <summary>
+        /// Blocks until the browser delivers a valid token, the <paramref name="timeout"/> elapses,
+        /// or an unrecoverable error occurs. Stops the listener before returning.
+        /// </summary>
+        /// <exception cref="SnowflakeDbException">Thrown on timeout or on a browser error reported by the handler.</exception>
         public T WaitAndGetResult(TimeSpan timeout)
         {
             try
@@ -49,6 +76,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser
             }
             finally
             {
+                _isShuttingDown = true;
                 _httpListener.Stop();
             }
 
@@ -62,68 +90,120 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         private void GetContextCallback(IAsyncResult result)
         {
-            if (_isDisposed)
-                return;
             HttpListener httpListener = (HttpListener)result.AsyncState;
-            if (httpListener.IsListening)
+            HttpListenerContext context;
+            try
             {
-                HttpListenerContext context = null;
-                try
+                // The pending operation is always completed, also while shutting down, so that
+                // the listener does not leak it when the wait is re-armed and then stopped.
+                context = httpListener.EndGetContext(result);
+            }
+            catch (Exception exception) when (IsListenerClosedException(exception))
+            {
+                if (IsShutdownExpected(httpListener))
                 {
-                    context = httpListener.EndGetContext(result);
-                }
-                catch (HttpListenerException ex)
-                {
-                    s_logger.Error("Error while trying to get context from HttpListener", ex);
-                    WakeUpAwaitingThread();
+                    s_logger.Debug("Stopped waiting for the browser response because the listener was closed");
                     return;
                 }
-
-                HttpListenerRequest request = context.Request;
-                bool success;
-                try
-                {
-                    var extracted = _extractor(request);
-                    success = extracted.IsSuccess();
-                    if (success)
-                    {
-                        _result = extracted.Success;
-                    }
-                    else
-                    {
-                        _browserError = extracted.Error.GetBrowserError();
-                        _exception = extracted.Error.GetException();
-                    }
-                }
-                catch (Exception exception)
-                {
-                    _exception = exception;
-                    _browserError = _unexpectedErrorResponse;
-                    success = false;
-                }
-                if (success)
-                    RespondToBrowser(context);
-                else
-                {
-                    RespondToBrowserWithError(context);
-                }
+                s_logger.Error("Error while trying to get context from HttpListener", exception);
+                _exception = exception;
+                WakeUpAwaitingThread();
+                return;
             }
+
+            if (IsShutdownExpected(httpListener))
+            {
+                s_logger.Debug("Ignoring the browser response received after the listener was closed");
+                return;
+            }
+
+            Result<T, IBrowserError> extracted;
+            try
+            {
+                extracted = _handler(context);
+            }
+            catch (Exception exception)
+            {
+                _exception = exception;
+                _browserError = _unexpectedErrorResponse;
+                RespondToBrowserWithError(context);
+                WakeUpAwaitingThread();
+                return;
+            }
+
+            if (extracted == null)
+            {
+                ContinueListening(httpListener);
+                return;
+            }
+
+            bool success = extracted.IsSuccess();
+            if (success)
+            {
+                _result = extracted.Success;
+            }
+            else
+            {
+                _browserError = extracted.Error.GetBrowserError();
+                _exception = extracted.Error.GetException();
+            }
+            if (success)
+                RespondToBrowser(context);
+            else
+                RespondToBrowserWithError(context);
             WakeUpAwaitingThread();
+        }
+
+        private void ContinueListening(HttpListener httpListener)
+        {
+            try
+            {
+                if (IsShutdownExpected(httpListener))
+                {
+                    s_logger.Debug("Stopped waiting for the browser response because the listener was closed");
+                    return;
+                }
+                httpListener.BeginGetContext(GetContextCallback, httpListener);
+            }
+            catch (Exception exception) when (IsListenerClosedException(exception))
+            {
+                if (IsShutdownExpected(httpListener))
+                {
+                    s_logger.Debug("Stopped waiting for the browser response because the listener was closed");
+                    return;
+                }
+                s_logger.Error("Error while waiting for another browser response", exception);
+                _exception = exception;
+                WakeUpAwaitingThread();
+            }
+        }
+
+        private static bool IsListenerClosedException(Exception exception) =>
+            exception is HttpListenerException ||
+            exception is ObjectDisposedException ||
+            exception is InvalidOperationException;
+
+        private bool IsShutdownExpected(HttpListener httpListener)
+        {
+            if (_isDisposed || _isShuttingDown)
+                return true;
+            try
+            {
+                return !httpListener.IsListening;
+            }
+            catch (ObjectDisposedException)
+            {
+                return true;
+            }
         }
 
         private void WakeUpAwaitingThread()
         {
-            try
+            lock (_wakeEventLock)
             {
+                if (_isDisposed)
+                    return;
                 _successEvent.Set();
-            }
-            catch (ObjectDisposedException)
-            {
-                s_logger.Warn("Could not wake up the thread waiting for the browser response because the resource was already disposed");
-            }
-            catch (Exception exception)
-            {
-                s_logger.Warn("Could not wake up the thread waiting for the browser response because of error", exception);
             }
         }
 
@@ -146,10 +226,10 @@ namespace Snowflake.Data.Core.Authenticator.Browser
         {
             try
             {
-                using (var output = response.OutputStream)
-                {
-                    output.Write(responseBytes, 0, responseBytes.Length);
-                }
+                response.ContentLength64 = responseBytes.Length;
+                response.KeepAlive = false;
+                response.OutputStream.Write(responseBytes, 0, responseBytes.Length);
+                response.Close();
             }
             catch
             {
@@ -160,12 +240,15 @@ namespace Snowflake.Data.Core.Authenticator.Browser
 
         public void Dispose()
         {
-            if (!_isDisposed)
+            lock (_wakeEventLock)
             {
+                if (_isDisposed)
+                    return;
+                _isShuttingDown = true;
                 _isDisposed = true;
-                ((IDisposable)_httpListener)?.Dispose();
-                _successEvent?.Dispose();
             }
+            ((IDisposable)_httpListener)?.Dispose();
+            _successEvent?.Dispose();
         }
     }
 }
