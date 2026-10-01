@@ -1,6 +1,8 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- v6.4.0
+  - Bug fix: symbol packages (`.snupkg`) are now pushed to NuGet alongside the main package during deployment.
 - v6.3.0
   - Improved external-browser callback handling by matching Origin headers to the configured Snowflake account origin, accepting same-origin POST token callbacks, and keeping the listener open for tokenless GET requests. (SNOW-4109575) 
   - Prevented credential and request payload replaying to cross-origin destinations or unencrypted HTTP during IdP authentication and HTTP retry redirects by disabling automatic HTTP redirects across HTTP client handlers, validating redirect locations against the origin (scheme, host, and port) of the initial request, and enforcing port matching in Okta authenticator URL verification.
