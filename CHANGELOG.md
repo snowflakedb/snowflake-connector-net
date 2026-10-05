@@ -3,6 +3,7 @@
 # Changelog
 - v6.4.0
   - Bug fix: symbol packages (`.snupkg`) are now pushed to NuGet alongside the main package during deployment.
+  - Upgraded the `BouncyCastle.Cryptography` dependency from 2.6.2 to 2.7.0, which resolves third-party vulnerability-scanner findings against the bundled library. (SNOW-4236088)
 - v6.3.0
   - Improved external-browser callback handling by matching Origin headers to the configured Snowflake account origin, accepting same-origin POST token callbacks, and keeping the listener open for tokenless GET requests. (SNOW-4109575) 
   - Prevented credential and request payload replaying to cross-origin destinations or unencrypted HTTP during IdP authentication and HTTP retry redirects by disabling automatic HTTP redirects across HTTP client handlers, validating redirect locations against the origin (scheme, host, and port) of the initial request, and enforcing port matching in Okta authenticator URL verification.

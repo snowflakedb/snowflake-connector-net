@@ -30,7 +30,7 @@ namespace Snowflake.Data.Tests.Util
             string[][] crlUrls,
             int keySize = 2048)
         {
-            var subjectName = $"CN={cn}, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var subjectName = $"CN={cn}, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             return GenerateSelfSignedCertificate(subjectName, notBefore, notAfter, crlUrls, keySize);
         }
 

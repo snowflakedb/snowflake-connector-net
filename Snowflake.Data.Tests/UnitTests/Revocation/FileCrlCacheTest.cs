@@ -15,7 +15,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
     public class FileCrlCacheTest : RevocationTests
     {
         const string CrlUrl = "http://snowflakecomputing.com/crl1.crl";
-        const string IssuerCa = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+        const string IssuerCa = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
         const long UnixUserId = 5;
         const long UnixGroupId = 6;
         private static readonly DateTime s_thisUpdate = new(2025, 8, 10, 0, 0, 0, DateTimeKind.Utc);

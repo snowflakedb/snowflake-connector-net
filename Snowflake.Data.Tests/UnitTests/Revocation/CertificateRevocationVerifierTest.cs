@@ -24,8 +24,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
             // arrange
             var certRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), checkMode, true);
-            var certSubject = "CN=ShortLivedCert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
-            var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certSubject = "CN=ShortLivedCert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
+            var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
             var certificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[0]);
             var rootCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
@@ -227,8 +227,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
             // arrange
             var certKeys = CertificateGenerator.GenerateEllipticKeysForCertAndItsParent();
-            var certSubject = "CN=cert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
-            var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certSubject = "CN=cert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
+            var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             var signatureAlgorithm = CertificateGenerator.SHA256WithECDSA;
             var certificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[0], false, signatureAlgorithm);
             var parentCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1], true, signatureAlgorithm);
@@ -256,8 +256,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
             // arrange
             var expectedResult = (ChainRevocationCheckResult)Enum.Parse(typeof(ChainRevocationCheckResult), expectedResultString, true);
-            var certSubject = "CN=ShortLivedCert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
-            var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certSubject = "CN=ShortLivedCert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
+            var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
             var shortLivedCertificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(offsetDays), null, certKeys[0]);
             var rootCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
@@ -327,7 +327,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void AuthorityKeyIdentifierConsistentWhenCrlHasNoAkiExtension()
         {
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
-            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             var parentCertificate = CertificateGenerator.GenerateCertificate(
                 rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
             var now = DateTime.UtcNow;
@@ -350,7 +350,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void AuthorityKeyIdentifierConsistentWhenAkiMatchesParentSki()
         {
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
-            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             var parentCertificate = CertificateGenerator.GenerateCertificate(
                 rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
             var now = DateTime.UtcNow;
@@ -377,7 +377,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         {
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
             var otherKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
-            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             var parentCertificate = CertificateGenerator.GenerateCertificate(
                 rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
             var now = DateTime.UtcNow;
@@ -403,7 +403,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         public void AuthorityKeyIdentifierConsistentWhenCrlHasAkiButParentHasNoSki()
         {
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
-            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             var parentCertificate = CertificateGenerator.GenerateCertificate(
                 rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300),
                 null, certKeys[1], includeSubjectKeyIdentifier: false);
@@ -464,8 +464,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var expectedCrlUrls = new[] { "http://test.crl" };
 
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
-            var certSubject = "CN=Test Cert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
-            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certSubject = "CN=Test Cert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             var certificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), new[] { expectedCrlUrls }, certKeys[0]);
             var parentCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
             var config = GetHttpConfig();
@@ -503,8 +503,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             var expectedCrlUrls = new[] { "http://test.crl" };
 
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
-            var certSubject = "CN=Test Cert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
-            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var certSubject = "CN=Test Cert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
+            var rootSubject = "CN=Test Root CA, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             var certificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), new[] { expectedCrlUrls }, certKeys[0]);
             var parentCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1]);
             var config = GetHttpConfig();

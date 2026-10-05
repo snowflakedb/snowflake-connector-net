@@ -178,7 +178,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
             // consistent with X509Certificate2.SerialNumber in both cases.
 
             // arrange
-            var rootSubject = "CN=Root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland";
+            var rootSubject = "CN=Root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
             var certKeys = CertificateGenerator.GenerateKeysForCertAndItsParent();
 
             // Generate certs until we get one with/without the 0x00 prefix (depending on test case).
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
 #if NET8_0_OR_GREATER
         private static X509Certificate2 BuildSelfSignedCertificate(int runNo)
         {
-            var distinguishedName = new X500DistinguishedName($"CN=TestCert{runNo}, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=Poland");
+            var distinguishedName = new X500DistinguishedName($"CN=TestCert{runNo}, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL");
             using var rsa = RSA.Create(2048);
             var request = new CertificateRequest(distinguishedName, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(30));
