@@ -1,0 +1,69 @@
+# AUTO-GENERATED — do not edit manually.
+# Regenerate by running: python3 ci/mirroring/scripts/generate_mirror_config.py
+name: Verify import label
+
+# Mirror-side integrity gate for the ok-to-import label.
+#
+# Fires when a maintainer labels a PR with `ok-to-import` on the mirror
+# repo (snowflakedb/drivers). Creates a GitHub check run
+# (`import-approval`) on the PR's HEAD SHA from the webhook payload.
+# The check is bound to that exact SHA — if the contributor pushes new
+# commits, the new HEAD has no check run and the import workflow will
+# reject it. The import workflow also passes the approved SHA directly
+# to Copybara as the source ref, so it imports exactly the reviewed
+# commit.
+#
+# Deployment: checked in to the internal repo; the outbound Copybara
+# mirror ships it to snowflakedb/drivers's
+# .github/workflows/ automatically. The repository_owner guard below
+# limits it to the mirror org; the internal copy is a no-op.
+
+on:
+    pull_request_target:
+        types: [labeled]
+
+permissions:
+    checks: write
+
+jobs:
+    verify:
+        # Only runs on the mirror org — the internal copy is a no-op.
+        # Only fires for the ok-to-import label.
+        if: >-
+            github.repository_owner == 'snowflakedb'
+            && github.event.label.name == 'ok-to-import'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Verify label integrity and stamp check run
+              uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+              with:
+                  script: |
+                      const { owner, repo } = context.repo;
+                      const prNumber = context.payload.pull_request.number;
+                      const headSha = context.payload.pull_request.head.sha;
+
+                      // Stamp a check run on the payload's HEAD SHA — the exact
+                      // commit that was current when the maintainer applied the
+                      // label. The check run is bound to this SHA; if the
+                      // contributor pushes new commits, the new HEAD has no check
+                      // and the import workflow will reject it. The import workflow
+                      // also passes this SHA to Copybara as the source ref, so it
+                      // imports exactly this commit.
+                      await github.rest.checks.create({
+                        owner, repo,
+                        head_sha: headSha,
+                        name: 'import-approval',
+                        status: 'completed',
+                        conclusion: 'success',
+                        output: {
+                          title: `Import approved for PR #${prNumber}`,
+                          summary:
+                            `SHA \`${headSha}\` was verified at label time. `
+                            + 'If the PR HEAD changes, this check will not exist on the new SHA '
+                            + 'and the import will be blocked.',
+                        },
+                      });
+
+                      core.info(
+                        `Check run 'import-approval' created on ${headSha} for PR #${prNumber}.`
+                      );
