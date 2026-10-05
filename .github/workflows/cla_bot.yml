@@ -1,29 +1,107 @@
-name: "CLA Assistant"
+# AUTO-GENERATED — do not edit manually.
+# Regenerate by running: python3 ci/mirroring/scripts/generate_mirror_config.py
+name: Verify import label
+
+# Mirror-side integrity gate for the ok-to-import label.
+#
+# Fires when a maintainer labels a PR with `ok-to-import` on the mirror
+# repo (snowflakedb/drivers). Two checks:
+#
+#   1. Fast-fail: re-fetches the PR and compares `updated_at` against
+#      the webhook payload. If they differ, the PR was modified between
+#      labeling and this workflow's start — removes the label and exits.
+#
+#   2. Creates a GitHub check run (`import-approval`) on the PR's head
+#      SHA with conclusion `success`. The check is bound to that exact
+#      SHA — if the contributor pushes new commits, the new HEAD has no
+#      check run and the internal import step will reject it.
+#
+# Deployment: checked in to the internal repo; the outbound Copybara
+# mirror ships it to snowflakedb/drivers's
+# .github/workflows/ automatically. The repository_owner guard below
+# limits it to the mirror org; the internal copy is a no-op.
+
 on:
-  issue_comment:
-    types: [created]
   pull_request_target:
-    types: [opened,closed,synchronize]
+    types: [labeled]
+
+permissions:
+  checks: write
+  pull-requests: write
+  contents: read
 
 jobs:
-  CLAAssistant:
+  verify:
+    # Only runs on the mirror org — the internal copy is a no-op.
+    # Only fires for the ok-to-import label.
+    if: >-
+      github.repository_owner == 'snowflakedb'
+      && github.event.label.name == 'ok-to-import'
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: write
-      pull-requests: write
-      statuses: write
     steps:
-      - name: "CLA Assistant"
-        if: (github.event.comment.body == 'recheck' || github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA') || github.event_name == 'pull_request_target'
-        uses: contributor-assistant/github-action/@master # @master needs to stay as the enterprise/repository rules does not allow to use versioning for this job
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PERSONAL_ACCESS_TOKEN : ${{ secrets.CLA_BOT_TOKEN }}
+      - name: Verify label integrity and stamp check run
+        uses: actions/github-script@v9
         with:
-          path-to-signatures: 'signatures/version1.json'
-          path-to-document: 'https://github.com/snowflakedb/CLA/blob/main/README.md'
-          branch: 'main'
-          allowlist: 'dependabot[bot],github-actions,Jenkins User,_jenkins,sfc-gh-snyk-sca-sa,snyk-bot'
-          remote-organization-name: 'snowflake-eng'
-          remote-repository-name: 'cla-db'
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const payloadUpdatedAt = context.payload.pull_request.updated_at;
+
+            // Re-fetch the PR to get its current state. If anything
+            // changed between the webhook firing and now, updated_at
+            // will have advanced past the payload snapshot.
+            const { data: pr } = await github.rest.pulls.get({
+              owner, repo, pull_number: prNumber,
+            });
+
+            if (pr.updated_at !== payloadUpdatedAt) {
+              // Remove the label so the PR visibly returns to
+              // "needs re-review" state.
+              try {
+                await github.rest.issues.removeLabel({
+                  owner, repo, issue_number: prNumber,
+                  name: 'ok-to-import',
+                });
+              } catch (e) {
+                core.warning(`Could not remove label: ${e.message}`);
+              }
+
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: prNumber,
+                body:
+                  'The `ok-to-import` label was removed automatically.\n\n'
+                  + '**Reason:** The PR was updated between labeling and verification. '
+                  + `The webhook payload recorded \`updated_at: ${payloadUpdatedAt}\` `
+                  + `but a fresh API fetch shows \`updated_at: ${pr.updated_at}\`.\n\n`
+                  + 'Please review the new changes and re-apply `ok-to-import` when ready.',
+              });
+
+              core.setFailed(
+                `PR #${prNumber} was modified after labeling `
+                + `(payload: ${payloadUpdatedAt}, current: ${pr.updated_at}). `
+                + 'Label removed.'
+              );
+              return;
+            }
+
+            // The PR has not changed since labeling. Stamp a check run
+            // on the exact HEAD SHA that was reviewed.
+            const headSha = pr.head.sha;
+            await github.rest.checks.create({
+              owner, repo,
+              head_sha: headSha,
+              name: 'import-approval',
+              status: 'completed',
+              conclusion: 'success',
+              output: {
+                title: `Import approved for PR #${prNumber}`,
+                summary:
+                  `SHA \`${headSha}\` was verified at label time. `
+                  + 'If the PR HEAD changes, this check will not exist on the new SHA '
+                  + 'and the import will be blocked.',
+              },
+            });
+
+            core.info(
+              `Check run 'import-approval' created on ${headSha} for PR #${prNumber}.`
+            );
