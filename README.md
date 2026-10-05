@@ -116,7 +116,7 @@ public commit history is the canonical record of what ships.
 
 ### How to contribute
 
-1. Fork this repository and open a pull request against `__MAIN_BRANCH__`.
+1. Fork this repository and open a pull request against `master`.
 2. A maintainer reviews your PR and triggers a workflow to copy your PR into
    our private repo to run internal CI and AI reviews.
 4. After the internal PR merges, the next mirror sync replays the commit
