@@ -17,7 +17,7 @@ The Snowflake .NET connector supports the following .NET framework and library v
 - .NET 9.0
 - .NET 10.0
 
-The connector targets `netstandard2.0` but only the versions listed above are tested and supported.
+The connector targets `netstandard2.0` but only the versions listed above are tested and supported....
 
 ## Target Frameworks and Platform-Specific Builds
 
