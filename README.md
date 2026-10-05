@@ -99,6 +99,40 @@ Detailed documentation for each area of the driver is maintained in separate pag
 
 ---
 
+## Contributing
+
+External contributions are welcome!
+
+### Two repositories, one source of truth
+
+Snowflake develops drivers in a private repository to isolate CI pipelines
+and internal tooling. This public repository is a **read-only mirror** kept
+in sync by [Copybara](https://github.com/google/copybara) — a tool that
+replays commits between repositories while preserving authorship. The
+mirror is updated roughly once a day.
+
+**Releases are always published from this public repository**, so the
+public commit history is the canonical record of what ships.
+
+### How to contribute
+
+1. Fork this repository and open a pull request against `__MAIN_BRANCH__`.
+2. A maintainer reviews your PR and triggers a workflow to copy your PR into
+   our private repo to run internal CI and AI reviews.
+4. After the internal PR merges, the next mirror sync replays the commit
+   back here and your original PR is closed automatically.
+
+### What to expect
+
+- The mirrored commit's author will be a Snowflake service account, but
+  your contribution is credited via the `Authored-by` field in the
+  commit message.
+- There is a short delay (typically under a day) between internal merge
+  and the commit appearing on the public mirror.
+- If you have questions, open an issue or a discussion.
+  
+---
+
 ## Notice
 
 1.  CVE-2019-0820 -
