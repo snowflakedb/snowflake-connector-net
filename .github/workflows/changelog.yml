@@ -1,22 +1,107 @@
-name: Changelog Check
-permissions:
-    contents: read
+# AUTO-GENERATED — do not edit manually.
+# Regenerate by running: python3 ci/mirroring/scripts/generate_mirror_config.py
+name: Verify import label
+
+# Mirror-side integrity gate for the ok-to-import label.
+#
+# Fires when a maintainer labels a PR with `ok-to-import` on the mirror
+# repo (snowflakedb/drivers). Two checks:
+#
+#   1. Fast-fail: re-fetches the PR and compares `updated_at` against
+#      the webhook payload. If they differ, the PR was modified between
+#      labeling and this workflow's start — removes the label and exits.
+#
+#   2. Creates a GitHub check run (`import-approval`) on the PR's head
+#      SHA with conclusion `success`. The check is bound to that exact
+#      SHA — if the contributor pushes new commits, the new HEAD has no
+#      check run and the internal import step will reject it.
+#
+# Deployment: checked in to the internal repo; the outbound Copybara
+# mirror ships it to snowflakedb/drivers's
+# .github/workflows/ automatically. The repository_owner guard below
+# limits it to the mirror org; the internal copy is a no-op.
 
 on:
-    pull_request:
-        types: [opened, synchronize, labeled, unlabeled]
-        branches:
-            - master
+  pull_request_target:
+    types: [labeled]
+
+permissions:
+  checks: write
+  pull-requests: write
+  contents: read
 
 jobs:
-    check_change_log:
-        runs-on: ubuntu-latest
-        if: ${{!contains(github.event.pull_request.labels.*.name, 'NO-CHANGELOG-UPDATES')}}
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-              with:
-                  fetch-depth: 0
+  verify:
+    # Only runs on the mirror org — the internal copy is a no-op.
+    # Only fires for the ok-to-import label.
+    if: >-
+      github.repository_owner == 'snowflakedb'
+      && github.event.label.name == 'ok-to-import'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify label integrity and stamp check run
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const payloadUpdatedAt = context.payload.pull_request.updated_at;
 
-            - name: Ensure CHANGELOG.md is updated
-              run: git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -wq "CHANGELOG.md"
+            // Re-fetch the PR to get its current state. If anything
+            // changed between the webhook firing and now, updated_at
+            // will have advanced past the payload snapshot.
+            const { data: pr } = await github.rest.pulls.get({
+              owner, repo, pull_number: prNumber,
+            });
+
+            if (pr.updated_at !== payloadUpdatedAt) {
+              // Remove the label so the PR visibly returns to
+              // "needs re-review" state.
+              try {
+                await github.rest.issues.removeLabel({
+                  owner, repo, issue_number: prNumber,
+                  name: 'ok-to-import',
+                });
+              } catch (e) {
+                core.warning(`Could not remove label: ${e.message}`);
+              }
+
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: prNumber,
+                body:
+                  'The `ok-to-import` label was removed automatically.\n\n'
+                  + '**Reason:** The PR was updated between labeling and verification. '
+                  + `The webhook payload recorded \`updated_at: ${payloadUpdatedAt}\` `
+                  + `but a fresh API fetch shows \`updated_at: ${pr.updated_at}\`.\n\n`
+                  + 'Please review the new changes and re-apply `ok-to-import` when ready.',
+              });
+
+              core.setFailed(
+                `PR #${prNumber} was modified after labeling `
+                + `(payload: ${payloadUpdatedAt}, current: ${pr.updated_at}). `
+                + 'Label removed.'
+              );
+              return;
+            }
+
+            // The PR has not changed since labeling. Stamp a check run
+            // on the exact HEAD SHA that was reviewed.
+            const headSha = pr.head.sha;
+            await github.rest.checks.create({
+              owner, repo,
+              head_sha: headSha,
+              name: 'import-approval',
+              status: 'completed',
+              conclusion: 'success',
+              output: {
+                title: `Import approved for PR #${prNumber}`,
+                summary:
+                  `SHA \`${headSha}\` was verified at label time. `
+                  + 'If the PR HEAD changes, this check will not exist on the new SHA '
+                  + 'and the import will be blocked.',
+              },
+            });
+
+            core.info(
+              `Check run 'import-approval' created on ${headSha} for PR #${prNumber}.`
+            );
