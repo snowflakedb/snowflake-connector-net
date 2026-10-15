@@ -457,6 +457,46 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
+        public void TestSuccessfulLoginWhenCacheWriteFails()
+        {
+            // arrange
+            var mockCredentialManager = new Mock<ISnowflakeCredentialManager>();
+            mockCredentialManager.Setup(m => m.GetCredentials(It.IsAny<string>())).Returns(string.Empty);
+            SnowflakeCredentialManagerFactory.SetCredentialManager(mockCredentialManager.Object);
+            _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+            _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            var session = PrepareSession();
+
+            // act
+            session.Open();
+
+            // assert
+            AssertSessionSuccessfullyCreated(session);
+            mockCredentialManager.Verify(m => m.SaveCredentials(It.IsAny<string>(), AccessToken), Times.Once);
+            mockCredentialManager.Verify(m => m.SaveCredentials(It.IsAny<string>(), RefreshToken), Times.Once);
+        }
+
+        [SFFact(SkipCondition.SkipOnJenkins)]
+        public async Task TestSuccessfulLoginWhenCacheWriteFailsAsync()
+        {
+            // arrange
+            var mockCredentialManager = new Mock<ISnowflakeCredentialManager>();
+            mockCredentialManager.Setup(m => m.GetCredentials(It.IsAny<string>())).Returns(string.Empty);
+            SnowflakeCredentialManagerFactory.SetCredentialManager(mockCredentialManager.Object);
+            _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+            _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            var session = PrepareSession();
+
+            // act
+            await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+            // assert
+            AssertSessionSuccessfullyCreated(session);
+            mockCredentialManager.Verify(m => m.SaveCredentials(It.IsAny<string>(), AccessToken), Times.Once);
+            mockCredentialManager.Verify(m => m.SaveCredentials(It.IsAny<string>(), RefreshToken), Times.Once);
+        }
+
+        [SFFact(SkipCondition.SkipOnJenkins)]
         public void TestTokenRequestError()
         {
             // arrange

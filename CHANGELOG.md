@@ -2,6 +2,7 @@
 
 # Changelog
 - v6.4.0
+  - `SaveCredentials` in the Windows Credential Manager backend now validates the token size against the OS-imposed 2560-byte blob limit before writing and checks the `CredWrite` return value after writing. Previously, an oversized or otherwise rejected token was silently discarded, causing the browser OAuth flow to re-prompt on restart. (SNOW-4199956)
   - Bug fix: symbol packages (`.snupkg`) are now pushed to NuGet alongside the main package during deployment.
   - Upgraded the `BouncyCastle.Cryptography` dependency from 2.6.2 to 2.7.0, which resolves third-party vulnerability-scanner findings against the bundled library. (SNOW-4236088)
 - v6.3.0

@@ -1,5 +1,6 @@
 using Microsoft.Win32.SafeHandles;
 using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -8,9 +9,13 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.CredentialManager.Infrastructure
 {
-
     internal class SFCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManager
     {
+        // Microsoft-documented ceiling for CREDENTIALW.CredentialBlobSize, in bytes.
+        // " This member cannot be larger than CRED_MAX_CREDENTIAL_BLOB_SIZE (5*512) bytes."
+        // https://learn.microsoft.com/en-us/windows/win32/api/wincred/ns-wincred-credentialw
+        internal const int CredMaxCredentialBlobSizeBytes = 5 * 512;
+
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerWindowsNativeImpl>();
 
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
@@ -82,6 +87,13 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
         {
             s_logger.Debug($"Saving the credentials for key: {key}");
             byte[] byteArray = Encoding.Unicode.GetBytes(token);
+
+            if (byteArray.Length > CredMaxCredentialBlobSizeBytes)
+            {
+                s_logger.Error($"token is too large ({byteArray.Length} bytes) for Windows Credential Manager (maximum {CredMaxCredentialBlobSizeBytes} bytes) and cannot be written to cache!");
+                return;
+            }
+
             Credential credential = new Credential();
             credential.AttributeCount = 0;
             credential.Attributes = IntPtr.Zero;
@@ -89,7 +101,7 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             credential.TargetAlias = IntPtr.Zero;
             credential.Type = 1; // Generic
             credential.Persist = 2; // Local Machine
-            credential.CredentialBlobSize = (uint)(byteArray == null ? 0 : byteArray.Length);
+            credential.CredentialBlobSize = (uint)byteArray.Length;
             credential.TargetName = key;
             credential.CredentialBlob = token;
             credential.UserName = Environment.UserName;
@@ -97,9 +109,14 @@ namespace Snowflake.Data.Core.CredentialManager.Infrastructure
             _lock.EnterWriteLock();
             try
             {
-                CredWrite(ref credential, 0);
+                if (CredWrite(ref credential, 0))
+                    return;
+
+                var win32Error = Marshal.GetLastWin32Error();
+                var win32Exception = new Win32Exception(win32Error);
+                s_logger.Error($"CredWrite failed with Win32 error {win32Exception.NativeErrorCode}: {win32Exception.Message}!");
             }
-            catch (Exception exception)
+            catch (Exception exception) when (exception is not SnowflakeDbException)
             {
                 s_logger.Error($"Failed to save credentials", exception);
                 throw;

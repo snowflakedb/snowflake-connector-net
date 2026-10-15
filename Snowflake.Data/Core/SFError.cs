@@ -108,6 +108,9 @@ namespace Snowflake.Data.Core
         [SFErrorAttr(errorCode = 270067)]
         TLS_CONFIGURATION_NOT_SUPPORTED,
 
+        [SFErrorAttr(errorCode = 270068)]
+        CREDENTIAL_WRITE_ERROR,
+
         [SFErrorAttr(errorCode = 390111)]
         SESSION_GONE,
 
