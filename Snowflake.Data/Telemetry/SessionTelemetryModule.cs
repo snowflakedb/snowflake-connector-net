@@ -262,8 +262,8 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
                 if (tag.Value is null)
                     continue;
 
-                var maskedTagValue = SecretDetector.MaskSecrets(tag.Value.ToString());
-                message[$"tag.{tag.Key}"] = maskedTagValue.maskedText;
+                var maskedTagValue = SecretDetector.Instance.MaskSecrets(tag.Value.ToString());
+                message[$"tag.{tag.Key}"] = maskedTagValue.MaskedText;
             }
 
 #if NET6_0_OR_GREATER

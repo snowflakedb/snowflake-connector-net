@@ -10,6 +10,7 @@ using System.Text;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Core.FileTransfer;
+using Snowflake.Data.Logger;
 using static System.Int32;
 
 namespace Snowflake.Data.Core
@@ -100,8 +101,6 @@ namespace Snowflake.Data.Core
 
     class SFStatement
     {
-        static private SFLogger logger = SFLoggerFactory.GetLogger<SFStatement>();
-
         internal SFSession SfSession { get; set; }
 
         private const string SF_QUERY_CANCEL_PATH = "/queries/v1/abort-request";
@@ -141,19 +140,20 @@ namespace Snowflake.Data.Core
         string _lastQueryId = null;
 
         private string _queryTag = null;
+        private readonly IQuerySFLogger _logger;
 
-        internal SFStatement(SFSession session)
-        {
-            SfSession = session;
-            _restRequester = session.restRequester;
-            _queryTag = session._queryTag;
-        }
+        internal SFStatement(SFSession session) : this(session, session._queryTag)
+        { }
 
-        internal SFStatement(SFSession session, string queryTag)
+        internal SFStatement(SFSession session, string queryTag) : this(session, queryTag, new QuerySFLogger(session._queryLoggingConfig, SFLoggerFactory.GetLogger<SFStatement>()))
+        { }
+
+        internal SFStatement(SFSession session, string queryTag, IQuerySFLogger logger)
         {
             SfSession = session;
             _restRequester = session.restRequester;
             _queryTag = queryTag ?? session._queryTag;
+            _logger = logger;
         }
 
         internal string GetBindStage() => _bindStage;
@@ -165,7 +165,7 @@ namespace Snowflake.Data.Core
 
                 if (_requestId != null)
                 {
-                    logger.Info("Another query is running.");
+                    _logger.Info("Another query is running.");
                     throw new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
                 }
 
@@ -334,7 +334,7 @@ namespace Snowflake.Data.Core
                     catch (Exception ex)
                     {
                         // Prevent an unhandled exception from being thrown
-                        logger.Error("Unable to cancel query.", ex);
+                        _logger.Error("Unable to cancel query.", ex);
                     }
                 });
             }
@@ -379,7 +379,7 @@ namespace Snowflake.Data.Core
                 // payload - that would silently drop the requested TLS restriction.
                 catch (Exception e) when (!e.IsTlsConfigurationNotSupported())
                 {
-                    logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
+                    _logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
                 }
                 finally
                 {
@@ -387,10 +387,11 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            var queryRequest = BuildQueryRequest(statementContext, bindings);
             string queryId = null;
             try
             {
+                var queryRequest = BuildQueryRequest(statementContext, bindings);
+                _logger.LogQuery(queryRequest, _requestId);
                 QueryExecResponse response = null;
                 var receivedFirstQueryResponse = false;
                 while (!receivedFirstQueryResponse)
@@ -426,14 +427,14 @@ namespace Snowflake.Data.Core
             {
                 queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
                 _lastQueryId = queryId ?? _lastQueryId;
-                logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
+                _logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
                 throw WrapCancellationException(ex, cancellationToken, statementContext.CommandTimeout, queryId);
             }
             catch (Exception ex)
             {
                 queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
                 _lastQueryId = queryId ?? _lastQueryId;
-                logger.Error("Query execution failed.");
+                _logger.Error("Query execution failed.");
                 HandleExceptionForSession(ex);
                 throw;
             }
@@ -475,7 +476,7 @@ namespace Snowflake.Data.Core
                 var response = ExecuteHelper<PutGetExecResponse, PutGetResponseData>(statementContext, bindings);
 
                 var dataQueryId = response.data?.queryId ?? "Unknown";
-                logger.Debug($"PUT/GET queryId: {dataQueryId}");
+                _logger.Debug($"PUT/GET queryId: {dataQueryId}");
 
                 var fileTransferAgent = statementContext.Stream != null
                     ? new SFFileTransferAgent(trimmedSql, SfSession, response.data, new BorrowedMemoryStream(statementContext.Stream, false))
@@ -492,7 +493,7 @@ namespace Snowflake.Data.Core
             }
             catch (SnowflakeDbException ex)
             {
-                logger.Error($"Query execution failed, QueryId: {ex.QueryId ?? "unavailable"}", ex);
+                _logger.Error($"Query execution failed, QueryId: {ex.QueryId ?? "unavailable"}", ex);
                 _lastQueryId = ex.QueryId ?? _lastQueryId;
                 HandleExceptionForSession(ex);
                 throw;
@@ -503,14 +504,14 @@ namespace Snowflake.Data.Core
             }
             catch (OperationCanceledException ex)
             {
-                logger.Error("Query execution timed out.", ex);
+                _logger.Error("Query execution timed out.", ex);
                 _lastQueryId = (ex.InnerException as SnowflakeDbException)?.QueryId ?? _lastQueryId;
                 HandleExceptionForSession(ex);
                 throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, args: ex.Message);
             }
             catch (Exception ex)
             {
-                logger.Error("Query execution failed.", ex);
+                _logger.Error("Query execution failed.", ex);
                 HandleExceptionForSession(ex);
                 throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, args: ex.Message);
             }
@@ -543,7 +544,7 @@ namespace Snowflake.Data.Core
                     // payload - that would silently drop the requested TLS restriction.
                     catch (Exception e) when (!e.IsTlsConfigurationNotSupported())
                     {
-                        logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " +
+                        _logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " +
                                     e.Message);
                     }
                     finally
@@ -557,7 +558,7 @@ namespace Snowflake.Data.Core
             }
             catch (Exception ex)
             {
-                logger.Error("Query execution failed.", ex);
+                _logger.Error("Query execution failed.", ex);
                 var queryId = (ex as SnowflakeDbException)?.QueryId;
                 queryId ??= ((ex as OperationCanceledException)?.InnerException as SnowflakeDbException)?.QueryId;
                 queryId ??= _lastQueryId;
@@ -649,23 +650,23 @@ namespace Snowflake.Data.Core
             {
                 var response = _restRequester.Post<NullDataResponse>(request);
                 if (!response.success)
-                    logger.Warn("Query cancellation failed.");
+                    _logger.Warn("Query cancellation failed.");
             }
             else
             {
                 var postTask = Task.Run(() => _restRequester.Post<NullDataResponse>(request));
                 postTask.ContinueWith(t =>
-                    logger.Error("Query cancellation request failed.", t.Exception),
+                    _logger.Error("Query cancellation request failed.", t.Exception),
                     TaskContinuationOptions.OnlyOnFaulted);
 
                 if (postTask.Wait(cleanupWait))
                 {
                     if (!postTask.Result.success)
-                        logger.Warn("Query cancellation failed.");
+                        _logger.Warn("Query cancellation failed.");
                 }
                 else if (cleanupWait != TimeSpan.Zero)
                 {
-                    logger.Warn($"Query cancellation did not complete within CLEANUP_WAIT ({cleanupWait.TotalSeconds}s). Returning to caller; the abort request continues in the background.");
+                    _logger.Warn($"Query cancellation did not complete within CLEANUP_WAIT ({cleanupWait.TotalSeconds}s). Returning to caller; the abort request continues in the background.");
                 }
             }
 
@@ -688,10 +689,12 @@ namespace Snowflake.Data.Core
             where TResponseData : IQueryExecResponseData
         {
             registerQueryCancellationCallback(statementContext.CommandTimeout, CancellationToken.None);
-            var queryRequest = BuildQueryRequest(statementContext, bindings);
+
             string queryId = null;
             try
             {
+                var queryRequest = BuildQueryRequest(statementContext, bindings);
+                _logger.LogQuery(queryRequest, _requestId);
                 TResponse response = null;
                 var receivedFirstQueryResponse = false;
                 while (!receivedFirstQueryResponse)
@@ -742,12 +745,12 @@ namespace Snowflake.Data.Core
             catch (OperationCanceledException ex)
             {
                 queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
-                logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
+                _logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
                 throw WrapCancellationException(ex, CancellationToken.None, statementContext.CommandTimeout, queryId);
             }
             catch (Exception ex)
             {
-                logger.Error("Query execution failed.", ex);
+                _logger.Error("Query execution failed.", ex);
                 HandleExceptionForSession(ex);
                 throw;
             }
@@ -775,10 +778,12 @@ namespace Snowflake.Data.Core
         {
             registerQueryCancellationCallback(statementContext.CommandTimeout, cancellationToken);
             var linkedToken = _linkedCancellationTokenSource.Token;
-            var queryRequest = BuildQueryRequest(statementContext, bindings);
+
             string queryId = null;
             try
             {
+                var queryRequest = BuildQueryRequest(statementContext, bindings);
+                _logger.LogQuery(queryRequest, _requestId);
                 T response = null;
                 var receivedFirstQueryResponse = false;
                 while (!receivedFirstQueryResponse)
@@ -830,12 +835,12 @@ namespace Snowflake.Data.Core
             catch (OperationCanceledException ex)
             {
                 queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
-                logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
+                _logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
                 throw WrapCancellationException(ex, cancellationToken, statementContext.CommandTimeout, queryId);
             }
             catch (Exception ex)
             {
-                logger.Error("Query execution failed.", ex);
+                _logger.Error("Query execution failed.", ex);
                 HandleExceptionForSession(ex);
                 throw;
             }
@@ -910,7 +915,7 @@ namespace Snowflake.Data.Core
             }
             catch
             {
-                logger.Error("Query execution failed.");
+                _logger.Error("Query execution failed.");
                 throw;
             }
             finally
@@ -960,7 +965,7 @@ namespace Snowflake.Data.Core
             }
             catch
             {
-                logger.Error("Query execution failed.");
+                _logger.Error("Query execution failed.");
                 throw;
             }
             finally
@@ -974,7 +979,7 @@ namespace Snowflake.Data.Core
         /// </summary>
         /// <param name="originalSql">The original sql query.</param>
         /// <returns>The query without the blanks and comments at the beginning.</returns>
-        internal static string TrimSql(string originalSql)
+        internal string TrimSql(string originalSql)
         {
             char[] sqlQueryBuf = originalSql.ToCharArray();
             var builder = new StringBuilder();
@@ -1022,7 +1027,6 @@ namespace Snowflake.Data.Core
 
             var trimmedQuery = builder.ToString();
             trimmedQuery = trimmedQuery.Trim();
-            logger.Debug("Trimmed query : " + trimmedQuery);
 
             return trimmedQuery;
         }
@@ -1143,7 +1147,7 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.SESSION_GONE);
 
             if (!response.IsSessionExpired()) return false;
-            logger.Info("Request failed with session expired, trying to renew the session.");
+            _logger.Info("Request failed with session expired, trying to renew the session.");
             await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
 
             return true;
@@ -1156,7 +1160,7 @@ namespace Snowflake.Data.Core
                 throw new SnowflakeDbException(SFError.SESSION_GONE);
 
             if (!response.IsSessionExpired()) return false;
-            logger.Info("Request failed with session expired, trying to renew the session.");
+            _logger.Info("Request failed with session expired, trying to renew the session.");
             SfSession.renewSession();
 
             return true;

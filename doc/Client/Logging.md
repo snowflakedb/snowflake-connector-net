@@ -10,6 +10,76 @@ SnowflakeDbLoggerConfig.SetCustomLogger(customILogger); // Enables the custom lo
 SnowflakeDbLoggerConfig.ResetCustomLogger(); // Disables the custom logger
 ```
 
+## Query Text and Parameter Logging
+
+The driver can optionally log SQL query text and bind parameter values for debugging purposes. These features are **disabled by default** for security reasons.
+
+**Warning**: Enabling query logging may expose sensitive data (PII, credentials, financial data) in your log output. Ensure logs are protected as confidential data.
+
+### Configuration
+
+Query logging can be configured via connection string, TOML configuration, or programmatically:
+
+**Connection string:**
+```csharp
+conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;" +
+    "LOG_QUERY_TEXT=true;LOG_QUERY_PARAMETERS=true;LOG_MAX_QUERY_LENGTH=1000";
+```
+
+**TOML configuration (`connections.toml`):**
+```toml
+[default]
+account = "testaccount"
+user = "testuser"
+log_query_text = true
+log_query_parameters = true
+log_max_query_length = 1000
+```
+
+**Programmatic (sets process-wide defaults):**
+```csharp
+SnowflakeDbLoggerConfig.SetLogQueryText(true);
+SnowflakeDbLoggerConfig.SetLogQueryParameters(true);
+SnowflakeDbLoggerConfig.SetLogMaxQueryLength(1000);
+```
+
+### Precedence
+
+When the same parameter is set in multiple places, the highest-precedence value wins:
+
+1. **Connection string** (highest)
+2. **TOML configuration**
+3. **Programmatic defaults** (lowest)
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `LOG_QUERY_TEXT` | bool | `false` | Log SQL query text at INFO level before each query execution. |
+| `LOG_QUERY_PARAMETERS` | bool | `false` | Log bind parameter values at INFO level before each query execution. Requires `LOG_QUERY_TEXT=true`; ignored otherwise. |
+| `LOG_MAX_QUERY_LENGTH` | int | `-1` | Maximum character length for logged query text and parameters. `-1` means no truncation. Must be `-1` (no limit) or at least `50`. Query text and parameters are truncated independently. |
+
+### Log output
+
+When enabled, query text and parameters are logged at **INFO** level right before each query is sent to the server:
+
+```
+[INFO] Query [<requestId>]: SELECT * FROM users WHERE id = ?
+[INFO] Parameters [<requestId>]: [john, 42]
+```
+
+When truncation is active:
+
+```
+[INFO] Query [<requestId>]: SELECT * FROM u... [truncated from 5000 to 1000 chars]
+```
+
+The `requestId` can be used to correlate query text with parameters and with Snowflake's query history.
+
+### Secret masking
+
+All logged content passes through the driver's secret masking pipeline on a best-effort basis. The driver attempts to detect and redact patterns that look like passwords, tokens, keys, and other credentials before they are written to the log. However, this masking is **not guaranteed to catch every sensitive value** — it relies on pattern matching and may miss application-specific secrets, PII, or non-standard credential formats. You should treat query logs as confidential data regardless of masking, and ensure your logging infrastructure applies appropriate access controls and retention policies.
+
 ## Easy logging
 
 The Easy Logging feature lets you change the log level for all driver classes and add an extra file appender for logs from the driver's classes at runtime. You can specify the log levels and the directory in which to save log files in a configuration file (default: `sf_client_config.json`).

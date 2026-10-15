@@ -12,7 +12,7 @@ public sealed class StringExtensionsTestCollection;
 [Collection(nameof(StringExtensionsTestCollection))]
 public sealed class StringExtensionsTest : IDisposable
 {
-    public void Dispose() => SecretDetector.ClearCustomPatterns();
+    public void Dispose() => SecretDetector.Instance.ClearCustomPatterns();
 
     [SFTheory]
     [InlineData(null, null)]
@@ -48,7 +48,7 @@ public sealed class StringExtensionsTest : IDisposable
     [SFFact]
     public void TestToMaskedStringReturnsErrorWhenMaskingFails()
     {
-        SecretDetector.SetCustomPatterns(
+        SecretDetector.Instance.SetCustomPatterns(
             ["[invalid regex"],
             ["****"]);
 

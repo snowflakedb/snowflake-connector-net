@@ -37,14 +37,14 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
         public void TestResetCustomLogger()
         {
             SnowflakeDbLoggerConfig.ResetCustomLogger();
-            Assert.IsAssignableFrom<ILogger>(SFLoggerFactory.s_customLogger);
+            Assert.IsAssignableFrom<ILogger>(SFLoggerFactory.CustomLogger);
         }
 
         [SFFact]
         public void TestSettingCustomLogger()
         {
             SnowflakeDbLoggerConfig.SetCustomLogger(new LoggerEmptyImpl());
-            Assert.IsType<LoggerEmptyImpl>(SFLoggerFactory.s_customLogger);
+            Assert.IsType<LoggerEmptyImpl>(SFLoggerFactory.CustomLogger);
         }
 
         [SFTheory]
@@ -122,7 +122,7 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
                 SnowflakeDbLoggerConfig.ResetCustomLogger();
             }
 
-            return SFLoggerFactory.s_customLogger;
+            return SFLoggerFactory.CustomLogger;
         }
 
         [SFFact]

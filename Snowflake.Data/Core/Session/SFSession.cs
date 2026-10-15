@@ -100,6 +100,8 @@ namespace Snowflake.Data.Core
 
         internal readonly TimeSpan _abortRequestTimeout;
 
+        internal readonly QueryLoggingConfig _queryLoggingConfig;
+
         private string _user;
 
         internal bool _disableSamlUrlCheck;
@@ -246,6 +248,7 @@ namespace Snowflake.Data.Core
                 _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
                 _cleanupWait = extractedProperties.cleanupWait;
                 _abortRequestTimeout = extractedProperties.abortRequestTimeout;
+                QueryLoggingConfig.ValidateAndExtract(properties, logger, out _queryLoggingConfig);
 
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&
                     MFACacheAuthenticator.IsMfaCacheAuthenticator(_authenticatorType))

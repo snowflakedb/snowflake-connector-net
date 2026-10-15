@@ -351,6 +351,9 @@ Special characters in TOML values:
 | ALLOW_NUMBER_OVERFLOW_AS_STRING   | 🟢 Optional | When `true`, numeric values that overflow `System.Decimal` (e.g. NUMBER(38,0) values exceeding ~7.9×10²⁸) are returned as strings instead of throwing `OverflowException`. Default: `false`. |
 | CLEANUP_WAIT                      | 🟢 Optional | How long `Cancel()` blocks waiting for the abort-request POST to complete. When the deadline expires, `Cancel()` returns and the POST continues fire-and-forget in the background. Set to `0` for immediate return. Supports units: `1000ms`, `15s`, `2m` (default unit: seconds). Default: not set (blocks until the cancel request completes). |
 | ABORT_REQUEST_TIMEOUT             | 🟢 Optional | HTTP-level timeout for the query cancellation POST (`/queries/v1/abort-request`). When set, the HTTP request is cancelled after the specified duration instead of using the driver's default 120-second REST timeout. Supports units: `1000ms`, `15s`, `2m` (default unit: seconds). Default: not set (uses the driver's default 120-second REST timeout). |
+| LOG_QUERY_TEXT                    | 🟢 Optional | When `true`, logs SQL query text at INFO level before each query execution. Default: `false`. **Security**: ensure logs are protected as confidential data when enabled. |
+| LOG_QUERY_PARAMETERS              | 🟢 Optional | When `true`, logs bind parameter values at INFO level before each query execution. Requires `LOG_QUERY_TEXT=true`; ignored otherwise. Default: `false`. **Security**: ensure logs are protected as confidential data when enabled. |
+| LOG_MAX_QUERY_LENGTH              | 🟢 Optional | Maximum character length for logged query text and parameters. Set to `-1` for no truncation (default). Must be `-1` (no limit) or at least `50`. Only effective when `LOG_QUERY_TEXT` or `LOG_QUERY_PARAMETERS` is enabled. |
 
 ### TLS cipher suites
 

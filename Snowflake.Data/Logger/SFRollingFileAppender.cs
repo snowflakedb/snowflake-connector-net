@@ -36,7 +36,7 @@ namespace Snowflake.Data.Log
         public void Append(string logLevel, string message, Type type, Exception ex = null)
         {
             var formattedMessage = PatternLayout.Format(logLevel, message, type);
-            var maskedExceptionString = SecretDetector.MaskSecrets(ex?.ToString()).maskedText;
+            var maskedExceptionString = SecretDetector.Instance.MaskSecrets(ex?.ToString()).MaskedText;
             try
             {
                 long fileSize;

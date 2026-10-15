@@ -9,9 +9,9 @@ internal static class StringExtensions
 
     public static string ToMaskedString(this string input)
     {
-        var maskSecrets = SecretDetector.MaskSecrets(input);
-        return string.IsNullOrEmpty(maskSecrets.errStr)
-            ? maskSecrets.maskedText
-            : $"[Error occurred during secret masking]: {maskSecrets.errStr}";
+        var maskSecrets = SecretDetector.Instance.MaskSecrets(input);
+        return string.IsNullOrEmpty(maskSecrets.ErrStr)
+            ? maskSecrets.MaskedText
+            : $"[Error occurred during secret masking]: {maskSecrets.ErrStr}";
     }
 }

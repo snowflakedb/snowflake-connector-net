@@ -4,27 +4,15 @@ using System.Text.RegularExpressions;
 
 namespace Snowflake.Data.Log
 {
-    class SecretDetector
+    internal class SecretDetector : ISecretDetector
     {
-        public struct Mask
-        {
-            public Mask(bool isMasked = false, string maskedText = null, string errStr = null)
-            {
-                this.isMasked = isMasked;
-                this.maskedText = maskedText;
-                this.errStr = errStr;
-            }
-
-            public bool isMasked { get; set; }
-            public string maskedText { get; set; }
-            public string errStr { get; set; }
-        }
+        public static SecretDetector Instance { get; } = new();
 
         private static List<string> CUSTOM_PATTERNS_REGEX = new List<string>();
         private static List<string> CUSTOM_PATTERNS_MASK = new List<string>();
         private static int CUSTOM_PATTERNS_LENGTH;
 
-        public static void SetCustomPatterns(string[] customRegex, string[] customMask)
+        public void SetCustomPatterns(string[] customRegex, string[] customMask)
         {
             if (CUSTOM_PATTERNS_LENGTH != 0)
             {
@@ -46,7 +34,7 @@ namespace Snowflake.Data.Log
             }
         }
 
-        public static void ClearCustomPatterns()
+        public void ClearCustomPatterns()
         {
             CUSTOM_PATTERNS_REGEX.Clear();
             CUSTOM_PATTERNS_MASK.Clear();
@@ -143,9 +131,9 @@ namespace Snowflake.Data.Log
 
         private static string MaskTokenProperty(string text) => s_tokenPropertyPattern.Replace(text, @"$1$2****");
 
-        public static Mask MaskSecrets(string text)
+        public Mask MaskSecrets(string text)
         {
-            Mask result = new Mask(maskedText: text);
+            var result = new Mask(false, text, null);
 
             if (String.IsNullOrEmpty(text))
             {
@@ -154,10 +142,10 @@ namespace Snowflake.Data.Log
 
             try
             {
-                result.maskedText = MaskAllPatterns(text);
-                if (result.maskedText != text)
+                result.MaskedText = MaskAllPatterns(text);
+                if (result.MaskedText != text)
                 {
-                    result.isMasked = true;
+                    result.IsMasked = true;
                 }
             }
             catch (Exception ex)
@@ -165,9 +153,9 @@ namespace Snowflake.Data.Log
                 //We'll assume that the exception was raised during masking
                 //to be safe consider that the log has sensitive information
                 //and do not raise an exception.
-                result.isMasked = true;
-                result.maskedText = ex.Message;
-                result.errStr = ex.Message;
+                result.IsMasked = true;
+                result.MaskedText = ex.Message;
+                result.ErrStr = ex.Message;
             }
             return result;
         }

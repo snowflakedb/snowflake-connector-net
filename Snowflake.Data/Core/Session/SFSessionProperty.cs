@@ -166,6 +166,12 @@ namespace Snowflake.Data.Core
         CLEANUP_WAIT,
         [SFSessionPropertyAttr(required = false, defaultValue = "-1")]
         ABORT_REQUEST_TIMEOUT,
+        [SFSessionPropertyAttr(required = false)]
+        LOG_QUERY_TEXT,
+        [SFSessionPropertyAttr(required = false)]
+        LOG_QUERY_PARAMETERS,
+        [SFSessionPropertyAttr(required = false)]
+        LOG_MAX_QUERY_LENGTH,
     }
 
     class SFSessionPropertyAttr : Attribute
@@ -336,6 +342,7 @@ namespace Snowflake.Data.Core
             ValidateServicePointConnectionLimit(properties);
             ValidateCrlParameters(properties);
             ValidateTlsParameters(properties);
+            ValidateLoggingConfig(properties);
 
             var allowUnderscoresInHost = ParseAllowUnderscoresInHost(properties);
 
@@ -365,6 +372,8 @@ namespace Snowflake.Data.Core
 
             return properties;
         }
+
+        private static void ValidateLoggingConfig(SFSessionProperties properties) => QueryLoggingConfig.ValidateAndExtract(properties, logger, out _);
 
         private static void ValidateCrlParameters(SFSessionProperties properties)
         {

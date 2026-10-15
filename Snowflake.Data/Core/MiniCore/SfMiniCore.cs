@@ -93,14 +93,14 @@ namespace Snowflake.Data.Core.MiniCore
             catch (DllNotFoundException ex)
             {
                 logs.Append($"MiniCore library not found. Error: {ex.Message}");
-                var maskedLogs = SecretDetector.MaskSecrets(logs.ToString()).maskedText;
+                var maskedLogs = SecretDetector.Instance.MaskSecrets(logs.ToString()).MaskedText;
                 Logger.Debug(maskedLogs);
                 return new LoadResult { Version = null, Logs = maskedLogs, Error = FAILED_TO_LOAD_MESSAGE };
             }
             catch (Exception ex)
             {
                 logs.Append($"Failed to load MiniCore: {ex.Message}");
-                var maskedLogs = SecretDetector.MaskSecrets(logs.ToString()).maskedText;
+                var maskedLogs = SecretDetector.Instance.MaskSecrets(logs.ToString()).MaskedText;
                 Logger.Debug(maskedLogs, ex);
                 return new LoadResult { Version = null, Logs = maskedLogs, Error = FAILED_TO_LOAD_MESSAGE };
             }

@@ -5,9 +5,9 @@ namespace Snowflake.Data.Tests.Mock
 {
     class MockSecretDetector
     {
-        public static SecretDetector.Mask MaskSecrets(string text)
+        public static Mask MaskSecrets(string text)
         {
-            SecretDetector.Mask result = new SecretDetector.Mask();
+            var result = new Mask();
             try
             {
                 throw new Exception("Test exception");
@@ -17,9 +17,9 @@ namespace Snowflake.Data.Tests.Mock
                 //We'll assume that the exception was raised during masking
                 //to be safe consider that the log has sensitive information
                 //and do not raise an exception.
-                result.isMasked = true;
-                result.maskedText = ex.Message;
-                result.errStr = ex.Message;
+                result.IsMasked = true;
+                result.MaskedText = ex.Message;
+                result.ErrStr = ex.Message;
             }
             return result;
         }
