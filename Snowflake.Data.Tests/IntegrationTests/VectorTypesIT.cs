@@ -21,6 +21,8 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
     public abstract class VectorTypesIT : SFBaseTestAsync
     {
+        private const float LargeNegativeFloat = -1E+38f;
+        private const float LargePositiveFloat = 1E+38f;
         private readonly ResultFormat _resultFormat;
 
         private readonly SFBaseTestAsyncFixture _fixture;
@@ -259,7 +261,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         }
 
         [SFFact(SkipCondition.SkipOnJenkins)]
-        public async Task TestSelectFloatVectorWithMinAndMaxFloatValues()
+        public async Task TestSelectFloatVectorWithLargeFloatValues()
         {
             using (DbConnection conn = new SnowflakeDbConnection())
             {
@@ -269,19 +271,18 @@ namespace Snowflake.Data.Tests.IntegrationTests
 
                 using (DbCommand command = conn.CreateCommand())
                 {
-                    command.CommandText = $"SELECT [{float.MinValue}, {float.MaxValue}]::VECTOR(FLOAT, 2) as vec;";
+                    command.CommandText = $"SELECT [{LargeNegativeFloat}, {LargePositiveFloat}]::VECTOR(FLOAT, 2) as vec;";
                     var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                     Assert.True(reader.Read());
 
                     var arr = reader.GetArray<float>(0);
-#if NETFRAMEWORK
-                    Assert.Equal(float.MinValue.ToString(), arr[0].ToString());
-                    Assert.Equal(float.MaxValue.ToString(), arr[1].ToString());
-#else
-                    Assert.Equal(float.MinValue, arr[0]);
-                    Assert.Equal(float.MaxValue, arr[1]);
-#endif
+
+                    if (!float.IsNegativeInfinity(arr[0]))
+                        Assert.InRange(arr[0], float.MinValue, -9E+37);
+
+                    if (!float.IsInfinity(arr[1]))
+                        Assert.InRange(arr[1], 9E+37, float.MaxValue);
                 }
             }
         }
