@@ -545,6 +545,49 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 
+        [SFFact]
+        public void TestConstructorUpdatesQueryContextCache()
+        {
+            var recordBatch = ArrowResultChunkTest.PrepareRecordBatch(SFDataType.FIXED, 0, new int[] { 1 });
+            var responseData = PrepareResponseData(recordBatch, SFDataType.FIXED, 0);
+            var queryContext = new ResponseQueryContext
+            {
+                Entries =
+                [
+                    new()
+                    {
+                        Id = 42,
+                        ReadTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                        Priority = 1,
+                        Context = "test_context"
+                    }
+                ]
+            };
+            responseData.QueryContext = queryContext;
+            var session = new SFSession("user=user;password=password;account=account;", new SessionPropertiesContext());
+            var sfStatement = new SFStatement(session);
+
+            _ = new ArrowResultSet(responseData, sfStatement, CancellationToken.None);
+
+            var cachedContext = session.GetQueryContextRequest();
+            Assert.NotNull(cachedContext);
+            Assert.Single(cachedContext.Entries);
+            Assert.Equal(42, cachedContext.Entries[0].Id);
+        }
+
+        [SFFact]
+        public void TestConstructorHandlesNullQueryContext()
+        {
+            var recordBatch = ArrowResultChunkTest.PrepareRecordBatch(SFDataType.FIXED, 0, new int[] { 1 });
+            var responseData = PrepareResponseData(recordBatch, SFDataType.FIXED, 0);
+            responseData.QueryContext = null;
+            var sfStatement = PrepareStatement();
+
+            var exception = Record.Exception(() => new ArrowResultSet(responseData, sfStatement, CancellationToken.None));
+
+            Assert.Null(exception);
+        }
+
         private SFStatement PrepareStatement()
         {
             SFSession session = new SFSession("user=user;password=password;account=account;", new SessionPropertiesContext());

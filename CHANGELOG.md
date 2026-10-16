@@ -4,6 +4,7 @@
 - v6.4.0
   - Added `LOG_QUERY_TEXT`, `LOG_QUERY_PARAMETERS`, and `LOG_MAX_QUERY_LENGTH` connection string properties for opt-in query text and bind parameter logging. When enabled, SQL query text and/or parameter values are logged at INFO level before each query execution. Configurable via connection string, TOML config, or programmatically via `SnowflakeDbLoggerConfig.SetLogQueryText()`, `SetLogQueryParameters()`, and `SetLogMaxQueryLength()`. All logged content passes through the driver's secret masking pipeline.
   - `SaveCredentials` in the Windows Credential Manager backend now validates the token size against the OS-imposed 2560-byte blob limit before writing and checks the `CredWrite` return value after writing. Previously, an oversized or otherwise rejected token was silently discarded, causing the browser OAuth flow to re-prompt on restart. (SNOW-4199956)
+  - Bug fix: `ArrowResultSet` now updates the query context cache during session status synchronization, preventing `rsHwm=-1` from being sent on subsequent arrow chunk requests which caused unnecessary foreground FDB transactions. (SNOW-4268513)
   - Bug fix: symbol packages (`.snupkg`) are now pushed to NuGet alongside the main package during deployment.
   - Upgraded the `BouncyCastle.Cryptography` dependency from 2.6.2 to 2.7.0, which resolves third-party vulnerability-scanner findings against the bundled library. (SNOW-4236088)
 - v6.3.0

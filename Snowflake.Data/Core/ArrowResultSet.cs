@@ -456,9 +456,10 @@ namespace Snowflake.Data.Core
 
         private void UpdateSessionStatus(QueryExecResponseData responseData)
         {
-            SFSession session = this.sfStatement.SfSession;
+            SFSession session = sfStatement.SfSession;
             session.UpdateSessionProperties(responseData);
             session.UpdateSessionParameterMap(responseData.parameters);
+            session.UpdateQueryContextCache(responseData.QueryContext);
         }
 
         private long ReadSubset<T>(int ordinal, long dataOffset, T[] buffer, int bufferOffset, int length) where T : struct
