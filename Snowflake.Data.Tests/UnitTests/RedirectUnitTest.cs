@@ -75,13 +75,14 @@ namespace Snowflake.Data.Tests.UnitTests
         private HttpClient CreateHttpClientForRetry()
         {
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 7, 20);
-            var handler = new CustomDelegatingHandler(new HttpClientHandler
+            var httpMessageHandler = new HttpClientHandler
             {
                 ClientCertificateOptions = ClientCertificateOption.Manual,
                 ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
                 AllowAutoRedirect = false,
-            });
-            return HttpUtil.Instance.CreateNewHttpClient(config, handler);
+            };
+            var customHandler = new CustomDelegatingHandler(httpMessageHandler);
+            return HttpUtil.Instance.CreateNewHttpClient(config, httpMessageHandler, customHandler);
         }
 
         private HttpRequestMessage CreateQueryRequest()

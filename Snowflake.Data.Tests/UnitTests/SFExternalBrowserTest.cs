@@ -784,7 +784,7 @@ namespace Snowflake.Data.Tests.UnitTests
         private static void SetAuthenticatorWithMockBrowser(SFSession session, IWebBrowserRunner browserRunner)
         {
             var authenticator = new ExternalBrowserAuthenticator(session, browserRunner);
-            session.authenticator = authenticator;
+            session.ReplaceAuthenticator(authenticator);
         }
 
         private static HttpRequestMessage CreatePostRequest(Uri uri, string origin)
@@ -838,7 +838,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var listenerUri = new Uri(endpoints[0]);
 
             var boom = new InvalidOperationException("handler exploded");
-            Func<HttpListenerContext, Result<string, IBrowserError>?> handler = _ => throw boom;
+            Func<HttpListenerContext, Result<string, IBrowserError>> handler = _ => throw boom;
 
             using var listener = new WebBrowserListener<string>(
                 httpListener, handler, "<ok/>", "<err/>");

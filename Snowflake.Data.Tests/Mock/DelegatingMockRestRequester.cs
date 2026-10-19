@@ -36,5 +36,7 @@ namespace Snowflake.Data.Tests.Mock
 
         public HttpResponseMessage Get(IRestRequest request) =>
             _inner.Get(request);
+
+        public HttpClient GetHttpClient() => _inner.GetHttpClient();
     }
 }

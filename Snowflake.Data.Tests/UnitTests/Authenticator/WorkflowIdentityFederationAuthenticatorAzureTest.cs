@@ -98,7 +98,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             AddAzureBasicWiremockMappings();
             var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var attestation = authenticator.CreateAttestation();
@@ -116,7 +116,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             AddAzureBasicWithClientIdWiremockMappings();
             var session = PrepareSessionForAzure(null, ConfigureIdentityClientId);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var attestation = authenticator.CreateAttestation();
@@ -134,7 +134,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             AddAzureBasicV2IssuerWiremockMappings();
             var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var attestation = authenticator.CreateAttestation();
@@ -151,7 +151,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             AddAzureUnparsableTokenWiremockMappings();
             var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
@@ -172,7 +172,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 ConfigureIdentityHeader(e);
                 ConfigureIdentityClientId(e);
             });
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var attestation = authenticator.CreateAttestation();
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 ConfigureIdentityEndpoint(e);
                 ConfigureIdentityHeader(e);
             });
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var attestation = authenticator.CreateAttestation();
@@ -217,7 +217,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 ConfigureIdentityHeader(e);
                 ConfigureIdentityClientId(e);
             });
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var attestation = authenticator.CreateAttestation();
@@ -239,7 +239,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 ConfigureIdentityEndpoint(e);
                 ConfigureIdentityClientId(e);
             });
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
@@ -260,7 +260,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 ConfigureIdentityHeader(e);
                 ConfigureIdentityClientId(e);
             });
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var attestation = authenticator.CreateAttestation();
@@ -343,7 +343,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var session = PrepareSessionForAzure("workload_impersonation_path=some/impersonation/path;", NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());

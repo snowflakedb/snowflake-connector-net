@@ -13,8 +13,6 @@ using Snowflake.Data.Log;
 using System.Collections.Specialized;
 using System.Web;
 using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
-using System.Net.Security;
 using System.Linq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
@@ -22,6 +20,11 @@ using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Tools;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
+
+#if NET8_0_OR_GREATER
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+#endif
 
 namespace Snowflake.Data.Core
 {
@@ -47,7 +50,8 @@ namespace Snowflake.Data.Core
             string minTlsProtocol = null,
             string maxTlsProtocol = null,
             bool tlsProtocolsExplicitlyRequested = false,
-            TlsCipherPolicy tlsCipherPolicy = null
+            TlsCipherPolicy tlsCipherPolicy = null,
+            string clientType = "default"
         )
         {
             ProxyHost = proxyHost;
@@ -94,7 +98,8 @@ namespace Snowflake.Data.Core
                     minTlsProtocol,
                     maxTlsProtocol,
                     tlsProtocolsExplicitlyRequested.ToString(),
-                    CipherPolicy?.CanonicalValue
+                    CipherPolicy?.CanonicalValue,
+                    clientType
                 });
         }
 
@@ -219,13 +224,24 @@ namespace Snowflake.Data.Core
             return _HttpClients[name];
         }
 
-        internal HttpClient CreateNewHttpClient(HttpClientConfig config, DelegatingHandler customHandler = null) =>
-            new HttpClient(
-                new RetryHandler(SetupCustomHttpHandler(config, customHandler), config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries,
-                    config.IncludeRetryReason, config.ConnectionLimit))
+        internal HttpClient CreateNewHttpClient(HttpClientConfig config, DelegatingHandler customDelegatingHandlerWrapper = null) =>
+            CreateNewHttpClient(config, SetupCustomHttpHandler(config), customDelegatingHandlerWrapper);
+
+        internal HttpClient CreateNewHttpClient(HttpClientConfig config, HttpMessageHandler messageHandler, DelegatingHandler customDelegatingHandlerWrapper = null)
+        {
+            RejectAutoRedirect(messageHandler);
+            if (customDelegatingHandlerWrapper != null)
+            {
+                customDelegatingHandlerWrapper.InnerHandler = messageHandler;
+                messageHandler = customDelegatingHandlerWrapper;
+            }
+
+            var retryHandler = new RetryHandler(messageHandler, config.DisableRetry, config.ForceRetryOn404, config.MaxHttpRetries, config.IncludeRetryReason, config.ConnectionLimit);
+            return new HttpClient(retryHandler)
             {
                 Timeout = Timeout.InfiniteTimeSpan
             };
+        }
 
         /// <summary>
         /// Returns an HttpClient for a cloud storage SDK over a shared handler. The caller may dispose
@@ -431,19 +447,8 @@ namespace Snowflake.Data.Core
             }
         }
 
-        internal HttpMessageHandler SetupCustomHttpHandler(HttpClientConfig config, DelegatingHandler customHandler = null)
+        internal HttpMessageHandler SetupCustomHttpHandler(HttpClientConfig config)
         {
-            if (customHandler != null)
-            {
-                if (config.CipherPolicy != null)
-                {
-                    throw config.CipherPolicy.Unsupported(
-                        "a custom HTTP handler was supplied, so the driver cannot apply the requested cipher suites.");
-                }
-                RejectAutoRedirect(customHandler);
-                return customHandler;
-            }
-
             HttpMessageHandler httpHandler = CreateHttpClientHandler(config);
 
             // Add a proxy if necessary
@@ -903,6 +908,7 @@ namespace Snowflake.Data.Core
                 var httpTimeout = (TimeSpan)requestMessage.GetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY);
                 var restTimeout = (TimeSpan)requestMessage.GetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY);
 
+
                 if (logger.IsDebugEnabled())
                 {
                     logger.Debug("Http request timeout : " + httpTimeout);
@@ -917,6 +923,7 @@ namespace Snowflake.Data.Core
                 var startTime = DateTimeOffset.UtcNow;
                 while (true)
                 {
+
                     try
                     {
                         childCts = null;

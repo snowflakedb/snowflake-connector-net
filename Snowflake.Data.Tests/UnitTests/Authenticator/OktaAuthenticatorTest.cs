@@ -65,7 +65,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 .Respond(HttpStatusCode.OK);
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-            var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var restRequester = new DelegatingMockRestRequester(httpClient);
             var sfSession = new SFSession(
                 "account=testaccount;user=testUser;password=testPassword;authenticator=https://company.okta.com;host=testaccount.snowflakecomputing.com",
@@ -108,7 +108,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 .Respond(HttpStatusCode.OK);
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-            var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var restRequester = new DelegatingMockRestRequester(httpClient);
             var sfSession = new SFSession(
                 "account=testaccount;user=testUser;password=testPassword;authenticator=https://company.okta.com;host=testaccount.snowflakecomputing.com",
@@ -150,7 +150,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 .Respond(HttpStatusCode.OK);
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-            var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var restRequester = new DelegatingMockRestRequester(httpClient);
             var sfSession = new SFSession(
                 "account=testaccount;user=testUser;password=testPassword;authenticator=https://company.okta.com;host=testaccount.snowflakecomputing.com",
@@ -222,7 +222,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 }));
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-            var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var restRequester = new DelegatingMockRestRequester(httpClient);
             var sfSession = new SFSession(
                 "account=testaccount;user=testUser;password=testPassword;authenticator=https://company.okta.com;host=testaccount.snowflakecomputing.com",

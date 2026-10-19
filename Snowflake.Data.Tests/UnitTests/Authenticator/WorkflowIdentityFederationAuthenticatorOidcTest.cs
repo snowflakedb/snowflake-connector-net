@@ -78,7 +78,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             var subject = WorkflowIdentityFederationAuthenticatorAzureTest.s_TokenSubject;
             var issuer = WorkflowIdentityFederationAuthenticatorAzureTest.s_TokenIssuer;
             var session = CreateSessionForOidc(token);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var attestation = authenticator.CreateAttestation();
@@ -95,7 +95,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
         {
             // arrange
             var session = CreateSessionForOidc("unparsable.token");
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
                 SetupSystemTime,
                 SetupAwsSdkDisabled
             );
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());

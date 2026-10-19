@@ -225,8 +225,7 @@ namespace Snowflake.Data.Tests.UnitTests
         private BaseAuthenticator CreateAuthenticator(string connectionString)
         {
             var session = new SFSession(connectionString, new SessionPropertiesContext());
-            session.InitialiseAuthenticator();
-            return (BaseAuthenticator)session.authenticator;
+            return (BaseAuthenticator)session.GetAuthenticator();
         }
     }
 }

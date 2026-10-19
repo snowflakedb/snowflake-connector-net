@@ -153,7 +153,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
 
             // act
             var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
-            var config = extractedProperties.BuildHttpClientConfig();
+            var config = extractedProperties.BuildHttpClientConfig("default");
 
             // assert
             Assert.Equal(validMaxSize, config.CrlDownloadMaxSize);
@@ -166,7 +166,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var properties = RandomSFSessionHttpClientProperties();
 
             // act
-            var config = properties.BuildHttpClientConfig();
+            var config = properties.BuildHttpClientConfig("default");
 
             // assert
             Assert.Equal(properties._certRevocationCheckMode, config.CertRevocationCheckMode);
@@ -193,7 +193,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange
             var properties = RandomSFSessionHttpClientProperties();
             properties._certRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), certCheckMode, true);
-            var config = properties.BuildHttpClientConfig();
+            var config = properties.BuildHttpClientConfig("default");
 
             // act
             var isCustomCrlCheck = config.IsCustomCrlCheckConfigured();
@@ -261,7 +261,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // arrange, act
             var config = SFSessionHttpClientProperties
                 .ExtractAndValidate(SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()))
-                .BuildHttpClientConfig();
+                .BuildHttpClientConfig("");
 
             // assert
             Assert.Equal(expectedMin, config.MinTlsProtocol);
@@ -279,7 +279,7 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             // connection string can tell a request to restrict TLS apart from the driver's defaults
             var config = SFSessionHttpClientProperties
                 .ExtractAndValidate(SFSessionProperties.ParseConnectionString(connectionString, new SessionPropertiesContext()))
-                .BuildHttpClientConfig();
+                .BuildHttpClientConfig("");
 
             // assert
             Assert.Equal(expectedRequested, config.TlsProtocolsExplicitlyRequested);

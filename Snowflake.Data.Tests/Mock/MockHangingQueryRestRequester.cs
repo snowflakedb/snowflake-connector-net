@@ -42,6 +42,8 @@ internal sealed class MockHangingQueryRestRequester : IMockRestRequester, IDispo
         _inner = new RestRequester(httpClient);
     }
 
+    public HttpClient GetHttpClient() => _inner?.GetHttpClient();
+
     public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
         var sfRequest = (SFRestRequest)request;

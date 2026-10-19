@@ -455,9 +455,7 @@ namespace Snowflake.Data.Core.Authenticator
                 DriverVersion = SFEnvironment.DriverVersion,
             };
 
-            int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-
-            return session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest() { Data = data });
+            return BuildTimeoutRequest(fedUrl, new AuthenticatorRequest() { Data = data }, null);
         }
 
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>

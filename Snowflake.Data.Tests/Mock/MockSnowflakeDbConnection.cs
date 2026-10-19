@@ -5,19 +5,26 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.Mock
 {
     class MockSnowflakeDbConnection : SnowflakeDbConnection
     {
+        private readonly Func<SFSession, IAuthenticator> _authenticatorFactory;
         private SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
 
-        private IMockRestRequester _restRequester;
+        private readonly IMockRestRequester _restRequester;
 
         public MockSnowflakeDbConnection(IMockRestRequester requester)
         {
             _restRequester = requester;
+        }
+
+        public MockSnowflakeDbConnection(Func<SFSession, IAuthenticator> authenticatorFactory) : this()
+        {
+            _authenticatorFactory = authenticatorFactory;
         }
 
         public MockSnowflakeDbConnection()
@@ -85,6 +92,9 @@ namespace Snowflake.Data.Tests.Mock
                 Passcode = Passcode
             };
             SfSession = new SFSession(ConnectionString, sessionContext, EasyLoggingStarter.Instance, _restRequester);
+
+            if (_authenticatorFactory != null)
+                SfSession.ReplaceAuthenticator(_authenticatorFactory.Invoke(SfSession));
 
             _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 

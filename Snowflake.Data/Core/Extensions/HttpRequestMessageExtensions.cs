@@ -27,5 +27,14 @@ namespace Snowflake.Data.Core.Extensions
             return message.Properties[key];
 #endif
         }
+
+        internal static bool TryGetOption(this HttpRequestMessage message, string key, out object value)
+        {
+#if NET5_0_OR_GREATER
+            return message.Options.TryGetValue(new HttpRequestOptionsKey<object>(key), out value);
+#else
+            return message.Properties.TryGetValue(key, out value);
+#endif
+        }
     }
 }

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
@@ -22,7 +23,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
         [SFFact(RetriesCount = RetriesCount.Thrice)]
         public void TestLoginTimeout()
         {
-            using (var conn = new MockSnowflakeDbConnection())
+            using (var conn = new MockSnowflakeDbConnection(session => new KeyPairAuthenticator(session, session.restRequester)))
             {
                 int timeoutSec = 5;
                 string loginTimeOut5sec = String.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
@@ -83,7 +84,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
             [SFFact]
             public void TestLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
             {
-                using (IDbConnection conn = new MockSnowflakeDbConnection())
+                using (IDbConnection conn = new MockSnowflakeDbConnection(session => new KeyPairAuthenticator(session, session.restRequester)))
                 {
                     int connectionTimeout = 5;
                     int retryTimeout = 1;

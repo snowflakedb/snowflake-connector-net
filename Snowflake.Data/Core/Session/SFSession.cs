@@ -25,8 +25,6 @@ namespace Snowflake.Data.Core
 
         private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
 
-        private const string SF_AUTHORIZATION_BASIC = "Basic";
-
         private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
 
         private const int _defaultQueryContextCacheSize = 5;
@@ -39,6 +37,8 @@ namespace Snowflake.Data.Core
 
         internal IRestRequester restRequester { get; private set; }
 
+        private Lazy<IAuthenticator> _authenticator;
+
         /// <summary>
         /// TLS protocols requested by MINTLS/MAXTLS. Cloud storage SDKs do not accept them through
         /// their own configuration objects, so they are handed the protocols separately.
@@ -49,8 +49,6 @@ namespace Snowflake.Data.Core
         /// True when MINTLS/MAXTLS came from the connection string rather than from the defaults.
         /// </summary>
         internal bool TlsProtocolsExplicitlyRequested { get; private set; }
-
-        internal IAuthenticator authenticator;
 
         internal SFSessionProperties properties;
 
@@ -67,8 +65,6 @@ namespace Snowflake.Data.Core
         internal TimeSpan connectionTimeout => _poolConfig.ConnectionTimeout;
 
         internal bool isHeartBeatEnabled;
-
-        private HttpClient _HttpClient;
 
         private string arrayBindStage = null;
         private int arrayBindStageThreshold = 0;
@@ -189,14 +185,10 @@ namespace Snowflake.Data.Core
         internal Uri BuildLoginUrl()
         {
             var queryParams = new Dictionary<string, string>();
-            string warehouseValue;
-            string dbValue;
-            string schemaValue;
-            string roleName;
-            queryParams[RestParams.SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out warehouseValue) ? warehouseValue : "";
-            queryParams[RestParams.SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out dbValue) ? dbValue : "";
-            queryParams[RestParams.SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "";
-            queryParams[RestParams.SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out roleName) ? roleName : "";
+            queryParams[RestParams.SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out var warehouseValue) ? warehouseValue : "";
+            queryParams[RestParams.SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out var dbValue) ? dbValue : "";
+            queryParams[RestParams.SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out var schemaValue) ? schemaValue : "";
+            queryParams[RestParams.SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out var roleName) ? roleName : "";
             queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
             queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
@@ -232,14 +224,15 @@ namespace Snowflake.Data.Core
             ValidateApplicationName(properties);
             try
             {
-                var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
-                var httpClientConfig = extractedProperties.BuildHttpClientConfig();
+                var extractedProperties = GetHttpClientConfig("default", out var httpClientConfig);
+                _authenticator = new Lazy<IAuthenticator>(() => AuthenticatorFactory.GetAuthenticator(this));
                 TlsProtocols = httpClientConfig.GetRequestedTlsProtocolsRange();
                 TlsProtocolsExplicitlyRequested = httpClientConfig.TlsProtocolsExplicitlyRequested;
                 ParameterMap = extractedProperties.ToParameterMap();
-                _HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
-                restRequester = new RestRequester(_HttpClient);
+                var httpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
+                restRequester = new RestRequester(httpClient);
                 _poolConfig = extractedProperties.BuildConnectionPoolConfig();
+
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
                 properties.TryGetValue(SFSessionProperty.QUERY_TAG, out _queryTag);
@@ -272,16 +265,29 @@ namespace Snowflake.Data.Core
             }
         }
 
+        private SFSessionHttpClientProperties GetHttpClientConfig(string clientType, out HttpClientConfig httpClientConfig)
+        {
+            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+            httpClientConfig = extractedProperties.BuildHttpClientConfig(clientType);
+            return extractedProperties;
+        }
+
+        internal HttpClientConfig GetHttpClientConfig(string clientType)
+        {
+            _ = GetHttpClientConfig(clientType, out var httpClientConfig);
+            return httpClientConfig;
+        }
+
         internal SFSession(String connectionString, SessionPropertiesContext sessionContext, IMockRestRequester restRequester) : this(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester)
         {
         }
 
-        internal SFSession(String connectionString, SessionPropertiesContext sessionContext, EasyLoggingStarter easyLoggingStarter, IMockRestRequester restRequester) : this(connectionString, sessionContext, easyLoggingStarter)
+        internal SFSession(String connectionString, SessionPropertiesContext sessionContext, EasyLoggingStarter easyLoggingStarter, IMockRestRequester mockRestRequester) : this(connectionString, sessionContext, easyLoggingStarter)
         {
             // Inject the HttpClient to use with the Mock requester
-            restRequester.setHttpClient(_HttpClient);
+            mockRestRequester.setHttpClient(restRequester.GetHttpClient());
             // Override the Rest requester with the mock for testing
-            this.restRequester = restRequester;
+            restRequester = mockRestRequester;
         }
 
         internal bool IsPoolingEnabledForConnectionCache()
@@ -334,23 +340,13 @@ namespace Snowflake.Data.Core
         internal virtual void Open()
         {
             logger.Debug("Open Session");
-            InitialiseAuthenticator();
-            authenticator.Authenticate();
+            _authenticator.Value.Authenticate();
         }
 
         internal virtual async Task OpenAsync(CancellationToken cancellationToken)
         {
             logger.Debug("Open Session Async");
-            InitialiseAuthenticator();
-            await authenticator.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        internal void InitialiseAuthenticator()
-        {
-            if (authenticator == null)
-            {
-                authenticator = AuthenticatorFactory.GetAuthenticator(this);
-            }
+            await _authenticator.Value.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
         }
 
         internal void close()
@@ -494,39 +490,15 @@ namespace Snowflake.Data.Core
                     { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
                 };
 
-            return new SFRestRequest
+            var result = new SFRestRequest
             {
                 jsonBody = postBody,
                 Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
-                RestTimeout = Timeout.InfiniteTimeSpan,
                 _isLogin = true
             };
-        }
-
-        internal SFRestRequest BuildTimeoutRestRequest(Uri uri, Object body)
-        {
-            return new SFRestRequest()
-            {
-                jsonBody = body,
-                Url = uri,
-                authorizationToken = SF_AUTHORIZATION_BASIC,
-                RestTimeout = connectionTimeout,
-                _isLogin = true
-            };
-        }
-
-        internal SFRestRequest BuildTimeoutRestRequest(Uri uri, Object body, TimeSpan httpTimeout)
-        {
-            return new SFRestRequest()
-            {
-                jsonBody = body,
-                Url = uri,
-                authorizationToken = SF_AUTHORIZATION_BASIC,
-                RestTimeout = connectionTimeout,
-                HttpTimeout = httpTimeout,
-                _isLogin = true
-            };
+            result.RestTimeout = Timeout.InfiniteTimeSpan;
+            return result;
         }
 
         internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
@@ -824,12 +796,10 @@ namespace Snowflake.Data.Core
             _timeSinceLastRenew = _startTime;
         }
 
-        internal void ReplaceAuthenticator(IAuthenticator authenticator)
-        {
-            this.authenticator = authenticator;
-        }
+        internal void ReplaceAuthenticator(IAuthenticator replacementAuthenticator) =>
+            _authenticator = new Lazy<IAuthenticator>(() => replacementAuthenticator);
 
-        internal IAuthenticator GetAuthenticator() => authenticator;
+        internal IAuthenticator GetAuthenticator() => _authenticator.Value;
 
         internal void InvalidateForPooling()
         {

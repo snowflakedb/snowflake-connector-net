@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.Mock;
 /// caller (SFFileTransferAgent) will fail because the data is incomplete.
 /// Used to verify that ExecuteSqlWithPutGet exception handling works correctly.
 /// </summary>
-internal sealed class MockPutGetOceRestRequester : IMockRestRequester
+internal sealed class MockPutGetOceRestRequester : MockBaseRestRequester
 {
     internal const string MockQueryId = "mock-putget-query-id";
     private readonly bool _throwOceOnQuery;
@@ -27,12 +27,12 @@ internal sealed class MockPutGetOceRestRequester : IMockRestRequester
         _throwOceOnQuery = throwOceOnQuery;
     }
 
-    public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+    public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
         return Task.FromResult(Post<T>(request));
     }
 
-    public T Post<T>(IRestRequest request)
+    public override T Post<T>(IRestRequest request)
     {
         var sfRequest = (SFRestRequest)request;
         if (sfRequest.jsonBody is LoginRequest)
@@ -98,15 +98,8 @@ internal sealed class MockPutGetOceRestRequester : IMockRestRequester
         return (T)(object)new NullDataResponse { success = true };
     }
 
-    public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+    public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         => Task.FromResult<T>(default);
 
-    public T Get<T>(IRestRequest request) => default;
-
-    public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        => Task.FromResult<HttpResponseMessage>(null);
-
-    public HttpResponseMessage Get(IRestRequest request) => null;
-
-    public void setHttpClient(HttpClient httpClient) { }
+    public override T Get<T>(IRestRequest request) => default;
 }

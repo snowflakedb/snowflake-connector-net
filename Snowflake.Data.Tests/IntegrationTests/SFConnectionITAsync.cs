@@ -108,7 +108,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             conn.ConnectionString = _fixture.ConnectionString;
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            var authenticator = (BaseAuthenticator)conn.SfSession.authenticator;
+            var authenticator = (BaseAuthenticator)conn.SfSession.GetAuthenticator();
             var clientEnv = authenticator.BuildLoginRequestData().clientEnv;
             var lowerPath = clientEnv.applicationPath.ToLower();
 #if NETFRAMEWORK
@@ -305,7 +305,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestLoginWithMaxRetryReached()
     {
-        using (var conn = new MockSnowflakeDbConnection())
+        using (var conn = new MockSnowflakeDbConnection(session => new KeyPairAuthenticator(session, session.restRequester)))
         {
             string maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=7";
 
@@ -825,7 +825,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact(RetriesCount = RetriesCount.Thrice)]
     public async Task TestAsyncLoginTimeout()
     {
-        using (var conn = new MockSnowflakeDbConnection())
+        using (var conn = new MockSnowflakeDbConnection(session => new KeyPairAuthenticator(session, session.restRequester)))
         {
             int timeoutSec = 5;
             string loginTimeOut5sec = String.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
@@ -885,7 +885,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         [SFFact]
         public async Task TestAsyncLoginTimeoutWithRetryTimeoutLesserThanConnectionTimeout()
         {
-            using (var conn = new MockSnowflakeDbConnection())
+            using (var conn = new MockSnowflakeDbConnection(s => new KeyPairAuthenticator(s, s.restRequester)))
             {
                 int connectionTimeout = 5;
                 int retryTimeout = 1;

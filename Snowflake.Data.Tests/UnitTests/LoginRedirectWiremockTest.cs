@@ -154,7 +154,7 @@ public sealed class LoginRedirectWiremockTest
             ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
             AllowAutoRedirect = false,
         });
-        return HttpUtil.Instance.CreateNewHttpClient(config, handler);
+        return HttpUtil.Instance.CreateNewHttpClient(config, handler, null);
     }
 
     private static HttpClient CreateHttpClientWithAutoRedirectPolicy()
@@ -166,7 +166,7 @@ public sealed class LoginRedirectWiremockTest
             ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
             AllowAutoRedirect = true,
         });
-        return HttpUtil.Instance.CreateNewHttpClient(config, handler);
+        return HttpUtil.Instance.CreateNewHttpClient(config, handler, null);
     }
 
     private HttpRequestMessage CreateLoginRequest()

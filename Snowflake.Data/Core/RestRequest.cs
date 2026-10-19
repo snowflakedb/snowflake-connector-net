@@ -30,6 +30,8 @@ namespace Snowflake.Data.Core
         // Default each http request timeout to 16 seconds
         public static readonly int s_defaultHttpSecondsTimeout = 16;
 
+        internal readonly Dictionary<string, object> Options = new();
+
         internal Uri Url { get; set; }
 
         /// <summary>
@@ -44,16 +46,17 @@ namespace Snowflake.Data.Core
         /// </summary>
         internal TimeSpan HttpTimeout { get; set; }
 
-        HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
-        {
-            throw new NotImplementedException();
-        }
+        HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method) => throw new NotImplementedException();
 
-        protected HttpRequestMessage newMessage(HttpMethod method, Uri url)
+        protected HttpRequestMessage NewMessage(HttpMethod method, Uri url)
         {
-            HttpRequestMessage message = new HttpRequestMessage(method, url);
+            var message = new HttpRequestMessage(method, url);
+            foreach (var option in Options)
+                message.SetOption(option.Key, option.Value);
+
             message.SetOption(HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
             message.SetOption(REST_REQUEST_TIMEOUT_KEY, RestTimeout);
+
             return message;
         }
 
@@ -82,7 +85,7 @@ namespace Snowflake.Data.Core
 
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
-            HttpRequestMessage message = newMessage(method, Url);
+            var message = NewMessage(method, Url);
             if (chunkHeaders != null)
             {
                 foreach (var item in chunkHeaders)
@@ -98,13 +101,12 @@ namespace Snowflake.Data.Core
 
             return message;
         }
-
     }
 
     internal class SFRestRequest : BaseRestRequest, IRestRequest
     {
-        private static MediaTypeWithQualityHeaderValue applicationSnowflake = new MediaTypeWithQualityHeaderValue("application/snowflake");
-        private static MediaTypeWithQualityHeaderValue applicationJson = new MediaTypeWithQualityHeaderValue("application/json");
+        private static MediaTypeWithQualityHeaderValue applicationSnowflake = new("application/snowflake");
+        private static MediaTypeWithQualityHeaderValue applicationJson = new("application/json");
 
         private const string SF_AUTHORIZATION_HEADER = "Authorization";
         private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";
@@ -112,7 +114,7 @@ namespace Snowflake.Data.Core
         private const string ClientAppId = "CLIENT_APP_ID";
         private const string ClientAppVersion = "CLIENT_APP_VERSION";
 
-        internal SFRestRequest() : base()
+        internal SFRestRequest()
         {
             RestTimeout = TimeSpan.FromSeconds(s_defaultRestRetrySecondsTimeout);
             HttpTimeout = TimeSpan.FromSeconds(s_defaultHttpSecondsTimeout);
@@ -138,22 +140,19 @@ namespace Snowflake.Data.Core
 
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
-            var message = newMessage(method, Url);
+            var message = NewMessage(method, Url);
             if (method != HttpMethod.Get && jsonBody != null)
             {
                 var json = JsonConvert.SerializeObject(jsonBody, JsonUtils.JsonSettings);
                 //TODO: Check if we should use other encodings...
                 message.Content = new StringContent(json, Encoding.UTF8, "application/json");
             }
-
             message.Headers.Add(SF_AUTHORIZATION_HEADER, authorizationToken);
             if (serviceName != null)
             {
                 message.Headers.Add(SF_SERVICE_NAME_HEADER, serviceName);
             }
 
-            // add quote otherwise it would be reported as error format
-            string osInfo = "(" + SFEnvironment.ClientEnv.osVersion + ")";
 
             if (isPutGet || _isStatusRequest)
             {
@@ -171,7 +170,8 @@ namespace Snowflake.Data.Core
             }
 
             message.Headers.UserAgent.Add(new ProductInfoHeaderValue(SFEnvironment.DriverName, SFEnvironment.DriverVersion));
-            message.Headers.UserAgent.Add(new ProductInfoHeaderValue(osInfo));
+            // add quote otherwise it would be reported as error format
+            message.Headers.UserAgent.Add(new ProductInfoHeaderValue($"({SFEnvironment.ClientEnv.osVersion})"));
             message.Headers.UserAgent.Add(new ProductInfoHeaderValue(
                 SFEnvironment.ClientEnv.netRuntime,
                 SFEnvironment.ClientEnv.netVersion));

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
@@ -12,16 +11,16 @@ namespace Snowflake.Data.Tests.Mock;
 /// then throws OperationCanceledException on Get (polling), simulating a timeout
 /// during the result polling loop.
 /// </summary>
-internal sealed class MockTimeoutDuringPollingRestRequester : IMockRestRequester
+internal sealed class MockTimeoutDuringPollingRestRequester : MockBaseRestRequester
 {
     internal const string MockQueryId = "mock-polling-timeout-query-id";
 
-    public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+    public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
         return Task.FromResult(Post<T>(request));
     }
 
-    public T Post<T>(IRestRequest request)
+    public override T Post<T>(IRestRequest request)
     {
         var sfRequest = (SFRestRequest)request;
         if (sfRequest.jsonBody is LoginRequest)
@@ -64,20 +63,13 @@ internal sealed class MockTimeoutDuringPollingRestRequester : IMockRestRequester
         return (T)(object)new NullDataResponse { success = true };
     }
 
-    public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+    public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
         throw new OperationCanceledException(cancellationToken);
     }
 
-    public T Get<T>(IRestRequest request)
+    public override T Get<T>(IRestRequest request)
     {
         throw new OperationCanceledException();
     }
-
-    public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        => Task.FromResult<HttpResponseMessage>(null);
-
-    public HttpResponseMessage Get(IRestRequest request) => null;
-
-    public void setHttpClient(HttpClient httpClient) { }
 }

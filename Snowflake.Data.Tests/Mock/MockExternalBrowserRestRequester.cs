@@ -1,12 +1,10 @@
 using Snowflake.Data.Core;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Snowflake.Data.Tests.Mock
 {
-
-    class MockExternalBrowserRestRequester : IMockRestRequester
+    internal class MockExternalBrowserRestRequester : MockBaseRestRequester
     {
         public string ProofKey { get; set; }
 
@@ -18,22 +16,12 @@ namespace Snowflake.Data.Tests.Mock
 
         public bool ThrowNonInvalidIdToken { get; set; } = false;
 
-        public T Get<T>(IRestRequest request)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public T Post<T>(IRestRequest postRequest)
+        public override T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+        public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)postRequest;
             if (sfRequest.jsonBody is AuthenticatorRequest)
@@ -107,21 +95,6 @@ namespace Snowflake.Data.Tests.Mock
 
                 return Task.FromResult<T>((T)(object)loginResponse);
             }
-        }
-
-        public HttpResponseMessage Get(IRestRequest request)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
     }
 }

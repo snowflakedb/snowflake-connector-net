@@ -1,43 +1,31 @@
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    using System.Net.Http;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
-
-    class MockCloseSessionException : IMockRestRequester
+    internal class MockCloseSessionException : MockBaseRestRequester
     {
-        static internal readonly int SESSION_CLOSE_ERROR = 390111;
+        internal static readonly int SESSION_CLOSE_ERROR = 390111;
 
-        public T Get<T>(IRestRequest request)
+        public override T Get<T>(IRestRequest request)
         {
             return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             return Task.FromResult<T>((T)(object)null);
         }
 
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<HttpResponseMessage>(null);
-        }
-
-        public HttpResponseMessage Get(IRestRequest request)
-        {
-            return null;
-        }
-
-        public T Post<T>(IRestRequest postRequest)
+        public override T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+        public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)postRequest;
             if (sfRequest.jsonBody is LoginRequest)
@@ -61,11 +49,6 @@ namespace Snowflake.Data.Tests.Mock
             {
                 throw new SnowflakeDbException("", SESSION_CLOSE_ERROR, "Mock generated error", null);
             }
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Snowflake.Data.Core
                     if (!String.IsNullOrEmpty(properties.nonProxyHosts))
                     {
                         // The list is url-encoded
-                        // Host names are separated with a URL-escaped pipe symbol (%7C). 
+                        // Host names are separated with a URL-escaped pipe symbol (%7C).
                         properties.nonProxyHosts = HttpUtility.UrlDecode(properties.nonProxyHosts);
                     }
                 }

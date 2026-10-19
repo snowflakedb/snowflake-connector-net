@@ -30,6 +30,7 @@ namespace Snowflake.Data.Core
 
         HttpResponseMessage Get(IRestRequest request);
 
+        HttpClient GetHttpClient();
     }
 
     internal interface IMockRestRequester : IRestRequester
@@ -76,6 +77,8 @@ namespace Snowflake.Data.Core
             //Run synchronous in a new thread-pool task.
             return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
+
+        public HttpClient GetHttpClient() => HttpClient;
 
         private async Task<T> SendAsync<T>(HttpMethod method, IRestRequest request, CancellationToken cancellationToken)
         {

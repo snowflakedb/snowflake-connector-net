@@ -92,7 +92,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             AddGcpWiremockMapping(JWTGCPToken);
             var session = PrepareSessionForGcp("", NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var attestation = authenticator.CreateAttestation();
@@ -112,7 +112,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             AddGcpWiremockMapping(token);
             var session = PrepareSessionForGcp("", NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
@@ -128,7 +128,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             _fixture.Runner.AddMappings(s_wifGcpHttpErrorMappingPath);
             var session = PrepareSessionForGcp("", NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
@@ -159,7 +159,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
             // arrange
             _fixture.Runner.AddMappings(s_wifGcpTransitiveImpersonationMappingPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, JWTGCPToken));
             var session = PrepareSessionForGcp($"workload_impersonation_path=target-sa@project.iam.gserviceaccount.com", NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.authenticator;
+            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
             // act
             var attestation = authenticator.CreateAttestation();

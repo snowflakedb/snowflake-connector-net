@@ -205,7 +205,7 @@ namespace Snowflake.Data.Core
             }
         }
 
-        public HttpClientConfig BuildHttpClientConfig()
+        public HttpClientConfig BuildHttpClientConfig(string clientType)
         {
             return new HttpClientConfig(
                 proxyProperties.proxyHost,
@@ -226,7 +226,9 @@ namespace Snowflake.Data.Core
                 _crlDownloadMaxSize,
                 _minTlsProtocol,
                 _maxTlsProtocol,
-                _tlsProtocolsExplicitlyRequested
+                _tlsProtocolsExplicitlyRequested,
+                null,
+                clientType
                 );
         }
 

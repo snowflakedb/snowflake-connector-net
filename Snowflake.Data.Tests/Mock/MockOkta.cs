@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Tests.Mock
 {
-
-    class MockOktaRestRequester : IMockRestRequester
+    internal class MockOktaRestRequester : MockBaseRestRequester
     {
         public string TokenUrl { get; set; }
         public string SSOUrl { get; set; }
@@ -15,17 +14,7 @@ namespace Snowflake.Data.Tests.Mock
         public int MaxRetryCount { get; set; }
         public int MaxRetryTimeout { get; set; }
 
-        public T Get<T>(IRestRequest request)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
             var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK);
             response.Content = new StringContent(ResponseContent);
@@ -34,12 +23,12 @@ namespace Snowflake.Data.Tests.Mock
             return Task.FromResult(response);
         }
 
-        public T Post<T>(IRestRequest postRequest)
+        public override T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+        public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
         {
             if (postRequest is SFRestRequest)
             {
@@ -94,14 +83,9 @@ namespace Snowflake.Data.Tests.Mock
             }
         }
 
-        public HttpResponseMessage Get(IRestRequest request)
+        public override HttpResponseMessage Get(IRestRequest request)
         {
             return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
     }
 }

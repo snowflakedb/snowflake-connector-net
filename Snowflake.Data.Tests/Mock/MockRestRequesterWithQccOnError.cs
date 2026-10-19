@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Snowflake.Data.Core;
 
-    internal sealed class MockRestRequesterWithQccOnError : IMockRestRequester
+    internal sealed class MockRestRequesterWithQccOnError : MockBaseRestRequester
     {
         private const int FAILED_QUERY_CODE = 999;
         private const string FAILED_QUERY_MESSAGE = "mock query failure";
@@ -20,7 +20,7 @@ namespace Snowflake.Data.Tests.Mock
             }
         };
 
-        public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             var sfRequest = (SFRestRequest)request;
             if (sfRequest.jsonBody is LoginRequest)
@@ -61,33 +61,19 @@ namespace Snowflake.Data.Tests.Mock
             }
         }
 
-        public T Post<T>(IRestRequest postRequest)
+        public override T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None).ConfigureAwait(false)).Result;
         }
 
-        public T Get<T>(IRestRequest request)
+        public override T Get<T>(IRestRequest request)
         {
             return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             return Task.FromResult<T>(default(T));
-        }
-
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<HttpResponseMessage>(null);
-        }
-
-        public HttpResponseMessage Get(IRestRequest request)
-        {
-            return null;
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
         }
     }
 }

@@ -1,47 +1,29 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    using Microsoft.IdentityModel.Tokens;
-
-    class MockLoginMFATokenCacheRestRequester : IMockRestRequester
+    internal class MockLoginMFATokenCacheRestRequester : MockBaseRestRequester
     {
         internal Queue<LoginRequest> LoginRequests { get; } = new();
 
         internal Queue<LoginResponseData> LoginResponses { get; } = new();
 
-        public T Get<T>(IRestRequest request)
+        public override T Get<T>(IRestRequest request)
         {
             return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<T>((T)(object)null);
-        }
-
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<HttpResponseMessage>(null);
-        }
-
-        public HttpResponseMessage Get(IRestRequest request)
-        {
-            return null;
-        }
-
-        public T Post<T>(IRestRequest postRequest)
+        public override T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+        public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)postRequest;
             if (sfRequest.jsonBody is LoginRequest)
@@ -74,17 +56,6 @@ namespace Snowflake.Data.Tests.Mock
                 return Task.FromResult<T>((T)(object)authnResponse);
             }
             throw new NotImplementedException();
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
-        }
-
-        public void Reset()
-        {
-            LoginRequests.Clear();
-            LoginResponses.Clear();
         }
     }
 }

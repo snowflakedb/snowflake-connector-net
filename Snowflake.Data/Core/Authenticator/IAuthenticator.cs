@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
@@ -41,12 +42,15 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     internal abstract class BaseAuthenticator
     {
+        internal const string SF_AUTHORIZATION_BASIC = "Basic";
+
         // The logger.
         private static readonly SFLogger logger =
             SFLoggerFactory.GetLogger<BaseAuthenticator>();
 
         // The name of the authenticator.
         private string authName;
+        private readonly IRestRequester _restRequester;
 
         // The session which created this authenticator.
         protected SFSession session;
@@ -57,14 +61,22 @@ namespace Snowflake.Data.Core.Authenticator
         // Provider for the SPCS container identity token
         internal SpcsTokenProvider SpcsTokenProvider = SpcsTokenProvider.CreateIfRunningInSpcs();
 
+        /// <inheritdoc/>
+        protected BaseAuthenticator(SFSession session, string authName) : this(session, authName, session.restRequester)
+        {
+        }
+
         /// <summary>
         /// The abstract base for all authenticators.
         /// </summary>
         /// <param name="session">The session which created the authenticator.</param>
-        protected BaseAuthenticator(SFSession session, string authName)
+        /// <param name="authName">The name of the authenticator used for telemetry.</param>
+        /// <param name="restRequester">Optional REST requester override</param>
+        private protected BaseAuthenticator(SFSession session, string authName, IRestRequester restRequester)
         {
             this.session = session;
             this.authName = authName;
+            _restRequester = restRequester;
             ClientEnv.certRevocationCheckMode = session.properties[SFSessionProperty.CERTREVOCATIONCHECKMODE];
             if (session.properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
             {
@@ -81,7 +93,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var loginRequest = BuildLoginRequest();
 
-            var response = await session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
+            var response = await _restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
 
             session.ProcessLoginResponse(response);
         }
@@ -91,7 +103,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var loginRequest = BuildLoginRequest();
 
-            var response = session.restRequester.Post<LoginResponse>(loginRequest);
+            var response = _restRequester.Post<LoginResponse>(loginRequest);
 
             session.ProcessLoginResponse(response);
         }
@@ -127,15 +139,40 @@ namespace Snowflake.Data.Core.Authenticator
         /// ClientAppVersion...).
         /// </summary>
         /// <returns>A login request to send to the server.</returns>
-        private SFRestRequest BuildLoginRequest()
+        protected virtual SFRestRequest BuildLoginRequest()
         {
             // build uri
             var loginUrl = session.BuildLoginUrl();
             var data = BuildLoginRequestData();
+            var loginRequest = new LoginRequest { data = data };
 
-            return data.HttpTimeout.HasValue ?
-                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data }, data.HttpTimeout.Value) :
-                session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+            var request = BuildTimeoutRequest(loginUrl, loginRequest, loginRequest.data.HttpTimeout);
+            return request;
+        }
+
+        protected SFRestRequest BuildTimeoutRequest(Uri loginUrl, object loginRequest, TimeSpan? httpTimeout)
+        {
+            if (httpTimeout.HasValue)
+            {
+                return new SFRestRequest
+                {
+                    jsonBody = loginRequest,
+                    Url = loginUrl,
+                    authorizationToken = SF_AUTHORIZATION_BASIC,
+                    _isLogin = true,
+                    HttpTimeout = httpTimeout.Value,
+                    RestTimeout = session.connectionTimeout
+                };
+            }
+
+            return new SFRestRequest
+            {
+                jsonBody = loginRequest,
+                Url = loginUrl,
+                authorizationToken = SF_AUTHORIZATION_BASIC,
+                _isLogin = true,
+                RestTimeout = session.connectionTimeout
+            };
         }
 
         internal LoginRequestData BuildLoginRequestData()
@@ -162,6 +199,7 @@ namespace Snowflake.Data.Core.Authenticator
     internal class AuthenticatorFactory
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
+
         /// <summary>
         /// Generate the authenticator given the session
         /// </summary>

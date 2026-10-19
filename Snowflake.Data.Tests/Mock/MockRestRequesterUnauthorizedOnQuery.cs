@@ -8,14 +8,14 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    class MockRestRequesterUnauthorizedOnQuery : IMockRestRequester
+    internal class MockRestRequesterUnauthorizedOnQuery : MockBaseRestRequester
     {
-        public T Post<T>(IRestRequest postRequest)
+        public override T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+        public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
         {
             var sfRequest = (SFRestRequest)postRequest;
             if (sfRequest.jsonBody is LoginRequest)
@@ -49,28 +49,14 @@ namespace Snowflake.Data.Tests.Mock
             return Task.FromResult((T)(object)null);
         }
 
-        public T Get<T>(IRestRequest request)
+        public override T Get<T>(IRestRequest request)
         {
             return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             return Task.FromResult((T)(object)null);
-        }
-
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<HttpResponseMessage>(null);
-        }
-
-        public HttpResponseMessage Get(IRestRequest request)
-        {
-            return null;
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
         }
     }
 }

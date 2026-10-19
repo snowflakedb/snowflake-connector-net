@@ -210,11 +210,11 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 AccountName = session.properties[SFSessionProperty.ACCOUNT],
                 Authenticator = _oktaUrl.ToString(),
-                DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(),
+                DriverVersion = SFEnvironment.DriverVersion,
                 DriverName = ".NET"
             };
 
-            return session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest { Data = data });
+            return base.BuildTimeoutRequest(fedUrl, new AuthenticatorRequest { Data = data }, null);
         }
 
         private IdpTokenRestRequest BuildIdpTokenRestRequest(Uri tokenUrl)
@@ -343,7 +343,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
         {
-            HttpRequestMessage message = newMessage(method, Url);
+            HttpRequestMessage message = NewMessage(method, Url);
             message.Headers.Accept.Add(s_jsonHeader);
 
             var json = JsonConvert.SerializeObject(JsonBody, JsonUtils.JsonSettings);
@@ -378,7 +378,7 @@ namespace Snowflake.Data.Core.Authenticator
         {
             UriBuilder builder = new UriBuilder(Url);
             builder.Query = "RelayState=%2Fsome%2Fdeep%2Flink&onetimetoken=" + OnetimeToken;
-            HttpRequestMessage message = newMessage(method, builder.Uri);
+            HttpRequestMessage message = NewMessage(method, builder.Uri);
 
             message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
 

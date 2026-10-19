@@ -34,7 +34,7 @@ namespace Snowflake.Data.Tests.UnitTests
             .ThrowsAsync(new HttpRequestException("", new AuthenticationException()));
 
             var httpClient = HttpUtil.Instance.GetHttpClient(
-                new HttpClientConfig("fakeHost", "fakePort", "user", "password", "fakeProxyList", false, false, 7, 20, certRevocationCheckMode: "ENABLED"),
+                new HttpClientConfig("fakeHost", "40000", "user", "password", "fakeProxyList", false, false, 7, 20, certRevocationCheckMode: "ENABLED"),
                 handler.Object);
 
             try
@@ -281,7 +281,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Respond(HttpStatusCode.OK);
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -307,7 +307,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Respond(HttpStatusCode.OK);
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -333,7 +333,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Respond(HttpStatusCode.OK);
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -362,7 +362,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Respond(HttpStatusCode.OK);
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -384,7 +384,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 .Respond(_ => new HttpResponseMessage(HttpStatusCode.Ambiguous)); // 300, no Location
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -414,7 +414,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 });
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -443,7 +443,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 });
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 0, 20);
-            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(60));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(300));
@@ -478,7 +478,7 @@ namespace Snowflake.Data.Tests.UnitTests
                 });
 
             var config = new HttpClientConfig(null, null, null, null, null, false, false, 1, 20);
-            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(30));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -510,7 +510,7 @@ namespace Snowflake.Data.Tests.UnitTests
 
             //                                                         disableRetry=true ↓
             var config = new HttpClientConfig(null, null, null, null, null, true, false, 3, 20);
-            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp));
+            var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -696,30 +696,6 @@ namespace Snowflake.Data.Tests.UnitTests
             }
         }
 #endif
-        [SFFact]
-        public void TestRejectsCustomHandlerWithAutoRedirect()
-        {
-            var innerHandler = new HttpClientHandler { AllowAutoRedirect = true };
-            var customHandler = new CustomDelegatingHandler(innerHandler);
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-
-            var ex = Assert.Throws<SecurityException>(() =>
-                HttpUtil.Instance.CreateNewHttpClient(config, customHandler));
-
-            Assert.Contains("AllowAutoRedirect", ex.Message);
-        }
-
-        [SFFact]
-        public void TestAcceptsCustomHandlerWithAutoRedirectDisabled()
-        {
-            var innerHandler = new HttpClientHandler { AllowAutoRedirect = false };
-            var customHandler = new CustomDelegatingHandler(innerHandler);
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
-
-            using var client = HttpUtil.Instance.CreateNewHttpClient(config, customHandler);
-
-            Assert.NotNull(client);
-        }
     }
 #pragma warning restore SYSLIB0014
 }

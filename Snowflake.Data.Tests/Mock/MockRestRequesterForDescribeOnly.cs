@@ -1,17 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock;
 
-internal sealed class MockRestRequesterForDescribeOnly : IMockRestRequester
+internal sealed class MockRestRequesterForDescribeOnly : MockBaseRestRequester
 {
     internal bool? CapturedDescribeOnly { get; private set; }
 
-    public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+    public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
         var sfRequest = (SFRestRequest)request;
         if (sfRequest.jsonBody is LoginRequest)
@@ -60,15 +59,9 @@ internal sealed class MockRestRequesterForDescribeOnly : IMockRestRequester
         return Task.FromResult(default(T));
     }
 
-    public T Post<T>(IRestRequest request) => PostAsync<T>(request, CancellationToken.None).Result;
+    public override T Post<T>(IRestRequest request) => PostAsync<T>(request, CancellationToken.None).Result;
 
-    public T Get<T>(IRestRequest request) => default;
+    public override T Get<T>(IRestRequest request) => default;
 
-    public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken) => Task.FromResult(default(T));
-
-    public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken) => Task.FromResult<HttpResponseMessage>(null);
-
-    public HttpResponseMessage Get(IRestRequest request) => null;
-
-    public void setHttpClient(HttpClient httpClient) { }
+    public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken) => Task.FromResult(default(T));
 }

@@ -1,23 +1,20 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Http;
 
 namespace Snowflake.Data.Tests.Mock
 {
     using Snowflake.Data.Core;
 
-    class MockRestSessionExpiredInQueryExec : IMockRestRequester
+    internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
     {
-        static private readonly int QUERY_IN_EXEC_CODE = 333333;
+        private static readonly int QUERY_IN_EXEC_CODE = 333333;
 
-        static private readonly int SESSION_EXPIRED_CODE = 390112;
+        private static readonly int SESSION_EXPIRED_CODE = 390112;
 
         private int getResultCallCount = 0;
 
-        public MockRestSessionExpiredInQueryExec() { }
-
-        public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)request;
             if (sfRequest.jsonBody is LoginRequest)
@@ -64,17 +61,17 @@ namespace Snowflake.Data.Tests.Mock
             }
         }
 
-        public T Post<T>(IRestRequest postRequest)
+        public override T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
-        public T Get<T>(IRestRequest request)
+        public override T Get<T>(IRestRequest request)
         {
             return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)request;
             if (getResultCallCount == 0)
@@ -129,21 +126,6 @@ namespace Snowflake.Data.Tests.Mock
                 };
                 return Task.FromResult<T>((T)(object)queryExecResponse);
             }
-        }
-
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<HttpResponseMessage>(null);
-        }
-
-        public HttpResponseMessage Get(IRestRequest request)
-        {
-            return null;
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
     }
 }

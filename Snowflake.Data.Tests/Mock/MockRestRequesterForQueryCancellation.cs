@@ -7,7 +7,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Mock
 {
-    class MockRestRequesterForQueryCancellation : IMockRestRequester
+    internal class MockRestRequesterForQueryCancellation : MockBaseRestRequester
     {
         private static readonly string SessionToken = "mock_session_token";
 
@@ -25,7 +25,7 @@ namespace Snowflake.Data.Tests.Mock
             foreach (var s in statuses) _statusQueue.Enqueue(s);
         }
 
-        public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)request;
             if (sfRequest.jsonBody is LoginRequest)
@@ -88,17 +88,17 @@ namespace Snowflake.Data.Tests.Mock
             return Task.FromResult<T>((T)(object)null);
         }
 
-        public T Post<T>(IRestRequest postRequest)
+        public override T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None).ConfigureAwait(false)).Result;
         }
 
-        public T Get<T>(IRestRequest request)
+        public override T Get<T>(IRestRequest request)
         {
             return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)request;
 
@@ -127,18 +127,9 @@ namespace Snowflake.Data.Tests.Mock
             return Task.FromResult<T>((T)(object)null);
         }
 
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
             return Task.FromResult<HttpResponseMessage>(null);
-        }
-
-        public HttpResponseMessage Get(IRestRequest request)
-        {
-            return null;
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
         }
     }
 }

@@ -8,25 +8,23 @@ namespace Snowflake.Data.Tests.Mock
 {
     using Snowflake.Data.Core;
 
-    class MockRestSessionExpired : IMockRestRequester
+    internal class MockRestSessionExpired : MockBaseRestRequester
     {
-        static private readonly String EXPIRED_SESSION_TOKEN = "session_expired_token";
+        private static readonly String EXPIRED_SESSION_TOKEN = "session_expired_token";
 
-        static internal readonly String NEW_SESSION_TOKEN = "new_session_token";
+        internal static readonly String NEW_SESSION_TOKEN = "new_session_token";
 
-        static private readonly String TOKEN_FMT = "Snowflake Token=\"{0}\"";
+        private static readonly String TOKEN_FMT = "Snowflake Token=\"{0}\"";
 
-        static internal readonly String THROW_ERROR_TOKEN = "throw_error_token";
+        internal static readonly String THROW_ERROR_TOKEN = "throw_error_token";
 
-        static internal readonly int SESSION_EXPIRED_CODE = 390112;
+        internal static readonly int SESSION_EXPIRED_CODE = 390112;
 
         public string FirstTimeRequestID;
 
         public string SecondTimeRequestID;
 
-        public MockRestSessionExpired() { }
-
-        public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)request;
             if (sfRequest.jsonBody is LoginRequest)
@@ -126,17 +124,17 @@ namespace Snowflake.Data.Tests.Mock
             }
         }
 
-        public T Post<T>(IRestRequest postRequest)
+        public override T Post<T>(IRestRequest postRequest)
         {
             return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
-        public T Get<T>(IRestRequest request)
+        public override T Get<T>(IRestRequest request)
         {
             return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
         }
 
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             SFRestRequest sfRequest = (SFRestRequest)request;
             if (sfRequest.Url.ToString().Contains("retryId"))
@@ -181,26 +179,11 @@ namespace Snowflake.Data.Tests.Mock
             return Task.FromResult<T>((T)(object)null);
         }
 
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<HttpResponseMessage>(null);
-        }
-
-        public HttpResponseMessage Get(IRestRequest request)
-        {
-            return null;
-        }
-
         private string ExtractRequestID(string queries)
         {
             int start = queries.IndexOf("requestId=");
             start += 10;
             return queries.Substring(start, 36);
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
         }
     }
 }
