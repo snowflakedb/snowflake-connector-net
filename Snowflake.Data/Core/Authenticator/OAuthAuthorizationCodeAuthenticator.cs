@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.Authenticator
 {
     internal class OAuthAuthorizationCodeAuthenticator : OAuthFlowAuthenticator, IAuthenticator
     {
-        public const string AuthName = "oauth_authorization_code";
+        private const string AUTH_NAME = "oauth_authorization_code";
         private const string TokenRequestGrantType = "authorization_code";
         private const string BrowserSuccessResponse = @"<!DOCTYPE html><html><head><meta charset=""UTF-8""/>
 <title>Authorization Code Granted for Snowflake</title></head>
@@ -34,8 +34,9 @@ You can close this window now and go back where you started from.
         private readonly WebBrowserStarter _browserStarter;
         private readonly WebListenerStarter _listenerStarter;
 
+        protected override string OAuthType => AUTH_NAME;
 
-        public OAuthAuthorizationCodeAuthenticator(SFSession session) : base(session, OAuthAuthenticator.AUTH_NAME)
+        public OAuthAuthorizationCodeAuthenticator(SFSession session) : base(session)
         {
             _challengeProvider = new ChallengeProvider();
             _browserStarter = WebBrowserStarter.Instance;
@@ -50,17 +51,15 @@ You can close this window now and go back where you started from.
         }
 
         public static bool IsOAuthAuthorizationCodeAuthenticator(string authenticator) =>
-            AuthName.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
-
-        protected override string GetAuthenticatorName() => AuthName;
+            AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
         protected override OAuthCacheKeys GetOAuthCacheKeys()
         {
             var tokenEndpoint = GetTokenEndpoint();
-            var snowflakeHost = session.properties[SFSessionProperty.HOST];
-            var user = session.properties[SFSessionProperty.USER];
-            session.properties.TryGetValue(SFSessionProperty.ROLE, out var role);
-            var clientStoreTemporaryCredentials = bool.Parse(session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
+            var snowflakeHost = Session.properties[SFSessionProperty.HOST];
+            var user = Session.properties[SFSessionProperty.USER];
+            Session.properties.TryGetValue(SFSessionProperty.ROLE, out var role);
+            var clientStoreTemporaryCredentials = bool.Parse(Session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
             return OAuthCacheKeys.CreateForAuthorizationCodeFlow(tokenEndpoint, snowflakeHost, user, role ?? string.Empty, clientStoreTemporaryCredentials, SnowflakeCredentialManagerFactory.GetCredentialManager);
         }
 
@@ -136,7 +135,7 @@ You can close this window now and go back where you started from.
 
         private OAuthAuthorizationCodeResponse ExecuteAuthorizationCodeRequest(OAuthAuthorizationCodeRequest request)
         {
-            var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
+            var timeoutInSec = int.Parse(Session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             var timeout = TimeSpan.FromSeconds(timeoutInSec);
             using (var httpListener = StartListenerUpdatingRedirectUri(request))
             using (var browserListener = new WebBrowserListener<OAuthAuthorizationCodeResponse>(

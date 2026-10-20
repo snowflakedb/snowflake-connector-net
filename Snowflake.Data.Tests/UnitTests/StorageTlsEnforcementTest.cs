@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Security.Authentication;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.FileTransfer;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 using Xunit;
 
@@ -75,5 +78,38 @@ namespace Snowflake.Data.Tests.UnitTests
             Assert.NotNull(client);
         }
 
+        [SFTheory]
+        [InlineData("account=test;user=test;password=test", SslProtocols.Tls12 | SslProtocolsExtensions.Tls13, false)]
+        [InlineData("account=test;user=test;password=test;minTls=tls13", SslProtocolsExtensions.Tls13, true)]
+        public void TestSessionHandsTlsProtocolsToStorageClients(string connectionString, SslProtocols expectedProtocols,
+            bool expectedExplicitlyRequested)
+        {
+            // arrange - an explicit request fails the connection on runtimes that cannot apply it
+            Skip.When(expectedExplicitlyRequested && !CanRuntimeApplyTlsProtocols(), TlsProtocolsUnsupportedRationale);
+
+            // act - storage clients read the protocols from the session, not from the connection's HttpClientConfig
+            var session = new SFSession(connectionString, new SessionPropertiesContext());
+
+            // assert
+            Assert.Equal(expectedProtocols, session.TlsProtocols);
+            Assert.Equal(expectedExplicitlyRequested, session.TlsProtocolsExplicitlyRequested);
+        }
+
+        private const string TlsProtocolsUnsupportedRationale =
+            "This runtime does not support setting TLS protocols on HttpClientHandler (.NET Framework 4.6.2 and 4.7.1).";
+
+        private static bool CanRuntimeApplyTlsProtocols()
+        {
+            try
+            {
+                using var handler = new HttpClientHandler();
+                handler.SslProtocols = SslProtocols.Tls12 | SslProtocolsExtensions.Tls13;
+                return true;
+            }
+            catch (PlatformNotSupportedException)
+            {
+                return false;
+            }
+        }
     }
 }

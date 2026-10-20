@@ -7,6 +7,7 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests
@@ -22,19 +23,10 @@ namespace Snowflake.Data.Tests.IntegrationTests
             // arrange
             var config = new HttpClientConfig(
                 null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                false,
-                3,
+                new SFSessionRetryProperties(default, false, false, default, 3, true),
+                new SFSessionCRLProperties(CertRevocationCheckMode.Enabled, true, true, false, 10, 209715200),
                 20,
-                true,
-                CertRevocationCheckMode.Enabled.ToString(),
-                true,
-                true,
-                false);
+                new SFSessionTLSProperties("tls12", "tls13", false, null));
             var httpClient = HttpUtil.Instance.CreateNewHttpClient(config);
             var restRequester = new RestRequester(httpClient);
             var request = CreateRequest();

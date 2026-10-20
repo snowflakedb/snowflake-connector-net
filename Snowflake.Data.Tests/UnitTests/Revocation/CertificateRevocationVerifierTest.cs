@@ -8,6 +8,7 @@ using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Rest;
 using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
@@ -550,20 +551,9 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation
         private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled, long crlDownloadMaxSize = 20971520) =>
             new HttpClientConfig(
                 null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                false,
-                3,
+                new SFSessionRetryProperties(default, false, false, default, 3, true),
+                new SFSessionCRLProperties(checkMode, false, true, false, 10, crlDownloadMaxSize),
                 20,
-                true,
-                checkMode.ToString(),
-                false,
-                true,
-                false,
-                10,
-                crlDownloadMaxSize);
+                new SFSessionTLSProperties("tls12", "tls13", false, null));
     }
 }

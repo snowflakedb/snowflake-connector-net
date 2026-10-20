@@ -136,11 +136,10 @@ namespace Snowflake.Data.Core
                     {
                         Url = new UriBuilder(chunk.Url).Uri,
                         qrmk = downloadContext.Qrmk,
-                        // s3 download request timeout to one hour
-                        RestTimeout = TimeSpan.FromHours(1),
+                        RestTimeout = TimeSpan.FromHours(1), // s3 download request timeout to one hour
                         HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
                         chunkHeaders = downloadContext.ChunkHeaders,
-                        sid = _resultSet.sfStatement.SfSession.sessionId
+                        sid = _resultSet.sfStatement.SfSession.sessionId,
                     };
 
                 using var httpResponse = await _restRequester.GetAsync(downloadRequest, downloadContext.CancellationToken)

@@ -12,6 +12,8 @@ using Moq;
 using Moq.Protected;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Extensions;
+using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -34,7 +36,12 @@ namespace Snowflake.Data.Tests.UnitTests
             .ThrowsAsync(new HttpRequestException("", new AuthenticationException()));
 
             var httpClient = HttpUtil.Instance.GetHttpClient(
-                new HttpClientConfig("fakeHost", "40000", "user", "password", "fakeProxyList", false, false, 7, 20, certRevocationCheckMode: "ENABLED"),
+                new HttpClientConfig(
+                    new SFSessionHttpClientProxyPropertiesForTests("fakeHost", "0", "fakeProxyList", "password", "user"),
+                    new SFSessionRetryProperties(default, false, false, default, 7, true),
+                    new SFSessionCRLProperties(CertRevocationCheckMode.Enabled, true, true, true, 10, 209715200),
+                    20,
+                    new SFSessionTLSProperties("tls12", "tls13", false, null)),
                 handler.Object);
 
             try
@@ -148,15 +155,11 @@ namespace Snowflake.Data.Tests.UnitTests
         {
             // arrange
             var config = new HttpClientConfig(
-                "snowflake.com",
-                "123",
-                "testUser",
-                "proxyPassword",
-                "localhost",
-                false,
-                false,
-                7,
-                20
+                new SFSessionHttpClientProxyPropertiesForTests("snowflake.com", "123", "localhost", "proxyPassword", "testUser"),
+                new SFSessionRetryProperties(default, false, false, default, 7, true),
+                new SFSessionCRLProperties(),
+                20,
+                new SFSessionTLSProperties("tls12", "tls13", false, null)
             );
 
             // act
@@ -173,14 +176,10 @@ namespace Snowflake.Data.Tests.UnitTests
             // arrange
             var config = new HttpClientConfig(
                 null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                false,
-                20,
-                0
+                new SFSessionRetryProperties(default, false, false, default, 20, true),
+                new SFSessionCRLProperties(),
+                0,
+                new SFSessionTLSProperties("tls12", "tls13", false, null)
             );
 
             // act
@@ -195,7 +194,7 @@ namespace Snowflake.Data.Tests.UnitTests
         public void TestCreateHttpClientHandlerDisablesAutoRedirect()
         {
             // arrange
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 7, 20);
+            var config = new HttpClientConfig(default, default, default, 20, default);
 
             // act
             var handler = (HttpClientHandler)HttpUtil.Instance.SetupCustomHttpHandler(config);
@@ -280,7 +279,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var unsafeTargetRequest = mockHttp.When(redirectTarget)
                 .Respond(HttpStatusCode.OK);
 
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var config = new HttpClientConfig(default, default, default, 20, default);
             var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
@@ -306,7 +305,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var attackerRequest = mockHttp.When("https://attacker.com/*")
                 .Respond(HttpStatusCode.OK);
 
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var config = new HttpClientConfig(default, default, default, 20, default);
             var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
@@ -332,7 +331,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var redirectedRequest = mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/temp-redirect-1")
                 .Respond(HttpStatusCode.OK);
 
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var config = new HttpClientConfig(default, default, default, 20, default);
             var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
@@ -361,7 +360,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var redirectedRequest = mockHttp.When(HttpMethod.Get, "https://test.snowflakecomputing.com/alternate")
                 .Respond(HttpStatusCode.OK);
 
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var config = new HttpClientConfig(default, default, default, 20, default);
             var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
@@ -383,7 +382,7 @@ namespace Snowflake.Data.Tests.UnitTests
             mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request")
                 .Respond(_ => new HttpResponseMessage(HttpStatusCode.Ambiguous)); // 300, no Location
 
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var config = new HttpClientConfig(default, default, default, 20, default);
             var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
@@ -413,7 +412,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     return redirect;
                 });
 
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 3, 20);
+            var config = new HttpClientConfig(default, default, default, 20, default);
             var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
@@ -442,7 +441,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     return response;
                 });
 
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 0, 20);
+            var config = new HttpClientConfig(default, default, default, 20, default);
             var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(60));
@@ -477,7 +476,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     return r;
                 });
 
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 1, 20);
+            var config = new HttpClientConfig(default, default, default, 20, default);
             var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(30));
@@ -508,8 +507,8 @@ namespace Snowflake.Data.Tests.UnitTests
             var redirectedRequest = mockHttp.When(HttpMethod.Post, "https://test.snowflakecomputing.com/redirected-login")
                 .Respond(HttpStatusCode.OK);
 
-            //                                                         disableRetry=true ↓
-            var config = new HttpClientConfig(null, null, null, null, null, true, false, 3, 20);
+            //
+            var config = new HttpClientConfig(default, new SFSessionRetryProperties(default, DisableRetry: true, default, default, default, default), default, 20, default);
             var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
             var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
@@ -636,19 +635,12 @@ namespace Snowflake.Data.Tests.UnitTests
 
         // Null min/max mean the connection string carried neither, i.e. only the defaults apply.
         private static HttpClientConfig CreateConfigWithTlsProtocols(string minTls, string maxTls) =>
-            new HttpClientConfig(
+            new(
                 null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                false,
-                7,
-                20,
-                minTlsProtocol: minTls,
-                maxTlsProtocol: maxTls,
-                tlsProtocolsExplicitlyRequested: minTls != null || maxTls != null
+                default,
+                default,
+                0,
+                new SFSessionTLSProperties(minTls, maxTls, minTls != null || maxTls != null, null)
             );
 
 #pragma warning disable SYSLIB0014

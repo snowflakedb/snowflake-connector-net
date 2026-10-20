@@ -551,7 +551,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         private string GetAuthorizationCodeConnectionString(bool addOAuthClientSecret, bool addUser)
         {
-            var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName;
+            var authenticator = "oauth_authorization_code";
             var account = "testAccount";
             var db = "testDb";
             var role = "ANALYST";

@@ -117,7 +117,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         private string GetPatConnectionString()
         {
-            var authenticator = ProgrammaticAccessTokenAuthenticator.AuthName;
+            var authenticator = "programmatic_access_token";
             var db = "testDb";
             var role = "ANALYST";
             var warehouse = "testWarehouse";

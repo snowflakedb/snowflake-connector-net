@@ -19,63 +19,37 @@ namespace Snowflake.Data.Tests.UnitTests.Session
             var proxyProperties = extractor.ExtractProperties(properties);
 
             // then
-            Assert.Equal(testCase.expectedProperties.proxyHost, proxyProperties.proxyHost);
-            Assert.Equal(testCase.expectedProperties.proxyPort, proxyProperties.proxyPort);
-            Assert.Equal(testCase.expectedProperties.nonProxyHosts, proxyProperties.nonProxyHosts);
-            Assert.Equal(testCase.expectedProperties.proxyPassword, proxyProperties.proxyPassword);
-            Assert.Equal(testCase.expectedProperties.proxyUser, proxyProperties.proxyUser);
+            Assert.Equal(testCase.expectedProxyHost, proxyProperties.proxyHost);
+            Assert.Equal(testCase.expectedProxyPort, proxyProperties.proxyPort);
+            Assert.Equal(testCase.expectedNonProxyHosts, proxyProperties.nonProxyHosts);
+            Assert.Equal(testCase.expectedProxyPassword, proxyProperties.proxyPassword);
+            Assert.Equal(testCase.expectedProxyUser, proxyProperties.proxyUser);
         }
 
         public static IEnumerable<object[]> ProxyPropertiesProvider()
         {
-            var noProxyPropertiesCase = new ProxyPropertiesTestCase()
+            var noProxyPropertiesCase = new ProxyPropertiesTestCase
             {
-                conectionString = "account=test;user=test;password=test",
-                expectedProperties = new SFSessionHttpClientProxyProperties()
-                {
-                    proxyHost = null,
-                    proxyPort = null,
-                    nonProxyHosts = null,
-                    proxyPassword = null,
-                    proxyUser = null
-                }
+                conectionString = "account=test;user=test;password=test"
             };
-            var proxyPropertiesConfiguredButDisabledCase = new ProxyPropertiesTestCase()
+            var proxyPropertiesConfiguredButDisabledCase = new ProxyPropertiesTestCase
             {
-                conectionString = "account=test;user=test;password=test;useProxy=false;proxyHost=snowflake.com;proxyPort=123;nonProxyHosts=localhost;proxyPassword=proxyPassword;proxyUser=Chris",
-                expectedProperties = new SFSessionHttpClientProxyProperties()
-                {
-                    proxyHost = null,
-                    proxyPort = null,
-                    nonProxyHosts = null,
-                    proxyPassword = null,
-                    proxyUser = null
-                }
+                conectionString = "account=test;user=test;password=test;useProxy=false;proxyHost=snowflake.com;proxyPort=123;nonProxyHosts=localhost;proxyPassword=proxyPassword;proxyUser=Chris"
             };
-            var proxyPropertiesConfiguredAndEnabledCase = new ProxyPropertiesTestCase()
+            var proxyPropertiesConfiguredAndEnabledCase = new ProxyPropertiesTestCase
             {
                 conectionString = "account=test;user=test;password=test;useProxy=true;proxyHost=snowflake.com",
-                expectedProperties = new SFSessionHttpClientProxyProperties()
-                {
-                    proxyHost = "snowflake.com",
-                    proxyPort = null,
-                    nonProxyHosts = null,
-                    proxyPassword = null,
-                    proxyUser = null
-                }
+                expectedProxyHost = "snowflake.com"
             };
-            var proxyPropertiesAllConfiguredAndEnabled = new ProxyPropertiesTestCase()
+            var proxyPropertiesAllConfiguredAndEnabled = new ProxyPropertiesTestCase
             {
                 conectionString =
                     "account=test;user=test;password=test;useProxy=true;proxyHost=snowflake.com;proxyPort=123;nonProxyHosts=localhost;proxyPassword=proxyPassword;proxyUser=Chris",
-                expectedProperties = new SFSessionHttpClientProxyProperties()
-                {
-                    proxyHost = "snowflake.com",
-                    proxyPort = "123",
-                    nonProxyHosts = "localhost",
-                    proxyPassword = "proxyPassword",
-                    proxyUser = "Chris"
-                }
+                expectedProxyHost = "snowflake.com",
+                expectedProxyPort = "123",
+                expectedNonProxyHosts = "localhost",
+                expectedProxyPassword = "proxyPassword",
+                expectedProxyUser = "Chris"
             };
             return new object[][]
             {
@@ -89,7 +63,11 @@ namespace Snowflake.Data.Tests.UnitTests.Session
         public class ProxyPropertiesTestCase
         {
             internal string conectionString;
-            internal SFSessionHttpClientProxyProperties expectedProperties;
+            internal string expectedProxyHost;
+            internal string expectedProxyPort;
+            internal string expectedNonProxyHosts;
+            internal string expectedProxyPassword;
+            internal string expectedProxyUser;
         }
     }
 }

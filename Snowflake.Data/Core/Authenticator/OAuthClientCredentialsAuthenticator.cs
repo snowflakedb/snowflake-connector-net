@@ -7,19 +7,19 @@ namespace Snowflake.Data.Core.Authenticator
 {
     internal class OAuthClientCredentialsAuthenticator : OAuthFlowAuthenticator, IAuthenticator
     {
-        public const string AuthName = "oauth_client_credentials";
+        private const string AUTH_NAME = "oauth_client_credentials";
         private const string TokenRequestGrantType = "client_credentials";
 
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthClientCredentialsAuthenticator>();
 
         public static bool IsOAuthClientCredentialsAuthenticator(string authenticator) =>
-            AuthName.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
+            AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
-        public OAuthClientCredentialsAuthenticator(SFSession session) : base(session, OAuthAuthenticator.AUTH_NAME)
+        protected override string OAuthType => AUTH_NAME;
+
+        public OAuthClientCredentialsAuthenticator(SFSession session) : base(session)
         {
         }
-
-        protected override string GetAuthenticatorName() => AuthName;
 
         protected override OAuthCacheKeys GetOAuthCacheKeys()
         {

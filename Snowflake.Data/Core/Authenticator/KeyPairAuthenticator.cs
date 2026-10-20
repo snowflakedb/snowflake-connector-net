@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     internal sealed class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public const string AUTH_NAME = "snowflake_jwt";
+        private const string AUTH_NAME = "snowflake_jwt";
         private const string KEY_PAIR_AUTHENTICATOR_SETUP_KEY = "KEY_PAIR_AUTHENTICATOR_SETUP_KEY";
         private const string ClientType = "auth";
 
@@ -37,9 +37,9 @@ namespace Snowflake.Data.Core.Authenticator
         {
         }
 
-        internal KeyPairAuthenticator(SFSession session, IRestRequester customRequester) : base(session, AUTH_NAME, customRequester)
+        internal KeyPairAuthenticator(SFSession session, IRestRequester customRequester) : base(session, customRequester)
         {
-            this.session = session;
+            this.Session = session;
             _rsaProvider = new RSACryptoServiceProvider();
         }
 
@@ -66,6 +66,8 @@ namespace Snowflake.Data.Core.Authenticator
             base.Login();
         }
 
+        protected override string AuthName => AUTH_NAME;
+
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
             data.Token = GenerateJwtToken();
@@ -84,9 +86,9 @@ namespace Snowflake.Data.Core.Authenticator
         {
             s_logger.Info("Key-pair Authentication");
 
-            var hasPkPath = session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);
-            _ = session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent);
-            session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_PWD, out var pkPwd);
+            var hasPkPath = Session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);
+            _ = Session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent);
+            Session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_PWD, out var pkPwd);
 
             // Extract the public key from the private key to generate the fingerprints
             RSAParameters rsaParams;
@@ -162,9 +164,9 @@ namespace Snowflake.Data.Core.Authenticator
              * Note : Lifetime = 120sec for Python impl, 60sec for Jdbc and Odbc
              */
             var accountUser =
-                session.properties[SFSessionProperty.ACCOUNT].ToUpper() +
+                Session.properties[SFSessionProperty.ACCOUNT].ToUpper() +
                 "." +
-                session.properties[SFSessionProperty.USER].ToUpper();
+                Session.properties[SFSessionProperty.USER].ToUpper();
             var issuer = accountUser + "." + publicKeyFingerPrint;
             var claims = new[]
             {

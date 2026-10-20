@@ -13,9 +13,13 @@ namespace Snowflake.Data.Core.Authenticator
     {
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OAuthFlowAuthenticator>();
 
-        internal SecureString AccessToken { get; set; } = null;
+        internal SecureString AccessToken { get; set; }
 
-        protected OAuthFlowAuthenticator(SFSession session, string authName) : base(session, authName)
+        protected override string AuthName => "oauth";
+
+        protected abstract string OAuthType { get; }
+
+        protected OAuthFlowAuthenticator(SFSession session) : base(session)
         {
         }
 
@@ -50,7 +54,7 @@ namespace Snowflake.Data.Core.Authenticator
                     Login();
                     return;
                 }
-                s_logger.Error($"Could not renew access token in {GetAuthenticatorName()} flow, returning the original error: {exception.Message}");
+                s_logger.Error($"Could not renew access token in {AuthName} flow, returning the original error: {exception.Message}");
                 throw;
             }
         }
@@ -86,7 +90,7 @@ namespace Snowflake.Data.Core.Authenticator
                     await LoginAsync(cancellationToken).ConfigureAwait(false);
                     return;
                 }
-                s_logger.Error($"Could not renew access token in {GetAuthenticatorName()} flow, returning the original error: {exception.Message}");
+                s_logger.Error($"Could not renew access token in {AuthName} flow, returning the original error: {exception.Message}");
                 throw;
             }
         }
@@ -95,19 +99,17 @@ namespace Snowflake.Data.Core.Authenticator
 
         protected abstract BaseOAuthAccessTokenRequest GetRenewAccessTokenRequest(SnowflakeDbException exception, OAuthCacheKeys cacheKeys);
 
-        protected abstract string GetAuthenticatorName();
-
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            data.clientEnv.oauthType = GetAuthenticatorName();
+            data.clientEnv.oauthType = OAuthType;
             data.Token = (AccessToken == null ? null : SecureStringHelper.Decode(AccessToken));
             if (string.IsNullOrEmpty(data.Token))
             {
-                var errorMessage = $"No valid access token is available to use for {GetAuthenticatorName()} authentication";
+                var errorMessage = $"No valid access token is available to use for {AuthName} authentication";
                 s_logger.Error(errorMessage);
                 throw new Exception(errorMessage);
             }
-            data.loginName = session.properties[SFSessionProperty.USER];
+            data.loginName = Session.properties[SFSessionProperty.USER];
             SetSecondaryAuthenticationData(ref data);
         }
 
@@ -115,9 +117,8 @@ namespace Snowflake.Data.Core.Authenticator
             BaseOAuthAccessTokenRequest accessTokenRequest,
             OAuthCacheKeys cacheKeys)
         {
-            var authName = GetAuthenticatorName();
-            s_logger.Debug($"Getting access token for {authName} authentication from {accessTokenRequest.TokenEndpoint}");
-            var restRequester = session.restRequester;
+            s_logger.Debug($"Getting access token for {AuthName} authentication from {accessTokenRequest.TokenEndpoint}");
+            var restRequester = Session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
                 var restRequest = new RestRequestWrapper(accessTokenHttpRequest);
@@ -129,7 +130,7 @@ namespace Snowflake.Data.Core.Authenticator
                 catch (Exception exception)
                 {
                     var realException = UnpackAggregateException(exception);
-                    s_logger.Error($"Failed to get access token for {authName} authentication: {realException.Message}");
+                    s_logger.Error($"Failed to get access token for {AuthName} authentication: {realException.Message}");
                     throw new SnowflakeDbException(SFError.OAUTH_TOKEN_REQUEST_ERROR, realException.Message);
                 }
                 HandleAccessTokenResponse(accessTokenRequest, accessTokenResponse, cacheKeys);
@@ -141,9 +142,8 @@ namespace Snowflake.Data.Core.Authenticator
             OAuthCacheKeys cacheKeys,
             CancellationToken cancellationToken)
         {
-            var authName = GetAuthenticatorName();
-            s_logger.Debug($"Getting access token (async) for {authName} authentication from {accessTokenRequest.TokenEndpoint}");
-            var restRequester = (RestRequester)session.restRequester;
+            s_logger.Debug($"Getting access token (async) for {AuthName} authentication from {accessTokenRequest.TokenEndpoint}");
+            var restRequester = (RestRequester)Session.restRequester;
             using (var accessTokenHttpRequest = accessTokenRequest.CreateHttpRequest())
             {
                 var restRequest = new RestRequestWrapper(accessTokenHttpRequest);
@@ -155,7 +155,7 @@ namespace Snowflake.Data.Core.Authenticator
                 catch (Exception exception)
                 {
                     var realException = UnpackAggregateException(exception);
-                    s_logger.Error($"Failed to get access token (async) for {authName} authentication: {realException.Message}");
+                    s_logger.Error($"Failed to get access token (async) for {AuthName} authentication: {realException.Message}");
                     throw new SnowflakeDbException(SFError.OAUTH_TOKEN_REQUEST_ERROR, realException.Message);
                 }
                 HandleAccessTokenResponse(accessTokenRequest, accessTokenResponse, cacheKeys);
@@ -194,7 +194,7 @@ namespace Snowflake.Data.Core.Authenticator
             var refreshToken = cacheKeys.GetRefreshToken();
             if (string.IsNullOrEmpty(refreshToken))
             {
-                s_logger.Debug($"The access token cannot be refreshed because there is no refresh token saved for this {GetAuthenticatorName()} authentication");
+                s_logger.Debug($"The access token cannot be refreshed because there is no refresh token saved for this {AuthName} authentication");
                 return null;
             }
             cacheKeys.RemoveAccessToken();
@@ -227,7 +227,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         protected string DefaultSnowflakeEndpoint(string relativeUrl)
         {
-            return session.BuildUri(relativeUrl).ToString();
+            return Session.BuildUri(relativeUrl).ToString();
         }
 
         protected string RequiredProperty(SFSessionProperty property)
@@ -244,7 +244,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         private string ExtractPropertyOrDefault(SFSessionProperty property, string defaultValue)
         {
-            if (session.properties.TryGetValue(property, out string value) && !string.IsNullOrEmpty(value))
+            if (Session.properties.TryGetValue(property, out string value) && !string.IsNullOrEmpty(value))
                 return value;
             return defaultValue;
         }

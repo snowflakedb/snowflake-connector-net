@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security;
@@ -147,7 +146,7 @@ public sealed class LoginRedirectWiremockTest
 
     private static HttpClient CreateHttpClientWithStrictRedirectPolicy()
     {
-        var config = new HttpClientConfig(null, null, null, null, null, false, false, 7, 20);
+        var config = new HttpClientConfig(default, default, default, 20, default);
         var handler = new CustomDelegatingHandler(new HttpClientHandler
         {
             ClientCertificateOptions = ClientCertificateOption.Manual,
@@ -159,7 +158,7 @@ public sealed class LoginRedirectWiremockTest
 
     private static HttpClient CreateHttpClientWithAutoRedirectPolicy()
     {
-        var config = new HttpClientConfig(null, null, null, null, null, false, false, 7, 20);
+        var config = new HttpClientConfig(default, default, default, 20, default);
         var handler = new CustomDelegatingHandler(new HttpClientHandler
         {
             ClientCertificateOptions = ClientCertificateOption.Manual,

@@ -6,7 +6,6 @@ using Snowflake.Data.Core;
 using System.Security;
 using Xunit;
 using Snowflake.Data.Client;
-using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
@@ -747,7 +746,7 @@ namespace Snowflake.Data.Tests.UnitTests
                     { SFSessionProperty.ACCOUNT, defAccount },
                     { SFSessionProperty.USER, "" },
                     { SFSessionProperty.HOST, defHost },
-                    { SFSessionProperty.AUTHENTICATOR, ExternalBrowserAuthenticator.AUTH_NAME },
+                    { SFSessionProperty.AUTHENTICATOR, "externalbrowser" },
                     { SFSessionProperty.SCHEME, defScheme },
                     { SFSessionProperty.CONNECTION_TIMEOUT, defConnectionTimeout },
                     { SFSessionProperty.PORT, defPort },

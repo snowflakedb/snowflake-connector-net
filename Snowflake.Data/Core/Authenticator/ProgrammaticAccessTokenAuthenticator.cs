@@ -6,14 +6,14 @@ namespace Snowflake.Data.Core.Authenticator
 {
     internal class ProgrammaticAccessTokenAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public const string AuthName = "programmatic_access_token";
+        private const string AUTH_NAME = "programmatic_access_token";
 
-        public ProgrammaticAccessTokenAuthenticator(SFSession session) : base(session, AuthName)
+        public ProgrammaticAccessTokenAuthenticator(SFSession session) : base(session)
         {
         }
 
         public static bool IsProgrammaticAccessTokenAuthenticator(string authenticator) =>
-            AuthName.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
+            AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
 
         public async Task AuthenticateAsync(CancellationToken cancellationToken)
         {
@@ -25,9 +25,11 @@ namespace Snowflake.Data.Core.Authenticator
             Login();
         }
 
+        protected override string AuthName => AUTH_NAME;
+
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
-            data.Token = session.properties[SFSessionProperty.TOKEN];
+            data.Token = Session.properties[SFSessionProperty.TOKEN];
             SetSecondaryAuthenticationData(ref data);
         }
     }

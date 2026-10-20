@@ -18,6 +18,7 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Extensions;
 using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
@@ -31,73 +32,58 @@ namespace Snowflake.Data.Core
     internal class HttpClientConfig
     {
         public HttpClientConfig(
-            string proxyHost,
-            string proxyPort,
-            string proxyUser,
-            string proxyPassword,
-            string noProxyList,
-            bool disableRetry,
-            bool forceRetryOn404,
-            int maxHttpRetries,
+            SFSessionHttpClientProxyProperties proxyProperties,
+            SFSessionRetryProperties retryProperties,
+            SFSessionCRLProperties crlProperties,
             int connectionLimit,
-            bool includeRetryReason = true,
-            string certRevocationCheckMode = "DISABLED",
-            bool enableCRLDiskCaching = true,
-            bool enableCRLInMemoryCaching = true,
-            bool allowCertificatesWithoutCrlUrl = true,
-            int crlDownloadTimeout = 10,
-            long crlDownloadMaxSize = 209715200,
-            string minTlsProtocol = null,
-            string maxTlsProtocol = null,
-            bool tlsProtocolsExplicitlyRequested = false,
-            TlsCipherPolicy tlsCipherPolicy = null,
+            SFSessionTLSProperties tlsProperties,
             string clientType = "default"
         )
         {
-            ProxyHost = proxyHost;
-            ProxyPort = proxyPort;
-            ProxyUser = proxyUser;
-            ProxyPassword = proxyPassword;
-            NoProxyList = noProxyList;
-            DisableRetry = disableRetry;
-            ForceRetryOn404 = forceRetryOn404;
-            MaxHttpRetries = maxHttpRetries;
-            IncludeRetryReason = includeRetryReason;
+            ProxyHost = proxyProperties?.proxyHost;
+            ProxyPort = proxyProperties?.proxyPort;
+            ProxyUser = proxyProperties?.proxyUser;
+            ProxyPassword = proxyProperties?.proxyPassword;
+            NoProxyList = proxyProperties?.nonProxyHosts;
+            DisableRetry = retryProperties.DisableRetry;
+            ForceRetryOn404 = retryProperties.ForceRetryOn404;
+            MaxHttpRetries = retryProperties.MaxHttpRetries;
+            IncludeRetryReason = retryProperties.IncludeRetryReason;
             ConnectionLimit = connectionLimit;
-            CertRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), certRevocationCheckMode, true);
-            EnableCRLDiskCaching = enableCRLDiskCaching;
-            EnableCRLInMemoryCaching = enableCRLInMemoryCaching;
-            AllowCertificatesWithoutCrlUrl = allowCertificatesWithoutCrlUrl;
-            CrlDownloadTimeout = crlDownloadTimeout;
-            CrlDownloadMaxSize = crlDownloadMaxSize;
-            TlsProtocolsExplicitlyRequested = tlsProtocolsExplicitlyRequested;
-            MinTlsProtocol = SslProtocolsExtensions.FromString(minTlsProtocol ?? SFSessionProperty.MINTLS.GetDefaultValue());
-            MaxTlsProtocol = SslProtocolsExtensions.FromString(maxTlsProtocol ?? SFSessionProperty.MAXTLS.GetDefaultValue());
-            CipherPolicy = tlsCipherPolicy ?? TlsCipherPolicy.FromEnvironment();
+            CertRevocationCheckMode = crlProperties.CertRevocationCheckMode;
+            EnableCRLDiskCaching = crlProperties.EnableCrlDiskCaching;
+            EnableCRLInMemoryCaching = crlProperties.EnableCrlInMemoryCaching;
+            AllowCertificatesWithoutCrlUrl = crlProperties.AllowCertificatesWithoutCrlUrl;
+            CrlDownloadTimeout = crlProperties.CRLDownloadTimeout;
+            CrlDownloadMaxSize = crlProperties.CRLDownloadMaxSize;
+            TlsProtocolsExplicitlyRequested = tlsProperties.TlsProtocolsExplicitlyRequested;
+            MinTlsProtocol = SslProtocolsExtensions.FromString(tlsProperties.MinTlsProtocol ?? SFSessionProperty.MINTLS.GetDefaultValue());
+            MaxTlsProtocol = SslProtocolsExtensions.FromString(tlsProperties.MaxTlsProtocol ?? SFSessionProperty.MAXTLS.GetDefaultValue());
+            CipherPolicy = tlsProperties.TlsCipherPolicy ?? TlsCipherPolicy.FromEnvironment();
             CipherPolicy?.WarnIfInconsistentWith(MinTlsProtocol, MaxTlsProtocol);
 
             ConfKey = string.Join(";",
                 new string[]
                 {
-                    proxyHost,
-                    proxyPort,
-                    proxyUser,
-                    proxyPassword,
-                    noProxyList,
-                    disableRetry.ToString(),
-                    forceRetryOn404.ToString(),
-                    maxHttpRetries.ToString(),
-                    includeRetryReason.ToString(),
+                    ProxyHost,
+                    ProxyPort,
+                    ProxyUser,
+                    ProxyPassword,
+                    NoProxyList,
+                    DisableRetry.ToString(),
+                    ForceRetryOn404.ToString(),
+                    MaxHttpRetries.ToString(),
+                    IncludeRetryReason.ToString(),
                     connectionLimit.ToString(),
-                    certRevocationCheckMode,
-                    enableCRLDiskCaching.ToString(),
-                    enableCRLInMemoryCaching.ToString(),
-                    allowCertificatesWithoutCrlUrl.ToString(),
-                    crlDownloadTimeout.ToString(),
-                    crlDownloadMaxSize.ToString(),
-                    minTlsProtocol,
-                    maxTlsProtocol,
-                    tlsProtocolsExplicitlyRequested.ToString(),
+                    CertRevocationCheckMode.ToString(),
+                    EnableCRLDiskCaching.ToString(),
+                    EnableCRLInMemoryCaching.ToString(),
+                    AllowCertificatesWithoutCrlUrl.ToString(),
+                    CrlDownloadTimeout.ToString(),
+                    CrlDownloadMaxSize.ToString(),
+                    tlsProperties.MinTlsProtocol,
+                    tlsProperties.MaxTlsProtocol,
+                    tlsProperties.TlsProtocolsExplicitlyRequested.ToString(),
                     CipherPolicy?.CanonicalValue,
                     clientType
                 });
@@ -133,14 +119,11 @@ namespace Snowflake.Data.Core
         public readonly string ConfKey;
 
         internal bool IsCustomCrlCheckConfigured() =>
-            CertRevocationCheckMode == CertRevocationCheckMode.Enabled || CertRevocationCheckMode == CertRevocationCheckMode.Advisory;
+            CertRevocationCheckMode is CertRevocationCheckMode.Enabled or CertRevocationCheckMode.Advisory;
 
         internal bool IsDotnetCrlCheckEnabled() => CertRevocationCheckMode == CertRevocationCheckMode.Native;
 
-        public SslProtocols GetRequestedTlsProtocolsRange()
-        {
-            return MinTlsProtocol | MaxTlsProtocol;
-        }
+        public SslProtocols GetRequestedTlsProtocolsRange() => MinTlsProtocol | MaxTlsProtocol;
     }
 
     internal sealed class HttpUtil

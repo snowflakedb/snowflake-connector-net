@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.Authenticator
 {
     class WorkloadIdentityFederationAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public const string AuthName = "workload_identity";
+        private const string AUTH_NAME = "workload_identity";
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WorkloadIdentityFederationAuthenticator>();
 
         private readonly IEnvironmentFacade _environmentFacade;
@@ -35,7 +35,7 @@ namespace Snowflake.Data.Core.Authenticator
             IEnvironmentFacade environmentFacade,
             TimeProvider timeProvider,
             AwsSdkWrapper awsSdkWrapper,
-            string metadataHost) : base(session, AuthName)
+            string metadataHost) : base(session)
         {
             _environmentFacade = environmentFacade;
             _timeProvider = timeProvider;
@@ -68,7 +68,9 @@ namespace Snowflake.Data.Core.Authenticator
         }
 
         public static bool IsWorkloadIdentityAuthenticator(string authenticator) =>
-            AuthName.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
+            AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
+
+        protected override string AuthName => AUTH_NAME;
 
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
@@ -90,7 +92,7 @@ namespace Snowflake.Data.Core.Authenticator
 
         internal WorkloadIdentityAttestationData CreateAttestation()
         {
-            var host = session.properties.TryGetValue(SFSessionProperty.HOST, out var configuredHost) ? configuredHost : null;
+            var host = Session.properties.TryGetValue(SFSessionProperty.HOST, out var configuredHost) ? configuredHost : null;
             var extraAllowedSuffixes = SnowflakeHost.GetExtraAllowedHostSuffixes(_environmentFacade);
             if (extraAllowedSuffixes.Count > 0)
             {
@@ -107,11 +109,11 @@ namespace Snowflake.Data.Core.Authenticator
             {
                 return _provider switch
                 {
-                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentFacade, _timeProvider, _awsSdkWrapper, session.restRequester, _awsStsHost)
+                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentFacade, _timeProvider, _awsSdkWrapper, Session.restRequester, _awsStsHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
-                    AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentFacade, session.restRequester, _metadataHost)
+                    AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentFacade, Session.restRequester, _metadataHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
-                    AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(session.restRequester, _metadataHost)
+                    AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(Session.restRequester, _metadataHost)
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),
                     AttestationProvider.OIDC => new WorkflowIdentityOidcAttestationRetriever()
                         .CreateAttestationData(_entraResource, _token, _impersonationPath),

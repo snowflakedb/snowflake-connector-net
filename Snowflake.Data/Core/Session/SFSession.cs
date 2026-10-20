@@ -80,6 +80,8 @@ namespace Snowflake.Data.Core
 
         internal SessionPropertiesContext PropertiesContext { get; }
 
+        internal SFSessionHttpClientProperties ClientProperties { get; }
+
         private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
 
         private int _queryContextCacheSize = _defaultQueryContextCacheSize;
@@ -88,19 +90,9 @@ namespace Snowflake.Data.Core
 
         internal bool _disableConsoleLogin;
 
-        internal int _maxRetryCount;
-
-        internal TimeSpan _maxRetryTimeout;
-
-        internal readonly TimeSpan _cleanupWait;
-
-        internal readonly TimeSpan _abortRequestTimeout;
-
-        internal readonly QueryLoggingConfig _queryLoggingConfig;
-
         private string _user;
 
-        internal bool _disableSamlUrlCheck;
+        internal readonly QueryLoggingConfig _queryLoggingConfig;
 
         private volatile bool _invalidatedForPooling;
 
@@ -224,23 +216,23 @@ namespace Snowflake.Data.Core
             ValidateApplicationName(properties);
             try
             {
-                var extractedProperties = GetHttpClientConfig("default", out var httpClientConfig);
+                ClientProperties = GetHttpClientConfig("default", out var httpClientConfig);
                 _authenticator = new Lazy<IAuthenticator>(() => AuthenticatorFactory.GetAuthenticator(this));
                 TlsProtocols = httpClientConfig.GetRequestedTlsProtocolsRange();
                 TlsProtocolsExplicitlyRequested = httpClientConfig.TlsProtocolsExplicitlyRequested;
-                ParameterMap = extractedProperties.ToParameterMap();
+                ParameterMap = new Dictionary<SFSessionParameter, object>
+                {
+                    [SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = ClientProperties._validateDefaultParameters,
+                    [SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] = ClientProperties._clientSessionKeepAlive,
+                    [SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL] = ClientProperties._clientStoreTemporaryCredential
+                };
                 var httpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
                 restRequester = new RestRequester(httpClient);
-                _poolConfig = extractedProperties.BuildConnectionPoolConfig();
+                _poolConfig = ClientProperties.BuildConnectionPoolConfig();
 
                 properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
                 _easyLoggingStarter.Init(easyLoggingConfigFile);
                 properties.TryGetValue(SFSessionProperty.QUERY_TAG, out _queryTag);
-                _maxRetryCount = extractedProperties.maxHttpRetries;
-                _maxRetryTimeout = extractedProperties.retryTimeout;
-                _disableSamlUrlCheck = extractedProperties._disableSamlUrlCheck;
-                _cleanupWait = extractedProperties.cleanupWait;
-                _abortRequestTimeout = extractedProperties.abortRequestTimeout;
                 QueryLoggingConfig.ValidateAndExtract(properties, logger, out _queryLoggingConfig);
 
                 if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&
@@ -719,7 +711,7 @@ namespace Snowflake.Data.Core
                             { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
                         };
 
-                    SFRestRequest heartBeatSessionRequest = new SFRestRequest
+                    var heartBeatSessionRequest = new SFRestRequest
                     {
                         Url = BuildUri(RestPath.SF_SESSION_HEARTBEAT_PATH, parameters),
                         authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),

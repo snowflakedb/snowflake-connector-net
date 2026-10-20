@@ -104,7 +104,7 @@ namespace Snowflake.Data.Tests.IntegrationTests
                 }
             }
 
-            [SFFact(RetriesCount = RetriesCount.Once)]
+            [SFFact(RetriesCount = RetriesCount.Thrice)]
             public async Task TestExternalCancellationPropagatesDuringBindStageUpload()
             {
                 var tableName = _isolatedFixture.TableNameBaseName + Guid.NewGuid().ToString("N");

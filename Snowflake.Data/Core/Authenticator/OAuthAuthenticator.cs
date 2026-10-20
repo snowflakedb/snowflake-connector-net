@@ -12,7 +12,7 @@ namespace Snowflake.Data.Core.Authenticator
     class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
     {
         // The authenticator setting value to use to authenticate using key pair authentication.
-        public const string AUTH_NAME = "oauth";
+        private const string AUTH_NAME = "oauth";
 
         // The logger.
         private static readonly SFLogger logger =
@@ -22,9 +22,9 @@ namespace Snowflake.Data.Core.Authenticator
         /// Constructor for the oauth authenticator.
         /// </summary>
         /// <param name="session">Session which created this authenticator</param>
-        internal OAuthAuthenticator(SFSession session) : base(session, AUTH_NAME)
+        internal OAuthAuthenticator(SFSession session) : base(session)
         {
-            this.session = session;
+            this.Session = session;
         }
 
         public static bool IsOAuthAuthenticator(string authenticator)
@@ -37,16 +37,18 @@ namespace Snowflake.Data.Core.Authenticator
         }
 
         /// <see cref="IAuthenticator.AuthenticateAsync"/>
-        async public Task AuthenticateAsync(CancellationToken cancellationToken)
+        public async Task AuthenticateAsync(CancellationToken cancellationToken)
         {
             await base.LoginAsync(cancellationToken).ConfigureAwait(false);
         }
+
+        protected override string AuthName => AUTH_NAME;
 
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
         {
             // Add the token to the Data attribute
-            data.Token = session.properties[SFSessionProperty.TOKEN];
+            data.Token = Session.properties[SFSessionProperty.TOKEN];
             // Remove the login name for an OAuth session
             data.loginName = "";
             SetSecondaryAuthenticationData(ref data);

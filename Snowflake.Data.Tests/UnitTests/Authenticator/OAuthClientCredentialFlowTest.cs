@@ -183,7 +183,7 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator
 
         private string GetClientCredentialsConnectionString(bool addOAuthClientSecret, bool addUser)
         {
-            var authenticator = OAuthClientCredentialsAuthenticator.AuthName;
+            var authenticator = "oauth_client_credentials";
             var account = "testAccount";
             var db = "testDb";
             var role = "ANALYST";

@@ -630,8 +630,8 @@ namespace Snowflake.Data.Core
                     jsonBody = postBody,
                     sid = SfSession.sessionId
                 };
-                if (!TimeoutHelper.IsInfinite(SfSession._abortRequestTimeout))
-                    request.RestTimeout = SfSession._abortRequestTimeout;
+                if (!TimeoutHelper.IsInfinite(SfSession.ClientProperties._abortRequestTimeout))
+                    request.RestTimeout = SfSession.ClientProperties._abortRequestTimeout;
                 return request;
             }
         }
@@ -645,7 +645,7 @@ namespace Snowflake.Data.Core
                 return;
             }
 
-            var cleanupWait = SfSession._cleanupWait;
+            var cleanupWait = SfSession.ClientProperties._cleanupWait;
             if (TimeoutHelper.IsInfinite(cleanupWait))
             {
                 var response = _restRequester.Post<NullDataResponse>(request);

@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
+using Snowflake.Data.Core.Revocation;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 using Xunit;
 #if NET8_0_OR_GREATER
@@ -54,18 +56,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var policy = TlsCipherPolicy.Parse("TLS_AES_128_GCM_SHA256");
             var config = new HttpClientConfig(
                 null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                false,
-                7,
+                new SFSessionRetryProperties(default, false, false, default, 7, true),
+                new SFSessionCRLProperties(),
                 20,
-                minTlsProtocol: "tls13",
-                maxTlsProtocol: "tls13",
-                tlsProtocolsExplicitlyRequested: true,
-                tlsCipherPolicy: policy);
+                new SFSessionTLSProperties("tls13", "tls13", true, policy));
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -118,16 +112,10 @@ namespace Snowflake.Data.Tests.UnitTests
             var policy = TlsCipherPolicy.Parse("TLS_AES_128_GCM_SHA256");
             var config = new HttpClientConfig(
                 null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                false,
-                7,
+                new SFSessionRetryProperties(default, false, false, default, 7, true),
+                new SFSessionCRLProperties(CertRevocationCheckMode.Enabled, true, true, false, 10, 20971520),
                 20,
-                certRevocationCheckMode: "ENABLED",
-                tlsCipherPolicy: policy);
+                new SFSessionTLSProperties("tls12", "tls13", false, policy));
 
             using var handler = Assert.IsType<SocketsHttpHandler>(
                 HttpUtil.Instance.SetupCustomHttpHandler(config));

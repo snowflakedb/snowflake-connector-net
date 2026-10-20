@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Core.Extensions;
+using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests
@@ -74,7 +75,13 @@ namespace Snowflake.Data.Tests.UnitTests
 
         private HttpClient CreateHttpClientForRetry()
         {
-            var config = new HttpClientConfig(null, null, null, null, null, false, false, 7, 20);
+            var config = new HttpClientConfig(
+                null,
+                new SFSessionRetryProperties(default, false, false, default, 7, true),
+                new SFSessionCRLProperties(),
+                20,
+                new SFSessionTLSProperties("tls12", "tls13", false, null));
+            // Inner handler is replaced by CreateNewHttpClient, so a bare instance suffices.
             var httpMessageHandler = new HttpClientHandler
             {
                 ClientCertificateOptions = ClientCertificateOption.Manual,
@@ -82,12 +89,12 @@ namespace Snowflake.Data.Tests.UnitTests
                 AllowAutoRedirect = false,
             };
             var customHandler = new CustomDelegatingHandler(httpMessageHandler);
-            return HttpUtil.Instance.CreateNewHttpClient(config, httpMessageHandler, customHandler);
+            return HttpUtil.Instance.CreateNewHttpClient(config, customHandler);
         }
 
         private HttpRequestMessage CreateQueryRequest()
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, _fixture.Runner.WiremockBaseHttpsUrl + "/queries/v1/query-request?requestId=abc");
+            var request = new HttpRequestMessage(HttpMethod.Post, _fixture.Runner.WiremockBaseHttpUrl + "/queries/v1/query-request?requestId=abc");
             request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultHttpSecondsTimeout));
             request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(BaseRestRequest.s_defaultRestRetrySecondsTimeout));
             return request;

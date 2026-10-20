@@ -115,7 +115,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var expectedIdToken = "mockIdToken";
             var connectionString = $"account=account;user=user;password=test;authenticator=externalbrowser;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
             var session = new SFSession(connectionString, new SessionPropertiesContext());
-            var authenticator = AuthenticatorFactory.GetAuthenticator(session);
+            var authenticator = session.GetAuthenticator();
             var key = ((ExternalBrowserAuthenticator)authenticator)._idTokenKey;
             LoginResponse authnResponse = new LoginResponse
             {
@@ -143,7 +143,7 @@ namespace Snowflake.Data.Tests.UnitTests
             var mockIdToken = "mockIdToken";
             var connectionString = $"account=account;password=test;authenticator=externalbrowser;CLIENT_STORE_TEMPORARY_CREDENTIAL=true";
             var session = new SFSession(connectionString, new SessionPropertiesContext());
-            var authenticator = AuthenticatorFactory.GetAuthenticator(session);
+            var authenticator = session.GetAuthenticator();
             var key = ((ExternalBrowserAuthenticator)authenticator)._idTokenKey;
             LoginResponse authnResponse = new LoginResponse
             {

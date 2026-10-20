@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
-using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 using Snowflake.Data.Tests.Mock;
@@ -269,7 +268,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         // arrange
         var driverRootPath = Path.Combine("..", "..");
         var configFilePath = Path.Combine(driverRootPath, "..", ".parameters_oauth_authorization_code_okta.json"); // Adjust to a proper config for your manual testing
-        var authenticator = OAuthAuthorizationCodeAuthenticator.AuthName; // Set either OAuthAuthorizationCodeAuthenticator.AuthName or OAuthClientCredentialsAuthenticator.AuthName
+        var authenticator = "oauth_authorization_code"; // Set either "oauth_authorization_code" or "oauth_client_credentials"
         RemoveOAuthCache(_fixture.testConfig);
         try
         {
@@ -365,12 +364,12 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             .Append("poolingEnabled=false;");
         switch (authenticator)
         {
-            case OAuthAuthorizationCodeAuthenticator.AuthName:
+            case "oauth_authorization_code":
                 return builder
                     .Append($"oauthRedirectUri={_fixture.testConfig.oauthRedirectUri};")
                     .Append($"oauthAuthorizationUrl={_fixture.testConfig.oauthAuthorizationUrl}")
                     .ToString();
-            case OAuthClientCredentialsAuthenticator.AuthName:
+            case "oauth_client_credentials":
                 return builder.ToString();
             default:
                 throw new Exception("Unknown authenticator");

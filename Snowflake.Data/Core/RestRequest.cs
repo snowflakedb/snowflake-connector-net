@@ -132,6 +132,8 @@ namespace Snowflake.Data.Core
 
         internal bool _isStatusRequest { get; set; }
 
+        internal Action<HttpRequestMessage> customRequestEnrichment { get; set; }
+
         public override string ToString()
         {
             return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", Url.ToString(),

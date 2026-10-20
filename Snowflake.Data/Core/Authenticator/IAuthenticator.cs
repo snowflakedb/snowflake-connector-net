@@ -37,6 +37,8 @@ namespace Snowflake.Data.Core.Authenticator
         SNOWFLAKE,
         OKTA,
     }
+
+
     /// <summary>
     /// A base implementation for all authenticators to create and send a login request.
     /// </summary>
@@ -49,11 +51,12 @@ namespace Snowflake.Data.Core.Authenticator
             SFLoggerFactory.GetLogger<BaseAuthenticator>();
 
         // The name of the authenticator.
-        private string authName;
+        protected abstract string AuthName { get; }
+
         private readonly IRestRequester _restRequester;
 
         // The session which created this authenticator.
-        protected SFSession session;
+        protected SFSession Session;
 
         // The client environment properties
         private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CloneForSession();
@@ -62,7 +65,7 @@ namespace Snowflake.Data.Core.Authenticator
         internal SpcsTokenProvider SpcsTokenProvider = SpcsTokenProvider.CreateIfRunningInSpcs();
 
         /// <inheritdoc/>
-        protected BaseAuthenticator(SFSession session, string authName) : this(session, authName, session.restRequester)
+        protected BaseAuthenticator(SFSession session) : this(session, session.restRequester)
         {
         }
 
@@ -70,12 +73,10 @@ namespace Snowflake.Data.Core.Authenticator
         /// The abstract base for all authenticators.
         /// </summary>
         /// <param name="session">The session which created the authenticator.</param>
-        /// <param name="authName">The name of the authenticator used for telemetry.</param>
         /// <param name="restRequester">Optional REST requester override</param>
-        private protected BaseAuthenticator(SFSession session, string authName, IRestRequester restRequester)
+        private protected BaseAuthenticator(SFSession session, IRestRequester restRequester)
         {
-            this.session = session;
-            this.authName = authName;
+            Session = session;
             _restRequester = restRequester;
             ClientEnv.certRevocationCheckMode = session.properties[SFSessionProperty.CERTREVOCATIONCHECKMODE];
             if (session.properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
@@ -95,7 +96,7 @@ namespace Snowflake.Data.Core.Authenticator
 
             var response = await _restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
 
-            session.ProcessLoginResponse(response);
+            Session.ProcessLoginResponse(response);
         }
 
         /// <see cref="IAuthenticator.Authenticate"/>
@@ -105,7 +106,7 @@ namespace Snowflake.Data.Core.Authenticator
 
             var response = _restRequester.Post<LoginResponse>(loginRequest);
 
-            session.ProcessLoginResponse(response);
+            Session.ProcessLoginResponse(response);
         }
 
         /// <summary>
@@ -116,13 +117,13 @@ namespace Snowflake.Data.Core.Authenticator
 
         protected void SetSecondaryAuthenticationData(ref LoginRequestData data)
         {
-            if (session.properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordString)
+            if (Session.properties.TryGetValue(SFSessionProperty.PASSCODEINPASSWORD, out var passcodeInPasswordString)
                 && bool.TryParse(passcodeInPasswordString, out var passcodeInPassword)
                 && passcodeInPassword)
             {
                 data.extAuthnDuoMethod = "passcode";
             }
-            else if (session.properties.TryGetValue(SFSessionProperty.PASSCODE, out var passcode) && !string.IsNullOrEmpty(passcode))
+            else if (Session.properties.TryGetValue(SFSessionProperty.PASSCODE, out var passcode) && !string.IsNullOrEmpty(passcode))
             {
                 data.extAuthnDuoMethod = "passcode";
                 data.passcode = passcode;
@@ -142,7 +143,7 @@ namespace Snowflake.Data.Core.Authenticator
         protected virtual SFRestRequest BuildLoginRequest()
         {
             // build uri
-            var loginUrl = session.BuildLoginUrl();
+            var loginUrl = Session.BuildLoginUrl();
             var data = BuildLoginRequestData();
             var loginRequest = new LoginRequest { data = data };
 
@@ -161,7 +162,7 @@ namespace Snowflake.Data.Core.Authenticator
                     authorizationToken = SF_AUTHORIZATION_BASIC,
                     _isLogin = true,
                     HttpTimeout = httpTimeout.Value,
-                    RestTimeout = session.connectionTimeout
+                    RestTimeout = Session.connectionTimeout
                 };
             }
 
@@ -171,7 +172,7 @@ namespace Snowflake.Data.Core.Authenticator
                 Url = loginUrl,
                 authorizationToken = SF_AUTHORIZATION_BASIC,
                 _isLogin = true,
-                RestTimeout = session.connectionTimeout
+                RestTimeout = Session.connectionTimeout
             };
         }
 
@@ -179,13 +180,13 @@ namespace Snowflake.Data.Core.Authenticator
         {
             var data = new LoginRequestData
             {
-                loginName = session.properties[SFSessionProperty.USER],
-                accountName = session.properties[SFSessionProperty.ACCOUNT],
+                loginName = Session.properties[SFSessionProperty.USER],
+                accountName = Session.properties[SFSessionProperty.ACCOUNT],
                 clientAppId = SFEnvironment.DriverName,
                 clientAppVersion = SFEnvironment.DriverVersion,
                 clientEnv = ClientEnv,
-                SessionParameters = session.ParameterMap,
-                Authenticator = authName,
+                SessionParameters = Session.ParameterMap,
+                Authenticator = AuthName,
             };
             data.SpcsToken = SpcsTokenProvider?.GetSpcsToken();
             SetSpecializedAuthenticatorData(ref data);

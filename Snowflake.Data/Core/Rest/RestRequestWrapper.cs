@@ -2,23 +2,21 @@ using System;
 using System.Net.Http;
 using Snowflake.Data.Core.Extensions;
 
-namespace Snowflake.Data.Core.Rest
+namespace Snowflake.Data.Core.Rest;
+
+internal class RestRequestWrapper : BaseRestRequest, IRestRequest
 {
-    internal class RestRequestWrapper : BaseRestRequest, IRestRequest
+    private readonly HttpRequestMessage _httpRequestMessage;
+
+    public RestRequestWrapper(HttpRequestMessage httpRequestMessage)
     {
-        private readonly HttpRequestMessage _httpRequestMessage;
+        _httpRequestMessage = httpRequestMessage;
+        if (httpRequestMessage.TryGetOption(REST_REQUEST_TIMEOUT_KEY, out var timeout) && timeout is TimeSpan restTimeout)
+            RestTimeout = restTimeout;
 
-        public RestRequestWrapper(HttpRequestMessage httpRequestMessage)
-        {
-            _httpRequestMessage = httpRequestMessage;
-        }
-
-        public HttpRequestMessage ToRequestMessage(HttpMethod method)
-        {
-            return _httpRequestMessage;
-        }
-
-        public TimeSpan GetRestTimeout() =>
-            (TimeSpan)_httpRequestMessage.GetOption(REST_REQUEST_TIMEOUT_KEY);
+        if (httpRequestMessage.TryGetOption(HTTP_REQUEST_TIMEOUT_KEY, out timeout) && timeout is TimeSpan httpTimeout)
+            HttpTimeout = httpTimeout;
     }
+
+    public HttpRequestMessage ToRequestMessage(HttpMethod method) => _httpRequestMessage;
 }

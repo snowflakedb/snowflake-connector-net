@@ -24,7 +24,7 @@ namespace Snowflake.Data.Core.Authenticator
     /// </summary>
     class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     {
-        public const string AUTH_NAME = "externalbrowser";
+        private const string AUTH_NAME = "externalbrowser";
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
         private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
         private const string OriginHeader = "Origin";
@@ -64,7 +64,7 @@ namespace Snowflake.Data.Core.Authenticator
         /// Constructor of the External authenticator
         /// </summary>
         /// <param name="session"></param>
-        internal ExternalBrowserAuthenticator(SFSession session) : base(session, AUTH_NAME)
+        internal ExternalBrowserAuthenticator(SFSession session) : base(session)
         {
             var user = session.properties[SFSessionProperty.USER];
             var clientStoreTemporaryCredential = bool.Parse(session.properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]);
@@ -171,10 +171,10 @@ namespace Snowflake.Data.Core.Authenticator
 
         private string GetIdpUrlAndProofKey(int localPort)
         {
-            if (session._disableConsoleLogin)
+            if (Session._disableConsoleLogin)
             {
                 var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
-                var authenticatorRestResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+                var authenticatorRestResponse = Session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
                 authenticatorRestResponse.FilterFailedResponse();
 
                 _proofKey = authenticatorRestResponse.data.proofKey;
@@ -189,11 +189,11 @@ namespace Snowflake.Data.Core.Authenticator
 
         private async Task<string> GetIdpUrlAndProofKeyAsync(int localPort, CancellationToken cancellationToken)
         {
-            if (session._disableConsoleLogin)
+            if (Session._disableConsoleLogin)
             {
                 var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
                 var authenticatorRestResponse =
-                    await session.restRequester.PostAsync<AuthenticatorResponse>(
+                    await Session.restRequester.PostAsync<AuthenticatorResponse>(
                         authenticatorRestRequest,
                         cancellationToken
                     ).ConfigureAwait(false);
@@ -211,9 +211,9 @@ namespace Snowflake.Data.Core.Authenticator
 
         private string GetRedirectSamlRequest(HttpListener httpListener, string loginUrl)
         {
-            var timeoutInSec = int.Parse(session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
+            var timeoutInSec = int.Parse(Session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
             var timeout = TimeSpan.FromSeconds(timeoutInSec);
-            var accountUrl = session.BuildUri(string.Empty);
+            var accountUrl = Session.BuildUri(string.Empty);
             logger.Debug($"External browser callback account origin: {accountUrl.Scheme}://{accountUrl.Host}:{accountUrl.Port}");
             using (var browserListener = new WebBrowserListener<ExternalBrowserToken>(
                 httpListener,
@@ -445,11 +445,11 @@ namespace Snowflake.Data.Core.Authenticator
 
         private SFRestRequest BuildAuthenticatorRestRequest(int port)
         {
-            var fedUrl = session.BuildUri(RestPath.SF_AUTHENTICATOR_REQUEST_PATH);
+            var fedUrl = Session.BuildUri(RestPath.SF_AUTHENTICATOR_REQUEST_PATH);
             var data = new AuthenticatorRequestData()
             {
-                AccountName = session.properties[SFSessionProperty.ACCOUNT],
-                Authenticator = AUTH_NAME,
+                AccountName = Session.properties[SFSessionProperty.ACCOUNT],
+                Authenticator = AuthName,
                 BrowserModeRedirectPort = port.ToString(),
                 DriverName = SFEnvironment.DriverName,
                 DriverVersion = SFEnvironment.DriverVersion,
@@ -457,6 +457,8 @@ namespace Snowflake.Data.Core.Authenticator
 
             return BuildTimeoutRequest(fedUrl, new AuthenticatorRequest() { Data = data }, null);
         }
+
+        protected override string AuthName => AUTH_NAME;
 
         /// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
         protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
@@ -479,11 +481,11 @@ namespace Snowflake.Data.Core.Authenticator
         {
             Dictionary<string, string> parameters = new Dictionary<string, string>()
             {
-                { "login_name", session.properties[SFSessionProperty.USER]},
+                { "login_name", Session.properties[SFSessionProperty.USER]},
                 { "proof_key", proofKey },
                 { "browser_mode_redirect_port", localPort.ToString() }
             };
-            Uri loginUrl = session.BuildUri(RestPath.SF_CONSOLE_LOGIN, parameters);
+            Uri loginUrl = Session.BuildUri(RestPath.SF_CONSOLE_LOGIN, parameters);
             return loginUrl.ToString();
         }
 
@@ -501,8 +503,8 @@ namespace Snowflake.Data.Core.Authenticator
             SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
                 TokenType: TokenType.IdToken,
                 Idp: "",
-                SnowflakeUrl: session.properties[SFSessionProperty.HOST],
-                Username: session.properties[SFSessionProperty.USER],
+                SnowflakeUrl: Session.properties[SFSessionProperty.HOST],
+                Username: Session.properties[SFSessionProperty.USER],
                 Role: ""));
     }
 }

@@ -2,17 +2,16 @@ using System;
 using System.Collections.Generic;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
-using Snowflake.Data.Core.Revocation;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core
 {
-
     internal class SFSessionHttpClientProperties
     {
-        private static readonly Extractor s_propertiesExtractor = new Extractor(new SFSessionHttpClientProxyProperties.Extractor());
+        private static readonly Extractor s_propertiesExtractor = GetDefaultPropertiesExtractor();
+
         public const int DefaultMaxPoolSize = 10;
         public const int DefaultMinPoolSize = 2;
         public const ChangedSessionBehavior DefaultChangedSession = ChangedSessionBehavior.Destroy;
@@ -24,37 +23,63 @@ namespace Snowflake.Data.Core
         public const int DefaultConnectionLimit = 20;
         public static TimeSpan DefaultRetryTimeout { get; internal set; } = TimeSpan.FromSeconds(300);
         private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFSessionHttpClientProperties>();
-        internal static readonly int MaxConnectionLimit = 1000;
+        internal const int MaxConnectionLimit = 1000;
 
-        internal bool validateDefaultParameters;
-        internal bool clientSessionKeepAlive;
-        internal TimeSpan connectionTimeout;
-        internal bool disableRetry;
-        internal bool forceRetryOn404;
-        internal TimeSpan retryTimeout;
-        internal int maxHttpRetries;
-        internal bool includeRetryReason;
-        internal SFSessionHttpClientProxyProperties proxyProperties;
-        internal bool _disableSamlUrlCheck;
-        private int _maxPoolSize;
-        private int _minPoolSize;
-        private ChangedSessionBehavior _changedSession;
-        private TimeSpan _waitingForSessionIdleTimeout;
-        private TimeSpan _expirationTimeout;
-        private bool _poolingEnabled;
-        internal bool _clientStoreTemporaryCredential;
-        internal int _servicePointConnectionLimit;
-        internal CertRevocationCheckMode _certRevocationCheckMode;
-        internal bool _enableCrlDiskCaching;
-        internal bool _enableCrlInMemoryCaching;
-        internal bool _allowCertificatesWithoutCrlUrl;
-        private int _crlDownloadTimeout;
-        private long _crlDownloadMaxSize;
-        internal bool _tlsProtocolsExplicitlyRequested;
-        internal string _minTlsProtocol;
-        internal string _maxTlsProtocol;
-        internal TimeSpan cleanupWait;
-        internal TimeSpan abortRequestTimeout;
+        internal bool _validateDefaultParameters { get; }
+        internal bool _clientSessionKeepAlive { get; }
+        internal SFSessionRetryProperties _retryProperties { get; private set; }
+        internal SFSessionHttpClientProxyProperties _proxyProperties { get; }
+        internal SFSessionCRLProperties _crlProperties { get; }
+        internal SFSessionTLSProperties _tlsProperties { get; }
+        private int _maxPoolSize { get; }
+        private int _minPoolSize { get; }
+        private ChangedSessionBehavior _changedSession { get; }
+        private TimeSpan _waitingForSessionIdleTimeout { get; }
+        private TimeSpan _expirationTimeout { get; }
+        internal bool _poolingEnabled { get; private set; }
+        internal bool _clientStoreTemporaryCredential { get; }
+        internal int _servicePointConnectionLimit { get; private set; }
+        internal TimeSpan _cleanupWait { get; }
+        internal TimeSpan _abortRequestTimeout { get; }
+        public bool _disableSamlUrlCheck { get; }
+
+        private protected SFSessionHttpClientProperties(
+            bool clientSessionKeepAlive,
+            bool validateDefaultParameters,
+                SFSessionRetryProperties retryProperties,
+                SFSessionHttpClientProxyProperties proxyProperties,
+                int maxPoolSize,
+                int minPoolSize,
+                ChangedSessionBehavior changedSession,
+                TimeSpan waitingForSessionIdleTimeout,
+                TimeSpan expirationTimeout,
+                bool poolingEnabled,
+                bool disableSamlUrlCheck,
+                bool clientStoreTemporaryCredential,
+                int servicePointConnectionLimit,
+                SFSessionCRLProperties crlProperties,
+                SFSessionTLSProperties tlsProperties,
+                TimeSpan cleanupWait,
+                TimeSpan abortRequestTimeout)
+        {
+            _clientSessionKeepAlive = clientSessionKeepAlive;
+            _validateDefaultParameters = validateDefaultParameters;
+            _retryProperties = retryProperties;
+            _proxyProperties = proxyProperties;
+            _maxPoolSize = maxPoolSize;
+            _minPoolSize = minPoolSize;
+            _changedSession = changedSession;
+            _waitingForSessionIdleTimeout = waitingForSessionIdleTimeout;
+            _expirationTimeout = expirationTimeout;
+            _poolingEnabled = poolingEnabled;
+            _disableSamlUrlCheck = disableSamlUrlCheck;
+            _clientStoreTemporaryCredential = clientStoreTemporaryCredential;
+            _servicePointConnectionLimit = servicePointConnectionLimit;
+            _crlProperties = crlProperties;
+            _tlsProperties = tlsProperties;
+            _cleanupWait = cleanupWait;
+            _abortRequestTimeout = abortRequestTimeout;
+        }
 
         public static SFSessionHttpClientProperties ExtractAndValidate(SFSessionProperties properties)
         {
@@ -100,10 +125,7 @@ namespace Snowflake.Data.Core
         {
             try
             {
-                ValidateConnectionTimeout();
-                ValidateRetryTimeout();
-                ShortenConnectionTimeoutByRetryTimeout();
-                ValidateHttpRetries();
+                ValidateRetryProperties();
                 ValidateMinMaxPoolSize();
                 ValidateWaitingForSessionIdleTimeout();
                 ValidateConnectionLimit();
@@ -118,8 +140,9 @@ namespace Snowflake.Data.Core
             }
         }
 
-        private void ValidateConnectionTimeout()
+        private void ValidateRetryProperties()
         {
+            var (connectionTimeout, retryTimeout, maxHttpRetries) = (_retryProperties.ConnectionTimeout, _retryProperties.RetryTimeout, _retryProperties.MaxHttpRetries);
             if (TimeoutHelper.IsZeroLength(connectionTimeout))
             {
                 s_logger.Warn("Connection timeout provided is 0. Timeout will be infinite");
@@ -129,14 +152,7 @@ namespace Snowflake.Data.Core
             {
                 s_logger.Warn("Connection timeout provided is negative. Timeout will be infinite.");
             }
-            if (!TimeoutHelper.IsInfinite(connectionTimeout) && connectionTimeout < DefaultRetryTimeout)
-            {
-                s_logger.Warn($"Connection timeout provided is less than recommended minimum value of {DefaultRetryTimeout}");
-            }
-        }
 
-        private void ValidateRetryTimeout()
-        {
             if (retryTimeout.TotalMilliseconds > 0 && retryTimeout < DefaultRetryTimeout)
             {
                 s_logger.Warn($"Max retry timeout provided is less than the allowed minimum value of {DefaultRetryTimeout}");
@@ -151,20 +167,14 @@ namespace Snowflake.Data.Core
             {
                 s_logger.Warn($"Max retry timeout provided is negative. Timeout will be infinite");
             }
-        }
 
-        private void ShortenConnectionTimeoutByRetryTimeout()
-        {
             if (!TimeoutHelper.IsInfinite(retryTimeout) && retryTimeout < connectionTimeout)
             {
                 s_logger.Warn($"Connection timeout greater than retry timeout. Setting connection time same as retry timeout");
                 connectionTimeout = retryTimeout;
             }
-        }
 
-        private void ValidateHttpRetries()
-        {
-            if (maxHttpRetries > 0 && maxHttpRetries < DefaultMaxHttpRetries)
+            if (maxHttpRetries is > 0 and < DefaultMaxHttpRetries)
             {
                 s_logger.Warn($"Max retry count provided is less than the allowed minimum value of {DefaultMaxHttpRetries}");
 
@@ -174,6 +184,8 @@ namespace Snowflake.Data.Core
             {
                 s_logger.Warn($"Max retry count provided is 0. Retry count will be infinite");
             }
+
+            _retryProperties = _retryProperties with { ConnectionTimeout = connectionTimeout, RetryTimeout = retryTimeout, MaxHttpRetries = maxHttpRetries };
         }
 
         private void ValidateMinMaxPoolSize()
@@ -198,7 +210,7 @@ namespace Snowflake.Data.Core
 
         private void ValidateConnectionLimit()
         {
-            if (_servicePointConnectionLimit < 1 || _servicePointConnectionLimit > MaxConnectionLimit)
+            if (_servicePointConnectionLimit is < 1 or > MaxConnectionLimit)
             {
                 s_logger.Warn($"Connection limit must be between 1 and {MaxConnectionLimit}. Using the default value of {DefaultConnectionLimit}");
                 _servicePointConnectionLimit = DefaultConnectionLimit;
@@ -208,32 +220,17 @@ namespace Snowflake.Data.Core
         public HttpClientConfig BuildHttpClientConfig(string clientType)
         {
             return new HttpClientConfig(
-                proxyProperties.proxyHost,
-                proxyProperties.proxyPort,
-                proxyProperties.proxyUser,
-                proxyProperties.proxyPassword,
-                proxyProperties.nonProxyHosts,
-                disableRetry,
-                forceRetryOn404,
-                maxHttpRetries,
+                _proxyProperties,
+                _retryProperties,
+                _crlProperties,
                 _servicePointConnectionLimit,
-                includeRetryReason,
-                _certRevocationCheckMode.ToString(),
-                _enableCrlDiskCaching,
-                _enableCrlInMemoryCaching,
-                _allowCertificatesWithoutCrlUrl,
-                _crlDownloadTimeout,
-                _crlDownloadMaxSize,
-                _minTlsProtocol,
-                _maxTlsProtocol,
-                _tlsProtocolsExplicitlyRequested,
-                null,
+                _tlsProperties,
                 clientType
                 );
         }
 
         public ConnectionPoolConfig BuildConnectionPoolConfig() =>
-            new ConnectionPoolConfig()
+            new()
             {
                 MaxPoolSize = _maxPoolSize,
                 MinPoolSize = _minPoolSize,
@@ -241,17 +238,8 @@ namespace Snowflake.Data.Core
                 WaitingForIdleSessionTimeout = _waitingForSessionIdleTimeout,
                 ExpirationTimeout = _expirationTimeout,
                 PoolingEnabled = _poolingEnabled,
-                ConnectionTimeout = connectionTimeout
+                ConnectionTimeout = _retryProperties.ConnectionTimeout
             };
-
-        internal Dictionary<SFSessionParameter, object> ToParameterMap()
-        {
-            var parameterMap = new Dictionary<SFSessionParameter, object>();
-            parameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = validateDefaultParameters;
-            parameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] = clientSessionKeepAlive;
-            parameterMap[SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL] = _clientStoreTemporaryCredential;
-            return parameterMap;
-        }
 
         internal interface IExtractor
         {
@@ -260,59 +248,69 @@ namespace Snowflake.Data.Core
 
         internal class Extractor : IExtractor
         {
-            private SFSessionHttpClientProxyProperties.IExtractor proxyPropertiesExtractor;
+            private readonly SFSessionHttpClientProxyProperties.IExtractor _proxyPropertiesExtractor;
+            private readonly SFSessionRetryProperties.IExtractor _retryPropertiesExtractor;
+            private readonly SFSessionCRLProperties.IExtractor _crlPropertiesExtractor;
+            private readonly SFSessionTLSProperties.IExtractor _tlsPropertiesExtractor;
 
-            public Extractor(SFSessionHttpClientProxyProperties.IExtractor proxyPropertiesExtractor)
+            public Extractor(
+                SFSessionHttpClientProxyProperties.IExtractor proxyPropertiesExtractor,
+                SFSessionRetryProperties.IExtractor retryPropertiesExtractor,
+                SFSessionCRLProperties.IExtractor crlPropertiesExtractor,
+                SFSessionTLSProperties.IExtractor tlsPropertiesExtractor)
             {
-                this.proxyPropertiesExtractor = proxyPropertiesExtractor;
+                _proxyPropertiesExtractor = proxyPropertiesExtractor;
+                _retryPropertiesExtractor = retryPropertiesExtractor;
+                _crlPropertiesExtractor = crlPropertiesExtractor;
+                _tlsPropertiesExtractor = tlsPropertiesExtractor;
             }
 
             public SFSessionHttpClientProperties ExtractProperties(SFSessionProperties propertiesDictionary)
             {
                 var extractor = new SessionPropertiesWithDefaultValuesExtractor(propertiesDictionary, true);
-                return new SFSessionHttpClientProperties()
-                {
-                    validateDefaultParameters = Boolean.Parse(propertiesDictionary[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]),
-                    clientSessionKeepAlive = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]),
-                    connectionTimeout = extractor.ExtractTimeout(SFSessionProperty.CONNECTION_TIMEOUT),
-                    disableRetry = Boolean.Parse(propertiesDictionary[SFSessionProperty.DISABLERETRY]),
-                    forceRetryOn404 = Boolean.Parse(propertiesDictionary[SFSessionProperty.FORCERETRYON404]),
-                    retryTimeout = extractor.ExtractTimeout(SFSessionProperty.RETRY_TIMEOUT),
-                    maxHttpRetries = int.Parse(propertiesDictionary[SFSessionProperty.MAXHTTPRETRIES]),
-                    includeRetryReason = Boolean.Parse(propertiesDictionary[SFSessionProperty.INCLUDERETRYREASON]),
-                    proxyProperties = proxyPropertiesExtractor.ExtractProperties(propertiesDictionary),
-                    _maxPoolSize = extractor.ExtractPositiveIntegerWithDefaultValue(SFSessionProperty.MAXPOOLSIZE),
-                    _minPoolSize = extractor.ExtractNonNegativeIntegerWithDefaultValue(SFSessionProperty.MINPOOLSIZE),
-                    _changedSession = ExtractChangedSession(extractor, SFSessionProperty.CHANGEDSESSION),
-                    _waitingForSessionIdleTimeout = extractor.ExtractTimeout(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT),
-                    _expirationTimeout = extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
-                    _poolingEnabled = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
-                    _disableSamlUrlCheck = extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
-                    _clientStoreTemporaryCredential = Boolean.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]),
-                    _servicePointConnectionLimit = int.Parse(propertiesDictionary[SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT]),
-                    _certRevocationCheckMode = (CertRevocationCheckMode)Enum.Parse(typeof(CertRevocationCheckMode), propertiesDictionary[SFSessionProperty.CERTREVOCATIONCHECKMODE], true),
-                    _enableCrlDiskCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLDISKCACHING]),
-                    _enableCrlInMemoryCaching = Boolean.Parse(propertiesDictionary[SFSessionProperty.ENABLECRLINMEMORYCACHING]),
-                    _allowCertificatesWithoutCrlUrl = Boolean.Parse(propertiesDictionary[SFSessionProperty.ALLOWCERTIFICATESWITHOUTCRLURL]),
-                    _crlDownloadTimeout = int.Parse(propertiesDictionary[SFSessionProperty.CRLDOWNLOADTIMEOUT]),
-                    _crlDownloadMaxSize = long.Parse(propertiesDictionary[SFSessionProperty.CRLDOWNLOADMAXSIZE]),
-                    _minTlsProtocol = propertiesDictionary[SFSessionProperty.MINTLS],
-                    _maxTlsProtocol = propertiesDictionary[SFSessionProperty.MAXTLS],
-                    _tlsProtocolsExplicitlyRequested = propertiesDictionary.TlsProtocolsExplicitlyRequested,
-                    cleanupWait = extractor.ExtractTimeout(SFSessionProperty.CLEANUP_WAIT),
-                    abortRequestTimeout = extractor.ExtractTimeout(SFSessionProperty.ABORT_REQUEST_TIMEOUT)
-                };
+
+                return new SFSessionHttpClientProperties
+                (
+                    validateDefaultParameters: bool.Parse(propertiesDictionary[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]),
+                    clientSessionKeepAlive: bool.Parse(propertiesDictionary[SFSessionProperty.CLIENT_SESSION_KEEP_ALIVE]),
+                    retryProperties: _retryPropertiesExtractor.ExtractProperties(propertiesDictionary, extractor),
+                    proxyProperties: _proxyPropertiesExtractor.ExtractProperties(propertiesDictionary),
+                    maxPoolSize: extractor.ExtractPositiveIntegerWithDefaultValue(SFSessionProperty.MAXPOOLSIZE),
+                    minPoolSize: extractor.ExtractNonNegativeIntegerWithDefaultValue(SFSessionProperty.MINPOOLSIZE),
+                    changedSession: ExtractChangedSession(extractor, SFSessionProperty.CHANGEDSESSION),
+                    waitingForSessionIdleTimeout: extractor.ExtractTimeout(SFSessionProperty.WAITINGFORIDLESESSIONTIMEOUT),
+                    expirationTimeout: extractor.ExtractTimeout(SFSessionProperty.EXPIRATIONTIMEOUT),
+                    poolingEnabled: extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.POOLINGENABLED),
+                    disableSamlUrlCheck: extractor.ExtractBooleanWithDefaultValue(SFSessionProperty.DISABLE_SAML_URL_CHECK),
+                    clientStoreTemporaryCredential: bool.Parse(propertiesDictionary[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]),
+                    servicePointConnectionLimit: int.Parse(propertiesDictionary[SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT]),
+                    crlProperties: _crlPropertiesExtractor.ExtractProperties(propertiesDictionary),
+                    tlsProperties: _tlsPropertiesExtractor.ExtractProperties(propertiesDictionary),
+                    cleanupWait: extractor.ExtractTimeout(SFSessionProperty.CLEANUP_WAIT),
+                    abortRequestTimeout: extractor.ExtractTimeout(SFSessionProperty.ABORT_REQUEST_TIMEOUT)
+                );
             }
 
-            private ChangedSessionBehavior ExtractChangedSession(
+            private static ChangedSessionBehavior ExtractChangedSession(
                 SessionPropertiesWithDefaultValuesExtractor extractor,
                 SFSessionProperty property) =>
                 extractor.ExtractPropertyWithDefaultValue(
                     property,
                     i => (ChangedSessionBehavior)Enum.Parse(typeof(ChangedSessionBehavior), i, true),
                     s => !string.IsNullOrEmpty(s),
-                    b => true
+                    _ => true
                 );
         }
+
+        private static Extractor GetDefaultPropertiesExtractor()
+        {
+            var proxyPropertiesExtractor = new SFSessionHttpClientProxyProperties.Extractor();
+            var retryPropertiesExtractor = new SFSessionRetryProperties.Extractor();
+            var crlPropertiesExtractor = new SFSessionCRLProperties.Extractor();
+            var tlsPropertiesExtractor = new SFSessionTLSProperties.Extractor();
+
+            return new(proxyPropertiesExtractor, retryPropertiesExtractor, crlPropertiesExtractor, tlsPropertiesExtractor);
+        }
+
     }
 }
