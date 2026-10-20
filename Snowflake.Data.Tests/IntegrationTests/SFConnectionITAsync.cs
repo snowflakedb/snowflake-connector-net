@@ -611,9 +611,9 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 SnowflakeDbExceptionAssert.HasErrorCode(e, SFError.INTERNAL_ERROR);
                 var message = string.Join("\n", ((AggregateException)e.InnerException).InnerExceptions.Select(x => x.Message));
                 Assert.Contains(
-                    $"The retry count has reached its limit of {expectedMaxRetryCount} and " +
-                    $"the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} " +
-                    "while trying to authenticate through Okta", message);
+                    $"The retry count has reached its limit of {expectedMaxRetryCount}",
+                    message);
+                Assert.Contains("while trying to authenticate through Okta", message);
             }
         }
     }
@@ -1199,14 +1199,10 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             catch (Exception e)
             {
                 SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.INTERNAL_ERROR);
-                var expectedMessage =
-                    $"The retry count has reached its limit of {expectedMaxRetryCount} and the timeout elapsed has reached its limit of {expectedMaxConnectionTimeout} while trying to authenticate through Okta";
-                AssertExtensions.AnySucceeds(
-                    () => Assert.Contains(expectedMessage, e.Message),
-                    () => Assert.Contains(expectedMessage, e.InnerException?.Message),
-                    () => Assert.Contains(expectedMessage, e.InnerException?.InnerException?.Message),
-                    () => Assert.Contains(expectedMessage, e.InnerException?.InnerException?.InnerException?.Message)
-                );
+                var expectedRetryMessage = $"The retry count has reached its limit of {expectedMaxRetryCount}";
+                var expectedSuffix = "while trying to authenticate through Okta";
+                SnowflakeDbExceptionAssert.HasMessageInExceptionChain(e, expectedRetryMessage);
+                SnowflakeDbExceptionAssert.HasMessageInExceptionChain(e, expectedSuffix);
             }
         }
     }

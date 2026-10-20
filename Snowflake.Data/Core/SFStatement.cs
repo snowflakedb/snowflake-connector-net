@@ -241,7 +241,7 @@ namespace Snowflake.Data.Core
                 HttpTimeout = Timeout.InfiniteTimeSpan,
                 RestTimeout = Timeout.InfiniteTimeSpan,
                 isPutGet = isPutGetQuery,
-                sid = SfSession.sessionId
+                SessionId = SfSession.sessionId
             };
         }
 
@@ -254,7 +254,7 @@ namespace Snowflake.Data.Core
                 authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
                 HttpTimeout = Timeout.InfiniteTimeSpan,
                 RestTimeout = Timeout.InfiniteTimeSpan,
-                sid = SfSession.sessionId
+                SessionId = SfSession.sessionId
             };
         }
 
@@ -628,7 +628,7 @@ namespace Snowflake.Data.Core
                     Url = uri,
                     authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
                     jsonBody = postBody,
-                    sid = SfSession.sessionId
+                    SessionId = SfSession.sessionId
                 };
                 if (!TimeoutHelper.IsInfinite(SfSession.ClientProperties._abortRequestTimeout))
                     request.RestTimeout = SfSession.ClientProperties._abortRequestTimeout;
@@ -868,7 +868,7 @@ namespace Snowflake.Data.Core
                     : null,
                 HttpTimeout = Timeout.InfiniteTimeSpan,
                 RestTimeout = Timeout.InfiniteTimeSpan,
-                sid = SfSession.sessionId,
+                SessionId = SfSession.sessionId,
                 _isStatusRequest = true
             };
         }

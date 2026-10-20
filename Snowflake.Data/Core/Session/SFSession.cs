@@ -396,14 +396,14 @@ namespace Snowflake.Data.Core
                 var response = restRequester.Post<CloseResponse>(closeSessionRequest);
                 if (!response.success)
                 {
-                    logger.Error($"Failed to close session: {closeSessionRequest.sid}, error ignored. Code: {response.code} Message: {response.message}");
+                    logger.Error($"Failed to close session: {closeSessionRequest.SessionId}, error ignored. Code: {response.code} Message: {response.message}");
                 }
 
-                logger.Debug($"Session closed: {closeSessionRequest.sid}");
+                logger.Debug($"Session closed: {closeSessionRequest.SessionId}");
             }
             catch (Exception)
             {
-                logger.Error($"Failed to close session: {closeSessionRequest.sid}, because of exception.");
+                logger.Error($"Failed to close session: {closeSessionRequest.SessionId}, because of exception.");
                 throw;
             }
         }
@@ -419,7 +419,7 @@ namespace Snowflake.Data.Core
             {
                 Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
-                sid = sessionId
+                SessionId = sessionId
             };
         }
 

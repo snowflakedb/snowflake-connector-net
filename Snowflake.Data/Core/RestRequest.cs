@@ -1,8 +1,8 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System;
-using System.Text;
 using System.Collections.Generic;
+using System.Text;
 using Newtonsoft.Json;
 using Snowflake.Data.Core.Extensions;
 
@@ -11,8 +11,8 @@ namespace Snowflake.Data.Core
     internal interface IRestRequest
     {
         HttpRequestMessage ToRequestMessage(HttpMethod method);
-        TimeSpan GetRestTimeout();
-        string getSid();
+        TimeSpan RestTimeout { get; }
+        string SessionId { get; }
     }
 
     /// <summary>
@@ -21,7 +21,6 @@ namespace Snowflake.Data.Core
     internal abstract class BaseRestRequest : IRestRequest
     {
         internal static string HTTP_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_HTTP_REQUEST";
-
         internal static string REST_REQUEST_TIMEOUT_KEY = "TIMEOUT_PER_REST_REQUEST";
 
         // The default Rest timeout. Set to 120 seconds.
@@ -34,17 +33,24 @@ namespace Snowflake.Data.Core
 
         internal Uri Url { get; set; }
 
-        /// <summary>
-        /// Timeout of the overall rest request
-        /// </summary>
-        internal TimeSpan RestTimeout { get; set; }
+        public String SessionId { get; set; }
 
-        internal String sid { get; set; }
+        internal TimeSpan HttpTimeout
+        {
+            set => Options[HTTP_REQUEST_TIMEOUT_KEY] = value;
+        }
 
-        /// <summary>
-        /// Timeout for every single HTTP request
-        /// </summary>
-        internal TimeSpan HttpTimeout { get; set; }
+        public TimeSpan RestTimeout
+        {
+            get => (TimeSpan)Options[REST_REQUEST_TIMEOUT_KEY];
+            set => Options[REST_REQUEST_TIMEOUT_KEY] = value;
+        }
+
+        protected BaseRestRequest()
+        {
+            HttpTimeout = TimeSpan.Zero;
+            RestTimeout = TimeSpan.Zero;
+        }
 
         HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method) => throw new NotImplementedException();
 
@@ -54,20 +60,7 @@ namespace Snowflake.Data.Core
             foreach (var option in Options)
                 message.SetOption(option.Key, option.Value);
 
-            message.SetOption(HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);
-            message.SetOption(REST_REQUEST_TIMEOUT_KEY, RestTimeout);
-
             return message;
-        }
-
-        TimeSpan IRestRequest.GetRestTimeout()
-        {
-            return RestTimeout;
-        }
-
-        string IRestRequest.getSid()
-        {
-            return sid;
         }
     }
 

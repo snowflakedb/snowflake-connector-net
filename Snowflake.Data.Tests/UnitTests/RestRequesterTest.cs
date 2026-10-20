@@ -193,8 +193,8 @@ namespace Snowflake.Data.Tests.UnitTests
 #pragma warning restore CS0618
                 return message;
             });
-            mock.Setup(r => r.GetRestTimeout()).Returns(TimeSpan.FromSeconds(120));
-            mock.Setup(r => r.getSid()).Returns("test-sid");
+            mock.Setup(r => r.RestTimeout).Returns(TimeSpan.FromSeconds(120));
+            mock.Setup(r => r.SessionId).Returns("test-sid");
             return mock.Object;
         }
     }

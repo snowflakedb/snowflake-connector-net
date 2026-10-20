@@ -289,7 +289,7 @@ internal sealed class SessionTelemetryModule : ISessionTelemetryModule
             Url = _url,
             authorizationToken = $"Snowflake Token=\"{_sessionToken}\"",
             jsonBody = new TelemetryRequest(data),
-            sid = _sessionId,
+            SessionId = _sessionId,
             RestTimeout = _sendTimeout,
         };
     }
